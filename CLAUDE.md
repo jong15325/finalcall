@@ -32,6 +32,22 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
 - 각 단계는 `docs/skeleton-prompts.md` 의 **"이번 단계에서 하지 말 것"** 범위 제한을 반드시 지킨다.
   범위를 벗어나는 코드를 만들지 않는다.
 - **git commit / push 는 사용자가 직접 한다. Claude Code 는 커밋·푸시하지 않는다.**
+- **각 단계/작업 종료 시, 사용자가 그대로 복사해 쓸 수 있는 "상세 커밋 메시지"를 함께 제안한다.**
+  Claude Code 가 커밋을 실행하지는 않되, 완료 보고 끝에 아래 형식의 커밋 메시지를 제시한다.
+  - 제목(1줄): `skeleton: stage <N> - <핵심 요약>` (기존 컨벤션 유지, 50자 내외, 명령형).
+  - 본문: 제목과 빈 줄로 구분. 무엇을·왜 바꿨는지 불릿으로 상세히.
+    추가/변경 파일, 핵심 결정(예: 버전 선택, 옵션 채택 이유), 검증 결과(테스트/부팅),
+    범위 밖으로 미룬 항목을 포함한다. 한국어로 작성.
+  - 형식 예:
+    ```
+    skeleton: stage 1 - 패키지 구조 & ArchUnit 의존 규율
+
+    - api>domain>infra>common 4레이어 + 하위 패키지(빈 패키지는 package-info 로 표시)
+    - 샘플 수직 슬라이스: domain.SampleService → api.SampleController/SampleResponse (GET /sample)
+    - ArchUnit 1.4.1 로 레이어 역방향 의존/순환 참조 금지 규칙 강제
+    - application.properties → application.yml (server.port 8080)
+    - 검증: gradlew test 통과, /sample 응답 확인, 위반 주입으로 규칙 탐지 확인
+    ```
 - **시크릿·`.env`·자격증명을 코드나 커밋에 넣지 않는다.** 민감값은 환경변수(`${ENV_VAR}`)로.
 - 응답 언어는 한국어. 주석·에러 메시지·문서도 한국어.
 - 변경 전, 관련 파일을 먼저 읽고 기존 컨벤션과 일치하는지 확인한다.
