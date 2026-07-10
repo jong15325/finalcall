@@ -21,6 +21,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	// Stage 2: @ConfigurationProperties 의 @Validated/@NotBlank 검증을 실제 동작시키기 위한 Bean Validation
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Stage 4: 구조화 로깅 + 분산추적
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'   // 트레이싱 활성화 기반(엔드포인트 노출은 Stage 5)
+	implementation 'org.springframework.boot:spring-boot-starter-aop'        // @ServiceLog AOP
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'            // traceId/spanId 생성·MDC 주입·전파(버전은 BOM 관리)
+	implementation 'net.logstash.logback:logstash-logback-encoder:8.1'       // dev/prod JSON 로그 인코더
+	// [INCLUDE_TRACE_EXPORT=false] span export 안 함 → opentelemetry-exporter-otlp 미추가(자리만)
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

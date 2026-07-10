@@ -1,5 +1,6 @@
 /**
- * 공통 유틸 자리(Stage 3 에서 Preconditions 등 구현).
- * Stage 1 에서는 구조만 비워둔다.
+ * 공통 유틸(Stage 3).
+ *
+ * <p>{@link com.finalcall.common.util.Preconditions} — 비즈니스 규칙 검증(조건 위반 시 BusinessException).
  */
 package com.finalcall.common.util;

@@ -10,6 +10,20 @@ spring:
     name: finalcall
   profiles:
     default: local
+  jackson:
+    serialization:
+      # Instant 등 시간 타입을 epoch 숫자가 아닌 ISO-8601 문자열로 직렬화(TIMESTAMP_FORMAT=ISO-8601).
+      write-dates-as-timestamps: false
+
+# Stage 4: 분산추적(Micrometer Tracing). traceId/spanId 생성·MDC 주입·전파는 라이브러리가 담당한다.
+management:
+  tracing:
+    propagation:
+      type: W3C            # 전파 포맷(W3C traceparent)
+    sampling:
+      probability: 1.0     # 기본(local/dev). prod 는 프로파일에서 0.1 로 오버라이드.
+  # [INCLUDE_TRACE_EXPORT=false] span export 는 이번 단계 범위 밖. 로그 상관관계까지만.
+  #   활성화 시: opentelemetry-exporter-otlp 추가 + management.otlp.tracing.endpoint 설정.
 
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
 #       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.
