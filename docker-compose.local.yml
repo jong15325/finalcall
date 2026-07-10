@@ -1,0 +1,46 @@
+# 로컬 인프라 기동용(MySQL/Redis). Stage 2 에서 앱이 실제 연결하지는 않는다.
+# DB 는 Stage D, Redis 는 Stage E1 에서 앱과 연결한다.
+# 기동:   docker compose -f docker-compose.local.yml up -d
+# 종료:   docker compose -f docker-compose.local.yml down
+#
+# ★ 아래 계정/비밀번호는 "로컬 개발 전용" 일회성 값이다.
+#    실제 dev/prod 에는 절대 사용하지 말 것(운영 시크릿은 환경변수/시크릿 매니저로 주입).
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: finalcall-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: finalcall
+      MYSQL_USER: finalcall
+      MYSQL_PASSWORD: finalcall
+      MYSQL_ROOT_PASSWORD: root
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - finalcall-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: finalcall-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - finalcall-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  finalcall-mysql-data:
+  finalcall-redis-data:

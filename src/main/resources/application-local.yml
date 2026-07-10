@@ -1,0 +1,21 @@
+# local 프로파일: 모든 값에 기본값을 두어 환경변수 없이 즉시 실행된다.
+# 시크릿/환경종속 값은 ${ENV:기본값} 형태 — 환경변수가 있으면 그 값, 없으면 기본값 사용.
+
+app:
+  name: ${APP_NAME:finalcall}
+  description: ${APP_DESCRIPTION:게임 아이템 경매 플랫폼}
+
+# --- 다음 단계용 자리(형태만, 실제 연결 없음) ---
+# Stage D 에서 DB, Stage E1 에서 Redis 를 활성화한다.
+# 현재는 data-jpa/data-redis 의존이 없어 아래 키들은 바인딩되지 않는다(주석 유지).
+# local 은 ${ENV:기본값} 으로 환경변수 없이도 뜨게 한다.
+#
+# spring:
+#   datasource:
+#     url: ${DB_URL:jdbc:mysql://localhost:3306/finalcall}
+#     username: ${DB_USERNAME:finalcall}
+#     password: ${DB_PASSWORD:finalcall}
+#   data:
+#     redis:
+#       host: ${REDIS_HOST:localhost}
+#       port: ${REDIS_PORT:6379}

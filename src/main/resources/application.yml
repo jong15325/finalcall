@@ -1,0 +1,15 @@
+# 프로파일 무관 공통 설정.
+# 활성 프로파일은 yml 에 하드코딩하지 않는다(spring.profiles.active 금지).
+# 활성 프로파일 미지정 시 local 로 동작하도록 default 만 지정하고,
+# 실제 활성화는 SPRING_PROFILES_ACTIVE 환경변수로만 한다(예: dev/prod 배포 시).
+server:
+  port: 8080
+
+spring:
+  application:
+    name: finalcall
+  profiles:
+    default: local
+
+# 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
+#       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.

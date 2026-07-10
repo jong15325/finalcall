@@ -1,0 +1,22 @@
+# prod 프로파일: 시크릿/환경종속 값은 기본값 없이 주입 → 누락 시 부팅 실패(fail-fast). 하드코딩 금지.
+#
+# app.name / app.description 는 어떤 기본값도 두지 않는다.
+# 환경변수 APP_NAME / APP_DESCRIPTION 으로 주입한다(relaxed binding → app.name / app.description).
+# 누락 시 @NotBlank 검증 실패로 부팅이 중단된다(fail-fast).
+# (주의: app.name: ${APP_NAME} 처럼 placeholder 를 쓰면 @ConfigurationProperties 바인더가
+#  미해결 placeholder 를 리터럴로 남겨 @NotBlank 를 통과시켜 fail-fast 가 무력화된다.
+#  따라서 검증 대상 문자열은 placeholder 대신 relaxed binding 으로 주입한다.)
+
+# --- 다음 단계용 자리(형태만, 실제 연결 없음) ---
+# Stage D/E1 에서 활성화. prod 는 반드시 기본값 없이 ${ENV} 만 사용한다.
+# DataSource 는 미해결 ${ENV} 가 잘못된 접속정보가 되어 연결 실패로 fail-fast 된다.
+#
+# spring:
+#   datasource:
+#     url: ${DB_URL}
+#     username: ${DB_USERNAME}
+#     password: ${DB_PASSWORD}
+#   data:
+#     redis:
+#       host: ${REDIS_HOST}
+#       port: ${REDIS_PORT}
