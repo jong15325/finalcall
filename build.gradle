@@ -27,6 +27,25 @@ dependencies {
 	implementation 'io.micrometer:micrometer-tracing-bridge-otel'            // traceId/spanId 생성·MDC 주입·전파(버전은 BOM 관리)
 	implementation 'net.logstash.logback:logstash-logback-encoder:8.1'       // dev/prod JSON 로그 인코더
 	// [INCLUDE_TRACE_EXPORT=false] span export 안 함 → opentelemetry-exporter-otlp 미추가(자리만)
+	// Stage 5: Prometheus 메트릭 노출(/actuator/prometheus). 버전은 BOM 관리.
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+	// Stage D: 데이터 계층(JPA + QueryDSL + Flyway)
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	// QueryDSL — 반드시 jakarta 분류자(javax 딸려오지 않게)
+	implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+	annotationProcessor 'com.querydsl:querydsl-apt:5.1.0:jakarta'
+	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+	// Flyway — flyway-mysql 필수(flyway-core 만으로 MySQL 동작 안 함)
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-mysql'
+	// Stage E1: Redis — 캐시=Lettuce, 분산락=Redisson 역할 분담(Redisson 을 캐시 백엔드로 쓰지 않음)
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'  // Lettuce, 캐시/기본 연산
+	implementation 'org.springframework.boot:spring-boot-starter-cache'       // Spring Cache 추상화
+	// 분산락 전용. starter 대신 코어 라이브러리를 쓴다: redisson-spring-boot-starter 는 커넥션 팩토리를
+	// Redisson 으로 교체해 Lettuce 를 밀어내므로("캐시=Lettuce" 규칙 위배), 코어만 넣고 RedissonClient 만 직접 등록.
+	implementation 'org.redisson:redisson:3.50.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -39,4 +58,16 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// Stage D: QueryDSL Q클래스 생성 경로를 build/ 하위로 지정(생성물은 커밋 금지 — build/ 는 이미 .gitignore).
+def querydslDir = "build/generated/querydsl"
+tasks.withType(JavaCompile).configureEach {
+	options.generatedSourceOutputDirectory = file(querydslDir)
+}
+sourceSets {
+	main.java.srcDirs += [querydslDir]
+}
+tasks.named('clean') {
+	delete file(querydslDir)
 }

@@ -5,17 +5,22 @@ app:
   name: ${APP_NAME:finalcall}
   description: ${APP_DESCRIPTION:게임 아이템 경매 플랫폼}
 
-# --- 다음 단계용 자리(형태만, 실제 연결 없음) ---
-# Stage D 에서 DB, Stage E1 에서 Redis 를 활성화한다.
-# 현재는 data-jpa/data-redis 의존이 없어 아래 키들은 바인딩되지 않는다(주석 유지).
-# local 은 ${ENV:기본값} 으로 환경변수 없이도 뜨게 한다.
-#
-# spring:
-#   datasource:
-#     url: ${DB_URL:jdbc:mysql://localhost:3306/finalcall}
-#     username: ${DB_USERNAME:finalcall}
-#     password: ${DB_PASSWORD:finalcall}
-#   data:
-#     redis:
-#       host: ${REDIS_HOST:localhost}
-#       port: ${REDIS_PORT:6379}
+# Stage D: DataSource — local 은 ${ENV:기본값} 으로 환경변수 없이도 뜬다.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/finalcall}
+    username: ${DB_USERNAME:finalcall}
+    password: ${DB_PASSWORD:finalcall}
+    hikari:
+      # ★ 아래는 튜닝 대상 — 구체 수치는 DB 최대 커넥션·CPU·동시성 고려해 추후 설정(무작정 크게 금지).
+      #   미설정 시 HikariCP 기본값 사용.
+      # maximum-pool-size:   # 최대 커넥션 수(DB max_connections/CPU/동시성 고려)
+      # minimum-idle:        # 최소 유휴 커넥션
+      # connection-timeout:  # 커넥션 획득 대기(ms)
+      # max-lifetime:        # 커넥션 최대 수명(ms), DB wait_timeout 보다 짧게
+
+# Stage E1: Redis(Lettuce) — local 은 ${ENV:기본값}. Redisson 도 같은 host/port 를 바라본다(설정은 각각).
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}

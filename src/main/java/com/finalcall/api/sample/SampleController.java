@@ -1,10 +1,13 @@
 package com.finalcall.api.sample;
 
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.domain.sample.SampleCacheValue;
 import com.finalcall.domain.sample.SampleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,5 +43,30 @@ public class SampleController {
     @PostMapping("/echo")
     public ApiResponse<SampleResponse> echo(@Valid @RequestBody SampleEchoRequest request) {
         return ApiResponse.success(new SampleResponse(request.message()));
+    }
+
+    /** 커스텀 메트릭 데모(Stage 5): 호출 시 Counter/Timer 를 기록한다(/actuator/prometheus 에서 확인). */
+    @GetMapping("/metric-demo")
+    public ApiResponse<SampleResponse> metricDemo() {
+        return ApiResponse.success(new SampleResponse(sampleService.processWithMetrics()));
+    }
+
+    /** 캐시 데모(Stage E1): 두 번째 호출은 캐시에서 반환(generatedAt 고정). */
+    @GetMapping("/cache/{id}")
+    public ApiResponse<SampleCacheValue> getCached(@PathVariable Long id) {
+        return ApiResponse.success(sampleService.getCached(id));
+    }
+
+    /** 캐시 무효화 데모(Stage E1). */
+    @DeleteMapping("/cache/{id}")
+    public ApiResponse<Void> evictCached(@PathVariable Long id) {
+        sampleService.evictCached(id);
+        return ApiResponse.success();
+    }
+
+    /** 분산락 데모(Stage E1): 동시 호출 시 상호배제(임계 구역 300ms). */
+    @GetMapping("/lock/{id}")
+    public ApiResponse<Long> lockDemo(@PathVariable Long id) {
+        return ApiResponse.success(sampleService.lockedProcess(id));
     }
 }

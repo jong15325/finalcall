@@ -1,0 +1,31 @@
+package com.finalcall.api.notice;
+
+import com.finalcall.domain.notice.Notice;
+import com.finalcall.domain.notice.NoticeType;
+import lombok.Builder;
+
+import java.time.Instant;
+
+/**
+ * 공지 단건 응답(Stage D). Response 는 record + @Builder + static from(Entity).
+ */
+@Builder
+public record NoticeDetailResponse(
+        Long id,
+        String title,
+        String content,
+        NoticeType type,
+        Instant createdAt,
+        Instant updatedAt
+) {
+    public static NoticeDetailResponse from(Notice notice) {
+        return NoticeDetailResponse.builder()
+                .id(notice.getId())
+                .title(notice.getTitle())
+                .content(notice.getContent())
+                .type(notice.getType())
+                .createdAt(notice.getCreatedAt())
+                .updatedAt(notice.getUpdatedAt())
+                .build();
+    }
+}

@@ -14,9 +14,38 @@ spring:
     serialization:
       # Instant 등 시간 타입을 epoch 숫자가 아닌 ISO-8601 문자열로 직렬화(TIMESTAMP_FORMAT=ISO-8601).
       write-dates-as-timestamps: false
+  # Stage D: JPA — 전 프로파일 validate(스키마는 Flyway 관리). DataSource 는 프로파일별로 주입.
+  jpa:
+    hibernate:
+      ddl-auto: validate         # create/update 금지. Flyway 가 만든 스키마를 검증만 한다.
+    open-in-view: false          # OSIV 는 커넥션을 뷰 렌더링까지 붙들어 커넥션 고갈 위험 → 끔.
+    # show-sql 금지. SQL 로깅은 logger 레벨(org.hibernate.SQL)로 제어한다.
+  # Stage D: Flyway — 전 프로파일 활성화. 부팅 순서: Flyway 스키마 생성 → JPA validate 검증.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
-# Stage 4: 분산추적(Micrometer Tracing). traceId/spanId 생성·MDC 주입·전파는 라이브러리가 담당한다.
+# Stage 4~5: Actuator 노출 + Prometheus 메트릭 + 분산추적(Micrometer Tracing).
 management:
+  endpoints:
+    web:
+      exposure:
+        # 화이트리스트. '*'/exclude 금지. env/beans/heapdump/mappings/threaddump 절대 비노출.
+        include: health, prometheus, info
+  endpoint:
+    health:
+      # ★ show-details=always 는 management 포트가 내부망 격리됐다는 전제다.
+      #   외부에 노출하는 구성이라면 반드시 never 로 바꿀 것.
+      show-details: always
+      # health group(liveness/readiness)은 배포 단계 관심사 — 자리만.
+  info:
+    env:
+      enabled: true          # info.* 프로퍼티를 /actuator/info 로 노출
+  metrics:
+    tags:
+      # 공통 태그. ★ 고카디널리티 금지: userId, path variable(/orders/{id}의 id), 요청 UUID 등
+      #   고유값을 태그로 쓰지 말 것(시계열 카디널리티 폭발 → Prometheus 성능/저장 장애).
+      application: ${spring.application.name}
   tracing:
     propagation:
       type: W3C            # 전파 포맷(W3C traceparent)
@@ -24,6 +53,12 @@ management:
       probability: 1.0     # 기본(local/dev). prod 는 프로파일에서 0.1 로 오버라이드.
   # [INCLUDE_TRACE_EXPORT=false] span export 는 이번 단계 범위 밖. 로그 상관관계까지만.
   #   활성화 시: opentelemetry-exporter-otlp 추가 + management.otlp.tracing.endpoint 설정.
+
+# Stage 5: /actuator/info 응답 내용(env 컨트리뷰터로 노출)
+info:
+  app:
+    name: ${spring.application.name}
+    description: 게임 아이템 경매 플랫폼 스켈레톤
 
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
 #       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.

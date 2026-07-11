@@ -12,6 +12,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -61,6 +62,14 @@ public class GlobalExceptionHandler {
         log.warn("[MethodNotAllowed] {}", ex.getMessage());
         return ResponseEntity.status(CommonErrorCode.METHOD_NOT_ALLOWED.getStatus())
                 .body(ErrorResponse.of(CommonErrorCode.METHOD_NOT_ALLOWED));
+    }
+
+    /** 3-c) 매핑되지 않은 경로(미노출 엔드포인트/오타 등) → NOT_FOUND. 전역 핸들러가 없으면 generic 500 으로 새는 것을 방지. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex) {
+        log.warn("[NotFound] {}", ex.getResourcePath());
+        return ResponseEntity.status(CommonErrorCode.NOT_FOUND.getStatus())
+                .body(ErrorResponse.of(CommonErrorCode.NOT_FOUND));
     }
 
     /** 4) 그 외 미처리 예외 → 500. 내부 정보는 응답에 노출하지 않고 로그에만 전체 스택을 남긴다. */
