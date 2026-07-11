@@ -1,5 +1,6 @@
 package com.finalcall.common.logging;
 
+import com.finalcall.support.TestcontainersConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,15 +9,17 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@link ServiceLogAspect} 검증(Stage 4).
+ * {@link ServiceLogAspect} 검증(Stage 4, F2에서 Testcontainers 기반으로 전환).
  *
  * <p>@ServiceLog 부착 메서드가 AOP 프록시로 가로채져, slowMs 초과 시 WARN 으로 로깅되는지 확인한다.
  */
 @SpringBootTest
+@Import(TestcontainersConfiguration.class)
 @ExtendWith(OutputCaptureExtension.class)
 class ServiceLogAspectTest {
 

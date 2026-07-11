@@ -23,11 +23,12 @@ public class SecurityAuditorAware implements AuditorAware<String> {
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.empty();
         }
-        Object principal = authentication.getPrincipal();
-        // 익명 사용자(anonymousUser 문자열)는 미인증으로 취급.
-        if (principal instanceof String userId && !"anonymousUser".equals(userId)) {
-            return Optional.of(userId);
+        // getName() 은 principal 이 String(실토큰)이든 UserDetails(@WithMockUser)든 주체 이름을 반환한다.
+        String name = authentication.getName();
+        // 익명 사용자(anonymousUser)는 미인증으로 취급 → createdBy null.
+        if (name == null || "anonymousUser".equals(name)) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        return Optional.of(name);
     }
 }

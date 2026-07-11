@@ -36,6 +36,7 @@ public class AuthController {
     @GetMapping("/me")
     public ApiResponse<String> me(Authentication authentication) {
         log.info("[Auth] 인증 사용자 조회");
-        return ApiResponse.success((String) authentication.getPrincipal());
+        // getName() 은 principal 이 String(실토큰)이든 UserDetails(@WithMockUser)든 주체 이름을 반환한다.
+        return ApiResponse.success(authentication.getName());
     }
 }

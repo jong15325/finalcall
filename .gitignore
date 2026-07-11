@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# 로컬 bootRun 리다이렉트 로그(임시)
+boot*.log
