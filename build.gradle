@@ -46,6 +46,9 @@ dependencies {
 	// 분산락 전용. starter 대신 코어 라이브러리를 쓴다: redisson-spring-boot-starter 는 커넥션 팩토리를
 	// Redisson 으로 교체해 Lettuce 를 밀어내므로("캐시=Lettuce" 규칙 위배), 코어만 넣고 RedissonClient 만 직접 등록.
 	implementation 'org.redisson:redisson:3.50.0'
+	// Stage E2: 회복탄력성(CircuitBreaker + Retry). Rate limiter 는 앱 레벨 미도입(게이트웨이 담당).
+	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.3.0'
+	implementation 'io.github.resilience4j:resilience4j-micrometer:2.3.0'      // 메트릭을 Stage 5 Prometheus 로 노출
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

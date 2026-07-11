@@ -2,6 +2,7 @@ package com.finalcall.api.sample;
 
 import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.sample.SampleCacheValue;
+import com.finalcall.domain.sample.ResilienceDemoService;
 import com.finalcall.domain.sample.SampleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SampleController {
 
     private final SampleService sampleService;
+    private final ResilienceDemoService resilienceDemoService;
 
     /** 성공 응답 데모: {success, data, timestamp}. */
     @GetMapping
@@ -68,5 +71,11 @@ public class SampleController {
     @GetMapping("/lock/{id}")
     public ApiResponse<Long> lockDemo(@PathVariable Long id) {
         return ApiResponse.success(sampleService.lockedProcess(id));
+    }
+
+    /** 회복탄력성 데모(Stage E2): fail=true 반복 호출 시 연속 실패로 회로 OPEN → fallback 응답. */
+    @GetMapping("/resilience")
+    public ApiResponse<String> resilienceDemo(@RequestParam(defaultValue = "true") boolean fail) {
+        return ApiResponse.success(resilienceDemoService.callExternal(fail));
     }
 }
