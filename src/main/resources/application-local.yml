@@ -5,6 +5,11 @@ app:
   name: ${APP_NAME:finalcall}
   description: ${APP_DESCRIPTION:게임 아이템 경매 플랫폼}
 
+# Stage F1: JWT secret — local 기본값(${ENV:기본값}). ★ HS256 은 최소 256비트(32바이트) 필요.
+#   운영 secret 은 절대 하드코딩/공유 금지. 아래 기본값은 로컬 전용 더미다.
+jwt:
+  secret: ${JWT_SECRET:finalcall-local-dev-secret-key-please-change-0123456789abcdef}
+
 # Stage D: DataSource — local 은 ${ENV:기본값} 으로 환경변수 없이도 뜬다.
 spring:
   datasource:

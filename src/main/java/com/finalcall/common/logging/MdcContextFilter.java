@@ -15,7 +15,8 @@ import java.io.IOException;
  * <p>역할(traceId 생성이 아님):
  * <ol>
  *   <li>라이브러리(Micrometer)가 MDC 에 넣어둔 traceId 를 <b>읽어서</b> 응답 헤더 {@value #REQUEST_ID_HEADER} 로 전달.</li>
- *   <li>요청 단위 비즈니스 컨텍스트(httpMethod, requestUri)를 MDC 에 추가. (userId 는 인증 도입 F1 후)</li>
+ *   <li>요청 단위 비즈니스 컨텍스트(httpMethod, requestUri)를 MDC 에 추가.
+ *       (userId 는 인증 성공 시 JwtAuthenticationFilter 가 적재/정리 — Stage F1)</li>
  * </ol>
  *
  * <p>★ traceId/spanId 를 직접 MDC.put/UUID 로 생성하지 않는다(Micrometer 값과 충돌). 정리 시에도

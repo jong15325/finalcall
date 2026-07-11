@@ -95,5 +95,11 @@ resilience4j:
       externalApi:
         base-config: default
 
+# Stage F1: JWT 인증. secret 은 프로파일별 주입(local 기본값, dev/prod ${ENV} fail-fast).
+jwt:
+  algorithm: HS256          # 시작(대칭키). 확장: RS256(공개키 검증)로 갈아끼울 수 있게 Provider 추상화.
+  access-exp-minutes: 30
+  # secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
+
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
 #       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.

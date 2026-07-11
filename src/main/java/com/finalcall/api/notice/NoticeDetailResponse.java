@@ -15,6 +15,7 @@ public record NoticeDetailResponse(
         String title,
         String content,
         NoticeType type,
+        String createdBy,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -24,6 +25,7 @@ public record NoticeDetailResponse(
                 .title(notice.getTitle())
                 .content(notice.getContent())
                 .type(notice.getType())
+                .createdBy(notice.getCreatedBy())
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
                 .build();

@@ -1,6 +1,6 @@
 package com.finalcall.domain.notice;
 
-import com.finalcall.domain.common.BaseTimeEntity;
+import com.finalcall.domain.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,13 +18,13 @@ import lombok.NoArgsConstructor;
  * 공지사항 엔티티(Stage D) — 도메인 코드 컨벤션 참조 구현.
  *
  * <p>@NoArgsConstructor(PROTECTED), 생성자에 @Builder(private), @Setter 금지 → 도메인 메서드로만 상태 변경.
- * soft delete({@code isDeleted}). 시각 필드는 {@link BaseTimeEntity} 가 자동 관리.
+ * soft delete({@code isDeleted}). 시각/작성자 필드는 {@link BaseEntity} 가 자동 관리(F1: createdBy/modifiedBy).
  */
 @Entity
 @Getter
 @Table(name = "notice")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Notice extends BaseTimeEntity {
+public class Notice extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
