@@ -62,6 +62,7 @@
 | D-052 | 입찰 시 게임머니 홀드 (해제 규칙 명시 조건) | ACCEPTED | 총괄 |
 | D-053 | 4-C 재확정: 단일 TX 유지 (충전만 외부 분리) | ACCEPTED | 총괄 |
 | D-054 | 지침 변경 전파 의무 (활성 역할 즉시 통보) | ACCEPTED | 총괄 |
+| D-055 | 브리핑 줄 표준 템플릿 (templates 16절) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | C-001 | 문서 유형 6종 정의 | ACCEPTED (→D-014) | 컨설턴트 |
