@@ -1,5 +1,5 @@
 # 008. outbox 정합 질의 — escalation-prompts.md 분할 이탈
-상태: SENT (총괄 회신 대기)
+상태: ANSWERED → management/outbox/010 ((A) 현행 유지, D 발번 없음)
 
 ```
 [기획/설계 → 총괄] outbox 정합 확인 요청 — escalation-prompts.md 분할 이탈
