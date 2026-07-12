@@ -608,7 +608,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-023. 지침 3계층: 공통 가이드 / 파트 지침 파일 / 킥오프 부트스트랩
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-014, D-021, 킥오프 미결 포인트 · 2026-07-12
+상태: ACCEPTED · escalated-as D-037 · 소유: 컨설턴트 · 관련: relates-to D-014, D-021, 킥오프 미결 포인트 · 2026-07-12
 
 결정
 - 지침을 3계층으로: 1) 공통(collaboration-guide·templates) 2) 파트 지침 파일
@@ -631,7 +631,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-024. 번호 체계 분리: 결정 로그(Q/S-xxx) vs 결함·발견 티켓(QA/SEC-NNN)
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-025 조건, D-009, D-010 · 2026-07-12
+상태: ACCEPTED · escalated-as D-038 · 소유: 컨설턴트 · 관련: relates-to D-025 조건, D-009, D-010 · 2026-07-12
 
 결정
 - Q-xxx/S-xxx = 결정 로그(4절 티켓 규약, 불변·상태 라벨). QA-NNN/SEC-NNN = 결함·발견
@@ -650,7 +650,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-025. 프론트엔드 CLAUDE.md 초안
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: depends-on D-032, D-030, relates-to C-023 · 2026-07-12
+상태: ACCEPTED · escalated-as D-039 · 소유: 컨설턴트 · 관련: depends-on D-032, D-030, relates-to C-023 · 2026-07-12
 
 결정
 - draft-frontend-claude.md를 프론트 저장소 루트 CLAUDE.md로 채택. 핵심: feature 기반 구조,
@@ -672,7 +672,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-026. QA 지침(qa-guide.md) 초안
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: depends-on C-023, C-024, relates-to D-008, D-016 · 2026-07-12
+상태: ACCEPTED · escalated-as D-040 · 소유: 컨설턴트 · 관련: depends-on C-023, C-024, relates-to D-008, D-016 · 2026-07-12
 
 결정
 - draft-qa-guide.md를 docs/qa/qa-guide.md로 채택. 핵심: 리스크 기반 1~2페이지 test-plan,
@@ -692,7 +692,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-027. 보안 지침(security-guide.md) 초안
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: depends-on C-023, C-024, D-013 · 2026-07-12
+상태: ACCEPTED · escalated-as D-041 (차단 권한 명시 승인) · 소유: 컨설턴트 · 관련: depends-on C-023, C-024, D-013 · 2026-07-12
 
 결정
 - draft-security-guide.md를 docs/security/security-guide.md로 채택. 핵심: 게이트 2회 절차
