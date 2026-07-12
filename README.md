@@ -50,4 +50,4 @@ REDIS_HOST=localhost REDIS_PORT=6379 JWT_SECRET=finalcall-local-dev-secret-key-p
 - Prometheus `http://localhost:9090` — `host.docker.internal:8080` 의 앱을 스크래이핑.
 - 앱은 컨테이너가 아니라 호스트에서 실행되고, 스택이 이를 바라본다(단일 서비스 스켈레톤).
 
-설정·변수·컨벤션은 [CLAUDE.md](CLAUDE.md), 단계별 구축 지시는 [docs/spring-skeleton-prompts.md](docs/spring-skeleton-prompts.md) 참조.
+설정·변수·컨벤션은 [CLAUDE.md](CLAUDE.md), 단계별 구축 지시는 [docs/backend/notes/spring-skeleton-prompts.md](docs/backend/notes/spring-skeleton-prompts.md) 참조.
