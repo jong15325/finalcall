@@ -9,3 +9,4 @@
 - 2026-07-12 consulting/outbox/003-C015-병렬작업규칙.md — 처리 완료 → D-028, 회신 outbox/004
 - 2026-07-12 consulting/outbox/004-C016-017-git컨벤션.md — 처리 완료 → D-029~031 + 블로커 등재, 회신 outbox/005
 - 2026-07-12 consulting/outbox/005-C019-022-컨벤션완결.md — 처리 완료 → D-033~036 + CLAUDE.md 보완, 회신 outbox/007, 기획 전파 outbox/008
+- (발신 기록) outbox/009 기획 규약 동기화 작업 지시 — 브리지 프롬프트로 전달 예정

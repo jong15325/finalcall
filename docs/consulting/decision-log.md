@@ -501,7 +501,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-019. 문서 파일 네이밍 규약
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-015, D-017, D-025 · 2026-07-12
+상태: ACCEPTED · escalated-as D-033 · 소유: 컨설턴트 · 관련: relates-to D-015, D-017, D-025 · 2026-07-12
 
 결정
 - outbox: `NNN-주제.md` (역할별 독립 증가, 기확정 D-017). 주제는 한글 허용.
@@ -527,7 +527,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-020. 용어집 미도입 — domain-spec 용어 정의 섹션으로 갈음
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-001, 기획 킥오프 프롬프트 · 2026-07-12
+상태: ACCEPTED · escalated-as D-034 · 소유: 컨설턴트 · 관련: relates-to D-001, 기획 킥오프 프롬프트 · 2026-07-12
 
 결정
 - 별도 용어집(glossary.md)을 만들지 않는다. 도메인 용어의 정본은 domain-spec.md의
@@ -550,7 +550,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-021. api-contract 문서 형식: 버저닝·변경 이력·엔드포인트 표기 골격
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to 가이드 6절, D-007, D-030, CLAUDE.md 5절 · 2026-07-12
+상태: ACCEPTED · escalated-as D-035 (조건: 기술 규약은 G1 직후 백엔드 조기 기동 협의) · 소유: 컨설턴트 · 관련: relates-to 가이드 6절, D-007, D-030, CLAUDE.md 5절 · 2026-07-12
 
 결정
 - 문서 헤더 고정: 버전 v<N>(정수 증가) · 상태(DRAFT|확정) · 기준 게이트 ·
@@ -580,7 +580,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-022. erd 문서 형식: 버전 연동·테이블 정의 골격
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-001, CLAUDE.md Stage D, C-021 · 2026-07-12
+상태: ACCEPTED · escalated-as D-036 (조건: 동일 조기 협의) · 소유: 컨설턴트 · 관련: relates-to D-001, CLAUDE.md Stage D, C-021 · 2026-07-12
 
 결정
 - 문서 헤더 고정: 버전 · 기준 domain-spec 버전 · 변경 이력 표(C-021과 동일 형식).
