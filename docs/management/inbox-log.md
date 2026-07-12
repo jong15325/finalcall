@@ -14,3 +14,4 @@
 - 2026-07-12 consulting/outbox/006-C023-027-파트지침.md — 처리 완료 → D-037~041 + 초안 3종 이관, 회신 outbox/011
 - 2026-07-12 consulting/outbox/007-최종완료보고-종료절차.md — 처리 완료 → D-042(대기 모드)·D-043(오탐 정정), 회신 outbox/012
 - (발신 기록) outbox/013 기획 주제 5 재개 지시 + notes/item-reference 조사 노트 작성
+- 2026-07-12 design/outbox/009-주제5-아이템모델.md — 처리 완료 → D-044~047, 회신 outbox/014
