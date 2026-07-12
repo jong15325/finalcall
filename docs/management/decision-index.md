@@ -56,6 +56,7 @@
 | D-046 | 강화·합성 범위 절단 | ACCEPTED | 총괄 |
 | D-047 | item_template 고정 시드 (가상 데이터) | ACCEPTED | 총괄 |
 | D-048 | 아이템 도메인 설계: 사용자 참여 필수 예외 | ACCEPTED | 총괄 |
+| D-049 | 사용자 브리핑 줄 (매 응답 채팅 요약 의무) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | C-001 | 문서 유형 6종 정의 | ACCEPTED (→D-014) | 컨설턴트 |
