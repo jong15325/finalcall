@@ -44,6 +44,11 @@
 | D-034 | 용어집 미도입 (정본 문서 내 용어 섹션) | ACCEPTED | 총괄 |
 | D-035 | api-contract 형식 골격 (기술 규약은 백엔드 조기 협의) | ACCEPTED | 총괄 |
 | D-036 | erd 형식 골격 (기술 규칙은 백엔드 조기 협의) | ACCEPTED | 총괄 |
+| D-037 | 지침 3계층 (킥오프는 부트스트랩만) | ACCEPTED | 총괄 |
+| D-038 | 번호 분리: 결정(Q/S-xxx) vs 티켓(QA/SEC-NNN) | ACCEPTED | 총괄 |
+| D-039 | 프론트 CLAUDE.md 확정 | ACCEPTED | 총괄 |
+| D-040 | QA 파트 지침 확정 | ACCEPTED | 총괄 |
+| D-041 | 보안 파트 지침 확정 + 게이트 1 차단 권한 | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | C-001 | 문서 유형 6종 정의 | ACCEPTED (→D-014) | 컨설턴트 |
@@ -68,6 +73,11 @@
 | C-020 | 용어집 미도입 | ACCEPTED (→D-034) | 컨설턴트 |
 | C-021 | api-contract 형식 골격 | ACCEPTED (→D-035, 조기 기동 조건) | 컨설턴트 |
 | C-022 | erd 형식 골격 | ACCEPTED (→D-036, 조기 기동 조건) | 컨설턴트 |
+| C-023 | 지침 3계층 | ACCEPTED (→D-037) | 컨설턴트 |
+| C-024 | 번호 체계 분리 | ACCEPTED (→D-038) | 컨설턴트 |
+| C-025 | 프론트 CLAUDE.md 초안 | ACCEPTED (→D-039) | 컨설턴트 |
+| C-026 | QA 지침 초안 | ACCEPTED (→D-040) | 컨설턴트 |
+| C-027 | 보안 지침 초안 | ACCEPTED (→D-041) | 컨설턴트 |
 
 ## 게이트 현황 (D-019)
 

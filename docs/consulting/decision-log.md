@@ -603,3 +603,109 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 레퍼런스: Flyway 버전드 마이그레이션 네이밍(V<N>__), Mermaid erDiagram(텍스트 기반
 다이어그램의 diff 가능성), docs-as-code.
+
+---
+
+## C-023. 지침 3계층: 공통 가이드 / 파트 지침 파일 / 킥오프 부트스트랩
+
+상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-014, D-021, 킥오프 미결 포인트 · 2026-07-12
+
+결정
+- 지침을 3계층으로: 1) 공통(collaboration-guide·templates) 2) 파트 지침 파일
+  (백엔드 CLAUDE.md 기존 / 프론트 repo CLAUDE.md / qa-guide.md / security-guide.md)
+  3) 킥오프 프롬프트는 부트스트랩만(역할 정의·필독 목록·첫 작업, 지침 내용 복제 금지).
+- 상세·부트스트랩 골격: 05-part-guides.md.
+
+이유
+- 킥오프에 지침 통합 시 개정마다 프롬프트 재발급 + 기동된 대화는 낡은 규칙으로 작동.
+  파일이면 유형 2로 관리되고 게이트 동기화(D-021)로 갱신된다.
+- 백엔드(짧은 지시 + CLAUDE.md)가 이미 이 모델을 검증.
+
+기각된 대안
+- 킥오프 통합(단일 프롬프트): 위 개정 문제. 프롬프트 비대화로 컨텍스트 낭비.
+- 전 지침 단일 파일: 역할별 필독 범위가 흐려지고 무관 규칙까지 상시 로드.
+
+레퍼런스: 백엔드 CLAUDE.md 운영 실적, GitLab Handbook(정본 문서 + 얇은 진입점).
+
+---
+
+## C-024. 번호 체계 분리: 결정 로그(Q/S-xxx) vs 결함·발견 티켓(QA/SEC-NNN)
+
+상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-025 조건, D-009, D-010 · 2026-07-12
+
+결정
+- Q-xxx/S-xxx = 결정 로그(4절 티켓 규약, 불변·상태 라벨). QA-NNN/SEC-NNN = 결함·발견
+  티켓(defects.md/findings.md, OPEN→FIXED/WONTFIX 상태 갱신). 시퀀스 완전 분리.
+
+이유
+- 결정은 불변 기록, 결함은 상태가 변하는 작업 항목 — 혼합 시 로그 불변 원칙과 충돌.
+- D-025 조건(번호 체계 재확인)의 회답.
+
+기각된 대안
+- 단일 시퀀스(Q-xxx에 결함 포함): 결함 상태 갱신이 로그 갱신 규칙을 침식, 인덱스 오염.
+
+레퍼런스: 이슈 트래커와 ADR의 분리 관행(결함≠아키텍처 결정).
+
+---
+
+## C-025. 프론트엔드 CLAUDE.md 초안
+
+상태: PROPOSED · 소유: 컨설턴트 · 관련: depends-on D-032, D-030, relates-to C-023 · 2026-07-12
+
+결정
+- draft-frontend-claude.md를 프론트 저장소 루트 CLAUDE.md로 채택. 핵심: feature 기반 구조,
+  서버 상태=TanStack Query·전역 클라이언트 상태=Zustand 최소(서버 데이터 복제 금지),
+  계약 1:1 API 함수 + ApiResponse 언랩, 시간 UTC 수신·표시 변환, strict TS·any 금지,
+  git은 D-030, 문서는 docs/frontend/ 허브.
+
+이유
+- D-032 스택의 공인 관행(피처 구조, 서버/클라이언트 상태 분리)을 백엔드 CLAUDE.md와
+  같은 밀도로 성문화 — 프론트 Claude Code 기동 시 즉시 사용 가능.
+
+기각된 대안
+- Airbnb 스타일 가이드 등 전문 채택: 대형 규정집은 학습 비용 대비 실익 없음.
+  도구 세부(ESLint 규칙)는 스켈레톤 구축 시 F-xxx 자율.
+
+레퍼런스: Robin Wieruch React 구조, ReactBlueprint, TanStack Query 공식 구조 논의.
+
+---
+
+## C-026. QA 지침(qa-guide.md) 초안
+
+상태: PROPOSED · 소유: 컨설턴트 · 관련: depends-on C-023, C-024, relates-to D-008, D-016 · 2026-07-12
+
+결정
+- draft-qa-guide.md를 docs/qa/qa-guide.md로 채택. 핵심: 리스크 기반 1~2페이지 test-plan,
+  동시성 4건(D-008) 필수 시나리오, 기대 결과에 계약 근거 인용 의무(인용 불가=스펙 공백
+  =계약 질의), QA-NNN 결함 흐름, Critical 즉시 총괄 통지.
+
+이유
+- 기대 결과의 근거 인용 의무가 핵심 규율 — 근거 없는 기대는 QA의 추측이 계약을 대체하는
+  통로(D-028 선착순 금지와 동일 논리).
+
+기각된 대안
+- IEEE 829식 문서 체계: 1인 구조 과잉. 리스크 기반 경량 플랜으로 대체.
+
+레퍼런스: BrowserStack 리스크 기반 테스트, QA Touch/TestLodge 1페이지 플랜.
+
+---
+
+## C-027. 보안 지침(security-guide.md) 초안
+
+상태: PROPOSED · 소유: 컨설턴트 · 관련: depends-on C-023, C-024, D-013 · 2026-07-12
+
+결정
+- draft-security-guide.md를 docs/security/security-guide.md로 채택. 핵심: 게이트 2회 절차
+  (게이트 1은 G3 차단 권한, Critical 미해결 시 통과 불가), STRIDE-lite 위협 모델 표,
+  도메인 리스크 축 6개(인가/입찰 부정/자금 정합성/시간 조작/주입·IDOR/시크릿),
+  SEC-NNN 발견 흐름, 계약 변경 시 보안 의견 1줄 첨부.
+
+이유
+- 게이트에 차단 권한을 명시하지 않으면 보안 검토가 자문으로 격하 — 돈이 오가는
+  시스템에서 Critical 미해결 통과는 one-way door.
+
+기각된 대안
+- ASVS 전면 준수: 인증 수준 요구가 없는 프로젝트에 과잉. 통제 선정 참조로만 사용.
+- 정식 STRIDE 워크숍: 참가자가 없다. 표 1개/도메인의 반복 갱신으로 대체.
+
+레퍼런스: OWASP Threat Modeling Cheat Sheet, OWASP Security Culture, ASVS.
