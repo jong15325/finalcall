@@ -33,6 +33,8 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
   범위를 벗어나는 코드를 만들지 않는다.
 - **git commit / push 는 사용자가 직접 한다. Claude Code 는 커밋·푸시하지 않는다.
   단계 완료 시 섹션 6 컨벤션을 따른 커밋 메시지를 제안한다(실행은 사용자).**
+  (문서(docs/) 커밋은 별도 규약 docs/management/decision-log.md D-029를 따른다 —
+  역할 대화가 메시지 작성, 기본 실행은 사용자, 지시 시 대행)
 - **시크릿·`.env`·자격증명을 코드나 커밋에 넣지 않는다.** 민감값은 환경변수(`${ENV_VAR}`)로.
 - 응답 언어는 한국어. 주석·에러 메시지·문서도 한국어.
 - 변경 전, 관련 파일을 먼저 읽고 기존 컨벤션과 일치하는지 확인한다.
@@ -205,6 +207,7 @@ INCLUDE_AWS_SPEC_HINT = true
 ### 커밋 메시지 (Conventional Commits, 제목은 한국어)
 형식: `type(scope): 한글 제목`
 - type: feat(기능), fix(버그), refactor(리팩터링), docs(문서), test(테스트), chore(잡무/설정), build(빌드/의존성)
+  (docs 타입 커밋의 상세 규약은 D-029 참조 — scope에 역할, 이벤트 기반, 코드 혼합 금지)
 - scope: 선택. 도메인/영역 (auth, bid, notice, skeleton 등)
 - 제목: 한국어, 간결하게.
 

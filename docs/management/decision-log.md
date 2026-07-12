@@ -420,3 +420,41 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
   실시간 최고가 갱신은 폴링/SSE 어느 쪽이든 SPA로 충분.
 - 기각: Next.js(App Router) — SSR/SEO 실익 대비 JWT+SSR 복잡도와 프론트 학습 비중 증가.
   Redux Toolkit — 1인 규모에 보일러플레이트 과잉. styled-components — 런타임 비용, 감소세.
+
+---
+
+## D-033. 문서 파일 네이밍 규약 (2026-07-12) [ACCEPTED]
+
+- 소유: 총괄 / 관련: escalated-from C-019, relates-to D-015, D-017
+- 결정: 유형별 네이밍 통합 — outbox `NNN-주제.md` / notes 자유 / `incident-NNN.md` /
+  `retro-G<N>.md`. 한글 파일명 공식 허용, 두 저장소에 `git core.quotepath=false` 권장.
+
+---
+
+## D-034. 용어집 미도입: 정본 문서 내 용어 섹션 (2026-07-12) [ACCEPTED]
+
+- 소유: 총괄 / 관련: escalated-from C-020, relates-to D-014
+- 결정: 별도 glossary.md 금지. 도메인 용어 정본 = domain-spec.md 용어 정의 섹션,
+  프로세스 용어 정본 = 협업 가이드. 이중 관리 차단.
+- 파급: 기획에 domain-spec 용어 정의 섹션 필수화 전파(outbox/008).
+
+---
+
+## D-035. api-contract 문서 형식 골격 (2026-07-12) [ACCEPTED]
+
+- 소유: 총괄 / 관련: escalated-from C-021, relates-to D-001, D-019, D-030
+- 결정: 헤더(v<N>·상태·변경 이력 표), 버전 규칙(G3 확정=v1, 이후 변경은 6절 경유+v+1),
+  엔드포인트 표기 단위 고정, "공통 규약" 섹션 예약. G3 전 확정 필수.
+- 조건(원안 수정): URL 네이밍·상태 코드·페이징 등 기술 내용은 "백엔드 기동 첫 작업"이
+  아니라 G1 직후 백엔드 대화를 기술 규약 협의 모드로 조기 기동해 기획과 협의 확정한다.
+  구현 착수는 G3 이후 유지. 이유: 기술 규약 없이 계약 v1을 쓰면 기동 직후 계약 변경
+  절차를 밟는 자기모순 발생.
+
+---
+
+## D-036. erd 문서 형식 골격 (2026-07-12) [ACCEPTED]
+
+- 소유: 총괄 / 관련: escalated-from C-022, relates-to D-019, D-035
+- 결정: 헤더·변경 이력, 섹션 골격 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 /
+  인덱스 표(이유 열 필수) / Flyway V<N>__ 매핑. G2 전 확정 필수.
+- 조건: 테이블·컬럼 네이밍 등 기술 규칙은 D-035와 동일하게 백엔드 조기 기동 협의로 확정.
