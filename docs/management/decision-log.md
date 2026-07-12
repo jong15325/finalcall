@@ -407,3 +407,16 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
 - 결정: git 커밋 docs 경량판 / 사고 회고 / 게이트 회고 취합 / 게이트 전파 /
   계약 변경 요청 5종을 templates.md 11~15절로 편입.
   템플릿 신설 경로: 컨설턴트 재직 중 설계 → 총괄 채택. 종료 후 역할 제안 → 총괄 승인.
+
+---
+
+## D-032. 프론트엔드 스택 확정 (2026-07-12) [ACCEPTED]
+
+- 소유: 총괄 / 관련: relates-to D-007, D-030, 블로커 "프론트 코드 컨벤션" 해소
+- 결정: TypeScript + React SPA(Vite) + TanStack Query(서버 상태) + Zustand(전역 최소)
+  + Tailwind CSS. SSR 미도입.
+- 이유: 핵심 기술 도전이 백엔드(동시성)이고 프론트는 계약 소비자 — 단순함 최우선.
+  JWT는 CSR 처리가 단순(서버 측 토큰 처리 불요), SEO는 현 범위 목표 아님.
+  실시간 최고가 갱신은 폴링/SSE 어느 쪽이든 SPA로 충분.
+- 기각: Next.js(App Router) — SSR/SEO 실익 대비 JWT+SSR 복잡도와 프론트 학습 비중 증가.
+  Redux Toolkit — 1인 규모에 보일러플레이트 과잉. styled-components — 런타임 비용, 감소세.
