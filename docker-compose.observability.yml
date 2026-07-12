@@ -1,0 +1,86 @@
+# Stage G: 관측성 스택(Prometheus/Grafana/Loki/Alloy).
+# ★ 기존 docker-compose.local.yml(MySQL/Redis)과 합치지 않는다 — 무거우므로 필요할 때만 별도 기동.
+# ★ 앱은 이 컴포즈에 넣지 않는다. IDE/호스트에서 앱을 실행하고, 이 스택이 호스트의 앱을 바라본다.
+#
+# 기동:  docker compose -f docker-compose.observability.yml up -d
+# 종료:  docker compose -f docker-compose.observability.yml down
+#
+# 접속: Grafana http://localhost:3000 (admin / ${GRAFANA_ADMIN_PASSWORD:-admin}),
+#       Prometheus http://localhost:9090, Loki http://localhost:3100
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: finalcall-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - finalcall-prometheus-data:/prometheus
+    # 컨테이너 → 호스트(앱) 접근을 위해 host.docker.internal 를 host-gateway 로 매핑(Linux 대응, Docker Desktop 은 자동).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - finalcall-observability
+
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: finalcall-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    # 기본 로컬 설정(이미지 내장 local-config.yaml) 사용 — 로그 저장소 기동.
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - finalcall-loki-data:/loki
+    networks:
+      - finalcall-observability
+
+  alloy:
+    image: grafana/alloy:v1.4.2
+    container_name: finalcall-alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # ★ 호스트에서 실행되는 앱의 JSON 로그 파일을 마운트해 tail 한다(앱은 컨테이너가 아니므로 파일 방식).
+      - ./logs:/var/log/finalcall:ro
+    ports:
+      - "12345:12345"   # Alloy UI(디버그용)
+    depends_on:
+      - loki
+    networks:
+      - finalcall-observability
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: finalcall-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # ★ 자격증명 하드코딩 금지 — 환경변수로 주입. 아래 기본값은 로컬 전용(운영은 반드시 override).
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - finalcall-grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - finalcall-observability
+
+volumes:
+  finalcall-prometheus-data:
+  finalcall-loki-data:
+  finalcall-grafana-data:
+
+networks:
+  finalcall-observability:
+    name: finalcall-observability

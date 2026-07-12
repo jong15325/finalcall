@@ -1,0 +1,13 @@
+# Stage G: 대시보드 프로비저닝 — /var/lib/grafana/dashboards 의 JSON 을 시작 시 자동 로드.
+apiVersion: 1
+
+providers:
+  - name: 'finalcall'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

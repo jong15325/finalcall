@@ -1,0 +1,49 @@
+// Stage G: Grafana Alloy — 앱 JSON 로그를 수집해 Loki 로 전송한다(Promtail 대체).
+// ★ 앱은 호스트에서 실행되므로, 호스트의 로그 파일(./logs/app.log → 컨테이너 /var/log/finalcall/app.log)을 tail 한다.
+//   앱을 dev/prod 프로파일로 실행하면 JSON 한 줄 로그가 출력된다(Stage 4). 이를 파일로 리다이렉트해 둔다.
+
+// 파일을 주기적으로 재탐색한다 — 앱(호스트)이 Alloy 보다 늦게 떠서 로그 파일이 나중에 생겨도 자동으로 잡는다.
+local.file_match "finalcall" {
+  path_targets = [
+    {
+      __path__ = "/var/log/finalcall/app.log",
+      job      = "finalcall",
+      service  = "finalcall",
+    },
+  ]
+}
+
+loki.source.file "finalcall_app" {
+  targets    = local.file_match.finalcall.targets
+  forward_to = [loki.process.finalcall_app.receiver]
+}
+
+loki.process "finalcall_app" {
+  // LogstashEncoder JSON 로그를 구조화 필드로 파싱.
+  stage.json {
+    expressions = {
+      level   = "level",
+      logger  = "logger_name",
+      thread  = "thread_name",
+      traceId = "traceId",
+      spanId  = "spanId",
+    }
+  }
+
+  // ★ 저카디널리티 값만 라벨로 승격한다(job/service 는 targets 에서 이미 라벨).
+  //   traceId/spanId/userId 같은 고카디널리티 값은 라벨로 쓰지 않는다(인덱스 폭발) —
+  //   파싱된 필드로 남겨 LogQL(| json | traceId="...")로 검색한다.
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

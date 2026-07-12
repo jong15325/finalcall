@@ -38,3 +38,7 @@ out/
 
 # 로컬 bootRun 리다이렉트 로그(임시)
 boot*.log
+
+# Stage G: 앱 JSON 로그 파일(Alloy tail 대상)
+/logs/
+/app.pid

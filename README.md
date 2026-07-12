@@ -30,4 +30,24 @@ docker compose -f docker-compose.local.yml up -d
 - 로컬 반복 속도를 높이려면 `~/.testcontainers.properties` 에 `testcontainers.reuse.enable=true` 를 두면
   컨테이너를 재사용한다(CI 에서는 보통 끔).
 
+## 관측성 스택 (Stage G, 선택)
+
+앱이 생성하는 메트릭(`/actuator/prometheus`)과 JSON 로그를 수집·시각화한다. 무거우므로 필요할 때만 기동.
+
+```bash
+# 1) 관측성 스택 기동 (Prometheus/Grafana/Loki/Alloy)
+docker compose -f docker-compose.observability.yml up -d
+
+# 2) 앱을 dev 프로파일(JSON 로그)로 실행하고 로그를 logs/app.log 로 남긴다(Alloy 가 tail).
+#    dev 는 fail-fast 라 env 필요. 예:
+SPRING_PROFILES_ACTIVE=dev APP_NAME=finalcall APP_DESCRIPTION=demo \
+DB_URL=jdbc:mysql://localhost:3306/finalcall DB_USERNAME=finalcall DB_PASSWORD=finalcall \
+REDIS_HOST=localhost REDIS_PORT=6379 JWT_SECRET=finalcall-local-dev-secret-key-please-change-0123456789abcdef \
+./gradlew bootRun > logs/app.log 2>&1
+```
+
+- Grafana `http://localhost:3000` (admin / `${GRAFANA_ADMIN_PASSWORD:-admin}`) — Prometheus/Loki 데이터소스와 기본 대시보드가 자동 프로비저닝된다.
+- Prometheus `http://localhost:9090` — `host.docker.internal:8080` 의 앱을 스크래이핑.
+- 앱은 컨테이너가 아니라 호스트에서 실행되고, 스택이 이를 바라본다(단일 서비스 스켈레톤).
+
 설정·변수·컨벤션은 [CLAUDE.md](CLAUDE.md), 단계별 구축 지시는 [docs/spring-skeleton-prompts.md](docs/spring-skeleton-prompts.md) 참조.

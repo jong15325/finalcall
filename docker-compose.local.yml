@@ -20,6 +20,16 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      # ★ 운영 인스턴스 스펙 시뮬레이션(기본 무제한). 로컬 Docker 는 호스트 리소스를 다 써서
+      #   "로컬은 되는데 작은 RDS 에선 커넥션 부족" 괴리가 생긴다. 타깃 인스턴스가 정해지면 주석을 풀어 시뮬레이션하라.
+      #   예) db.t3.micro(1GB): max_connections≈66, buffer_pool 256M
+      # - --max_connections=66
+      # - --innodb_buffer_pool_size=256M
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 1g
     volumes:
       - finalcall-mysql-data:/var/lib/mysql
     healthcheck:
@@ -33,6 +43,18 @@ services:
     container_name: finalcall-redis
     ports:
       - "6379:6379"
+    # ★ 운영 인스턴스 스펙 시뮬레이션(기본 무제한). 타깃이 정해지면 주석을 풀어라.
+    #   예) cache.t4g.micro(0.5GB): maxmemory 400mb, 축출 정책 allkeys-lru
+    # command:
+    #   - redis-server
+    #   - --maxmemory
+    #   - 400mb
+    #   - --maxmemory-policy
+    #   - allkeys-lru
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512m
     volumes:
       - finalcall-redis-data:/data
     healthcheck:
