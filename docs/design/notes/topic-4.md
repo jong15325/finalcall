@@ -13,5 +13,4 @@ domain-spec 작성 시 반영할 파생 사항 정리.
 
 ## D-005 파생 (domain-spec 반영용)
 - FixedSale의 SOLD도 경매 SOLD와 동일하게 Order 애그리거트로 핸드오프(구매 경로 단일화).
-- 유찰(UNSOLD) 후 재등록은 별도 플로우 없음 — 신규 등록으로 처리(범위 절단).
-- SCHEDULED는 경매만. FixedSale은 미지원(비대칭 허용).
+- 유찰(UNSOLD) 후 재등록은 별도 플로�

@@ -66,8 +66,10 @@
 | D-056 | 마감 트리거: 지연 인덱스 하이브리드 | ACCEPTED | 총괄 |
 | D-057 | 시각 트리거 단일 인덱스 통합 | ACCEPTED | 총괄 |
 | D-058 | 마감 처리 멱등·유실 복구 (CAS+재구축) | ACCEPTED | 총괄 |
+| D-059 | 세션 핸드오버 규칙 (notes/handover.md) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
+| P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
 | C-001 | 문서 유형 6종 정의 | ACCEPTED (→D-014) | 컨설턴트 |
 | C-002 | 역할 폴더 표준 내부 구조 | ACCEPTED (→D-015) | 컨설턴트 |
 | C-003 | 읽기 규칙 재설계 (pull 열람) | ACCEPTED (→D-016) | 컨설턴트 |
