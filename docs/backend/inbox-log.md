@@ -8,3 +8,4 @@
 | 2026-07-13 | design/outbox/014 아이템 ERD 결정 요청(기획→총괄) — B-001~009 인용 | 백엔드 앞 아님(총괄 대상). D-024 정합 확인: 안건4 owner_id FK+public_id(ULID)/내부 id = B-004 정합, 안건1·2 정형 컬럼 인덱스 = B-006 정합, 안건5-2 CAS 단일승자 = 정합. 내 규약 올바르게 적용, 액션 없음(참고) |
 | 2026-07-13 | mgmt/outbox/039 G3 통과 전파(전역할) — 구현 단계 진입 | api-contract v1 확정. 백엔드 G4-n 착수(auth 우선, notice 참조 컨벤션), SCG 엣지 게이트웨이 확장(D-068), 구현 순서·분해는 총괄 협의. 확정 스펙(domain-spec/erd/api-contract) 재동기화 필요. 적용 확인 완료 |
 | 2026-07-13 | design/outbox/016 sale_order 다형 출처 참조 정합(기획→백엔드) | B-001 물리 FK 예외 판단 필요. 수용: source_type+source_id 폴리모픽(출처 2테이블→단일 물리 FK 불가). 조건=앱 레벨 참조 무결성+((source_type,source_id) 인덱스. B-010 발번, 회신 outbox/005 |
+| 2026-07-13 | mgmt/outbox/040 G4-1 auth 구현 계획·작업 분해 지시(총괄→백엔드) | 정식 착수 지시. 완료기준: auth(signup/login/refresh/logout+SEC-006 토큰전략) Claude Code 단위 분해, templates 18 작업 프롬프트 backend/outbox 작성, 순서·의존 명시, SCG 게이트웨이(D-068) 별도 단위, 총괄 완료보고. 의존 전부 확정. 착수 대기 — 스펙 정독 필요(api-contract §2/erd auth/templates 18/SEC-006) |

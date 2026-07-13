@@ -135,3 +135,15 @@
 - 기각된 대안: `auction_id`/`shop_id` 두 nullable FK + XOR CHECK(정합성↑이나 과설계), 물리 FK 강제(불가능).
 
 ---
+
+## B-011. refresh 토큰 저장소 — Redis (2026-07-13) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: depends-on api-contract §2(SEC-006 토큰 전략), relates-to CLAUDE.md E1·F1, D-002. mgmt/outbox/040 G4-1
+- 결정: refresh 토큰은 Redis에 해시(SHA-256) 저장. 키 `auth:refresh:{userId}:{sessionId}`, TTL=refresh 만료.
+  회전(재발급 시 신규 저장+구 폐기), 재사용 탐지(제시 토큰≠저장분 → 해당 세션 무효화), logout 시 폐기.
+  refresh 토큰 자체는 opaque 난수(≥256bit) + Redis 매핑(탈취·즉시 무효화 대응).
+- 이유: SEC-006(서버 저장·회전·재사용 탐지·즉시 무효화)을 Redis로 전부 충족. erd에 refresh 테이블 없음 →
+  DB 테이블 신설은 6절 스펙 변경(무겁다). Redis는 스택 내재·TTL 자연 폐기·On-Race TokenStoreService 패턴 정합.
+- 기각된 대안: DB 테이블(감사·다기기 유리하나 ERD 변경 필요), 하이브리드 Redis+DB(현 단계 과설계).
+
+---
