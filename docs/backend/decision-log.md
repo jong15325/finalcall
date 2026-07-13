@@ -147,3 +147,15 @@
 - 기각된 대안: DB 테이블(감사·다기기 유리하나 ERD 변경 필요), 하이브리드 Redis+DB(현 단계 과설계).
 
 ---
+
+## B-012. Flyway 버전 정합 — user/balance는 V3 (스켈레톤 V1/V2 선점) (2026-07-13) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to erd §6, B-001. G4-1 유닛 A(006) 구현 이슈. escalated to 기획·총괄(outbox/014)
+- 결정: user·user_balance 마이그레이션은 `V3__user_and_balance.sql`로 작성. erd §6이 지시한 V1은 스켈레톤이
+  이미 소비(V1 init_schema, V2 notice_auditor) → append-only 원칙상 재사용 불가. 파일 범위는 user·user_balance만
+  (charge/money_exchange/money_hold는 화폐 도메인 후속 단위 별도 버전).
+- 이유: Flyway append-only·불변 이력 원칙. 실제 소비 상태 기준으로 다음 번호 채번이 유일한 정합 방법.
+- 후속: erd §6 매핑표(V1=user_and_money)가 실제 파일 번호와 어긋남 → 기획·총괄에 §6 정정 요청(확정 스펙은 기획만 수정).
+- 비고: ULID는 `@JdbcTypeCode(SqlTypes.CHAR)`로 CHAR(26) 정합(validate 통과). AUTH_005(권한)는 관리자 API 단계로 유보.
+
+---
