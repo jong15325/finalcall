@@ -1,4 +1,4 @@
-상태: SENT
+상태: ANSWERED → 계획 승인 + refresh 정합 (a) 채택(D-070). mgmt/outbox/041
 회신대상: management/outbox/040-백엔드-auth구현계획.md
 # [백엔드 → 총괄] 완료 보고: auth 구현 계획·작업 프롬프트 세트 (G4-1)
 
