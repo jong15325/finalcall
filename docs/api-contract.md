@@ -1,13 +1,14 @@
 # FinalCall API Contract (계약서)
 
-상태: DRAFT v0 — G3 미승인 (기획 초안 → 총괄 검수 + 보안 게이트 1(D-013) + 사용자 승인 → v1 확정)
+상태: DRAFT v0.1 — G3 미승인 (기획 초안 → 총괄 검수 + 보안 게이트 1(D-013) + 사용자 승인 → v1 확정)
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.3, erd v0.2, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
-| v0 | 2026-07-13 | 골격 착수 — 공통 규약 + auth 섹션. 리소스 엔드포인트는 후속 |
+| v0 | 2026-07-13 | 골격 착수 — 공통 규약 + auth 섹션 |
+| v0.1 | 2026-07-13 | 전 섹션 초안 완성 — §3 경매·고정가·입찰, §4 아이템·인벤토리·주문·화폐, §5 에러코드. G3 검수 대기 |
 
 ---
 
@@ -153,8 +154,134 @@ POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
 - 동작: ACTIVE(미판매)일 때 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
 - 응답 200: `{ status }` / 에러 `SHOP_004` 이미 종료(409)
 
-## 4. 아이템·인벤토리·주문·화폐 (후속)
+## 4. 아이템·인벤토리·주문·화폐
 
-## 5. 공통 에러코드 표 (후속)
+`me` 접두는 인증 주체(SecurityContext) 기준 리소스다.
 
-도메인별 `{DOMAIN}_{NNN}` 코드와 HTTP status 매핑을 엔드포인트 확정과 함께 정리한다.
+### 4.1 아이템·시세
+
+GET /api/v1/item-templates — 아이템 정의 카탈로그(검색 메타)
+- 인증: 불요
+- 쿼리: `mainCategory, subGroup, element, kind, grade`(필터)
+- 응답 200: offset 페이지(템플릿 = 대분류·중분류·속성·종류·등급·표시명·typeCode)
+- 용도: 검색 필터 UI 구성, 원게임 시드 기준(D-067)
+
+GET /api/v1/items/{itemInstancePublicId} — 아이템 인스턴스 상세
+- 인증: 불요(공개 범위) / 소유자 부가정보는 인증 시 노출
+- 응답 200: 템플릿·레벨·스킬1/2·발동확률·골드포스 만료·현재 위치(공개 가능한 범위) + 소유자(마스킹)
+- 에러: `ITEM_001` 없음(404)
+
+GET /api/v1/market-prices — 시세 집계 조회
+- 인증: 불요
+- 쿼리: `templatePublicId(또는 typeCode), level, skill1?, skill2?` — 시세 집계 단위(D-044 조건, §7.7)
+- 응답 200: `{ key:{template,level,skill1,skill2}, avgPrice, minPrice, maxPrice, recentPrice, sampleCount, windowDays }`
+- 비고: 집계는 sale_order 기준. 골드포스는 집계 키에서 제외(시간제, D-066) — 필터로만.
+
+### 4.2 인벤토리
+
+GET /api/v1/me/inventory — 내 정규 인벤토리(96칸)
+- 인증: 필요
+- 쿼리: `sort=slotNo,asc`(기본)
+- 응답 200: `{ capacity:96, used, items:[ {itemInstancePublicId, slotNo, 요약} ] }`
+
+GET /api/v1/me/temp-storage — 내 임시보관(오버플로우)
+- 인증: 필요
+- 응답 200: cursor 페이지(`items:[ {itemInstancePublicId, storedAt, expireAt?} ]`)
+
+POST /api/v1/me/temp-storage/{itemInstancePublicId}/relocate — 임시보관→정규 슬롯 이동
+- 인증: 필요(소유자)
+- 요청(body): `{ slotNo? }`(미지정 시 빈 슬롯 자동 배정)
+- 동작: 정규 슬롯 여유 필요. location TEMP→INVENTORY 이동(temp_storage 행 제거).
+- 응답 200: `{ slotNo }`
+- 에러: `INV_001` 인벤토리 만실(409), `INV_002` 슬롯 점유(409), `ITEM_002` 소유자 아님(403)
+
+### 4.3 주문(거래)
+
+GET /api/v1/me/orders — 내 거래 내역
+- 인증: 필요
+- 쿼리: `role=BUYER|SELLER, sourceType=AUCTION|SHOP`(필터), 페이징(cursor)/정렬(`createdAt`)
+- 응답 200: cursor 페이지(주문 요약: 상대·아이템·최종가·정산액·시각)
+
+GET /api/v1/orders/{orderPublicId} — 주문 상세
+- 인증: 필요(구매자·판매자 당사자만)
+- 응답 200: 주문 상세(출처·아이템·최종가·수수료·정산액·상태)
+- 에러: `ORDER_001` 없음(404), `ORDER_002` 당사자 아님(403)
+
+### 4.4 화폐(잔액·충전·교환)
+
+GET /api/v1/me/balance — 내 잔액
+- 인증: 필요
+- 응답 200: `{ cashBalance, gameMoneyBalance, gameMoneyHeld, gameMoneyAvailable }`
+
+POST /api/v1/charges — 캐시 충전 시작(토스 테스트 결제)
+- 인증: 필요
+- 요청(body): `{ amount }`
+- 응답 201: `{ chargePublicId, amount, paymentClientKey, status:"READY" }`
+- 비고: 결제창 연동은 클라이언트. 실제 캐시 반영은 승인 콜백에서.
+
+POST /api/v1/charges/confirm — 충전 승인 콜백 처리
+- 인증: 서버 검증(토스 승인 정보). 멱등키 필수(D-051)
+- 요청(body): `{ paymentKey, chargePublicId, amount, idempotencyKey }`
+- 동작: 토스 승인 검증 후 캐시 잔액 반영(멱등 — 중복 콜백 no-op). 거래 TX와 분리(D-053).
+- 응답 200: `{ status:"APPROVED", cashBalance }`
+- 에러: `CHARGE_001` 승인 검증 실패(422), `CHARGE_002` 금액 불일치(422). 중복 콜백은 200(멱등)
+
+GET /api/v1/me/charges — 충전 내역
+- 인증: 필요 / 응답 200: cursor 페이지
+
+POST /api/v1/exchanges — 캐시↔게임머니 교환
+- 인증: 필요
+- 요청(body): `{ direction:"CASH_TO_GAME", cashAmount }` (역방향 환전은 범위 밖, domain-spec §12)
+- 동작: 교환 비율 파라미터 적용(비율 ON-HOLD, 확정 전 스텁). 캐시 차감 + 게임머니 지급.
+- 응답 201: `{ gameMoneyAmount, appliedRate }`
+- 에러: `EXC_001` 캐시 잔액 부족(422), `EXC_002` 역방향 미지원(422)
+
+### 4.5 관리자
+
+POST /api/v1/admin/auctions/{auctionPublicId}/force-cancel — 관리자 강제 취소
+- 인증: 필요(관리자)
+- 동작: 상태 무관 강제 CANCELLED(정책 위반 등). 입찰 홀드 전량 해제·아이템 에스크로 해제.
+- 응답 200: `{ status }` / 에러 `AUTH_005` 권한 없음(403)
+
+## 5. 에러코드 표
+
+`{DOMAIN}_{NNN}` 코드 ↔ HTTP status. 응답 envelope의 `code`에 실린다(1.4). 백엔드 도메인 ErrorCode enum과 1:1.
+
+| 코드 | 의미 | HTTP |
+|---|---|---|
+| COMMON_004 | 분산락 획득 실패(LOCK_ACQUISITION_FAILED) | 409 |
+| AUTH_001 | 중복 loginId | 409 |
+| AUTH_002 | 중복 nickname | 409 |
+| AUTH_003 | 로그인 자격 불일치 | 401 |
+| AUTH_004 | refresh 토큰 만료·무효 | 401 |
+| AUTH_005 | 권한 없음(관리자 등) | 403 |
+| AUCTION_001 | 아이템 미소유·미보유 | 403/409 |
+| AUCTION_002 | 이미 출품중 | 409 |
+| AUCTION_003 | buyNowPrice ≤ startPrice | 422 |
+| AUCTION_004 | 경매 없음 | 404 |
+| AUCTION_005 | 즉시구매 미설정 | 422 |
+| AUCTION_006 | 이미 종료 | 409 |
+| AUCTION_007 | 입찰 존재로 취소 불가 | 409 |
+| BID_001 | 최소 증분 미달 | 422 |
+| BID_002 | buyNowPrice 이상 | 422 |
+| BID_003 | 자기 경매 입찰 | 403 |
+| BID_004 | 연속(최고가 보유자) 입찰 | 409 |
+| BID_005 | 게임머니 잔액 부족 | 422 |
+| BID_006 | 마감/종료됨 | 409 |
+| SHOP_001 | 아이템 미소유·미보유 | 403/409 |
+| SHOP_002 | 이미 출품중 | 409 |
+| SHOP_003 | 고정가 없음 | 404 |
+| SHOP_004 | 이미 판매/종료 | 409 |
+| SHOP_005 | 게임머니 잔액 부족 | 422 |
+| ITEM_001 | 아이템 없음 | 404 |
+| ITEM_002 | 소유자 아님 | 403 |
+| INV_001 | 인벤토리 만실 | 409 |
+| INV_002 | 슬롯 점유 | 409 |
+| ORDER_001 | 주문 없음 | 404 |
+| ORDER_002 | 당사자 아님 | 403 |
+| CHARGE_001 | 승인 검증 실패 | 422 |
+| CHARGE_002 | 금액 불일치 | 422 |
+| EXC_001 | 캐시 잔액 부족 | 422 |
+| EXC_002 | 역방향 교환 미지원 | 422 |
+
+주: 검증 실패(형식) 400 + `errors[]`(1.4). 코드 목록은 엔드포인트 추가 시 확장.
