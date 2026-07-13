@@ -104,11 +104,21 @@
 
 ---
 
-## B-008. [PROPOSED·에스컬레이션] 아키텍처 — SCG 게이트웨이/MSA + 인증 모델 (2026-07-13)
+## B-008. [SUPERSEDED-BY D-065·에스컬레이션] 아키텍처 — SCG 게이트웨이/MSA + 인증 모델 (2026-07-13)
 
-- 소유: 백엔드(제안) / 관련: escalated-as D-xxx(대기), relates-to CLAUDE.md 섹션1·4·F1, D-035
-- 상태: PROPOSED — 총괄 에스컬레이션(backend/outbox/002). CLAUDE.md 단일 서비스와 충돌, 4기준 #2·#3·#4 해당 → 자율 결정 불가.
-- 안건: (1) 게이트웨이/배포 토폴로지(단일 / 단일+SCG / 완전 MSA), (2) 인증 모델(서비스 JWT 검증 / 게이트웨이 X-User-Id 주입).
-- 근거·선택지·추천은 outbox/002 참조. 총괄 D 발번 시 이 항목을 "escalated-as D-xxx"로 갱신(내용 중복 기록 금지).
+- 소유: 백엔드(제안) / 관련: escalated-as D-064(VOID·롤백) → superseded-by D-065(ACCEPTED), relates-to CLAUDE.md 섹션1·4·F1, D-035
+- 상태: 종결 — 총괄 최종 회신 D-065(mgmt/outbox/031). 최종 결정: 안건1 (A) 단일 서비스 유지·게이트웨이 없음,
+  안건2 (A) 서비스 자체 JWT 검증·SecurityContext·X-User-Id 미도입. (중간 D-064 MSA 채택은 사용자 롤백으로 VOID.)
+- 근거·선택지·추천은 outbox/002 참조. 게이트웨이/대기열/MSA는 향후 필요·여력 시 재검토(현재 미채택).
+
+---
+
+## B-009. 사용자 식별 규약 — SecurityContext 기준 (2026-07-13) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: depends-on D-065(단일 서비스·서비스 JWT 검증), relates-to CLAUDE.md F1, B-003·B-008
+- 결정: 컨트롤러/서비스의 인증 주체 식별은 `SecurityContext`(서비스 자체 JWT 검증) 기준. `@RequestHeader("X-User-Id")` 미사용.
+  게이트웨이 헤더 주입 모델은 D-065로 미도입.
+- 이유: D-065로 단일 서비스·서비스 JWT 검증 확정. 게이트웨이 부재로 X-User-Id 신뢰 경계가 성립하지 않음.
+- 비고: outbox/003의 "사용자 식별 헤더 보류" 항목 해소. 게이트웨이 재검토 시 함께 재논의.
 
 ---
