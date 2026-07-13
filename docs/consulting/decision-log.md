@@ -714,7 +714,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-028. 프로젝트 지식 스냅샷 등록 규칙: 공통 필수 집합·경계·최신성
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-007, D-016, D-021, D-023 · 2026-07-13
+상태: ACCEPTED · escalated-as D-060 · 소유: 컨설턴트 · 관련: relates-to D-007, D-016, D-021, D-023 · 2026-07-13
 (총괄 작업 지시 management/outbox/022 회답)
 
 결정
@@ -780,7 +780,7 @@ GitLab docs-as-code(문서도 저장소가 단일 진실).
 
 ## C-029. docs 커밋 실행 일원화: 역할이 메시지 작성, 사용자가 단일 실행
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: supersedes C-016(D-029) 규칙 3·대행 조항, relates-to D-021, D-022, D-023, incident-001 · 2026-07-13
+상태: ACCEPTED · escalated-as D-061 · 소유: 컨설턴트 · 관련: supersedes C-016(D-029) 규칙 3·대행 조항, relates-to D-021, D-022, D-023, incident-001 · 2026-07-13
 (사용자 지시 — 대기모드 전달, 커밋 꼬임 해소)
 
 결정
