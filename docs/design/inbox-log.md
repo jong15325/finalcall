@@ -24,3 +24,6 @@
 | 2026-07-13 | mgmt/outbox/025 docs 커밋 방식 변경 → D-061 (supersedes D-029 규칙3) | docs 커밋 git 실행은 사용자 단일 전담. 역할은 완료 보고 말미에 `docs(<역할>): 제목` 메시지 블록만 제안, git 대행·`git add -A` 금지, 스테이징은 자기 폴더 한정. 회신 불요 |
 | 2026-07-13 | mgmt/outbox/026 아이템 소절(§7) 회신 → D-062 | 안건1 (a) 개념·규칙만(구체 taxonomy·스킬목록·명칭은 ERD), 안건2 (a) 기획 가상 시드 초안 제시, 안건3 목차 승인+8)소유·이전 추가. outbox/012 ANSWERED 갱신. §7 작성 착수 |
 | 2026-07-13 | mgmt/outbox/028 G1 통과·ERD 착수 지시 (회신대상 013) | G1 통과(총괄 검수+사용자 승인). ERD(G2) 착수 지시. 비차단 정정 2건(상태줄 v0.1, 고정가 취소 조건 §5) 직접 반영. 013 ANSWERED. 완료기준5(기술 규칙 네이밍)는 백엔드 협의(029) 대기 |
+| 2026-07-13 | backend/outbox/001 네이밍 규약 → B-001~003 (정보 공유) | 테이블 단수·snake_case / PK BIGINT 대리키 / FK `<참조>_id` / 시간 DATETIME(6) UTC `_at` / soft delete `is_deleted`+`deleted_at`. 자연키=유니크, soft delete 유니크는 삭제식별 포함, 물리 FK 시작. ERD 네이밍 기준으로 채택. 회신 불요 |
+| 2026-07-13 | backend/outbox/003 URL·페이징·응답 규약 → B-004~007 (정보 공유) | 노출식별자 public_id(ULID)/내부 id(BIGINT), URL `/api/v1` 복수형·1단중첩, 페이징 cursor 기본·offset 예외, 정렬 `sort=field,dir` 화이트리스트=인덱스 1:1, 응답 ApiResponse/ErrorResponse envelope. 정렬·필터 필드는 ERD 인덱스 근거. 계약(G3)용 다수. 회신 불요 |
+| 2026-07-13 | backend/outbox/004 사용자 식별·B-008 정정 → B-009 (정보 공유) | 단일 서비스 유지(D-065, MSA=D-064 VOID). 사용자 식별=SecurityContext(X-User-Id 미사용). B-001~007 단일서비스 전제 유효. D-035 협의 종결 → ERD 완료기준5 해소. 회신 불요 |
