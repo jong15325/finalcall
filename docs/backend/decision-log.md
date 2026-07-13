@@ -159,3 +159,22 @@
 - 비고: ULID는 `@JdbcTypeCode(SqlTypes.CHAR)`로 CHAR(26) 정합(validate 통과). AUTH_005(권한)는 관리자 API 단계로 유보.
 
 ---
+
+## B-013. refresh 토큰 만료 — 14일(잠정) (2026-07-13) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-011, SEC-006. 유닛 B(007) 구현값. 보안 게이트2 검토 대상
+- 결정: refresh 만료 `jwt.refresh-exp-days=14`(잠정). access 만료는 CLAUDE.md F1(JWT_ACCESS_EXP_MIN=30) 유지.
+- 이유: 계약·CLAUDE.md에 refresh 만료 미정의 → 자금 시스템 통상값 14일로 잠정 설정(재로그인 빈도·탈취 노출창 균형).
+- 후속: 보안 게이트2에서 만료 정책(기간·기기별 세션 상한) 확정 시 조정. two-way door(설정값).
+
+---
+
+## B-014. access 토큰 클레임 포맷 단일화 (2026-07-13) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-009, 스켈레톤 common/security. 유닛 B(007) 구현 결정 흡수
+- 결정: access 토큰을 subject-only 데모 포맷에서 클레임 기반으로 단일화 — subject=userId + `publicId`·`isAdmin` 클레임(`TokenClaims` record).
+  필터 principal=userId, `isAdmin`→`ROLE_ADMIN` 부여(관리자 인가 AUTH_005 선반영). 데모 API(generateToken/validateAndGetSubject) 제거.
+- 이유: 두 토큰 포맷 공존(필터 양쪽 파싱)의 잠재 버그 회피, 단일 포맷 확정. 데모 자산 정리.
+- 파급: JwtAuthenticationFilter·데모 AuthController·토큰 테스트 2건 동반 갱신(전부 통과). 로그인 로직은 미포함(008~011 소관).
+
+---
