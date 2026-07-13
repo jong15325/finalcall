@@ -239,3 +239,20 @@ docs 커밋은 파일 목록·검증 대신 결정 ID 연결이 추적 가치의
 ```
 
 - 덮어쓰기(이력은 git). 파일에 이미 있는 내용은 경로 참조만 — 1페이지 이내.
+
+## 18. Claude Code 작업 프롬프트 (백엔드/프론트 → Claude Code, D-069)
+
+```
+# [<역할> → Claude Code] 작업 지시: <도메인> - <작업>
+
+대상: <도메인·기능 — 예: auth 회원가입>
+참조: api-contract §<X>, erd <테이블>, domain-spec §<Y>, 관련 <D/B ID>
+범위: <이번 작업 포함> / 하지 말 것: <제외·후속>
+구현 지침: CLAUDE.md 5절 컨벤션(Entity/Repository/Service/Controller/DTO/ErrorCode) 준수.
+  <도메인 특이사항 — 예: 입찰 @DistributedLock, 종료 전이 CAS 단일 승자>
+DoD: 계약 준수 + CLAUDE.md 컨벤션 + 테스트(단위·슬라이스) 통과 + 빌드 성공.
+커밋 제안: <type>(<scope>): <제목>  (코드 커밋 형식 CLAUDE.md 6절, 실행은 사용자)
+```
+
+- 부모 대화가 자기 outbox에 저장(`NNN-<도메인>-<작업>.md`). Claude Code는 경로 지정으로 읽는다
+  (수신함 스캔 아님). 산출물 = 코드 + 커밋 메시지 제안. 완료·이슈는 부모 대화가 흡수해 버스 재진입(D-069).

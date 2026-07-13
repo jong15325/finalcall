@@ -240,3 +240,13 @@ api-contract.md는 백/프론트/QA가 병렬로 의존하는 단일 진실이�
   작업 블록 종료 시 완료 보고 말미에 `docs(<역할>): 제목` 커밋 메시지 블록만 제안한다.
 - 스테이징은 path-scope `git add docs/<역할>/`로 한정하고 `git add -A`는 금지한다.
 - 유지: 커밋 메시지 형식(D-029), 타입 혼합 금지, 코드 커밋은 CLAUDE.md 2절 현행.
+
+### Claude Code 핸드오프 (D-069)
+- 역할 대화(백엔드/프론트)가 코딩을 Claude Code에 넘기는 규약. Claude Code는 파일 버스 노드가
+  아니라 부모 대화의 '손' — 별도 outbox·수신함 스캔 없음. 산출물은 코드 + 커밋 메시지 제안(git 이력).
+- 작업 프롬프트: 부모 대화가 자기 outbox에 파일로 남기고(`<role>/outbox/NNN-<도메인>-<작업>.md`,
+  헤더 `[<역할> → Claude Code] 작업 지시`), Claude Code는 경로 지정으로 읽는다. 형식은 templates 18.
+- Claude Code 필독: CLAUDE.md + 지정 작업 프롬프트 + 참조된 api-contract 절·erd·domain-spec 절
+  + notice 참조 구현. DoD = 계약 준수 + 컨벤션 + 테스트 + 빌드.
+- 리포트 루프: Claude Code 출력(완료·이슈·계약 의문)은 사용자가 부모 대화에 전달 → 부모 대화가
+  완료 보고·에스컬레이션을 자기 outbox로 재진입. 부모 대화가 버스에서 Claude Code를 대표한다.

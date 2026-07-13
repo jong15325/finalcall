@@ -857,3 +857,25 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
   게이트웨이 반영. 보안 게이트 2에서 rate limit·직접접근 차단 구현 검토. 계약·domain-spec·erd 무영향.
 - 기각된 대안: 앱 레벨 rate limit(Resilience4j/bucket4j) — 동작하나 엣지 관심사엔 부적합·다중
   인스턴스 일관성 약함. 게이트 2 보류 — 실배포 방어 공백 잔존.
+
+---
+
+## D-069. 백엔드/프론트 → Claude Code 핸드오프 규약 (2026-07-13) [ACCEPTED]
+
+- 소유: 총괄 / 관련: relates-to D-007(대화 vs Claude Code 분업), D-061(커밋 실행), D-023(파일 버스)
+- 결정: 역할 대화(백엔드/프론트)가 Claude Code에 코딩을 넘기는 핸드오프를 규약화한다.
+  1. Claude Code는 파일 버스 노드가 아니라 부모 대화의 '손' — 별도 outbox·수신함 스캔 없음.
+     산출물은 코드 + 커밋 메시지 제안(git이 이력).
+  2. 작업 프롬프트: 부모 대화가 자기 outbox에 파일로 남기고(<role>/outbox/NNN-<도메인>-<작업>.md,
+     헤더 `[<역할> → Claude Code] 작업 지시`), Claude Code는 경로 지정으로 읽는다("구현해: <경로>").
+     필수 항목은 templates 18.
+  3. Claude Code 필독(작업 시): CLAUDE.md(자동) + 지정 작업 프롬프트 + 프롬프트가 참조한
+     api-contract 절·erd·domain-spec 절 + notice 참조 구현.
+  4. DoD: 계약 준수 + CLAUDE.md 컨벤션 + 테스트 통과 + 빌드 성공.
+  5. 리포트 루프: Claude Code 출력(완료·이슈·계약 의문)은 사용자가 부모 대화에 전달 →
+     부모 대화가 완료 보고/에스컬레이션을 자기 outbox로 재진입. 부모 대화가 버스에서 Claude Code를 대표.
+  6. 프론트도 동일(frontend 대화 → 프론트 Claude Code, 프론트 저장소).
+- 이유: 구현 본격화 전 작업 프롬프트 형식·필독·DoD를 표준화해 프롬프트 품질 편차·감사 추적
+  공백 제거. Claude Code를 버스 노드로 만들지 않아 파일 버스를 단순 유지.
+- 기각된 대안: Claude Code 전용 outbox·수신함 스캔 — 코드가 곧 산출물이라 불필요, 버스 복잡화.
+  프롬프트 복붙만(파일 미보관) — 감사 추적 공백.
