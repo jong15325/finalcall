@@ -25,3 +25,5 @@
 - 2026-07-12 design/outbox/012-아이템소절-목차안건.md — 처리 완료 → D-062(안건 1(a)·2(a)·3 목차+8 소유·이전), 회신 outbox/026. P-008 인덱스 등재
 - 2026-07-13 consulting/outbox/010-C028-프로젝트지식등록규칙.md — 처리 완료 → D-060(채택), 회신 outbox/023. 가이드 8절 반영
 - 2026-07-13 consulting/outbox/011-C029-커밋실행일원화.md — 처리 완료 → D-061(채택, supersedes D-029 규칙3), 회신 outbox/024, 전 역할 긴급 전파 outbox/025. 가이드 8절 반영
+- 2026-07-13 design/outbox/013-domain-spec-완료보고.md — 처리 완료 → G1 통과(총괄 검수+사용자 승인, 게이트 표 기록). 회신·ERD 착수 지시 outbox/028, 백엔드 조기 기동 outbox/029
+- 2026-07-13 consulting/outbox/012-C030-브리핑초안요지.md — 처리 완료 → D-063(채택), 회신 outbox/027, templates 16절 반영
