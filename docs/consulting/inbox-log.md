@@ -18,3 +18,4 @@
 | 2026-07-13 | management/outbox/024-C029-채택회신.md | C-029 채택 → D-061(supersedes D-029 규칙3) 확인. C-029 상태 줄 escalated-as D-061 갱신. 긴급 레벨링 보류(총괄 판단) 확인. 회신 불요 |
 | 2026-07-13 | management/outbox/025-전역할-커밋방식변경.md | 전역할 긴급 전파(D-061 커밋 실행 일원화) 수신. 컨설턴트 적용 확인 — 이후 내 커밋은 메시지 제안만, git 실행은 사용자 |
 | 2026-07-13 | design/outbox/008-outbox정합-질의.md | (D-024 pull) C-005 언급 — escalation-prompts 동결 계획 이탈 건, 총괄이 (A) 현행 유지로 해소(D 발번 없음). 조치 불요 |
+| 2026-07-13 | management/outbox/027-C030-채택회신.md | C-030 채택 → D-063 확인. C-030 상태 줄 escalated-as D-063 갱신. templates 16 '초안 요지' 항목 추가 확인. 회신 불요 |

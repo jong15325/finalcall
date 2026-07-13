@@ -821,7 +821,7 @@ trunk-based development(단일 브랜치 빈번 커밋), incident-001 교훈.
 
 ## C-030. 사용자 브리핑에 '초안 요지' 항목 추가 (D-049 확장)
 
-상태: PROPOSED · 소유: 컨설턴트 · 관련: relates-to D-049, D-023, D-025(templates 16) · 2026-07-13
+상태: ACCEPTED · escalated-as D-063 · 소유: 컨설턴트 · 관련: relates-to D-049, D-023, D-025(templates 16) · 2026-07-13
 (사용자 지시 — 대기모드 전달)
 
 결정
