@@ -10,17 +10,31 @@
 
 | ID | 심각도 | 제목 | 상태 | 성격 |
 |---|---|---|---|---|
-| SEC-001 | Major | 충전 콜백 멱등 앵커가 클라이언트 값 | OPEN | 계약 |
-| SEC-002 | Major | 충전 confirm 인증·서버검증 미명시 | OPEN | 계약 |
-| SEC-003 | Major | 즉시구매·고정가 자기구매 미차단 | OPEN | 계약 |
-| SEC-004 | Major | 교환(exchange) 멱등성 부재 | OPEN | 계약 |
-| SEC-005 | Major | 인증 엔드포인트 rate limiting 공백 | OPEN | 계약/구현 |
-| SEC-006 | Major | 토큰 회전·무효화 전략 미확정 | OPEN | 계약 |
-| SEC-007 | Minor | 가입 응답 회원 열거 | OPEN | 계약 |
-| SEC-008 | Minor | 잔액 검증 TOCTOU(원자성 문구 부재) | OPEN | 구현 |
-| SEC-009 | Minor | 경매 생성 시간 파라미터 검증 미명시 | OPEN | 계약 |
-| SEC-010 | Minor | public_id ULID 시각 성분 노출 | OPEN | 정보 |
-| SEC-011 | Minor | /admin/** 인가 일괄 적용 규정 부재 | OPEN | 구현 |
+| SEC-001 | Major | 충전 콜백 멱등 앵커가 클라이언트 값 | FIXED(계약 v0.2) | 계약 |
+| SEC-002 | Major | 충전 confirm 인증·서버검증 미명시 | FIXED(계약 v0.2) | 계약 |
+| SEC-003 | Major | 즉시구매·고정가 자기구매 미차단 | FIXED(계약 v0.2) | 계약 |
+| SEC-004 | Major | 교환(exchange) 멱등성 부재 | FIXED(계약 v0.2) | 계약 |
+| SEC-005 | Major | 인증 엔드포인트 rate limiting 공백 | OPEN(게이트2) | 계약/구현 |
+| SEC-006 | Major | 토큰 회전·무효화 전략 미확정 | FIXED(계약 v0.2) | 계약 |
+| SEC-007 | Minor | 가입 응답 회원 열거 | FIXED(완화 채택) | 계약 |
+| SEC-008 | Minor | 잔액 검증 TOCTOU(원자성 문구 부재) | OPEN(게이트2) | 구현 |
+| SEC-009 | Minor | 경매 생성 시간 파라미터 검증 미명시 | FIXED(계약 v0.2) | 계약 |
+| SEC-010 | Minor | public_id ULID 시각 성분 노출 | WONTFIX(수용) | 정보 |
+| SEC-011 | Minor | /admin/** 인가 일괄 적용 규정 부재 | OPEN(게이트2) | 구현 |
+
+게이트 1 델타 재확인 결과 (api-contract v0.2·erd v0.3 원문 검증, 2026-07-14)
+- FIXED(계약 반영·델타 검증): SEC-001(§4.4 pg_tx_id 멱등 + erd charge.pg_tx_id UK),
+  SEC-002(§4.4 confirm 인증+charge 소유자 검증+토스 서버-투-서버 재조회, 클라 amount 미수용,
+  CHARGE_003), SEC-003(AUCTION_009·SHOP_006 자기구매 금지), SEC-004(§4.4 Idempotency-Key
+  헤더+캐시 차감 조건부 원자 갱신), SEC-006(§2 refresh 서버저장·회전·재사용 탐지·logout
+  무효화), SEC-007(가입 실패 사유 최소화+게이트웨이 rate limit 완화 채택), SEC-009(§3.1
+  시간 서버 검증·AUCTION_008).
+- OPEN→게이트2: SEC-005(D-068 SCG 게이트웨이 rate limit·직접접근 차단 구현 검증),
+  SEC-008(홀드·차감 원자성 코드 표본), SEC-011(/admin/** 인가 적용 표본).
+- WONTFIX(수용): SEC-010(ULID 시각 성분, 정보성).
+- 잔여 관찰(Minor, 비차단): 신규 에러코드 4종(AUCTION_008·009, SHOP_006, CHARGE_003)이
+  엔드포인트엔 있으나 §5 에러코드 표 미등재 → enum 1:1 정합 위해 §5 표 보강 권고(v1 전).
+- 최종 판정: 게이트 1 통과(PASS). 미해결 Critical 없음. 판정 근거 decision-log S-001 갱신.
 
 ---
 
