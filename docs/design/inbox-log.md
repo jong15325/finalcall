@@ -27,3 +27,4 @@
 | 2026-07-13 | backend/outbox/001 네이밍 규약 → B-001~003 (정보 공유) | 테이블 단수·snake_case / PK BIGINT 대리키 / FK `<참조>_id` / 시간 DATETIME(6) UTC `_at` / soft delete `is_deleted`+`deleted_at`. 자연키=유니크, soft delete 유니크는 삭제식별 포함, 물리 FK 시작. ERD 네이밍 기준으로 채택. 회신 불요 |
 | 2026-07-13 | backend/outbox/003 URL·페이징·응답 규약 → B-004~007 (정보 공유) | 노출식별자 public_id(ULID)/내부 id(BIGINT), URL `/api/v1` 복수형·1단중첩, 페이징 cursor 기본·offset 예외, 정렬 `sort=field,dir` 화이트리스트=인덱스 1:1, 응답 ApiResponse/ErrorResponse envelope. 정렬·필터 필드는 ERD 인덱스 근거. 계약(G3)용 다수. 회신 불요 |
 | 2026-07-13 | backend/outbox/004 사용자 식별·B-008 정정 → B-009 (정보 공유) | 단일 서비스 유지(D-065, MSA=D-064 VOID). 사용자 식별=SecurityContext(X-User-Id 미사용). B-001~007 단일서비스 전제 유효. D-035 협의 종결 → ERD 완료기준5 해소. 회신 불요 |
+| 2026-07-13 | mgmt/outbox/032 아이템 ERD 모델 회신 → D-066 (회신대상 014) | 안건 1~5 전부 채택. 조건: 골드포스는 §7.7 검색 필터만·시세 키 제외. 5-2 CAS 에스크로가 G1 중복출품 관찰 해소. outbox/014 ANSWERED. 후속: spec §7 보강(v0.2 반영 완료) + erd.md 작성 |
