@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinalCall 비주얼 방향 A/B/C — 경매 상세 대표 뷰 (D-072 시각 예시)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{ --font: Pretendard, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:var(--font); background:#1f2430; color:#e8edf7; padding:24px; }
+  .num{ font-variant-numeric: tabular-nums; }
+  h1{ font-size:20px; font-weight:700; margin-bottom:4px; }
+  .sub{ color:#9aa7bd; font-size:13px; margin-bottom:20px; }
+  .grid{ display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start; }
+  .col{ flex:1 1 300px; min-width:300px; }
+  .dir-label{ font-size:13px; font-weight:600; margin-bottom:8px; opacity:.9; }
+  .dir-desc{ font-size:12px; color:#9aa7bd; margin-bottom:10px; }
+  .pick{ display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:9999px; margin-left:6px; }
+
+  /* ---- 카드 공통 구조 ---- */
+  .card{ border-radius:12px; padding:18px; border:1px solid transparent; }
+  .thumb{ height:96px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; margin-bottom:12px; }
+  .badges{ display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  .badge{ font-size:11px; font-weight:600; padding:3px 8px; border-radius:4px; }
+  .name{ font-size:18px; font-weight:600; }
+  .meta{ font-size:12px; margin-top:2px; }
+  .divider{ height:1px; margin:14px 0; }
+  .row{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px; }
+  .price-label{ font-size:12px; }
+  .price{ font-size:28px; font-weight:700; }
+  .unit{ font-size:13px; font-weight:500; }
+  .countdown{ font-size:13px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-flex; gap:6px; align-items:center; }
+  .btns{ display:flex; gap:8px; margin-top:14px; }
+  .btn{ flex:1; text-align:center; padding:12px; border-radius:8px; font-size:15px; font-weight:600; border:none; cursor:pointer; }
+  .btn-ghost{ flex:0 0 auto; padding:12px 16px; border-radius:8px; font-size:14px; font-weight:600; background:transparent; cursor:pointer; }
+  .bidder{ font-size:12px; margin-top:12px; }
+</style>
+</head>
+<body>
+  <h1>FinalCall — 경매 상세 대표 뷰로 보는 비주얼 방향</h1>
+  <div class="sub">같은 화면(아이템 카드 + 입찰 패널)을 3가지 방향으로 렌더. 실제 디자인 토큰(색·타이포·tabular 숫자) 적용. 추천: A안.</div>
+
+  <div class="grid">
+
+    <!-- ============ A. Dark Arena ============ -->
+    <div class="col">
+      <div class="dir-label">A. Dark Arena <span class="pick" style="background:#F59E0B;color:#1a1200;">추천</span></div>
+      <div class="dir-desc">다크 우선 · 인디고 primary · amber 긴급색. 등급색이 도드라지고 마감·즉시구매가 강조됨.</div>
+      <div class="card" style="background:#141A29;border-color:#2A3448;">
+        <div class="thumb" style="background:linear-gradient(135deg,#1C2436,#141A29);color:#6b7890;border:1px solid #2A3448;">아이템 이미지</div>
+        <div class="name" style="color:#E8EDF7;">태초의 심판자 대검</div>
+        <div class="badges">
+          <span class="badge" style="background:rgba(168,85,247,.16);color:#C99BFF;">영웅 등급</span>
+          <span class="badge" style="background:rgba(239,68,68,.16);color:#FF9A9A;">불 속성</span>
+        </div>
+        <div class="meta" style="color:#9aa7bd;">Lv.42 · 스킬 치명 강타 / 화염 폭발 · 발동 18%</div>
+        <div class="divider" style="background:#2A3448;"></div>
+        <div class="row">
+          <div>
+            <div class="price-label" style="color:#9aa7bd;">현재 최고가</div>
+            <div class="price num" style="color:#E8EDF7;">1,850,000<span class="unit" style="color:#9aa7bd;"> G</span></div>
+          </div>
+          <span class="countdown num" style="background:rgba(245,158,11,.18);color:#F5B94B;">마감 04:58</span>
+        </div>
+        <div class="btns">
+          <button class="btn" style="background:#F59E0B;color:#1a1200;">입찰하기</button>
+          <button class="btn" style="background:#6366F1;color:#fff;">즉시구매 2,400,000</button>
+        </div>
+        <div class="bidder" style="color:#6b7890;">최고 입찰자 gh****15 · 홀드 보증</div>
+      </div>
+    </div>
+
+    <!-- ============ B. Clean Marketplace ============ -->
+    <div class="col">
+      <div class="dir-label" style="color:#e8edf7;">B. Clean Marketplace</div>
+      <div class="dir-desc">라이트 우선 · 트러스트 블루 primary(토스 결제 톤과 조화). 자금 신뢰·넓은 접근성.</div>
+      <div class="card" style="background:#FFFFFF;border-color:#E2E8F0;box-shadow:0 4px 12px rgba(15,23,42,.10);">
+        <div class="thumb" style="background:#F1F5F9;color:#94A3B8;">아이템 이미지</div>
+        <div class="name" style="color:#0F172A;">태초의 심판자 대검</div>
+        <div class="badges">
+          <span class="badge" style="background:#F3E8FF;color:#7E22CE;">영웅 등급</span>
+          <span class="badge" style="background:#FEE2E2;color:#B91C1C;">불 속성</span>
+        </div>
+        <div class="meta" style="color:#475569;">Lv.42 · 스킬 치명 강타 / 화염 폭발 · 발동 18%</div>
+        <div class="divider" style="background:#E2E8F0;"></div>
+        <div class="row">
+          <div>
+            <div class="price-label" style="color:#475569;">현재 최고가</div>
+            <div class="price num" style="color:#0F172A;">1,850,000<span class="unit" style="color:#475569;"> G</span></div>
+          </div>
+          <span class="countdown num" style="background:#FEF3C7;color:#B45309;">마감 04:58</span>
+        </div>
+        <div class="btns">
+          <button class="btn" style="background:#F59E0B;color:#1a1200;">입찰하기</button>
+          <button class="btn" style="background:#2563EB;color:#fff;">즉시구매 2,400,000</button>
+        </div>
+        <div class="bidder" style="color:#94A3B8;">최고 입찰자 gh****15 · 홀드 보증</div>
+      </div>
+    </div>
+
+    <!-- ============ C. Neon Night ============ -->
+    <div class="col">
+      <div class="dir-label" style="color:#e8edf7;">C. Neon Night</div>
+      <div class="dir-desc">고대비 다크 + 네온 시안/마젠타. 강한 게임 임팩트(단, 자금 신뢰·대비 리스크).</div>
+      <div class="card" style="background:#12121F;border:1px solid #2A2A45;box-shadow:0 0 24px rgba(34,211,238,.10);">
+        <div class="thumb" style="background:#0A0A12;color:#5b6b8a;border:1px solid #2A2A45;">아이템 이미지</div>
+        <div class="name" style="color:#E8EDF7;">태초의 심판자 대검</div>
+        <div class="badges">
+          <span class="badge" style="background:rgba(232,121,249,.16);color:#F0ABFC;">영웅 등급</span>
+          <span class="badge" style="background:rgba(34,211,238,.14);color:#67E8F9;">불 속성</span>
+        </div>
+        <div class="meta" style="color:#8b9bc0;">Lv.42 · 스킬 치명 강타 / 화염 폭발 · 발동 18%</div>
+        <div class="divider" style="background:#2A2A45;"></div>
+        <div class="row">
+          <div>
+            <div class="price-label" style="color:#8b9bc0;">현재 최고가</div>
+            <div class="price num" style="color:#67E8F9;text-shadow:0 0 12px rgba(34,211,238,.4);">1,850,000<span class="unit" style="color:#8b9bc0;"> G</span></div>
+          </div>
+          <span class="countdown num" style="background:rgba(240,171,252,.16);color:#F0ABFC;">마감 04:58</span>
+        </div>
+        <div class="btns">
+          <button class="btn" style="background:#E879F9;color:#1a0020;">입찰하기</button>
+          <button class="btn" style="background:#22D3EE;color:#03212a;">즉시구매 2,400,000</button>
+        </div>
+        <div class="bidder" style="color:#5b6b8a;">최고 입찰자 gh****15 · 홀드 보증</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
