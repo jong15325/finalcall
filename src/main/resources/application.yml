@@ -99,6 +99,7 @@ resilience4j:
 jwt:
   algorithm: HS256          # 시작(대칭키). 확장: RS256(공개키 검증)로 갈아끼울 수 있게 Provider 추상화.
   access-exp-minutes: 30
+  refresh-exp-days: 14      # refresh 만료(= Redis 저장분 TTL, B-011). 데모 기본값 — 정책에 맞게 조정.
   # secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
 
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.

@@ -1,5 +1,6 @@
 package com.finalcall.integration;
 
+import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -30,8 +31,8 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void 실제토큰으로_보호경로_접근성공() throws Exception {
-        // JwtAuthenticationFilter 를 실제로 통과시키는 end-to-end 검증.
-        String token = tokenProvider.generateToken("tester");
+        // JwtAuthenticationFilter 를 실제로 통과시키는 end-to-end 검증. principal 은 userId(subject).
+        String token = tokenProvider.generateAccessToken(new TokenClaims("tester", "01HXPUBLICID0000000000000C", false));
         mockMvc.perform(get("/auth/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("tester"));

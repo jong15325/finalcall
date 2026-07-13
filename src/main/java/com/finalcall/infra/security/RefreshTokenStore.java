@@ -1,0 +1,153 @@
+package com.finalcall.infra.security;
+
+import com.finalcall.infra.config.JwtProperties;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.util.Base64;
+import java.util.Optional;
+
+/**
+ * refresh 토큰 저장소(auth, B-011) — Redis(Lettuce, {@link StringRedisTemplate}) 기반.
+ *
+ * <p>정책(SEC-006):
+ * <ul>
+ *   <li>refresh 토큰은 opaque 난수(≥256bit). 원문은 클라이언트만 보유하고, 서버는 SHA-256 <b>해시</b>만 저장한다.</li>
+ *   <li>키 {@code auth:refresh:{userId}:{sessionId}} = 현재 유효 토큰의 해시, TTL = refresh 만료.</li>
+ *   <li><b>회전</b>: 재발급 시 같은 세션에 신규 토큰 해시를 덮어써 이전 토큰을 폐기(1회성).</li>
+ *   <li><b>재사용 탐지</b>: 제시 토큰 해시가 저장분과 불일치하면(=회전으로 폐기된 옛 토큰) 해당 세션을 무효화(키 삭제).</li>
+ *   <li><b>폐기</b>: logout 시 세션 키 삭제.</li>
+ * </ul>
+ *
+ * <p>레이어 규율상 infra 는 domain 을 의존할 수 없어, 여기서는 도메인 예외(AuthErrorCode)를 던지지 않고
+ * {@link Optional} 로 유효/무효를 반환한다. 401(AUTH_004) 매핑은 호출 측 도메인 서비스(후속 단위)가 담당한다.
+ */
+@Component
+public class RefreshTokenStore {
+
+    private static final String KEY_PREFIX = "auth:refresh:";
+    private static final String DELIMITER = ".";
+    private static final int SESSION_ID_BYTES = 16;   // 128bit — 세션 식별(라우팅)
+    private static final int SECRET_BYTES = 32;        // 256bit — 실제 비밀값(B-011)
+
+    private final StringRedisTemplate redisTemplate;
+    private final SecureRandom random = new SecureRandom();
+    private final Base64.Encoder base64Url = Base64.getUrlEncoder().withoutPadding();
+    private final Duration refreshTtl;
+
+    public RefreshTokenStore(StringRedisTemplate redisTemplate, JwtProperties jwtProperties) {
+        this.redisTemplate = redisTemplate;
+        this.refreshTtl = Duration.ofDays(jwtProperties.refreshExpDays());
+    }
+
+    /**
+     * 새 세션의 refresh 토큰을 발급하고 해시를 저장한다(TTL = refresh 만료).
+     *
+     * @param userId 내부 사용자 식별자(access 토큰 subject 와 동일)
+     * @return 클라이언트에 전달할 원문 refresh 토큰
+     */
+    public String issue(String userId) {
+        String sessionId = randomToken(SESSION_ID_BYTES);
+        return store(userId, sessionId);
+    }
+
+    /**
+     * 제시된 refresh 토큰의 유효성을 검증한다(해시 대조).
+     *
+     * @return 유효하면 userId, 무효/재사용이면 empty(재사용 탐지 시 해당 세션 무효화)
+     */
+    public Optional<String> validate(String presentedToken) {
+        Parsed parsed = parse(presentedToken);
+        if (parsed == null) {
+            return Optional.empty();
+        }
+        String stored = redisTemplate.opsForValue().get(parsed.key());
+        if (stored == null) {
+            return Optional.empty(); // 없음/만료/폐기 — 무효화할 세션도 없음
+        }
+        if (!constantTimeEquals(stored, sha256(presentedToken))) {
+            // 저장분과 불일치 = 회전으로 폐기된 옛 토큰 재사용 → 세션 무효화(B-011).
+            redisTemplate.delete(parsed.key());
+            return Optional.empty();
+        }
+        return Optional.of(parsed.userId());
+    }
+
+    /**
+     * refresh 토큰을 회전한다: 검증 통과 시 같은 세션에 신규 토큰을 저장(이전 토큰 폐기)하고 원문을 반환한다.
+     *
+     * @return 신규 원문 refresh 토큰, 무효/재사용이면 empty(재사용 탐지 시 해당 세션 무효화)
+     */
+    public Optional<String> rotate(String presentedToken) {
+        Optional<String> userId = validate(presentedToken);
+        if (userId.isEmpty()) {
+            return Optional.empty();
+        }
+        Parsed parsed = parse(presentedToken); // validate 통과 → non-null 보장
+        return Optional.of(store(parsed.userId(), parsed.sessionId()));
+    }
+
+    /** 세션을 폐기한다(logout). 원문 토큰의 라우팅 정보로 세션 키를 삭제한다. */
+    public void revoke(String presentedToken) {
+        Parsed parsed = parse(presentedToken);
+        if (parsed != null) {
+            redisTemplate.delete(parsed.key());
+        }
+    }
+
+    /** 주어진 세션에 신규 토큰을 생성·저장(덮어쓰기)하고 원문을 반환한다. */
+    private String store(String userId, String sessionId) {
+        String secret = randomToken(SECRET_BYTES);
+        String token = userId + DELIMITER + sessionId + DELIMITER + secret;
+        redisTemplate.opsForValue().set(key(userId, sessionId), sha256(token), refreshTtl);
+        return token;
+    }
+
+    private String randomToken(int numBytes) {
+        byte[] bytes = new byte[numBytes];
+        random.nextBytes(bytes);
+        return base64Url.encodeToString(bytes);
+    }
+
+    private static String key(String userId, String sessionId) {
+        return KEY_PREFIX + userId + ":" + sessionId;
+    }
+
+    private static String sha256(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 미지원 환경", e); // 표준 JDK 에선 발생하지 않음
+        }
+    }
+
+    /** 상수 시간 비교(타이밍 공격 방지) — 해시 원바이트 대조. */
+    private static boolean constantTimeEquals(String a, String b) {
+        return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** 토큰을 {@code userId.sessionId.secret} 로 분해한다. 형식 위반이면 null. */
+    private static Parsed parse(String token) {
+        if (token == null) {
+            return null;
+        }
+        String[] parts = token.split("\\.", -1);
+        if (parts.length != 3 || parts[0].isEmpty() || parts[1].isEmpty() || parts[2].isEmpty()) {
+            return null;
+        }
+        return new Parsed(parts[0], parts[1]);
+    }
+
+    /** 토큰에서 추출한 라우팅 정보(비밀값 제외). */
+    private record Parsed(String userId, String sessionId) {
+        String key() {
+            return RefreshTokenStore.key(userId, sessionId);
+        }
+    }
+}

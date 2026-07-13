@@ -1,6 +1,7 @@
 package com.finalcall.api.auth;
 
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +26,10 @@ public class AuthController {
 
     private final TokenProvider tokenProvider;
 
-    /** 고정 사용자("demo")로 액세스 토큰 발급(만료 30분). permitAll. */
+    /** 고정 사용자("demo")로 액세스 토큰 발급(만료 30분). permitAll. 실제 로그인은 후속 단위가 대체한다. */
     @PostMapping("/token")
     public ApiResponse<TokenResponse> issueDemoToken() {
-        String token = tokenProvider.generateToken(DEMO_USER_ID);
+        String token = tokenProvider.generateAccessToken(new TokenClaims(DEMO_USER_ID, "demo-public-id", false));
         return ApiResponse.success(new TokenResponse(token));
     }
 
