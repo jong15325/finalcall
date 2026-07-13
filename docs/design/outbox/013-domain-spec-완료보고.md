@@ -1,4 +1,4 @@
-상태: SENT
+상태: ANSWERED → management/outbox/028-기획-G1통과-ERD착수.md (G1 통과)
 회신대상: management/outbox/026-기획-아이템소절-회신.md
 # [기획/설계 → 총괄] 완료 보고: domain-spec.md 초안 완성 (G1 검수 요청)
 
