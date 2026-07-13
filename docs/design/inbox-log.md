@@ -29,3 +29,5 @@
 | 2026-07-13 | backend/outbox/004 사용자 식별·B-008 정정 → B-009 (정보 공유) | 단일 서비스 유지(D-065, MSA=D-064 VOID). 사용자 식별=SecurityContext(X-User-Id 미사용). B-001~007 단일서비스 전제 유효. D-035 협의 종결 → ERD 완료기준5 해소. 회신 불요 |
 | 2026-07-13 | mgmt/outbox/032 아이템 ERD 모델 회신 → D-066 (회신대상 014) | 안건 1~5 전부 채택. 조건: 골드포스는 §7.7 검색 필터만·시세 키 제외. 5-2 CAS 에스크로가 G1 중복출품 관찰 해소. outbox/014 ANSWERED. 후속: spec §7 보강(v0.2 반영 완료) + erd.md 작성 |
 | 2026-07-13 | mgmt/outbox/033 G2 통과·D-067·G3 착수 (회신대상 015) | G2 통과(erd v0.1 확정). D-067: IP 회피 원칙 삭제 — 원게임(SurvivalProject) 명칭·수치·코드 전면 사용 허용 → spec §7.5·§12·intro 정리(v0.3)·erd 시드 정식화. 관찰 후속: sale_order 폴리모픽 백엔드 정합(D-024), shop 인덱스 추가. G3 api-contract 착수(auth 우선). 015 ANSWERED |
+| 2026-07-14 | mgmt/outbox/035 G3 총괄 검수 결과 (회신대상 017) | 통과 권고(정합 양호). 관찰 정정: item_template 외부 식별자(templatePublicId 참조하나 erd 미보유) → typeCode로 통일. 017 ANSWERED. 보안 게이트 진행 |
+| 2026-07-14 | mgmt/outbox/037 보안 findings 계약 반영 지시 | 보안 게이트 1 조건부 통과(S-001, Critical 없음). SEC 7건(002·001·003·004·006·007·009) 계약 v0.1 초안 반영 + item_template 식별자 정정. SEC-005는 D-068 해소·무영향, 008·011 게이트2 이월 |

@@ -10,6 +10,7 @@
 | v0 | 2026-07-13 | 골격 착수 — 네이밍 선언부·엔티티 개요·Mermaid |
 | v0.1 | 2026-07-13 | 테이블 정의(§4, 14개)·인덱스 표(§5)·Flyway(§6) 작성. 네이밍(auction/shop/sale_order)·위치 디스크리미네이터 확정. G2 검수 대기 |
 | v0.2 | 2026-07-13 | G2 통과. D-067 반영 — 시드 '가상' 제약 해제(원게임 실제 데이터·코드), skill_code 원게임 대응 정식화. G2 관찰: shop(item_instance_id) 인덱스 추가 |
+| v0.3 | 2026-07-14 | 보안 델타(계약 v0.2) 정합 — charge.pg_tx_id UK(멱등 앵커, SEC-001), item_template.type_code 외부 식별자 UK(035) |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -166,8 +167,8 @@ table `charge` — 캐시 충전(토스 테스트 결제). 별도 도메인, 거
 | user_id | BIGINT | N | FK→user | |
 | amount | BIGINT | N | | 충전 캐시액 |
 | status | ENUM | N | | READY / APPROVED / FAILED |
-| idempotency_key | VARCHAR | N | UK | 콜백 멱등키(중복 승인 차단) |
-| pg_tx_id | VARCHAR | Y | | PG 거래 식별자 |
+| idempotency_key | VARCHAR | Y | | 요청 재시도 편의 보조(멱등 앵커는 pg_tx_id, SEC-001) |
+| pg_tx_id | VARCHAR | Y | UK | PG 승인 식별자(paymentKey) — 멱등 앵커. 동일 승인 재반영 DB 차단(SEC-001) |
 | approved_at | DATETIME(6) | Y | | |
 
 table `money_exchange` — 캐시↔게임머니 교환. 교환 비율은 파라미터(ON-HOLD, 추적표).
@@ -265,7 +266,7 @@ table `item_template` — 아이템 정의 마스터. 타입코드 정규화(①
 | element | INT | N | | 속성(물/불/흙/바람) — 십의 자리 |
 | kind | INT | N | | 종류(검·도·활·방·펜…) — 일의 자리 |
 | grade | INT | N | | 등급 축(D-044) |
-| type_code | INT | N | | 위 자리값 합성 코드(파생/조회 편의) |
+| type_code | INT | N | UK | 자리값 합성 코드 — item_template 외부 식별자(035, public_id 미부여) |
 | display_name | VARCHAR | N | | 표시명(원게임 데이터, 시드) |
 
 유니크: (main_category, sub_group, element, kind, grade) 조합 1건.

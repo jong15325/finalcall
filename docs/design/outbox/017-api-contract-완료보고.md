@@ -1,4 +1,4 @@
-상태: SENT
+상태: ANSWERED → management/outbox/035-기획-G3검수결과.md (통과 권고, 보안 게이트 진행)
 회신대상: management/outbox/033-기획-G2통과-IP삭제-G3착수.md
 # [기획/설계 → 총괄] 완료 보고: api-contract.md 초안 완성 (G3 검수 + 보안 게이트 1 요청)
 
