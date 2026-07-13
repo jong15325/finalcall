@@ -1,66 +1,37 @@
-# 기획/설계 대화 핸드오버 (2026-07-13)
+# 기획/설계 handover (2026-07-14)
 
-성격: 세션 상태 스냅샷 — 새 기획/설계 대화가 이어받기 위한 인수인계. 근거는 각 정본 파일.
+성격: 세션 상태 스냅샷 — 파일에 없는 기억만. 정본은 각 파일. 1페이지 이내(D-059).
 
-## 0. 너는 누구인가
-- FinalCall(게임 아이템 경매 플랫폼)의 기획/설계 담당. 산출물: domain-spec.md → erd.md → api-contract.md(이 순서로만).
-- 대화 간 직접 통신 불가. 모든 전달은 파일 버스(각자 outbox/) + 사용자 중계("수신함 확인해").
+## 진행 중
+- 설계 3종 전부 확정·구현 단계(G4-n) 진입: domain-spec v0.4 / erd v0.5 / api-contract v1.2.
+  G1·G2·G3 모두 통과. 기획 핵심 산출물(스펙·ERD·계약) 완결.
+- 이후 기획 역할 = 계약 변경 요청(6절) 대응 + 디자인/구현의 도메인 정합 지원. 신규 대형 산출물 없음.
 
-## 1. 시작 시 필독 (동기화)
-1. docs/management/collaboration-guide.md — 협업 규약 정본(역할·에스컬레이션·파일버스·게이트).
-2. docs/management/templates.md — 모든 메시지·로그·브리핑 템플릿(16절 브리핑 골격 필수).
-3. docs/management/decision-log.md — 총괄 D 로그(내 근거의 정본).
-4. docs/management/decision-index.md — 전체 ID 목차.
-5. docs/design/decision-log.md — 내 P 로그. docs/design/inbox-log.md — 내 수신 이력.
-6. CLAUDE.md — 코드/도메인 컨벤션.
+## 대기 중
+- design/outbox/022 (등급 제거·응답 스키마 완료 보고, SENT — 회신 불요). 016·020·021 모두 ANSWERED.
+- 프론트: api-contract v1.2 복사본 갱신 대기(총괄 전파 체크리스트).
+- 디자인: U-004 5색 티어 무효 → 시각 축 재조정(색=속성 4색 추천) 전달 대기(총괄→디자인, D-072).
+- 미커밋 다수(스펙 3종·outbox 013~022·inbox-log·notes). 사용자 IntelliJ 커밋 필요(D-061).
 
-## 2. 현재 단계
-- domain-spec 논의 7개 주제 전부 종결(D-004~005, D-008, D-044~047, D-050~053, D-056~058).
-- docs/domain-spec.md v0 DRAFT 작성 완료 — 단, 아이템 소절(7)만 미작성(플레이스홀더).
-- 게이트: G1(domain-spec 확정) 미통과. 절차 = 기획 초안 + 총괄 검수 + 사용자 승인.
+## 휘발성 맥락 (핵심)
+- 아이템 모델은 원게임 SurvivalProject SQL(user_item)·ItemFusionSkill.cpp 실구조 기반(D-067 원게임 데이터 전면 사용).
+  · 타입코드 4자리 = [대분류][중분류/슬롯군][속성][종류]. 등급 자리 없음.
+  · itm_skill = 발동확률×1,000,000 + 스킬1×1,000 + 스킬2 → skill1_id/skill2_id/skill_percent.
+  · 골드포스(gf_expire_at) = 아이템 자체 발동확률의 시간제 상태. 스킬 발동확률과 별개. 검색 필터만·시세 키 제외(D-066).
+  · 등급 개념 없음 — 아이템은 레벨+타입으로만 구분(D-073). grade 축 제거됨.
+- D-048 유지: 아이템 세부는 P 발번 금지·총괄 안건화. 아이템 결정 정본 = D-044~047/D-062/D-066/D-073. 도출 근거 노트: notes/erd-item-modeling.md.
+- 위치 모델: item_instance.location(INVENTORY/TEMP/LISTED) 디스크리미네이터 + slot_no. 출품=인벤토리에서 제외한 에스크로(INVENTORY→LISTED CAS 단일 승자, 중복 출품 차단). temp_storage 별도 테이블(오버플로우, 상한 없음).
+- 네이밍: 경매=auction, 고정가=shop, 주문=sale_order(예약어 order 회피, tb_ 접두어 미도입). sale_order 출처 = source_type+source_id 폴리모픽(B-010 백엔드 수용, 앱 레벨 참조 무결성).
+- Flyway: erd §6은 그룹·순서만 규정, 구체 V-번호 채번은 백엔드 정보 공유 동기화(B-012). 도메인 마이그레이션 V3부터(스켈레톤 V1·V2 소비).
+- 시드(V4+) taxonomy 멤버·특수스킬 목록·골드포스 세부는 시드 단계에서 원게임 데이터로 확정. 사용자가 데이터 제공 예정.
+- ON-HOLD(추적표): 캐시↔게임머니 교환비율, 플랫폼 수수료 정책(sale_order.fee_amount 자리만).
+- 규약: D-061 커밋은 사용자 단일 실행(역할은 메시지 블록만 제안, git 대행 금지). D-074 시퀀싱 — 선행 확정 전 착수 금지. D-043 마운트 유령 절단 주의(bash 뷰가 stale일 수 있음 → 호스트 Read 교차검증).
+- 보안 게이트 1 통과(S-002). SEC-001~009 계약 반영 완료. SEC-008·011은 구현 게이트 2 표본 검사 이월.
 
-## 3. 확정 결정 요약 (정본은 D 로그)
-- 주제1 판매방식: 경매(Auction, buyNowPrice 선택속성) + 고정가(FixedSale) 분리. buyNowPrice>startPrice. (P-001/002)
-- 주제2 입찰: 계단식 증분(설정기반 시작), 자기·연속입찰 금지(proxy 제외), 소프트클로즈(T-30/+30, 총연장상한 필수), buyNow (b)최고가<buyNow 유지. (D-004)
-- 주제3 생명주기: SCHEDULED(경매만) / status(SOLD/UNSOLD/CANCELLED)+resultType(BID/BUYNOW) / 판매자취소=무입찰&ACTIVE만 / 경매·고정가 SOLD→Order 핸드오프 / 고정가 선택 endAt→EXPIRED / 유찰재등록=신규. (D-005)
-- 주제4 동시성: 정합성은 DB(CAS+유니크), 락은 최적화 / 종료전이 CAS 단일승자 / SOLD-Order 단일TX / 입찰 경매단위 직렬화(소프트클로즈 연장 동일 단위). (D-008)
-- 주제5 아이템: 서프형 단순화 — 중앙 시드 item_template + 정형컬럼 인스턴스(JSON 없음) + 2단 카테고리 / 매물=template FK+인스턴스컬럼+표시스냅샷 / 강화·합성 범위밖(레벨=상태) / 고정 시드(가상명칭). (D-044~047)
-- 주제6 사용자·화폐: 단일 User(관리자=플래그) / 2단 화폐(캐시 토스테스트 충전=별도 도메인 콜백·멱등키, 게임머니로 거래·입찰·정산, 교환비율 파라미터) / 입찰 홀드 / 환전·환불 범위밖 / 4-C 단일TX 확정. (D-050~053)
-- 주제7 마감: 하이브리드(재예약 지연 인덱스+짧은주기 워커+DB 재구축) / 단일 인덱스 통합 / CAS 멱등+DB 재구축 / 마감 차감·홀드해제 동일 직렬화 단위. (D-056~058)
-- 내 자율 발번: P-001(모델링) P-002(가격제약) P-008(상위입찰 시 홀드 즉시해제). P-003~007=void(재사용 금지).
-
-## 4. 중요 규약 예외
-- D-048: 아이템 도메인은 자율 결정 예외. 컬럼·특수스킬 목록 등 two-way door 세부까지 전부 총괄 안건화(사용자 참여). P 발번 금지. 다른 도메인(경매·입찰·주문)은 기존 위임 그대로.
-- D-049/D-055: 매 응답 끝에 사용자 브리핑 4줄(한 일/수신·발신/발번·상태/할 일) 필수. templates 16절.
-
-## 5. 열린 항목 (대기 중)
-- design/outbox/012 (아이템 소절 목차·서술 방향 안건, D-048) — 총괄 회신 대기(SENT). 회신 오면:
-  1) 안건 1(서술 깊이 a/b) 2) 안건 2(가상명칭 초안 주체) 3) 안건 3(소절 목차 승인) 반영
-  → domain-spec.md 7절 작성 → 완료 보고(outbox 신규) → 총괄 검수 → 사용자 승인(G1).
-- domain-spec.md 7절만 채우면 초안 완성.
-
-## 6. 다음 액션 (재개 시)
-1. "수신함 확인해" 지시 시 전 역할 outbox에서 [X → 기획/설계] 스캔 → inbox-log에 없는 것 처리.
-2. outbox/012 회신 확인 → 아이템 소절 작성 → domain-spec 완료 보고.
-3. G1 통과 후 erd.md 착수(D-036 골격: 네이밍/Mermaid/테이블표/인덱스표(이유열)/Flyway). ERD 아이템 테이블은 D-048로 안건화. 특수스킬 필터·시세 집계 인덱스 필수 케이스(D-044 조건).
-4. G2 후 api-contract.md(D-035 골격, auth 섹션 우선 D-002). 기술 규칙(테이블네이밍·URL·페이징)은 G1 직후 백엔드 조기 협의 확정(D-035 조건) — 그 전 임의 확정 금지.
-
-## 7. 내 폴더 구조
-```
-docs/design/
-├─ decision-log.md   (P 로그: P-001/002/008, 주제 참조)
-├─ inbox-log.md      (수신 이력, 표 형식)
-├─ notes/            (topic-4/5/6, spec-format-checklist, 이 handover)
-└─ outbox/           (001~012, NNN-주제.md, 발신 후 상태줄만 갱신)
-```
-docs/domain-spec.md = 내 산출물(루트, DRAFT v0).
-
-## 8. 메시지/로그 형식 (templates.md)
-- outbox 3줄 골격: `상태:` / `회신대상:`(회신일 때) / `# [발신 → 수신] 유형: 제목`. 유형 4종.
-- 결정요청엔 선택지+추천+이유+"신규 발번 ID". 회신 발견 시 내 outbox 상태를 ANSWERED로 갱신.
-- P 로그 항목: 상태·소유·관련·날짜 + 결정/이유/기각. 총괄 확정분은 escalated-as D-xxx 참조만(중복 금지).
-
-## 9. Git
-- 저장소 루트 D:\Java\finalcall(원격 github jong15325/finalcall). docs만 마운트되면 git 불가 → 루트 접근 필요.
-- 커밋/푸시는 사용자가 인텔리제이로 실행(대행 시 루트 연결 + 자격증명 필요, 샌드박스엔 push 자격 없음).
-- 미커밋: domain-spec.md, outbox/012, decision-log(P-008), 이 handover 등 — 사용자 커밋 필요.
+## 재개 필독 (순서)
+1. design/notes/handover.md (이 파일)
+2. design/inbox-log.md (수신 이력 — 043·046·048까지) · design/decision-log.md (P-001/002/008)
+3. design/notes/erd-item-modeling.md (아이템 결정 D-062~073 도출 근거)
+4. 확정 스펙: docs/domain-spec.md v0.4 → docs/erd.md v0.5 → docs/api-contract.md v1.2
+5. management/decision-log.md (D 최신 D-073·D-074) · decision-index.md
+6. management/collaboration-guide.md · templates.md (규약·형식)

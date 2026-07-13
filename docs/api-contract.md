@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.1 — G3 확정(2026-07-14) + 6절 계약 변경 1건(D-070). 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
+상태: v1.2 — G3 확정(2026-07-14) + 6절 계약 변경 2건(D-070, D-073). 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.3, erd v0.2, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
@@ -12,6 +12,7 @@
 | v0.2 | 2026-07-14 | 보안 게이트 1 findings 반영 — SEC-001·002(충전 confirm 인증·서버검증·pg_tx_id 멱등), SEC-003(자기구매 차단), SEC-004(교환 멱등키), SEC-006(토큰 회전), SEC-007(열거 완화), SEC-009(시간 검증) + item_template 식별자 typeCode 통일(035). 보안 델타 재확인 대기 |
 | v1 | 2026-07-14 | G3 확정 — 총괄 검수 + 보안 게이트 1(S-002) + 사용자 승인. 설계 3종 확정, 구현(G4-n) 진입. 이후 변경은 6절 절차 |
 | v1.1 | 2026-07-14 | 6절 계약 변경 — §2 /refresh 응답에 refreshToken 추가 + 회전 정책(1회성·재사용 탐지) 명시. 사유: D-070/SEC-006(refresh 회전 구현 정합) |
+| v1.2 | 2026-07-14 | 6절 계약 변경 — 등급 필터 제거(D-073), §3.3 목록/상세 응답 스키마 구체화(a안). 사유: 원게임 무등급 + 프론트·QA 단일 진실 |
 
 ---
 
@@ -89,7 +90,7 @@
 
 ## 3. 경매·고정가·입찰
 
-공통 목록 필터(경매·고정가·아이템 검색 공유, ERD 인덱스·§7.7 정합): `mainCategory, subGroup, element, kind, grade, minLevel/maxLevel, skill1/skill2(스킬 코드), goldforceActive(bool), minPrice/maxPrice, status`. 정렬 화이트리스트: `price, endAt, createdAt, highestBidAmount`(경매), `price, endAt, createdAt`(고정가). 목록은 cursor 기본.
+공통 목록 필터(경매·고정가·아이템 검색 공유, ERD 인덱스·§7.7 정합): `mainCategory, subGroup, element, kind, minLevel/maxLevel, skill1/skill2(스킬 코드), goldforceActive(bool), minPrice/maxPrice, status`. (등급 필터 없음 — D-073) 정렬 화이트리스트: `price, endAt, createdAt, highestBidAmount`(경매), `price, endAt, createdAt`(고정가). 목록은 cursor 기본.
 
 ### 3.1 경매 (auction)
 
@@ -165,6 +166,32 @@ POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
 - 동작: ACTIVE(미판매)일 때 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
 - 응답 200: `{ status }` / 에러 `SHOP_004` 이미 종료(409)
 
+### 3.3 응답 스키마 — 목록/상세 (6절, D-073)
+
+목록/상세 응답의 구체 필드(프론트·QA·디자인 단일 진실). erd 필드·표시 스냅샷 기준. 등급 없음(D-073). 소유자·최고입찰자는 마스킹, 골드포스는 만료시각(활성/잔여는 클라 파생).
+
+item 블록(공통):
+```
+item: { typeCode, mainCategory, subGroup, element, kind, level,
+        skill1?, skill2?, skillPercent, goldforceExpireAt?,
+        nameSnapshot, specSnapshot }
+```
+
+AuctionSummary (GET /auctions content 항목):
+```
+{ auctionPublicId, status, item, startPrice, buyNowPrice?,
+  highestBidAmount?, bidCount, startAt?, endAt, sellerNickname }
+```
+AuctionDetail (GET /auctions/{id}): AuctionSummary + `{ resultType?, highestBidderMasked?, extensionCount, maxEndAt, createdAt }`
+
+ShopSummary (GET /shops content 항목):
+```
+{ shopPublicId, status, item, price, endAt?, sellerNickname }
+```
+ShopDetail (GET /shops/{id}): ShopSummary + `{ createdAt }`
+
+주: item.nameSnapshot/specSnapshot은 등록 시점 스냅샷(D-045). 실시간 값(현재 소유자 등)은 상세에서 마스킹 노출. 필드 추가는 6절 절차.
+
 ## 4. 아이템·인벤토리·주문·화폐
 
 `me` 접두는 인증 주체(SecurityContext) 기준 리소스다.
@@ -173,8 +200,8 @@ POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
 
 GET /api/v1/item-templates — 아이템 정의 카탈로그(검색 메타)
 - 인증: 불요
-- 쿼리: `mainCategory, subGroup, element, kind, grade`(필터)
-- 응답 200: offset 페이지(템플릿 = 대분류·중분류·속성·종류·등급·표시명·typeCode)
+- 쿼리: `mainCategory, subGroup, element, kind`(필터, 등급 없음 D-073)
+- 응답 200: offset 페이지(템플릿 = 대분류·중분류·속성·종류·표시명·typeCode)
 - 용도: 검색 필터 UI 구성, 원게임 시드 기준(D-067)
 - 비고(035 관찰): item_template 외부 식별자는 `typeCode`(고정 시드·유일 조합). public_id를 별도로 두지 않는다 — erd와 일치.
 

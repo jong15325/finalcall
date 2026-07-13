@@ -12,6 +12,7 @@
 | v0.2 | 2026-07-13 | G2 통과. D-067 반영 — 시드 '가상' 제약 해제(원게임 실제 데이터·코드), skill_code 원게임 대응 정식화. G2 관찰: shop(item_instance_id) 인덱스 추가 |
 | v0.3 | 2026-07-14 | 보안 델타(계약 v0.2) 정합 — charge.pg_tx_id UK(멱등 앵커, SEC-001), item_template.type_code 외부 식별자 UK(035) |
 | v0.4 | 2026-07-14 | §6 Flyway 매핑 6절 정정(B-012) — 스켈레톤 V1·V2 소비 반영, 도메인은 V3부터. erd는 그룹·순서만 규정, 구체 채번은 백엔드 동기화 |
+| v0.5 | 2026-07-14 | D-073 반영 — item_template.grade 제거, 유니크 (main_category,sub_group,element,kind), §5 인덱스 (element,kind), Mermaid 정정 |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -53,7 +54,7 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 - `sale_order` — 판매 성립(SOLD) 시 생성되는 거래(결제·정산·소유 이전). 경매·고정가 공통 핸드오프.
 
 아이템 (D-044~047·D-062·D-066)
-- `item_template` — 아이템 정의 마스터. 타입코드 정규화(대분류·중분류·속성·종류·등급) + 표시명(가상 시드).
+- `item_template` — 아이템 정의 마스터. 타입코드 정규화(대분류·중분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073).
 - `skill_definition` — 특수스킬 정의 마스터(가상 시드). 인스턴스 스킬 슬롯이 참조.
 - `item_instance` — 개별 아이템. template FK + 레벨·스킬 2슬롯·발동확률·골드포스 + 소유자 + 위치.
 - `item_ownership_history` — 소유 이전 이력(최초·직전·전체 체인). 비거래 이전도 통합.
@@ -111,7 +112,6 @@ erDiagram
       int sub_group
       int element
       int kind
-      int grade
       string display_name
     }
     auction {
@@ -266,11 +266,10 @@ table `item_template` — 아이템 정의 마스터. 타입코드 정규화(①
 | sub_group | INT | N | | 중분류/슬롯군(무기·방어구/장신구·필드) — 백의 자리 |
 | element | INT | N | | 속성(물/불/흙/바람) — 십의 자리 |
 | kind | INT | N | | 종류(검·도·활·방·펜…) — 일의 자리 |
-| grade | INT | N | | 등급 축(D-044) |
 | type_code | INT | N | UK | 자리값 합성 코드 — item_template 외부 식별자(035, public_id 미부여) |
 | display_name | VARCHAR | N | | 표시명(원게임 데이터, 시드) |
 
-유니크: (main_category, sub_group, element, kind, grade) 조합 1건.
+유니크: (main_category, sub_group, element, kind) 조합 1건. (등급 축 제거, D-073)
 
 table `skill_definition` — 특수스킬 정의 마스터(②). 원게임(SurvivalProject) 스킬 데이터 시드. 인스턴스 슬롯1/2가 참조.
 
@@ -330,7 +329,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | item_instance | (skill1_id, skill2_id) | 특수스킬 조합 필터(§7.7). 스킬만으로 매물 탐색 |
 | item_instance | (gf_expire_at) | 골드포스 활성/잔여 필터·정렬(D-066, 검색 전용·시세 키 제외) |
 | item_instance | (owner_id, location, slot_no) | 사용자 인벤토리 조회(정규 슬롯 나열), 위치별 분리 |
-| item_template | (element, kind, grade) | 속성·종류·등급 부분 필터 검색(§7.7). 대분류·중분류와 조합 |
+| item_template | (element, kind) | 속성·종류 부분 필터 검색(§7.7). 대분류·중분류와 조합 |
 | auction | (status, end_at) | 마감 트리거 DB 재구축 스캔(status=ACTIVE AND end_at<=now, D-058). 지연 인덱스 유실 복구 |
 | auction | (status, start_at) | 예약 시작(SCHEDULED→ACTIVE) 트리거 스캔(D-057) |
 | auction | (seller_id, status) | 판매자 진행/종료 경매 목록 |
