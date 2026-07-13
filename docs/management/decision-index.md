@@ -73,6 +73,7 @@
 | D-063 | 브리핑 초안 요지 항목 추가 (D-049 확장) | ACCEPTED | 총괄 |
 | D-064 | 아키텍처: MSA + 게이트웨이 인증 전담 (B-008 escalation) | SUPERSEDED (→D-065) | 총괄 |
 | D-065 | 아키텍처 롤백: 단일 서비스 유지 (D-064 철회) | ACCEPTED | 총괄 |
+| D-066 | 아이템 ERD 모델 확정 (타입·스킬·골드포스·소유이전·인벤토리 5건) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
