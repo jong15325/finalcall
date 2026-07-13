@@ -1,4 +1,4 @@
-상태: SENT
+상태: ANSWERED → management/outbox/039-전역할-G3통과전파.md (G3 확정)
 회신대상: management/outbox/037-기획-보안findings-계약반영.md
 # [기획/설계 → 총괄] 완료 보고: 보안 findings 계약 반영 (보안 델타 재확인 요청)
 
