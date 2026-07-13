@@ -81,6 +81,7 @@
 | D-071 | 프로덕트 디자인(UX/UI) 파트 신설 (docs/ux, U-xxx) | ACCEPTED | 총괄 |
 | D-072 | 디자인 파트 프로세스 개정 (기획 경유·시각 예시 의무·총괄+사용자 최종) | ACCEPTED | 총괄 |
 | D-073 | 아이템 등급(grade) 축 제거 (원게임 무등급, D-044 개정) | ACCEPTED | 총괄 |
+| D-074 | 총괄 시퀀싱·선행 완료 게이팅 (순서 지정·선행 미완료 착수 금지) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
