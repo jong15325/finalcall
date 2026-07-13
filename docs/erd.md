@@ -11,6 +11,7 @@
 | v0.1 | 2026-07-13 | 테이블 정의(§4, 14개)·인덱스 표(§5)·Flyway(§6) 작성. 네이밍(auction/shop/sale_order)·위치 디스크리미네이터 확정. G2 검수 대기 |
 | v0.2 | 2026-07-13 | G2 통과. D-067 반영 — 시드 '가상' 제약 해제(원게임 실제 데이터·코드), skill_code 원게임 대응 정식화. G2 관찰: shop(item_instance_id) 인덱스 추가 |
 | v0.3 | 2026-07-14 | 보안 델타(계약 v0.2) 정합 — charge.pg_tx_id UK(멱등 앵커, SEC-001), item_template.type_code 외부 식별자 UK(035) |
+| v0.4 | 2026-07-14 | §6 Flyway 매핑 6절 정정(B-012) — 스켈레톤 V1·V2 소비 반영, 도메인은 V3부터. erd는 그룹·순서만 규정, 구체 채번은 백엔드 동기화 |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -351,15 +352,17 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 - 출품 중복 방지는 item_instance.location 전이(INVENTORY→LISTED) CAS 단일 승자로 보증(플래그 B). "활성 리스팅 instance 유니크"용 부분 유니크 인덱스는 불요.
 - charge.idempotency_key UK로 충전 콜백 멱등(D-051).
 
-## 6. Flyway 매핑 (D-036)
+## 6. Flyway 매핑 (D-036, B-012 정정)
 
-`classpath:db/migration`, 네이밍 `V<N>__<설명>.sql`. 도메인 그룹 단위로 버전을 나눈다.
+`classpath:db/migration`, 네이밍 `V<N>__<설명>.sql`, append-only. 스켈레톤이 V1(init_schema)·V2(notice_auditor)를 이미 소비하므로 도메인 마이그레이션은 V3부터 채번한다.
 
-| 버전 | 파일(예시) | 포함 |
-|---|---|---|
-| V1 | V1__user_and_money.sql | user, user_balance, charge, money_exchange, money_hold + 인덱스 |
-| V2 | V2__item.sql | item_template, skill_definition, item_instance, item_ownership_history, temp_storage + 인덱스 |
-| V3 | V3__auction_shop_order.sql | auction, bid, shop, sale_order + 인덱스, FK |
-| V4 | V4__seed_item_master.sql | item_template·skill_definition 고정 시드(원게임 실제 명칭·수치·코드, D-067) |
+erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번은 구현 진행에 맞춰 백엔드가 정보 공유로 동기화한다(B-012). 확정 스펙에 변동적 채번을 고정하지 않아 구현 단위 분할 시 반복 정정을 피한다.
 
-주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 아이템 시드(V4)의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).
+마이그레이션 그룹·순서(스켈레톤 소비분 V1·V2 이후 V3부터):
+1. 사용자·잔액 — user, user_balance (백엔드 `V3__user_and_balance`부터, B-012)
+2. 화폐 — charge, money_exchange, money_hold (후속 버전 분리)
+3. 아이템 — item_template, skill_definition, item_instance, item_ownership_history, temp_storage + 인덱스
+4. 판매·거래 — auction, bid, shop, sale_order + 인덱스·FK
+5. 아이템 시드 — item_template·skill_definition 고정 시드(원게임 실제 명칭·수치·코드, D-067)
+
+주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

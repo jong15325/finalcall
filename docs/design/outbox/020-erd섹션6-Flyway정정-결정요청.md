@@ -1,4 +1,4 @@
-상태: SENT
+상태: ANSWERED → management/outbox/043-기획-erd정정-등급-응답스키마.md (방식 b 승인)
 # [기획/설계 → 총괄] 결정 요청: erd §6 Flyway 매핑표 정정 승인 (B-012 계기)
 
 배경: 백엔드가 G4-1 구현 중 erd §6 Flyway 매핑표와 스켈레톤 실제 채번 불일치를 보고(backend/outbox/014, B-012). 스켈레톤이 V1(init_schema)·V2(notice_auditor)를 이미 소비 → append-only 원칙상 도메인 마이그레이션은 V3부터 시작해야 하나, erd §6은 `V1__user_and_money`를 지시한다. 스키마 설계 변경이 아니라 버전 번호 라벨 정합 문제이며 api-contract 무영향. erd는 확정 스펙(기획 소유)이라 정정에 총괄 승인이 필요(D-014, 6절 준용).

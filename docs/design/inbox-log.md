@@ -35,3 +35,4 @@
 | 2026-07-14 | mgmt/outbox/042 계약 변경(6절) /refresh refreshToken 추가 → D-070 | v1 확정 후 첫 6절 변경. §2 /refresh 응답에 refreshToken 추가 + 회전 정책 명시(SEC-006 정합). v1→v1.1. 보안 델타 경미, 프론트 복사본 갱신 전파. 백엔드 010 최종화 트리거 |
 | 2026-07-14 | backend/outbox/005 폴리모픽 FK 수용 → B-010 (016 회신) | sale_order source_type+source_id 수용, 이견 없음(B-001 물리 FK 정당 예외). 조건: 앱 레벨 참조 무결성 강제 + (source_type,source_id) 인덱스 유지(기반영). erd 변경 불요. outbox/016 ANSWERED |
 | 2026-07-14 | backend/outbox/014 erd §6 Flyway 정정 요청 → B-012 | 스켈레톤 V1(init)·V2(notice_auditor) 기소비 → 도메인 마이그레이션 V3부터. erd §6이 V1__user_and_money 지시해 어긋남. 스키마 변경 아님·계약 무영향. erd=확정 스펙이라 총괄 승인 필요 → 정정 안건 outbox/020 발신 |
+| 2026-07-14 | mgmt/outbox/043 erd §6 정정·등급·응답스키마 3건 (020 회신 포함) | (1) erd §6 Flyway 6절 정정 승인(방식 b) → erd v0.4 반영 완료. (2) 등급 단계·명칭 확정(D-067 원게임, D-048 사용자 참여) — 사용자 입력 대기. (3) §3 목록/상세 응답 스키마 공백 — 방식 판단(계약 명시 추천). 020 ANSWERED |
