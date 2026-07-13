@@ -78,7 +78,80 @@
 
 ---
 
-## 3. 경매·고정가·입찰 (후속)
+## 3. 경매·고정가·입찰
+
+공통 목록 필터(경매·고정가·아이템 검색 공유, ERD 인덱스·§7.7 정합): `mainCategory, subGroup, element, kind, grade, minLevel/maxLevel, skill1/skill2(스킬 코드), goldforceActive(bool), minPrice/maxPrice, status`. 정렬 화이트리스트: `price, endAt, createdAt, highestBidAmount`(경매), `price, endAt, createdAt`(고정가). 목록은 cursor 기본.
+
+### 3.1 경매 (auction)
+
+POST /api/v1/auctions — 경매 등록
+- 인증: 필요(판매자 = 등록자)
+- 요청(body): `{ itemInstancePublicId, startPrice, buyNowPrice?, startAt?, endAt, softCloseWindowSec?, softCloseExtendSec?, maxEndAt }`
+- 동작: 아이템을 인벤토리→출품 에스크로(location LISTED)로 CAS 이동(중복 출품 차단). SCHEDULED(startAt 있으면)/ACTIVE로 생성.
+- 응답 201: `{ auctionPublicId, status, endAt }`
+- 에러: `AUCTION_001` 아이템 미소유·미보유(403/409), `AUCTION_002` 이미 출품중(409), `AUCTION_003` buyNowPrice ≤ startPrice(422)
+
+GET /api/v1/auctions — 경매 목록
+- 인증: 불요
+- 쿼리: 공통 목록 필터 + 페이징(cursor)/정렬
+- 응답 200: cursor 페이지(`content`: 경매 요약 + item 표시 스냅샷)
+
+GET /api/v1/auctions/{auctionPublicId} — 경매 상세
+- 인증: 불요
+- 응답 200: 경매 상세 + 현재 최고가·최고입찰자(마스킹)·남은 시간 + item 스냅샷
+- 에러: `AUCTION_004` 없음(404)
+
+POST /api/v1/auctions/{auctionPublicId}/bids — 입찰 (bid)
+- 인증: 필요
+- 요청(body): `{ amount }`
+- 동작: 경매 단위 직렬화(D-008). 검증 통과 시 게임머니 홀드(에스크로), 직전 최고입찰자 홀드 즉시 해제(P-008), 소프트클로즈 연장 판단(동일 단위). 최고가 갱신.
+- 응답 201: `{ bidPublicId, amount, currentHighestAmount, endAt }`
+- 에러: `BID_001` 최소 증분 미달(422), `BID_002` buyNowPrice 이상(422), `BID_003` 자기 경매 입찰(403), `BID_004` 연속(현재 최고가 보유자) 입찰(409), `BID_005` 게임머니 잔액 부족(422), `BID_006` 마감/종료됨(409)
+
+GET /api/v1/auctions/{auctionPublicId}/bids — 입찰 내역
+- 인증: 불요(입찰자 식별은 마스킹)
+- 응답 200: offset 페이지(입찰 이력)
+
+POST /api/v1/auctions/{auctionPublicId}/purchase — 즉시구매(buyNow)
+- 인증: 필요
+- 동작: 종료성 CAS 단일 승자(SOLD, resultType=BUYNOW). Order 생성·정산·소유 이전 단일 TX(D-053).
+- 응답 201: `{ orderPublicId, finalPrice }`
+- 에러: `AUCTION_005` 즉시구매 미설정(422), `AUCTION_006` 이미 종료(409), `BID_005` 잔액 부족(422)
+
+POST /api/v1/auctions/{auctionPublicId}/cancel — 판매자 취소
+- 인증: 필요(판매자 본인). 관리자 강제 취소는 별도 관리자 API(4절).
+- 동작: 입찰 0건 & ACTIVE일 때만 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
+- 응답 200: `{ status }`
+- 에러: `AUCTION_007` 입찰 존재로 취소 불가(409), `AUCTION_006` 이미 종료(409)
+
+### 3.2 고정가 (shop)
+
+POST /api/v1/shops — 고정가 등록
+- 인증: 필요(판매자)
+- 요청(body): `{ itemInstancePublicId, price, endAt? }`
+- 동작: 아이템 출품 에스크로(LISTED) CAS 이동. ACTIVE 생성.
+- 응답 201: `{ shopPublicId, status }`
+- 에러: `SHOP_001` 아이템 미소유·미보유(403/409), `SHOP_002` 이미 출품중(409)
+
+GET /api/v1/shops — 고정가 목록
+- 인증: 불요
+- 쿼리: 공통 목록 필터 + 페이징(cursor)/정렬
+- 응답 200: cursor 페이지
+
+GET /api/v1/shops/{shopPublicId} — 고정가 상세
+- 인증: 불요
+- 응답 200: 상세 + item 스냅샷 / 에러 `SHOP_003` 없음(404)
+
+POST /api/v1/shops/{shopPublicId}/purchase — 구매
+- 인증: 필요
+- 동작: 원자적 선점 CAS 단일 승자(SOLD). Order 생성·정산·소유 이전 단일 TX(D-053).
+- 응답 201: `{ orderPublicId, finalPrice }`
+- 에러: `SHOP_004` 이미 판매/종료(409), `SHOP_005` 게임머니 잔액 부족(422)
+
+POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
+- 인증: 필요(판매자 본인)
+- 동작: ACTIVE(미판매)일 때 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
+- 응답 200: `{ status }` / 에러 `SHOP_004` 이미 종료(409)
 
 ## 4. 아이템·인벤토리·주문·화폐 (후속)
 
