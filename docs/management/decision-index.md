@@ -77,6 +77,7 @@
 | D-067 | 원게임 IP 회피 원칙 삭제 (원게임 데이터 전면 사용) | ACCEPTED | 총괄 |
 | D-068 | SCG 엣지 게이트웨이 채택 (모놀리식+엣지, 인증 서비스 유지, SEC-005 해소) | ACCEPTED | 총괄 |
 | D-069 | 백엔드/프론트 → Claude Code 핸드오프 규약 (작업 프롬프트·필독·DoD·리포트) | ACCEPTED | 총괄 |
+| D-070 | refresh 토큰 회전 계약 정합 (/refresh 응답에 refreshToken, 6절 첫 적용) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |

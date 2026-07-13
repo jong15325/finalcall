@@ -879,3 +879,17 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
   공백 제거. Claude Code를 버스 노드로 만들지 않아 파일 버스를 단순 유지.
 - 기각된 대안: Claude Code 전용 outbox·수신함 스캔 — 코드가 곧 산출물이라 불필요, 버스 복잡화.
   프롬프트 복붙만(파일 미보관) — 감사 추적 공백.
+
+---
+
+## D-070. refresh 토큰 회전 계약 정합 — /refresh 응답에 refreshToken 추가 (2026-07-13) [ACCEPTED]
+
+- 소유: 총괄 / 관련: escalated-from backend/outbox/013, relates-to SEC-006(S-002), D-002,
+  api-contract §2. 계약 변경 절차(가이드 6절) 첫 적용.
+- 결정: api-contract §2 POST /refresh 응답에 refreshToken을 추가한다(회전한 신규 refresh 전달,
+  선택지 a). SEC-006의 refresh 회전(재발급마다 이전 폐기·재사용 탐지)을 구현하려면 신규 refresh를
+  클라가 수신해야 하므로 응답 미포함은 모순. api-contract v1 → v1.1, 6절 절차(기획 수정 + 변경
+  이력, 프론트 복사본 갱신).
+- 이유: SEC-006(보안 게이트 1 통과 조건)의 정확한 구현. 계약이 login엔 refreshToken이 있으나
+  refresh엔 누락된 미명세 갭. 기술·보안 정합 건이라 총괄 결정(사용자 위임 범위).
+- 기각된 대안: (b) 임계시점만 회전 — 재사용 탐지 약화로 보안 저하.
