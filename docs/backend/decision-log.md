@@ -122,3 +122,16 @@
 - 비고: outbox/003의 "사용자 식별 헤더 보류" 항목 해소. 게이트웨이 재검토 시 함께 재논의.
 
 ---
+
+## B-010. sale_order 다형 출처 참조 — B-001 물리 FK 예외 승인 (2026-07-13) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-001, depends-on D-066(sale_order)·erd.md §4.2·§5. design/outbox/016 회신
+- 결정: `sale_order`의 출처 참조는 `source_type(AUCTION/SHOP)` + `source_id` 폴리모픽 유지(기획 ERD 안 수용).
+  출처가 두 테이블(`auction`/`shop`)이라 단일 물리 FK가 성립하지 않으므로 B-001 "물리 FK 시작"의 정당한 예외.
+  조건: (1) DB 물리 FK 부재를 애플리케이션 레벨 참조 무결성 강제로 보완(존재 검증·삭제 정책),
+  (2) 역참조용 `(source_type, source_id)` 보조 인덱스 유지(erd §5 이미 반영).
+- 이유: 출처 2종으로 안정적이고 "출처 무관 주문 조회"가 잦아 폴리모픽이 실용적. 두 nullable FK+XOR CHECK
+  대안은 DB 정합성을 지키나 컬럼·분기 증가 대비 이득이 2종 출처에선 낮음.
+- 기각된 대안: `auction_id`/`shop_id` 두 nullable FK + XOR CHECK(정합성↑이나 과설계), 물리 FK 강제(불가능).
+
+---
