@@ -1,0 +1,87 @@
+package com.finalcall.domain.auth;
+
+import com.finalcall.common.util.Ulid;
+import com.finalcall.domain.common.BaseTimeEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.Instant;
+
+/**
+ * 회원 계정 엔티티(auth). 관리자 여부는 별도 서비스가 아닌 {@code isAdmin} 플래그로 표현한다(erd §4.1).
+ *
+ * <p>컨벤션(CLAUDE.md §5): {@code @NoArgsConstructor(PROTECTED)}·생성자 {@code @Builder}·{@code @Setter} 금지
+ * → 상태 변경은 도메인 메서드로만. soft delete({@code isDeleted}/{@code deletedAt}, B-003).
+ *
+ * <p>식별자 이원화(B-002·B-004): 내부 PK {@code id}(BIGINT auto-increment)는 노출 금지,
+ * 외부 노출은 {@code publicId}(ULID, {@code CHAR(26)} UK). {@code publicId}는 생성 시 {@link Ulid}로 채운다.
+ */
+@Entity
+@Getter
+@Table(name = "user")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // erd 정합: ULID 는 고정 길이 CHAR(26). 기본 VARCHAR 매핑을 CHAR 로 바꿔 validate 를 통과시킨다.
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "public_id", nullable = false, unique = true, updatable = false, length = 26)
+    private String publicId;
+
+    @Column(name = "login_id", nullable = false, unique = true, length = 50)
+    private String loginId;
+
+    @Column(name = "password_hash", nullable = false, length = 100)
+    private String passwordHash;
+
+    @Column(nullable = false, unique = true, length = 30)
+    private String nickname;
+
+    @Column(name = "is_admin", nullable = false)
+    private boolean isAdmin;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Builder
+    private User(String loginId, String passwordHash, String nickname, boolean isAdmin) {
+        this.publicId = Ulid.generate();
+        this.loginId = loginId;
+        this.passwordHash = passwordHash;
+        this.nickname = nickname;
+        this.isAdmin = isAdmin;
+        this.isDeleted = false;
+    }
+
+    /** 닉네임 변경(도메인 메서드). @Setter 대신 사용. */
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    /** 비밀번호(해시) 변경(도메인 메서드). 해싱은 호출 측 책임. */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    /** soft delete — 삭제 플래그와 삭제 시각을 기록한다. */
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = Instant.now();
+    }
+}
