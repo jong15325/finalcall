@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1 — G3 확정 (2026-07-14, 총괄 검수 + 보안 게이트 1(S-002) + 사용자 승인). 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
+상태: v1.1 — G3 확정(2026-07-14) + 6절 계약 변경 1건(D-070). 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.3, erd v0.2, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(collaboration-guide 6절) 경유 + v+1.
@@ -11,6 +11,7 @@
 | v0.1 | 2026-07-13 | 전 섹션 초안 완성 — §3 경매·고정가·입찰, §4 아이템·인벤토리·주문·화폐, §5 에러코드. G3 검수 대기 |
 | v0.2 | 2026-07-14 | 보안 게이트 1 findings 반영 — SEC-001·002(충전 confirm 인증·서버검증·pg_tx_id 멱등), SEC-003(자기구매 차단), SEC-004(교환 멱등키), SEC-006(토큰 회전), SEC-007(열거 완화), SEC-009(시간 검증) + item_template 식별자 typeCode 통일(035). 보안 델타 재확인 대기 |
 | v1 | 2026-07-14 | G3 확정 — 총괄 검수 + 보안 게이트 1(S-002) + 사용자 승인. 설계 3종 확정, 구현(G4-n) 진입. 이후 변경은 6절 절차 |
+| v1.1 | 2026-07-14 | 6절 계약 변경 — §2 /refresh 응답에 refreshToken 추가 + 회전 정책(1회성·재사용 탐지) 명시. 사유: D-070/SEC-006(refresh 회전 구현 정합) |
 
 ---
 
@@ -74,8 +75,9 @@
 ### POST /api/v1/auth/refresh — 액세스 토큰 재발급
 - 인증: 불요(refreshToken으로 검증)
 - 요청(body): `{ refreshToken }`
-- 응답 200: `{ accessToken, accessExpiresAt }`
-- 에러: `AUTH_004` refresh 만료·무효(401)
+- 응답 200: `{ accessToken, refreshToken, accessExpiresAt }` (회전된 신규 refreshToken 포함)
+- 회전(SEC-006, D-070): 재발급마다 이전 refreshToken을 폐기(1회성 회전)하고 신규 refreshToken을 발급한다. 폐기된 토큰 재사용이 탐지되면 해당 refresh 세션을 무효화한다.
+- 에러: `AUTH_004` refresh 만료·무효·재사용(401)
 
 ### POST /api/v1/auth/logout — 로그아웃
 - 인증: 필요

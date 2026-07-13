@@ -32,3 +32,4 @@
 | 2026-07-14 | mgmt/outbox/035 G3 총괄 검수 결과 (회신대상 017) | 통과 권고(정합 양호). 관찰 정정: item_template 외부 식별자(templatePublicId 참조하나 erd 미보유) → typeCode로 통일. 017 ANSWERED. 보안 게이트 진행 |
 | 2026-07-14 | mgmt/outbox/037 보안 findings 계약 반영 지시 | 보안 게이트 1 조건부 통과(S-001, Critical 없음). SEC 7건(002·001·003·004·006·007·009) 계약 v0.1 초안 반영 + item_template 식별자 정정. SEC-005는 D-068 해소·무영향, 008·011 게이트2 이월 |
 | 2026-07-14 | mgmt/outbox/039 G3 통과 전파 (전역할, 회신 불요) | G3 확정 — 설계 3종(domain-spec v0.3/erd v0.3/api-contract v1) 확정, 구현(G4-n) 진입. 기획 할 일: api-contract v1 표기(에러코드 4종은 v0.2 반영 완료). 이후 계약 변경은 6절 절차. 적용 확인 |
+| 2026-07-14 | mgmt/outbox/042 계약 변경(6절) /refresh refreshToken 추가 → D-070 | v1 확정 후 첫 6절 변경. §2 /refresh 응답에 refreshToken 추가 + 회전 정책 명시(SEC-006 정합). v1→v1.1. 보안 델타 경미, 프론트 복사본 갱신 전파. 백엔드 010 최종화 트리거 |
