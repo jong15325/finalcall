@@ -9,8 +9,9 @@
 |---|---|---|
 | v0 | 2026-07-13 | 골격 착수 — 네이밍 선언부·엔티티 개요·Mermaid |
 | v0.1 | 2026-07-13 | 테이블 정의(§4, 14개)·인덱스 표(§5)·Flyway(§6) 작성. 네이밍(auction/shop/sale_order)·위치 디스크리미네이터 확정. G2 검수 대기 |
+| v0.2 | 2026-07-13 | G2 통과. D-067 반영 — 시드 '가상' 제약 해제(원게임 실제 데이터·코드), skill_code 원게임 대응 정식화. G2 관찰: shop(item_instance_id) 인덱스 추가 |
 
-확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·가상 명칭(D-047 시드 단계).
+확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
 ---
 
@@ -255,7 +256,7 @@ table `sale_order` — 판매 성립 거래(경매 낙찰 + shop 구매 공통, 
 
 ### 4.3 아이템 (D-044~047·D-062·D-066)
 
-table `item_template` — 아이템 정의 마스터. 타입코드 정규화(①). 고정 시드(Flyway, D-047). taxonomy 멤버 값·가상 표시명은 시드에서 확정.
+table `item_template` — 아이템 정의 마스터. 타입코드 정규화(①). 고정 시드(Flyway). taxonomy 멤버 값·명칭은 원게임(SurvivalProject) 실제 데이터로 시드에서 확정(D-067).
 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
@@ -265,16 +266,16 @@ table `item_template` — 아이템 정의 마스터. 타입코드 정규화(①
 | kind | INT | N | | 종류(검·도·활·방·펜…) — 일의 자리 |
 | grade | INT | N | | 등급 축(D-044) |
 | type_code | INT | N | | 위 자리값 합성 코드(파생/조회 편의) |
-| display_name | VARCHAR | N | | 가상 표시명(시드, D-047) |
+| display_name | VARCHAR | N | | 표시명(원게임 데이터, 시드) |
 
 유니크: (main_category, sub_group, element, kind, grade) 조합 1건.
 
-table `skill_definition` — 특수스킬 정의 마스터(②). 가상 시드. 인스턴스 슬롯1/2가 참조.
+table `skill_definition` — 특수스킬 정의 마스터(②). 원게임(SurvivalProject) 스킬 데이터 시드. 인스턴스 슬롯1/2가 참조.
 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
-| skill_code | INT | N | UK | 스킬 코드(원게임 100~435 대응 구조) |
-| name | VARCHAR | N | | 가상 스킬명(시드) |
+| skill_code | INT | N | UK | 원게임 스킬 ID(100~435) |
+| name | VARCHAR | N | | 스킬명(원게임 데이터, 시드) |
 | description | VARCHAR | Y | | 설명 |
 
 주: 슬롯1/2에 올 수 있는 유효 스킬 풀(장비 종류별 상이)은 시드·검증 규칙으로 관리(테이블 모델 밖).
@@ -336,6 +337,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | bid | (bidder_id) | 사용자 입찰 내역, 연속 입찰 금지 검증 |
 | shop | (status, end_at) | 고정가 만료(EXPIRED) 트리거 스캔(D-057) |
 | shop | (seller_id, status) | 판매자 고정가 목록 |
+| shop | (item_instance_id) | 출품 아이템 역참조(에스크로 상태 확인, auction 대칭 — G2 관찰 #3) |
 | sale_order | (source_type, source_id) | 출처 리스팅 역참조(중복 성립 방지 보조) |
 | sale_order | (buyer_id), (seller_id) | 구매/판매 거래 내역 |
 | charge | (user_id, status) | 사용자 충전 내역·진행 상태 |
@@ -357,6 +359,6 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | V1 | V1__user_and_money.sql | user, user_balance, charge, money_exchange, money_hold + 인덱스 |
 | V2 | V2__item.sql | item_template, skill_definition, item_instance, item_ownership_history, temp_storage + 인덱스 |
 | V3 | V3__auction_shop_order.sql | auction, bid, shop, sale_order + 인덱스, FK |
-| V4 | V4__seed_item_master.sql | item_template·skill_definition 고정 시드(가상 명칭·수치, D-047) |
+| V4 | V4__seed_item_master.sql | item_template·skill_definition 고정 시드(원게임 실제 명칭·수치·코드, D-067) |
 
-주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 아이템 시드(V4)의 실제 taxonomy 멤버·가상 명칭은 시드 확정 단계에서 작성(D-047·D-066).
+주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 아이템 시드(V4)의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).
