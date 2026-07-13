@@ -11,6 +11,10 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
 - **프로젝트명**: FinalCall (게임 아이템 경매 플랫폼)
 - **개요**: 게임 아이템을 등록·경매·입찰·낙찰하는 대규모 트래픽 경매 백엔드.
   마감 직전 입찰 폭주(동시성)와 실시간 최고가 갱신이 핵심 기술 도전.
+- **토폴로지(D-068)**: 모놀리식 단일 서비스 + SCG(Spring Cloud Gateway) 엣지 게이트웨이(별도 배포).
+  게이트웨이 역할 = rate limit(Redis 토큰버킷 RequestRateLimiter)·직접접근 차단(공유비밀
+  X-Gateway-Token)·라우팅. 인증은 서비스가 유지(JWT 자체 검증 F1, SecurityContext, D-065) —
+  게이트웨이 인증 전담 아님, X-User-Id 미도입. 게이트웨이는 스켈레톤 확장 항목이며 향후 MSA 확장 시 재사용.
 - **핵심 도메인** (스켈레톤 완성 후, notice 참조 구현의 컨벤션을 따라 구현):
   - `member`      : 회원 계정, 보유 잔액/포인트
   - `category`    : 게임/아이템 유형 분류
