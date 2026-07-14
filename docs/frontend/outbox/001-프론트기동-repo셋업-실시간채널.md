@@ -1,4 +1,4 @@
-상태: SENT
+상태: ANSWERED → management/outbox/059-프론트-001회신-repo셋업-실시간채널.md
 # [프론트 → 총괄] 결정 요청: 프론트 기동 — repo 셋업 시점·실시간 채널
 
 배경: G3 전파(039) 수신 후 프론트 기동 완료. 폴더 세팅(decision-log·inbox-log·outbox·notes), 수신함 처리(039·025·011), 계약 v1.1 기준 초기 설계(화면·라우트 맵, feature 구조, 계약 타입 대응, 폴링/구독 전략 F-001)까지 마쳤다. 산출물: docs/frontend/notes/screen-route-map.md, decision-log.md(F-001). 다음 진행에 아래 2건의 결정이 필요하다.
