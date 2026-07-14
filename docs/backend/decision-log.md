@@ -228,7 +228,7 @@
 
 ## B-019. 204 No Content 응답 — ApiResponse 미적용(void + @ResponseStatus) (2026-07-14) [ACCEPTED]
 
-- 소유: 백엔드 / 관련: relates-to 011 logout, api-contract §1.5·§2, CLAUDE.md §5(컨트롤러 ApiResponse). 011 완료 보고 이슈2
+- 소유: 백엔드 / 관련: relates-to 011 logout, api-contract §1.5·§2, CLAUDE.md §5(컨트롤러 ApiResponse), escalated-as D-076(CLAUDE.md §5 204 예외 명문화). 011 완료 보고 이슈2
 - 결정: 204 No Content(본문 없는) 응답 엔드포인트는 `void` + `@ResponseStatus(HttpStatus.NO_CONTENT)`로 처리하고
   `ApiResponse<T>`로 감싸지 않는다. logout이 최초 적용. 향후 DELETE 등 no-content 응답에 동일 적용.
 - 이유: RFC 7231상 204는 메시지 본문을 포함할 수 없다. `ApiResponse<T>`로 감싸면 본문이 생겨 204와 모순.
