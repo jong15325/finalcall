@@ -9,5 +9,7 @@
 | 2026-07-14 | management/outbox/047-디자인-등급제거-비주얼논의.md | [총괄→디자인] D-073 등급 축 제거 확정(U-004 무효) + 비주얼 방향은 사용자 직접 논의 재디자인 예정. 진행 방향: 산출물 grade 제거 정합(054), 목업 grade 제거 갱신. |
 | 2026-07-14 | management/outbox/052-전역할-기획분리-D077.md | [총괄→전역할] 기획 분리(D-077) — 백엔드기획(P)/프론트기획(PF). 디자인 상류 조율 = PF, 시각 최종 총괄+사용자 불변. U-011로 반영. |
 | 2026-07-14 | management/outbox/054-디자인-v12정합-grade제거-U004supersede.md | [총괄→디자인] 작업 지시. 계약 v1.2·D-073 정합: design-system §2.3 grade 토큰·GradeBadge 제거, U-004 SUPERSEDE(→U-010), 시각 축 속성/레벨/골드포스/스킬. 완료 → outbox/005 보고. |
+| 2026-07-14 | management/outbox/058-전역할-레인재편-QA기동-백엔드대기.md | [총괄→전역할] D-074 레인 재편. 디자인=초안 계속+grade 정합(054) 마저 — 이미 반영됨(005). 추가 액션 없음. |
+| 2026-07-14 | management/outbox/064-전역할-기획재통합-D079.md | [총괄→전역할] D-079 기획 재통합(PF→P, D-077 되돌림). 디자인 상류 조율 = 기획(P). U-011 SUPERSEDED(상류=P), U-013 경계 유지. 미결 outbox/006·008 수신처 PF→P 정정. |
 
 주: 전 역할 outbox에서 `[X → 디자인]`·U- 접두 언급 스캔 결과 신규 직접 수신 없음(2026-07-14 기준). 착수 근거는 킥오프(management/prompts/design-kickoff-prompt.md)와 확정 스펙(api-contract v1.1)이다.
