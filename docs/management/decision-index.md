@@ -83,9 +83,21 @@
 | D-073 | 아이템 등급(grade) 축 제거 (원게임 무등급, D-044 개정) | ACCEPTED | 총괄 |
 | D-074 | 총괄 시퀀싱·선행 완료 게이팅 (순서 지정·선행 미완료 착수 금지) | ACCEPTED | 총괄 |
 | D-075 | CLAUDE.md 코드 스타일 규약 섹션 7 신설 (§7 append, B-020 반영, 재번호 회피) | ACCEPTED | 총괄 |
+| D-076 | CLAUDE.md §5 Controller 규약 — 204 No Content 예외 명문화 (B-019) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
+| B-015 | API 라우팅 — 컨트롤러 클래스 레벨 @RequestMapping (전역 접두 미도입) | ACCEPTED | 백엔드 |
+| B-016 | password 검증 잠정 (@Size max=72, 강화 보안게이트2 이월) | ACCEPTED | 백엔드 |
+| B-017 | 로그인 타이밍 사이드채널 대응 — 보안게이트2 이월 | ACCEPTED | 백엔드 |
+| B-018 | refresh 회전 vs 탈퇴 순서 — 보안게이트2 이월 | ACCEPTED | 백엔드 |
+| B-019 | 204 No Content — ApiResponse 미적용 (void + @ResponseStatus) | ACCEPTED (→D-076 명문화) | 백엔드 |
+| B-020 | 코드 스타일 자동화 도입 (Naver 핵데이 + Spotless/Checkstyle, 스페이스4) | ACCEPTED (→D-075) | 백엔드 |
+| B-021 | Checkstyle 10.20.2 (Java 21 record 지원) | ACCEPTED | 백엔드 |
+| B-022 | 포맷터↔Checkstyle 정합 정책 (포맷터 튜닝 우선, 룰 완화 금지) | ACCEPTED | 백엔드 |
+| B-023 | 테스트 메서드명 한국어 허용 (*Test.java suppress) | ACCEPTED | 백엔드 |
+| B-024 | signup 중복 409 정합 (제약 위반 예외 매핑) | ACCEPTED | 백엔드 |
+| B-025 | refresh 만료 — 회전 슬라이딩 현행 + 절대 상한 보안게이트2 이월 | ACCEPTED | 백엔드 |
 | C-001 | 문서 유형 6종 정의 | ACCEPTED (→D-014) | 컨설턴트 |
 | C-002 | 역할 폴더 표준 내부 구조 | ACCEPTED (→D-015) | 컨설턴트 |
 | C-003 | 읽기 규칙 재설계 (pull 열람) | ACCEPTED (→D-016) | 컨설턴트 |
@@ -124,7 +136,7 @@
 | G1 domain-spec 확정 | 기획 초안 + 총괄 검수 + 사용자 승인, ON-HOLD 인덱스 등재 | 통과 (총괄 검수 + 사용자 승인, DRAFT v0.1) | 2026-07-13 |
 | G2 erd 확정 | G1 + spec 정합 확인 | 통과 (총괄 검수 + 사용자 승인, DRAFT v0.1, 관찰 #1·#3 후속) | 2026-07-13 |
 | G3 api-contract 확정 | 총괄 검수 + 보안 게이트 1 + 사용자 승인 → 백/프론트/QA/보안 기동(백엔드는 G1 직후 기술 규약 협의 모드로 조기 기동, D-035) | 통과 (총괄 검수 + 보안 게이트 1 S-002 + 사용자 승인, api-contract v1) | 2026-07-13 |
-| G4-n 도메인 구현 | 구현 DoD + QA 시나리오 + defects 처리, 전체 완료 시 보안 게이트 2 | 착수 (G3 통과, 백엔드 구현 계획·auth 우선) | - |
+| G4-n 도메인 구현 | 구현 DoD + QA 시나리오 + defects 처리, 전체 완료 시 보안 게이트 2 | 진행: auth 구현 DoD 충족(총괄 검수 019 — 산출물·config 실재, 계약 §2 정합, clean build). QA 시나리오 대기 → G4-1 게이트 미통과. SCG(012) 대기 | - |
 
 ## 추적 안건 (D-026: 보류/블로커/리스크)
 
@@ -134,6 +146,7 @@
 | 캐시↔게임머니 교환 비율 (D-051) | 보류 | 기획·사용자 | 파라미터화 설계, 구현 전 확정 | ON-HOLD |
 | 플랫폼 수수료·정산 정책 (settlement, spec §5·§8 이월, G1 검수 관찰) | 보류 | 총괄·사용자 | ERD/구현 전 확정 | ON-HOLD |
 | ERD G2 관찰 후속: sale_order 폴리모픽 FK(B-001 정합)·shop(item_instance_id) 인덱스 | 리스크 | 기획·백엔드 | 폴리모픽 FK B-010 수용(앱 레벨 무결성), shop 인덱스 구현 튜닝 이월 | 해소됨(2026-07-13) |
+| 보안 게이트 2 이월분: B-016(password 강화)·B-017(로그인 타이밍)·B-018(회전vs탈퇴 순서)·B-025(refresh 절대상한)·m3(BCrypt 72바이트 vs @Size)·SEC-008·SEC-011 | 이월 | 보안·백엔드 | G4-n 구현 후 보안 게이트 2 표본 검사 | OPEN |
 | 주제 5(아이템 도메인) 논의 | 보류 | 기획 | D-044~047로 종결 | 해소됨(2026-07-12) |
 | 컨설턴트 종료 재검토 (현재 대기 모드, D-042) | 보류 | 총괄·사용자 | G3 통과 후 재검토 | ON-HOLD |
 | 다중 세션 동시 편집 시 파일 절단(소실 사고 누적 6건) | 리스크 | 총괄 | incident-001 방지 액션 준수 | 감시 중 |

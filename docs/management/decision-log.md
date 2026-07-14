@@ -991,3 +991,12 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
   명시해 선제 준수 + 정본 경로 단일화.
 - 기각된 대안: §4~5 사이 삽입(백엔드 A안) — 논리적 인접성은 낫지만 재번호 파급이 커 기각.
 - 집행: 총괄이 CLAUDE.md 섹션 7 반영(D-061 커밋은 사용자).
+
+## D-076. CLAUDE.md §5 Controller 규약 — 204 No Content 예외 명문화 (2026-07-14) [ACCEPTED]
+
+- 소유: 총괄 / 관련: relates-to B-019(백엔드 자율 결정)·backend/outbox/019(요청). CLAUDE.md 지침(유형2)·총괄 소유.
+- 결정: §5 Controller "반환 타입 항상 ApiResponse<T>"에 예외를 명문화한다 — 상태 변경만 하고 반환
+  본문이 없는 응답(예: logout)은 204 No Content + `void`/`@ResponseStatus` 를 허용(ApiResponse 래핑 제외).
+- 이유: 204 No Content는 정의상 본문이 없어 ApiResponse<T> 래핑이 불가·부적절하다. "항상" 문구와
+  실제 구현(B-019)이 충돌하므로 예외를 명시해 새 세션 혼선을 차단한다. REST 정합.
+- 집행: 총괄이 CLAUDE.md §5 반영(D-061 커밋은 사용자).

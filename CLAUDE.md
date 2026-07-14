@@ -199,7 +199,7 @@ INCLUDE_AWS_SPEC_HINT = true
   `<Entity>RepositoryCustom` + `<Entity>RepositoryImpl`(QueryDSL).
 - **Service**: 클래스 레벨 `@Transactional(readOnly = true)`, 쓰기만 `@Transactional` 오버라이드.
   `@ServiceLog` 부착, 비즈니스 검증은 `Preconditions.validate(condition, ErrorCode)`.
-- **Controller**: 반환 타입 항상 `ApiResponse<T>`, 요청 검증 `@Valid`, try-catch 금지(전역 핸들러).
+- **Controller**: 반환 타입 항상 `ApiResponse<T>`(예외: 상태 변경만 하고 본문이 없는 응답은 204 No Content + `void`/`@ResponseStatus` 허용 — ApiResponse 래핑 제외, B-019·D-076), 요청 검증 `@Valid`, try-catch 금지(전역 핸들러).
 - **DTO**: Java `record`, Response 는 `@Builder` + `static from(Entity)`,
   네이밍 `<도메인><목적>Request/Response`(Dto 접미사 금지).
 - **도메인 ErrorCode**: 공통 `ErrorCode` 인터페이스를 구현한 도메인별 enum, 네이밍 `{DOMAIN}_{3자리}`.
