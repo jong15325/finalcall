@@ -118,10 +118,14 @@ public class RefreshTokenStore {
         return Optional.empty(); // MISSING(없음/만료) 또는 REUSE(스크립트가 이미 세션 삭제)
     }
 
-    /** 세션을 폐기한다(logout). 원문 토큰의 라우팅 정보로 세션 키를 삭제한다. */
-    public void revoke(String presentedToken) {
+    /**
+     * 세션을 폐기한다(logout). <b>소유자 검증</b>: 토큰의 userId 가 {@code ownerUserId}(SecurityContext 주체)와
+     * 일치할 때만 삭제한다 — 타 사용자 세션 조작 방지. 삭제 키는 항상 토큰의 userId 네임스페이스라, 일치를 강제하면
+     * 인증 사용자 자신의 세션만 폐기된다. 형식 위반·불일치는 무해한 no-op(멱등 로그아웃).
+     */
+    public void revoke(String presentedToken, String ownerUserId) {
         Parsed parsed = parse(presentedToken);
-        if (parsed != null) {
+        if (parsed != null && parsed.userId().equals(ownerUserId)) {
             redisTemplate.delete(parsed.key());
         }
     }

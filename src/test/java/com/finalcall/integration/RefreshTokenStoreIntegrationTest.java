@@ -79,9 +79,18 @@ class RefreshTokenStoreIntegrationTest extends IntegrationTest {
     void 폐기하면_검증에_실패한다() {
         String token = refreshTokenStore.issue(USER_ID);
 
-        refreshTokenStore.revoke(token);
+        refreshTokenStore.revoke(token, USER_ID);
 
         assertThat(refreshTokenStore.validate(token)).isEmpty();
+    }
+
+    @Test
+    void 소유자가_아니면_폐기되지_않는다() {
+        String token = refreshTokenStore.issue(USER_ID);
+
+        refreshTokenStore.revoke(token, "9999"); // 타 사용자 → no-op
+
+        assertThat(refreshTokenStore.validate(token)).contains(USER_ID);
     }
 
     @Test

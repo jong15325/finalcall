@@ -165,4 +165,12 @@ class AuthServiceUnitTest {
 
         verify(tokenProvider, never()).generateAccessToken(any());
     }
+
+    @Test
+    void 로그아웃은_소유자_기준으로_refresh를_폐기한다() {
+        authService.logout("42", "42.sid.secret");
+
+        // 폐기는 SecurityContext 주체(userId) 소유 세션에 한정된다(타 사용자 세션 조작 방지).
+        verify(refreshTokenStore).revoke("42.sid.secret", "42");
+    }
 }

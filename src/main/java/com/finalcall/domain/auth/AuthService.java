@@ -87,4 +87,15 @@ public class AuthService {
                 new TokenClaims(rotation.userId(), user.getPublicId(), user.isAdmin()));
         return new LoginResult(accessToken, rotation.refreshToken(), tokenProvider.accessTokenExpiresAt());
     }
+
+    /**
+     * 로그아웃: 제시된 refresh 세션을 폐기한다(RefreshTokenStore.revoke, B-011). 폐기 후 동일 refresh 는 AUTH_004 로 차단된다.
+     *
+     * <p>access 는 무상태 JWT 라 블랙리스트하지 않는다(짧은 만료로 자연 소멸). 소유자 검증으로 자신의 세션만 폐기한다
+     * ({@code userId} = SecurityContext 주체). 없는·타인·형식위반 토큰은 무해한 no-op(멱등).
+     */
+    @ServiceLog
+    public void logout(String userId, String refreshToken) {
+        refreshTokenStore.revoke(refreshToken, userId);
+    }
 }

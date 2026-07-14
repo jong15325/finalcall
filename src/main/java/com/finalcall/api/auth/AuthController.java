@@ -7,6 +7,7 @@ import com.finalcall.domain.auth.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,5 +48,15 @@ public class AuthController {
     public ApiResponse<RefreshResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         LoginResult result = authService.refresh(request.refreshToken());
         return ApiResponse.success(RefreshResponse.from(result));
+    }
+
+    /**
+     * 로그아웃 — 인증 필요. 제시된 refresh 세션을 폐기하고 본문 없이 204(계약 §2·§1.5).
+     * 주체는 SecurityContext(userId)에서 얻는다(B-009). 204 no-body 라 예외적으로 ApiResponse 를 감싸지 않는다.
+     */
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(Authentication authentication, @Valid @RequestBody LogoutRequest request) {
+        authService.logout(authentication.getName(), request.refreshToken());
     }
 }
