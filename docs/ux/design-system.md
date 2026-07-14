@@ -1,13 +1,14 @@
 # FinalCall 디자인 시스템 (design-system.md)
 
-상태: DRAFT v0 — 디자인 초안. 비주얼 방향(1절)·기본 테마는 총괄/사용자 결정 대기(outbox/001).
+상태: DRAFT v0.1 — 디자인 초안. 비주얼 방향(1절)·기본 테마는 사용자 직접 논의 재디자인 예정(047), 최종 총괄+사용자(D-072).
 소유: 디자인(UX/UI)
-근거: api-contract v1.1(최상위), erd v0.2(item_template.element/grade), frontend/CLAUDE.md 5절, design-guide 3·4절, U-001~007
-기준: 계약이 최상위. 이 문서는 프론트 구현의 참고 지침이며 계약·도메인 규칙과 충돌 시 계약 우선.
+근거: api-contract v1.2(최상위, 등급 제거 D-073·§3.3 응답 스키마), erd v0.5(item_template.element), frontend/CLAUDE.md 5절, design-guide 3·4·11절, U-001~003·005~011
+기준: 계약이 최상위. 이 문서는 프론트 구현의 참고 지침이며 계약·도메인 규칙과 충돌 시 계약 우선. 상류 조율은 프론트 기획(PF, D-077).
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v0 | 2026-07-14 | 초안 — 비주얼 방향(선택지), 토큰(색·타이포·간격·반경·그림자·모션) + Tailwind 매핑, 우선 컴포넌트 스펙 |
+| v0.1 | 2026-07-14 | 계약 v1.2 정합 — 등급(grade) 축 제거(D-073, U-004 SUPERSEDED→U-010). grade 토큰·GradeBadge 폐기, 시각 축을 속성(4색)·레벨·골드포스·스킬로 재조정 |
 
 핸드오프 원칙: 토큰명은 프론트 Tailwind 유틸과 1:1(U-001). 이 표의 키를 `tailwind.config.js` `theme.extend`에 그대로 넣으면 `bg-primary`, `text-muted`, `rounded-lg` 등으로 사용된다.
 
@@ -19,11 +20,11 @@ FinalCall은 두 성격이 겹친다: (1) 실시간 경쟁·희소템 거래의 
 
 | 안 | 무드 | 기본 테마 | primary | 강점 | 약점 |
 |---|---|---|---|---|---|
-| A. Dark Arena (추천) | 경매장·게임 인벤토리. 어두운 표면에 희소 등급색이 도드라짐 | 다크 우선(라이트 병행) | 일렉트릭 인디고 | 게임 몰입·등급 스캔성·장시간 열람 피로 저감. 카운트다운/즉시구매 amber가 강하게 튐 | 다크에서 대비 설계 신중 필요 |
+| A. Dark Arena (추천) | 경매장·게임 인벤토리. 어두운 표면에 속성색이 도드라짐 | 다크 우선(라이트 병행) | 일렉트릭 인디고 | 게임 몰입·속성 스캔성·장시간 열람 피로 저감. 카운트다운/즉시구매 amber가 강하게 튐 | 다크에서 대비 설계 신중 필요 |
 | B. Clean Marketplace | 핀테크·마켓(토스 결제 연동 톤과 조화) | 라이트 우선 | 트러스트 블루 | 자금 신뢰·넓은 접근성·구현 단순 | 게임 개성 약함 |
 | C. Neon Night | 고대비 다크 + 네온 시안/마젠타 | 다크 | 네온 시안 | 강한 게임 임팩트 | 자금 신뢰감·WCAG 대비 리스크 큼 |
 
-추천: A(Dark Arena). 근거 — 타깃(게임 아이템 트레이더)의 다크 선호, 등급/속성 색이 어두운 표면에서 가장 잘 읽힘, 마감 임박·즉시구매 같은 긴급 상태를 amber로 강조하기 유리. 자금 신뢰는 라이트 테마 병행(U-005)과 절제된 채도로 확보. 아래 토큰의 기본 색값은 A안 기준으로 제시하되, B/C 채택 시 primary·기본 테마만 교체한다.
+추천: A(Dark Arena). 근거 — 타깃(게임 아이템 트레이더)의 다크 선호, 속성 색이 어두운 표면에서 가장 잘 읽힘, 마감 임박·즉시구매 같은 긴급 상태를 amber로 강조하기 유리. 자금 신뢰는 라이트 테마 병행(U-005)과 절제된 채도로 확보. 아래 토큰의 기본 색값은 A안 기준으로 제시하되, B/C 채택 시 primary·기본 테마만 교체한다.
 
 레퍼런스: 게임 레어리티 색 관례(공통/희귀/영웅/전설 티어), 거래소·핀테크 UI의 tabular 숫자·절제된 채도, 다크 UI 대비 설계(WCAG 2.1 AA).
 
@@ -59,9 +60,11 @@ FinalCall은 두 성격이 겹친다: (1) 실시간 경쟁·희소템 거래의 
 
 각 색은 배경용 옅은 톤(`-soft`)과 전경 텍스트용 진한 톤(`-strong`)을 함께 둔다(예: `success-soft` #DCFCE7 / `success-strong` #15803D). 색만으로 정보 전달 금지 — 반드시 아이콘/텍스트 병기(accessibility 2절).
 
-### 2.3 등급(grade) · 속성(element) — 아이템 도메인 (U-004)
+### 2.3 속성(element) — 아이템 도메인 (U-010)
 
-element(4종 확정, erd)와 grade(레어리티 티어)는 아이템 카드·필터의 핵심 시각 축이다.
+등급(grade)/희귀도 축은 D-073으로 제거됐다(원게임 무등급). 아이템의 시각 축은 속성(element 4색)·레벨(숫자)·골드포스(잔여시간)·스킬(태그)이며, 레어리티 티어 색은 없다.
+
+element(4종 확정, erd·계약 §3.3 item 블록)만 색 매핑한다.
 
 | element 토큰 | 값 | 매핑 |
 |---|---|---|
@@ -70,15 +73,7 @@ element(4종 확정, erd)와 grade(레어리티 티어)는 아이템 카드·필
 | element-earth | #D97706 | 흙 |
 | element-wind | #10B981 | 바람 |
 
-| grade 토큰 | 값 | 잠정 티어 |
-|---|---|---|
-| grade-1 | #9CA3AF | 일반(gray) |
-| grade-2 | #22C55E | 고급(green) |
-| grade-3 | #3B82F6 | 희귀(blue) |
-| grade-4 | #A855F7 | 영웅(purple) |
-| grade-5 | #F59E0B | 전설(gold) |
-
-미확정 참고: erd `grade`는 INT 축으로 값 목록 미명시. 실제 등급 단계 수 확정 시 티어를 1:1 고정한다(기획 확인 대상, U-004). 티어 수가 5와 다르면 스케일을 확장/축소한다.
+주: 레벨은 강조 숫자(font-num), 골드포스는 잔여시간 칩(만료 임박 시 warning), 스킬1/2는 태그(발동확률 skillPercent 병기)로 표현한다 — 색 위계로 "희귀함"을 나타내지 않는다(등급 폐기 정합).
 
 ### 2.4 중립 · 표면 · 텍스트 (테마별)
 
@@ -106,14 +101,13 @@ colors: {
   accent:  { 500:'#F59E0B',600:'#D97706', DEFAULT:'#F59E0B' },
   success:'#16A34A', warning:'#F59E0B', danger:'#DC2626', info:'#2563EB',
   element: { water:'#3B82F6', fire:'#EF4444', earth:'#D97706', wind:'#10B981' },
-  grade:   { 1:'#9CA3AF',2:'#22C55E',3:'#3B82F6',4:'#A855F7',5:'#F59E0B' },
   // 표면/텍스트는 CSS 변수로: bg-[var(--bg)] 또는 theme 확장 + [data-theme] 오버라이드
   bg:'var(--color-bg)', surface:'var(--color-surface)', 'surface-raised':'var(--color-surface-raised)',
   border:'var(--color-border)', text:'var(--color-text)', 'text-muted':'var(--color-text-muted)',
 }
 ```
 
-권장: 테마 의존 토큰(표면/텍스트)은 CSS 변수로 정의하고 `[data-theme="dark"]`에서 값을 오버라이드, Tailwind는 `var()` 참조. 테마 무관 토큰(primary·grade·element)은 정적값. 이로써 다크/라이트 전환이 클래스 토글 1회로 끝난다(U-005).
+권장: 테마 의존 토큰(표면/텍스트)은 CSS 변수로 정의하고 `[data-theme="dark"]`에서 값을 오버라이드, Tailwind는 `var()` 참조. 테마 무관 토큰(primary·element)은 정적값. 이로써 다크/라이트 전환이 클래스 토글 1회로 끝난다(U-005).
 
 ---
 
@@ -198,16 +192,16 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 ### 5.3 ItemCard (매물 카드)
 
-- 용도: 경매·고정가 목록의 매물 표시(계약 GET /auctions·/shops 요약 + item 스냅샷).
-- 해부: 썸네일/아이콘 · 아이템명(text-lg semibold) · GradeBadge · ElementBadge · 레벨·스킬 요약 · 가격(현재가 또는 정가, font-num) · 상태/카운트다운(경매) · 판매유형 칩(경매/즉시구매/고정가).
-- 등급 색은 카드 좌측 보더/뱃지로 표기(grade 토큰). 등급을 색만으로 전달 금지 — 등급명 텍스트 병기.
+- 용도: 경매·고정가 목록의 매물 표시(계약 §3.3 AuctionSummary·ShopSummary + item 블록).
+- 해부(계약 §3.3 필드 1:1): 썸네일/아이콘 · 아이템명(item.nameSnapshot, text-lg semibold) · ElementBadge(item.element) · 레벨(item.level, font-num) · 스킬 태그(skill1/2 + skillPercent) · 골드포스 잔여(goldforceExpireAt 있으면) · 가격(경매 highestBidAmount 또는 startPrice / 고정가 price, font-num) · 상태(status)·카운트다운(경매 endAt) · 판매유형 칩(경매/즉시구매(buyNowPrice 유무)/고정가) · 판매자(sellerNickname).
+- 등급/희귀도 표현 없음(D-073). 속성은 색+속성명 텍스트 병기(색만 전달 금지).
 - 상태: default/hover(surface-raised + shadow-md·다크는 밝기차) / loading(스켈레톤) / 종료(딤 처리 + "마감/판매완료" 오버레이).
 - 반응형: 목록 그리드 1열(모바일)→2(sm)→3(lg)→4(xl). 카드 내부는 세로 스택.
 
 ### 5.4 ListGrid + SearchFilterBar
 
 - ListGrid: ItemCard 반응형 그리드 + 빈 상태 + 로딩 스켈레톤 + 무한스크롤 센티넬(cursor) 또는 페이지네이션(offset).
-- SearchFilterBar(계약 §3 공통 필터): mainCategory·subGroup·element·kind·grade·minLevel/maxLevel·skill1/skill2·goldforceActive·minPrice/maxPrice·status. 정렬은 화이트리스트만(경매 price·endAt·createdAt·highestBidAmount / 고정가 price·endAt·createdAt). 모바일은 필터를 시트/드로어로, 데스크톱은 좌측 레일 또는 상단 바.
+- SearchFilterBar(계약 §3 공통 필터, 등급 없음 D-073): mainCategory·subGroup·element·kind·minLevel/maxLevel·skill1/skill2·goldforceActive·minPrice/maxPrice·status. 정렬은 화이트리스트만(경매 price·endAt·createdAt·highestBidAmount / 고정가 price·endAt·createdAt). 모바일은 필터를 시트/드로어로, 데스크톱은 좌측 레일 또는 상단 바.
 - 접근성: 필터 컨트롤 키보드 조작, 적용된 필터는 제거 가능한 칩으로 표시(현재 상태 가시화).
 
 ### 5.5 Modal / Dialog
@@ -228,10 +222,10 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 - cursor(무한스크롤): 경매·고정가·임시보관·주문·충전내역 — 센티넬 관찰 + "더 보기" 폴백 버튼(키보드·스크린리더 접근). hasNext=false 시 종료 표시.
 - offset(페이지 번호): item-templates·입찰내역 — 이전/다음 + 현재 페이지. 총페이지 표시.
 
-### 5.8 Badge / StatusChip (+ GradeBadge / ElementBadge)
+### 5.8 Badge / StatusChip (+ ElementBadge)
 
 - StatusChip: 경매 status(SCHEDULED/ACTIVE/SOLD/UNSOLD/CANCELLED)·고정가(ACTIVE/SOLD/EXPIRED/CANCELLED)·주문 상태. 의미색 soft 배경 + strong 텍스트 + 상태명. 색+텍스트(+아이콘) 병기.
-- GradeBadge: grade 토큰 색 + 등급명. ElementBadge: element 색 + 속성명/아이콘.
+- ElementBadge: element 색(2.3) + 속성명/아이콘. 등급(GradeBadge)은 D-073으로 폐기 — 사용 금지.
 - resultType(BID/BUYNOW)은 보조 라벨로 표기(낙찰 사유).
 
 ### 5.9 Countdown (마감 카운트다운)

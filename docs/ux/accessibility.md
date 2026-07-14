@@ -23,7 +23,7 @@
 자금·경쟁 도메인이라 상태 오인은 손실로 직결된다. 색은 보조 신호이고 텍스트/아이콘/형태가 1차 신호다.
 
 - StatusChip(경매·고정가·주문 상태): 의미색 + 상태명 텍스트(+아이콘). 색만으로 SOLD/ACTIVE 구분 금지.
-- GradeBadge/ElementBadge: 색 + 등급명·속성명 텍스트 병기(색약 사용자 대비).
+- ElementBadge: 색 + 속성명 텍스트 병기(색약 사용자 대비). 등급(GradeBadge)은 D-073으로 폐기 — 해당 없음.
 - 잔액 부족·마감 임박: danger/warning 색 + 명시 문구("잔액 부족", "마감 임박").
 - 입력 에러: 색 + 에러 메시지 텍스트(aria-describedby 연결).
 
@@ -44,7 +44,7 @@
 
 - 랜드마크: header/nav/main/footer. 목록은 list 시맨틱, 카드 그리드는 적절한 역할.
 - 폼: label for=input(가시 라벨, placeholder 라벨 대용 금지). 힌트·에러는 aria-describedby. 필수는 aria-required.
-- 아이템 이미지: 의미 있는 대체텍스트(아이템명·등급). 장식 아이콘은 aria-hidden.
+- 아이템 이미지: 의미 있는 대체텍스트(아이템명·속성·레벨). 장식 아이콘은 aria-hidden.
 - 아이콘 전용 버튼(즉시구매·닫기 등): aria-label 필수.
 - 금액·시간: 시각은 축약(N:MM)해도 스크린리더용 전체 값 제공(aria-label 또는 sr-only).
 
