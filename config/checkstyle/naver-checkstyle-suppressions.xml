@@ -6,4 +6,9 @@
 <suppressions>
 	<!-- 자동 생성 코드 제외(B-020): QueryDSL Q타입 등 build/generated 산출물은 스타일 검사 대상 아님. -->
 	<suppress files="[/\\]generated[/\\]" checks=".*"/>
+
+	<!-- B-023: 테스트 메서드명은 한국어 서술 컨벤션(CLAUDE.md 언어 규약·Naver 2.9 테스트 예외). *Test.java 한정,
+	     프로덕션 코드 enforcement 는 불변. 룰 완화 아니라 컨벤션 정합. -->
+	<suppress files="Test\.java$" checks="MethodName"/>
+	<suppress files="Test\.java$" checks="AbbreviationAsWordInName"/>
 </suppressions>
