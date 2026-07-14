@@ -258,3 +258,18 @@ INCLUDE_AWS_SPEC_HINT = true
 - 커밋·푸시는 사용자가 직접 실행한다.
 - Claude Code 는 단계·작업 완료 시 위 컨벤션을 따른 커밋 메시지를 제안한다(여러 변경이면 나눠서).
 - 시크릿·.env·자격증명은 .gitignore 로 커밋 제외를 보장한다.
+
+---
+
+## 섹션 7: 코드 스타일 규약 (B-020, D-075)
+
+기계가 강제하는 스타일 층이다. 섹션 5(도메인 코드 컨벤션·아키텍처)와 병존하며 스타일 포매팅만 담당한다.
+
+- **정본(기계 강제)**: `config/checkstyle/naver-checkstyle-rules.xml`(+ `naver-checkstyle-suppressions.xml`),
+  `.editorconfig`, `config/naver-eclipse-formatter.xml`. 경로·파일명은 도입 작업(B-020) 산출물과 일치시킨다.
+- **기반**: Naver 캠퍼스 핵데이 Java 컨벤션(https://naver.github.io/hackday-conventions-java/).
+  들여쓰기는 스페이스 4로 커스터마이즈(하드탭 미사용).
+- **강제**: `build`(check)에 checkstyle·spotlessCheck 를 연결, 위반 시 빌드 실패(maxWarnings 0).
+- **적용 의무**: 코드 작성·커밋 전 `./gradlew spotlessApply` 실행 후 checkstyle 통과를 확인한다.
+  새 세션·전 도메인 동일 적용한다(Claude Code 킥오프도 이 절을 따른다).
+- **범위**: 스타일 층만 담당한다. 도메인 설계 규칙은 섹션 5, 커밋 형식은 섹션 6을 따른다.
