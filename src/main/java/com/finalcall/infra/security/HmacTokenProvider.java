@@ -53,6 +53,11 @@ public class HmacTokenProvider implements TokenProvider {
     }
 
     @Override
+    public Instant accessTokenExpiresAt() {
+        return Instant.now().plus(accessExpMinutes, ChronoUnit.MINUTES);
+    }
+
+    @Override
     public TokenClaims parseAccessToken(String token) {
         // 서명/만료 검증 실패 시 JwtException 계열 예외를 던진다(필터에서 컨텍스트 비우고 EntryPoint 가 401).
         Claims payload = Jwts.parser()

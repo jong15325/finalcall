@@ -17,4 +17,7 @@ public interface TokenProvider {
 
     /** 액세스 토큰을 검증하고 클레임을 반환한다. 무효/만료 시 예외를 던진다. */
     TokenClaims parseAccessToken(String token);
+
+    /** 지금 발급하는 액세스 토큰의 만료 시각(UTC). 토큰 수명은 Provider 가 소유하므로 여기서 노출한다(응답 accessExpiresAt). */
+    java.time.Instant accessTokenExpiresAt();
 }

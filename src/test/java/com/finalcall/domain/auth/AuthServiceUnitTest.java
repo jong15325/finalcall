@@ -1,12 +1,18 @@
 package com.finalcall.domain.auth;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.security.TokenClaims;
+import com.finalcall.common.security.TokenProvider;
+import com.finalcall.infra.security.RefreshTokenStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +37,12 @@ class AuthServiceUnitTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private TokenProvider tokenProvider;
+
+    @Mock
+    private RefreshTokenStore refreshTokenStore;
 
     @InjectMocks
     private AuthService authService;
@@ -76,5 +88,50 @@ class AuthServiceUnitTest {
 
         verify(userRepository, never()).save(any());
         verify(userBalanceRepository, never()).save(any());
+    }
+
+    @Test
+    void 로그인에_성공하면_access_refresh_를_발급한다() {
+        User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
+        ReflectionTestUtils.setField(user, "id", 42L);
+        Instant expiresAt = Instant.parse("2026-07-14T00:30:00Z");
+        when(userRepository.findByLoginId("hong")).thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.matches("pw12345678", "hashed-pw")).thenReturn(true);
+        when(tokenProvider.generateAccessToken(any(TokenClaims.class))).thenReturn("access-token");
+        when(tokenProvider.accessTokenExpiresAt()).thenReturn(expiresAt);
+        when(refreshTokenStore.issue("42")).thenReturn("42.sid.secret");
+
+        LoginResult result = authService.login("hong", "pw12345678");
+
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("42.sid.secret");
+        assertThat(result.accessExpiresAt()).isEqualTo(expiresAt);
+        verify(refreshTokenStore).issue("42"); // refresh 저장(발급) 확인
+    }
+
+    @Test
+    void 없는_loginId_는_AUTH_003() {
+        when(userRepository.findByLoginId("nobody")).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> authService.login("nobody", "pw12345678"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+
+        verify(refreshTokenStore, never()).issue(any());
+    }
+
+    @Test
+    void 비밀번호_불일치는_AUTH_003() {
+        User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
+        when(userRepository.findByLoginId("hong")).thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.matches("wrong", "hashed-pw")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.login("hong", "wrong"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+
+        verify(refreshTokenStore, never()).issue(any());
     }
 }

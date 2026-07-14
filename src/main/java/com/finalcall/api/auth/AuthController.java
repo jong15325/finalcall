@@ -2,6 +2,7 @@ package com.finalcall.api.auth;
 
 import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.auth.AuthService;
+import com.finalcall.domain.auth.LoginResult;
 import com.finalcall.domain.auth.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +33,12 @@ public class AuthController {
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         User created = authService.signup(request.loginId(), request.password(), request.nickname());
         return ApiResponse.success(SignupResponse.from(created));
+    }
+
+    /** 로그인 — 성공 시 200, access/refresh 발급(계약 §2). 실패는 단일 코드 AUTH_003(열거 완화). */
+    @PostMapping("/login")
+    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResult result = authService.login(request.loginId(), request.password());
+        return ApiResponse.success(LoginResponse.from(result));
     }
 }
