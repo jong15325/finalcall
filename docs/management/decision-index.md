@@ -88,6 +88,8 @@
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
+| PF-001 | 화면 명세·IA 베이스라인 = api-contract v1.2 기준 (screen-spec.md) | ACCEPTED | 프론트기획 |
+| PF-002 | 화면 표현 grade 축 제거 (D-073 집행, 타 역할 전파는 총괄) | ACCEPTED | 프론트기획 |
 | B-015 | API 라우팅 — 컨트롤러 클래스 레벨 @RequestMapping (전역 접두 미도입) | ACCEPTED | 백엔드 |
 | B-016 | password 검증 잠정 (@Size max=72, 강화 보안게이트2 이월) | ACCEPTED | 백엔드 |
 | B-017 | 로그인 타이밍 사이드채널 대응 — 보안게이트2 이월 | ACCEPTED | 백엔드 |
