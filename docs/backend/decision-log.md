@@ -319,3 +319,30 @@
 - 후속: 보안 게이트2 확정 시 B-013 연장 갱신 or 신규 발번. 절대 상한 도입 시 rotate에 iat 검증 추가.
 
 ---
+
+## B-026. 게이트웨이 멀티모듈 구조 — 루트=서비스 + :gateway 형제 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to D-068, B-020(스타일). 012 D-a·D-b
+- 결정: SCG 게이트웨이는 루트(서비스 앱) 유지 + `:gateway` 형제 서브프로젝트로 추가(루트를 `:app` 순수 부모로
+  내리는 전면 재구조화 회피). 독립 2앱(루트 jar + gateway jar). gateway build.gradle이 checkstyle/spotless를
+  자체 선언(루트 config 재사용), `subprojects{}` 공통화 미도입.
+- 이유: 완성된 스켈레톤 재구조화는 위험·범위 밖. D-068은 `:gateway` 등록만 요구. 루트가 순수 부모 아닌 서비스
+  앱이라 `subprojects{}` 공통화는 혼용 위험.
+- 기각된 대안: 루트를 `:app`으로 내려 순수 부모화(전면 재구조화·위험), `subprojects{}` 공통 빌드(루트=앱 혼용 위험).
+- 후속: 향후 MSA/common 모듈 생기면 루트 재배치·공통 빌드 블록화 재검토(열린 질문 1). two-way door.
+
+---
+
+## B-027. 게이트웨이 직접접근 차단 메커니즘 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to D-068·D-065, SEC-005. 012 D-c·D-d·D-e. 보안 게이트2 검토
+- 결정: (1) 공유비밀 프리픽스 `gateway.internal`(secret/header/enforced), `GATEWAY_INTERNAL_SECRET` env relaxed
+  binding. (2) 직접접근 차단 필터를 JWT 필터보다 앞(actuator·error만 제외). (3) gateway가 하류에
+  `X-Gateway-Token`을 `.set()`으로 덮어쓰기(add 아님) — 클라 위조 헤더를 실비밀로 대체(유출 차단, On-Race
+  stripInternalHeaders 패턴).
+- 이유: 게이트웨이 경유 여부는 인증보다 앞선 관문. 헬스·프로브는 직접 접근 필요(제외). `.set()` 덮어쓰기로 헤더
+  위조 방어. 시크릿 명명은 `jwt.secret`·`app.name` 기존 패턴 정합.
+- 후속: 필터 순서·제외 경로·헤더 위조 방어는 보안 게이트2 검토·인정 대상. rate limit 정책·X-Forwarded-For
+  신뢰(열린 질문 3·4)도 게이트2/실배포 전.
+
+---

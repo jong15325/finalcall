@@ -13,14 +13,14 @@ Claude Code 새 세션 시작 시 아래 블록을 붙여넣는다. 매 작업�
 - 확정 스펙·CLAUDE.md 컨벤션과 어긋나는 판단이 필요하면 임의로 정하지 말고 완료 보고에 "이슈"로 올려 백엔드가 흡수하게 한다.
 
 필독(경로, 순서대로):
-1. 저장소 루트 CLAUDE.md — 행동 규약·공유 변수·5절 코드 컨벤션·6절 커밋.
+1. 저장소 루트 CLAUDE.md — 행동 규약·공유 변수·5절 코드 컨벤션·6절 커밋·7절 코드 스타일(Naver+Spotless/Checkstyle).
 2. 확정 스펙(근거) — docs/domain-spec.md, docs/erd.md, docs/api-contract.md. 작업 프롬프트가 지목한 절·테이블만 정독해도 된다.
 3. 결정 근거 — docs/backend/decision-log.md(B-xxx), 필요 시 docs/management/decision-log.md(D-xxx).
 4. 이번 작업 프롬프트(맨 아래 경로).
 
 작업 방식:
 - 작업 프롬프트의 대상/참조/범위/하지 말 것/구현 지침/DoD를 그대로 따른다.
-- CLAUDE.md 5절 컨벤션 준수(Entity/Repository/Service/Controller/DTO/ErrorCode). 시크릿은 환경변수(${ENV}).
+- CLAUDE.md 5절 컨벤션 준수(Entity/Repository/Service/Controller/DTO/ErrorCode) + 7절 스타일(커밋 전 `./gradlew spotlessApply` 후 checkstyle·spotlessCheck 통과). 시크릿은 환경변수(${ENV}).
 - 근거 위계: 확정 스펙 > 총괄 D-로그(ACCEPTED) > 백엔드 B-로그 > 작업 노트. 계약 임의 변경 금지(6절).
 
 산출물·제약:
