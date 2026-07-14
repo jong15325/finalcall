@@ -292,3 +292,30 @@
 - 후속: 새 세션은 CLAUDE.md 언어 규약대로 한글 테스트명 작성 → suppressions로 자동 통과. two-way door.
 
 ---
+
+## B-024. signup 중복 409 정합 — 제약 위반 예외 매핑 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to api-contract §2(AUTH_001/002), B-015. 코드리뷰 M1(병합 차단)
+- 결정: signup 중복은 (1) `existsBy` 선검사(UX 빠른 409, 일반 케이스) + (2) save 시 `DataIntegrityViolationException`
+  catch로 UK 위반을 구분해 AUTH_001(loginId)/AUTH_002(nickname) 재던짐(경쟁·더블클릭 TOCTOU 안전망). 이중 방어.
+- 이유: check-then-save는 동시 요청에 TOCTOU → 둘 다 save → DB UK 위반 → 전역 미매핑 500(계약 409 위반).
+  전역 핸들러만으론 어느 UK인지 구분 불가 → 서비스가 컨텍스트로 구분. 선검사 유지로 일반 케이스 빠른 실패,
+  제약 안전망으로 경쟁 케이스 정합.
+- 기각된 대안: 선검사만(경쟁 시 500 잔존), 전역 `DataIntegrityViolationException`→409 단일 매핑(어느 필드
+  중복인지 구분 불가), 락 직렬화(과설계).
+- 후속: UK 제약명(uk_user_login_id/uk_user_nickname)으로 구분. 수정 Claude Code backend/outbox/017.
+
+---
+
+## B-025. refresh 만료 정책 — 회전 슬라이딩 현행 + 절대 상한 보안게이트2 이월 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-011·B-013, SEC-006. 코드리뷰 m1. 보안 게이트2 검토 대상
+- 결정: 현 rotate는 회전마다 TTL을 refreshExpDays로 리셋 = 슬라이딩 만료(현행 동작 명문화). 절대 상한(iat 기준
+  max lifetime) 도입 여부·기간은 보안 게이트2에서 확정. 현 단계 구현 변경 없음.
+- 이유: 자금 시스템에서 슬라이딩만으론 refresh 세션 무기한 연명 우려(탈취 refresh가 정상 회전을 이어가면).
+  절대 상한이 표준(OAuth absolute+sliding 병행)이나 상한 기간은 보안 정책이고 iat 저장 등 스토어 변경 수반 →
+  정책 확정 선행. 재사용 탐지(B-011)가 부분 방어.
+- 기각된 대안: 지금 절대 상한 임의 도입(정책값·구현 미정), 회전 시 잔여 TTL 유지(재로그인 빈도 급증·UX 저하).
+- 후속: 보안 게이트2 확정 시 B-013 연장 갱신 or 신규 발번. 절대 상한 도입 시 rotate에 iat 검증 추가.
+
+---
