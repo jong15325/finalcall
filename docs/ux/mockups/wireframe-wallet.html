@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinalCall 와이어프레임 — 지갑(잔액·충전·교환) (색 없음, 구조 확정용)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:Pretendard,-apple-system,"Segoe UI",sans-serif; background:#eceef1; color:#3a3f47; padding:24px; }
+  h1{ font-size:19px; font-weight:700; color:#2a2e34; }
+  .note{ font-size:13px; color:#7a828c; margin:4px 0 20px; }
+  .num{ font-variant-numeric:tabular-nums; }
+  .frame{ width:400px; background:#fff; border:1px solid #cfd4da; border-radius:12px; padding:22px; }
+  .frame-cap{ font-size:12px; font-weight:600; color:#7a828c; margin-bottom:16px; letter-spacing:.02em; }
+  .sec{ border-top:1px solid #e2e5e9; padding-top:16px; margin-top:18px; }
+  .sec:first-of-type{ border-top:none; padding-top:0; margin-top:0; }
+  .sec-h{ font-size:14px; font-weight:700; color:#3a3f47; margin-bottom:10px; }
+  .bal-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .bal{ border:1px solid #d6dae0; border-radius:8px; padding:12px; }
+  .bal-l{ font-size:11px; color:#8b929b; margin-bottom:4px; }
+  .bal-v{ font-size:20px; font-weight:700; color:#4a4f57; }
+  .bal-sub{ font-size:11px; color:#8b929b; margin-top:4px; }
+  .full{ grid-column:1 / -1; background:#f5f6f8; }
+  .field{ margin-bottom:10px; }
+  .lbl{ font-size:12px; font-weight:600; color:#4a4f57; margin-bottom:5px; display:block; }
+  .inp{ height:42px; border:1px solid #c4cad1; border-radius:8px; background:#f7f8fa; display:flex; align-items:center; justify-content:space-between; padding:0 12px; font-size:13px; color:#aeb4bc; }
+  .inp .u{ font-size:11px; color:#8b929b; }
+  .hint{ font-size:11px; color:#8b929b; margin-top:5px; }
+  .stub{ display:inline-block; font-size:10px; color:#8b929b; border:1px solid #cfd4da; border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  .btn{ height:44px; border-radius:8px; background:#565b63; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; margin-top:8px; }
+  .flow{ background:#f5f6f8; border:1px dashed #c4cad1; border-radius:8px; padding:10px 12px; font-size:12px; color:#6a717a; margin-bottom:18px; text-align:center; }
+  .list-row{ display:flex; justify-content:space-between; font-size:12px; color:#6a717a; padding:8px 0; border-bottom:1px solid #eceef1; }
+  .err{ font-size:11px; color:#4a4f57; margin-top:6px; padding-left:8px; border-left:2px solid #b4bac2; }
+  .stage{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .legend{ margin-top:20px; font-size:12px; color:#7a828c; max-width:820px; line-height:1.7; }
+</style>
+</head>
+<body>
+  <h1>지갑 와이어프레임 · /me/wallet</h1>
+  <div class="note">색·브랜드 제외, 구조/배치/상태만. 필드·플로우·에러는 PF screen-spec §3.8 + 계약 §4.4 기준. 회색 = 색 미정.</div>
+
+  <div class="stage">
+    <div class="frame">
+      <div class="frame-cap">지갑 — 잔액 · 충전 · 교환 · 내역</div>
+
+      <div class="flow">캐시 충전 (외부 결제) → 게임머니 교환 → 거래는 게임머니로</div>
+
+      <div class="sec">
+        <div class="sec-h">잔액 (GET /me/balance)</div>
+        <div class="bal-grid">
+          <div class="bal">
+            <div class="bal-l">캐시 (cashBalance)</div>
+            <div class="bal-v num">000,000</div>
+            <div class="bal-sub">외부 결제로 충전</div>
+          </div>
+          <div class="bal">
+            <div class="bal-l">게임머니 가용 (available)</div>
+            <div class="bal-v num">000,000</div>
+            <div class="bal-sub">입찰·구매 가능액</div>
+          </div>
+          <div class="bal full">
+            <div class="bal-l">게임머니 총액 (balance) · 홀드 (held)</div>
+            <div class="bal-v num">000,000 <span style="font-size:12px;color:#8b929b;">/ 홀드 00,000</span></div>
+            <div class="bal-sub">홀드 = 입찰로 잠긴 금액(상위 입찰·마감 시 해제/확정)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-h">충전 (캐시)</div>
+        <div class="field">
+          <span class="lbl">충전 금액</span>
+          <div class="inp"><span>amount 입력</span><span class="u">원</span></div>
+        </div>
+        <div class="btn">충전하기 (토스 결제창)</div>
+        <div class="hint">결제창은 클라이언트, 실제 반영은 승인 콜백(/me/wallet/charge/confirm)에서 서버 재검증·멱등(SEC-001·002). 중복 승인은 완료로 동일 표시.</div>
+        <div class="err">CHARGE_001 승인 검증 실패 / CHARGE_002 금액 불일치 / CHARGE_003 소유자 불일치</div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-h">교환 (캐시 → 게임머니)</div>
+        <div class="field">
+          <span class="lbl">교환할 캐시 (cashAmount)</span>
+          <div class="inp"><span>cashAmount 입력</span><span class="u">캐시</span></div>
+        </div>
+        <div class="field">
+          <span class="lbl">적용 비율 <span class="stub">스텁</span></span>
+          <div class="inp" style="background:#f0f1f3;"><span>appliedRate 응답값 표시</span><span class="u">비율 ON-HOLD</span></div>
+          <div class="hint">비율 확정 전이라 서버 응답 appliedRate를 그대로 표시(계약 §4.4). 예상 게임머니 = 결과값 노출.</div>
+        </div>
+        <div class="btn">교환하기</div>
+        <div class="err">EXC_001 캐시 잔액 부족 / EXC_002 역방향(게임머니→캐시) 미지원 — 역방향 UI 없음</div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-h">충전 내역 (GET /me/charges, cursor)</div>
+        <div class="list-row"><span>2026-07-14 · 승인</span><span class="num">+00,000</span></div>
+        <div class="list-row"><span>2026-07-13 · 승인</span><span class="num">+00,000</span></div>
+        <div class="list-row" style="justify-content:center;color:#aeb4bc;">더 보기 (무한스크롤)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="legend">
+    구조 기준: 모바일 우선 1열, 데스크톱은 가운데 카드 또는 잔액/충전·교환 2열. 금액은 tabular-nums(정렬·갱신 시 흔들림 방지). 잔액 4종은 held(홀드)/available(가용) 구분이 핵심 — 사용자가 "왜 못 쓰지"를 홀드로 이해하게. 게임머니 0 상태에서 입찰/구매 시도 시 이 화면으로 딥링크(BID_005·SHOP_005 진입점). 이 구조 확정 후 토큰·색을 입힌다.
+  </div>
+</body>
+</html>
