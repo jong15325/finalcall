@@ -21,7 +21,11 @@
 
 ## PF-002. 화면 표현에서 등급(grade) 축 제거 반영 — 디자인·프론트 정합은 총괄 격상
 
-상태: PROPOSED · 소유: 프론트기획 · 관련: relates-to D-073(등급 축 제거), api-contract v1.2 §3·§3.3 · escalated-as 총괄(outbox/001) · 2026-07-14
+상태: ACCEPTED · 소유: 프론트기획 · 관련: relates-to D-073(등급 축 제거), api-contract v1.2 §3·§3.3 · escalated-as 총괄 (a) 집행(053 회신, 전파 054·055) · 2026-07-14
+
+집행(053)
+- 자기 문서(screen-spec) grade 제거분: ACCEPTED — D-073 집행이라 신규 D 없음.
+- 타 역할 전파분: 총괄이 (a)로 집행 — 디자인 054(grade 제거·U-004 SUPERSEDE 지시)·프론트 055(grade 필터 제거 지시) 발신. PF 직접 발신 없이 전파 결과 참조.
 
 결정
 - PF 화면 명세에서 등급(grade) 축을 제거한다(카드·필터·뱃지·표시 필드 모두). 계약 §3 공통 필터·§3.3 응답 item 블록에 grade가 없고 D-073으로 도메인에서 제거됐기 때문.
