@@ -1,5 +1,8 @@
 package com.finalcall.domain.auth;
 
+import java.util.Locale;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,10 @@ public class AuthService {
     /**
      * 회원가입: loginId/nickname 중복 검사 → BCrypt 해시 → User + UserBalance(0,0,0)를 <b>단일 트랜잭션</b>으로 생성한다.
      *
+     * <p>중복 방어는 이중이다(B-024): {@code existsBy} 선검사(UX용 빠른 실패, 일반 케이스) + UK 제약 안전망
+     * (경쟁·더블클릭으로 선검사를 통과한 경우). 제약 위반은 {@link DataIntegrityViolationException} 을 이 계층에서
+     * 잡아 위반 UK를 구분해 AUTH_001/002 로 재던진다(전역 핸들러는 어느 UK인지 못 가려 500 이 되므로 서비스에서 처리).
+     *
      * <p>SEC-007(열거 방지): 실패 응답은 AuthErrorCode 표준 메시지만 노출한다(구체 사유 최소화). nickname 중복은 표시용이라 유지.
      *
      * @return 생성된 {@link User}(public_id 는 생성자에서 ULID 로 채워짐). 표현 변환은 api 계층이 담당.
@@ -42,14 +49,33 @@ public class AuthService {
         Preconditions.validate(!userRepository.existsByLoginId(loginId), AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
         Preconditions.validate(!userRepository.existsByNickname(nickname), AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
 
-        User user = userRepository.save(User.builder()
-            .loginId(loginId)
-            .passwordHash(passwordEncoder.encode(password))
-            .nickname(nickname)
-            .build());
-        // 잔액 행(0,0,0)을 같은 트랜잭션에서 함께 생성한다.
-        userBalanceRepository.save(UserBalance.builder().user(user).build());
-        return user;
+        try {
+            User user = userRepository.save(User.builder()
+                .loginId(loginId)
+                .passwordHash(passwordEncoder.encode(password))
+                .nickname(nickname)
+                .build());
+            // 잔액 행(0,0,0)을 같은 트랜잭션에서 함께 생성한다.
+            userBalanceRepository.save(UserBalance.builder().user(user).build());
+            return user;
+        } catch (DataIntegrityViolationException e) {
+            // 경쟁/더블클릭으로 선검사를 지난 중복 → UK 제약 안전망. 위반 UK 를 구분해 409 로 매핑.
+            throw toDuplicateException(e);
+        }
+    }
+
+    /** UK 제약 위반을 도메인 예외(AUTH_001/002)로 변환한다. 판정은 제약명(uk_user_login_id/uk_user_nickname) 기반. */
+    private BusinessException toDuplicateException(DataIntegrityViolationException ex) {
+        String cause = ex.getMostSpecificCause().getMessage();
+        String lower = cause == null ? "" : cause.toLowerCase(Locale.ROOT);
+        if (lower.contains("uk_user_login_id")) {
+            return new BusinessException(AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
+        }
+        if (lower.contains("uk_user_nickname")) {
+            return new BusinessException(AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
+        }
+        // 알 수 없는 무결성 위반(예: 극히 드문 public_id 충돌)은 원본을 유지해 전역 핸들러가 처리한다.
+        throw ex;
     }
 
     /**

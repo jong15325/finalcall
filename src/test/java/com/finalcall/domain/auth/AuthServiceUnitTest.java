@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -89,6 +90,35 @@ class AuthServiceUnitTest {
 
         verify(userRepository, never()).save(any());
         verify(userBalanceRepository, never()).save(any());
+    }
+
+    @Test
+    void 선검사_통과후_loginId_UK위반이면_AUTH_001로_매핑_M1() {
+        // 경쟁으로 선검사를 지난 뒤 save 에서 UK 제약 위반 → 500 아닌 409 AUTH_001.
+        when(userRepository.existsByLoginId("racer")).thenReturn(false);
+        when(userRepository.existsByNickname("닉네임")).thenReturn(false);
+        when(passwordEncoder.encode("pw12345678")).thenReturn("hashed-pw");
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate entry 'racer' for key 'uk_user_login_id'"));
+
+        assertThatThrownBy(() -> authService.signup("racer", "pw12345678", "닉네임"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
+    }
+
+    @Test
+    void 선검사_통과후_nickname_UK위반이면_AUTH_002로_매핑_M1() {
+        when(userRepository.existsByLoginId("newid")).thenReturn(false);
+        when(userRepository.existsByNickname("중복닉")).thenReturn(false);
+        when(passwordEncoder.encode("pw12345678")).thenReturn("hashed-pw");
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate entry '중복닉' for key 'uk_user_nickname'"));
+
+        assertThatThrownBy(() -> authService.signup("newid", "pw12345678", "중복닉"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
     }
 
     @Test
