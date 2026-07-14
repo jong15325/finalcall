@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinalCall 와이어프레임 — 로그인 · 회원가입 (색 없음, 구조 확정용)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:Pretendard,-apple-system,"Segoe UI",sans-serif; background:#eceef1; color:#3a3f47; padding:24px; }
+  h1{ font-size:19px; font-weight:700; color:#2a2e34; }
+  .note{ font-size:13px; color:#7a828c; margin:4px 0 20px; }
+  .stage{ display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+  .frame{ width:360px; background:#fff; border:1px solid #cfd4da; border-radius:12px; padding:22px; }
+  .frame-cap{ font-size:12px; font-weight:600; color:#7a828c; margin-bottom:12px; letter-spacing:.02em; }
+  .brand{ height:44px; border:1px dashed #b4bac2; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#9aa1aa; margin-bottom:22px; }
+  .field{ margin-bottom:14px; }
+  .lbl{ font-size:13px; font-weight:600; color:#4a4f57; margin-bottom:6px; display:block; }
+  .req{ color:#9aa1aa; font-weight:400; }
+  .inp{ height:44px; border:1px solid #c4cad1; border-radius:8px; background:#f7f8fa; display:flex; align-items:center; padding:0 12px; font-size:13px; color:#aeb4bc; }
+  .hint{ font-size:11px; color:#8b929b; margin-top:5px; }
+  .err{ font-size:11px; color:#4a4f57; margin-top:5px; padding-left:8px; border-left:2px solid #b4bac2; }
+  .btn{ height:46px; border-radius:8px; background:#565b63; color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; margin-top:6px; }
+  .btn.sub{ background:#fff; border:1px solid #c4cad1; color:#565b63; }
+  .link{ text-align:center; font-size:13px; color:#6a717a; margin-top:16px; }
+  .u{ text-decoration:underline; }
+  .tag{ display:inline-block; font-size:10px; color:#8b929b; border:1px solid #cfd4da; border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  .legend{ margin-top:22px; font-size:12px; color:#7a828c; max-width:760px; line-height:1.7; }
+</style>
+</head>
+<body>
+  <h1>로그인 · 회원가입 와이어프레임</h1>
+  <div class="note">색·브랜드 제외, 구조/배치/상태만 확정하는 단계. 회색 = 아직 색 미정. 필드·에러는 계약 §2 기준.</div>
+
+  <div class="stage">
+
+    <div class="frame">
+      <div class="frame-cap">화면 A — 로그인 · /login</div>
+      <div class="brand">FinalCall 로고 자리</div>
+      <div class="field">
+        <span class="lbl">아이디</span>
+        <div class="inp">loginId 입력</div>
+      </div>
+      <div class="field">
+        <span class="lbl">비밀번호</span>
+        <div class="inp">password 입력</div>
+      </div>
+      <div class="err">자격이 일치하지 않습니다 (AUTH_003, 401) — 아이디/비번 공통 문구</div>
+      <div class="btn">로그인</div>
+      <div class="link">계정이 없으신가요? <span class="u">회원가입</span></div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-cap">화면 B — 회원가입 · /signup</div>
+      <div class="brand">FinalCall 로고 자리</div>
+      <div class="field">
+        <span class="lbl">아이디 <span class="req">필수</span></span>
+        <div class="inp">loginId 입력</div>
+        <div class="hint">중복 시: 이미 사용 중인 아이디입니다 (AUTH_001, 409)</div>
+      </div>
+      <div class="field">
+        <span class="lbl">비밀번호 <span class="req">필수</span></span>
+        <div class="inp">password 입력</div>
+      </div>
+      <div class="field">
+        <span class="lbl">비밀번호 확인 <span class="tag">클라 검증</span></span>
+        <div class="inp">password 재입력</div>
+        <div class="hint">계약 밖 · 프론트 일치 검증용(서버 전송 안 함)</div>
+      </div>
+      <div class="field">
+        <span class="lbl">닉네임 <span class="req">필수</span></span>
+        <div class="inp">nickname 입력</div>
+        <div class="hint">중복 시: 이미 사용 중인 닉네임입니다 (AUTH_002, 409)</div>
+      </div>
+      <div class="btn">가입하기</div>
+      <div class="link">이미 계정이 있으신가요? <span class="u">로그인</span></div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    구조 기준: 모바일 우선 1열 폼(≤360px), 데스크톱은 가운데 정렬 카드. 필드·버튼 타깃 44px 이상(접근성). 라벨은 항상 가시(placeholder 라벨 대용 금지). 에러는 필드 하단 텍스트 + 폼 상단 요약 병행 가능. 회원가입 성공(201) → 로그인 화면 또는 자동 로그인, 로그인 성공(200) → 홈. 이 구조가 확정되면 그 위에 토큰·색을 입힌다.
+  </div>
+</body>
+</html>

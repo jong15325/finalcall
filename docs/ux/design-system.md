@@ -193,8 +193,9 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 ### 5.3 ItemCard (매물 카드)
 
 - 용도: 경매·고정가 목록의 매물 표시(계약 §3.3 AuctionSummary·ShopSummary + item 블록).
-- 해부(계약 §3.3 필드 1:1): 썸네일/아이콘 · 아이템명(item.nameSnapshot, text-lg semibold) · ElementBadge(item.element) · 레벨(item.level, font-num) · 스킬 태그(skill1/2 + skillPercent) · 골드포스 잔여(goldforceExpireAt 있으면) · 가격(경매 highestBidAmount 또는 startPrice / 고정가 price, font-num) · 상태(status)·카운트다운(경매 endAt) · 판매유형 칩(경매/즉시구매(buyNowPrice 유무)/고정가) · 판매자(sellerNickname).
-- 등급/희귀도 표현 없음(D-073). 속성은 색+속성명 텍스트 병기(색만 전달 금지).
+- 구조(U-012 — 게임 이미지 + 웹 상거래 정보 결합): 세로형 카드. [상단] 게임 카드 이미지 슬롯(사용자 제공 게임 아트, 원본 카드 형태·비율 유지) + 오버레이(레벨·속성은 게임 아트에 이미 포함될 수 있음). [하단 웹 상거래 영역] 아이템명(nameSnapshot)·가격(경매 highestBidAmount 또는 startPrice / 고정가 price, font-num)·카운트다운(경매 endAt)·입찰수(bidCount)·판매유형 칩·판매자(sellerNickname). 게임 카드에 없는 상거래 정보는 이 하단 영역이 담당.
+- 게임 아트 밖에서 웹이 별도 표기할 때만 ElementBadge(속성) 사용. 등급/희귀도 표현 없음(D-073). 속성은 색+속성명 텍스트 병기(색만 전달 금지).
+- 이미지 파이프라인: 게임 카드 아트는 typeCode(item_template) 기준 자산으로 매핑(사용자 제공). 자산 부재 시 플레이스홀더.
 - 상태: default/hover(surface-raised + shadow-md·다크는 밝기차) / loading(스켈레톤) / 종료(딤 처리 + "마감/판매완료" 오버레이).
 - 반응형: 목록 그리드 1열(모바일)→2(sm)→3(lg)→4(xl). 카드 내부는 세로 스택.
 
