@@ -2,7 +2,7 @@ package com.finalcall.api.auth;
 
 import java.time.Instant;
 
-import com.finalcall.domain.auth.LoginResult;
+import com.finalcall.domain.auth.TokenBundle;
 
 import lombok.Builder;
 
@@ -15,7 +15,7 @@ public record RefreshResponse(
     String accessToken,
     String refreshToken,
     Instant accessExpiresAt) {
-    public static RefreshResponse from(LoginResult result) {
+    public static RefreshResponse from(TokenBundle result) {
         return RefreshResponse.builder()
             .accessToken(result.accessToken())
             .refreshToken(result.refreshToken())

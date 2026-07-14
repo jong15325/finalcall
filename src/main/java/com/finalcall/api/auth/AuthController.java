@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.auth.AuthService;
-import com.finalcall.domain.auth.LoginResult;
+import com.finalcall.domain.auth.TokenBundle;
 import com.finalcall.domain.auth.User;
 
 import jakarta.validation.Valid;
@@ -41,14 +41,14 @@ public class AuthController {
     /** 로그인 — 성공 시 200, access/refresh 발급(계약 §2). 실패는 단일 코드 AUTH_003(열거 완화). */
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        LoginResult result = authService.login(request.loginId(), request.password());
+        TokenBundle result = authService.login(request.loginId(), request.password());
         return ApiResponse.success(LoginResponse.from(result));
     }
 
     /** 토큰 재발급 — 성공 시 200, access 재발급 + refresh 회전(계약 §2 v1.1). 무효·재사용·만료는 AUTH_004. */
     @PostMapping("/refresh")
     public ApiResponse<RefreshResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        LoginResult result = authService.refresh(request.refreshToken());
+        TokenBundle result = authService.refresh(request.refreshToken());
         return ApiResponse.success(RefreshResponse.from(result));
     }
 

@@ -132,7 +132,7 @@ class AuthServiceUnitTest {
         when(tokenProvider.accessTokenExpiresAt()).thenReturn(expiresAt);
         when(refreshTokenStore.issue("42")).thenReturn("42.sid.secret");
 
-        LoginResult result = authService.login("hong", "pw12345678");
+        TokenBundle result = authService.login("hong", "pw12345678");
 
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("42.sid.secret");
@@ -177,7 +177,7 @@ class AuthServiceUnitTest {
         when(tokenProvider.generateAccessToken(any(TokenClaims.class))).thenReturn("new-access");
         when(tokenProvider.accessTokenExpiresAt()).thenReturn(expiresAt);
 
-        LoginResult result = authService.refresh("42.sid.old");
+        TokenBundle result = authService.refresh("42.sid.old");
 
         assertThat(result.accessToken()).isEqualTo("new-access");
         assertThat(result.refreshToken()).isEqualTo("42.sid.new"); // 회전된 신규
