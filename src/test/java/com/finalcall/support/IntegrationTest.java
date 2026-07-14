@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -20,6 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
+// D-068: 통합테스트는 게이트웨이를 거치지 않는 MockMvc 직접 호출이라 직접접근 차단을 끈다(공유비밀 헤더 없음).
+//   차단 자체의 검증은 별도 GatewayAccessIntegrationTest 가 enforced=true 로 오버라이드해 수행한다.
+@TestPropertySource(properties = "gateway.internal.enforced=false")
 public abstract class IntegrationTest {
 
     @Autowired

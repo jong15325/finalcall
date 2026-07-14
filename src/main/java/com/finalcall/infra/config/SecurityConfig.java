@@ -10,7 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finalcall.common.security.TokenProvider;
+import com.finalcall.infra.security.GatewayAccessFilter;
 import com.finalcall.infra.security.JwtAccessDeniedHandler;
 import com.finalcall.infra.security.JwtAuthenticationEntryPoint;
 import com.finalcall.infra.security.JwtAuthenticationFilter;
@@ -29,7 +31,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
         TokenProvider tokenProvider,
         JwtAuthenticationEntryPoint authenticationEntryPoint,
-        JwtAccessDeniedHandler accessDeniedHandler) throws Exception {
+        JwtAccessDeniedHandler accessDeniedHandler,
+        GatewayInternalProperties gatewayInternalProperties,
+        ObjectMapper objectMapper) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             // cors 는 필요 시 여기서 구성(현재는 자리만).
@@ -49,7 +53,10 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)) // 403
             // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 등록.
             .addFilterBefore(new JwtAuthenticationFilter(tokenProvider),
-                UsernamePasswordAuthenticationFilter.class);
+                UsernamePasswordAuthenticationFilter.class)
+            // 직접접근 차단(D-068): 게이트웨이 경유 검증을 인증(JWT)보다 먼저 수행한다.
+            .addFilterBefore(new GatewayAccessFilter(gatewayInternalProperties, objectMapper),
+                JwtAuthenticationFilter.class);
         return http.build();
     }
 

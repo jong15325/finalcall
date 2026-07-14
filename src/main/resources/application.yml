@@ -102,5 +102,12 @@ jwt:
   refresh-exp-days: 14      # refresh 만료(= Redis 저장분 TTL, B-011). 데모 기본값 — 정책에 맞게 조정.
   # secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
 
+# D-068: 직접접근 차단(엣지 게이트웨이 공유비밀 검증). enforced 는 실 프로파일에서 항상 켠다.
+#   secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
+#   ★ 통합테스트는 게이트웨이 미경유 MockMvc 직접 호출이라 enforced=false 로 내린다(테스트 base).
+gateway:
+  internal:
+    enforced: true
+
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
 #       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.

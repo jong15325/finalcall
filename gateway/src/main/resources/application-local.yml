@@ -1,0 +1,19 @@
+# local 프로파일: 환경변수 없이 즉시 실행되도록 기본값을 둔다.
+# 시크릿/환경종속 값은 ${ENV:기본값} 형태 — 환경변수가 있으면 그 값, 없으면 기본값.
+
+# 하류 서비스 주소(라우트 uri 가 참조하는 스칼라 변수).
+service:
+  uri: ${SERVICE_URI:http://localhost:8080}
+
+spring:
+  # RequestRateLimiter 용 Redis(Lettuce, 리액티브) — local 은 ${ENV:기본값}.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# 공유비밀 — local 기본값. ★ 서비스(local) 기본값과 동일해야 게이트웨이 경유가 성립한다(직접접근 차단 데모).
+#   운영 secret 은 절대 하드코딩/공유 금지. 아래 기본값은 로컬 전용 더미다.
+gateway:
+  internal:
+    secret: ${GATEWAY_INTERNAL_SECRET:finalcall-local-gateway-shared-secret-change-me}

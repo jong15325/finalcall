@@ -10,6 +10,12 @@ app:
 jwt:
   secret: ${JWT_SECRET:finalcall-local-dev-secret-key-please-change-0123456789abcdef}
 
+# D-068: 직접접근 차단 공유비밀 — local 기본값. ★ 게이트웨이(local) 기본값과 반드시 동일해야 경유가 성립한다.
+#   운영 secret 은 절대 하드코딩/공유 금지. 아래 기본값은 로컬 전용 더미다.
+gateway:
+  internal:
+    secret: ${GATEWAY_INTERNAL_SECRET:finalcall-local-gateway-shared-secret-change-me}
+
 # Stage D: DataSource — local 은 ${ENV:기본값} 으로 환경변수 없이도 뜬다.
 spring:
   datasource:

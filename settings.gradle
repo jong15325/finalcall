@@ -1,1 +1,5 @@
 rootProject.name = 'finalcall'
+
+// D-068: SCG 엣지 게이트웨이 — 단일 서비스(루트)와 별도 빌드 산출물(별도 배포)인 서브프로젝트.
+//   루트는 모놀리식 서비스 그대로 유지하고, 게이트웨이만 WebFlux 스택으로 독립 구성한다.
+include 'gateway'

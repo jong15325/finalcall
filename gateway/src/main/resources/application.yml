@@ -1,0 +1,54 @@
+# SCG 엣지 게이트웨이 공통 설정(D-068). 활성 프로파일은 하드코딩하지 않는다(SPRING_PROFILES_ACTIVE 로만).
+# 게이트웨이 포트는 서비스(8080)와 구분해 엣지 진입점으로 8000 을 쓴다.
+# 시크릿/환경종속 값(공유비밀·Redis·하류 주소)은 공통에 두지 않고 프로파일별로 주입한다
+#   (공통에 기본값을 두면 prod fail-fast 가 무력화되기 때문).
+server:
+  port: ${GATEWAY_PORT:8000}
+
+spring:
+  application:
+    name: finalcall-gateway
+  profiles:
+    default: local
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # 라우팅: 단일 서비스로 경로 기반 프록시. 목록 순서대로 매칭되므로 rate limit 대상(auth)을 먼저 둔다.
+          # 하류 주소는 스칼라 placeholder(${service.uri})로 참조한다 — 라우트 목록은 프로파일 간 병합이 아니라
+          # 전체 치환되므로, 목록은 공통에 한 번만 정의하고 주소만 프로파일별 변수로 주입한다.
+          routes:
+            # 인증 계열(login/signup/refresh) — Redis 토큰버킷 rate limit 우선 적용(SEC-005).
+            - id: auth-rate-limited
+              uri: ${service.uri}
+              predicates:
+                - Path=/api/v1/auth/login,/api/v1/auth/signup,/api/v1/auth/refresh
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@clientIpKeyResolver}"
+                    # 토큰버킷: 초당 보충 5개, 최대 버스트 10개, 요청당 1토큰(데모값 — 실측으로 조정).
+                    redis-rate-limiter.replenishRate: 5
+                    redis-rate-limiter.burstCapacity: 10
+                    redis-rate-limiter.requestedTokens: 1
+            # 그 외 서비스 API 는 rate limit 없이 프록시(엣지는 라우팅·직접접근 차단만 담당).
+            - id: service-proxy
+              uri: ${service.uri}
+              predicates:
+                - Path=/api/v1/**
+
+# 엣지 게이트웨이 공유비밀(직접접근 차단). 하류 요청에 X-Gateway-Token 으로 부착된다.
+#   header 는 무해한 상수라 공통에 둔다. secret 은 프로파일별 주입(공통 금지).
+gateway:
+  internal:
+    header: X-Gateway-Token
+
+# 엣지 운영 관심사(헬스 체크). 화이트리스트만 노출.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: never
