@@ -84,8 +84,9 @@
 | D-074 | 총괄 시퀀싱·선행 완료 게이팅 (순서 지정·선행 미완료 착수 금지) | ACCEPTED | 총괄 |
 | D-075 | CLAUDE.md 코드 스타일 규약 섹션 7 신설 (§7 append, B-020 반영, 재번호 회피) | ACCEPTED | 총괄 |
 | D-076 | CLAUDE.md §5 Controller 규약 — 204 No Content 예외 명문화 (B-019) | ACCEPTED | 총괄 |
-| D-077 | 기획 파트 분리 — 백엔드 기획(P)/프론트 기획(PF) 신설, 계약 소유 P 유지 | ACCEPTED | 총괄 |
+| D-077 | 기획 파트 분리 — 백엔드 기획(P)/프론트 기획(PF) 신설, 계약 소유 P 유지 | SUPERSEDED (→D-079) | 총괄 |
 | D-078 | QA 두뇌(대화)/손(Claude Code) 분리 — 실행은 도메인별 총괄 지정 | ACCEPTED | 총괄 |
+| D-079 | 기획 파트 재통합 — 프론트 기획(PF)을 기획(P)으로 흡수 (D-077 되돌림) | ACCEPTED | 총괄 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |

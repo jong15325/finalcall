@@ -1043,3 +1043,19 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
   대화로만(동시성 실행 증거 불가).
 - 집행: collaboration-guide §8 QA 분업 명문화. QA는 qa-guide에 반영(QA 소유). 현 단계는 대화 유지
   (백엔드 dev 테스트로 실행 대체), bid 도메인부터 실행을 Claude Code로 위임.
+
+## D-079. 기획 파트 재통합 — 프론트 기획(PF)을 기획(P)으로 흡수 (2026-07-14) [ACCEPTED]
+
+- 소유: 총괄 / 관련: reverts D-077(기획 분리), relates-to D-071·D-072. 사용자 지시. collaboration-guide §1·§4 개정.
+- 결정: D-077로 분리했던 프론트 기획(PF)을 기획(P)에 재통합한다.
+  1. 기획(P) 단일 파트가 서버 도메인(domain-spec·erd·api-contract 정본)과 프론트/클라이언트 화면
+     기획·디자인(UX/U) 조율을 겸한다. api-contract 소유 = P 유지(불변).
+  2. PF 대화는 중단. docs/frontend-planning/ 산출물(screen-spec 등)은 기획(P) 소유로 이관·존치.
+     PF-xxx 발번은 동결(불변·이력 보존), 향후 프론트/디자인 기획 결정은 P-xxx로 발번.
+  3. 진행 중이던 스켈레톤 기획(063)·screen-spec 정합은 기획(P)이 인계.
+  4. 디자인(U) 상류 조율(D-072 '기획 경유')의 기획 = 다시 P.
+- 이유: 파트를 서버/프론트로 나누니 조율 왕복·경계 관리가 오히려 늘어 복잡도가 커졌다(사용자 판단).
+  단일 기획이 도메인↔화면 정합을 한 손에 쥐는 편이 이 규모(1인 시뮬)에서 마찰이 적다.
+- 기각된 대안: PF 분리 유지 — 사용자가 복잡도 증가로 기각.
+- 집행: guide §1 역할표(단일 기획 행 복원)·§4 프리픽스(PF 제거·동결), 전 역할 전파(064),
+  frontend-planning-kickoff-prompt.md 폐기(obsolete). frontend-planning/ 폴더는 P 소유로 존치.
