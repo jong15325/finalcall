@@ -1,4 +1,4 @@
-상태: HOLD (D-070 (a) 채택 — /refresh 응답에 refreshToken 추가. 기획 api-contract v1.1 확정 후 최종화)
+상태: READY (계약 v1.1 확정으로 해금 — mgmt/044, 2026-07-14. /refresh 응답 refreshToken+회전 §2 line76~81 반영 완료)
 # [백엔드 → Claude Code] 작업 지시: auth - 토큰 재발급(refresh)
 
 대상: POST /api/v1/auth/refresh. (구현 순서 5/E, A·B 의존)

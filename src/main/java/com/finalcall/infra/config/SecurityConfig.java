@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -32,8 +34,8 @@ public class SecurityConfig {
                 // cors 는 필요 시 여기서 구성(현재는 자리만).
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 토큰 발급 데모 · actuator · 에러 경로는 공개.
-                        .requestMatchers("/auth/token", "/actuator/**", "/error").permitAll()
+                        // 회원가입(계약 §2 인증 불요) · 토큰 발급 데모 · actuator · 에러 경로는 공개.
+                        .requestMatchers("/api/v1/auth/signup", "/auth/token", "/actuator/**", "/error").permitAll()
                         // 데모/참조(sample, notice)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
                         // (notice 는 비인증 생성 시 createdBy=null 을 시연하기 위해 의도적으로 공개)
                         .requestMatchers("/sample/**", "/notices/**").permitAll()
@@ -46,5 +48,11 @@ public class SecurityConfig {
                 .addFilterBefore(new JwtAuthenticationFilter(tokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    /** 비밀번호 해시(BCrypt) — 회원가입/로그인이 공유한다. */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
