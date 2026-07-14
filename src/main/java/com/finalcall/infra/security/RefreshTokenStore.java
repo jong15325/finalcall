@@ -1,11 +1,5 @@
 package com.finalcall.infra.security;
 
-import com.finalcall.infra.config.JwtProperties;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.core.script.RedisScript;
-import org.springframework.stereotype.Component;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,6 +8,13 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.stereotype.Component;
+
+import com.finalcall.infra.config.JwtProperties;
 
 /**
  * refresh 토큰 저장소(auth, B-011) — Redis(Lettuce, {@link StringRedisTemplate}) 기반.
@@ -35,8 +36,8 @@ public class RefreshTokenStore {
 
     private static final String KEY_PREFIX = "auth:refresh:";
     private static final String DELIMITER = ".";
-    private static final int SESSION_ID_BYTES = 16;   // 128bit — 세션 식별(라우팅)
-    private static final int SECRET_BYTES = 32;        // 256bit — 실제 비밀값(B-011)
+    private static final int SESSION_ID_BYTES = 16; // 128bit — 세션 식별(라우팅)
+    private static final int SECRET_BYTES = 32; // 256bit — 실제 비밀값(B-011)
 
     /**
      * 회전을 원자적으로 처리하는 Lua CAS(경쟁 시 단일 승자).
@@ -44,16 +45,16 @@ public class RefreshTokenStore {
      * GET·비교·SET/DEL 이 단일 EVAL 로 원자 실행돼 동시 회전 시 두 번째는 REUSE 로 세션이 무효화된다.
      */
     private static final RedisScript<String> ROTATE_SCRIPT = new DefaultRedisScript<>("""
-            local cur = redis.call('GET', KEYS[1])
-            if not cur then return 'MISSING' end
-            if cur == ARGV[1] then
-              redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
-              return 'OK'
-            else
-              redis.call('DEL', KEYS[1])
-              return 'REUSE'
-            end
-            """, String.class);
+        local cur = redis.call('GET', KEYS[1])
+        if not cur then return 'MISSING' end
+        if cur == ARGV[1] then
+          redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+          return 'OK'
+        else
+          redis.call('DEL', KEYS[1])
+          return 'REUSE'
+        end
+        """, String.class);
 
     private final StringRedisTemplate redisTemplate;
     private final SecureRandom random = new SecureRandom();
@@ -111,7 +112,7 @@ public class RefreshTokenStore {
         }
         String newToken = parsed.userId() + DELIMITER + parsed.sessionId() + DELIMITER + randomToken(SECRET_BYTES);
         String result = redisTemplate.execute(ROTATE_SCRIPT, List.of(parsed.key()),
-                sha256(presentedToken), sha256(newToken), String.valueOf(refreshTtl.toSeconds()));
+            sha256(presentedToken), sha256(newToken), String.valueOf(refreshTtl.toSeconds()));
         if ("OK".equals(result)) {
             return Optional.of(new Rotation(newToken, parsed.userId()));
         }
@@ -158,8 +159,8 @@ public class RefreshTokenStore {
     }
 
     /** 상수 시간 비교(타이밍 공격 방지) — 해시 원바이트 대조. */
-    private static boolean constantTimeEquals(String a, String b) {
-        return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
+    private static boolean constantTimeEquals(String left, String right) {
+        return MessageDigest.isEqual(left.getBytes(StandardCharsets.UTF_8), right.getBytes(StandardCharsets.UTF_8));
     }
 
     /** 토큰을 {@code userId.sessionId.secret} 로 분해한다. 형식 위반이면 null. */

@@ -1,9 +1,14 @@
 package com.finalcall.domain.auth;
 
-import com.finalcall.common.exception.BusinessException;
-import com.finalcall.common.security.TokenClaims;
-import com.finalcall.common.security.TokenProvider;
-import com.finalcall.infra.security.RefreshTokenStore;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,14 +17,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Instant;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.security.TokenClaims;
+import com.finalcall.common.security.TokenProvider;
+import com.finalcall.infra.security.RefreshTokenStore;
 
 /**
  * {@link AuthService} 단위 테스트 — 스프링 컨텍스트 없이 협력자 모의(가장 빠른 계층).
@@ -128,9 +129,9 @@ class AuthServiceUnitTest {
         when(passwordEncoder.matches("wrong", "hashed-pw")).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login("hong", "wrong"))
-                .isInstanceOf(BusinessException.class)
-                .extracting(e -> ((BusinessException) e).getErrorCode())
-                .isEqualTo(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
+            .isInstanceOf(BusinessException.class)
+            .extracting(e -> ((BusinessException)e).getErrorCode())
+            .isEqualTo(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
 
         verify(refreshTokenStore, never()).issue(any());
     }
@@ -141,7 +142,7 @@ class AuthServiceUnitTest {
         ReflectionTestUtils.setField(user, "id", 42L);
         Instant expiresAt = Instant.parse("2026-07-14T01:00:00Z");
         when(refreshTokenStore.rotate("42.sid.old"))
-                .thenReturn(java.util.Optional.of(new RefreshTokenStore.Rotation("42.sid.new", "42")));
+            .thenReturn(java.util.Optional.of(new RefreshTokenStore.Rotation("42.sid.new", "42")));
         when(userRepository.findById(42L)).thenReturn(java.util.Optional.of(user));
         when(tokenProvider.generateAccessToken(any(TokenClaims.class))).thenReturn("new-access");
         when(tokenProvider.accessTokenExpiresAt()).thenReturn(expiresAt);

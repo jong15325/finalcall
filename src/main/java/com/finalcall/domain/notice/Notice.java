@@ -1,6 +1,7 @@
 package com.finalcall.domain.notice;
 
 import com.finalcall.domain.common.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,9 +1,10 @@
 package com.finalcall.domain.sample;
 
+import org.springframework.stereotype.Service;
+
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 /**
  * 회복탄력성 규약 데모(Stage E2). "가짜 외부 호출"을 Retry + CircuitBreaker + fallback 으로 감싼다.
@@ -38,8 +39,8 @@ public class ResilienceDemoService {
      * fallback 시그니처: 원본 파라미터 목록 + 마지막에 Throwable 1개, 반환 타입 동일(어기면 fallback 을 못 찾는다).
      * 여기서는 기본값(graceful degradation)을 반환한다. 명확한 실패 응답(3단계 표준 에러)로 바꿔도 된다.
      */
-    public String callFallback(boolean fail, Throwable t) {
-        log.warn("[Resilience] fallback 동작: {}", t.toString());
+    public String callFallback(boolean fail, Throwable throwable) {
+        log.warn("[Resilience] fallback 동작: {}", throwable.toString());
         return "fallback: 외부 시스템 지연/실패 — 기본값 반환";
     }
 }

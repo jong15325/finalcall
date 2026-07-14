@@ -1,7 +1,13 @@
 package com.finalcall.domain.auth;
 
+import java.time.Instant;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.finalcall.common.util.Ulid;
 import com.finalcall.domain.common.BaseTimeEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,10 +18,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import java.time.Instant;
 
 /**
  * 회원 계정 엔티티(auth). 관리자 여부는 별도 서비스가 아닌 {@code isAdmin} 플래그로 표현한다(erd §4.1).

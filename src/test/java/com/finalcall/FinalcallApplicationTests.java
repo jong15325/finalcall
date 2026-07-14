@@ -1,7 +1,8 @@
 package com.finalcall;
 
-import com.finalcall.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
+
+import com.finalcall.support.IntegrationTest;
 
 /**
  * 컨텍스트 로딩 검증(Stage F2에서 Testcontainers 기반으로 전환).

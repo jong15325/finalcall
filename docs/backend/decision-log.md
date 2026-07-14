@@ -178,3 +178,117 @@
 - 파급: JwtAuthenticationFilter·데모 AuthController·토큰 테스트 2건 동반 갱신(전부 통과). 로그인 로직은 미포함(008~011 소관).
 
 ---
+
+## B-015. API 라우팅 — 컨트롤러 클래스 레벨 경로 명시 (/api/v1/<도메인>) (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to api-contract §Base(/api/v1), B-004(URI 경로 버저닝). 008 완료 보고 이슈1
+- 결정: 실도메인 컨트롤러는 클래스 레벨 `@RequestMapping("/api/v1/<도메인>")`으로 전체 경로를 명시하고
+  메서드는 상대 경로. 전역 접두 config(WebMvcConfigurer `addPathPrefix`·`server.servlet.context-path`) 미도입.
+- 이유: 스켈레톤 bare 엔드포인트(sample·notice·데모 auth)와 actuator가 공존 → 전역 접두는 이들에 예외 처리를
+  강제(이중 접두 `/api/v1/api/v1/...`·URL 변경 위험). 명시 방식은 예외 없음, URL grep 가능, 계약 최종 URL과 1:1.
+  계약 URL 불변이라 경계·계약 무영향(자율 결정, two-way door).
+- 기각된 대안: base package 한정 `addPathPrefix`(스켈레톤 예외·"숨은 접두" 추적성 저하), `context-path`(actuator 등 앱 전역 영향).
+- 후속: 실도메인 컨트롤러가 크게 늘어 클래스 레벨 반복이 부담되면 base package 한정 `addPathPrefix`로 리팩터(two-way door).
+  데모 `AuthController`→`AuthDemoController` 개명은 login/logout 실구현 후 데모 제거로 정리.
+
+---
+
+## B-016. 비밀번호 검증 정책 — 잠정(@Size max=72)·강화 이월 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to 008 signup, SEC-007. 보안 게이트2 검토 대상
+- 결정: signup password 검증은 `@NotBlank + @Size(max=72)`(BCrypt 72바이트 한계)만 잠정 적용.
+  최소 길이·복잡도 정책은 계약·스펙 미정 → 미도입, 보안 게이트2에서 확정.
+- 이유: 계약/도메인 스펙에 password 규칙 부재. 최소길이·복잡도는 프론트 검증·UX·보안이 함께 걸리는 사안 →
+  임의 도입보다 보안 검토로 확정이 정합. `max=72`는 BCrypt 기술 한계라 지금 필수.
+- 후속: 보안 게이트2에서 정책 확정 시 강화(프론트 검증 메시지 정합 병행). two-way door.
+
+---
+
+## B-017. 로그인 타이밍 사이드채널 완화 — 보안 게이트2 이월 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to 009 login, B-016(정책 이월 동궤), SEC-007. 보안 게이트2 검토 대상
+- 결정: 없는 loginId는 BCrypt `matches`를 건너뛰어 응답 시간이 짧아지는 타이밍 사이드채널이 남는다.
+  더미 해시 상수시간 비교 등 완화는 이번 유닛 범위 밖 → 보안 게이트2 이월. 이번 유닛 미도입 유지.
+- 이유: 응답 코드는 이미 AUTH_003 단일화로 열거 완화. 타이밍 완화는 자금 시스템에서 유효하나 정책·구현이
+  보안 검토와 함께 확정될 사안. 현 단계 미도입이 정합.
+- 후속: 보안 게이트2에서 완화 방식 확정(더미 BCrypt 상수시간 처리 등). two-way door.
+
+---
+
+## B-018. refresh 회전 vs 탈퇴 계정 순서 — member 탈퇴 구현 시 조정 (이월) (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to 010 refresh, B-011. member 탈퇴 도메인 구현 시 검토
+- 결정: rotate(Lua CAS 원자)가 신규 refresh를 먼저 저장한 뒤 소유자 `isDeleted`를 판정 → 탈퇴 계정의 신규
+  refresh 해시가 TTL까지 Redis에 잔존하는 미세 엣지. 사용자 삭제 엔드포인트 미구현이라 현재는 이론적. 현 단계 미조정.
+- 이유: 탈퇴 플로우(member) 미구현 상태에서 순서 조정은 실익 없음. 회전 결과 access 발급은 어차피 AUTH_004로
+  차단되어 재발급 자체는 성립 안 함(방어됨). 잔존 해시는 TTL로 자연 폐기.
+- 후속: member 탈퇴 구현 시 (a) 회전 전 소유자 유효성 선검증 또는 (b) 탈퇴 시 refresh 세션 일괄 폐기로 해소. two-way door.
+
+---
+
+## B-019. 204 No Content 응답 — ApiResponse 미적용(void + @ResponseStatus) (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to 011 logout, api-contract §1.5·§2, CLAUDE.md §5(컨트롤러 ApiResponse). 011 완료 보고 이슈2
+- 결정: 204 No Content(본문 없는) 응답 엔드포인트는 `void` + `@ResponseStatus(HttpStatus.NO_CONTENT)`로 처리하고
+  `ApiResponse<T>`로 감싸지 않는다. logout이 최초 적용. 향후 DELETE 등 no-content 응답에 동일 적용.
+- 이유: RFC 7231상 204는 메시지 본문을 포함할 수 없다. `ApiResponse<T>`로 감싸면 본문이 생겨 204와 모순.
+  근거 위계상 확정 스펙(계약 §2 logout 204) > CLAUDE.md 컨벤션이라 계약 준수가 우선. CLAUDE.md §5 "항상
+  ApiResponse"는 본문이 있는 응답(2xx+body / 4xx 에러)에 대한 규칙으로 해석.
+- 기각된 대안: 204를 200 + ApiResponse(빈 data)로 변경(계약 위반), ApiResponse를 204 body로 강제(RFC 위반).
+- 후속: CLAUDE.md §5 컨벤션 문구에 "204/no-content 예외"를 명문화할지 총괄 확인(지침 수정은 총괄 승인). auth 완료 묶음 보고에 포함.
+
+---
+
+## B-020. 코드 스타일 자동화 도입 — Naver 핵데이 + Spotless/Checkstyle (스페이스4) (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to CLAUDE.md §4·§5, D-075(CLAUDE.md 섹션7 반영). 사용자 지시(업계 레퍼런스 조사·적용). 작업 프롬프트 backend/outbox/015
+- 결정: 스타일 강제 층으로 Naver 캠퍼스 핵데이 컨벤션 채택. Checkstyle(naver-checkstyle-rules.xml, 검사) +
+  Spotless(eclipse=naver-eclipse-formatter, 자동교정) 조합. 들여쓰기는 하드탭(Naver 기본) 대신 스페이스4로
+  커스터마이즈. `.editorconfig`(UTF-8·LF·space4·max120) 공유.
+- 이유: 국내 실무 표준·한글 친화·Checkstyle 룰셋/포맷터 기성 제공. 스페이스4는 기존 코드(533줄 스페이스)·
+  IntelliJ 기본 정합이고, 하드탭 전환은 전면 리포맷·diff 노이즈 유발. 아키텍처 규약(§5)은 스타일 가이드
+  미포함 영역이라 병존한다.
+- 기각된 대안: google-java-format(2-space 강제, 국내 관례 충돌), `.editorconfig`+Checkstyle만(자동교정 부재),
+  하드탭 유지(기존 코드 전면 변경).
+- 범위: 스타일 층만. §5 아키텍처 규약 불변. CLAUDE.md §5 문구 반영은 총괄 승인(에스컬레이션).
+- 후속: 도입은 Claude Code(백엔드 리팩토링). 첫 spotlessApply는 단독 style 커밋(로직 무변경). CLAUDE.md 반영 총괄 승인.
+
+---
+
+## B-021. Checkstyle 버전 — 10.20.2 (Java 21 record 지원) (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-020, D-075. 015 도입 이슈1. Naver 권장 "8.24 이상" 충족
+- 결정: checkstyle `toolVersion`을 8.24 대신 10.20.2로 확정. Naver 룰셋(8.24 기준)은 10.20.2에서 로딩·구동 확인.
+- 이유: 8.24는 Java 21 `record`를 파싱 못함(DTO 전부 record → LoginRequest.java record 토큰 에러). record 지원이
+  필수라 상위 버전 불가피. Naver 문서도 "Checkstyle 8.24 이상"이라 상충 없음.
+- 기각된 대안: 8.24 고정(record 미지원, 근본 불가), DTO record 회피(계약·§5 DTO record 규약 위반).
+- 후속: 10.x 일부 모듈 속성 호환성은 잔여 정합(B-022)에서 함께 검증. two-way door.
+
+---
+
+## B-022. 스타일 포맷터↔Checkstyle 정합 정책 — 포맷터 튜닝 우선 (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-020·B-021, D-075. 015 이슈2. 코드리뷰(홀드) 일부 겹침
+- 결정: 포맷터(naver-eclipse-formatter)와 Checkstyle(Naver 룰) 불일치는 Naver 룰을 완화하지 않고 포맷터 튜닝으로 정합.
+  (a) Indentation 14건 → continuation indent 8·120자 미만 불필요 강제개행 억제, (b) braces 6건 → 빈 블럭 `{}` 축약을
+  Naver 5.3(허용)에 정합. 이 둘은 이번 유닛에서 완결. (c) 1글자명 4건(var-lower-camelcase)은 네이밍 사안 → Naver 2.13
+  짧은 스코프 임시변수(람다·catch·comparator)면 `// @checkstyle:ignore`로 정당화, 넓은 스코프면 의미명 리네임.
+  코드리뷰(홀드) 대상 로직은 불변경, 최소 처리.
+- 이유: 정본은 Naver 표준(D-075). 룰 완화는 표준 훼손 → 포맷터를 표준에 맞추는 게 정합. 네이밍은 포맷과 성격이 달라 스코프 기준 개별 판단.
+- 후속: 그린화(checkstyle 위반 0) 후 maxWarnings 0 강제 유지. 1글자명 최종 정리는 코드리뷰 반영 단계와 조율. .gitattributes(*.java eol=lf) 추가(CRLF 재발 방지).
+
+---
+
+## B-023. 테스트 메서드명 한국어 허용 — *Test.java suppress (2026-07-14) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-020·B-022, D-075, CLAUDE.md 언어 규약(주석·테스트 한국어). 015 이슈1
+- 결정: Naver `MethodName`(^[a-z]...)·`AbbreviationAsWordInName`을 `*Test.java`에 한해 naver-checkstyle-suppressions.xml로
+  제외. 프로덕션 코드는 그대로 강제(메인 enforcement 불변).
+- 이유: 테스트 메서드명 한국어는 CLAUDE.md 언어 규약 + 국내 실무 관례(가독성). Naver 2.9도 테스트 메서드명 예외
+  (언더스코어)를 인정. suppressions는 Naver 공식 제외 메커니즘(B.6). 테스트 스코프 한정이라 룰 완화(B-022 금지)가
+  아니라 룰 적용 범위를 프로젝트 컨벤션에 정합시키는 것.
+- 기각된 대안: 테스트명 영어화(CLAUDE.md 언어 규약 위배 + 15파일 대규모 변경 + 가독성 손실), `MethodName` 전역
+  완화(프로덕션 enforcement 훼손).
+- 후속: 새 세션은 CLAUDE.md 언어 규약대로 한글 테스트명 작성 → suppressions로 자동 통과. two-way door.
+
+---

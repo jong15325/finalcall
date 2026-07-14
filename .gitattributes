@@ -1,3 +1,5 @@
 /gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
+# B-022(이슈3): Java 소스는 LF 고정(Naver [newline-lf]·.editorconfig 정합, Windows CRLF 재발 방지).
+*.java text eol=lf

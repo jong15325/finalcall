@@ -25,7 +25,7 @@ public class RedissonConfig {
         RedisConnectionDetails.Standalone standalone = redisConnectionDetails.getStandalone();
         Config config = new Config();
         var singleServer = config.useSingleServer()
-                .setAddress("redis://" + standalone.getHost() + ":" + standalone.getPort());
+            .setAddress("redis://" + standalone.getHost() + ":" + standalone.getPort());
         if (StringUtils.hasText(redisConnectionDetails.getPassword())) {
             singleServer.setPassword(redisConnectionDetails.getPassword());
         }

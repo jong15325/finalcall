@@ -1,8 +1,8 @@
 package com.finalcall.domain.auth;
 
-import com.finalcall.infra.config.JpaConfig;
-import com.finalcall.support.TestcontainersConfiguration;
-import jakarta.persistence.EntityManager;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -10,8 +10,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.finalcall.infra.config.JpaConfig;
+import com.finalcall.support.TestcontainersConfiguration;
+
+import jakarta.persistence.EntityManager;
 
 /**
  * 회원 리포지토리 슬라이스 테스트(auth). notice 슬라이스 테스트 컨벤션을 따른다.
@@ -80,9 +82,9 @@ class UserRepositorySliceTest {
 
     private User user(String loginId, String nickname) {
         return User.builder()
-                .loginId(loginId)
-                .passwordHash("hash")
-                .nickname(nickname)
-                .build();
+            .loginId(loginId)
+            .passwordHash("hash")
+            .nickname(nickname)
+            .build();
     }
 }

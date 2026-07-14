@@ -9,8 +9,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class FinalcallApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(FinalcallApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(FinalcallApplication.class, args);
+    }
 
 }

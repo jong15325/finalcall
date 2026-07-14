@@ -1,9 +1,5 @@
 package com.finalcall.api.notice;
 
-import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.notice.NoticeService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +11,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.finalcall.common.response.ApiResponse;
+import com.finalcall.domain.notice.NoticeService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 공지 컨트롤러(Stage D) — 컨트롤러 컨벤션 참조 구현.
@@ -64,8 +66,8 @@ public class NoticeController {
     /** 커서 목록(무한 스크롤/대규모 트래픽용). */
     @GetMapping("/cursor")
     public ApiResponse<NoticeCursorResponse> getByCursor(
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size) {
+        @RequestParam(required = false) Long cursor,
+        @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.success(NoticeCursorResponse.from(noticeService.getByCursor(cursor, size)));
     }
 }

@@ -1,8 +1,9 @@
 package com.finalcall.infra.config;
 
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * 설정 바인딩 표준 데모(Stage 2).
@@ -17,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "app")
 public record AppProperties(
-        @NotBlank String name,
-        @NotBlank String description
-) {
+    @NotBlank String name,
+    @NotBlank String description) {
 }

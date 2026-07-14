@@ -1,13 +1,14 @@
 package com.finalcall.common.logging;
 
+import java.io.IOException;
+
+import org.slf4j.MDC;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.MDC;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 /**
  * 요청 단위 MDC 컨텍스트 필터(Stage 4).
@@ -32,7 +33,7 @@ public class MdcContextFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         try {
             String traceId = MDC.get(MDC_TRACE_ID);
             if (traceId != null) {

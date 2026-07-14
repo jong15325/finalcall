@@ -1,16 +1,18 @@
 package com.finalcall.domain.sample;
 
-import com.finalcall.common.exception.CommonErrorCode;
-import com.finalcall.common.lock.DistributedLock;
-import com.finalcall.common.util.Preconditions;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import java.time.Instant;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import com.finalcall.common.exception.CommonErrorCode;
+import com.finalcall.common.lock.DistributedLock;
+import com.finalcall.common.util.Preconditions;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 /**
  * 샘플 도메인 서비스 — Stage 1 수직 슬라이스 + Stage 3 예외/검증 + Stage 5 커스텀 메트릭 데모용.

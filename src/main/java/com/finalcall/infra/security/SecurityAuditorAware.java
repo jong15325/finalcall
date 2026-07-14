@@ -1,11 +1,11 @@
 package com.finalcall.infra.security;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 /**
  * 작성자 auditing 제공자(Stage F1) — SecurityContext 의 인증 주체를 createdBy/modifiedBy 로 사용한다.

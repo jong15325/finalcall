@@ -32,40 +32,40 @@ public final class Ulid {
 
         byte[] bytes = new byte[10];
         RANDOM.nextBytes(bytes);
-        int[] e = new int[10];
+        int[] octets = new int[10];
         for (int i = 0; i < 10; i++) {
-            e[i] = bytes[i] & 0xFF;
+            octets[i] = bytes[i] & 0xFF;
         }
 
         char[] chars = new char[26];
         // 타임스탬프 48비트 → 앞 10자(시간순 정렬성의 근거).
-        chars[0] = ENCODING[(int) ((time >>> 45) & 0x1F)];
-        chars[1] = ENCODING[(int) ((time >>> 40) & 0x1F)];
-        chars[2] = ENCODING[(int) ((time >>> 35) & 0x1F)];
-        chars[3] = ENCODING[(int) ((time >>> 30) & 0x1F)];
-        chars[4] = ENCODING[(int) ((time >>> 25) & 0x1F)];
-        chars[5] = ENCODING[(int) ((time >>> 20) & 0x1F)];
-        chars[6] = ENCODING[(int) ((time >>> 15) & 0x1F)];
-        chars[7] = ENCODING[(int) ((time >>> 10) & 0x1F)];
-        chars[8] = ENCODING[(int) ((time >>> 5) & 0x1F)];
-        chars[9] = ENCODING[(int) (time & 0x1F)];
+        chars[0] = ENCODING[(int)((time >>> 45) & 0x1F)];
+        chars[1] = ENCODING[(int)((time >>> 40) & 0x1F)];
+        chars[2] = ENCODING[(int)((time >>> 35) & 0x1F)];
+        chars[3] = ENCODING[(int)((time >>> 30) & 0x1F)];
+        chars[4] = ENCODING[(int)((time >>> 25) & 0x1F)];
+        chars[5] = ENCODING[(int)((time >>> 20) & 0x1F)];
+        chars[6] = ENCODING[(int)((time >>> 15) & 0x1F)];
+        chars[7] = ENCODING[(int)((time >>> 10) & 0x1F)];
+        chars[8] = ENCODING[(int)((time >>> 5) & 0x1F)];
+        chars[9] = ENCODING[(int)(time & 0x1F)];
         // 난수 80비트 → 뒤 16자(5비트씩 재배열).
-        chars[10] = ENCODING[e[0] >>> 3];
-        chars[11] = ENCODING[((e[0] & 0x07) << 2) | (e[1] >>> 6)];
-        chars[12] = ENCODING[(e[1] & 0x3E) >>> 1];
-        chars[13] = ENCODING[((e[1] & 0x01) << 4) | (e[2] >>> 4)];
-        chars[14] = ENCODING[((e[2] & 0x0F) << 1) | (e[3] >>> 7)];
-        chars[15] = ENCODING[(e[3] & 0x7C) >>> 2];
-        chars[16] = ENCODING[((e[3] & 0x03) << 3) | (e[4] >>> 5)];
-        chars[17] = ENCODING[e[4] & 0x1F];
-        chars[18] = ENCODING[e[5] >>> 3];
-        chars[19] = ENCODING[((e[5] & 0x07) << 2) | (e[6] >>> 6)];
-        chars[20] = ENCODING[(e[6] & 0x3E) >>> 1];
-        chars[21] = ENCODING[((e[6] & 0x01) << 4) | (e[7] >>> 4)];
-        chars[22] = ENCODING[((e[7] & 0x0F) << 1) | (e[8] >>> 7)];
-        chars[23] = ENCODING[(e[8] & 0x7C) >>> 2];
-        chars[24] = ENCODING[((e[8] & 0x03) << 3) | (e[9] >>> 5)];
-        chars[25] = ENCODING[e[9] & 0x1F];
+        chars[10] = ENCODING[octets[0] >>> 3];
+        chars[11] = ENCODING[((octets[0] & 0x07) << 2) | (octets[1] >>> 6)];
+        chars[12] = ENCODING[(octets[1] & 0x3E) >>> 1];
+        chars[13] = ENCODING[((octets[1] & 0x01) << 4) | (octets[2] >>> 4)];
+        chars[14] = ENCODING[((octets[2] & 0x0F) << 1) | (octets[3] >>> 7)];
+        chars[15] = ENCODING[(octets[3] & 0x7C) >>> 2];
+        chars[16] = ENCODING[((octets[3] & 0x03) << 3) | (octets[4] >>> 5)];
+        chars[17] = ENCODING[octets[4] & 0x1F];
+        chars[18] = ENCODING[octets[5] >>> 3];
+        chars[19] = ENCODING[((octets[5] & 0x07) << 2) | (octets[6] >>> 6)];
+        chars[20] = ENCODING[(octets[6] & 0x3E) >>> 1];
+        chars[21] = ENCODING[((octets[6] & 0x01) << 4) | (octets[7] >>> 4)];
+        chars[22] = ENCODING[((octets[7] & 0x0F) << 1) | (octets[8] >>> 7)];
+        chars[23] = ENCODING[(octets[8] & 0x7C) >>> 2];
+        chars[24] = ENCODING[((octets[8] & 0x03) << 3) | (octets[9] >>> 5)];
+        chars[25] = ENCODING[octets[9] & 0x1F];
 
         return new String(chars);
     }

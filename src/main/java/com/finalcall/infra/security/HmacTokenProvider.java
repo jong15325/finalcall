@@ -1,18 +1,21 @@
 package com.finalcall.infra.security;
 
-import com.finalcall.common.security.TokenClaims;
-import com.finalcall.common.security.TokenProvider;
-import com.finalcall.infra.config.JwtProperties;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Component;
+
+import com.finalcall.common.security.TokenClaims;
+import com.finalcall.common.security.TokenProvider;
+import com.finalcall.infra.config.JwtProperties;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * HS256(대칭키) 기반 {@link TokenProvider} 구현(Stage F1, auth 클레임 정합).
@@ -42,14 +45,14 @@ public class HmacTokenProvider implements TokenProvider {
         Instant now = Instant.now();
         Instant expiry = now.plus(accessExpMinutes, ChronoUnit.MINUTES);
         return Jwts.builder()
-                .subject(claims.userId())
-                .claim(CLAIM_PUBLIC_ID, claims.publicId())
-                .claim(CLAIM_IS_ADMIN, claims.admin())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiry))
-                // ★ HS256 명시(JWT_ALGORITHM=HS256). signWith(key) 만 쓰면 키 길이에 따라 HS384/512 로 자동 상향된다.
-                .signWith(key, Jwts.SIG.HS256)
-                .compact();
+            .subject(claims.userId())
+            .claim(CLAIM_PUBLIC_ID, claims.publicId())
+            .claim(CLAIM_IS_ADMIN, claims.admin())
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(expiry))
+            // ★ HS256 명시(JWT_ALGORITHM=HS256). signWith(key) 만 쓰면 키 길이에 따라 HS384/512 로 자동 상향된다.
+            .signWith(key, Jwts.SIG.HS256)
+            .compact();
     }
 
     @Override
@@ -61,13 +64,13 @@ public class HmacTokenProvider implements TokenProvider {
     public TokenClaims parseAccessToken(String token) {
         // 서명/만료 검증 실패 시 JwtException 계열 예외를 던진다(필터에서 컨텍스트 비우고 EntryPoint 가 401).
         Claims payload = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
         return new TokenClaims(
-                payload.getSubject(),
-                payload.get(CLAIM_PUBLIC_ID, String.class),
-                Boolean.TRUE.equals(payload.get(CLAIM_IS_ADMIN, Boolean.class)));
+            payload.getSubject(),
+            payload.get(CLAIM_PUBLIC_ID, String.class),
+            Boolean.TRUE.equals(payload.get(CLAIM_IS_ADMIN, Boolean.class)));
     }
 }

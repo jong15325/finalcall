@@ -1,9 +1,10 @@
 package com.finalcall.api.auth;
 
-import com.finalcall.domain.auth.LoginResult;
-import lombok.Builder;
-
 import java.time.Instant;
+
+import com.finalcall.domain.auth.LoginResult;
+
+import lombok.Builder;
 
 /**
  * 로그인 응답(auth) — 계약 §2 `{ accessToken, refreshToken, accessExpiresAt }`.
@@ -11,15 +12,14 @@ import java.time.Instant;
  */
 @Builder
 public record LoginResponse(
-        String accessToken,
-        String refreshToken,
-        Instant accessExpiresAt
-) {
+    String accessToken,
+    String refreshToken,
+    Instant accessExpiresAt) {
     public static LoginResponse from(LoginResult result) {
         return LoginResponse.builder()
-                .accessToken(result.accessToken())
-                .refreshToken(result.refreshToken())
-                .accessExpiresAt(result.accessExpiresAt())
-                .build();
+            .accessToken(result.accessToken())
+            .refreshToken(result.refreshToken())
+            .accessExpiresAt(result.accessExpiresAt())
+            .build();
     }
 }

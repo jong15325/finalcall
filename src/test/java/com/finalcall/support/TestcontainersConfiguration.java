@@ -24,14 +24,14 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     MySQLContainer<?> mysqlContainer() {
         return new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
-                .withReuse(true);
+            .withReuse(true);
     }
 
     @Bean
     @ServiceConnection(name = "redis")
     GenericContainer<?> redisContainer() {
         return new GenericContainer<>(DockerImageName.parse("redis:7"))
-                .withExposedPorts(6379)
-                .withReuse(true);
+            .withExposedPorts(6379)
+            .withReuse(true);
     }
 }

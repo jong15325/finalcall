@@ -1,15 +1,17 @@
 package com.finalcall.api.auth;
 
-import com.finalcall.common.response.ApiResponse;
-import com.finalcall.common.security.TokenClaims;
-import com.finalcall.common.security.TokenProvider;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.finalcall.common.response.ApiResponse;
+import com.finalcall.common.security.TokenClaims;
+import com.finalcall.common.security.TokenProvider;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 인증 데모 컨트롤러(Stage F1).

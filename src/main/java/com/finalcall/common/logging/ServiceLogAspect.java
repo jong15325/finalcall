@@ -1,11 +1,12 @@
 package com.finalcall.common.logging;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link ServiceLog} 처리 Aspect(Stage 4).
@@ -35,7 +36,7 @@ public class ServiceLogAspect {
     }
 
     private String methodName(ProceedingJoinPoint joinPoint) {
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        MethodSignature signature = (MethodSignature)joinPoint.getSignature();
         return signature.getDeclaringType().getSimpleName() + "." + signature.getName();
     }
 }

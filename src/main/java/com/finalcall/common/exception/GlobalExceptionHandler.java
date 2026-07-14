@@ -1,8 +1,7 @@
 package com.finalcall.common.exception;
 
-import com.finalcall.common.response.ErrorResponse;
-import com.finalcall.common.response.FieldErrorDetail;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -14,7 +13,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.util.List;
+import com.finalcall.common.response.ErrorResponse;
+import com.finalcall.common.response.FieldErrorDetail;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 전역 예외 처리(Stage 3). 모든 핸들러는 {@link ErrorResponse} 를 반환한다(성공 타입 ApiResponse 를 에러에 쓰지 않는다).
@@ -31,29 +33,29 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
         log.warn("[BusinessException] {} - {}", errorCode.getCode(), ex.getMessage());
         return ResponseEntity.status(errorCode.getStatus())
-                .body(ErrorResponse.of(errorCode, ex.getMessage()));
+            .body(ErrorResponse.of(errorCode, ex.getMessage()));
     }
 
     /** 2) @Valid 바디 검증 실패 → INVALID_INPUT + 필드별 errors 배열. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         List<FieldErrorDetail> errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::toFieldErrorDetail)
-                .toList();
+            .map(this::toFieldErrorDetail)
+            .toList();
         return ResponseEntity.status(CommonErrorCode.INVALID_INPUT.getStatus())
-                .body(ErrorResponse.of(CommonErrorCode.INVALID_INPUT, errors));
+            .body(ErrorResponse.of(CommonErrorCode.INVALID_INPUT, errors));
     }
 
     /** 3-a) 타입 불일치/바디 파싱 실패/필수 파라미터 누락 등 표준 4xx → INVALID_INPUT. */
     @ExceptionHandler({
-            MethodArgumentTypeMismatchException.class,
-            HttpMessageNotReadableException.class,
-            MissingServletRequestParameterException.class
+        MethodArgumentTypeMismatchException.class,
+        HttpMessageNotReadableException.class,
+        MissingServletRequestParameterException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
         log.warn("[BadRequest] {}", ex.getMessage());
         return ResponseEntity.status(CommonErrorCode.INVALID_INPUT.getStatus())
-                .body(ErrorResponse.of(CommonErrorCode.INVALID_INPUT));
+            .body(ErrorResponse.of(CommonErrorCode.INVALID_INPUT));
     }
 
     /** 3-b) 지원하지 않는 HTTP 메서드 → METHOD_NOT_ALLOWED. */
@@ -61,7 +63,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
         log.warn("[MethodNotAllowed] {}", ex.getMessage());
         return ResponseEntity.status(CommonErrorCode.METHOD_NOT_ALLOWED.getStatus())
-                .body(ErrorResponse.of(CommonErrorCode.METHOD_NOT_ALLOWED));
+            .body(ErrorResponse.of(CommonErrorCode.METHOD_NOT_ALLOWED));
     }
 
     /** 3-c) 매핑되지 않은 경로(미노출 엔드포인트/오타 등) → NOT_FOUND. 전역 핸들러가 없으면 generic 500 으로 새는 것을 방지. */
@@ -69,7 +71,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex) {
         log.warn("[NotFound] {}", ex.getResourcePath());
         return ResponseEntity.status(CommonErrorCode.NOT_FOUND.getStatus())
-                .body(ErrorResponse.of(CommonErrorCode.NOT_FOUND));
+            .body(ErrorResponse.of(CommonErrorCode.NOT_FOUND));
     }
 
     /** 4) 그 외 미처리 예외 → 500. 내부 정보는 응답에 노출하지 않고 로그에만 전체 스택을 남긴다. */
@@ -77,13 +79,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
         log.error("[Unexpected] 처리되지 않은 예외", ex);
         return ResponseEntity.status(CommonErrorCode.INTERNAL_ERROR.getStatus())
-                .body(ErrorResponse.of(CommonErrorCode.INTERNAL_ERROR));
+            .body(ErrorResponse.of(CommonErrorCode.INTERNAL_ERROR));
     }
 
     private FieldErrorDetail toFieldErrorDetail(FieldError fieldError) {
         String reason = fieldError.getDefaultMessage() != null
-                ? fieldError.getDefaultMessage()
-                : "유효하지 않은 값입니다.";
+            ? fieldError.getDefaultMessage()
+            : "유효하지 않은 값입니다.";
         return new FieldErrorDetail(fieldError.getField(), reason);
     }
 }

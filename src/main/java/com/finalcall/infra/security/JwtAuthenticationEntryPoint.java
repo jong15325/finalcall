@@ -1,15 +1,17 @@
 package com.finalcall.infra.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finalcall.common.exception.CommonErrorCode;
-import com.finalcall.common.response.ErrorResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finalcall.common.exception.CommonErrorCode;
+import com.finalcall.common.response.ErrorResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 인증 실패(401) 처리(Stage F1). Security 기본 응답 대신 3단계 {@link ErrorResponse} 포맷으로 통일한다.
@@ -25,7 +27,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
+        AuthenticationException authException) throws IOException {
         writeError(response);
     }
 

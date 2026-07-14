@@ -1,13 +1,14 @@
 package com.finalcall.common.logging;
 
+import java.io.IOException;
+
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 /**
  * 접근 로그 필터(Stage 4, ACCESS_LOG_ENABLED).
@@ -22,7 +23,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         long startMs = System.currentTimeMillis();
         try {
             chain.doFilter(request, response);

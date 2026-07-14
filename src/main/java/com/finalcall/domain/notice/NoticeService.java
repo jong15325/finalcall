@@ -1,14 +1,16 @@
 package com.finalcall.domain.notice;
 
-import com.finalcall.common.logging.ServiceLog;
-import com.finalcall.common.util.Preconditions;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.common.util.Preconditions;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 공지 서비스(Stage D) — 서비스 컨벤션 참조 구현.
@@ -27,10 +29,10 @@ public class NoticeService {
     @ServiceLog
     public Long create(String title, String content, NoticeType type) {
         Notice saved = noticeRepository.save(Notice.builder()
-                .title(title)
-                .content(content)
-                .type(type)
-                .build());
+            .title(title)
+            .content(content)
+            .type(type)
+            .build());
         return saved.getId();
     }
 

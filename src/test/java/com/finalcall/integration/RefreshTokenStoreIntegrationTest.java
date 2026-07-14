@@ -1,16 +1,17 @@
 package com.finalcall.integration;
 
-import com.finalcall.infra.config.JwtProperties;
-import com.finalcall.infra.security.RefreshTokenStore;
-import com.finalcall.support.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+import com.finalcall.infra.config.JwtProperties;
+import com.finalcall.infra.security.RefreshTokenStore;
+import com.finalcall.support.IntegrationTest;
 
 /**
  * {@link RefreshTokenStore} 동작 검증(auth, B-011) — 실제 Redis(Testcontainers).

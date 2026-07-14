@@ -1,10 +1,10 @@
 package com.finalcall.domain.sample;
 
+import java.time.Instant;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
 
 /**
  * 캐시 데모 값(Stage E1). Instant 필드로 JSON 직렬화(JavaTimeModule)와 캐시 히트 여부를 확인한다.

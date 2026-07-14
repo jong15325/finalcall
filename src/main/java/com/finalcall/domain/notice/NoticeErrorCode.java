@@ -1,9 +1,11 @@
 package com.finalcall.domain.notice;
 
+import org.springframework.http.HttpStatus;
+
 import com.finalcall.common.exception.ErrorCode;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 /**
  * 공지 도메인 에러 코드(Stage D) — 공통 {@link ErrorCode} 인터페이스의 첫 도메인 구현체(본보기).

@@ -1,13 +1,14 @@
 package com.finalcall.integration;
 
-import com.finalcall.support.IntegrationTest;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.finalcall.support.IntegrationTest;
 
 /**
  * 회원가입 엔드포인트 통합 검증(auth) — 실제 MySQL(Testcontainers) + Security 필터 체인.
@@ -23,57 +24,57 @@ class SignupIntegrationTest extends IntegrationTest {
     @Test
     void 가입에_성공하면_201과_publicId_nickname을_반환한다() throws Exception {
         mockMvc.perform(post(SIGNUP_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body("hong", "pw12345678", "홍길동")))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.userPublicId").isNotEmpty())
-                .andExpect(jsonPath("$.data.nickname").value("홍길동"));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body("hong", "pw12345678", "홍길동")))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.userPublicId").isNotEmpty())
+            .andExpect(jsonPath("$.data.nickname").value("홍길동"));
     }
 
     @Test
     void loginId_중복이면_409_AUTH_001() throws Exception {
         mockMvc.perform(post(SIGNUP_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body("dupid", "pw12345678", "닉네임A")))
-                .andExpect(status().isCreated());
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body("dupid", "pw12345678", "닉네임A")))
+            .andExpect(status().isCreated());
 
         mockMvc.perform(post(SIGNUP_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body("dupid", "pw12345678", "닉네임B")))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH_001"));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body("dupid", "pw12345678", "닉네임B")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("AUTH_001"));
     }
 
     @Test
     void nickname_중복이면_409_AUTH_002() throws Exception {
         mockMvc.perform(post(SIGNUP_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body("idA", "pw12345678", "같은닉네임")))
-                .andExpect(status().isCreated());
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body("idA", "pw12345678", "같은닉네임")))
+            .andExpect(status().isCreated());
 
         mockMvc.perform(post(SIGNUP_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body("idB", "pw12345678", "같은닉네임")))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH_002"));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body("idB", "pw12345678", "같은닉네임")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("AUTH_002"));
     }
 
     @Test
     void 필수값_누락이면_400_검증에러() throws Exception {
         mockMvc.perform(post(SIGNUP_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body("", "pw12345678", "닉네임")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errors").isArray());
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body("", "pw12345678", "닉네임")))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.errors").isArray());
     }
 
     private static String body(String loginId, String password, String nickname) {
         return """
-                {"loginId":"%s","password":"%s","nickname":"%s"}
-                """.formatted(loginId, password, nickname);
+            {"loginId":"%s","password":"%s","nickname":"%s"}
+            """.formatted(loginId, password, nickname);
     }
 }

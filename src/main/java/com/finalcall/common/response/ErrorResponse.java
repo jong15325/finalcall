@@ -1,11 +1,12 @@
 package com.finalcall.common.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.finalcall.common.exception.ErrorCode;
-import lombok.Getter;
-
 import java.time.Instant;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.finalcall.common.exception.ErrorCode;
+
+import lombok.Getter;
 
 /**
  * 에러 응답 wrapper(Stage 3). 성공({@link ApiResponse})과 <b>독립 타입</b>이다.

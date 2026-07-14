@@ -1,6 +1,7 @@
 package com.finalcall.api.auth;
 
 import com.finalcall.domain.auth.User;
+
 import lombok.Builder;
 
 /**
@@ -10,13 +11,12 @@ import lombok.Builder;
  */
 @Builder
 public record SignupResponse(
-        String userPublicId,
-        String nickname
-) {
+    String userPublicId,
+    String nickname) {
     public static SignupResponse from(User user) {
         return SignupResponse.builder()
-                .userPublicId(user.getPublicId())
-                .nickname(user.getNickname())
-                .build();
+            .userPublicId(user.getPublicId())
+            .nickname(user.getNickname())
+            .build();
     }
 }

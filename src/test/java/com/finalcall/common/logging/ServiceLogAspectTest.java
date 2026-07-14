@@ -1,6 +1,7 @@
 package com.finalcall.common.logging;
 
-import com.finalcall.support.TestcontainersConfiguration;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.finalcall.support.TestcontainersConfiguration;
 
 /**
  * {@link ServiceLogAspect} 검증(Stage 4, F2에서 Testcontainers 기반으로 전환).

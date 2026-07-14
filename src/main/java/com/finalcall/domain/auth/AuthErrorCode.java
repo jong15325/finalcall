@@ -1,9 +1,11 @@
 package com.finalcall.domain.auth;
 
+import org.springframework.http.HttpStatus;
+
 import com.finalcall.common.exception.ErrorCode;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 /**
  * 인증(auth) 도메인 에러 코드 — 공통 {@link ErrorCode} 인터페이스 구현. 네이밍은 {@code AUTH_{3자리}}.

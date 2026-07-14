@@ -1,8 +1,9 @@
 package com.finalcall.common.exception;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 /**
  * 도메인 무관 공통 에러 코드(Stage 3).

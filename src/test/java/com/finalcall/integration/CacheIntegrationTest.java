@@ -1,15 +1,16 @@
 package com.finalcall.integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finalcall.support.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finalcall.support.IntegrationTest;
 
 /**
  * Redis 캐시 통합 검증(Stage F2, E1 연계).
@@ -36,8 +37,8 @@ class CacheIntegrationTest extends IntegrationTest {
 
     private String getCached() throws Exception {
         return mockMvc.perform(get("/sample/cache/1"))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
     }
 
     private String generatedAt(String body) throws Exception {

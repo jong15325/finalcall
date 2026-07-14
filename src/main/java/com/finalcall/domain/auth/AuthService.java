@@ -1,15 +1,17 @@
 package com.finalcall.domain.auth;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.infra.security.RefreshTokenStore;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 인증(auth) 서비스 — 회원가입·로그인. 클래스 레벨 {@code @Transactional(readOnly = true)} 기본, 쓰기만 오버라이드(CLAUDE.md §5).
@@ -41,10 +43,10 @@ public class AuthService {
         Preconditions.validate(!userRepository.existsByNickname(nickname), AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
 
         User user = userRepository.save(User.builder()
-                .loginId(loginId)
-                .passwordHash(passwordEncoder.encode(password))
-                .nickname(nickname)
-                .build());
+            .loginId(loginId)
+            .passwordHash(passwordEncoder.encode(password))
+            .nickname(nickname)
+            .build());
         // 잔액 행(0,0,0)을 같은 트랜잭션에서 함께 생성한다.
         userBalanceRepository.save(UserBalance.builder().user(user).build());
         return user;
@@ -64,7 +66,7 @@ public class AuthService {
         }
         String userId = String.valueOf(user.getId());
         String accessToken = tokenProvider.generateAccessToken(
-                new TokenClaims(userId, user.getPublicId(), user.isAdmin()));
+            new TokenClaims(userId, user.getPublicId(), user.isAdmin()));
         String refreshToken = refreshTokenStore.issue(userId);
         return new LoginResult(accessToken, refreshToken, tokenProvider.accessTokenExpiresAt());
     }
@@ -78,13 +80,13 @@ public class AuthService {
     @ServiceLog
     public LoginResult refresh(String refreshToken) {
         RefreshTokenStore.Rotation rotation = refreshTokenStore.rotate(refreshToken)
-                .orElseThrow(() -> new BusinessException(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN));
+            .orElseThrow(() -> new BusinessException(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN));
         // 회전된 세션의 소유자를 로드해 access 클레임(publicId·isAdmin)을 구성한다. 탈퇴 계정은 무효 처리.
         User user = userRepository.findById(Long.parseLong(rotation.userId()))
-                .filter(u -> !u.isDeleted())
-                .orElseThrow(() -> new BusinessException(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN));
+            .filter(u -> !u.isDeleted())
+            .orElseThrow(() -> new BusinessException(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN));
         String accessToken = tokenProvider.generateAccessToken(
-                new TokenClaims(rotation.userId(), user.getPublicId(), user.isAdmin()));
+            new TokenClaims(rotation.userId(), user.getPublicId(), user.isAdmin()));
         return new LoginResult(accessToken, rotation.refreshToken(), tokenProvider.accessTokenExpiresAt());
     }
 

@@ -1,9 +1,10 @@
 package com.finalcall.common.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Getter;
-
 import java.time.Instant;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.Getter;
 
 /**
  * 성공 응답 wrapper(Stage 3). <b>성공 전용</b> — 에러 필드(code/message/errors)를 두지 않는다.

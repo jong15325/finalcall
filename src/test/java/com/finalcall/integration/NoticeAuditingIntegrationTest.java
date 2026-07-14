@@ -1,18 +1,19 @@
 package com.finalcall.integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.finalcall.support.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finalcall.support.IntegrationTest;
 
 /**
  * 작성자 Auditing(createdBy) 통합 검증(Stage F2, F1 연계).
@@ -32,24 +33,24 @@ class NoticeAuditingIntegrationTest extends IntegrationTest {
     void 인증_컨텍스트에서_createdBy_기록() throws Exception {
         long id = createNotice();
         mockMvc.perform(get("/notices/" + id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.createdBy").value("author-1"));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.createdBy").value("author-1"));
     }
 
     @Test
     void 비인증_생성시_createdBy_는_null() throws Exception {
         long id = createNotice();
         mockMvc.perform(get("/notices/" + id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.createdBy").value(nullValue()));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.createdBy").value(nullValue()));
     }
 
     private long createNotice() throws Exception {
         String response = mockMvc.perform(post("/notices")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(CREATE_BODY))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(CREATE_BODY))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
         JsonNode node = objectMapper.readTree(response);
         return node.get("data").asLong();
     }

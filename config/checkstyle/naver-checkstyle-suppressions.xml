@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+"-//Puppy Crawl//DTD Suppressions 1.1//EN"
+"http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+
+<suppressions>
+	<!-- 자동 생성 코드 제외(B-020): QueryDSL Q타입 등 build/generated 산출물은 스타일 검사 대상 아님. -->
+	<suppress files="[/\\]generated[/\\]" checks=".*"/>
+</suppressions>

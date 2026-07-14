@@ -1,11 +1,5 @@
 package com.finalcall.api.sample;
 
-import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.sample.SampleCacheValue;
-import com.finalcall.domain.sample.ResilienceDemoService;
-import com.finalcall.domain.sample.SampleService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +8,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.finalcall.common.response.ApiResponse;
+import com.finalcall.domain.sample.ResilienceDemoService;
+import com.finalcall.domain.sample.SampleCacheValue;
+import com.finalcall.domain.sample.SampleService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 샘플 컨트롤러 — Stage 3 공통 응답/예외 포맷 시연.
@@ -39,7 +41,7 @@ public class SampleController {
     @GetMapping("/error")
     public ApiResponse<Void> getError() {
         sampleService.ensureExists(false); // NOT_FOUND 로 BusinessException 발생
-        return ApiResponse.success();      // 도달하지 않음
+        return ApiResponse.success(); // 도달하지 않음
     }
 
     /** @Valid 검증 데모: message 가 비면 INVALID_INPUT + errors 배열. */

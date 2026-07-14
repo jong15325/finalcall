@@ -1,10 +1,11 @@
 package com.finalcall.domain.common;
 
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
 
 /**
  * 작성자 감사(Auditing)까지 제공하는 공통 상위 엔티티(Stage F1).

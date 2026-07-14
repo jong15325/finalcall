@@ -10,16 +10,9 @@ import jakarta.validation.constraints.Size;
  * 72자 이내로 제한한다(정책상 최소 길이 등은 미정 — 계약 확정 시 강화).
  */
 public record SignupRequest(
-        @NotBlank(message = "로그인 아이디는 필수입니다.")
-        @Size(max = 50, message = "로그인 아이디는 50자 이하여야 합니다.")
-        String loginId,
+    @NotBlank(message = "로그인 아이디는 필수입니다.") @Size(max = 50, message = "로그인 아이디는 50자 이하여야 합니다.") String loginId,
 
-        @NotBlank(message = "비밀번호는 필수입니다.")
-        @Size(max = 72, message = "비밀번호는 72자 이하여야 합니다.")
-        String password,
+    @NotBlank(message = "비밀번호는 필수입니다.") @Size(max = 72, message = "비밀번호는 72자 이하여야 합니다.") String password,
 
-        @NotBlank(message = "닉네임은 필수입니다.")
-        @Size(max = 30, message = "닉네임은 30자 이하여야 합니다.")
-        String nickname
-) {
+    @NotBlank(message = "닉네임은 필수입니다.") @Size(max = 30, message = "닉네임은 30자 이하여야 합니다.") String nickname) {
 }

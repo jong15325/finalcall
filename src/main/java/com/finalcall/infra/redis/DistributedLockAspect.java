@@ -1,9 +1,7 @@
 package com.finalcall.infra.redis;
 
-import com.finalcall.common.exception.BusinessException;
-import com.finalcall.common.exception.CommonErrorCode;
-import com.finalcall.common.lock.DistributedLock;
-import lombok.extern.slf4j.Slf4j;
+import java.lang.reflect.Method;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -18,7 +16,11 @@ import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Method;
+import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.CommonErrorCode;
+import com.finalcall.common.lock.DistributedLock;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link DistributedLock} 처리 Aspect(Stage E1).
@@ -46,7 +48,7 @@ public class DistributedLockAspect {
 
     @Around("@annotation(com.finalcall.common.lock.DistributedLock)")
     public Object lock(ProceedingJoinPoint joinPoint) throws Throwable {
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        MethodSignature signature = (MethodSignature)joinPoint.getSignature();
         Method method = signature.getMethod();
         DistributedLock distributedLock = method.getAnnotation(DistributedLock.class);
 
@@ -76,7 +78,7 @@ public class DistributedLockAspect {
     /** SpEL 로 파라미터 기반 동적 락 키를 만든다. */
     private String parseKey(ProceedingJoinPoint joinPoint, Method method, String keyExpression) {
         MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(
-                null, method, joinPoint.getArgs(), parameterNameDiscoverer);
+            null, method, joinPoint.getArgs(), parameterNameDiscoverer);
         Expression expression = parser.parseExpression(keyExpression);
         return String.valueOf(expression.getValue(context));
     }

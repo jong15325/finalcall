@@ -1,10 +1,11 @@
 package com.finalcall.domain.auth;
 
-import com.finalcall.common.exception.BusinessException;
-import com.finalcall.common.exception.ErrorCode;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.ErrorCode;
 
 /**
  * 회원 리포지토리(auth). 가입 중복 검사·로그인 조회에 쓰는 파생 쿼리를 제공한다.

@@ -1,11 +1,5 @@
 package com.finalcall.api.auth;
 
-import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.auth.AuthService;
-import com.finalcall.domain.auth.LoginResult;
-import com.finalcall.domain.auth.User;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +7,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.finalcall.common.response.ApiResponse;
+import com.finalcall.domain.auth.AuthService;
+import com.finalcall.domain.auth.LoginResult;
+import com.finalcall.domain.auth.User;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 인증(auth) 컨트롤러 — 계약 §2 기준 실제 엔드포인트(/api/v1/auth).

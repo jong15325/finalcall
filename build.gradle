@@ -2,6 +2,9 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.16'
 	id 'io.spring.dependency-management' version '1.1.7'
+	// B-020: 코드 스타일 자동화(Naver 핵데이 컨벤션). checkstyle 은 코어 플러그인(버전 불요).
+	id 'checkstyle'
+	id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.finalcall'
@@ -73,9 +76,37 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+// B-020: Checkstyle — Naver 룰셋(스페이스4 커스터마이즈). 위반/경고 시 빌드 실패(maxWarnings=0).
+checkstyle {
+	// B-021: Java 21 record 파싱 위해 10.20.2 확정(8.24 는 record 파싱 불가). Naver 룰(8.24+)과 호환.
+	toolVersion = '10.20.2'
+	configFile = file('config/checkstyle/naver-checkstyle-rules.xml')
+	configProperties = [suppressionFile: file('config/checkstyle/naver-checkstyle-suppressions.xml')]
+	maxWarnings = 0
+	// QueryDSL Q타입(build/generated) 위반은 suppressions.xml(전체 경로 매칭)로 제외한다.
+}
+
+// B-020: Spotless — Naver eclipse formatter(스페이스4) + import 순서(static→java→javax→org→net→com).
+spotless {
+	lineEndings = com.diffplug.spotless.LineEnding.UNIX   // [newline-lf] LF 강제(.editorconfig 정합)
+	java {
+		target 'src/main/java/**/*.java', 'src/test/java/**/*.java'   // build/·생성코드 제외
+		eclipse().configFile('config/naver-eclipse-formatter.xml')
+		importOrder('\\#', 'java', 'javax', 'org', 'net', 'com')      // '\\#' = static 그룹 먼저
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
 // Stage D: QueryDSL Q클래스 생성 경로를 build/ 하위로 지정(생성물은 커밋 금지 — build/ 는 이미 .gitignore).
 def querydslDir = "build/generated/querydsl"
 tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'   // B-020: 컴파일 인코딩 UTF-8 고정(한국어 주석/메시지 안전).
+}
+// Q타입 생성은 main 컴파일에서만 querydslDir 로. compileTestJava 까지 이 dir 를 출력으로 선언하면
+// main srcDir(=checkstyleMain 입력)과 겹쳐 Gradle 태스크 의존성 검증 실패 → main 한정(B-022).
+tasks.named('compileJava') {
 	options.generatedSourceOutputDirectory = file(querydslDir)
 }
 sourceSets {

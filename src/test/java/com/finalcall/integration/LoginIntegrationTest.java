@@ -1,18 +1,19 @@
 package com.finalcall.integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finalcall.infra.security.RefreshTokenStore;
-import com.finalcall.support.IntegrationTest;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finalcall.infra.security.RefreshTokenStore;
+import com.finalcall.support.IntegrationTest;
 
 /**
  * 로그인 엔드포인트 통합 검증(auth) — 실제 MySQL/Redis(Testcontainers) + Security 필터 체인.
@@ -37,14 +38,14 @@ class LoginIntegrationTest extends IntegrationTest {
         signup("hong", "pw12345678", "홍길동");
 
         String responseBody = mockMvc.perform(post(LOGIN_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody("hong", "pw12345678")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.data.accessExpiresAt").isNotEmpty())
-                .andReturn().getResponse().getContentAsString();
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(loginBody("hong", "pw12345678")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+            .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
+            .andExpect(jsonPath("$.data.accessExpiresAt").isNotEmpty())
+            .andReturn().getResponse().getContentAsString();
 
         // 발급된 refresh 가 실제로 저장돼 검증에 통과하는지 확인(B-011).
         JsonNode data = objectMapper.readTree(responseBody).get("data");
@@ -57,35 +58,35 @@ class LoginIntegrationTest extends IntegrationTest {
         signup("hong", "pw12345678", "홍길동");
 
         mockMvc.perform(post(LOGIN_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody("hong", "wrong-pw")))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH_003"));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(loginBody("hong", "wrong-pw")))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("AUTH_003"));
     }
 
     @Test
     void 없는_사용자면_401_AUTH_003() throws Exception {
         mockMvc.perform(post(LOGIN_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody("nobody", "pw12345678")))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH_003"));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(loginBody("nobody", "pw12345678")))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("AUTH_003"));
     }
 
     private void signup(String loginId, String password, String nickname) throws Exception {
         mockMvc.perform(post(SIGNUP_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"loginId":"%s","password":"%s","nickname":"%s"}
-                                """.formatted(loginId, password, nickname)))
-                .andExpect(status().isCreated());
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {"loginId":"%s","password":"%s","nickname":"%s"}
+                """.formatted(loginId, password, nickname)))
+            .andExpect(status().isCreated());
     }
 
     private static String loginBody(String loginId, String password) {
         return """
-                {"loginId":"%s","password":"%s"}
-                """.formatted(loginId, password);
+            {"loginId":"%s","password":"%s"}
+            """.formatted(loginId, password);
     }
 }

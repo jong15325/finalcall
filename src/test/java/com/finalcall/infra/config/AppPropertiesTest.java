@@ -1,10 +1,10 @@
 package com.finalcall.infra.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * 설정 바인딩 표준(Stage 2) 검증.
@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AppPropertiesTest {
 
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
-            .withUserConfiguration(TestConfig.class);
+        .withUserConfiguration(TestConfig.class);
 
     @EnableConfigurationProperties(AppProperties.class)
     static class TestConfig {
@@ -24,17 +24,17 @@ class AppPropertiesTest {
     @Test
     void 유효한_값이면_바인딩된다() {
         runner.withPropertyValues("app.name=finalcall", "app.description=경매 플랫폼")
-                .run(ctx -> {
-                    assertThat(ctx).hasNotFailed();
-                    AppProperties props = ctx.getBean(AppProperties.class);
-                    assertThat(props.name()).isEqualTo("finalcall");
-                    assertThat(props.description()).isEqualTo("경매 플랫폼");
-                });
+            .run(ctx -> {
+                assertThat(ctx).hasNotFailed();
+                AppProperties props = ctx.getBean(AppProperties.class);
+                assertThat(props.name()).isEqualTo("finalcall");
+                assertThat(props.description()).isEqualTo("경매 플랫폼");
+            });
     }
 
     @Test
     void 필수값이_비면_검증실패로_컨텍스트가_뜨지_않는다() {
         runner.withPropertyValues("app.name=", "app.description=경매 플랫폼")
-                .run(ctx -> assertThat(ctx).hasFailed());
+            .run(ctx -> assertThat(ctx).hasFailed());
     }
 }

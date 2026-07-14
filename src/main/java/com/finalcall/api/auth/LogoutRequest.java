@@ -8,7 +8,5 @@ import jakarta.validation.constraints.NotBlank;
  * <p>인증 필요 엔드포인트다: 실제 폐기는 SecurityContext 주체 소유 세션에 한한다(타 사용자 세션 조작 방지).
  */
 public record LogoutRequest(
-        @NotBlank(message = "리프레시 토큰은 필수입니다.")
-        String refreshToken
-) {
+    @NotBlank(message = "리프레시 토큰은 필수입니다.") String refreshToken) {
 }

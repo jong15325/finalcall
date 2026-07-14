@@ -1,8 +1,9 @@
 package com.finalcall.infra.config;
 
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * JWT 설정 바인딩(Stage F1, auth refresh 만료 추가).
@@ -16,9 +17,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "jwt")
 public record JwtProperties(
-        @NotBlank String secret,
-        long accessExpMinutes,
-        long refreshExpDays,
-        String algorithm
-) {
+    @NotBlank String secret,
+    long accessExpMinutes,
+    long refreshExpDays,
+    String algorithm) {
 }
