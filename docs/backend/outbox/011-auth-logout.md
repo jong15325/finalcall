@@ -1,4 +1,4 @@
-상태: SENT (Claude Code 대상, 총괄 검토 후 착수)
+상태: DONE (2026-07-14 구현·흡수 완료. auth 수직 006~011 완결. 이슈2 204 vs ApiResponse→B-019(계약 우선, void+@ResponseStatus 승인). 항목1 revoke 소유자검증·3 멱등·4 블랙리스트 미도입 수용)
 # [백엔드 → Claude Code] 작업 지시: auth - 로그아웃(logout)
 
 대상: POST /api/v1/auth/logout. (구현 순서 6/F, A·B 의존)

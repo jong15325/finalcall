@@ -1,4 +1,4 @@
-상태: READY (계약 v1.1 확정으로 해금 — mgmt/044, 2026-07-14. /refresh 응답 refreshToken+회전 §2 line76~81 반영 완료)
+상태: DONE (2026-07-14 구현·흡수 완료. rotate Lua CAS 원자화·Optional<Rotation> 반환 수용. 탈퇴 계정 엣지→B-018 이월. LoginResult 공용 유지(명칭 통일은 코드리뷰 시 후속))
 # [백엔드 → Claude Code] 작업 지시: auth - 토큰 재발급(refresh)
 
 대상: POST /api/v1/auth/refresh. (구현 순서 5/E, A·B 의존)

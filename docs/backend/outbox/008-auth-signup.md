@@ -1,4 +1,4 @@
-상태: SENT (Claude Code 대상, 총괄 검토 후 착수)
+상태: DONE (2026-07-14 구현·흡수 완료. 이슈1 라우팅→B-015, 이슈3 password→B-016. 이슈2 데모개명·이슈4 UserBalanceRepository 수용)
 # [백엔드 → Claude Code] 작업 지시: auth - 회원가입(signup)
 
 대상: POST /api/v1/auth/signup. (구현 순서 3/C, A 의존 — B와 병행 가능)
