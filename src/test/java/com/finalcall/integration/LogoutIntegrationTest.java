@@ -51,11 +51,14 @@ class LogoutIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void 인증없이_로그아웃은_401() throws Exception {
+    void 인증없이_로그아웃은_401_표준에러() throws Exception {
+        // 미인증 시 EntryPoint 가 표준 에러 포맷(success:false, COMMON_005)으로 401 응답(데모 제거로 이관된 회귀).
         mockMvc.perform(post(LOGOUT_URL)
             .contentType(MediaType.APPLICATION_JSON)
             .content(refreshBody("any.refresh.token")))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("COMMON_005"));
     }
 
     /** 가입 후 로그인해 {accessToken, refreshToken} 노드를 돌려준다. */
