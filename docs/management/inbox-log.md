@@ -54,4 +54,5 @@
 - 2026-07-14 backend/outbox/020-게이트웨이-엣지오류포맷-후속순서-결정요청.md — 처리. 안건1(엣지 429 포맷) A 채택(envelope 통일) → 계약 영향이라 6절: 백엔드기획(P) api-contract v1.3 반영 지시(057), 확정 시 프론트/PF/QA 전파. 안건2(관측성·compose) 후순위 지정, 다음 우선순위 사용자 확정 후 배치. B-026·027 인덱스 등재. 지적: B-015~027 backend/decision-log 미기재 지속 → 재요청
 - 2026-07-14 frontend/outbox/002-v12정합-grade제거-완료보고.md — 검수 통과(회신 불요). screen-route-map v1.2 정합(grade 필터·뱃지·색 제거, §3.3 스키마 고정), IA 기준선을 PF screen-spec에 종속 명시(D-077 존중). 055 집행 완료·ANSWERED. 잔여 디자인 grade 정합(054)만 대기
 - 2026-07-14 ux/outbox/005-v12정합-grade제거-완료보고.md — 검수 통과(회신 불요). 054 완료 — design-system·ux-flows·accessibility·목업 grade 축 제거, U-004 SUPERSEDED→U-010(속성 4색), U-011(상류=PF, D-077). docs/ux grade 잔존=폐기 명시 문구 외 0. 054 ANSWERED. 비주얼 방향·테마는 사용자 직접 논의 대기(목업 준비완료). U-010·011 인덱스 미등재(U 전체 백필 보류 중)
+- 2026-07-14 (후속) frontend/outbox/001 미결 2안건 회신 059 — 안건1 repo 셋업 GO(058 스켈레톤 착수), 안건2 실시간채널=폴링 MVP 채택(F-001, push는 bid 도메인 단계 재검토). 001 ANSWERED. 002는 지난 턴 처리 완료
 - (스캔 갭 주의) 다중 수신 헤더 `[X → 기획, 총괄]`은 `→ 총괄\]` 패턴에 미포착 — 스캔은 `총괄\]`로 넓혀야 함(001·003 누락 사례)

@@ -1,7 +1,7 @@
 # 프론트 결정 로그 (F-xxx)
 
 접두어 F 독립 증가·불변·재사용 금지. 상태 라벨: PROPOSED / ACCEPTED / ON-HOLD / SUPERSEDED.
-근거 위계: 확정 스펙(api-contract v1.1) > 총괄 D 로그(ACCEPTED) > 이 로그 > 타 역할 로그(맥락) > 노트.
+근거 위계: 확정 스펙(api-contract v1.2) > 총괄 D 로그(ACCEPTED) > 이 로그 > 타 역할 로그(맥락) > 노트.
 
 ---
 
