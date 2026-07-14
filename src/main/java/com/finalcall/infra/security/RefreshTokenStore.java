@@ -2,6 +2,8 @@ package com.finalcall.infra.security;
 
 import com.finalcall.infra.config.JwtProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -10,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,6 +37,23 @@ public class RefreshTokenStore {
     private static final String DELIMITER = ".";
     private static final int SESSION_ID_BYTES = 16;   // 128bit — 세션 식별(라우팅)
     private static final int SECRET_BYTES = 32;        // 256bit — 실제 비밀값(B-011)
+
+    /**
+     * 회전을 원자적으로 처리하는 Lua CAS(경쟁 시 단일 승자).
+     * 저장분==제시분이면 신규 해시로 교체(회전)하고 'OK', 불일치면 세션 삭제(재사용 탐지)하고 'REUSE', 없으면 'MISSING'.
+     * GET·비교·SET/DEL 이 단일 EVAL 로 원자 실행돼 동시 회전 시 두 번째는 REUSE 로 세션이 무효화된다.
+     */
+    private static final RedisScript<String> ROTATE_SCRIPT = new DefaultRedisScript<>("""
+            local cur = redis.call('GET', KEYS[1])
+            if not cur then return 'MISSING' end
+            if cur == ARGV[1] then
+              redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+              return 'OK'
+            else
+              redis.call('DEL', KEYS[1])
+              return 'REUSE'
+            end
+            """, String.class);
 
     private final StringRedisTemplate redisTemplate;
     private final SecureRandom random = new SecureRandom();
@@ -79,17 +99,23 @@ public class RefreshTokenStore {
     }
 
     /**
-     * refresh 토큰을 회전한다: 검증 통과 시 같은 세션에 신규 토큰을 저장(이전 토큰 폐기)하고 원문을 반환한다.
+     * refresh 토큰을 <b>원자적으로</b> 회전한다: 검증 통과 시 같은 세션에 신규 토큰을 저장(이전 토큰 폐기)하고 반환한다.
+     * 재발급 호출자는 새 access 토큰 발급을 위해 userId 가 필요하므로 {@link Rotation}(신규 토큰 + userId)으로 반환한다.
      *
-     * @return 신규 원문 refresh 토큰, 무효/재사용이면 empty(재사용 탐지 시 해당 세션 무효화)
+     * @return 성공 시 {@link Rotation}, 무효/재사용/만료면 empty(재사용 탐지 시 해당 세션 무효화)
      */
-    public Optional<String> rotate(String presentedToken) {
-        Optional<String> userId = validate(presentedToken);
-        if (userId.isEmpty()) {
+    public Optional<Rotation> rotate(String presentedToken) {
+        Parsed parsed = parse(presentedToken);
+        if (parsed == null) {
             return Optional.empty();
         }
-        Parsed parsed = parse(presentedToken); // validate 통과 → non-null 보장
-        return Optional.of(store(parsed.userId(), parsed.sessionId()));
+        String newToken = parsed.userId() + DELIMITER + parsed.sessionId() + DELIMITER + randomToken(SECRET_BYTES);
+        String result = redisTemplate.execute(ROTATE_SCRIPT, List.of(parsed.key()),
+                sha256(presentedToken), sha256(newToken), String.valueOf(refreshTtl.toSeconds()));
+        if ("OK".equals(result)) {
+            return Optional.of(new Rotation(newToken, parsed.userId()));
+        }
+        return Optional.empty(); // MISSING(없음/만료) 또는 REUSE(스크립트가 이미 세션 삭제)
     }
 
     /** 세션을 폐기한다(logout). 원문 토큰의 라우팅 정보로 세션 키를 삭제한다. */
@@ -142,6 +168,10 @@ public class RefreshTokenStore {
             return null;
         }
         return new Parsed(parts[0], parts[1]);
+    }
+
+    /** 회전 결과 — 신규 refresh 원문과 소유 userId(재발급 access 클레임 구성용). */
+    public record Rotation(String refreshToken, String userId) {
     }
 
     /** 토큰에서 추출한 라우팅 정보(비밀값 제외). */

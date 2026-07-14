@@ -68,4 +68,23 @@ public class AuthService {
         String refreshToken = refreshTokenStore.issue(userId);
         return new LoginResult(accessToken, refreshToken, tokenProvider.accessTokenExpiresAt());
     }
+
+    /**
+     * 토큰 재발급: refresh 를 원자적으로 회전(신규 저장·구 폐기)하고 새 access 를 발급한다(계약 §2 v1.1).
+     *
+     * <p>회전 실패(무효·만료·재사용 탐지 → 세션 무효화, B-011)는 모두 {@code AUTH_004}(401)로 통일한다.
+     * 반환 값은 로그인과 동일 형태({@link LoginResult})다.
+     */
+    @ServiceLog
+    public LoginResult refresh(String refreshToken) {
+        RefreshTokenStore.Rotation rotation = refreshTokenStore.rotate(refreshToken)
+                .orElseThrow(() -> new BusinessException(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN));
+        // 회전된 세션의 소유자를 로드해 access 클레임(publicId·isAdmin)을 구성한다. 탈퇴 계정은 무효 처리.
+        User user = userRepository.findById(Long.parseLong(rotation.userId()))
+                .filter(u -> !u.isDeleted())
+                .orElseThrow(() -> new BusinessException(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN));
+        String accessToken = tokenProvider.generateAccessToken(
+                new TokenClaims(rotation.userId(), user.getPublicId(), user.isAdmin()));
+        return new LoginResult(accessToken, rotation.refreshToken(), tokenProvider.accessTokenExpiresAt());
+    }
 }

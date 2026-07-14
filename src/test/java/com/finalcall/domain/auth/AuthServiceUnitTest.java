@@ -134,4 +134,35 @@ class AuthServiceUnitTest {
 
         verify(refreshTokenStore, never()).issue(any());
     }
+
+    @Test
+    void 재발급에_성공하면_access재발급_refresh회전분을_반환한다() {
+        User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
+        ReflectionTestUtils.setField(user, "id", 42L);
+        Instant expiresAt = Instant.parse("2026-07-14T01:00:00Z");
+        when(refreshTokenStore.rotate("42.sid.old"))
+                .thenReturn(java.util.Optional.of(new RefreshTokenStore.Rotation("42.sid.new", "42")));
+        when(userRepository.findById(42L)).thenReturn(java.util.Optional.of(user));
+        when(tokenProvider.generateAccessToken(any(TokenClaims.class))).thenReturn("new-access");
+        when(tokenProvider.accessTokenExpiresAt()).thenReturn(expiresAt);
+
+        LoginResult result = authService.refresh("42.sid.old");
+
+        assertThat(result.accessToken()).isEqualTo("new-access");
+        assertThat(result.refreshToken()).isEqualTo("42.sid.new"); // 회전된 신규
+        assertThat(result.accessExpiresAt()).isEqualTo(expiresAt);
+    }
+
+    @Test
+    void 회전_실패는_AUTH_004() {
+        // 무효·만료·재사용 탐지 → rotate empty → 단일 코드 AUTH_004.
+        when(refreshTokenStore.rotate("bad")).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> authService.refresh("bad"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+
+        verify(tokenProvider, never()).generateAccessToken(any());
+    }
 }

@@ -41,4 +41,11 @@ public class AuthController {
         LoginResult result = authService.login(request.loginId(), request.password());
         return ApiResponse.success(LoginResponse.from(result));
     }
+
+    /** 토큰 재발급 — 성공 시 200, access 재발급 + refresh 회전(계약 §2 v1.1). 무효·재사용·만료는 AUTH_004. */
+    @PostMapping("/refresh")
+    public ApiResponse<RefreshResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+        LoginResult result = authService.refresh(request.refreshToken());
+        return ApiResponse.success(RefreshResponse.from(result));
+    }
 }

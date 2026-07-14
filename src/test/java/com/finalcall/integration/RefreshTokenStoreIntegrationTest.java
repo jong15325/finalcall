@@ -53,19 +53,20 @@ class RefreshTokenStoreIntegrationTest extends IntegrationTest {
     void 회전하면_같은_세션에_신규_토큰이_발급된다() {
         String original = refreshTokenStore.issue(USER_ID);
 
-        Optional<String> rotated = refreshTokenStore.rotate(original);
+        Optional<RefreshTokenStore.Rotation> rotated = refreshTokenStore.rotate(original);
 
         assertThat(rotated).isPresent();
-        assertThat(rotated.get()).isNotEqualTo(original);
+        assertThat(rotated.get().refreshToken()).isNotEqualTo(original);
+        assertThat(rotated.get().userId()).isEqualTo(USER_ID);
         // 신규 토큰은 유효(같은 세션 키 유지 — 라우팅 정보 동일).
-        assertThat(refreshTokenStore.validate(rotated.get())).contains(USER_ID);
-        assertThat(keyOf(rotated.get())).isEqualTo(keyOf(original));
+        assertThat(refreshTokenStore.validate(rotated.get().refreshToken())).contains(USER_ID);
+        assertThat(keyOf(rotated.get().refreshToken())).isEqualTo(keyOf(original));
     }
 
     @Test
     void 회전으로_폐기된_옛_토큰_재사용시_세션이_무효화된다() {
         String original = refreshTokenStore.issue(USER_ID);
-        String rotated = refreshTokenStore.rotate(original).orElseThrow();
+        String rotated = refreshTokenStore.rotate(original).orElseThrow().refreshToken();
 
         // 폐기된 옛 토큰 재사용 → 무효 + 재사용 탐지로 세션 자체 무효화.
         assertThat(refreshTokenStore.validate(original)).isEmpty();
