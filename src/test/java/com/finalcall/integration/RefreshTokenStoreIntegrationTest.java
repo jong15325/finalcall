@@ -3,7 +3,11 @@ package com.finalcall.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +102,42 @@ class RefreshTokenStoreIntegrationTest extends IntegrationTest {
     void 형식이_잘못된_토큰은_무효다() {
         assertThat(refreshTokenStore.validate("garbage")).isEmpty();
         assertThat(refreshTokenStore.rotate("a.b")).isEmpty();
+    }
+
+    @Test
+    void 동일_refresh_동시_회전은_단일_승자이고_세션이_무효화된다_m2() throws Exception {
+        // m2: 같은 토큰을 N스레드가 동시에 rotate → Lua CAS 로 정확히 1개만 OK, 나머지는 재사용 탐지로 empty.
+        // 패자들이 세션을 삭제(REUSE)하므로 종국엔 세션 키가 사라진다(단일 승자·회귀 방지).
+        String original = refreshTokenStore.issue(USER_ID);
+
+        int threads = 8;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch ready = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(threads);
+        AtomicInteger winners = new AtomicInteger();
+        try {
+            for (int i = 0; i < threads; i++) {
+                pool.submit(() -> {
+                    try {
+                        ready.await();
+                        if (refreshTokenStore.rotate(original).isPresent()) {
+                            winners.incrementAndGet();
+                        }
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        done.countDown();
+                    }
+                });
+            }
+            ready.countDown(); // 동시 출발
+            assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(winners.get()).isEqualTo(1); // 단일 승자
+        assertThat(redisTemplate.hasKey(keyOf(original))).isFalse(); // 패자 재사용 탐지 → 세션 무효화
     }
 
     /** 원문 토큰({@code userId.sessionId.secret})에서 Redis 세션 키를 유도한다(테스트 검증용). */

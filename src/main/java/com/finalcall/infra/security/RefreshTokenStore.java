@@ -80,6 +80,9 @@ public class RefreshTokenStore {
     /**
      * 제시된 refresh 토큰의 유효성을 검증한다(해시 대조).
      *
+     * <p><b>용도: 테스트 지원</b>(프로덕션 재발급 경로는 {@link #rotate}가 원자적 검증+회전으로 대체한다). 통합 테스트가
+     * 발급/폐기 후 저장 상태를 확인하는 데 쓴다 — 제거하지 말 것(n1).
+     *
      * @return 유효하면 userId, 무효/재사용이면 empty(재사용 탐지 시 해당 세션 무효화)
      */
     public Optional<String> validate(String presentedToken) {
