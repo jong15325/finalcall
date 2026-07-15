@@ -1,4 +1,4 @@
-상태: SENT
+상태: SENT (유효). 경위: 2026-07-15 프론트 repo 선생성 검토로 일시 SUPERSEDED 표기했으나 사용자가 철회 — 062 안건2(스켈레톤 완성 후 repo 생성) 유지로 본 지시가 그대로 유효하다. 후속 007 미발행.
 supersedes: frontend/outbox/003-스켈레톤-scaffold.md (HOLD 해소 후 재발신)
 # [프론트 → Claude Code] 작업 지시: skeleton - 프론트 스켈레톤 scaffold (재발신)
 
