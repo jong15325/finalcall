@@ -91,6 +91,9 @@
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
+| P-009 | 회원가입 "비밀번호 확인" 필드 — 포함(클라 검증 전용·서버 미전송) | ACCEPTED | 기획 |
+| P-010 | 회원가입 성공 후 플로우 — 로그인 화면 이동(자동 로그인 미채택) | ACCEPTED | 기획 |
+| P-011 | 로그인 성공 후 목적지 — 홈 기본 + returnUrl 복귀 | ACCEPTED | 기획 |
 | PF-001 | 화면 명세·IA 베이스라인 = api-contract v1.2 기준 (screen-spec.md) | ACCEPTED | 프론트기획 |
 | PF-002 | 화면 표현 grade 축 제거 (D-073 집행, 타 역할 전파는 총괄) | ACCEPTED | 프론트기획 |
 | B-015 | API 라우팅 — 컨트롤러 클래스 레벨 @RequestMapping (전역 접두 미도입) | ACCEPTED | 백엔드 |
