@@ -1,11 +1,12 @@
-# 기획(P) handover (2026-07-15)
+# 기획(P) handover (2026-07-16)
 
 성격: 세션 상태 스냅샷 — **파일에 없는 기억만**. 정본은 각 파일. 1페이지 이내(D-059).
 
 ## 진행 중
 
-- **미처리 지시 0 · 발신 회신 대기 0. 손이 빈 상태** — 다음 배치는 총괄이 한다.
-- 설계 3종 전부 확정·구현 단계(G4-n): **domain-spec v0.5 / erd v0.7 / api-contract v1.4**.
+- **미처리 지시 0 · 발신 회신 대기 0.** REFORM/002(spec 이동) 완료 → `design/outbox/REFORM/001`.
+- 미처리 정합 확인 1건: **ux/015 U-020 토큰 명칭 변경 → skeleton-plan [4] 정합**(구 토큰명 예시 잔존 여부). 디자인이 내 소유라 넘겼다.
+- 설계 3종 전부 확정·구현 단계(G4-n): **domain-spec v0.5 / erd v0.7 / api-contract v1.4** — 위치 `docs/spec/`(2026-07-16 이동).
 - 화면 층: **screen-spec v0.3 / skeleton-plan v0.2** (프론트 F 구성·CC 생성의 선행 기준선 — 인계 완료).
 
 ## 대기 중
@@ -16,10 +17,13 @@
 
 ## 휘발성 맥락 (핵심)
 
-**역할** — D-079로 PF 흡수 → **기획(P) 단일**. 서버 도메인(계약 정본) + 프론트/화면 기획 + 디자인 상류 조율을 겸한다. PF-xxx 동결, P-xxx 계속(최신 **P-013**). 내 소유 = `docs/domain-spec.md`·`erd.md`·`api-contract.md` + `docs/frontend-planning/` + `docs/design/`.
+**역할** — D-079로 PF 흡수 → **기획(P) 단일**. 서버 도메인(계약 정본) + 프론트/화면 기획 + 디자인 상류 조율을 겸한다. PF-xxx 동결, P-xxx 계속(최신 **P-013**). 내 소유 = `docs/spec/domain-spec.md`·`docs/spec/erd.md`·`docs/spec/api-contract.md` + `docs/frontend-planning/` + `docs/design/`.
+
+**규약 정본이 `common/rules.md`로 전면 개편됐다(2026-07-15 · C-036~056).** 아래 D-xxx 목록은 그 이전 세션 기준이고, 지금은 rules.md `[N.M]`이 정본이다. `management/collaboration-guide.md`·`management/templates.md`는 **더 이상 정본이 아니다**. 새로 몸에 붙일 것: outbox는 `<역할>/outbox/<스레드>/NNN`(`[5.13]`, 앞으로만 — 내 flat 001~033과 영구 공존) · 대기 큐는 손이 아니라 grep 파생(`[5.21]`) · 스펙 3종은 `docs/spec/`(`[3]`).
 
 **규약이 12건+로 급증했다. 실제로 몸에 붙여야 할 것:**
-- **D-090 (가장 중요)** — 저장소 파일의 목록·내용·**편집 위치 판단**은 호스트 도구(Read/Grep/Edit)만. **bash 마운트 뷰 판단 금지**(에러 없이 낡은 내용을 서빙해 의심 트리거가 없다). bash는 git·빌드·테스트만.
+- **D-090 (가장 중요, 현 `[9.1]`·`[9.2]`)** — 저장소 파일의 목록·내용·**편집 위치 판단**은 호스트 도구(Read/Grep/Edit)만. **bash 마운트 뷰 판단 금지**(에러 없이 낡은 내용을 서빙해 의심 트리거가 없다). bash는 git·빌드·테스트만.
+  - **2026-07-16 실물 재현 — 추상 규칙이 아니다.** spec 3종이 bash 뷰에서 절단본이었다(erd 341/실물 409, spec 186/227, contract 310/374). erd는 §5·§6이 통째로 없고 행 중간에서 끊겼다. **v0.6 구조 오류를 만든 그 절단이 같은 파일 같은 지점에서 아직 살아 있다.** 마운트가 통째로 낡은 게 아니라(같은 호출에서 rules.md·신규 파일은 정상) **어느 파일이 낡았는지 bash 안에서 알 방법이 없다** — 그래서 조회 결과 전체를 배제하는 것 말고 안전한 운용이 없다. 상세: `design/outbox/REFORM/001` [관측].
 - **D-083** 이의 제기는 권한이 아니라 **의무**. 총괄 지시가 진행 중 작업과 부딪히면 따르기 전에 말한다.
 - **D-086** 부재("없음")·수량("N건") 근거는 탐색 방법 1구 명시 + 중대하면 교차검증.
 - **D-087** 절 참조 `[N.M]`, `§` 금지(앞으로만·소급 금지).
@@ -49,7 +53,7 @@
 
 1. `design/notes/handover.md` (이 파일)
 2. `design/inbox-log.md` (수신 이력 — **097까지**) · `design/decision-log.md` (P-001·002·008~013)
-3. 확정 스펙: `docs/domain-spec.md` v0.5 → `docs/erd.md` v0.7 → `docs/api-contract.md` v1.4
+3. 확정 스펙: `docs/spec/domain-spec.md` v0.5 → `docs/spec/erd.md` v0.7 → `docs/spec/api-contract.md` v1.4
 4. 화면 층: `frontend-planning/screen-spec.md` v0.3 · `skeleton-plan.md` v0.2
 5. `management/decision-log.md`(최신 **D-092**) · `decision-index.md`
 6. `management/collaboration-guide.md` · `templates.md`
