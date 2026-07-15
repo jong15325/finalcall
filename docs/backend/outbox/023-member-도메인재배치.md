@@ -1,5 +1,11 @@
-상태: SENT
+상태: 완료 — Claude Code 실행·백엔드 흡수 → 총괄 보고 backend/outbox/031
 # [백엔드 → Claude Code] 작업 지시: member - 계정·잔액 엔티티 도메인 재배치 (B-028)
+
+주(실행 후 정정): 아래 "참조자 실측 5파일"은 **부정확했다**. 실제 7파일 — `LoginResponse`·`RefreshResponse`는
+  `TokenBundle`(auth 존치)만 참조해 변경 불요였고, 반대로 동일 패키지라 import 없이 쓰던
+  `UserRepository`·`AuthServiceUnitTest`·`UserRepositorySliceTest`가 누락됐다(원인: import 문 기준 grep이
+  동일 패키지 사용처를 못 봄). DoD의 grep 패턴도 이스케이프 누락으로 `domain.auth.UserRepository` 오탐.
+  상세·정정은 031 참조. B-028 결론은 불변(7파일도 이동 비용 최소 구간).
 
 대상: `User`·`UserBalance`·`UserBalanceRepository`를 `domain/auth` → `domain/member`로 이동.
   **기능 무변경 순수 리팩터** — 로직·시그니처·테이블·API 일절 건드리지 않는다.
