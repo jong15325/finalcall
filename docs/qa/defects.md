@@ -9,12 +9,12 @@
 
 ---
 
-## 현황 요약 (2026-07-15, G4-1 / erd 기준 보완 재검증)
+## 현황 요약 (2026-07-15, V4 재검증 반영)
 
 | 심각도 | OPEN | FIXED | WONTFIX |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| Major | 1 | 0 | 0 |
+| Major | 0 | **1** | 0 |
 | Minor | 0 | 0 | 0 |
 
 - api-contract·domain-spec 층: G4-1 범위 위반 0건(060 판정 시점 검증 유효).
@@ -27,7 +27,44 @@
 
 ## QA-001. V3 `user` 자연키 UK가 erd §1 soft delete 규약 위반 — 재가입 불능(잠복)
 
-심각도: Major · 상태: OPEN · 2026-07-15
+심각도: Major · 상태: **FIXED**(2026-07-15 재검증, V4 `df9836c`) · 등재 2026-07-15
+
+### 재검증 결과 (094 지시, 082 경로 발동) — FIXED 판정
+
+FIX 실물: `V4__user_natural_key_uk.sql`. 판정 근거(전량 호스트 도구 Read·Grep, D-090):
+- **D-081 패턴 정확 적용**: 기존 `uk_user_login_id`·`uk_user_nickname` DROP → 생성 컬럼
+  `login_id_active`/`nickname_active` = `IF(is_deleted, NULL, 자연키)` STORED 추가 → 생성 컬럼에만 UK.
+  활성 행만 값 → 유일성 보존 / 탈퇴행 NULL → 다중 NULL 허용 → 재탈퇴 무제한.
+- **기각안 배제 확인(핵심)**: (a) `UNIQUE(자연키, deleted_at)`·(b) `UNIQUE(자연키, is_deleted)` 모두
+  V4에 없음. 소스 정독으로 확정.
+- **파급 3건 해소**: (1) 재가입 → `ReSignupIntegrationTest` 201. (2) nickname 중복 오판정 → 탈퇴행이
+  활성 검사에서 제외(`UserRepositorySliceTest` 63~72) + 동일 nickname 재가입 성공. (3) 다건 로그인
+  파손 → **필터 없는 `findByLoginId`가 main 전역에 부재**(Grep 전수: `AndIsDeletedFalse` 변형만 존재),
+  `ReSignupIntegrationTest` 재가입 후 로그인 200.
+- **회귀 무발생 확인**: V4가 UK명을 `_active`로 바꿨는데 B-024 중복 매핑(제약명 문자열 판정)도
+  `uk_user_login_id_active`/`uk_user_nickname_active`로 동반 갱신됨. 테스트에 옛 UK명 잔존 없음
+  (Grep: 옛 이름 0건, 전건 `_active`). `SignupConcurrencyIntegrationTest` 6스레드 → 1×201·5×409·500 0건.
+
+증거 수준의 한계(정직 표기): **QA 독립 재실행은 수행하지 못했다** — 검증 환경에 Docker 미가용·
+Java 11(프로젝트 21)이라 Testcontainers 구동 불가. 실행 증거는 백엔드 CC 보고 + 커밋 `df9836c`
+검증란("로컬 MySQL 8.0 마이그레이션 구동 + ddl-auto=validate 부팅 성공, QA-S-MBR-06 그린")이다.
+D-078 설계상 실행은 손(Claude Code) 소관이라 예상된 한계다.
+
+그럼에도 FIXED로 판정하는 근거: **MBR-06의 존재 이유는 "기각안 (a) 오적용 검출"인데, 적용된 패턴이
+(a)가 아님을 V4 소스로 확정했다.** 즉 이 리스크는 실행 결과와 무관하게 정적으로 닫힌다. 실행은
+확인(confirmation)을 더할 뿐 판정을 뒤집을 수 없다 — 소스가 (a)가 아닌데 (a) 함정이 발현할 수는 없다.
+
+잔여(결함 아님, 권고):
+- 재탈퇴 반복 3회 이상(탈퇴행 2건+ 공존)을 단언하는 테스트 없음. 구조적으로는 닫힘(탈퇴행 전부 NULL,
+  기각안 (b) 배제 확인) → 리스크 낮음. QA-S-MBR-05 케이스 4는 미단언으로 남는다.
+- 탈퇴자 nickname을 `PATCH /me`로 사용하는 경로는 member 3유닛 미착수라 미실행 이월(QA-S-MBR-05 케이스 3).
+  signup 경로로는 해소 입증됨.
+
+---
+
+### 원 등재 내용 (이력 보존, 불변)
+
+심각도: Major · 상태: OPEN(등재 시점) · 2026-07-15
 
 재현/조건: (현재 미발현 — 탈퇴 경로 미구현이라 API로는 도달 불가. 스키마 정적 검증으로 확인)
 1. `src/main/resources/db/migration/V3__user_and_balance.sql` 확인 — `user`는 `is_deleted BIT NOT
