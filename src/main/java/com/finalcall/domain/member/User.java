@@ -1,4 +1,4 @@
-package com.finalcall.domain.auth;
+package com.finalcall.domain.member;
 
 import java.time.Instant;
 
@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 회원 계정 엔티티(auth). 관리자 여부는 별도 서비스가 아닌 {@code isAdmin} 플래그로 표현한다(erd §4.1).
+ * 회원 계정 엔티티(member). 관리자 여부는 별도 서비스가 아닌 {@code isAdmin} 플래그로 표현한다(erd §4.1).
  *
  * <p>컨벤션(CLAUDE.md §5): {@code @NoArgsConstructor(PROTECTED)}·생성자 {@code @Builder}·{@code @Setter} 금지
  * → 상태 변경은 도메인 메서드로만. soft delete({@code isDeleted}/{@code deletedAt}, B-003).

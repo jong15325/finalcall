@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.domain.member.User;
 
 /**
  * 회원 리포지토리(auth). 가입 중복 검사·로그인 조회에 쓰는 파생 쿼리를 제공한다.

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.auth.AuthService;
 import com.finalcall.domain.auth.TokenBundle;
-import com.finalcall.domain.auth.User;
+import com.finalcall.domain.member.User;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

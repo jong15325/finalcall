@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import com.finalcall.domain.auth.UserBalanceRepository;
 import com.finalcall.domain.auth.UserRepository;
+import com.finalcall.domain.member.UserBalanceRepository;
 import com.finalcall.support.IntegrationTest;
 
 /**

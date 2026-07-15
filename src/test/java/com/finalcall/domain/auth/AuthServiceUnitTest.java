@@ -21,6 +21,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
+import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.UserBalance;
+import com.finalcall.domain.member.UserBalanceRepository;
 import com.finalcall.infra.security.RefreshTokenStore;
 
 /**

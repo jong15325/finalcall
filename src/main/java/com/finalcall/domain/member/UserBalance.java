@@ -1,4 +1,4 @@
-package com.finalcall.domain.auth;
+package com.finalcall.domain.member;
 
 import com.finalcall.domain.common.BaseTimeEntity;
 
@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 사용자별 잔액 엔티티(auth) — {@link User}와 1:1({@code user_id} UK FK, erd §4.1).
+ * 사용자별 잔액 엔티티(member) — {@link User}와 1:1({@code user_id} UK FK, erd §4.1).
  *
  * <p>세 잔액을 BIGINT 로 보유한다: 캐시({@code cashBalance}, 충전 화폐)·게임머니({@code gameMoneyBalance},
  * 거래 화폐)·홀드 합계({@code gameMoneyHeld}). 가용 게임머니 = 잔액 − 홀드.
