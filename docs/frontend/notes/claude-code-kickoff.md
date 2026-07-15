@@ -2,7 +2,7 @@
 
 성격: 실행 문서(프론트 대화 소유). 프론트 Claude Code 세션 시작 시 이 파일 내용을 붙여넣거나 경로로 지정한다.
 관련: D-069(핸드오프 규약), D-088(반환 경로), D-061(커밋 사용자 전담), D-087(대괄호 표기), 062(repo 후생성)
-갱신: 작업 프롬프트 번호만 교체해 재사용한다(스켈레톤 = `outbox/006`).
+갱신: 작업 프롬프트 번호만 교체해 재사용한다(스켈레톤 = `outbox/007`).
 
 ---
 
@@ -18,7 +18,7 @@
 
 ### 이번 작업
 
-**`D:\Java\finalcall\docs\frontend\outbox\006-스켈레톤-scaffold-재발신.md` 를 읽고 그대로 수행한다.**
+**`D:\Java\finalcall\docs\frontend\outbox\007-스켈레톤-scaffold-U020토큰반영.md` 를 읽고 그대로 수행한다.**
 이 파일이 범위·하지 말 것·DoD·반환 경로의 정본이다. 아래는 그 작업을 위한 표준 컨텍스트다.
 
 ### 작업 디렉터리 — 경로가 3개다. 헷갈리지 마라
@@ -35,7 +35,7 @@
 ### 필독 (순서대로, 작업 전)
 
 1. `D:\Java\finalcall\docs\frontend\CLAUDE.md` — 네 파트 지침(스택·구조 [3]·상태관리 [4]·컨벤션 [5]·git [6]). **repo 미생성이라 자동 로드되지 않으니 직접 읽어라.**
-2. `D:\Java\finalcall\docs\frontend\outbox\006-스켈레톤-scaffold-재발신.md` — 이번 작업 지시(정본).
+2. `D:\Java\finalcall\docs\frontend\outbox\007-스켈레톤-scaffold-U020토큰반영.md` — 이번 작업 지시(정본).
 3. `D:\Java\finalcall\docs\frontend-planning\skeleton-plan.md` v0.2 — 스켈레톤 선행 기준선(범위 [2]·IA 셸 [3]·토큰 방침 [4]·계약 정합 [5]·DoD [7]).
 4. `D:\Java\finalcall\docs\api-contract.md` **v1.4** — 유일한 API 기준(최상위).
 5. `D:\Java\finalcall\docs\frontend-planning\screen-spec.md` v0.3 — 라우트·IA.
@@ -55,12 +55,12 @@
 
 ### 완료 보고 (D-088 — 정본은 파일, 사용자 복붙 중계 불요)
 
-작업을 마치면 **`D:\Java\finalcall\docs\frontend\notes\cc-reports\006-skeleton-scaffold.md`** 에 보고를 남긴다. 채팅 요약은 선택이다.
+작업을 마치면 **`D:\Java\finalcall\docs\frontend\notes\cc-reports\007-skeleton-scaffold.md`** 에 보고를 남긴다. 채팅 요약은 선택이다.
 
 보고에 포함할 것:
 - **결과**: 1~2줄.
 - **산출물**: 생성 파일 트리 요지(전체 나열 말고 구조 수준).
-- **DoD 대비**: 006 [DoD] 6항목 각각 충족/미충족 + 미충족 사유. 검증은 실측으로 — `lint`·`typecheck`·`build` 실행 결과를 적어라(추정 금지).
+- **DoD 대비**: 007 [DoD] 6항목 각각 충족/미충족 + 미충족 사유. 검증은 실측으로 — `lint`·`typecheck`·`build` 실행 결과를 적어라(추정 금지).
 - **판단 보류·공백**: 계약·기획 문서에서 발견한 공백, 추측을 피해 멈춘 지점, 상위 문서 간 충돌.
 - **커밋 메시지 제안**: 프론트 `CLAUDE.md` [6] 형식.
 
