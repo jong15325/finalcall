@@ -29,7 +29,7 @@ class GatewayAccessIntegrationTest extends IntegrationTest {
     private static final String LOGIN_URL = "/api/v1/auth/login";
 
     @Test
-    @DisplayName("공유비밀 헤더가 없으면 게이트웨이를 거치지 않은 직접접근으로 보고 403 COMMON_006 을 반환한다")
+    @DisplayName("공유비밀 헤더가 없으면 게이트웨이를 거치지 않은 직접접근으로 보고 403 GATEWAY_403 을 반환한다")
     void 헤더가_없으면_403() throws Exception {
         mockMvc.perform(post(LOGIN_URL)
             .contentType(MediaType.APPLICATION_JSON)
@@ -38,11 +38,12 @@ class GatewayAccessIntegrationTest extends IntegrationTest {
                 """))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.code").value("COMMON_006"));
+            .andExpect(jsonPath("$.code").value("GATEWAY_403"))
+            .andExpect(jsonPath("$.errors").doesNotExist());
     }
 
     @Test
-    @DisplayName("공유비밀 헤더가 틀리면 403 COMMON_006 을 반환한다")
+    @DisplayName("공유비밀 헤더가 틀리면 403 GATEWAY_403 을 반환한다")
     void 헤더가_틀리면_403() throws Exception {
         mockMvc.perform(post(LOGIN_URL)
             .header(GATEWAY_HEADER, "wrong-secret")
@@ -51,7 +52,7 @@ class GatewayAccessIntegrationTest extends IntegrationTest {
                 {"loginId":"nobody","password":"pw12345678"}
                 """))
             .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value("COMMON_006"));
+            .andExpect(jsonPath("$.code").value("GATEWAY_403"));
     }
 
     @Test

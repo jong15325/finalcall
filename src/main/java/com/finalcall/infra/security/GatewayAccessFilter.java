@@ -6,7 +6,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.response.ErrorResponse;
 import com.finalcall.infra.config.GatewayInternalProperties;
 
@@ -23,7 +22,8 @@ import lombok.extern.slf4j.Slf4j;
  * 직접 접근(헤더 부재·불일치)을 403 으로 차단한다. 인증(JWT) 이전 관문이므로 JWT 필터보다 앞에 둔다.
  *
  * <p>제외 경로: actuator(헬스 포함)·error 는 게이트웨이 밖(로컬 헬스체크·컨테이너 프로브 등)에서 직접
- * 접근할 수 있어야 하므로 검사에서 제외한다. 응답은 3단계 {@link ErrorResponse} 포맷으로 통일한다.
+ * 접근할 수 있어야 하므로 검사에서 제외한다. 응답은 3단계 {@link ErrorResponse} 포맷으로 통일하며,
+ * 코드는 계약 [1.6]에 맞춰 {@link GatewayErrorCode#DIRECT_ACCESS_BLOCKED}(GATEWAY_403)를 반환한다.
  *
  * <p>{@code enforced=false}(통합테스트 등 게이트웨이 미경유 환경)면 검사를 건너뛴다.
  */
@@ -63,8 +63,8 @@ public class GatewayAccessFilter extends OncePerRequestFilter {
     }
 
     private void writeForbidden(HttpServletResponse response) throws IOException {
-        response.setStatus(CommonErrorCode.FORBIDDEN.getStatus().value());
+        response.setStatus(GatewayErrorCode.DIRECT_ACCESS_BLOCKED.getStatus().value());
         response.setContentType("application/json;charset=UTF-8");
-        objectMapper.writeValue(response.getWriter(), ErrorResponse.of(CommonErrorCode.FORBIDDEN));
+        objectMapper.writeValue(response.getWriter(), ErrorResponse.of(GatewayErrorCode.DIRECT_ACCESS_BLOCKED));
     }
 }
