@@ -1,8 +1,8 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v0.5 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073 반영(§6 Flyway·등급 축 제거). api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v0.6 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴) 반영. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
-근거: domain-spec v0.2, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), B-001~009(기술 규약)
+근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
 
 | 버전 | 날짜 | 내용 |
@@ -13,6 +13,7 @@
 | v0.3 | 2026-07-14 | 보안 델타(계약 v0.2) 정합 — charge.pg_tx_id UK(멱등 앵커, SEC-001), item_template.type_code 외부 식별자 UK(035) |
 | v0.4 | 2026-07-14 | §6 Flyway 매핑 6절 정정(B-012) — 스켈레톤 V1·V2 소비 반영, 도메인은 V3부터. erd는 그룹·순서만 규정, 구체 채번은 백엔드 동기화 |
 | v0.5 | 2026-07-14 | D-073 반영 — item_template.grade 제거, 유니크 (main_category,sub_group,element,kind), §5 인덱스 (element,kind), Mermaid 정정 |
+| v0.6 | 2026-07-14 | D-081 반영(074) — [1] soft delete 자연키 UK 구현 지침 명문화(생성 컬럼 패턴 + 기각 해석 2종 + 동반 필수 + 대리키 예외 + 트리거 조건), [4.1] `user` 표에 `login_id_active`·`nickname_active` 생성 컬럼 UK 반영(원본 컬럼 존치), [4] 말미에 자연키 스윕 결과 주 신설(적용 대상 user 1건·그 외 0건·조건부 리스크 3건). 사유: 기존 [1] 한 줄이 의도만 말하고 구현 해석을 열어둬 V3가 함정을 밟음(backend/028 발견, QA-001) |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -28,6 +29,23 @@
 - 외부 노출 식별자: `public_id`(ULID, char/varchar). 외부 노출 리소스(user·auction·shop·item_instance 등)에 부여. 내부 조인·FK는 `id`.
 - 시간: `DATETIME(6)` UTC 저장, 컬럼 접미 `_at`. (Instant/UTC — CLAUDE.md 정합)
 - soft delete: `is_deleted`(bool) + `deleted_at`. soft delete 테이블의 자연키 유니크는 삭제 식별 컬럼을 포함(삭제행-신규행 충돌 회피).
+- **soft delete 자연키 유니크 = 생성 컬럼 패턴 (D-081 확정 · 구현 지침)**
+
+  위 한 줄은 의도만 말하고 구현 해석을 열어둬 함정을 허용했다(V3 `user`가 실제로 밟았다 — backend/028, QA-001). 아래가 확정 구현이다.
+
+  ```sql
+  <자연키>_active <TYPE> GENERATED ALWAYS AS (IF(is_deleted, NULL, <자연키>)) STORED,
+  UNIQUE KEY uk_<table>_<자연키>_active (<자연키>_active)
+  ```
+  활성 행만 값을 가져 유일성이 보존되고, 삭제행은 NULL이라 MySQL 다중 NULL 허용으로 재삭제가 무제한이다. 원본 컬럼은 존치하고 UK만 생성 컬럼에 건다. `deleted_at`은 널 허용을 유지한다.
+
+  - **기각된 해석 — 규약의 문자를 지키면서 의도를 깨는 함정이라 반드시 피한다**
+    - `UNIQUE(<자연키>, deleted_at)` — **활성 중복이 조용히 뚫린다.** MySQL은 UNIQUE에서 NULL을 서로 다른 값으로 취급하므로 `deleted_at IS NULL`인 활성 행이 동일 자연키로 N개 허용된다. 위 한 줄("삭제 식별 컬럼을 포함")을 문자 그대로 만족시키면서 유일성을 파괴하므로 **가장 위험하다.**
+    - `UNIQUE(<자연키>, is_deleted)` — 삭제행이 자연키당 1개로 제한돼 재삭제(재가입 후 재탈퇴)에서 충돌한다. domain-spec [6.1] 이력 보존과 상충한다.
+  - **동반 필수** — UK만 고치면 파손된다. 재사용이 허용되면 동일 자연키에 삭제행과 활성행이 공존하므로, 단건 조회 파생 쿼리에 활성 필터(`...AndIsDeletedFalse`)를 함께 넣어야 한다. 누락 시 다건 반환으로 단건 바인딩이 깨진다(로그인 파손).
+  - **적용 대상 = 자연키만.** `public_id`(ULID) 같은 시스템 발급 대리 식별자는 재사용되지 않아 삭제행-신규행 충돌이 성립하지 않는다 — 패턴 불요.
+  - **트리거 조건** — 자연키 UK를 가진 테이블에 soft delete를 **새로 도입하는 순간** 이 패턴이 의무가 된다. 현재 해당 테이블은 `user` 하나이며, 자연키 UK를 갖되 soft delete가 없어 아직 무관한 테이블은 [4] 표 말미 주를 참조한다.
+  - 근거: D-081(정본) · backend/028(발견) · QA-001 · 074.
 - 상태 enum: 대문자 문자열(예: `SCHEDULED`,`ACTIVE`,`SOLD`).
 
 테이블 네이밍 확정(2026-07-13, 사용자): 경매 = `auction`, 고정가 = `shop`(별도 구조 유지, P-001 불변). 도메인 용어 "경매(Auction)/고정가(FixedSale)"는 domain-spec 유지, 물리 테이블만 매핑(auction / shop).
@@ -143,13 +161,20 @@ table `user` — 단일 사용자(관리자=플래그). 인증 상세 필드는 
 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
-| public_id | ULID | N | UK | 외부 노출 식별자(B-004) |
-| login_id | VARCHAR | N | UK | 로그인 식별자 |
+| public_id | ULID | N | UK | 외부 노출 식별자(B-004). 대리 식별자라 D-081 패턴 불요 |
+| login_id | VARCHAR(50) | N | | 로그인 식별자(자연키). **원본에 UK를 걸지 않는다** — D-081 |
+| login_id_active | VARCHAR(50) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, login_id)) STORED`. 활성만 유일·삭제행 NULL(D-081) |
 | password_hash | VARCHAR | N | | 비밀번호 해시 |
-| nickname | VARCHAR | N | UK | 표시명 |
+| nickname | VARCHAR(30) | N | | 표시명(자연키). **원본에 UK를 걸지 않는다** — D-081 |
+| nickname_active | VARCHAR(30) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, nickname)) STORED` (D-081) |
 | is_admin | BOOLEAN | N | | 관리자 권한 플래그(기본 false) |
 | is_deleted | BOOLEAN | N | | soft delete |
-| deleted_at | DATETIME(6) | Y | | |
+| deleted_at | DATETIME(6) | Y | | 널 허용 유지 |
+
+`user` 주(D-081):
+- 이 UK 구성에 **재가입 허용**(api-contract [2.5] · domain-spec [6.1])이 의존한다. 원본 컬럼에 단일 UK를 걸면 재가입이 동작하지 않는다 — V3가 그 상태였고 V4에서 재구성한다(채번은 백엔드 동기화, [6]).
+- **동반 필수**: `UserRepository` 단건·존재 조회는 활성 필터를 함께 건다(`findByLoginIdAndIsDeletedFalse` 등). UK만 고치면 삭제행+활성행 다건 반환으로 로그인이 깨진다.
+- 컬럼 길이(`login_id` 50 · `nickname` 30)는 V3 실물 기준이며 생성 컬럼은 원본과 동일 타입·길이를 쓴다.
 
 table `user_balance` — 사용자별 잔액(1:1). 잔액 갱신은 원자적(D-008).
 
@@ -310,6 +335,20 @@ table `item_ownership_history` — 소유 이전 이력(④). 최초 소유자 =
 | transferred_at | DATETIME(6) | N | | 이전 시각 |
 
 table `temp_storage` — 임시보관(오버플로우, ⑤-2). location=TEMP일 때만 행 존재. 상한 없음.
+
+### [4] 말미 주 — soft delete 자연키 스윕 결과 (074-3, D-081)
+
+**D-081 패턴 적용 대상 = `user` 1건. 그 외 0건.**
+
+탐색 방법(D-086): `erd.md` 전수에 패턴 `is_deleted|deleted_at` 및 `^\| (login_id|nickname|pg_tx_id|type_code|skill_code|public_id) \|` 실행. bash·호스트 Grep 양쪽 교차검증(결과 일치 — stale 아님).
+
+- **soft delete 보유 테이블**: `user` 뿐이다(`is_deleted` 컬럼 보유 테이블 전수 = 1). 따라서 현재 함정을 밟을 수 있는 테이블은 `user` 하나이며 [4.1]에서 처리했다.
+- **조건부 리스크 — 자연키 UK 보유, soft delete 미보유**: 아래 테이블은 자연키 UK를 갖지만 `is_deleted`가 없어 **현재는 무관**하다. 다만 향후 soft delete를 도입하면 그 순간 D-081 패턴이 의무가 된다([1] 트리거 조건).
+  - `charge.pg_tx_id` (PG 승인 식별자)
+  - `item_template.type_code` 및 `(main_category, sub_group, element, kind)` 조합
+  - `skill_definition.skill_code`
+- **패턴 불요**: `public_id`(ULID) 계열 전부 — 시스템 발급 대리 식별자라 재사용되지 않아 삭제행-신규행 충돌이 성립하지 않는다.
+- FK 1:1 유니크(`user_balance.user_id`·`money_hold.bid_id`·`temp_storage.instance_id`)는 자연키가 아니라 대상 아님.
 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|

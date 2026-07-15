@@ -24,6 +24,7 @@ import com.finalcall.common.security.TokenProvider;
 import com.finalcall.domain.member.User;
 import com.finalcall.domain.member.UserBalance;
 import com.finalcall.domain.member.UserBalanceRepository;
+import com.finalcall.domain.member.UserRepository;
 import com.finalcall.infra.security.RefreshTokenStore;
 
 /**
@@ -54,8 +55,8 @@ class AuthServiceUnitTest {
 
     @Test
     void 가입에_성공하면_유저와_잔액을_함께_생성한다() {
-        when(userRepository.existsByLoginId("hong")).thenReturn(false);
-        when(userRepository.existsByNickname("홍길동")).thenReturn(false);
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("hong")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("홍길동")).thenReturn(false);
         when(passwordEncoder.encode("pw12345")).thenReturn("hashed-pw");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -70,7 +71,7 @@ class AuthServiceUnitTest {
 
     @Test
     void loginId_중복이면_AUTH_001() {
-        when(userRepository.existsByLoginId("dup")).thenReturn(true);
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("dup")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.signup("dup", "pw12345", "닉네임"))
                 .isInstanceOf(BusinessException.class)
@@ -83,8 +84,8 @@ class AuthServiceUnitTest {
 
     @Test
     void nickname_중복이면_AUTH_002() {
-        when(userRepository.existsByLoginId("hong")).thenReturn(false);
-        when(userRepository.existsByNickname("중복닉")).thenReturn(true);
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("hong")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("중복닉")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.signup("hong", "pw12345", "중복닉"))
                 .isInstanceOf(BusinessException.class)
@@ -98,11 +99,12 @@ class AuthServiceUnitTest {
     @Test
     void 선검사_통과후_loginId_UK위반이면_AUTH_001로_매핑_M1() {
         // 경쟁으로 선검사를 지난 뒤 save 에서 UK 제약 위반 → 500 아닌 409 AUTH_001.
-        when(userRepository.existsByLoginId("racer")).thenReturn(false);
-        when(userRepository.existsByNickname("닉네임")).thenReturn(false);
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("racer")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("닉네임")).thenReturn(false);
         when(passwordEncoder.encode("pw12345678")).thenReturn("hashed-pw");
         when(userRepository.save(any(User.class)))
-                .thenThrow(new DataIntegrityViolationException("Duplicate entry 'racer' for key 'uk_user_login_id'"));
+                .thenThrow(new DataIntegrityViolationException(
+                    "Duplicate entry 'racer' for key 'uk_user_login_id_active'"));
 
         assertThatThrownBy(() -> authService.signup("racer", "pw12345678", "닉네임"))
                 .isInstanceOf(BusinessException.class)
@@ -112,11 +114,12 @@ class AuthServiceUnitTest {
 
     @Test
     void 선검사_통과후_nickname_UK위반이면_AUTH_002로_매핑_M1() {
-        when(userRepository.existsByLoginId("newid")).thenReturn(false);
-        when(userRepository.existsByNickname("중복닉")).thenReturn(false);
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("newid")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("중복닉")).thenReturn(false);
         when(passwordEncoder.encode("pw12345678")).thenReturn("hashed-pw");
         when(userRepository.save(any(User.class)))
-                .thenThrow(new DataIntegrityViolationException("Duplicate entry '중복닉' for key 'uk_user_nickname'"));
+                .thenThrow(new DataIntegrityViolationException(
+                    "Duplicate entry '중복닉' for key 'uk_user_nickname_active'"));
 
         assertThatThrownBy(() -> authService.signup("newid", "pw12345678", "중복닉"))
                 .isInstanceOf(BusinessException.class)
@@ -129,7 +132,7 @@ class AuthServiceUnitTest {
         User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
         ReflectionTestUtils.setField(user, "id", 42L);
         Instant expiresAt = Instant.parse("2026-07-14T00:30:00Z");
-        when(userRepository.findByLoginId("hong")).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByLoginIdAndIsDeletedFalse("hong")).thenReturn(java.util.Optional.of(user));
         when(passwordEncoder.matches("pw12345678", "hashed-pw")).thenReturn(true);
         when(tokenProvider.generateAccessToken(any(TokenClaims.class))).thenReturn("access-token");
         when(tokenProvider.accessTokenExpiresAt()).thenReturn(expiresAt);
@@ -145,7 +148,7 @@ class AuthServiceUnitTest {
 
     @Test
     void 없는_loginId_는_AUTH_003() {
-        when(userRepository.findByLoginId("nobody")).thenReturn(java.util.Optional.empty());
+        when(userRepository.findByLoginIdAndIsDeletedFalse("nobody")).thenReturn(java.util.Optional.empty());
 
         assertThatThrownBy(() -> authService.login("nobody", "pw12345678"))
                 .isInstanceOf(BusinessException.class)
@@ -158,7 +161,7 @@ class AuthServiceUnitTest {
     @Test
     void 비밀번호_불일치는_AUTH_003() {
         User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
-        when(userRepository.findByLoginId("hong")).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByLoginIdAndIsDeletedFalse("hong")).thenReturn(java.util.Optional.of(user));
         when(passwordEncoder.matches("wrong", "hashed-pw")).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login("hong", "wrong"))

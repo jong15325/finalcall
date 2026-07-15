@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import com.finalcall.domain.auth.UserRepository;
 import com.finalcall.domain.member.UserBalanceRepository;
+import com.finalcall.domain.member.UserRepository;
 import com.finalcall.support.IntegrationTest;
 
 /**
@@ -61,7 +61,7 @@ class SignupConcurrencyIntegrationTest extends IntegrationTest {
                 pool.submit(() -> {
                     try {
                         ready.await();
-                        // 같은 loginId, 닉네임만 유니크 → 충돌은 uk_user_login_id 로 한정.
+                        // 같은 loginId, 닉네임만 유니크 → 충돌은 uk_user_login_id_active 로 한정.
                         int status = mockMvc.perform(post(SIGNUP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body("racer", "pw12345678", "nick_" + idx)))

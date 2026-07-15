@@ -15,6 +15,7 @@ import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.member.User;
 import com.finalcall.domain.member.UserBalance;
 import com.finalcall.domain.member.UserBalanceRepository;
+import com.finalcall.domain.member.UserRepository;
 import com.finalcall.infra.security.RefreshTokenStore;
 
 import lombok.RequiredArgsConstructor;
@@ -49,8 +50,10 @@ public class AuthService {
     @Transactional
     @ServiceLog
     public User signup(String loginId, String password, String nickname) {
-        Preconditions.validate(!userRepository.existsByLoginId(loginId), AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
-        Preconditions.validate(!userRepository.existsByNickname(nickname), AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
+        Preconditions.validate(
+            !userRepository.existsByLoginIdAndIsDeletedFalse(loginId), AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
+        Preconditions.validate(
+            !userRepository.existsByNicknameAndIsDeletedFalse(nickname), AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
 
         try {
             User user = userRepository.save(User.builder()
@@ -67,14 +70,17 @@ public class AuthService {
         }
     }
 
-    /** UK 제약 위반을 도메인 예외(AUTH_001/002)로 변환한다. 판정은 제약명(uk_user_login_id/uk_user_nickname) 기반. */
+    /**
+     * UK 제약 위반을 도메인 예외(AUTH_001/002)로 변환한다. 판정은 제약명 기반.
+     * V4(D-081)에서 UK가 생성 컬럼으로 이전돼 제약명이 {@code uk_user_login_id_active}/{@code uk_user_nickname_active}다.
+     */
     private BusinessException toDuplicateException(DataIntegrityViolationException ex) {
         String cause = ex.getMostSpecificCause().getMessage();
         String lower = cause == null ? "" : cause.toLowerCase(Locale.ROOT);
-        if (lower.contains("uk_user_login_id")) {
+        if (lower.contains("uk_user_login_id_active")) {
             return new BusinessException(AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
         }
-        if (lower.contains("uk_user_nickname")) {
+        if (lower.contains("uk_user_nickname_active")) {
             return new BusinessException(AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
         }
         // 알 수 없는 무결성 위반(예: 극히 드문 public_id 충돌)은 원본을 유지해 전역 핸들러가 처리한다.
@@ -86,11 +92,14 @@ public class AuthService {
      *
      * <p>열거 완화(SEC-006/007): loginId 부재·비밀번호 불일치·탈퇴 계정을 <b>단일 코드 AUTH_003</b>으로 통일해
      * loginId 존재 여부가 응답으로 드러나지 않게 한다. RDB 쓰기는 없어 클래스 기본 readOnly 트랜잭션을 따른다.
+     *
+     * <p>조회는 활성 회원만 대상({@code findByLoginIdAndIsDeletedFalse}) — 재가입 허용(D-081)으로 동일 loginId에
+     * 탈퇴행+활성행이 공존할 수 있어 필터 없는 조회는 다건 반환으로 깨진다. 탈퇴 계정은 조회에서 빠져 AUTH_003으로 수렴한다.
      */
     @ServiceLog
     public TokenBundle login(String loginId, String password) {
-        User user = userRepository.findByLoginId(loginId).orElse(null);
-        if (user == null || user.isDeleted() || !passwordEncoder.matches(password, user.getPasswordHash())) {
+        User user = userRepository.findByLoginIdAndIsDeletedFalse(loginId).orElse(null);
+        if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new BusinessException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
         String userId = String.valueOf(user.getId());
