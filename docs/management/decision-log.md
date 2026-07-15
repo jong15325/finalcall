@@ -1088,3 +1088,34 @@ ERD는 도메인 개념·상태 전이의 산출물이고, API 계약은 그 둘
     종속하며, 실결제 도입 시 D-080은 재검토 대상(SUPERSEDE 후보)이다.
 - 범위 밖(이 결정에 미포함, 기획 자율 — 069 §1): 진행 중 경매·입찰 홀드·미완료 주문 보유 시 탈퇴 차단
   여부(거래 무결성 문제, D-052 정합), 과거 이력 닉네임 마스킹, 재가입 시 login_id·nickname UK 재사용.
+
+## D-081. soft delete 자연키 유니크 — 생성 컬럼 패턴 확정 (erd 1절 구현 해석) (2026-07-15) [ACCEPTED]
+
+- 소유: 총괄 / 관련: escalated-from backend/outbox/028(안건1), relates-to erd 1절 규약·B-024(이중 방어),
+  depends-on api-contract v1.4 §2.5(재가입 허용)·domain-spec v0.5 §6.1. 전 도메인 적용 패턴.
+- 배경: erd 1절 "soft delete 테이블의 자연키 유니크는 **삭제 식별 컬럼을 포함**(삭제행-신규행 충돌 회피)"의
+  구현 해석이 확정되지 않아, V3 `user`가 `UNIQUE(login_id)`·`UNIQUE(nickname)`으로 규약을 위반했다(028 발견).
+  이 규약은 user만이 아니라 **soft delete + 자연키를 가진 모든 테이블**에 걸린다. 순진한 해석이 MySQL에서
+  함정이라 해석을 결정으로 고정한다.
+- 결정: **생성 컬럼(generated column) + 단일 UK** 패턴을 표준으로 채택한다.
+  ```sql
+  <자연키>_active <TYPE> GENERATED ALWAYS AS (IF(is_deleted, NULL, <자연키>)) STORED,
+  UNIQUE KEY uk_<table>_<자연키>_active (<자연키>_active)
+  ```
+  - 활성 행만 값을 가져 **활성 유일성 보존**, 탈퇴행은 NULL이라 MySQL의 다중 NULL 허용으로 **재탈퇴 무제한**.
+  - `deleted_at` 널 허용(erd §4.1) 유지, 센티넬 값 불요. MySQL 8.0 지원.
+  - 원본 자연키 컬럼(`login_id` 등)은 그대로 두고 UK만 생성 컬럼에 건다.
+  - 적용 대상: soft delete(`is_deleted`) + 자연키 UK를 가진 **전 테이블**. 신규 도메인도 이 패턴을 따른다.
+- 이유:
+  - **(a) `UNIQUE(자연키, deleted_at)` 기각 — 가장 위험**. MySQL은 UNIQUE 인덱스에서 NULL을 서로 다른 값으로
+    취급하므로 `deleted_at=NULL`인 활성 행이 **동일 자연키로 N개 허용된다**. erd 1절의 문자적 해석이지만
+    규약 의도(활성 유일성 보존)를 정면으로 깬다. 조용히 뚫리는 유형이라 명시적으로 기각을 남긴다.
+  - **(b) `UNIQUE(자연키, is_deleted)` 기각**. 활성 유일성은 지키나 탈퇴행이 자연키당 1개로 제한 →
+    가입→탈퇴→재가입→재탈퇴 시 충돌. 이력 보존(domain-spec §6.1)과 상충.
+  - **(d) 애플리케이션 레벨 검사만 기각**. DB 이중 방어(B-024 TOCTOU 안전망) 포기.
+  - (c)는 위 셋의 결함이 없고 erd 1절 의도(활성 유일성 + 삭제행 충돌 회피)를 동시에 만족한다.
+- 동반 필수(순서 주의 — 028 경고): UK 재구성만 하고 리포지토리 파생 쿼리를 두면 **로그인이 깨진다**.
+  재가입 성사 시 동일 자연키로 탈퇴행+신규행이 공존해 `findByLoginId`가 다건을 반환한다
+  (`IncorrectResultSizeDataAccessException`). UK 변경과 `...AndIsDeletedFalse` 정정은 **같은 작업 단위**로 묶는다.
+- 집행: 백엔드 V4 마이그레이션 + UserRepository 정정 + auth 회귀 테스트(별도 선행 단위, 028 안건3 (a)).
+  기획이 erd 1절 규약에 본 패턴을 구현 지침으로 명문화 + §4.1 `user` 표 갱신(074).
