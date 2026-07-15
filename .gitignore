@@ -42,3 +42,10 @@ boot*.log
 # Stage G: 앱 JSON 로그 파일(Alloy tail 대상)
 /logs/
 /app.pid
+
+# docs 작업 로그 — 상시 변경되어 IDE 커밋 목록을 오염시킨다 (C-058)
+# 이력 가치 없음: handover는 휘발성 맥락(rules [8.6] "이력을 남기지 않는다"),
+# inbox-log는 유실 시 중복 처리뿐. 로컬 파일은 유지되므로 전 대화가 그대로 읽는다.
+# decision-log·outbox는 제외하지 않는다 — rules.md `근거:` 링크의 정본이자 합의 이력이다.
+docs/*/inbox-log.md
+docs/*/notes/handover.md
