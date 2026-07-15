@@ -3,22 +3,74 @@
 결함 티켓 누적(전 역할 열람). 심각도 Critical|Major|Minor, 상태 OPEN|FIXED|WONTFIX.
 결함 티켓은 삭제하지 않는다(qa-guide §5). Critical(돈·정합성 훼손)은 발견 즉시 총괄 push.
 
-기준: api-contract **v1.3** · domain-spec v0.4 · ACCEPTED 결정만(qa-guide §1, 추측 금지).
-검증 대상 범위: backend/outbox/019(auth 완결) · 021(게이트웨이 완결).
-검증 방법: Q-001(계약 기준 정적 정합 검증 + 재실행 가능한 시나리오 스위트).
+기준: 확정 스펙 3종 **api-contract v1.4 · domain-spec v0.5 · erd v0.5(§1 규약 포함)** + ACCEPTED
+결정만(qa-guide §1, 추측 금지). 검증 대상 범위: backend/outbox/019(auth 완결) · 021(게이트웨이 완결).
+검증 방법: Q-001(정적 정합 검증 + 재실행 가능한 스위트) + **Q-004(기준에 erd 포함)**.
 
 ---
 
-## 현황 요약 (2026-07-14, G4-1 검증 / v1.3 델타 반영)
+## 현황 요약 (2026-07-15, G4-1 / erd 기준 보완 재검증)
 
 | 심각도 | OPEN | FIXED | WONTFIX |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| Major | 0 | 0 | 0 |
+| Major | 1 | 0 | 0 |
 | Minor | 0 | 0 | 0 |
 
-auth 4종(signup·login·refresh·logout)·게이트웨이(rate limit·직접접근 차단·라우팅)는 검증 범위
-계약 조항 대비 정합. G4-1 범위에서 계약 위반 결함은 발견되지 않았다(G4-1 통과 확정, 060).
+- api-contract·domain-spec 층: G4-1 범위 위반 0건(060 판정 시점 검증 유효).
+- **erd 층: 위반 1건(QA-001)** — Q-001의 기준에 erd가 없어 G4-1에서 통과된 잠복분. 기준 보완(Q-004)
+  후 V3를 erd §1·§4.1 전 항목에 재대조한 결과 **위반은 QA-001 1건뿐**(네이밍·PK·FK·public_id·
+  시간·컬럼 집합은 모두 정합) — 추가 잠복 없음.
+- G4-1 게이트 판정은 번복하지 않는다(당시 기준으로 유효, 075). 결함 이력만 남긴다.
+
+---
+
+## QA-001. V3 `user` 자연키 UK가 erd §1 soft delete 규약 위반 — 재가입 불능(잠복)
+
+심각도: Major · 상태: OPEN · 2026-07-15
+
+재현/조건: (현재 미발현 — 탈퇴 경로 미구현이라 API로는 도달 불가. 스키마 정적 검증으로 확인)
+1. `src/main/resources/db/migration/V3__user_and_balance.sql` 확인 — `user`는 `is_deleted BIT NOT
+   NULL`·`deleted_at DATETIME(6) NULL` 보유 = soft delete 테이블.
+2. 동 파일 UK 정의: `UNIQUE KEY uk_user_login_id (login_id)`, `UNIQUE KEY uk_user_nickname (nickname)`
+   — 자연키 유니크에 삭제 식별 컬럼이 포함되지 않음.
+3. (발현 시나리오, v1.4 §2.5 `DELETE /me` 구현 후) 탈퇴 → 동일 login_id 재가입 → `AUTH_001` 409 오거부.
+
+기대 vs 실제:
+- 기대(erd §1, line 30): "soft delete 테이블의 자연키 유니크는 삭제 식별 컬럼을 포함(삭제행-신규행
+  충돌 회피)". 확정 패턴은 D-081(`<자연키>_active` 생성 컬럼 + UK).
+- 실제: 삭제 식별 컬럼 없는 평문 자연키 UK → 탈퇴행이 login_id·nickname을 **영구 점유**.
+
+발현 시 파급(075 총괄 제시, QA 확인):
+1. 재가입 차단 — `AUTH_001` 오거부(v1.4 §2.5 "재가입: login_id·nickname 재사용 허용" 정면 위반).
+2. 탈퇴자 nickname 중복 오판정 — `PATCH /me` 시 `MEMBER_001` 오거부.
+3. 재가입이 성사되는 구현으로 바뀌면 `findByLoginId` 다건 → `IncorrectResultSizeDataAccessException`
+   (로그인 파손).
+
+심각도 근거(Major, Critical 아님): 확정 스펙 위반 + v1.4 §2.5 명시 기능(재가입)을 불능화하므로
+Minor 아님. 다만 현 상태는 **과잉 제약(차단)**이라 데이터 정합성이 깨지지 않고(중복 행·잔액 오류
+없음), 미발현이며 FIX가 선행 단위로 진행 중 → qa-guide §5의 Critical 정의(돈·정합성 훼손: 중복
+판매·잔액 오류)에 해당하지 않는다. 즉시 총괄 push 대상 아님.
+
+분류 근거(Q-003 RETEST가 아니라 결함인 이유): erd §1은 **G2 통과 확정 스펙(2026-07-13)**이고 V3는
+그 이후(07-14) 작성됐다 — 작성 시점에 규약이 이미 존재했다. Q-003이 다루는 "완료 후 계약이 바뀌어
+생긴 새 요구(미착수 할당분)"가 아니라 "이미 있던 확정 스펙을 위반한 완료 주장 산출물"이므로 결함의
+정의 그대로다. 규약 발동 조건은 "탈퇴가 명세되면"이 아니라 "soft delete 테이블이면"이다.
+
+귀속(blameless, D-027): 백엔드 과실이 아니다. 스펙 공백(022)의 2차 파생 + **검증 기준 누락(Q-001에
+erd 부재 — QA 소유 문서의 구멍)**이 함께 만든 결과다. 등재 이유는 지표 정직성 하나 — G4-1이
+"defects 0"으로 통과했는데 확정 스펙 위반이 있었다면 그 0은 거짓이고, 거짓 지표는 다음 게이트
+판정을 오염시킨다.
+
+FIX·재검증: 백엔드 V4 선행 단위(D-081 패턴)가 FIX. 완료 보고 수신 → QA-S-MBR-04·05·06 재검증 →
+FIXED 전환. 현재 V4 마이그레이션 미생성 확인(db/migration = V1·V2·V3).
+
+관련: erd §1(line 30)·§4.1 · D-081 · api-contract v1.4 §2.5 · backend/outbox/028 · management/outbox/
+073·074·075 · Q-004 · scenarios/003-member-계정생명주기.md
+
+QA 관찰(백엔드 참고 — 패턴 과적용 주의): D-081 패턴은 **자연키(login_id·nickname)에만** 적용한다.
+`uk_user_public_id`는 대상이 아니다 — public_id는 ULID 대리키로 재사용되지 않아 삭제행-신규행 충돌이
+구조적으로 발생하지 않는다(erd §1 "외부 노출 식별자" 항). 일괄 적용 시 불필요한 생성 컬럼이 는다.
 
 ## 계약 질의 — 해소됨 (v1.3 확정, 065)
 

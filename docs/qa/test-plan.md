@@ -1,7 +1,12 @@
 # FinalCall 테스트 플랜 (QA, D-040·qa-guide §2)
 
 성격: 전체 테스트 전략 1~2페이지. 리스크 기반 우선순위(qa-guide §3). 무거운 IEEE 829식 미채택.
-기준: api-contract v1.2 · domain-spec v0.4 · ACCEPTED 결정만. 갱신은 게이트 진행에 따라 누적.
+
+기준(확정 스펙 **3종 전부** + ACCEPTED 결정만): **api-contract v1.4 · domain-spec v0.5 · erd v0.5**
+(erd v0.6 확정 시 갱신 — 074 진행 중). 갱신은 게이트 진행에 따라 누적.
+- 확정 스펙 3종은 기준 위계(collaboration-guide §3)상 **동급 근거**다. 하나라도 빠지면 그 층의 위반은
+  게이트를 그대로 통과한다 — 실제로 erd 누락이 V3 자연키 UK 위반을 G4-1에서 통과시켰다(QA-001, Q-004).
+  검증 기준에서 erd를 빼지 말 것.
 
 ## 1. 범위
 
@@ -18,11 +23,18 @@
 |---|---|---|
 | 단위 | 백엔드(구현 DoD) | AuthServiceUnitTest 등. QA는 커버리지 갭만 시나리오로 보강 |
 | 슬라이스·통합 | 백엔드(구현 DoD) | Testcontainers(MySQL 8/Redis 7). GatewayAccessIntegrationTest 등 |
-| 계약 정합 검증 | QA | 계약 조항 대비 정적 대조(경로·스키마·상태코드·에러코드). Q-001 |
+| 스펙 정합 검증 | QA | 확정 스펙 3종 대비 정적 대조. Q-001 + **Q-004(erd 포함)** |
 | 시나리오(재실행) | QA 설계 → 백엔드/CI 실행 | 기능·동시성·경계값. scenarios/NNN |
 
-QA는 확정 계약을 기대치의 단일 근거로 삼고(qa-guide §1), 동적 재실행은 백엔드 Testcontainers
-하네스에 위임한다(Q-001). 계약 공백은 결함이 아니라 계약 질의로 격상(qa-guide §4).
+스펙 정합 검증의 대조 범위(Q-004 — 3종 전부, 층별로 빠짐없이):
+- **api-contract**: 경로·요청/응답 스키마·상태코드·에러코드·envelope.
+- **domain-spec**: 도메인 규칙·상태 전이·동시성 필수 케이스(§10).
+- **erd**: 스키마·마이그레이션이 erd를 지키는지. **§1 공통 규약(네이밍·PK/FK·public_id·시간·soft
+  delete 자연키 UK·상태 enum) 대조를 포함**한다. 테이블 정의표(§4)만 보고 §1 규약을 건너뛰지 말 것 —
+  §4 표가 §1 규약을 반영하지 못한 경우가 실재한다(erd §4.1 user, 074로 정정 중).
+
+QA는 확정 스펙을 기대치의 단일 근거로 삼고(qa-guide §1), 동적 재실행은 백엔드 Testcontainers
+하네스에 위임한다(Q-001). 스펙 공백은 결함이 아니라 계약 질의로 격상(qa-guide §4).
 
 ## 3. 리스크 기반 우선순위 (영향 × 발생가능성, 각 1~3)
 
@@ -32,6 +44,8 @@ QA는 확정 계약을 기대치의 단일 근거로 삼고(qa-guide §1), 동�
 
 | 기능 | 영향 | 발생 | 점수 | 시나리오 |
 |---|---|---|---|---|
+| 활성 유일성(soft delete 자연키 UK) — 패턴 오구현 시 조용히 뚫림 | 3 | 3 | 9 | QA-S-MBR-06(회귀) |
+| 재가입·재탈퇴 생애주기(D-081 패턴) | 3 | 2 | 6 | QA-S-MBR-04·05 |
 | refresh 토큰 회전·재사용 탐지 | 3 | 2 | 6 | QA-S-AUTH-05·06(동시성) |
 | 중복 signup 경쟁(UK 안전망) | 3 | 2 | 6 | QA-S-AUTH-02(동시성) |
 | 게이트웨이 직접접근 차단(우회 시 인증 관문 무력화) | 3 | 2 | 6 | QA-S-GW-03·04 |
@@ -48,7 +62,8 @@ QA는 확정 계약을 기대치의 단일 근거로 삼고(qa-guide §1), 동�
 
 - 동적 재실행 전제: 로컬 Docker 데몬 up + Testcontainers(MySQL 8.0/Redis 7). `./gradlew clean build`
   (021 기준 61 테스트 그린). 게이트웨이 차단 검증은 `gateway.internal.enforced=true` 오버라이드.
-- 계약 정합 검증 전제: api-contract v1.2, domain-spec v0.4, 구현 소스(main/test) 열람(D-016 pull).
+- 스펙 정합 검증 전제: 확정 스펙 3종 **api-contract v1.4 · domain-spec v0.5 · erd v0.5(§1 규약 포함)**
+  + 구현 소스(main/test)·**마이그레이션(db/migration)** 열람(D-016 pull). erd v0.6 확정 시 갱신.
 
 ## 5. 완료 기준 (G4-1 QA 파트)
 
