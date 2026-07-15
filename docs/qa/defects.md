@@ -3,8 +3,8 @@
 결함 티켓 누적(전 역할 열람). 심각도 Critical|Major|Minor, 상태 OPEN|FIXED|WONTFIX.
 결함 티켓은 삭제하지 않는다(qa-guide §5). Critical(돈·정합성 훼손)은 발견 즉시 총괄 push.
 
-기준: 확정 스펙 3종 **api-contract v1.4 · domain-spec v0.5 · erd v0.5(§1 규약 포함)** + ACCEPTED
-결정만(qa-guide §1, 추측 금지). 검증 대상 범위: backend/outbox/019(auth 완결) · 021(게이트웨이 완결).
+기준: 확정 스펙 3종 **api-contract v1.4 · domain-spec v0.5 · erd v0.7([1] 규약 포함)** + ACCEPTED
+결정만(qa-guide [1], 추측 금지). 검증 대상 범위: backend/outbox/019(auth 완결) · 021(게이트웨이 완결).
 검증 방법: Q-001(정적 정합 검증 + 재실행 가능한 스위트) + **Q-004(기준에 erd 포함)**.
 
 ---
@@ -73,10 +73,10 @@ D-078 설계상 실행은 손(Claude Code) 소관이라 예상된 한계다.
    — 자연키 유니크에 삭제 식별 컬럼이 포함되지 않음.
 3. (발현 시나리오, v1.4 §2.5 `DELETE /me` 구현 후) 탈퇴 → 동일 login_id 재가입 → `AUTH_001` 409 오거부.
 
-기대 vs 실제:
-- 기대(erd §1, line 30): "soft delete 테이블의 자연키 유니크는 삭제 식별 컬럼을 포함(삭제행-신규행
-  충돌 회피)". 확정 패턴은 D-081(`<자연키>_active` 생성 컬럼 + UK).
-- 실제: 삭제 식별 컬럼 없는 평문 자연키 UK → 탈퇴행이 login_id·nickname을 **영구 점유**.
+기대(erd [1] soft delete 항 — 등재 시점 erd v0.5 기준 원문): "soft delete 테이블의 자연키 유니크는
+  삭제 식별 컬럼을 포함(삭제행-신규행 충돌 회피)". 확정 패턴은 D-081(`<자연키>_active` 생성 컬럼 + UK).
+  (행 번호 인용은 제거 — erd v0.6에서 [1]이 확장돼 행이 밀렸다. 절 참조가 stale에 강하다, D-092.)
+실제: 삭제 식별 컬럼 없는 평문 자연키 UK → 탈퇴행이 login_id·nickname을 **영구 점유**.
 
 발현 시 파급(075 총괄 제시, QA 확인):
 1. 재가입 차단 — `AUTH_001` 오거부(v1.4 §2.5 "재가입: login_id·nickname 재사용 허용" 정면 위반).
