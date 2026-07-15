@@ -384,3 +384,22 @@
   기획·총괄에 정보 공유(outbox/027)로 통지.
 
 ---
+
+## B-030. UserRepository 소유 도메인 — member (B-028 누락분 보정) (2026-07-15) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to B-028(이동 목록에서 누락), D-081(V4 집행 중 발현). 030 실행분
+- 결정: `UserRepository`를 `domain/auth` → `domain/member`로 이동한다(`User`와 동일 도메인).
+  B-028이 이동 대상을 `User`·`UserBalance`·`UserBalanceRepository` 3건으로, 존치를 `AuthService`·`TokenBundle`·
+  `AuthErrorCode` 3건으로 열거하면서 **`UserRepository`를 어느 목록에도 넣지 않은 공백**을 보정한다.
+- 이유: 리포지토리는 자기 엔티티와 같은 도메인에 있어야 한다(`notice` 참조 구현도 `Notice`+`NoticeRepository`
+  동거). `User`가 member로 갔는데 `UserRepository`만 auth에 남으면 `domain/auth → domain/member` 참조가
+  리포지토리 계층에 생겨 B-028이 차단하려던 역방향 의존이 다른 경로로 재현된다. auth는 인증 로직만 소유한다는
+  B-028 원칙의 직접 귀결이다.
+- 기각된 대안: auth 존치(B-028 원칙과 모순·역방향 의존 재현), 별도 유닛으로 분리(V4가 이 파일의 파생 쿼리를
+  고치므로 이동을 미루면 수정 후 이동으로 diff가 두 번 갈린다 — 076이 030을 023 직후에 둔 사유와 동일).
+- **집행(D-089)**: `src/main/java/com/finalcall/domain/member/UserRepository.java` — 반영 완료(030 실행분,
+  커밋 `df9836c`). `domain/auth/UserRepository.java` 삭제 확인. 총괄 보고 outbox/033.
+- 비고: 030(V4) 커밋에 포함돼 실행됐다. 본래 023(재배치) 범위였어야 하나 B-028 열거 누락으로 흘렀다.
+  결과는 정합하며 되돌릴 사유 없음. 발견 경위·범위 처리는 033 보고.
+
+---
