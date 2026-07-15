@@ -23,11 +23,13 @@ GET /api/v1/me/balance — 내 잔액
    (= balance − held) 사용, 컬럼 신설 금지.
 3. `domain/member/MemberService` 신설 — 클래스 레벨 `@Transactional(readOnly = true)`, `@ServiceLog` 부착.
    SecurityContext에서 사용자 식별(B-009) → 잔액 조회. 비즈니스 검증은 `Preconditions.validate(...)`.
-4. `domain/member/MemberErrorCode` 신설 — 공통 `ErrorCode` 구현 enum, 네이밍 `MEMBER_{3자리}`(§5).
-   이번엔 잔액 행 부재 케이스만 필요(예: `MEMBER_001` 잔액 없음 404).
-   **주의**: 계약 §5 에러코드 표에 `MEMBER_` 코드는 아직 미등재(068 — 기획이 명세 중, 069).
-   따라서 이번 유닛은 정상 경로(200)가 계약 준수 대상이고, `MEMBER_001`은 방어적 내부 코드다.
-   계약 확정(v1.4 예상) 후 코드·상태값 정합을 재확인한다 — 이 사실을 완료 보고에 명시할 것.
+4. **`MemberErrorCode`를 신설하지 않는다**(B-029). 잔액 행 부재는 `CommonErrorCode.INTERNAL_ERROR`
+   (`COMMON_999`, 500)로 처리한다.
+   - 근거: signup이 `user`와 `user_balance`를 1:1로 함께 생성하므로(V3 UK+FK) 잔액 행 부재는 비즈니스
+     상태가 아니라 **깨진 불변식**이다. 404 도메인 에러로 두면 "잔액 없는 회원"이 정상 상태인 것처럼
+     계약에 드러나는데 설계상 그런 상태는 없다.
+   - `MEMBER_NNN` 채번 권한은 기획(계약 §5 정본)에 있고 069에서 확정 중이다. 이번 유닛은 `MEMBER_` 코드를
+     일절 쓰지 않아 채번 충돌 표면이 없다. `MemberErrorCode`는 프로필·수정·탈퇴 유닛에서 계약 확정 번호로 신설.
 5. `UserBalanceRepository`에 조회 메서드 추가(`findByUser` 또는 `findByUserId`). QueryDSL 불요(단순 조회).
 6. 테스트: 서비스 단위 테스트 + 컨트롤러 슬라이스 테스트(`@WebMvcTest`). 인증 필요(401) 경로 포함.
    테스트 메서드명 한국어(B-023 suppress 적용됨).
@@ -59,14 +61,15 @@ feat(member): 잔액 조회 API 추가 (GET /api/v1/me/balance)
 
 세부 내용 (영역별)
 - api: MemberController(/api/v1/me, B-015) + MemberBalanceResponse(record, from(UserBalance))
-- domain: MemberService(readOnly 트랜잭션·@ServiceLog), MemberErrorCode 신설
+- domain: MemberService(readOnly 트랜잭션·@ServiceLog)
 - domain: UserBalanceRepository 조회 메서드 추가
+- 잔액 행 부재는 불변식 위반 → COMMON_999(500). MEMBER_ 코드 미사용(B-029)
 - gameMoneyAvailable 은 balance − held 파생값(컬럼 미신설)
 
 수정 파일
   변경(M): domain/member/UserBalanceRepository.java
   추가(A): api/member/MemberController.java, api/member/MemberBalanceResponse.java,
-           domain/member/MemberService.java, domain/member/MemberErrorCode.java
+           domain/member/MemberService.java
            (테스트) MemberServiceTest.java, MemberControllerTest.java
 
 검증
