@@ -97,6 +97,8 @@
 | D-087 | 절 참조 표기 — `§` 금지, 대괄호 `[N.M]` 채택 (앞으로만·소급 없음) | ACCEPTED | 총괄 |
 | D-088 | Claude Code 완료 보고 반환 경로 — 파일 인계함(cc-reports), 사용자 중계 불요 | ACCEPTED (supersedes D-069 리포트 루프 조항) | 총괄 |
 | D-089 | 결정 로그 `집행` 필드 — 규약↔실행 문서 비동기화 차단 | ACCEPTED | 총괄 |
+| D-090 | 저장소 파일 작업의 정본 도구 = 호스트. bash 마운트 뷰 판단 근거 금지 | ACCEPTED (supersedes D-043 교차검증 조항) | 총괄 |
+| B-030 | UserRepository 소유 도메인 = member (B-028 열거 누락분 보정) | ACCEPTED | 백엔드 |
 | P-001 | 판매 방식 모델링 구조 (C안) | ACCEPTED | 기획 |
 | P-002 | 즉시구매가/시작가 제약 (buyNowPrice > startPrice) | ACCEPTED | 기획 |
 | P-008 | 입찰 홀드 해제 규칙 (자율, D-052 조건 이행) | ACCEPTED | 기획 |
