@@ -1,8 +1,8 @@
 # FinalCall UX 플로우 · 화면 맵 (ux-flows.md)
 
-상태: DRAFT v0.1 — 디자인 초안. 계약 v1.2 기준. 목록/상세 응답 스키마는 계약 §3.3로 확정(공백 해소).
+상태: DRAFT v0.1 — 디자인 초안. 계약 v1.4 기준. 목록/상세 응답 스키마는 계약 [3.3]으로 확정(공백 해소).
 소유: 디자인(UX/UI)
-근거: api-contract v1.2(최상위 — 라우트·엔드포인트·§3.3 응답 스키마·등급 제거 D-073), domain-spec §3~§9, frontend/notes/screen-route-map.md(미확정 참고 — 프론트 노트), design-guide 5·11절
+근거: api-contract v1.4(최상위 — 라우트·엔드포인트·[3.3] 응답 스키마·등급 제거 D-073), domain-spec v0.5 [3]~[9], frontend/notes/screen-route-map.md(미확정 참고 — 프론트 노트), design-guide 5·11절
 기준: 계약이 최상위. 계약에 없는 화면·데이터는 가정하지 않는다(공백은 6절에 결정 요청 대상으로 표기). 상류 조율은 프론트 기획(PF, D-077).
 
 | 버전 | 날짜 | 내용 |

@@ -1,8 +1,8 @@
 # FinalCall 디자인 시스템 (design-system.md)
 
-상태: DRAFT v0.1 — 디자인 초안. 비주얼 방향(1절)·기본 테마는 사용자 직접 논의 재디자인 예정(047), 최종 총괄+사용자(D-072).
+상태: DRAFT v0.1 — 디자인 초안. 비주얼 방향은 **원게임 UI 스킨 전면 차용으로 확정**(U-016, 2026-07-15 사용자 결정 — A/B/C 폐기). [2] 색 토큰은 아직 A안 잠정값이며 게임 팔레트 재정의 미반영(U-016 집행 항목).
 소유: 디자인(UX/UI)
-근거: api-contract v1.2(최상위, 등급 제거 D-073·§3.3 응답 스키마), erd v0.5(item_template.element), frontend/CLAUDE.md 5절, design-guide 3·4·11절, U-001~003·005~011
+근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마), erd v0.7(item_template.element), frontend/CLAUDE.md 5절, design-guide 3·4·11절, U-001~003·005~011·U-016
 기준: 계약이 최상위. 이 문서는 프론트 구현의 참고 지침이며 계약·도메인 규칙과 충돌 시 계약 우선. 상류 조율은 프론트 기획(PF, D-077).
 
 | 버전 | 날짜 | 내용 |
