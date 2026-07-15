@@ -1,0 +1,123 @@
+# FinalCall 프론트 스켈레톤 기획 (skeleton-plan.md)
+
+상태: v0 — 063 산출물. F 구성·프론트 Claude Code 생성의 **선행 기준선**(레인 순서 (a), 062).
+소유: 기획 (P) — D-079(PF→P 재통합)
+근거: 063(작업 지시), screen-spec v0.2(IA·라우트), api-contract **v1.4**(계약 정본), ux/design-system.md(토큰·U-010), 프론트 CLAUDE.md 3~6절(구조·상태·컨벤션), 062(레인 순서·repo 후생성), P-011(returnUrl)
+경계: 이 문서는 **무엇을·어디까지**만 규정한다. 툴링·배선 구체(설정값)는 F 구성, 실제 코드 생성은 Claude Code 소관이다. 계약은 최상위이며 이 문서가 계약을 바꾸지 않는다(변경 필요 시 6절).
+
+| 버전 | 날짜 | 내용 |
+|---|---|---|
+| v0 | 2026-07-14 | 초안 — 범위·경계, IA 셸, 토큰 통합 방침, 계약 v1.3 정합, 잔여 공백 |
+| v0.1 | 2026-07-14 | 기준 계약 v1.3→**v1.4**(069 회원 리소스 §2.5 확정). 공백 4 해소 — `/me/profile` 라우트 placeholder를 Protected에 포함(계약 근거 확보). 화면 구현은 여전히 member feature 단계. 그 외 범위·토큰 방침·DoD 불변 |
+
+---
+
+## 1. 스켈레톤의 정의
+
+스켈레톤 = 도메인 feature를 채우기 전에 **모든 feature가 공통으로 딛는 바닥**이다. 화면 내용은 비어 있어도 되지만 바닥은 완성돼 있어야 한다.
+
+완료 상태(DoD 관점): 라우팅 셸이 뜨고 · 인증 가드가 동작하고 · api 클라이언트가 계약 envelope를 언랩·에러를 정규화하고 · 디자인 토큰이 Tailwind에 매핑돼 있고 · 공용 타입이 계약과 1:1이면 완료다.
+
+원칙: **도메인 지식을 스켈레톤에 넣지 않는다.** 경매·입찰 규칙이 스켈레톤에 새면 feature 단계에서 뜯어내야 한다.
+
+---
+
+## 2. 범위 — 포함 / 제외
+
+### 포함
+
+| 계층 | 내용 | 근거 |
+|---|---|---|
+| 라우팅 셸 | 레이아웃 3종(공개·인증·관리자) + screen-spec §2 전 라우트 placeholder | 063, screen-spec §2 |
+| 인증 가드 | 라우트 보호 + 미인증 시 `/login?returnUrl=<원경로>` 복귀(앱 내부 라우트 한정) | P-011 |
+| api 클라이언트 | base URL·토큰 첨부·§1.4 envelope 언랩·에러 정규화·401 시 refresh 회전 | 계약 §1.2·§1.4, CLAUDE.md §5 |
+| 공용 타입 | envelope(§1.4)·cursor 페이징(§1.3)·목록/상세 스키마(§3.3)·에러코드(§5·§1.6) | 계약 v1.3 |
+| 전역 상태 골격 | 인증 세션·테마(Zustand 최소) | CLAUDE.md §4 |
+| 디자인 토큰 | design-system 토큰 → Tailwind theme + CSS 변수 매핑(4절) | U-010, design-system §2.5 |
+| 공통 UI 상태 3종 | 로딩(스켈레톤)·빈 상태·에러의 **골격**(각 화면 카피는 feature 단계) | ux-flows §5 공통 요구 |
+
+### 제외 (의도적 절단)
+
+- **도메인 feature 구현 9종**(auth·auction·bid·shop·item·inventory·order·wallet·admin의 화면·쿼리 훅·도메인 컴포넌트) — 각 도메인 단계. 스켈레톤은 라우트 placeholder까지만.
+- **비주얼 확정**(색값·타이포 최종) — 총괄+사용자(D-072). 스켈레톤은 잠정 A안(4절).
+- **실시간 채널**(SSE/WS) — 폴링 전제(F-001), screen-spec §5 공백 2.
+- **홈 통합 피드 표시 규칙** — 계약에 스펙 없음. 탭 분리 잠정(screen-spec §5 공백 1).
+- **회원 리소스 화면 구현**(마이페이지 프로필·닉네임 수정·탈퇴 폼·탈퇴 확인 UI) — member feature 단계. **단 v0.1부터 `/me/profile` 라우트 placeholder는 포함한다**(계약 v1.4 §2.5 확정으로 근거 확보 — 아래 v0.1 갱신 주 참조).
+- **툴링·배선 구체**(Vite·tsconfig·ESLint·Prettier 설정값, 스크립트) — F 구성(F-002) 소관.
+- **repo 생성** — 스켈레톤 완성 후(062 안건2). 로컬 작업 디렉터리 scaffold → DoD 검증 → repo 생성·계약 v1.3 복사본 헤더 기입(D-030)·초기 push(사용자).
+
+---
+
+## 3. IA 셸 — 레이아웃 ↔ 라우트 매핑
+
+screen-spec §1의 세 접근 영역을 레이아웃 3종으로 구현한다. 모든 라우트는 **빈 placeholder**로 두고 feature 단계에서 채운다.
+
+| 레이아웃 | 접근 | 라우트 placeholder | 가드 |
+|---|---|---|---|
+| Public | 인증 불요 | `/` · `/auctions` · `/auctions/:auctionPublicId` · `/shops` · `/shops/:shopPublicId` · `/items/:itemInstancePublicId` · `/market-prices` | 없음 |
+| Public(Auth 폼) | 인증 불요 | `/login` · `/signup` | 인증 상태면 `/`로 되돌림 |
+| Protected | 인증(`me` 주체) | `/sell` · `/me/inventory` · `/me/temp-storage` · `/me/orders` · `/me/orders/:orderPublicId` · `/me/wallet` · `/me/wallet/charge/confirm` · `/me/profile` | 미인증 → `/login?returnUrl=` (P-011) |
+| Admin | 관리자 | `/admin/auctions/:auctionPublicId` | 인증 + `isAdmin` (계약 §1.2, 미충족 `AUTH_005` 403) |
+
+주:
+- `/login`·`/signup`은 접근상 공개지만 내비게이션이 없는 폼 전용 화면이라 Public의 **최소 변형**으로 둔다. 별도 최상위 영역이 아니다(표현 세부는 디자인·F).
+- 판매자 취소·즉시구매는 상세 화면 내 액션이라 라우트가 없다(screen-spec §2 주).
+- 관리자 판정은 **서버 권위**다. 클라 `isAdmin`은 UI 노출 제어용이며 인가는 서버가 한다(계약 §1.2).
+
+---
+
+## 4. 토큰 통합 방침
+
+정본은 `docs/ux/design-system.md`다. **스켈레톤은 토큰명을 1:1로 옮기되 값을 복제하지 않는다** — 값의 단일 지점을 유지해야 비주얼 확정 시 교체가 한 곳에서 끝난다.
+
+| 구분 | 대상 | 방식 |
+|---|---|---|
+| 테마 무관 | `primary`·`accent`·semantic(success·warning·danger·info)·`element` 4색 | Tailwind `theme.extend.colors` 정적값 |
+| 테마 의존 | `bg`·`surface`·`surface-raised`·`border`·`text`·`text-muted` | CSS 변수 정의 + `[data-theme="dark"]` 오버라이드, Tailwind는 `var()` 참조 |
+
+- **색값은 잠정 A안**이다. 비주얼 방향이 미확정(D-072 — 총괄+사용자 최종)이므로, 확정 시 **값만 교체하고 토큰명·구조는 불변**이 되도록 설계한다. A안으로 먼저 가는 이유가 이것이다 — 교체 비용을 값 치환으로 국한한다.
+- `element` 4색(water·fire·earth·wind)은 D-073 등급 축 제거 후 시각 축이 속성으로 재조정된 결과다(U-010). **등급(grade) 토큰은 만들지 않는다.**
+- 타이포·간격·반경·그림자·모션도 동일 원칙(design-system §3·§4): 토큰명 1:1, 값은 정본 참조.
+- 다크/라이트 전환은 `[data-theme]` 토글 1회로 끝나야 한다(U-005).
+
+---
+
+## 5. 계약 정합 (api-contract v1.3)
+
+기준은 **v1.3**이다(063 지시문의 "v1.2"는 지시 발신 이후 v1.3 확정으로 대체 — 065 전파). v1.2→v1.3 델타는 §1.6 엣지 오류뿐이라 **IA·라우트에는 영향이 없고 api 클라이언트 에러 처리에만 반영**된다.
+
+- **타입**: `ApiResponse<T>`/`ErrorResponse`(§1.4) · cursor 페이징(§1.3) · 목록/상세 스키마(§3.3) · 에러코드 상수(§5). 타입은 계약 스키마와 1:1이며 클라 편의를 위한 임의 필드 추가·개명을 하지 않는다.
+- **api 클라이언트**: 함수는 계약 엔드포인트 단위 1:1(CLAUDE.md §5). 응답은 envelope 언랩 후 `data` 반환. 에러는 `code` 기반 정규화 — try-catch 산발 금지, Query error 경로 + 전역 에러 바운더리.
+- **에러 처리 방침**:
+  - `GATEWAY_429`(§1.6): `Retry-After` 헤더 존중 백오프(있으면 그 값, 없으면 기본). **기존 envelope 소비 로직 재사용 — 신규 파서 불요**(065 프론트 지시).
+  - `GATEWAY_403`(§1.6): 정상 경유 클라이언트 미해당 → **별도 분기를 두지 않는다**(음성 테스트 전용).
+  - `AUTH_004`(401): refresh 만료·무효·재사용 → 세션 정리 후 재로그인 유도.
+  - 401 일반: refresh 회전 시도(§2 회전 정책) → 실패 시 재로그인.
+- **시간**: 서버 `Instant`(UTC, ISO-8601) 수신 그대로 보관, **표시 시점에만** 로컬 변환.
+- **식별자**: 외부 노출은 `public_id`(ULID), `item_template`은 `typeCode`(계약 §1.1).
+- **계약 복사본**: repo 생성 시 v1.3 복사본 + 헤더에 원본 경로·버전 표기(D-030). 실행 주체는 사용자.
+
+---
+
+## 6. 잔여 공백 · 의존 (임의 가정 금지)
+
+| # | 공백 | 스켈레톤 대응 | 해소 경로 |
+|---|---|---|---|
+| 1 | 비주얼 방향 미확정 | 색값 잠정 A안, 토큰 구조 고정 | 총괄+사용자(D-072) |
+| 2 | 실시간 채널 부재 | 폴링 전제, 스켈레톤에 구독 계층 없음 | F-001·총괄 |
+| 3 | 홈 통합 피드 규칙 | 탭 분리 잠정, placeholder만 | 결정 요청 |
+| 4 | ~~회원 리소스 계약 부재~~ **해소(v0.1)** | `/me/profile` placeholder 포함 | 완료 — 계약 v1.4 §2.5, screen-spec v0.2 §3.1-b |
+| 5 | **인증 세션 지속성(persist)** | **메모리 세션 기본**(새로고침 시 재로그인) | 보안(S) 검토 필요 — 아래 |
+| 6 | 교환 비율 ON-HOLD | 응답 `appliedRate` 표시로 대응 | 사용자 확정 |
+
+**#5 보충 (스켈레톤 결정 포인트)**: refresh 토큰을 브라우저 저장소에 두면 XSS 노출면이 생긴다. 자금 시스템이라 이 선택은 프론트 내부 편의 문제가 아니라 **보안 사안**이므로 기획이 단독 확정하지 않는다. 스켈레톤은 **메모리 세션(Zustand, persist 없음)**으로 시작한다 — 프론트 CLAUDE.md §4와 정합하고, 가장 보수적이며, 나중에 완화하는 방향이 반대보다 싸다.
+
+부수 영향: `/me/wallet/charge/confirm`는 외부 PG에서 리다이렉트로 복귀하는 경로라 하드 리로드 시 메모리 세션이 소실될 수 있다. **wallet 도메인 착수 전** persist 방침이 확정돼야 한다(스켈레톤은 차단하지 않음 — placeholder뿐).
+
+---
+
+## 7. F · Claude Code 인계 기준선
+
+- **F 구성(F-002)**: 이 문서의 범위(2절)·IA 셸(3절)·토큰 매핑(4절)·계약 정합(5절)을 전제로 툴링·배선 구체를 정한다. 어긋나면 F가 정합한다(D-028 진행측 부담). 다만 이 문서가 계약·토큰 정본과 어긋난다고 판단되면 정합시키지 말고 기획에 회신하라.
+- **프론트 Claude Code**: `frontend/outbox/003`(HOLD) 재발신 시 이 문서를 반영한다. 003의 "api-contract v1.2" 참조는 **v1.3**으로 읽는다.
+- **스켈레톤 DoD**: (1) 3종 레이아웃 + 전 라우트 placeholder 렌더 (2) 인증 가드·returnUrl 복귀 동작 (3) api 클라이언트 envelope 언랩·에러 코드 정규화 (4) 토큰 → Tailwind/CSS 변수 매핑 + 테마 토글 (5) 계약 타입 1:1 (6) lint·typecheck·build 그린. **도메인 feature 없음이 정상.**
