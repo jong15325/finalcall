@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v0.6 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴) 반영. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v0.7 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -13,6 +13,7 @@
 | v0.3 | 2026-07-14 | 보안 델타(계약 v0.2) 정합 — charge.pg_tx_id UK(멱등 앵커, SEC-001), item_template.type_code 외부 식별자 UK(035) |
 | v0.4 | 2026-07-14 | §6 Flyway 매핑 6절 정정(B-012) — 스켈레톤 V1·V2 소비 반영, 도메인은 V3부터. erd는 그룹·순서만 규정, 구체 채번은 백엔드 동기화 |
 | v0.5 | 2026-07-14 | D-073 반영 — item_template.grade 제거, 유니크 (main_category,sub_group,element,kind), §5 인덱스 (element,kind), Mermaid 정정 |
+| v0.7 | 2026-07-14 | [6] Flyway 채번 동기화(B-012 방식 b) — 백엔드 V4 실물(`V4__user_natural_key_uk.sql`, backend/033) 등재. 부수: v0.6 편집 시 [4] 말미 주가 `temp_storage` 표 선언과 컬럼 표 사이에 삽입돼 표가 분리됐던 구조 오류 복구(원인 = bash 마운트 뷰가 [5]·[6]을 서빙하지 않아 문서 말미로 오판. 호스트 Read로 발견·정정) |
 | v0.6 | 2026-07-14 | D-081 반영(074) — [1] soft delete 자연키 UK 구현 지침 명문화(생성 컬럼 패턴 + 기각 해석 2종 + 동반 필수 + 대리키 예외 + 트리거 조건), [4.1] `user` 표에 `login_id_active`·`nickname_active` 생성 컬럼 UK 반영(원본 컬럼 존치), [4] 말미에 자연키 스윕 결과 주 신설(적용 대상 user 1건·그 외 0건·조건부 리스크 3건). 사유: 기존 [1] 한 줄이 의도만 말하고 구현 해석을 열어둬 V3가 함정을 밟음(backend/028 발견, QA-001) |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
@@ -336,6 +337,13 @@ table `item_ownership_history` — 소유 이전 이력(④). 최초 소유자 =
 
 table `temp_storage` — 임시보관(오버플로우, ⑤-2). location=TEMP일 때만 행 존재. 상한 없음.
 
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| instance_id | BIGINT | N | UK, FK→item_instance | 1:1 |
+| owner_id | BIGINT | N | FK→user | |
+| stored_at | DATETIME(6) | N | | 임시보관 시각 |
+| expire_at | DATETIME(6) | Y | | 선택 보관 기한(회수 규칙 미확정) |
+
 ### [4] 말미 주 — soft delete 자연키 스윕 결과 (074-3, D-081)
 
 **D-081 패턴 적용 대상 = `user` 1건. 그 외 0건.**
@@ -349,13 +357,6 @@ table `temp_storage` — 임시보관(오버플로우, ⑤-2). location=TEMP일 
   - `skill_definition.skill_code`
 - **패턴 불요**: `public_id`(ULID) 계열 전부 — 시스템 발급 대리 식별자라 재사용되지 않아 삭제행-신규행 충돌이 성립하지 않는다.
 - FK 1:1 유니크(`user_balance.user_id`·`money_hold.bid_id`·`temp_storage.instance_id`)는 자연키가 아니라 대상 아님.
-
-| 컬럼 | 타입 | 널 | 키 | 설명 |
-|---|---|---|---|---|
-| instance_id | BIGINT | N | UK, FK→item_instance | 1:1 |
-| owner_id | BIGINT | N | FK→user | |
-| stored_at | DATETIME(6) | N | | 임시보관 시각 |
-| expire_at | DATETIME(6) | Y | | 선택 보관 기한(회수 규칙 미확정) |
 
 ## 5. 인덱스 표 (이유 열 필수, D-036)
 
@@ -398,6 +399,7 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 
 마이그레이션 그룹·순서(스켈레톤 소비분 V1·V2 이후 V3부터):
 1. 사용자·잔액 — user, user_balance (백엔드 `V3__user_and_balance`부터, B-012)
+   - 1-a. 자연키 UK 재구성 — 백엔드 `V4__user_natural_key_uk.sql` 실물 채번(backend/033 동기화, D-081). V3가 원본 컬럼 단일 UK(`uk_user_login_id`·`uk_user_nickname`)로 [1] 규약을 위반해 재가입([2.5]·domain-spec [6.1])이 미동작했고, V4가 생성 컬럼 UK(`uk_user_login_id_active`·`uk_user_nickname_active`)로 재구성했다. QA-001(Major) FIX.
 2. 화폐 — charge, money_exchange, money_hold (후속 버전 분리)
 3. 아이템 — item_template, skill_definition, item_instance, item_ownership_history, temp_storage + 인덱스
 4. 판매·거래 — auction, bid, shop, sale_order + 인덱스·FK
