@@ -346,3 +346,22 @@
   신뢰(열린 질문 3·4)도 게이트2/실배포 전.
 
 ---
+
+## B-028. 계정·잔액 엔티티 소유 도메인 — auth → member 이동 (2026-07-15) [ACCEPTED]
+
+- 소유: 백엔드 / 관련: relates-to 066(member 착수 지시)·068(부수 확인 "구현 기법이라 백엔드 자율"), B-015(라우팅). 사용자 확정 2026-07-15
+- 결정: `User`·`UserBalance`·`UserBalanceRepository`를 `domain/auth` → `domain/member`로 이동한다. auth는 인증
+  로직(`AuthService`·`TokenBundle`·`AuthErrorCode`)만 소유하고 `member.User`를 참조한다. 잔액 조회 API는
+  `api/member/MemberController`(`@RequestMapping("/api/v1/me")`, B-015 정합)에 배치.
+  이동은 기능 무변경 순수 리팩터로 단독 커밋(로직 변경 동반 금지).
+- 이유: 계정 마스터·잔액은 member 도메인 자산이고 auth는 그것을 인증에 쓰는 소비자다. 존치하면 `domain/member →
+  domain/auth` 역방향 의존이 생기고, 이후 화폐·bid·settlement가 전부 `auth.UserBalance`를 참조하게 되어
+  인증 도메인이 사실상 계정 마스터를 소유하는 왜곡이 전 도메인에 전파된다. 현재 참조자가 `api/auth` 4개 +
+  통합테스트 1개뿐이라(실측) 이동 비용이 최소인 시점 — 화폐·bid 착수 후에는 되돌리기 비용이 급증한다.
+  D-074 시퀀싱상 member가 화폐·bid의 선행이라 지금이 마지막 two-way door 구간.
+- 기각된 대안: auth 존치 + member 참조(역방향 의존·왜곡 고착, 참조자 증가 후 이동 불가), User는 member·
+  UserBalance는 auth 분리(1:1 연관이 도메인 경계를 가로지름 — 응집도 최악).
+- 후속: 이동 후 `./gradlew clean build` 그린으로 기능 무변경 검증. 화폐 도메인 착수 시 `UserBalance` 원자적
+  갱신(조건부 UPDATE, D-008)을 member 소유 그대로 확장.
+
+---
