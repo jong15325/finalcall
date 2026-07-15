@@ -25,12 +25,14 @@
   .link{ text-align:center; font-size:13px; color:#6a717a; margin-top:16px; }
   .u{ text-decoration:underline; }
   .tag{ display:inline-block; font-size:10px; color:#8b929b; border:1px solid #cfd4da; border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  .inp.fill{ color:#4a4f57; background:#fff; }
+  .ok{ font-size:12px; color:#4a4f57; border:1px dashed #b4bac2; border-radius:8px; padding:10px 12px; margin-bottom:18px; line-height:1.5; }
   .legend{ margin-top:22px; font-size:12px; color:#7a828c; max-width:760px; line-height:1.7; }
 </style>
 </head>
 <body>
   <h1>로그인 · 회원가입 와이어프레임</h1>
-  <div class="note">색·브랜드 제외, 구조/배치/상태만 확정하는 단계. 회색 = 아직 색 미정. 필드·에러는 계약 §2 기준.</div>
+  <div class="note">색·브랜드 제외, 구조/배치/상태만 확정하는 단계. 회색 = 아직 색 미정. 필드·에러는 계약 [2] 기준. 폼 구성·플로우는 기획 회신 P-009·P-010·P-011(design/outbox/024) 반영.</div>
 
   <div class="stage">
 
@@ -63,6 +65,12 @@
         <div class="inp">password 입력</div>
       </div>
       <div class="field">
+        <span class="lbl">비밀번호 확인 <span class="req">필수</span><span class="tag">P-009 · 서버 미전송</span></span>
+        <div class="inp">password 재입력</div>
+        <div class="err">비밀번호가 일치하지 않습니다 — 클라이언트 검증(서버 400 아님)</div>
+        <div class="hint">계약 signup body는 {loginId, password, nickname} 불변 — 이 필드는 전송하지 않는다</div>
+      </div>
+      <div class="field">
         <span class="lbl">닉네임 <span class="req">필수</span></span>
         <div class="inp">nickname 입력</div>
         <div class="hint">중복 시: 이미 사용 중인 닉네임입니다 (AUTH_002, 409)</div>
@@ -71,10 +79,28 @@
       <div class="link">이미 계정이 있으신가요? <span class="u">로그인</span></div>
     </div>
 
+    <div class="frame">
+      <div class="frame-cap">화면 C — 가입 성공 직후 · /login <span class="tag">P-010</span></div>
+      <div class="brand">FinalCall 로고 자리</div>
+      <div class="ok">가입이 완료되었습니다. 로그인해 주세요.<br>← 자동 로그인 없음: 계약 signup 201 응답 {userPublicId, nickname}에 토큰이 없다</div>
+      <div class="field">
+        <span class="lbl">아이디</span>
+        <div class="inp fill">가입한 loginId — prefill</div>
+        <div class="hint">재입력 부담 완화. 값은 가입 폼에서 전달(클라 상태)</div>
+      </div>
+      <div class="field">
+        <span class="lbl">비밀번호</span>
+        <div class="inp">password 입력 — 포커스 위치</div>
+      </div>
+      <div class="btn">로그인</div>
+      <div class="link">계정이 없으신가요? <span class="u">회원가입</span></div>
+    </div>
+
   </div>
 
   <div class="legend">
-    구조 기준: 모바일 우선 1열 폼(≤360px), 데스크톱은 가운데 정렬 카드. 필드·버튼 타깃 44px 이상(접근성). 라벨은 항상 가시(placeholder 라벨 대용 금지). 에러는 필드 하단 텍스트 + 폼 상단 요약 병행 가능. 회원가입 성공(201) → 로그인 화면 또는 자동 로그인, 로그인 성공(200) → 홈. 이 구조가 확정되면 그 위에 토큰·색을 입힌다.
+    구조 기준: 모바일 우선 1열 폼(≤360px), 데스크톱은 가운데 정렬 카드. 필드·버튼 타깃 44px 이상(접근성). 라벨은 항상 가시(placeholder 라벨 대용 금지). 에러는 필드 하단 텍스트 + 폼 상단 요약 병행 가능. 이 구조가 확정되면 그 위에 토큰·색을 입힌다(색값만 잠정, 토큰명·구조는 고정).<br><br>
+    플로우 확정(기획 P-009~011, design/outbox/024): 회원가입 폼 = loginId · password · <b>password 확인</b> · nickname 4필드 — 확인 필드는 클라이언트 일치 검증 전용으로 <b>서버에 보내지 않으며</b> 계약 body를 바꾸지 않는다(P-009. 비밀번호 변경·재설정이 범위 밖이라 오타로 굳은 비밀번호의 복구 경로가 현재 없다 — 계약 비용 0의 방어). 가입 성공(201) → <b>자동 로그인 없이</b> /login 이동 + 성공 안내 + loginId prefill(P-010. 201에 토큰이 없고, signup·login 연속 호출은 엣지 rate limit으로 GATEWAY_429를 유발할 수 있다). 로그인 성공(200) → 홈 / 기본, 단 인증 가드에 튕겨 유입된 경우 returnUrl 복귀(P-011 — 라우팅 동작이라 화면 표현 없음. 복귀 대상은 앱 내부 라우트 한정, 오픈 리다이렉트 방지).
   </div>
 </body>
 </html>
