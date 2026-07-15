@@ -1,8 +1,8 @@
 # FinalCall 프론트 스켈레톤 기획 (skeleton-plan.md)
 
-상태: v0 — 063 산출물. F 구성·프론트 Claude Code 생성의 **선행 기준선**(레인 순서 (a), 062).
+상태: v0.2 — 063 산출물. F 구성·프론트 Claude Code 생성의 **선행 기준선**(레인 순서 (a), 062). 계약 기준 v1.4.
 소유: 기획 (P) — D-079(PF→P 재통합)
-근거: 063(작업 지시), screen-spec v0.2(IA·라우트), api-contract **v1.4**(계약 정본), ux/design-system.md(토큰·U-010), 프론트 CLAUDE.md 3~6절(구조·상태·컨벤션), 062(레인 순서·repo 후생성), P-011(returnUrl)
+근거: 063(작업 지시), screen-spec v0.3(IA·라우트), api-contract **v1.4**(계약 정본), ux/design-system.md(토큰·U-010), 프론트 CLAUDE.md 3~6절(구조·상태·컨벤션), 062(레인 순서·repo 후생성), P-011(returnUrl)
 경계: 이 문서는 **무엇을·어디까지**만 규정한다. 툴링·배선 구체(설정값)는 F 구성, 실제 코드 생성은 Claude Code 소관이다. 계약은 최상위이며 이 문서가 계약을 바꾸지 않는다(변경 필요 시 6절).
 
 | 버전 | 날짜 | 내용 |
