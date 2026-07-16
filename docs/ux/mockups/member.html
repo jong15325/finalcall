@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>FinalCall — member 목업 (D-097 1-1 · 계약 v1.4 [2.5])</title>
+<style>
+/* design-system.md v0.2.1 [2.6] 확정 토큰 전사. 정본은 docs/ux/design-system.md */
+:root, [data-theme="dark"] {
+  --color-bg:#001C33; --color-surface:#012A4A; --color-surface-raised:#013A63;
+  --color-border:#3394DE; --color-border-muted:#14496E;
+  --color-text:#FAF7D5; --color-text-muted:#B8C4D9; --color-text-subtle:#6B8CA6;
+  --color-focus-ring:#FAF7D5;
+  --primary:#0667BD; --primary-hover:#0560AD; --primary-pressed:#E25706;
+  --primary-selected:#E2B206; --primary-disabled:#0A3A63;
+  --primary-fg:#FAF7D5; --on-accent-fg:#001C33;
+  --success:#4ADE80; --warning:#E2B206; --danger:#FF4D4D; --info:#3394DE;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; padding:24px; background:var(--color-bg); color:var(--color-text);
+  font-family:Pretendard,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.5;
+}
+.num { font-variant-numeric:tabular-nums; }
+:focus-visible { outline:2px solid var(--color-focus-ring); outline-offset:2px; }  /* offset 2px = AA 조건(019) */
+
+h1 { font-size:1.5rem; font-weight:700; margin:0 0 4px; }
+h2 { font-size:1.25rem; font-weight:600; margin:0 0 12px; }
+.lede { color:var(--color-text-muted); font-size:.875rem; margin:0 0 24px; }
+.label { font-size:.75rem; color:var(--color-text-subtle); }
+.note { font-size:.8125rem; color:var(--color-text-muted); }
+.rule { border:0; border-top:1px solid var(--color-border-muted); margin:32px 0; }
+
+.screens { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:20px; align-items:start; }
+.panel { background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; padding:20px; }
+.panel-head { background:var(--primary); color:var(--primary-fg); margin:-20px -20px 16px; padding:12px 20px; border-radius:12px 12px 0 0; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+.panel-head code { font-size:.6875rem; opacity:.85; font-weight:400; }
+
+.field { margin-bottom:14px; }
+.field > label { display:block; font-size:.8125rem; font-weight:500; margin-bottom:4px; color:var(--color-text-muted); }
+.input {
+  width:100%; padding:10px 12px; font:inherit; border-radius:8px;
+  background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border);
+}
+.input::placeholder { color:var(--color-text-subtle); }   /* 4.88:1 — placeholder 도 읽혀야 한다 */
+.input:disabled { background:var(--color-surface-raised); color:var(--color-text-subtle); cursor:not-allowed; }
+.input[aria-invalid="true"] { border-color:var(--danger); }
+.err { color:var(--danger); font-size:.75rem; margin-top:4px; display:flex; gap:4px; align-items:center; }
+.hint { color:var(--color-text-subtle); font-size:.75rem; margin-top:4px; }
+
+.ro { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--color-border-muted); gap:12px; }
+.ro:last-child { border-bottom:0; }
+.ro dt { color:var(--color-text-subtle); font-size:.8125rem; }
+.ro dd { margin:0; font-weight:500; text-align:right; }
+dl { margin:0; }
+
+.btn { font:inherit; font-weight:600; cursor:pointer; padding:10px 18px; border-radius:8px;
+  background:var(--primary); color:var(--primary-fg); border:1px solid var(--primary); transition:background 120ms,border-color 120ms; }
+.btn:hover { background:var(--primary-hover); border-color:var(--color-border); }
+.btn:active { background:var(--primary-pressed); border-color:var(--primary-pressed); color:var(--on-accent-fg); }
+.btn:disabled { background:var(--primary-disabled); border-color:var(--primary-disabled); color:var(--color-text-subtle); cursor:not-allowed; }
+.btn-ghost { background:transparent; color:var(--color-text); border-color:var(--color-border); }
+.btn-ghost:hover { background:var(--color-surface-raised); }
+.btn-danger { background:var(--danger); border-color:var(--danger); color:var(--on-accent-fg); }
+.btn-danger:hover { background:#E63939; border-color:#E63939; }
+.btn-danger:disabled { background:var(--primary-disabled); border-color:var(--primary-disabled); color:var(--color-text-subtle); }
+.btn-full { width:100%; }
+.row { display:flex; gap:8px; }
+
+.status { display:inline-flex; align-items:center; gap:4px; font-size:.75rem; font-weight:600; padding:2px 8px; border-radius:9999px; }
+.status-info { background:color-mix(in srgb,var(--info) 12%,var(--color-bg)); color:var(--info); }
+.status-danger { background:color-mix(in srgb,var(--danger) 12%,var(--color-bg)); color:var(--danger); }
+.status-success { background:color-mix(in srgb,var(--success) 12%,var(--color-bg)); color:var(--success); }
+
+.danger-box { border:1px solid var(--danger); border-radius:8px; padding:14px; background:color-mix(in srgb,var(--danger) 8%,var(--color-bg)); }
+.forfeit { background:var(--color-bg); border:1px solid var(--color-border-muted); border-radius:8px; padding:12px; margin:12px 0; }
+.forfeit .amt { font-size:1.25rem; font-weight:600; }
+
+/* Checkbox — 게임 자산에 없어 전량 CSS 재현([5.2]) */
+.check { display:flex; gap:10px; align-items:flex-start; cursor:pointer; padding:10px 0; }
+.check input { appearance:none; width:20px; height:20px; flex:none; margin:0; border-radius:4px;
+  border:2px solid var(--color-border); background:var(--color-bg); cursor:pointer; position:relative; }
+.check input:checked { background:var(--primary-selected); border-color:var(--primary-selected); }
+.check input:checked::after { content:"✓"; position:absolute; inset:0; display:grid; place-items:center;
+  color:var(--on-accent-fg); font-size:.875rem; font-weight:700; }   /* 남색 on 황금 = 8.74:1 */
+.check span { font-size:.875rem; }
+
+.delta { background:var(--color-surface); border-left:3px solid var(--warning); border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:12px; }
+.delta h3 { margin:0 0 6px; font-size:.9375rem; color:var(--warning); }
+.delta p { margin:0 0 6px; font-size:.8125rem; color:var(--color-text-muted); }
+.delta p:last-child { margin-bottom:0; }
+.delta code { color:var(--color-text); }
+table.mini { border-collapse:collapse; font-size:.8125rem; width:100%; }
+table.mini th, table.mini td { border:1px solid var(--color-border-muted); padding:6px 10px; text-align:left; vertical-align:top; }
+table.mini th { color:var(--color-text-subtle); font-weight:600; }
+</style>
+</head>
+<body>
+
+<h1>member 목업 — 프로필 조회 · 수정 · 탈퇴</h1>
+<p class="lede">
+  D-097 <strong>1-1</strong>. 계약 <strong>v1.4 [2.5]</strong> 기준 · 확정 토큰 v0.2.1 적용.
+  <strong>빠르게 낸 것이지 완성이 아니다</strong> — 세부는 1-3에서 한다. 산출의 절반은 아래 <strong>계약 델타</strong>다.
+  구조 원본은 <code>wireframe-member.html</code>(009 검수 통과분)이고 여기에 색을 입혔다.
+</p>
+
+<div class="screens">
+
+  <!-- ── 1. 프로필 조회 ───────────────────────── -->
+  <section class="panel">
+    <div class="panel-head"><span>내 프로필</span> <code>GET /api/v1/me</code></div>
+    <dl>
+      <div class="ro"><dt>닉네임</dt><dd>달빛상인</dd></div>
+      <div class="ro"><dt>가입일</dt><dd class="num">2025-11-03</dd></div>
+      <div class="ro"><dt>회원 ID</dt><dd class="num" style="font-size:.75rem;color:var(--color-text-muted)">u_8f3a…c21b</dd></div>
+    </dl>
+    <p class="hint" style="margin-top:10px">
+      <code>loginId</code>·<code>passwordHash</code>는 응답에 없다(SEC-007 열거 리스크) — <strong>화면에 자리를 만들지 않는다.</strong>
+    </p>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" style="flex:1">프로필 수정</button>
+      <button class="btn btn-ghost" style="flex:1">잔액 보기</button>
+    </div>
+    <p class="hint">
+      <strong>관리자 진입은 <code>isAdmin=true</code>일 때만 노출</strong> — 표시 제어일 뿐 인가는 서버 권위([1.2]).
+      이 목업은 <code>isAdmin=false</code>다.
+    </p>
+  </section>
+
+  <!-- ── 2. 프로필 수정 ───────────────────────── -->
+  <section class="panel">
+    <div class="panel-head"><span>프로필 수정</span> <code>PATCH /api/v1/me</code></div>
+
+    <div class="field">
+      <label for="nick">닉네임</label>
+      <input class="input" id="nick" value="달빛상인" maxlength="30" aria-describedby="nickhint">
+      <div class="hint" id="nickhint"><span class="num">4</span>/30자</div>
+    </div>
+
+    <div class="field">
+      <label for="lid">로그인 ID</label>
+      <input class="input" id="lid" value="—— 응답에 없음 ——" disabled>
+      <div class="hint">수정 가능 필드는 <strong>nickname 뿐</strong>이다. 비밀번호 변경은 계약상 범위 밖([2.5]).</div>
+    </div>
+
+    <div class="field">
+      <label for="nick2">닉네임 <span class="status status-danger">MEMBER_001 · 409</span></label>
+      <input class="input" id="nick2" value="바람의검객" aria-invalid="true">
+      <div class="err"><span aria-hidden="true">⚠</span> 이미 사용 중인 닉네임입니다. 다른 이름을 입력해 주세요.</div>
+      <div class="hint">중복은 <strong>서버만 안다</strong> — 클라가 미리 못 막는다. 제출 후 필드 에러로 되돌린다.</div>
+    </div>
+
+    <div class="row">
+      <button class="btn" style="flex:1">저장</button>
+      <button class="btn btn-ghost">취소</button>
+    </div>
+  </section>
+
+  <!-- ── 3. 탈퇴 ──────────────────────────────── -->
+  <section class="panel">
+    <div class="panel-head"><span>회원 탈퇴</span> <code>DELETE /api/v1/me</code></div>
+
+    <div class="danger-box">
+      <div style="font-weight:600; margin-bottom:8px">탈퇴하면 되돌릴 수 없습니다</div>
+
+      <div class="forfeit">
+        <div class="label">소멸되는 잔액</div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px">
+          <span class="label">캐시</span><span class="amt num">128,000</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline">
+          <span class="label">게임머니</span><span class="amt num">2,450,000</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding-top:6px; margin-top:6px; border-top:1px solid var(--color-border-muted)">
+          <span class="label">그중 홀드 중</span><span class="num" style="color:var(--warning); font-weight:600">300,000</span>
+        </div>
+        <div class="hint" style="margin-top:8px">
+          홀드는 진행 중 입찰에 묶인 금액이다. <strong>홀드가 있으면 아래 탈퇴가 <code>MEMBER_002</code>로 막힌다</strong> —
+          이 줄이 그 예고다.
+        </div>
+      </div>
+
+      <p class="note" style="margin:0 0 4px">환불·역환전은 범위 밖이다(D-080). 잔액이 <strong>0이어도</strong> 아래 동의는 필수다.</p>
+
+      <label class="check">
+        <input type="checkbox" id="ack">
+        <span>잔존 캐시·게임머니가 <strong>소멸하며 복구되지 않는다</strong>는 것에 동의합니다.</span>
+      </label>
+
+      <button class="btn btn-danger btn-full" id="delBtn" disabled>회원 탈퇴</button>
+      <p class="hint" id="delHint" style="margin-top:6px">동의해야 탈퇴할 수 있습니다.</p>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="label" style="margin-bottom:6px">차단된 경우 — <span class="status status-danger">MEMBER_002 · 409</span></div>
+      <div class="danger-box">
+        <div style="font-weight:600; margin-bottom:6px">진행 중인 거래가 있어 탈퇴할 수 없습니다</div>
+        <p class="note" style="margin:0">정리한 뒤 다시 시도해 주세요.</p>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-ghost" style="flex:1; font-size:.8125rem">내 경매 보기</button>
+          <button class="btn btn-ghost" style="flex:1; font-size:.8125rem">내 입찰 보기</button>
+        </div>
+        <p class="hint" style="margin-top:8px">
+          ★ <strong>이 두 버튼의 근거가 계약에 없다</strong> — 아래 델타 2.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<hr class="rule">
+
+<h2>계약 델타 — 후보 3건 중 <strong>실질 2건</strong> (D-097 1-1 산출의 절반)</h2>
+<p class="lede">
+  화면을 그리다 계약이 못 채우는 자리를 만난 것. <strong>임의 가정하지 않고 낸다</strong>(<code>ux/rules.md</code> [11] 규칙 1).
+  <strong>백엔드 1-2를 막는 것은 델타 2 하나다</strong> — 나머지는 1줄 확인이거나 소멸했다.
+  <strong>1건은 실측으로 스스로 죽었다</strong>(델타 1) — 세어보기 전엔 3건인 줄 알았다.
+</p>
+
+<div class="delta" style="border-left-color:var(--success)">
+  <h3 style="color:var(--success)">델타 1 — 탈퇴 화면의 잔액 의존. <strong>실측하니 소멸했다. 델타 아니다</strong></h3>
+  <p>
+    <strong>처음엔 델타로 봤다</strong>: D-080이 "잔존 잔액 소멸 명시 동의"를 요구하고 072가 "잔존 잔액 표시"를 요구하는데
+    (<strong>무엇을 잃는지 숫자로 보여야 동의가 성립한다</strong> — 안 보이면 그냥 체크박스다),
+    그 숫자의 출처 <code>GET /me/balance</code>는 <strong>화폐 절([4.4])</strong>이고 화폐는 교환비율에 막혀 member보다 뒤다.
+    <strong>→ 잔액 없는 탈퇴 화면이 나오겠다고 판단했다.</strong>
+  </p>
+  <p>
+    <strong>틀렸다.</strong> 탐색 방법([5.34]): 호스트 Grep <code>me/balance|잔액 조회|024</code> on <code>docs/backend</code>.
+    <strong><code>GET /api/v1/me/balance`는 024로 이미 구현됐고 동결선 안이다</strong>(<code>backend/decision-log.md</code> B-029 —
+    잔액 행 부재를 <code>COMMON_999</code>로 처리한다는 결정이 그 API를 전제한다 · <code>_broadcast/002</code> [2] 동결선 "코드 — member 잔액(024)").
+  </p>
+  <p><strong>막힌 건 「교환」이지 「조회」가 아니었다.</strong> 화면은 지금 바로 붙일 데이터가 있다. <strong>백엔드 1-2에 추가할 것 0건.</strong>
+    남는 건 계약 [2.5]가 탈퇴 화면의 [4.4] 의존을 안 적었다는 문서상 공백뿐인데, <strong>spec은 D-093 동결이고 이 판단은 이 목업에 적혀 있으면 충분하다 — [6] 격상 안 한다.</strong></p>
+</div>
+
+<div class="delta">
+  <h3>델타 2 — <code>MEMBER_002</code>가 "무엇이 막고 있는지"를 안 준다</h3>
+  <p>
+    계약 [2.5] 차단 조건은 <strong>3종</strong>이다 — 진행 중 경매(판매자) · 홀드 보유 입찰 · 미완료 주문.
+    <strong>그런데 409 응답은 코드 하나뿐이라 셋 중 무엇인지 모른다.</strong>
+  </p>
+  <p>
+    072는 디자인에 <strong>"MEMBER_002 차단 시 다음 행동 안내"</strong>를 요구했다.
+    <strong>안내하려면 어디로 보낼지 알아야 하는데 계약이 안 알려준다</strong> — 위 화면의 두 버튼이
+    지금 근거 없이 서 있는 이유다. 셋 다 나열하면 <strong>해당 없는 것까지 보여주는 오안내</strong>가 된다.
+  </p>
+  <p><strong>추천</strong>: 409 body <code>details</code>에 <strong>막은 종류만</strong> 싣는다 —
+    예: <code>{ blockedBy: ["AUCTION","BID"] }</code>. <strong>건수·목록은 넣지 마라</strong>(열거 노출면·SEC-007, 그리고 화면이 안 쓴다).
+    <strong>enum 3값이면 충분하고 계약 변경이 작다.</strong> 대안(프론트가 내 경매·내 입찰·내 주문을 각각 조회해 역추론)은
+    <strong>3콜을 쓰고 서버 판정과 어긋날 수 있다</strong> — 기각.</p>
+</div>
+
+<div class="delta">
+  <h3>델타 3 — <code>nickname</code> 검증 규칙이 없다 (작음)</h3>
+  <p>
+    [2.5]는 <code>PATCH /me</code>에 "검증 400"만 적고 <strong>규칙을 안 준다.</strong>
+    erd에서 <strong>최대 30자</strong>는 파생되나(<code>VARCHAR(30)</code>) <strong>최소 길이·허용 문자셋·공백 처리가 없다.</strong>
+  </p>
+  <p>
+    지금 화면은 <code>maxlength=30</code>만 걸었다. <strong>클라가 미리 못 막으면 사용자가 400을 받고서야 안다</strong> —
+    되돌릴 수 있으니 치명적이진 않다.
+  </p>
+  <p><strong>추천</strong>: 가입(<code>[2.2]</code>)과 <strong>같은 규칙을 쓴다고 1줄 명시</strong>.
+    <strong>새 규칙을 만들자는 게 아니다</strong> — 가입과 수정이 다른 규칙이면 그게 더 큰 문제다.
+    가입 쪽에도 규칙이 없으면 그때 기획에 올린다.</p>
+</div>
+
+<h2 style="margin-top:32px">디자인 판단 — 계약이 요구하지 않았지만 넣은 것</h2>
+<table class="mini">
+  <tr><th>무엇</th><th>왜</th></tr>
+  <tr>
+    <td><strong>홀드 금액 노출</strong>(탈퇴 화면)</td>
+    <td>계약은 <code>gameMoneyHeld</code>를 <strong>[4.4]에서 주기만</strong> 한다. <strong>홀드 &gt; 0이면 MEMBER_002로 막힌다</strong>는 걸 화면이 미리 말해주면 사용자가 409를 만나기 전에 안다. <strong>차단을 예고로 바꾼다.</strong></td>
+  </tr>
+  <tr>
+    <td><strong>모달 배제</strong> — 탈퇴를 전용 화면으로</td>
+    <td>009 검수 승인분. <strong>동의 체크가 스크롤 뒤에 숨는 배치는 위험하다</strong> — 잃는 금액·경고·동의가 한 화면에 다 보여야 한다.</td>
+  </tr>
+  <tr>
+    <td><strong>잔액 0이어도 블록 유지</strong></td>
+    <td>계약이 잔액 0에도 동의를 필수로 요구한다. <strong>블록을 지우면 동의만 남아 무엇에 동의하는지 사라진다.</strong> "소멸할 잔액 0"을 그대로 보여준다.</td>
+  </tr>
+  <tr>
+    <td><strong>미체크 시 버튼 비활성 + 사유 병기</strong></td>
+    <td>비활성만 두면 <strong>왜 못 누르는지 모른다</strong>. 색만으로 상태를 말하지 않는다(<code>accessibility.md</code>).</td>
+  </tr>
+</table>
+
+<p class="note" style="margin-top:24px">
+  근거: api-contract <strong>v1.4</strong> [2.5]·[4.4]·[1.2]·[5] · domain-spec v0.5 [6.1] · erd v0.7 [1] ·
+  design-system <strong>v0.2.1</strong> [1.2]·[2]·[5.2] · D-080 · D-097 · D-091(자율 확정) · 총괄 072·091.
+</p>
+
+<script>
+const ack = document.getElementById('ack'), del = document.getElementById('delBtn'), hint = document.getElementById('delHint');
+ack.addEventListener('change', () => {
+  del.disabled = !ack.checked;
+  hint.textContent = ack.checked ? '되돌릴 수 없습니다.' : '동의해야 탈퇴할 수 있습니다.';
+});
+const nick = document.getElementById('nick'), nickhint = document.getElementById('nickhint');
+nick.addEventListener('input', () => {
+  nickhint.innerHTML = `<span class="num">${nick.value.length}</span>/30자`;
+});
+</script>
+</body>
+</html>
