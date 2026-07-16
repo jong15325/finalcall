@@ -14,8 +14,9 @@ Claude Code 새 세션 시작 시 아래 블록을 붙여넣는다. 매 작업�
 
 필독(경로, 순서대로):
 1. 저장소 루트 CLAUDE.md — 행동 규약·공유 변수·5절 코드 컨벤션·6절 커밋·7절 코드 스타일(Naver+Spotless/Checkstyle).
+   **코드는 `backend/` 아래다**(모노레포, D-098) — `backend/src/**`·`backend/gateway/**`. `docs/`·`config/`는 루트 그대로다.
 2. 확정 스펙(근거) — docs/spec/domain-spec.md, docs/spec/erd.md, docs/spec/api-contract.md. 작업 프롬프트가 지목한 절·테이블만 정독해도 된다.
-   **확정 스펙은 bash(`cat`·`grep` 등)로 읽지 마라 — 마운트 뷰가 이 3파일을 절단본으로 서빙한다(erd [5]·[6] 전체 소실). 호스트 Read/Grep만 쓴다**(총괄 `_broadcast/001`, rules [9.1]·[9.2]).
+   **확정 스펙은 bash(`cat`·`grep` 등)로 읽지 마라 — 마운트 뷰가 이 3파일을 절단본으로 서빙한다(erd [5]·[6] 전체 소실). 호스트 Read/Grep만 쓴다**(총괄 `_broadcast/001`, rules [9.1]).
 3. 결정 근거 — docs/backend/decision-log.md(B-xxx), 필요 시 docs/management/decision-log.md(D-xxx).
 4. 이번 작업 프롬프트(맨 아래 경로).
 
