@@ -15,7 +15,7 @@ export function SignupPage() {
       </p>
       <p className="text-sm text-text-muted">
         이미 계정이 있나요?{' '}
-        <Link to={ROUTES.login} className="text-primary-500 hover:underline">
+        <Link to={ROUTES.login} className="text-text underline">
           로그인
         </Link>
       </p>

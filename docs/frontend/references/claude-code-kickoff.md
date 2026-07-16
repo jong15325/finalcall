@@ -21,24 +21,26 @@
 **`<이번 작업 프롬프트 경로>` 를 읽고 그대로 수행한다.**
 이 파일이 범위·하지 말 것·DoD·반환 경로의 정본이다. 아래는 그 작업을 위한 표준 컨텍스트다.
 
-### 작업 디렉터리 — 경로가 3개다. 헷갈리지 마라
+### 작업 디렉터리 — **모노레포 하나다**(D-098)
+
+**루트 = `D:\Java\finalcall\`**
 
 | 용도 | 경로 | 권한 |
 |---|---|---|
-| **코드 생성**(이번 산출물) | 로컬 프론트 작업 디렉터리 (예: `D:\Java\finalcall-frontend`) | 쓰기 |
-| **문서 읽기**(계약·기획·디자인·지침) | `D:\Java\finalcall\docs\` (백엔드 레포 = 문서 허브) | 읽기 전용 |
+| **코드 생성**(이번 산출물) | `D:\Java\finalcall\frontend\` | 쓰기 |
+| **문서 읽기**(계약·기획·디자인·지침) | `D:\Java\finalcall\docs\` | 읽기 전용 |
 | **완료 보고 제출** | `D:\Java\finalcall\docs\frontend\notes\cc-reports\` | 쓰기(이 폴더만) |
 
-- **프론트 repo는 아직 없다.** 스켈레톤 완성·검증 후 사용자가 생성한다(062). `git init`·커밋·푸시를 실행하지 마라.
-- 문서 허브(`D:\Java\finalcall\docs\`)에는 `frontend/notes/cc-reports/` 외에 **아무것도 쓰지 마라.**
+- **모노레포다.** 코드는 `frontend/` 아래만, `docs/` 아래는 `frontend/notes/cc-reports/` 외에 **아무것도 쓰지 마라.**
+- **커밋·푸시를 실행하지 마라**(D-061 — 사용자 단일 실행). 메시지 **제안만** 한다.
 
 ### 필독 (순서대로, 작업 전)
 
-1. `D:\Java\finalcall\docs\frontend\rules.md` — 네 파트 지침(스택·구조 [3]·상태관리 [4]·컨벤션 [5]·git [6]). **repo 미생성이라 자동 로드되지 않으니 직접 읽어라.**
+1. `D:\Java\finalcall\docs\frontend\rules.md` — 네 파트 지침(스택·구조 [3]·상태관리 [4]·컨벤션 [5]·git [6]). **루트 `CLAUDE.md`는 백엔드용이다 — 이걸 직접 읽어라.**
 2. `<이번 작업 프롬프트 경로>` — 이번 작업 지시(정본).
-3. `D:\Java\finalcall\docs\frontend-planning\skeleton-plan.md` v0.2 — 스켈레톤 선행 기준선(범위 [2]·IA 셸 [3]·토큰 방침 [4]·계약 정합 [5]·DoD [7]).
-4. `D:\Java\finalcall\docs\spec\api-contract.md` **v1.4** — 유일한 API 기준(최상위).
-5. `D:\Java\finalcall\docs\frontend-planning\screen-spec.md` v0.3 — 라우트·IA.
+3. `D:\Java\finalcall\docs\design\skeleton-plan.md` v0.2 — 스켈레톤 선행 기준선(범위 [2]·IA 셸 [3]·토큰 방침 [4]·계약 정합 [5]·DoD [7]).
+4. `D:\Java\finalcall\docs\spec\api-contract.md` **v1.4** — 유일한 API 기준(최상위). **복사본을 만들지 마라**(D-007·D-030 사망).
+5. `D:\Java\finalcall\docs\design\screen-spec.md` v0.3 — 라우트·IA.
 6. `D:\Java\finalcall\docs\ux\design-system.md` — 토큰 정본(값 복제 금지, 토큰명 1:1).
 
 기준 위계: **확정 스펙(api-contract) > 기획 문서(skeleton-plan·screen-spec) > 이 킥오프.** 어긋나면 상위를 따르고 완료 보고에 적어라.
@@ -48,7 +50,7 @@
 - **계약에 없는 API·필드를 추측으로 만들지 마라.** 공백을 발견하면 **멈추고** 완료 보고에 적는다. 먼저 구현한 쪽이 기준이 되지 않는다(D-028 선착순 기준 금지).
 - **커밋·푸시 실행 금지.** 커밋 메시지 **제안만** 한다(D-061). `git add -A` 금지.
 - 응답·주석·문서는 **한국어**. 문서에 이모지 금지.
-- 절 참조는 `§` 대신 **대괄호** `[N.M]` 표기(D-087). 예: `api-contract [3.3]`.
+- 절 참조는 **`<문서> [N.M]`**으로 쓴다(`rules [3.11]`, C-082). 예: `api-contract [3.3]` · `CLAUDE.md [6]` · `rules [4]`. 자기 문서 안이면 `[3.3]`. **`§`·`N절`을 쓰지 마라** — `(6절)`은 자기 문서 6절로 읽힌다.
 - 시크릿·API 키를 코드·커밋에 넣지 마라(`.env.example`만, 실제 `.env`는 `.gitignore`).
 - 변경 전 관련 파일을 읽고 기존 컨벤션과 일치를 확인한다.
 - `any` 금지(불가피하면 사유 주석), strict 유지.
@@ -75,5 +77,4 @@
 ## 사용 메모 (프론트 대화용 — 붙여넣기 대상 아님)
 
 - 작업 프롬프트를 바꿔 재사용할 때 교체 지점 3곳: "이번 작업"의 `<이번 작업 프롬프트 경로>`, 필독 2번, 완료 보고 파일명의 `<NNN>-<도메인>-<작업>`.
-- 로컬 작업 디렉터리 경로는 사용자 확정값으로 교체한다(현재 예시: `D:\Java\finalcall-frontend`).
-- repo 생성 후에는 프론트 `rules.md`가 repo 루트 `CLAUDE.md`로 이관되어 자동 로드되므로(D-039) 필독 1번·경로 표의 "문서 읽기" 항목을 조정한다.
+- 경로는 D-098 모노 전환으로 확정됐다(`D:\Java\finalcall\frontend`). D-039·D-096(repo 루트 이관)은 죽었다 — `docs/frontend/rules.md`가 정본 자리다.

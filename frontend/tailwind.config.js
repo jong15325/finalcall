@@ -1,9 +1,10 @@
 /**
  * FinalCall Tailwind 토큰 매핑.
- * 정본: docs/ux/design-system.md [2]~[4] (토큰 정본). 토큰명 1:1, 색값은 잠정 A안.
- * - 테마 무관(primary·accent·semantic·element): 정적값.
- * - 테마 의존(bg·surface·border·text ...): CSS 변수 참조(var()) → src/index.css 의 :root / [data-theme="dark"] 에서 값 오버라이드.
- * 비주얼 확정 시 값만 교체하고 토큰명·구조는 불변으로 유지한다(skeleton-plan [4]).
+ * 정본: docs/ux/design-system.md [2]~[4]. 토큰명 1:1, 값 복제 금지 — 정본이 바뀌면 여기가 따라간다.
+ * - 테마 무관(primary·on-accent-fg·semantic·element·surface-slot): 정적값.
+ * - 테마 의존(bg·surface·border·text·focus-ring): CSS 변수 참조(var()) → src/index.css.
+ * U-020 확정 팔레트 반영(2026-07-16, ux/017 [4] 드롭인 + ux/019 + ux/020 보정).
+ * 폐기: primary 6단 스케일(50~700) · accent(500·600) · 의미색 -soft/-strong — design-system [2.6].
  * 등급(grade) 토큰은 만들지 않는다(D-073).
  */
 /** @type {import('tailwindcss').Config} */
@@ -13,42 +14,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 테마 무관 — design-system [2.1][2.2][2.3]
+        // 조작 계층 — 게임 상태 언어(테마 무관 정적값). design-system [1.2]① [2.2]
+        // 상태는 명도가 아니라 hue 전환이다: 기본 파랑 → 눌림 주황 → 활성 황금.
         primary: {
-          50: '#EEF0FF',
-          100: '#E0E3FF',
-          300: '#A5AEFF',
-          500: '#6366F1',
-          600: '#4F52D6',
-          700: '#3E40AD',
-          fg: 'var(--color-primary-fg)',
-          DEFAULT: '#6366F1',
+          DEFAULT: '#0667BD',
+          hover: '#0560AD',
+          pressed: '#E25706',
+          selected: '#E2B206',
+          disabled: '#0A3A63',
+          fg: '#FAF7D5', // 정적값 — 파랑 위의 전경. 테마 무관(019 안건2). text 와 hex 가 같아도 다른 토큰이다
         },
-        accent: {
-          500: '#F59E0B',
-          600: '#D97706',
-          DEFAULT: '#F59E0B',
-        },
-        success: '#16A34A',
-        warning: '#F59E0B',
-        danger: '#DC2626',
-        info: '#2563EB',
+        'on-accent-fg': '#001C33', // 밝은 계열(pressed·selected·warning) 위의 전경
+
+        // 정보 계층 — 의미색(-soft 는 12% 알파 합성, 별도 토큰 없음). design-system [2.3]
+        success: '#4ADE80',
+        warning: '#E2B206',
+        danger: '#FF4D4D',
+        info: '#3394DE',
+
+        // 아이템 계층 — 아트 픽셀 실측(변경 금지). design-system [2.3]
+        // element 칩은 bg 위에만 놓는다 — primary 위에서 water 2.4:1 로 무너진다(ux/017 [5]#1)
         element: {
-          water: '#3B82F6',
-          fire: '#EF4444',
-          earth: '#D97706',
-          wind: '#10B981',
+          water: '#19B2FF',
+          fire: '#FF5500',
+          earth: '#95B259',
+          wind: '#66CCCC',
         },
-        // 테마 의존 — design-system [2.4], 값은 CSS 변수(src/index.css)
+
+        // 표면·텍스트 — CSS 변수 참조(src/index.css). design-system [2.4]
+        // 라이트 값은 0개다. U-005 확정 시 [data-theme="light"] 블록을 얹어 덮는다(ux/020 [2])
         bg: 'var(--color-bg)',
         surface: 'var(--color-surface)',
         'surface-raised': 'var(--color-surface-raised)',
+        'surface-slot': '#000000',
         border: 'var(--color-border)',
-        text: {
-          DEFAULT: 'var(--color-text)',
-          muted: 'var(--color-text-muted)',
-          subtle: 'var(--color-text-subtle)',
-        },
+        'border-muted': 'var(--color-border-muted)',
+        text: 'var(--color-text)',
+        'text-muted': 'var(--color-text-muted)',
+        'text-subtle': 'var(--color-text-subtle)',
         'focus-ring': 'var(--color-focus-ring)',
       },
       fontFamily: {

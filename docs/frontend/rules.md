@@ -1,24 +1,23 @@
 # 프론트 규칙 (F)
 
-Spring Boot 백엔드(finalcall)와 짝을 이루는 프론트엔드 저장소의 Claude Code 지침이다.
-협업 규약은 백엔드 저장소 docs/common/rules.md, 형식은 docs/common/templates.md를 따른다.
+FinalCall 모노레포(D-098) `frontend/` 웹 클라이언트의 파트 지침이다.
+협업 규약은 `docs/common/rules.md`, 형식은 `docs/common/templates.md`를 따른다.
 
 - **소유·개정**: 프론트 제안 + 컨설턴트 승인. 개정하면 덮어쓴다(불변 아님, 이력은 git).
-- 이관 2026-07-16: `docs/frontend/CLAUDE.md` → 이 파일(C-073 [3]). 내용은 헤더·:11 원본 경로 외 무변경.
-- **주(D-039)**: D-039는 이 문서를 프론트 저장소 생성 시 루트 `CLAUDE.md`로 이관한다고 서 있다.
-  C-073 구조(`<역할>/rules.md`)와 충돌 예정이다. repo 미생성이라 지금은 안 막힌다 — 생성 시점에 총괄에 올린다.
+- 이관 2026-07-16: `docs/frontend/CLAUDE.md` → 이 파일(C-073 [3]) ·
+  **D-098 모노 전환으로 repo 루트 이관 항 소멸(D-039·D-096 사망) · 계약 복사본 항 소멸(D-007·D-030 사망).**
 
 ## 1. 프로젝트 정보
 
 - FinalCall 게임 아이템 경매 플랫폼의 웹 클라이언트.
 - 스택(D-032 확정): TypeScript(strict) + React SPA(Vite) + TanStack Query + Zustand
   + Tailwind CSS. SSR 미도입.
-- 유일한 API 기준: 이 저장소의 docs/api-contract.md 복사본(헤더에 원본 경로·버전·해시).
-  원본 = `finalcall/docs/spec/api-contract.md`. 복사본과 원본이 어긋나면 원본(백엔드 저장소)이 우선한다.
+- 유일한 API 기준: **`docs/spec/api-contract.md` (정본 직접 참조).**
+  **복사본을 만들지 않는다** — D-007·D-030 사망(D-098 모노라 정본이 같은 트리에 있다).
 
 ## 2. Claude Code 행동 규약
 
-- 커밋·푸시는 사용자가 직접 한다. Claude Code는 컨벤션(6절)에 따른 커밋 메시지를 제안한다.
+- 커밋·푸시는 사용자가 직접 한다. Claude Code는 컨벤션(`CLAUDE.md [6]`)에 따른 커밋 메시지를 제안한다.
 - 응답·주석·문서는 한국어.
 - 계약에 없는 API를 추측으로 사용하지 않는다. 스펙 공백 발견 시 구현을 멈추고
   프론트 대화로 보고한다(→ 총괄 결정 요청 격상, 선착순 기준 금지 — D-028).
@@ -61,12 +60,11 @@ src/
 
 ## 6. Git (D-030)
 
-- Conventional Commits + 한국어 제목, 본문 템플릿은 백엔드 CLAUDE.md 6절과 동일.
+- Conventional Commits + 한국어 제목, 본문 템플릿은 `CLAUDE.md [6]`과 동일.
 - 스켈레톤기 main 직접 → 도메인 개발기 feature/<도메인> → PR → main(Squash and Merge).
 - 스켈레톤 커밋: `chore(skeleton): stage N - 설명`.
-- 계약 복사본 갱신: `docs(contract): api-contract v<N> 동기화 (원본 finalcall@<해시7>)`.
 
 ## 7. 문서·결정
 
-- 프론트 결정 로그(F-xxx)·노트·outbox는 백엔드 저장소 docs/frontend/ (문서 허브 단일화).
+- 프론트 결정 로그(F-xxx)·노트·outbox는 `docs/frontend/` (문서 허브 단일화).
 - 에스컬레이션 4기준·메시지 형식은 협업 가이드 준수.

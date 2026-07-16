@@ -51,7 +51,7 @@ export function LoginPage() {
           <button
             type="button"
             onClick={() => handleStubSignIn(false)}
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-fg transition-colors duration-fast hover:bg-primary-600"
+            className="rounded-md border border-primary bg-primary px-3 py-2 text-sm text-primary-fg transition-colors duration-fast hover:border-border hover:bg-primary-hover"
           >
             임시 세션(사용자)
           </button>
@@ -67,7 +67,7 @@ export function LoginPage() {
 
       <p className="text-sm text-text-muted">
         계정이 없나요?{' '}
-        <Link to={ROUTES.signup} className="text-primary-500 hover:underline">
+        <Link to={ROUTES.signup} className="text-text underline">
           회원가입
         </Link>
       </p>

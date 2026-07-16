@@ -3,32 +3,24 @@
 @tailwind utilities;
 
 /*
- * 테마 의존 토큰 값 (design-system [2.4]). 잠정 A안 — 비주얼 확정 시 값만 교체(토큰명 불변).
- * :root = 라이트 기본값, [data-theme="dark"] = 다크 오버라이드(A안 기본). U-005 토글 1회.
+ * 테마 의존 토큰 값 (design-system [2.4]). U-020 확정 팔레트(ux/017 [4] + ux/019 + ux/020).
+ * ★ 라이트 값은 0개다. 게임 스킨은 단일 다크다(U-016) — :root 와 dark 가 한 규칙인 것이 정상이다.
+ *   U-005 가 오면 [data-theme="light"] 블록을 새로 얹어 덮는다. 지금 라이트 값을 지어내지 마라
+ *   (design-system [2.5] — 근거 없는 색이 정본에 박힌다).
+ * primary-fg 는 변수가 아니라 정적값이다 — 조작 계층은 테마 무관(ux/019 안건2). tailwind.config.js 에 있다.
  * Tailwind 는 tailwind.config.js 에서 var(--color-*) 로 이 값을 참조한다.
  */
-:root {
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
-  --color-border: #e2e8f0;
-  --color-text: #0f172a;
-  --color-text-muted: #475569;
-  --color-text-subtle: #94a3b8;
-  --color-primary-fg: #ffffff;
-  --color-focus-ring: #6366f1;
-}
-
+:root,
 [data-theme='dark'] {
-  --color-bg: #0b0f1a;
-  --color-surface: #141a29;
-  --color-surface-raised: #1c2436;
-  --color-border: #2a3448;
-  --color-text: #e8edf7;
-  --color-text-muted: #9aa7bd;
-  --color-text-subtle: #6b7890;
-  --color-primary-fg: #ffffff;
-  --color-focus-ring: #8b8ff5;
+  --color-bg: #001c33;
+  --color-surface: #012a4a;
+  --color-surface-raised: #013a63;
+  --color-border: #3394de;
+  --color-border-muted: #14496e;
+  --color-text: #faf7d5;
+  --color-text-muted: #b8c4d9;
+  --color-text-subtle: #6b8ca6;
+  --color-focus-ring: #faf7d5;
 }
 
 @layer base {
@@ -37,7 +29,12 @@
     font-family: theme('fontFamily.sans');
   }
 
-  /* 포커스 가시성 — focus-ring 토큰(대비 확보, design-system [2.4]) */
+  /* 포커스 가시성 — focus-ring 토큰(design-system [2.2]).
+   * ★ outline-offset: 2px 는 장식이 아니라 AA 조건이다. 0 으로 줄이면 primary-selected(황금) 위에서
+   *   1.82:1, success 위에서 1.60:1 로 무너진다. offset 이 그 2px 에 남색 배경을 드러내 링을 살린다.
+   * ★ :focus 가 아니라 :focus-visible — 마우스 클릭마다 링이 뜨면 조작 계층이 지저분해진다(ux/019 [3]).
+   * 요소별로 다시 정의하지 않는다. overflow:hidden 안에서 offset 이 잘리면 지우지 말고 디자인에 알려라.
+   */
   :focus-visible {
     outline: 2px solid var(--color-focus-ring);
     outline-offset: 2px;
