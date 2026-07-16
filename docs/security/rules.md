@@ -18,7 +18,7 @@
 |---|---|
 | threat-model.md | 도메인별 위협 모델(3절 형식). 게이트 1에서 작성, 이후 갱신 |
 | checklist.md | 게이트별 검토 체크리스트(4절 기반, 프로젝트 맞춤 진화) |
-| findings.md | 발견 티켓 누적(SEC-NNN, 전 역할 열람 — templates 10) |
+| findings.md | 발견 티켓 누적(SEC-NNN, 전 역할 열람 — common/rules.md [3] 문서 체계) |
 | decision-log.md | 보안 결정(S-xxx): 기준·정책 결정 |
 
 - 번호 체계: S-xxx는 결정 로그, SEC-NNN은 발견 티켓(별도 시퀀스, QA와 동일 논리).
@@ -52,7 +52,7 @@
 ## 5. 발견 처리 흐름
 
 1. 발견 → findings.md에 SEC-NNN(심각도: Critical/Major/Minor, 공격 시나리오 필수).
-2. 계약·설계 영향 시 계약 변경 요청(templates 15) 격상, 구현 문제면 해당 역할로 결정 요청.
+2. 계약·설계 영향 시 계약 변경 절차(common/rules.md [6]) 격상, 구현 문제면 해당 역할로 결정 요청.
 3. 수정 확인 후 상태 갱신. 티켓 삭제 금지. Critical은 미해결 상태로 게이트 통과 불가.
 
 ## 6. 레퍼런스

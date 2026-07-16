@@ -66,7 +66,7 @@ bash는 git·빌드·테스트 등 마운트 뷰와 무관한 작업에만 쓴�
 
 ---
 
-## 게이트 2 (구현) — 예정, 도메인 구현 완료 시
+## 게이트 2 (구현) — 도메인 구현 완료 시. **단 SEC-005는 선행 분리(아래)**
 
 - @PreAuthorize 등 인가 적용 실태 표본(특히 /admin/**, relocate, orders) — SEC-011
 - 검증 로직 우회 경로(API 직접 호출로 소유자·자기구매·상한 검증 우회) — SEC-003
@@ -74,3 +74,45 @@ bash는 git·빌드·테스트 등 마운트 뷰와 무관한 작업에만 쓴�
 - 충전 confirm 서버-투-서버 검증·멱등 앵커(pg_tx_id) 실구현 — SEC-001·002
 - 시크릿 하드코딩 grep, fail-fast 준수(CLAUDE.md 4절)
 - IDOR 표본 테스트(타 사용자 리소스 접근)
+
+### 회수 등재분 (2026-07-16 — 「미뤘다는 표시가 없던 것」)
+
+| # | 항목 | 재개 트리거 | 출처 |
+|---|---|---|---|
+| 1 | **SEC-010 WONTFIX의 조건** — charge 등 민감 리소스에서 `public_id`(ULID) 생성 시각·순서 노출이 문제되는지, UUIDv4 등 무순서 식별자로 갈지 확인 | **charge 도메인 착수** | 보안 `outbox/REFORM/001` ⓑ-1. WONTFIX 라벨이 조건부 수용을 무조건 수용으로 보이게 했다 |
+| 2 | **인증 세션 persist 방침** — refresh 토큰을 브라우저 저장소에 두면 XSS 노출면이 생긴다. 현행 = 메모리 세션(`persist` 없음, 스켈레톤 미차단) | **wallet(화폐) 도메인 착수 전** | 기획 026 격상 → 총괄 `_broadcast/003` [4] 보안 레인 이관. **교환비율과 묶여 있던 것을 기획이 풀었다**(둘은 무관 — 하나는 돈, 하나는 XSS 노출면) |
+
+**#2 판정 시 볼 것**: SEC-006이 refresh **서버 저장·회전·재사용 탐지**로 확정됐다(계약 §2, FIXED).
+**회전·재사용 탐지가 서 있으면 persist의 리스크 계산이 게이트 1 때와 다르다** — 탈취된 refresh가
+1회용이고 재사용 시 세션이 무효화된다. **그래도 XSS로 탈취 즉시 1회 재발급은 가능하다.**
+판정은 그 잔여를 `/me/wallet/charge/confirm` PG 리다이렉트 복귀(하드 리로드 시 메모리 세션 소실,
+`design/skeleton-plan.md:122`)의 실효성과 견주는 것이다. **wallet 착수 전에 낸다.**
+
+---
+
+## SEC-005 선행 검증 — 게이트 2에서 분리 착수 (2026-07-16, 총괄 승인 `management/outbox/_broadcast/003` [4])
+
+**분리 사유**: 게이트웨이(D-068)가 이미 서 있어 **대상이 실재한다.** 게이트 2의 다른 항목은
+도메인 미구현으로 막혀 있으나 이 항목만 막는 것이 없었다. 판정 = `decision-log.md` S-004.
+
+| # | 점검 항목 | 결과 | 근거 (호스트 Read 원문) |
+|---|---|---|---|
+| 1 | 인증 계열 rate limit 실재 | O | `gateway/application.yml:20~33` — 라우트 `auth-rate-limited`, `Path=/api/v1/auth/login,signup,refresh`, `RequestRateLimiter`(replenish 5·burst 10·1토큰), key `#{@clientIpKeyResolver}` |
+| 2 | key resolver 실재 | O | `RateLimitConfig:28~36` — 클라이언트 IP 기반. `remoteAddress` null 시 `"unknown"` 폴백 |
+| 3 | 직접접근 차단 — 게이트웨이 측 | O | `InternalTokenGlobalFilter:33~38` — `headers.set()` **덮어쓰기**(add 아님) → 클라 위조 헤더 선제거. `HIGHEST_PRECEDENCE` |
+| 4 | 직접접근 차단 — 서비스 측 | O | `GatewayAccessFilter:56~63` — 헤더 부재·불일치 403(`GATEWAY_403`). JWT 필터보다 앞. actuator·error만 제외. 공통 `application.yml:110` `enforced: true` |
+| 5 | 시크릿 fail-fast | O | dev/prod가 **placeholder 미사용** + relaxed binding + `@NotBlank`(`GatewayInternalProperties:29`). `${GATEWAY_INTERNAL_SECRET}` placeholder를 쓰면 미해결 리터럴이 `@NotBlank`를 통과해 fail-fast가 무력화되는 함정을 **주석으로 명시 방어**(`application-prod.yml:6~7`) |
+| 6 | 시크릿 하드코딩 | O | local 기본값 2건은 `${ENV:더미}` 형태(`…-change-me`)로 CLAUDE.md 섹션 4 규약 준수. dev/prod 기본값 0. **탐색: 호스트 Grep `secret` on `src/main/resources`·`gateway/src/main/resources` 전수** |
+| 7 | **rate limit 회귀 방지** | **X** | `GatewayApplicationTests` = `contextLoads()` **1건뿐.** 429 발현 미검증 → **SEC-013** |
+| 8 | **출발지 식별 정확성** | **X** | `RateLimitConfig:17~19`가 자인 — LB 뒤 `remoteAddress` 수렴 → **SEC-014** |
+
+**판정: SEC-005 FIXED**(공백 소멸 — 설정·필터·fail-fast 전건 원문 확인).
+**신규 2건은 005의 잔여가 아니라 005 처방 자체의 결함이라 분리 등재한다**(SEC-013 Major · SEC-014 Minor→실배포 시 Major).
+
+**★ 부재 주장 교차검증**(085 통과 조건): 항목 6·7의 "없음" 2건은 **호스트 Glob + Grep 병용**이다.
+- 7의 근거는 **부재가 아니라 존재**다 — 테스트 파일을 Read해 `contextLoads()` 1개만 있음을 원문 확인
+  (Glob `gateway/**/*.java` → 테스트 4파일 중 게이트웨이분 1건). **"테스트가 없다"가 아니라
+  "있는 테스트가 이것뿐이다"** — 부정 결과를 긍정 근거로 바꿔 세웠다.
+- 6의 "dev/prod 하드코딩 0"은 **부재 주장이다.** 탐색 = 호스트 Grep `gateway|internal|enforced|secret`
+  on 두 `resources` 디렉터리 전수 → dev/prod 히트는 **전부 주석**이고 값 할당 0. 호스트 Read로
+  4개 yml 원문 재확인. **bash 미사용.**

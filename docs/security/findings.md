@@ -3,7 +3,8 @@
 공격자 관점 발견 누적. 전 역할 열람(`common/rules.md [3]` 문서 체계 · `common/templates.md`).
 심각도: Critical(자금 탈취·인증 우회) / Major / Minor. 삭제 금지, 상태 라벨만 갱신.
 
-검토 대상: docs/api-contract.md DRAFT v0.1 (근거 domain-spec v0.3, erd v0.2).
+검토 대상: docs/spec/api-contract.md DRAFT v0.1 (근거 domain-spec v0.3, erd v0.2).
+  ※ 경로는 `docs/spec/`으로 이동(`management/outbox/_broadcast/001`). 버전은 게이트 1 검토 시점 기록이라 불변.
 게이트: 보안 게이트 1 (D-013), 판정 security/decision-log.md S-001.
 
 요약 표
@@ -14,13 +15,31 @@
 | SEC-002 | Major | 충전 confirm 인증·서버검증 미명시 | FIXED(계약 v0.2) | 계약 |
 | SEC-003 | Major | 즉시구매·고정가 자기구매 미차단 | FIXED(계약 v0.2) | 계약 |
 | SEC-004 | Major | 교환(exchange) 멱등성 부재 | FIXED(계약 v0.2) | 계약 |
-| SEC-005 | Major | 인증 엔드포인트 rate limiting 공백 | OPEN(게이트2) | 계약/구현 |
+| SEC-005 | Major | 인증 엔드포인트 rate limiting 공백 | FIXED(구현 v-게이트2선행, S-004) | 계약/구현 |
 | SEC-006 | Major | 토큰 회전·무효화 전략 미확정 | FIXED(계약 v0.2) | 계약 |
 | SEC-007 | Minor | 가입 응답 회원 열거 | FIXED(완화 채택) | 계약 |
 | SEC-008 | Minor | 잔액 검증 TOCTOU(원자성 문구 부재) | OPEN(게이트2) | 구현 |
 | SEC-009 | Minor | 경매 생성 시간 파라미터 검증 미명시 | FIXED(계약 v0.2) | 계약 |
 | SEC-010 | Minor | public_id ULID 시각 성분 노출 | WONTFIX(수용) | 정보 |
 | SEC-011 | Minor | /admin/** 인가 일괄 적용 규정 부재 | OPEN(게이트2) | 구현 |
+| SEC-012 | Minor | 다계정 공모(collusion) 시세 조작 | WONTFIX(범위 밖 확정) | 정보 |
+| SEC-013 | Major | rate limit이 라우트 순서에만 의존 — 회귀 테스트 0 | OPEN | 구현 |
+| SEC-014 | Minor | X-Forwarded-For 미신뢰 — LB 뒤 전 클라이언트 단일 버킷 | OPEN(실배포 전) | 구현/운영 |
+
+SEC-005 선행 검증 결과 (게이트 2 분리 착수, 총괄 승인 `management/outbox/_broadcast/003` [4], 2026-07-16)
+- **탐색 방법**: 호스트 Glob `**/*.java`·`**/application*.yml` → `gateway/` 모듈 전수 → 호스트 Read
+  원문 대조(`application.yml`·`-local`·`-dev`·`-prod` · `RateLimitConfig` · `InternalTokenGlobalFilter` ·
+  `GatewayInternalProperties`×2 · `GatewayAccessFilter` · `GatewayApplicationTests`). **bash 마운트 조회 미사용**(D-090).
+- **FIXED 근거(긍정·원문 인용)**: rate limit 실재 — `gateway/application.yml:20~33` 라우트
+  `auth-rate-limited`(`/api/v1/auth/login,signup,refresh`) + `RequestRateLimiter`
+  (Redis 토큰버킷 replenish 5·burst 10·1토큰, `#{@clientIpKeyResolver}`). 직접접근 차단 실재 —
+  게이트웨이가 `X-Gateway-Token`을 `.set()`으로 **덮어쓰고**(위조 헤더 선제거), 서비스
+  `GatewayAccessFilter`가 JWT 앞 관문에서 403(`GATEWAY_403`), 공통 `enforced: true`.
+  시크릿 fail-fast 성립 — dev/prod가 **placeholder를 안 쓰고** relaxed binding + `@NotBlank`
+  (placeholder를 쓰면 미해결 리터럴이 `@NotBlank`를 통과해 fail-fast가 무력화되는 함정까지 주석으로 방어).
+- **→ SEC-005의 「공백」은 메워졌다**(D-065 롤백 부작용 소멸). 다만 **검증 과정에서 신규 2건**
+  (SEC-013·014). **둘은 005의 잔여가 아니라 005 처방 자체의 결함이라 분리 등재한다.**
+- 판정: `decision-log.md` **S-004**.
 
 게이트 1 델타 재확인 결과 (api-contract v0.2·erd v0.3 원문 검증, 2026-07-14)
 - FIXED(계약 반영·델타 검증): SEC-001(§4.4 pg_tx_id 멱등 + erd charge.pg_tx_id UK),
@@ -197,8 +216,19 @@
 
 조치(권고)
 - 트레이드오프상 UX(중복 안내)와 충돌하므로, 코드 통합보다 SEC-005 rate limit +
-  가입 시도 모니터링으로 완화하는 편을 권고. nickname 중복은 표시용이라 열거 가치가
+  ~~가입 시도 모니터링~~으로 완화하는 편을 권고. nickname 중복은 표시용이라 열거 가치가
   낮아 유지 가능, loginId 중복 응답만 일반화 검토.
+
+**「가입 시도 모니터링」 항 폐기 — FIXED 유지 (2026-07-16, 총괄 `_broadcast/003` [4] (a) 채택)**
+- **완화 채택안의 절반이 어디에도 배정되지 않은 채 FIXED 라벨이 붙어 있었다**(보안 `outbox/REFORM/001` ⓑ-3
+  회수). 라벨이 절반만 참이었다.
+- **폐기 사유**: rate limit이 열거 **속도**를 죽이면 모니터링은 **통제가 아니라 관측 편의**다.
+  Prometheus·Grafana·Loki가 이미 서 있어 필요하면 대시보드 1개다. **Minor 하나에 두 파트를
+  움직이는 것은 비례하지 않는다.**
+- **완화의 실체는 SEC-005 하나다**: `/api/v1/auth/signup`이 `auth-rate-limited` 라우트에 실재한다
+  (호스트 Read, `gateway/application.yml:25`). `RateLimitConfig:15`가 `SEC-007`을 명시적으로 참조한다.
+- **단 SEC-014가 이 완화에 걸린다** — LB 뒤에서 버킷이 뭉치면 signup 열거 제한도 같이 무력화된다.
+  **SEC-007의 FIXED는 SEC-014 해소를 전제로 한다.**
 
 ---
 
@@ -254,6 +284,12 @@
 - 대부분 리소스는 수용 가능(생성 시각은 준공개). 민감 리소스(charge 등)에서 생성
   시각·순서 노출이 문제되면 UUIDv4 등 무순서 식별자 사용 여부만 확인. 현 단계 정보성.
 
+**★ WONTFIX의 조건이 미표시였다 — 회수·등재 (2026-07-16, 보안 `outbox/REFORM/001` ⓑ-1)**
+- 위 조치의 *"민감 리소스(charge 등)에서 … UUIDv4 등 무순서 식별자 사용 여부만 확인"*은
+  **charge 구현 시 재확인 조건**인데 `checklist.md [게이트 2]`에 없었다. **WONTFIX 라벨만 보면
+  닫힌 것처럼 보인다** — 조건부 수용이 무조건 수용으로 읽히는 형태다.
+- → `checklist.md [게이트 2]`에 등재했다. **재개 트리거 = charge 도메인 착수.**
+
 ---
 
 ## SEC-011. /admin/** 인가 일괄 적용 규정 부재
@@ -269,6 +305,98 @@
 조치(권고)
 - 계약에는 "/admin/**는 관리자 인가 필수"로 충분. 게이트 2에서 인가 적용 실태
   (@PreAuthorize, URL 패턴 필터) 표본 검사.
+
+---
+
+## SEC-012. 다계정 공모(collusion) 시세 조작 — 범위 밖 확정
+
+심각도: Minor(정보) · 상태: WONTFIX · 2026-07-16
+관련: SEC-003(자기구매 차단 — FIXED), api-contract §4.1 market-prices, threat-model.md:43,
+       판정 = 총괄 `management/outbox/_broadcast/003` [4] (a) 채택 (보안 `outbox/REFORM/001` ⓒ-1 추천)
+
+조건
+- SEC-003으로 **판매자 본인** 구매는 차단됐다(AUCTION_009·SHOP_006). 그러나 판매자가 **공모 계정**
+  으로 자기 매물을 사면 계약·구현 어느 쪽으로도 구분되지 않는다. `sale_order`가 시세 집계
+  (market-prices) 소스이므로 자전거래로 시세를 인위 형성할 수 있다.
+
+기대 vs 실제
+- 기대: 시세가 실거래를 반영한다.
+- 실제: 다계정 공모분이 실거래와 구분되지 않고 섞인다.
+
+왜 WONTFIX인가 (삭제가 아니라 기록 — `[4.17]`)
+- **계약으로도 구현으로도 못 막는다.** SEC-003 본문이 이미 그렇게 적었다("완전 차단은 불가").
+  탐지는 **거래 데이터가 쌓여야 성립하는데 지금 0건**이다.
+- 후속 과제로 등재하면 **착수할 수 없는 항목이 목록에 남아 부담만 는다.** 지금 필요한 것은
+  과제가 아니라 **"안 한다는 표시"**다. 이 티켓이 그 표시다.
+- **철회 조건**: 실거래 데이터가 쌓이고 시세 왜곡이 실측되면 재개한다. 그때는 이 티켓을
+  근거로 이상탐지를 신규 발번한다. **재개 트리거가 데이터이지 일정이 아니다.**
+
+관련 기록
+- `findings.md` SEC-003 조치(권고)가 *"후속 과제로 등재"*라고 썼으나 **티켓·인덱스 어디에도
+  등재된 적이 없다.** 범위 밖 표시는 `threat-model.md:43` 잔여 리스크 칸에만 있었다
+  (호스트 Grep `collusion|공모|이상탐지` on `docs/` → 3곳, 전부 서술문). **이 티켓이 그 공백을 닫는다.**
+
+---
+
+## SEC-013. rate limit이 라우트 순서에만 의존한다 — 회귀 테스트 0
+
+심각도: Major · 상태: OPEN · 2026-07-16 (SEC-005 선행 검증 산출)
+관련: gateway `application.yml:20~38`, `GatewayApplicationTests`, SEC-005, D-068, B-027
+
+조건 (공격 시나리오 — 공격자가 아니라 **우리가** 여는 구멍이다)
+- `gateway/application.yml`에 라우트가 2개다. `auth-rate-limited`(`Path=/api/v1/auth/login,
+  /api/v1/auth/signup,/api/v1/auth/refresh`)가 먼저, `service-proxy`(`Path=/api/v1/**`)가 뒤.
+  **후자의 predicate가 전자를 완전히 포함한다.** 지금은 정의 순서 덕에 auth가 먼저 매칭돼
+  rate limit이 걸린다.
+- **누가 라우트를 위에 하나 추가하거나 `order:` 값을 넣으면 auth 요청이 `service-proxy`로 떨어진다.
+  그 순간 rate limit이 사라진다.** 부팅은 성공하고, 컨텍스트는 로드되고, 라우팅도 정상 동작한다.
+  → **실패 신호가 0이다.** login이 무제한으로 열린 것을 아무도 모른다.
+- 게이트웨이 테스트는 `GatewayApplicationTests.contextLoads()` **1건뿐**이고, 주석이
+  *"라우트 정의·RequestRateLimiter·KeyResolver·공유비밀 바인딩이 부팅 시점에 성립하는지 확인"*
+  이라 적는다. **"설정이 존재한다"만 검증하고 "429가 실제로 난다"는 검증하지 않는다.**
+
+기대 vs 실제
+- 기대: 버스트 초과 시 auth 경로가 429를 낸다. 이 성질이 **테스트로 고정**돼 회귀 시 빌드가 깨진다.
+- 실제: 성질이 **YAML 목록의 줄 순서**에만 걸려 있고, 깨져도 아무것도 실패하지 않는다.
+
+조치(권고)
+- 게이트웨이에 **행위 테스트 2건**: (1) auth 경로 버스트 초과 → 429 (2) 비auth `/api/v1/**` 경로
+  동일 부하 → 429 없음(대조군). Redis는 Testcontainers.
+- **SEC-005의 해소가 "설정이 존재한다"에 그치는 것이 이 티켓의 요지다.** 설정은 정확하다
+  (원문 대조 완료). 문제는 **그 정확함을 지킬 것이 없다**는 것이다.
+- 배정: 백엔드(게이트웨이 소유). **테스트 전략은 QA와 겹치지 않는다** — 보안 통제의 회귀 방지다.
+
+---
+
+## SEC-014. X-Forwarded-For 미신뢰 — LB 뒤에서 전 클라이언트가 단일 버킷
+
+심각도: Minor(현 스켈레톤) → **실배포 시 Major** · 상태: OPEN(실배포 전 확정) · 2026-07-16
+관련: `RateLimitConfig:17~19`(자인 주석), B-027 후속(*"X-Forwarded-For 신뢰(열린 질문 3·4)도
+       게이트2/실배포 전"*), SEC-005, SEC-007
+
+조건
+- `clientIpKeyResolver`가 `exchange.getRequest().getRemoteAddress()` 기준이다. **LB·프록시 뒤에
+  배포하면 remoteAddress가 LB IP로 수렴한다.** 그러면 토큰버킷이 출발지별로 갈리지 않고 **전
+  클라이언트가 하나의 버킷**을 쓴다.
+  - (a) **통제 무력화**: 공격자 1명이 초당 5개 제한을 다른 모두와 나눠 쓴다 = 제한이 안 걸린다
+  - (b) **자해 DoS**: 정상 트래픽이 조금만 늘어도 **전체가 429를 맞는다.** 공격자가 의도적으로
+    버킷을 비우면 **전 사용자 로그인 차단**이 된다. 이쪽이 (a)보다 나쁘다.
+- `remoteAddress`가 null이면 `UNKNOWN_KEY`("unknown") 단일 키로 수렴한다 — 같은 형태의 공유 버킷.
+- **코드가 자인한다**(`RateLimitConfig:17~19`): *"★ 운영 주의: 로드밸런서/프록시 뒤에서는
+  remoteAddress 가 LB IP 로 수렴할 수 있다. … 이 스켈레톤은 remoteAddress 기준으로 둔다."*
+
+기대 vs 실제
+- 기대: 토큰버킷이 **실제 출발지**별로 갈린다.
+- 실제: 배포 토폴로지에 따라 갈릴 수도, 전부 뭉칠 수도 있다. **어느 쪽인지 지금 확정 불가.**
+
+조치(권고)
+- **지금 고칠 수 없다 — 배포 토폴로지가 미확정이다.** `X-Forwarded-For`를 무조건 신뢰하면
+  **클라이언트가 헤더를 위조해 버킷을 무한 분할**할 수 있어 지금보다 나빠진다. 신뢰 프록시 수
+  (`trusted hop count`)를 아는 것이 선행이다.
+- **실배포 전 조건으로 고정한다**: 배포 토폴로지 확정 → 신뢰 프록시 수 확정 → key resolver 조정
+  → SEC-013 테스트로 회귀 고정.
+- **이건 백엔드가 이미 열어둔 질문이다**(B-027 후속 *"게이트2/실배포 전"*). **표시가 있었고
+  자리도 맞았다** — 이 티켓은 그것을 보안 레인에 받는 것이지 새로 여는 것이 아니다.
 
 ---
 
