@@ -1,5 +1,10 @@
 # 프론트기획 결정 로그 (PF-xxx, D-009~D-011 규약)
 
+> **`_archive/` 이관 (2026-07-16, C-073 [5] 기획분 집행).** 원 경로 `docs/frontend-planning/decision-log.md`.
+> 프론트기획(PF) 역할은 D-079로 P에 재통합됐고 `frontend-planning/` 폴더 폐지가 사용자 확정이다.
+> **PF-xxx는 동결이다** — 삭제가 아니라 이동이며(`rules [5.12]` 취지 = 이력을 없애지 않는다),
+> `_archive/`는 `rules [3.5]`로 **읽지 않고 인용하지 않는** 구역이다.
+
 접두어 PF. 1항목=1원자적 결정. 상태: PROPOSED / ACCEPTED / ON-HOLD / SUPERSEDED. 근거는 확정 스펙 또는 ACCEPTED 결정만.
 
 ---
