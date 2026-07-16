@@ -1,5 +1,11 @@
 rootProject.name = 'finalcall'
 
-// D-068: SCG 엣지 게이트웨이 — 단일 서비스(루트)와 별도 빌드 산출물(별도 배포)인 서브프로젝트.
-//   루트는 모놀리식 서비스 그대로 유지하고, 게이트웨이만 WebFlux 스택으로 독립 구성한다.
-include 'gateway'
+// D-098: 모노레포 — 루트는 aggregator다(앱 아님). backend/ · frontend/ 로 분리.
+//   config/ · docs/ 는 루트 유지 — config 는 backend·gateway 공용, docs 는 전 역할 소유.
+//   frontend/ 는 npm 프로젝트라 gradle 대상이 아니다.
+include 'backend'
+
+// D-068: SCG 엣지 게이트웨이 — 백엔드 서비스와 별도 빌드 산출물(별도 배포)인 서브프로젝트.
+//   D-098 로 폴더가 backend/ 하위로 내려왔으나 빌드·배포 단위는 그대로 독립이다
+//   (폴더 위치와 배포 단위는 다른 축).
+include 'backend:gateway'

@@ -80,8 +80,10 @@ tasks.named('test') {
 checkstyle {
 	// B-021: Java 21 record 파싱 위해 10.20.2 확정(8.24 는 record 파싱 불가). Naver 룰(8.24+)과 호환.
 	toolVersion = '10.20.2'
-	configFile = file('config/checkstyle/naver-checkstyle-rules.xml')
-	configProperties = [suppressionFile: file('config/checkstyle/naver-checkstyle-suppressions.xml')]
+	// D-098: 모노 전환으로 이 파일이 backend/ 로 내려왔다. config/ 는 루트 유지(backend·gateway 공용)라
+	//   프로젝트 상대 file() 이 아니라 rootProject.file() 을 쓴다 — gateway/build.gradle 과 대칭.
+	configFile = rootProject.file('config/checkstyle/naver-checkstyle-rules.xml')
+	configProperties = [suppressionFile: rootProject.file('config/checkstyle/naver-checkstyle-suppressions.xml')]
 	maxWarnings = 0
 	// QueryDSL Q타입(build/generated) 위반은 suppressions.xml(전체 경로 매칭)로 제외한다.
 }
@@ -91,7 +93,7 @@ spotless {
 	lineEndings = com.diffplug.spotless.LineEnding.UNIX   // [newline-lf] LF 강제(.editorconfig 정합)
 	java {
 		target 'src/main/java/**/*.java', 'src/test/java/**/*.java'   // build/·생성코드 제외
-		eclipse().configFile('config/naver-eclipse-formatter.xml')
+		eclipse().configFile(rootProject.file('config/naver-eclipse-formatter.xml'))   // D-098: 위와 동일
 		importOrder('\\#', 'java', 'javax', 'org', 'net', 'com')      // '\\#' = static 그룹 먼저
 		removeUnusedImports()
 		trimTrailingWhitespace()

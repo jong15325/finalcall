@@ -222,7 +222,14 @@
 | D-094 | 폴더 구조 정형화를 파트별 재정리보다 앞에 둔다 — 설계는 컨설턴트 축 | ACCEPTED (supersedes D-093 「순서」 항) | 총괄 |
 | D-095 | `common/status.md` 폐기 — 뷰가 둘일 이유가 없다. 대체 = `templates [15]` | ACCEPTED | 총괄 |
 | C-072 | `templates [15]` 작업 리스트 신설 — 명령어 `작업 리스트 보여줘`. 트리가 파생을 준다 | ACCEPTED | 컨설턴트 |
-| C-073 | 폴더 구조 정본 — `<역할>/rules.md` · `references/` 신설. 조항 102 → 98, 신규 0 | ACCEPTED | 컨설턴트 |
+| C-073 | 폴더 구조 정본 — `<역할>/rules.md` · `references/` 신설. 조항 102 → 98, 신규 0 | ACCEPTED (`[3]` 파일 이동 지시는 → C-075로 뒤집힘 — `mv` 허용) | 컨설턴트 |
+| C-074 | `[7.4]`를 교체하지 않고 **삭제**한다 — 게이트의 순서는 규약의 내용이 아니다 | ACCEPTED (D-097 문면 회신. 조항 순증 0 → **-1**) | 컨설턴트 |
+| C-075 | 저장소 파일 규칙 6개+표 → 3개. **`mv` 금지가 실측으로 반증됐다**(`rename(2)`·inode 보존·내용 미독) | ACCEPTED (supersedes C-059, refines C-062. `[9.2]`·`[9.4]`·`[9.25]`·`[9.3]` 표 결번) | 컨설턴트 |
+| C-076 | 사용자에게 규약 용어로 말하지 않는다 — 브리핑이 안 읽히면 형식이 아니라 실패다 | ACCEPTED | 컨설턴트 |
+| D-096 | 프론트 지침은 `docs/frontend/rules.md` 존치, repo 루트는 포인터 (D-039 「이관」 항 대체) | **SUPERSEDED (→D-098)** — 모노 전환으로 「루트 포인터」가 성립하지 않음. `rules.md` 존치는 D-098이 승계 | 총괄 |
+| F-003 | `screen-route-map.md` 폐기 → `_archive/` | ACCEPTED | 프론트 |
+| D-097 | 도메인 진행 순서 재정의 — 목업이 코드 앞에, 보안이 QA 앞에 (`[7.4]` 보안 시점 대체) | ACCEPTED | 총괄 |
+| D-098 | 모노레포 전환 — `finalcall/{backend/{src,gateway}, frontend, docs, config}` | ACCEPTED (supersedes D-007·D-030·D-039·D-096) | 총괄 |
 | Q-004 | 검증 기준 = 확정 스펙 3종 (Q-001 기준 열거 보정) | ACCEPTED | QA |
 | S-003 | 부재·수량 근거 시 교차검증 의무 (D-086 보안 파트 적용) | ACCEPTED | 보안 |
 
