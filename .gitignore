@@ -43,9 +43,7 @@ boot*.log
 /logs/
 /app.pid
 
-# docs 작업 로그 — 상시 변경되어 IDE 커밋 목록을 오염시킨다 (C-058)
-# 이력 가치 없음: handover는 휘발성 맥락(rules [8.6] "이력을 남기지 않는다"),
-# inbox-log는 유실 시 중복 처리뿐. 로컬 파일은 유지되므로 전 대화가 그대로 읽는다.
-# decision-log·outbox는 제외하지 않는다 — rules.md `근거:` 링크의 정본이자 합의 이력이다.
-docs/*/inbox-log.md
-docs/*/notes/handover.md
+# docs 작업 로그는 제외하지 않는다 (C-067, supersedes C-058).
+# C-058이 inbox-log·handover를 여기 넣었다가 철회했다 — 호스트 Grep이 gitignore 대상 파일을
+# 스코프에 따라 조용히 건너뛰어 `rules [9.1]`(호스트 도구로 판단)의 신뢰성이 깨졌다.
+# IDE 커밋 목록 청결과 정본 신뢰성을 맞바꾼 것이었고, 후자가 크다.
