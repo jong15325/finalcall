@@ -1,3 +1,15 @@
+> **_archive/ — 읽지 않고 인용하지 않는다 (`rules.md [3.5]`).**
+> 이관: 2026-07-16 · B-1 · 원 경로 `docs/consulting/notes/rulebook-template-draft.md`
+> **왜 죽었나**: 이 초안이 낳은 것이 현행 `common/rules.md` + `common/templates.md [13]`이다.
+> 초안의 핵심 3장치는 **전부 채택되지 않았거나 이미 폐기됐다** —
+> ① 3문 편입 기준 = C-038, **C-066이 1문으로 대체(SUPERSEDED)** ·
+> ② `R-NNN` 항목 형식 = 미채택, 현행은 `[N.M]` ·
+> ③ 6절 결론의 "`collaboration-guide.md` 개편" = 그 문서 자체가 삭제됨.
+> 경로만 고치지 않는 이유는 `design/notes/handover-kickoff-prompt.md`의 판정과 같다 —
+> 고치면 나머지가 낡은 채로 살아 있는 것처럼 보인다. **이력으로만 남긴다.**
+
+---
+
 # 공통 규약 문서 템플릿 (초안)
 
 성격: 미확정 초안 — 타 역할 근거 인용 금지 (D-014 유형 4)
