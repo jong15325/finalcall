@@ -100,6 +100,38 @@ outbox/004): v0.2에 이미 등재. stale 마운트 부정 결과(D-086·D-043).
 **해당 도메인이 ③을 마쳤을 때** 그 도메인분만 돈다.
 
 **auth 이월 5건**(B-016·017·018·025 + m3)이 **member ④에 붙는다** — G4-1이 보안 없이 통과한 빚이다.
+**단 025는 QA RETEST-1·2의 선행이라 먼저 뺐다**(아래 절). **잔여 이월 = B-016·017·018 + m3 4건.**
+
+---
+
+## 025 게이트웨이 엣지 오류 핸들러 — 보안 구현 리뷰 (2026-07-16, D-097 ④)
+
+**왜 먼저 도나**: `_broadcast/004`(정정본) [0] — **QA RETEST-1·2가 025를 검증하는데 보안이 025를 안 봤다.**
+D-097이 코드 → **보안** → QA라 **보안이 임계 경로**였다. auth 이월 5건 중 025만 분리해 먼저 돌린다.
+
+**대상**(호스트 Read 원문 5파일 · `backend/outbox/GATEWAY/001` 산출물 목록 기준 — **전수**):
+`gateway/response/GatewayErrorResponse.java` · `gateway/filter/RateLimitResponseGlobalFilter.java` ·
+`infra/security/GatewayErrorCode.java` · `infra/security/GatewayAccessFilter.java` ·
+`gateway/ratelimit/RateLimit429IntegrationTest.java`. **탐색 = 호스트 Grep(Glob 미사용 — `[9.1]`).**
+
+| # | 점검 항목 | 결과 | 근거 |
+|---|---|---|---|
+| 1 | 엣지 오류의 정보 과다 노출 | O | 429·403 **메시지가 상수**다. 스택·내부 경로·예외 타입 노출 0. `GatewayErrorResponse` = `success·code·message·timestamp` 4필드 고정, `errors` 미포함 |
+| 2 | 429 핸들러 fail-safe | O | `RateLimitResponseGlobalFilter:69~72` — 직렬화 실패 시 `super.setComplete()` 폴백. **429 상태는 유지되고 본문만 빠진다.** rate limit이 풀리지 않는다(fail-open 아님) |
+| 3 | 응답 커밋 경합 | O | `:62` `isCommitted()` 선검사 후 위임 |
+| 4 | 필터 순서 | O | `RateLimitResponseGlobalFilter`·`InternalTokenGlobalFilter` 둘 다 `HIGHEST_PRECEDENCE`(동률). **하나는 request, 하나는 response를 mutate해 서로 간섭 없다.** 둘 다 라우트 필터(rate limiter)보다 앞이라 순서 무관하게 성립 |
+| 5 | 403 코드 분리 | O | `GatewayErrorCode.DIRECT_ACCESS_BLOCKED` = `GATEWAY_403`. `CommonErrorCode`·도메인 enum 무변경(065 기준 준수) |
+| 6 | 엣지 DTO 독립 | O | 게이트웨이가 서비스 `ErrorResponse`에 의존하지 않고 동형 record 자체 보유(B-026 독립 2앱). **계약 `[1.6]` 필드명·순서·타입 일치** |
+| 7 | **시크릿 대조 방식** | **X** | `GatewayAccessFilter:57` `properties.secret().equals(token)` — **비상수시간** → **SEC-015** |
+
+**판정: 025 보안 리뷰 통과. QA RETEST-1·2 차단 사유 없음.**
+**SEC-015는 비차단** — 응답 **형상**(코드 문자열·필드 집합·헤더 유무)을 안 바꾼다. RETEST-1·2의
+기대치는 형상이고 SEC-015 수정은 비교 함수 한 줄이라 **QA 시나리오가 다시 돌 이유가 없다.**
+→ **D-097의 "보안 결함이 나오면 코드가 바뀌고 QA를 다시 돌려야 한다"에 해당하지 않는다.**
+
+**★ SEC-015가 SEC-005에서 안 잡힌 이유**: SEC-005는 *"차단이 존재하는가"*를 물었고(O),
+**"차단이 어떻게 비교하는가"는 안 물었다.** **같은 파일 같은 행을 읽고도 질문이 달라 안 보였다.**
+→ **범위가 다르면 같은 코드도 다시 봐라.** 이월 리뷰를 "이미 본 코드"라고 건너뛰지 마라.
 
 - @PreAuthorize 등 인가 적용 실태 표본(특히 /admin/**, relocate, orders) — SEC-011
 - 검증 로직 우회 경로(API 직접 호출로 소유자·자기구매·상한 검증 우회) — SEC-003
