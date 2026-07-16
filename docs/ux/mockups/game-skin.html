@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>FinalCall — 게임 스킨 목업 (U-016 · U-020 확정 토큰 렌더)</title>
+<style>
+/* ============================================================
+   design-system.md v0.2.1 [2.6] 확정 토큰 — 값 복제가 아니라 전사다.
+   토큰이 바뀌면 여기만 고친다. 정본은 docs/ux/design-system.md.
+   ============================================================ */
+:root, [data-theme="dark"] {
+  --color-bg: #001C33;             --color-surface: #012A4A;
+  --color-surface-raised: #013A63; --color-border: #3394DE;
+  --color-border-muted: #14496E;   --color-text: #FAF7D5;
+  --color-text-muted: #B8C4D9;     --color-text-subtle: #6B8CA6;
+  --color-focus-ring: #FAF7D5;
+
+  /* 조작 계층 — 테마 무관 정적값 ([1.2] ①) */
+  --primary: #0667BD; --primary-hover: #0560AD; --primary-pressed: #E25706;
+  --primary-selected: #E2B206; --primary-disabled: #0A3A63;
+  --primary-fg: #FAF7D5; --on-accent-fg: #001C33;
+
+  /* 정보 계층 ([1.2] ②) */
+  --success: #4ADE80; --warning: #E2B206; --danger: #FF4D4D; --info: #3394DE;
+
+  /* 아이템 계층 — 아트 실측, 변경 금지 ([1.2] ③) */
+  --element-water: #19B2FF; --element-fire: #FF5500;
+  --element-earth: #95B259; --element-wind: #66CCCC;
+
+  --slot: #000000;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 24px;
+  background: var(--color-bg); color: var(--color-text);
+  font-family: Pretendard, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px; line-height: 1.5;
+}
+.num { font-variant-numeric: tabular-nums; }
+
+/* 전역 포커스 — 019 확정. offset 2px 는 AA 조건이다(0이면 황금 위 1.82:1) */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; }
+h2 { font-size: 1.25rem; font-weight: 600; margin: 40px 0 4px; }
+h3 { font-size: 1.125rem; font-weight: 600; margin: 24px 0 8px; }
+.lede { color: var(--color-text-muted); font-size: .875rem; margin: 0 0 20px; }
+.rule { border: 0; border-top: 1px solid var(--color-border-muted); margin: 32px 0; }
+
+/* ── 자산 경로 배너 ─────────────────────────────── */
+.asset-bar {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;
+  font-size: .8125rem; color: var(--color-text-muted);
+}
+.asset-bar code { color: var(--color-text); font-size: .8125rem; }
+.asset-bar input {
+  width: 100%; margin-top: 8px; padding: 8px 10px;
+  background: var(--color-bg); color: var(--color-text);
+  border: 1px solid var(--color-border); border-radius: 8px;
+  font-family: ui-monospace, monospace; font-size: .75rem;
+}
+
+/* ── 패널 ──────────────────────────────────────── */
+.panel {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 12px; padding: 20px;
+}
+.panel-head {
+  background: var(--primary); color: var(--primary-fg);
+  margin: -20px -20px 16px; padding: 12px 20px;
+  border-radius: 12px 12px 0 0; font-weight: 600;
+}
+
+/* ── 조작 계층: 버튼 ([1.2] ①, [2.2]) ──────────── */
+.btn {
+  font: inherit; font-weight: 600; cursor: pointer;
+  padding: 10px 18px; border-radius: 8px;
+  background: var(--primary); color: var(--primary-fg);
+  border: 1px solid var(--primary);
+  transition: background 120ms cubic-bezier(.4,0,.2,1), border-color 120ms;
+}
+/* hover = 채우기 미세 변화 + border 밝힘. 지각 신호는 테두리가 만든다([2.2]) */
+.btn:hover { background: var(--primary-hover); border-color: var(--color-border); }
+/* 눌림 = 게임의 hue 전환. 전경은 남색으로 반전(크림이면 3.45:1) */
+.btn:active { background: var(--primary-pressed); border-color: var(--primary-pressed); color: var(--on-accent-fg); }
+.btn:disabled { background: var(--primary-disabled); border-color: var(--primary-disabled); color: var(--color-text-subtle); cursor: not-allowed; }
+.btn-lg { padding: 14px 28px; font-size: 1.125rem; width: 100%; }
+.btn-ghost { background: transparent; color: var(--color-text); border-color: var(--color-border); }
+.btn-ghost:hover { background: var(--color-surface-raised); }
+
+/* ── 조작 계층: 탭 ─────────────────────────────── */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--color-border-muted); margin-bottom: 16px; }
+.tab {
+  font: inherit; font-weight: 500; cursor: pointer;
+  background: transparent; border: 0; border-bottom: 3px solid transparent;
+  padding: 10px 16px; color: var(--color-text-muted);
+}
+.tab:hover { color: var(--color-text); }
+/* 선택 = 황금. 언더라인 형태가 "선택됨"과 warning 칩을 구분한다([1.2] 한계) */
+.tab[aria-selected="true"] { color: var(--primary-selected); border-bottom-color: var(--primary-selected); font-weight: 600; }
+
+/* ── 아이템 슬롯 — 아트는 검정 전제로 그려졌다([2.1] slot) ── */
+.slot {
+  background: var(--slot); border: 1px solid var(--color-border-muted);
+  display: grid; place-items: center; overflow: hidden;
+}
+.slot img {
+  image-rendering: pixelated;      /* U-016 — 원본 정수배 확대 */
+  display: block;
+}
+
+/* ── 아이템 계층: element 칩 ([1.2] ③) ──────────
+   ★ bg 위에만. primary 위는 water 2.4:1 / fire 1.78:1 로 무너진다([2.4])
+   ★ 색 단독 금지 — 아이콘+라벨 필수 */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .75rem; font-weight: 600; padding: 2px 8px;
+  border-radius: 4px; border: 1px solid currentColor;
+  background: transparent;
+}
+.chip .glyph { font-size: .8125rem; line-height: 1; }
+.chip-water { color: var(--element-water); }
+.chip-fire  { color: var(--element-fire); }
+.chip-earth { color: var(--element-earth); }
+.chip-wind  { color: var(--element-wind); }
+
+/* ── 정보 계층: 상태 칩 ([1.2] ②) ─────────────── */
+.status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px;
+}
+.status-warning { background: color-mix(in srgb, var(--warning) 12%, var(--color-bg)); color: var(--warning); }
+.status-danger  { background: color-mix(in srgb, var(--danger) 12%, var(--color-bg)); color: var(--danger); }
+.status-success { background: color-mix(in srgb, var(--success) 12%, var(--color-bg)); color: var(--success); }
+.status-info    { background: color-mix(in srgb, var(--info) 12%, var(--color-bg)); color: var(--info); }
+
+/* 골드포스 — gold_black 아트 유지 + 별도 표시(기획 033 (a), 표현은 디자인 자율) */
+.goldforce {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .6875rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  background: var(--primary-selected); color: var(--on-accent-fg);   /* 8.74:1 */
+}
+
+/* ── 카드 그리드 ───────────────────────────────── */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+.card {
+  background: var(--color-surface); border: 1px solid var(--color-border-muted);
+  border-radius: 12px; padding: 12px; cursor: pointer;
+  transition: border-color 120ms;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.card:hover { border-color: var(--color-border); }
+/* 골드포스 활성 = 아트 교체 아님. 테두리로 얹는다 */
+.card.gf { border-color: var(--primary-selected); }
+.card-top { display: flex; gap: 12px; }
+.card-slot { width: 78px; height: 145px; flex: none; border-radius: 6px; position: relative; }
+.card-name { font-weight: 600; font-size: .9375rem; line-height: 1.3; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.card-price { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid var(--color-border-muted); }
+.card-price .amt { font-weight: 600; font-size: 1.125rem; }
+.label { font-size: .75rem; color: var(--color-text-subtle); }
+
+/* ── 상세 히어로 ───────────────────────────────── */
+.detail { display: grid; grid-template-columns: auto 1fr; gap: 28px; }
+.detail-slot { width: 150px; height: 279px; border-radius: 8px; }  /* l 50×93 × 3배(U-016) */
+.hero-price { font-size: 1.875rem; font-weight: 600; line-height: 1.2; }
+.spec {
+  background: var(--color-bg); border: 1px solid var(--color-border-muted);
+  border-radius: 8px; padding: 10px 12px; font-size: .8125rem;
+  color: var(--color-text-muted); white-space: pre-wrap; word-break: break-word;
+}
+
+/* ── 판독성 실측대 ─────────────────────────────── */
+.probe { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; }
+.probe figure { margin: 0; text-align: center; }
+.probe figcaption { font-size: .6875rem; color: var(--color-text-subtle); margin-top: 6px; }
+.probe .slot { border-radius: 4px; }
+.ladder { display: flex; gap: 6px; align-items: flex-end; }
+.ladder figure { margin: 0; text-align: center; }
+.ladder figcaption { font-size: .625rem; color: var(--color-text-subtle); margin-top: 4px; }
+
+table.mini { border-collapse: collapse; font-size: .8125rem; margin-top: 8px; }
+table.mini th, table.mini td { border: 1px solid var(--color-border-muted); padding: 6px 10px; text-align: left; }
+table.mini th { color: var(--color-text-subtle); font-weight: 600; }
+.note { font-size: .8125rem; color: var(--color-text-muted); }
+.warn { color: var(--warning); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>FinalCall — 게임 스킨 목업</h1>
+<p class="lede">
+  design-system <strong>v0.2.1</strong> 확정 토큰(U-016·U-020)을 경매 상세·상거래 카드에 실제로 입힌 것.
+  아이템 아트는 <strong>원게임 실물</strong>이다(648개 CRC 전건 검증). 크롬은 이미지 부착이 아니라 <strong>CSS 재현</strong>이다(U-016).
+</p>
+
+<div class="asset-bar">
+  아트 경로는 <strong>P-012</strong> 그대로 계약 필드 3개(<code>level</code>·<code>element</code>·<code>kind</code>)에서 파생한다 —
+  서버는 이미지 필드를 주지 않는다. 아래 함수가 그 파생을 그대로 구현한 것이고, 프론트가 쓸 것과 같다.<br>
+  <code>gold_black/level{level}/{l|s}/{element}/{kind}.png</code> · <code>gold_black</code>은 고정 세그먼트(기획 031)
+  <label>
+    <input id="base" value="file:///D:/private_server/SP/tool/Survival-project-PGF-decompressor-main/src/images/global/card/card_image/gold_black"
+           aria-label="자산 베이스 경로">
+  </label>
+  <div style="margin-top:6px">아트가 안 보이면 이 경로를 고쳐라. 목업 전용 로컬 경로이고 계약·구현과 무관하다.</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>1. 상거래 카드 — 목록</h2>
+<p class="lede">
+  카드 아트는 <code>l</code>(50×93)을 <strong>1.56배</strong>로 띄웠다. 골드포스 활성 매물도 아트는 <code>gold_black</code>
+  그대로이고 <strong>테두리 황금 + 배지</strong>로 얹는다(기획 033 (a) — 레벨·속성 축을 지키기 위해).
+</p>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true">경매</button>
+  <button class="tab" role="tab" aria-selected="false">즉시구매</button>
+  <button class="tab" role="tab" aria-selected="false">고정가</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<hr class="rule">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>2. 경매 상세</h2>
+<p class="lede"><code>l</code> 50×93을 <strong>3배(150×279)</strong>로 확대 — <code>image-rendering: pixelated</code>, 정수배(U-016).</p>
+
+<div class="panel">
+  <div class="panel-head">경매 상세</div>
+  <div class="detail">
+    <div>
+      <div class="slot detail-slot" id="heroSlot"></div>
+      <div style="margin-top:10px; text-align:center">
+        <span class="goldforce">◆ 골드포스 2일 4시간</span>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px">
+        <span class="chip chip-fire"><span class="glyph" aria-hidden="true">🔥</span>불</span>
+        <span class="label">Lv.<strong class="num" style="color:var(--color-text)">7</strong></span>
+        <span class="status status-warning">⏳ 마감 12분</span>
+      </div>
+      <div style="font-size:1.25rem; font-weight:600; margin-bottom:16px">불의 대검 +7</div>
+
+      <div class="label">현재 최고가</div>
+      <div class="hero-price num">1,240,000 <span style="font-size:1rem; color:var(--color-text-muted)">캐시</span></div>
+      <div class="label" style="margin:4px 0 16px">
+        입찰 <strong class="num" style="color:var(--color-text-muted)">14</strong>회 ·
+        시작가 <span class="num">800,000</span> · 판매자 <span style="color:var(--color-text-muted)">달빛상인</span>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-bottom:8px">
+        <button class="btn" style="flex:1">입찰하기</button>
+        <button class="btn btn-ghost" style="flex:1">즉시구매 <span class="num">1,500,000</span></button>
+      </div>
+      <div class="note" style="margin-bottom:16px">↑ Tab 으로 포커스 링을 확인해라 — 크림 2px + offset 2px(019).</div>
+
+      <div class="label" style="margin-bottom:4px">아이템 정보 (specSnapshot)</div>
+      <div class="spec">공격력 412~508
+채널링 대미지 +18%
+스킬: 화염참(32%) / 강타(11%)
+합성 조건: 불속성 결정 3</div>
+      <div class="note" style="margin-top:6px">
+        단일 자유 텍스트다(P-012 안건4). 길이·줄바꿈이 가변이고 <strong>내용은 시드 단계 미확정</strong>(D-048) —
+        그래서 내용에 의존하지 않는 표현으로 짰다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="rule">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>3. ★ 선결 판정 — <code>s</code>(26×28) 레벨 배지가 목록에서 읽히나</h2>
+<p class="lede">
+  P-013 조건이다. <strong>레벨은 시세 집계·필터 축(1급 정보)이라 목록에서 판독돼야 한다</strong>(기획 요구).
+  아트에 배지가 구워져 있으니 위임할 수 있다면 중복 표기를 없앤다. 아래가 그 실측대다.
+</p>
+
+<h3>3-a. 같은 아이템, 레벨 1→9 — <code>s</code> 원본 1배 (26×28)</h3>
+<p class="note">목록에서 실제로 이 크기다. <strong>레벨이 구분되나?</strong></p>
+<div class="ladder" id="ladder1"></div>
+
+<h3>3-b. 같은 것을 2배 (52×56)</h3>
+<div class="ladder" id="ladder2"></div>
+
+<h3>3-c. 같은 것을 3배 (78×84)</h3>
+<div class="ladder" id="ladder3"></div>
+
+<h3>3-d. 참고 — <code>l</code>(50×93) 3배에서는 어떻게 보이나</h3>
+<div class="ladder" id="ladderL"></div>
+
+<h3>디자인 판정</h3>
+<table class="mini">
+  <tr><th>크기</th><th>레벨 판독</th><th>결론</th></tr>
+  <tr><td><code>s</code> 1배 26×28</td><td class="warn">불가 판정</td><td>계약 <code>level</code>을 <strong>텍스트로 병기</strong>한다</td></tr>
+  <tr><td><code>s</code> 2~3배</td><td>육안 확인 대상</td><td>확대해도 목록 카드에 넣을 크기가 아니다</td></tr>
+  <tr><td><code>l</code> 3배 (상세)</td><td>가능</td><td><strong>아트 위임</strong> — 상세는 중복 표기 안 한다</td></tr>
+</table>
+<p class="note" style="margin-top:10px">
+  <strong>크기별로 갈리고 일괄 규칙이 성립하지 않는다.</strong> 위 1의 카드가 이 판정을 이미 반영해
+  <code>Lv.7</code>을 텍스트로 병기하고 있다 — 아트에 배지가 있어도 병기한다.
+  <strong>사용자가 3-a를 보고 "읽힌다"고 하면 카드에서 <code>Lv.</code>를 뺀다.</strong>
+</p>
+
+<hr class="rule">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>4. 색 계층 검증대 — 규칙이 실물에서 지켜지는지</h2>
+
+<h3>4-a. element 칩은 <code>bg</code> 위에만 ([1.2] ③, [2.4])</h3>
+<div style="display:flex; gap:24px; flex-wrap:wrap">
+  <div style="background:var(--color-bg); border:1px solid var(--color-border-muted); border-radius:8px; padding:14px">
+    <div class="label" style="margin-bottom:8px">✅ <code>bg</code> 위 — 허용 (water 7.29 · fire 5.4)</div>
+    <span class="chip chip-water"><span class="glyph" aria-hidden="true">💧</span>물</span>
+    <span class="chip chip-fire"><span class="glyph" aria-hidden="true">🔥</span>불</span>
+    <span class="chip chip-earth"><span class="glyph" aria-hidden="true">🌿</span>흙</span>
+    <span class="chip chip-wind"><span class="glyph" aria-hidden="true">🌀</span>바람</span>
+  </div>
+  <div style="background:var(--primary); border:1px solid var(--color-border); border-radius:8px; padding:14px">
+    <div class="label" style="margin-bottom:8px; color:var(--primary-fg)">❌ <code>primary</code> 위 — 금지 (water 2.4 · fire 1.78)</div>
+    <span class="chip chip-water"><span class="glyph" aria-hidden="true">💧</span>물</span>
+    <span class="chip chip-fire"><span class="glyph" aria-hidden="true">🔥</span>불</span>
+    <span class="chip chip-earth"><span class="glyph" aria-hidden="true">🌿</span>흙</span>
+    <span class="chip chip-wind"><span class="glyph" aria-hidden="true">🌀</span>바람</span>
+  </div>
+</div>
+<p class="note" style="margin-top:8px">
+  오른쪽이 왜 금지인지가 눈으로 보인다. <strong>이 목업은 규칙 위반을 일부러 렌더한다</strong> — 규칙이 취향이 아니라 계산임을 보이려고.
+  earth·wind는 <strong>아트 실측</strong>값이다(올리브·청록). 관례 추정(amber·green)이 반증된 그 2건.
+</p>
+
+<h3>4-b. 황금의 중의성 — 형태로 구분한다 ([1.2] 한계)</h3>
+<div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap">
+  <div><span class="label">탭에서 = 선택됨</span><br>
+    <span style="display:inline-block; margin-top:6px; padding:8px 14px; color:var(--primary-selected); border-bottom:3px solid var(--primary-selected); font-weight:600">경매</span>
+  </div>
+  <div><span class="label">칩에서 = 주의</span><br>
+    <span style="display:inline-block; margin-top:6px"><span class="status status-warning">⏳ 마감 12분</span></span>
+  </div>
+  <div><span class="label">배지에서 = 골드포스</span><br>
+    <span style="display:inline-block; margin-top:6px"><span class="goldforce">◆ 골드포스 2일</span></span>
+  </div>
+</div>
+<p class="note" style="margin-top:8px">
+  같은 <code>#E2B206</code>이 셋이다. hue 재고가 없어 <strong>형태(언더라인 / 둥근 칩 / 각진 배지)와 위치로만 구분</strong>한다.
+  <strong>이게 이 팔레트의 가장 약한 곳이다</strong> — 실사용에서 혼동이 관측되면 <code>warning</code>을 재배치한다(토큰 1개 값 교체).
+</p>
+
+<h3>4-c. 조작 상태 = hue 전환 ([2.2])</h3>
+<div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+  <button class="btn">기본 (hover/눌러 봐라)</button>
+  <button class="btn" style="background:var(--primary-hover); border-color:var(--color-border)">hover 고정</button>
+  <button class="btn" style="background:var(--primary-pressed); border-color:var(--primary-pressed); color:var(--on-accent-fg)">눌림 고정</button>
+  <button class="btn" disabled>비활성</button>
+</div>
+<p class="note" style="margin-top:8px">
+  게임은 명도가 아니라 <strong>hue로 상태를 말한다</strong>(파랑→주황). 그래서 <strong>전경색이 상태에 따라 뒤집힌다</strong> —
+  크림→남색. 주황 위 크림은 3.45:1, 황금 위 크림은 <strong>1.82:1</strong>이라 웹에선 안 된다.
+  <strong>게임을 그대로 베끼면 깨지는 유일한 지점이고, 여기서만 웹이 이긴다.</strong>
+</p>
+
+<hr class="rule">
+<p class="note">
+  근거: <code>docs/ux/design-system.md</code> v0.2.1 [1]·[2] · <code>ux/rules.md</code> [11] ·
+  api-contract v1.4 [3.3] · P-012·P-013 · 기획 033 · D-091(자율 확정) ·
+  아트 = 원게임 실물 648개(CRC 전건 검증, 치수 324/324).
+</p>
+
+<script>
+/* ============================================================
+   P-012 경로 파생 — 서버가 이미지 필드를 주지 않는다.
+   계약 필드 3개로 프론트가 정적 경로를 만든다. 이 함수가 그 명세다.
+   ============================================================ */
+function artPath(base, { level, element, kind }, size /* 'l' | 's' */) {
+  return `${base}/level${level}/${size}/${element}/${kind}.png`;
+}
+
+const ELEMENT = {
+  water: { ko: '물',   glyph: '💧' },
+  fire:  { ko: '불',   glyph: '🔥' },
+  earth: { ko: '흙',   glyph: '🌿' },
+  wind:  { ko: '바람', glyph: '🌀' },
+};
+
+/* 계약 [3.3] AuctionSummary 를 흉내 낸 것 — 필드명이 계약과 1:1이다 */
+const ITEMS = [
+  { nameSnapshot:'불의 대검 +7',   level:7, element:'fire',  kind:'sword',   highestBidAmount:1240000, bidCount:14, endsIn:'12분',  goldforce:'2일',  buyNowPrice:1500000 },
+  { nameSnapshot:'심해의 지팡이 +5', level:5, element:'water', kind:'wand',    highestBidAmount:430000,  bidCount:3,  endsIn:'4시간', goldforce:null,   buyNowPrice:null },
+  { nameSnapshot:'대지의 갑옷 +9',  level:9, element:'earth', kind:'armor',   highestBidAmount:2980000, bidCount:41, endsIn:'2분',   goldforce:'6시간',buyNowPrice:3400000 },
+  { nameSnapshot:'질풍의 활 +6',    level:6, element:'wind',  kind:'bow',     highestBidAmount:760000,  bidCount:8,  endsIn:'1일',   goldforce:null,   buyNowPrice:null },
+  { nameSnapshot:'화염의 도끼 +3',  level:3, element:'fire',  kind:'axe',     highestBidAmount:180000,  bidCount:0,  endsIn:'3일',   goldforce:null,   buyNowPrice:220000 },
+  { nameSnapshot:'수호의 방패 +8',  level:8, element:'water', kind:'shield',  highestBidAmount:1890000, bidCount:22, endsIn:'38분',  goldforce:'11일', buyNowPrice:null },
+];
+
+const won = n => n.toLocaleString('ko-KR');
+
+function render() {
+  const base = document.getElementById('base').value.replace(/\/+$/, '');
+
+  /* ── 1. 카드 그리드 ── */
+  document.getElementById('grid').innerHTML = ITEMS.map(it => {
+    const el = ELEMENT[it.element];
+    const urgent = it.endsIn.includes('분');
+    return `
+    <article class="card ${it.goldforce ? 'gf' : ''}" tabindex="0">
+      <div class="card-top">
+        <div class="slot card-slot">
+          <img src="${artPath(base, it, 'l')}" width="78" height="145" alt="${it.nameSnapshot}">
+        </div>
+        <div style="min-width:0; display:flex; flex-direction:column; gap:6px">
+          <div class="card-name">${it.nameSnapshot}</div>
+          <div class="card-meta">
+            <span class="chip chip-${it.element}"><span class="glyph" aria-hidden="true">${el.glyph}</span>${el.ko}</span>
+            <span class="label">Lv.<strong class="num" style="color:var(--color-text)">${it.level}</strong></span>
+          </div>
+          <div class="card-meta">
+            <span class="status ${urgent ? 'status-warning' : 'status-info'}">⏳ ${it.endsIn}</span>
+            ${it.buyNowPrice ? '<span class="status status-success">즉시구매</span>' : ''}
+          </div>
+          ${it.goldforce ? `<div><span class="goldforce">◆ 골드포스 ${it.goldforce}</span></div>` : ''}
+        </div>
+      </div>
+      <div class="card-price">
+        <div>
+          <div class="label">현재가</div>
+          <div class="amt num">${won(it.highestBidAmount)}</div>
+        </div>
+        <div class="label num">입찰 ${it.bidCount}</div>
+      </div>
+    </article>`;
+  }).join('');
+
+  /* ── 2. 상세 히어로 ── */
+  const hero = ITEMS[0];
+  document.getElementById('heroSlot').innerHTML =
+    `<img src="${artPath(base, hero, 'l')}" width="150" height="279" alt="${hero.nameSnapshot}">`;
+
+  /* ── 3. 판독성 실측대 — 같은 아이템, 레벨만 1→9 ── */
+  const probe = { element:'fire', kind:'sword' };
+  const ladder = (id, size, w, h) => {
+    document.getElementById(id).innerHTML = [1,2,3,4,5,6,7,8,9].map(level => `
+      <figure>
+        <div class="slot" style="width:${w}px; height:${h}px">
+          <img src="${artPath(base, { ...probe, level }, size)}" width="${w}" height="${h}" alt="레벨 ${level}">
+        </div>
+        <figcaption>Lv.${level}</figcaption>
+      </figure>`).join('');
+  };
+  ladder('ladder1', 's', 26, 28);
+  ladder('ladder2', 's', 52, 56);
+  ladder('ladder3', 's', 78, 84);
+  ladder('ladderL', 'l', 150, 279);
+}
+
+document.getElementById('base').addEventListener('change', render);
+render();
+</script>
+</body>
+</html>
