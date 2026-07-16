@@ -1,7 +1,7 @@
 # QA 파트 지침 (D-040, 지침 유형)
 
-QA 역할의 산출물·형식·우선순위 규약. 협업 규약은 collaboration-guide.md,
-메시지·티켓 형식은 templates.md를 따른다.
+QA 역할의 산출물·형식·우선순위 규약. 협업 규약은 common/rules.md,
+메시지·티켓 형식은 common/templates.md를 따른다.
 
 ## 1. 역할과 투입 시점
 
@@ -59,7 +59,8 @@ QA 역할의 산출물·형식·우선순위 규약. 협업 규약은 collaborat
 
 ## 6. 실행 분업 — 두뇌/손 (D-078)
 
-QA 대화(두뇌)와 테스트 실행(손)을 분리한다. 정본은 collaboration-guide §8.
+QA 대화(두뇌)와 테스트 실행(손)을 분리한다. 정본은 **D-078**(결정 로그)이고,
+Claude Code 운용은 `common/rules.md [9]` Claude Code 절을 따른다.
 
 - QA 대화 = 두뇌: 테스트 전략·시나리오 설계·계약 정합 검증·결함 분류·게이트 판정 권고·파일 버스
   조율. 이 대화가 담당한다.

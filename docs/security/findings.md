@@ -1,6 +1,6 @@
 # 보안 발견 티켓 (SEC-NNN)
 
-공격자 관점 발견 누적. 전 역할 열람(collaboration-guide 3절, templates 10).
+공격자 관점 발견 누적. 전 역할 열람(`common/rules.md [3]` 문서 체계 · `common/templates.md`).
 심각도: Critical(자금 탈취·인증 우회) / Major / Minor. 삭제 금지, 상태 라벨만 갱신.
 
 검토 대상: docs/api-contract.md DRAFT v0.1 (근거 domain-spec v0.3, erd v0.2).

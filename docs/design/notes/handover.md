@@ -59,5 +59,5 @@
 3. 확정 스펙: `docs/spec/domain-spec.md` v0.5 → `docs/spec/erd.md` v0.7 → `docs/spec/api-contract.md` v1.4
 4. 화면 층: `frontend-planning/screen-spec.md` v0.3 · `skeleton-plan.md` v0.2
 5. `management/decision-log.md`(최신 **D-092**) · `decision-index.md`
-6. `management/collaboration-guide.md` · `templates.md`
+6. `common/rules.md` · `common/templates.md` — **규약 정본.** (구 `management/collaboration-guide.md`·`templates.md`는 2026-07-16 삭제됨. 총괄이 `[3.2]` 한시 해제로 이 줄만 정정했다 — 나머지는 네 몫이다)
 7. 아이템 도출 근거 필요 시: `design/notes/erd-item-modeling.md`

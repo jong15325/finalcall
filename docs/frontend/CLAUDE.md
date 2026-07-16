@@ -1,7 +1,7 @@
 # 프론트엔드 CLAUDE.md (D-039 — 프론트 저장소 생성 시 루트로 이관)
 
 Spring Boot 백엔드(finalcall)와 짝을 이루는 프론트엔드 저장소의 Claude Code 지침이다.
-협업 규약은 백엔드 저장소 docs/management/collaboration-guide.md, 형식은 templates.md를 따른다.
+협업 규약은 백엔드 저장소 docs/common/rules.md, 형식은 docs/common/templates.md를 따른다.
 
 ## 1. 프로젝트 정보
 

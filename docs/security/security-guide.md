@@ -1,7 +1,7 @@
 # 보안 파트 지침 (D-041, 지침 유형)
 
-보안 역할(D-013)의 검토 절차·산출물 규약. 협업 규약은 collaboration-guide.md,
-형식은 templates.md를 따른다.
+보안 역할(D-013)의 검토 절차·산출물 규약. 협업 규약은 common/rules.md,
+형식은 common/templates.md를 따른다.
 
 ## 1. 역할과 게이트 (D-013)
 
