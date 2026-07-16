@@ -23,13 +23,16 @@
 | SEC-010 | Minor | public_id ULID 시각 성분 노출 | WONTFIX(수용) | 정보 |
 | SEC-011 | Minor | /admin/** 인가 일괄 적용 규정 부재 | OPEN(게이트2) | 구현 |
 | SEC-012 | Minor | 다계정 공모(collusion) 시세 조작 | WONTFIX(범위 밖 확정) | 정보 |
-| SEC-013 | Major | rate limit이 라우트 순서에만 의존 — 회귀 테스트 0 | OPEN | 구현 |
+| SEC-013 | ~~Major~~ | ~~rate limit이 라우트 순서에만 의존 — 회귀 테스트 0~~ | **WONTFIX(오탐 철회, `[4.17]`)** | 구현 |
 | SEC-014 | Minor | X-Forwarded-For 미신뢰 — LB 뒤 전 클라이언트 단일 버킷 | OPEN(실배포 전) | 구현/운영 |
 
 SEC-005 선행 검증 결과 (게이트 2 분리 착수, 총괄 승인 `management/outbox/_broadcast/003` [4], 2026-07-16)
-- **탐색 방법**: 호스트 Glob `**/*.java`·`**/application*.yml` → `gateway/` 모듈 전수 → 호스트 Read
-  원문 대조(`application.yml`·`-local`·`-dev`·`-prod` · `RateLimitConfig` · `InternalTokenGlobalFilter` ·
-  `GatewayInternalProperties`×2 · `GatewayAccessFilter` · `GatewayApplicationTests`). **bash 마운트 조회 미사용**(D-090).
+- **탐색 방법(정정본)**: 호스트 **Grep** `RequestRateLimiter` on 저장소 → 게이트웨이 파일 특정 →
+  호스트 Read 원문 대조 10파일. **bash 마운트 조회 미사용**(현행 `[9.1]`).
+  ~~초판은 호스트 Glob `**/*.java`로 탐색했다~~ → **그 Glob이 `Showing 100 of 111`로 잘려 SEC-013
+  오탐을 만들었다. Glob은 현행 `[9.1]` 도구 목록에서 빠졌다**(C-075/076). 재검증은 Grep으로 했다.
+- **경로**: 모노 전환(D-098) 후 코드는 `backend/` 아래다. 초판의 `gateway/…`·`src/…` 표기는
+  `checklist.md` [SEC-005 선행 검증] 표에서 정정했다.
 - **FIXED 근거(긍정·원문 인용)**: rate limit 실재 — `gateway/application.yml:20~33` 라우트
   `auth-rate-limited`(`/api/v1/auth/login,signup,refresh`) + `RequestRateLimiter`
   (Redis 토큰버킷 replenish 5·burst 10·1토큰, `#{@clientIpKeyResolver}`). 직접접근 차단 실재 —
@@ -37,9 +40,11 @@ SEC-005 선행 검증 결과 (게이트 2 분리 착수, 총괄 승인 `manageme
   `GatewayAccessFilter`가 JWT 앞 관문에서 403(`GATEWAY_403`), 공통 `enforced: true`.
   시크릿 fail-fast 성립 — dev/prod가 **placeholder를 안 쓰고** relaxed binding + `@NotBlank`
   (placeholder를 쓰면 미해결 리터럴이 `@NotBlank`를 통과해 fail-fast가 무력화되는 함정까지 주석으로 방어).
-- **→ SEC-005의 「공백」은 메워졌다**(D-065 롤백 부작용 소멸). 다만 **검증 과정에서 신규 2건**
-  (SEC-013·014). **둘은 005의 잔여가 아니라 005 처방 자체의 결함이라 분리 등재한다.**
-- 판정: `decision-log.md` **S-004**.
+- **회귀 울타리도 실재한다**(재검증분): `backend/gateway/…/RateLimit429IntegrationTest` — Testcontainers
+  Redis로 실제 429를 유발하고 `GATEWAY_429` envelope·`Retry-After`를 검증한다. 커밋 `4c94471`.
+- **→ SEC-005의 「공백」은 메워졌다**(D-065 롤백 부작용 소멸). **잔여는 SEC-014 1건**(실배포 전 조건).
+- ~~검증 과정에서 신규 2건(SEC-013·014)~~ → **SEC-013은 오탐이었고 철회했다.** 상세는 SEC-013 티켓.
+- 판정: `decision-log.md` **S-004**(SEC-013 철회는 상태 줄 부기).
 
 게이트 1 델타 재확인 결과 (api-contract v0.2·erd v0.3 원문 검증, 2026-07-14)
 - FIXED(계약 반영·델타 검증): SEC-001(§4.4 pg_tx_id 멱등 + erd charge.pg_tx_id UK),
@@ -338,9 +343,51 @@ SEC-005 선행 검증 결과 (게이트 2 분리 착수, 총괄 승인 `manageme
 
 ---
 
-## SEC-013. rate limit이 라우트 순서에만 의존한다 — 회귀 테스트 0
+## SEC-013. ~~rate limit이 라우트 순서에만 의존한다 — 회귀 테스트 0~~ → **오탐. 철회한다**
 
-심각도: Major · 상태: OPEN · 2026-07-16 (SEC-005 선행 검증 산출)
+심각도: ~~Major~~ · 상태: **WONTFIX(오탐 철회, `[4.17]` — 지우지 않고 남긴다)** · 철회 2026-07-16
+관련: `backend/gateway/src/test/java/com/finalcall/gateway/ratelimit/RateLimit429IntegrationTest.java`,
+       SEC-005, S-004(부기), 철회 보고 `outbox/REFORM/003`
+
+### ★ 철회 사유 — 테스트는 처음부터 있었다. 내 Glob이 잘랐다
+
+**`RateLimit429IntegrationTest`가 실재한다.** 내가 "없다"고 쓴 그 테스트가, 내가 쓰는 동안에도
+저장소에 있었다. **커밋 `4c94471`** — `git log --diff-filter=A` 확인. **내 검증보다 앞선 커밋이다.**
+나중에 추가된 게 아니라 **처음부터 있었다.**
+
+내용이 내가 요구한 것과 거의 같다(호스트 Read 원문):
+- Testcontainers Redis + 실제 `RequestRateLimiter` 구동 → `/api/v1/auth/login`에 60회 몰아쳐 **실제 429 유발**
+- `GATEWAY_429` envelope 4필드·`errors` 미포함·필드 순서·`Retry-After: 1` 검증
+
+**그리고 이 테스트가 정확히 내가 걱정한 것을 막는다**: auth가 `service-proxy`로 떨어지면
+rate limit이 안 걸리고 → 429가 안 나고 → **테스트가 깨진다.** **라우트 순서 회귀는 이미 울타리가 있다.**
+→ **내 핵심 주장("깨져도 아무것도 실패하지 않는다")은 정면으로 거짓이다.**
+
+### 원인 — 도구가 아니라 순서다. 그리고 이번엔 발신됐다
+
+- **탐색이 호스트 Glob `**/*.java`였고 결과가 `Showing 100 of 111 matching files`로 잘렸다.**
+  `RateLimit429IntegrationTest`·`RateLimitResponseGlobalFilter`가 **안 보인 11건 안에 있었다.**
+  **에러가 아니다. "100 of 111"이라고 정직하게 적혀 있었고 내가 그걸 전수로 읽었다.**
+- **`[9.1]`이 오늘 Glob을 호스트 도구 목록에서 뺐다**(C-075/076, 현행 = Read·Grep·Edit).
+  **내 오탐이 그 개정의 실물 근거다** — 규칙이 바뀐 날 내가 그 규칙이 겨눈 형태로 틀렸다.
+- **같은 계열 5번째다**(게이트 1 오탐 2건 · 오늘 초안 2건 · 이것). **앞의 4건은 발신 전에 잡혔고
+  이건 발신됐다**(`outbox/REFORM/002`, 불변). **내가 `checklist.md`에 「부재는 도구 커버리지에
+  전적으로 의존하고 사각지대는 언제나 거짓 음성으로만 나타난다」고 써놓고 그 문장에 물렸다.**
+- **내가 세운 방어("부정을 긍정으로 바꿔 세라")를 스스로 어겼다.** `GatewayApplicationTests`를
+  Read한 것은 긍정이지만, 거기서 **"그러므로 다른 테스트는 없다"로 건너뛴 순간 부재 주장**이고
+  그 근거는 잘린 Glob뿐이었다. **긍정 근거 하나가 옆의 부재 추론을 정당화하지 못한다.**
+
+### 남는 것 — 없다
+
+- **대조군(비auth 경로에 rate limit 미적용) 테스트는 없다.** 그러나 이건 **보안 결함이 아니다** —
+  거기 rate limit이 걸리는 건 기대가 아니고, 걸려도 통제가 과할 뿐 뚫리지 않는다. **티켓 대상 아님.**
+- **백엔드에 할 일이 생기지 않는다.** REFORM/002가 요청한 배정을 **철회한다.**
+
+---
+
+## SEC-013-부록. 철회 전 원문 (기록 보존 — `[4.17]` 삭제 금지)
+
+심각도: ~~Major~~ · 상태: ~~OPEN~~ · 2026-07-16 (SEC-005 선행 검증 산출)
 관련: gateway `application.yml:20~38`, `GatewayApplicationTests`, SEC-005, D-068, B-027
 
 조건 (공격 시나리오 — 공격자가 아니라 **우리가** 여는 구멍이다)

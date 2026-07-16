@@ -34,11 +34,31 @@ outbox/004): v0.2에 이미 등재. stale 마운트 부정 결과(D-086·D-043).
 
 ## 도구 규율 + 부재·수량 근거 (D-090 · D-086 — 전 게이트 적용)
 
-**도구 제약(D-090, S-003을 대체)**: 저장소 파일의 목록·내용·형상·편집 위치 판단은
-**호스트 도구(Read·Grep·Glob·Edit)로만** 한다. bash 마운트 뷰(`/sessions/.../mnt/...`)
-조회 결과를 판단 근거로 쓰지 않는다. 존재·부재·형상·위치·수량 — 전부 해당한다.
-bash는 git·빌드·테스트 등 마운트 뷰와 무관한 작업에만 쓴다(git 오브젝트 조회는 정확).
-부득이 bash 조회를 인용하면 호스트 교차검증 결과를 병기한다.
+**도구 제약(현행 `[9.1]` — C-075/076 개정 반영, 2026-07-16)**: 저장소 파일의 목록·내용·존재·수량·
+편집 위치 판단은 **호스트 도구(Read·Grep·Edit)로만** 한다. bash 마운트 뷰(`/sessions/.../mnt/...`)
+조회 결과를 판단 근거로 쓰지 않는다 — `git status`·`git diff`의 **내용 판단**도 여기 걸린다.
+
+- **★ Glob이 도구 목록에서 빠졌다.** 이전 판(D-090 시절)은 `Read·Grep·Glob·Edit`였다.
+  **`[9.2]`·`[9.4]`·`[9.25]`는 결번**이고 **`[9.3]`은 번호가 살아있는 채 내용이 통째로 바뀌었다**
+  (현행 = *"되돌릴 수 없는 것을 남기는 실행은 사용자에게 묻고 지시를 받아서 한다 — DB 스키마·
+  외부 시스템·원격 저장소. **파일 조작은 묻지 않는다**"*). **`mv`·`cp` 금지는 없어졌다.**
+- **★ 보안이 Glob 개정의 실물 근거다**: SEC-013 오탐(철회). Glob `**/*.java`가
+  `Showing 100 of 111`로 잘렸고 그 11건 안에 있던 테스트를 "없다"로 보고했다. **에러가 아니라
+  정직하게 잘렸고 내가 전수로 읽었다.**
+
+**부재 주장 규율 — 이게 이 절의 전부다**
+
+1. **부재를 근거로 삼을 때 탐색 방법 1구를 명시한다**(`[5.34]`) — 도구·경로·패턴.
+2. **가능하면 부재를 긍정으로 바꿔 센다.** "테스트가 없다"(부재) 대신 "있는 테스트가 이것뿐이다"
+   (원문 Read = 자기 증명). **★ 단 「있는 게 이것뿐」은 목록 전수가 성립할 때만 긍정이다** —
+   목록이 잘리면 그건 부재 주장으로 되돌아간다. **SEC-013이 정확히 여기서 물렸다.**
+3. **목록 결과에 잘림 표시(`Showing N of M`)가 있으면 전수가 아니다.** 다시 세거나 "전수 아님"이라 쓴다.
+4. **문장을 쓰기 전에 탐색을 돌린다.** 오늘 오탐 3건 중 2건은 발신 전에 잡혔고 1건(SEC-013)은
+   발신됐다. **셋 다 세기 전에 결론을 썼다. 도구가 아니라 순서가 원인이다.**
+
+**게이트 2 통과 조건(총괄 통지, 085)**: 부재 주장의 교차검증 근거 제시 여부를 총괄이
+별도 확인한다. 완료 보고는 부재 주장마다 (a) 탐색 방법 1구, (b) 사용 도구를 병기한다.
+근거 없는 "없음"은 통과 근거로 쓰지 않는다.
 
 - S-003의 "긍정 근거는 자기 증명적이라 교차검증 불요"는 **폐기**한다. stale 뷰는 낡은
   내용을 긍정 형태로도 서빙하므로 비대칭이 성립하지 않는다(D-090 사례 5).
@@ -66,7 +86,20 @@ bash는 git·빌드·테스트 등 마운트 뷰와 무관한 작업에만 쓴�
 
 ---
 
-## 게이트 2 (구현) — 도메인 구현 완료 시. **단 SEC-005는 선행 분리(아래)**
+## 게이트 2 (구현) — **★ 「도메인 전체 완료 후」가 아니다. D-097로 도메인마다다** (2026-07-16 개정)
+
+**`rules [7.4]`가 삭제됐다**(C-074 — *"게이트 순서는 규약이 아니다"*). 그 조항이 보안을 **도메인
+전체 뒤**로 미뤘고, 그 탓에 **G4-1(auth)이 보안 리뷰 없이 통과했다**(총괄 `_broadcast/004` [1]).
+현행 `rules [7]` G4-n 통과 기준에 **「보안 구현 리뷰」가 들어갔다** — 도메인마다 ④에서 돈다.
+
+| 현행 D-097 순서 | 보안 자리 |
+|---|---|
+| ① 기획 계약 → ② 디자인 목업 → ③ 백엔드 코드 → **④ 디자인 세부 ∥ 보안 구현 리뷰** → ⑤ QA → ⑥ G4-n 판정 | **④.** QA보다 **앞이다** — 보안 결함이 나오면 코드가 바뀌고 QA가 다시 돌아야 하기 때문 |
+
+**→ 「게이트 2」는 이제 한 번의 큰 관문이 아니라 도메인마다 반복되는 ④다.** 아래 항목은
+**해당 도메인이 ③을 마쳤을 때** 그 도메인분만 돈다.
+
+**auth 이월 5건**(B-016·017·018·025 + m3)이 **member ④에 붙는다** — G4-1이 보안 없이 통과한 빚이다.
 
 - @PreAuthorize 등 인가 적용 실태 표본(특히 /admin/**, relocate, orders) — SEC-011
 - 검증 로직 우회 경로(API 직접 호출로 소유자·자기구매·상한 검증 우회) — SEC-003
@@ -97,22 +130,27 @@ bash는 git·빌드·테스트 등 마운트 뷰와 무관한 작업에만 쓴�
 
 | # | 점검 항목 | 결과 | 근거 (호스트 Read 원문) |
 |---|---|---|---|
-| 1 | 인증 계열 rate limit 실재 | O | `gateway/application.yml:20~33` — 라우트 `auth-rate-limited`, `Path=/api/v1/auth/login,signup,refresh`, `RequestRateLimiter`(replenish 5·burst 10·1토큰), key `#{@clientIpKeyResolver}` |
-| 2 | key resolver 실재 | O | `RateLimitConfig:28~36` — 클라이언트 IP 기반. `remoteAddress` null 시 `"unknown"` 폴백 |
-| 3 | 직접접근 차단 — 게이트웨이 측 | O | `InternalTokenGlobalFilter:33~38` — `headers.set()` **덮어쓰기**(add 아님) → 클라 위조 헤더 선제거. `HIGHEST_PRECEDENCE` |
-| 4 | 직접접근 차단 — 서비스 측 | O | `GatewayAccessFilter:56~63` — 헤더 부재·불일치 403(`GATEWAY_403`). JWT 필터보다 앞. actuator·error만 제외. 공통 `application.yml:110` `enforced: true` |
+**경로 주의**: 아래 경로는 **모노 전환(D-098) 후 기준**이다 — 코드는 `backend/` 아래로 갔다.
+초판(2026-07-16)은 전환 전 경로(`gateway/…`·`src/…`)로 적었고 재검증하며 정정했다.
+
+| # | 점검 항목 | 결과 | 근거 (호스트 Read 원문) |
+|---|---|---|---|
+| 1 | 인증 계열 rate limit 실재 | O | `backend/gateway/src/main/resources/application.yml:20~33` — 라우트 `auth-rate-limited`, `Path=/api/v1/auth/login,signup,refresh`, `RequestRateLimiter`(replenish 5·burst 10·1토큰), key `#{@clientIpKeyResolver}` |
+| 2 | key resolver 실재 | O | `backend/gateway/…/ratelimit/RateLimitConfig.java:28~36` — 클라이언트 IP 기반. `remoteAddress` null 시 `"unknown"` 폴백 |
+| 3 | 직접접근 차단 — 게이트웨이 측 | O | `backend/gateway/…/filter/InternalTokenGlobalFilter.java:33~38` — `headers.set()` **덮어쓰기**(add 아님) → 클라 위조 헤더 선제거. `HIGHEST_PRECEDENCE` |
+| 4 | 직접접근 차단 — 서비스 측 | O | `backend/src/…/infra/security/GatewayAccessFilter.java:56~63` — 헤더 부재·불일치 403(`GATEWAY_403`). JWT 필터보다 앞. actuator·error만 제외. 공통 `backend/src/main/resources/application.yml:110` `enforced: true` |
 | 5 | 시크릿 fail-fast | O | dev/prod가 **placeholder 미사용** + relaxed binding + `@NotBlank`(`GatewayInternalProperties:29`). `${GATEWAY_INTERNAL_SECRET}` placeholder를 쓰면 미해결 리터럴이 `@NotBlank`를 통과해 fail-fast가 무력화되는 함정을 **주석으로 명시 방어**(`application-prod.yml:6~7`) |
-| 6 | 시크릿 하드코딩 | O | local 기본값 2건은 `${ENV:더미}` 형태(`…-change-me`)로 CLAUDE.md 섹션 4 규약 준수. dev/prod 기본값 0. **탐색: 호스트 Grep `secret` on `src/main/resources`·`gateway/src/main/resources` 전수** |
-| 7 | **rate limit 회귀 방지** | **X** | `GatewayApplicationTests` = `contextLoads()` **1건뿐.** 429 발현 미검증 → **SEC-013** |
-| 8 | **출발지 식별 정확성** | **X** | `RateLimitConfig:17~19`가 자인 — LB 뒤 `remoteAddress` 수렴 → **SEC-014** |
+| 6 | 시크릿 하드코딩 | O | local 기본값 2건은 `${ENV:더미}` 형태(`…-change-me`)로 CLAUDE.md 섹션 4 규약 준수. dev/prod 기본값 0. **탐색: 호스트 Grep `gateway\|internal\|enforced\|secret` on 두 `resources` 디렉터리 → dev/prod 히트는 전부 주석, 값 할당 0. 호스트 Read로 yml 4개 원문 재확인** |
+| 7 | **rate limit 회귀 방지** | **O** | **★ 초판 X → 재검증 O(오탐 철회).** `backend/gateway/src/test/java/com/finalcall/gateway/ratelimit/RateLimit429IntegrationTest.java` — Testcontainers Redis + 실제 `RequestRateLimiter` 구동, `/api/v1/auth/login` 60회 → **실제 429 유발**, `GATEWAY_429` envelope 4필드·`Retry-After` 검증. **커밋 `4c94471` — 내 검증보다 앞선다.** 라우트 순서가 깨지면 429가 안 나고 **이 테스트가 깨진다** → 회귀 울타리 실재 |
+| 8 | **출발지 식별 정확성** | **X** | `RateLimitConfig.java:17~19`가 자인 — LB 뒤 `remoteAddress` 수렴 → **SEC-014** |
 
-**판정: SEC-005 FIXED**(공백 소멸 — 설정·필터·fail-fast 전건 원문 확인).
-**신규 2건은 005의 잔여가 아니라 005 처방 자체의 결함이라 분리 등재한다**(SEC-013 Major · SEC-014 Minor→실배포 시 Major).
+**판정: SEC-005 FIXED**(공백 소멸 — 설정·필터·fail-fast·회귀 테스트 전건 원문 확인).
+**잔여 1건 = SEC-014**(실배포 전 조건). ~~SEC-013~~ 은 **오탐으로 철회**했다.
 
-**★ 부재 주장 교차검증**(085 통과 조건): 항목 6·7의 "없음" 2건은 **호스트 Glob + Grep 병용**이다.
-- 7의 근거는 **부재가 아니라 존재**다 — 테스트 파일을 Read해 `contextLoads()` 1개만 있음을 원문 확인
-  (Glob `gateway/**/*.java` → 테스트 4파일 중 게이트웨이분 1건). **"테스트가 없다"가 아니라
-  "있는 테스트가 이것뿐이다"** — 부정 결과를 긍정 근거로 바꿔 세웠다.
-- 6의 "dev/prod 하드코딩 0"은 **부재 주장이다.** 탐색 = 호스트 Grep `gateway|internal|enforced|secret`
-  on 두 `resources` 디렉터리 전수 → dev/prod 히트는 **전부 주석**이고 값 할당 0. 호스트 Read로
-  4개 yml 원문 재확인. **bash 미사용.**
+**★ 항목 7이 왜 뒤집혔나 — 이 절의 교훈이다**
+- 초판 근거: `GatewayApplicationTests`를 Read해 `contextLoads()` 1개 확인 → **"그러므로 429 미검증"**.
+- **앞은 긍정(원문 Read)인데 뒤가 부재 추론이고, 그 근거는 `Showing 100 of 111`로 잘린 Glob뿐이었다.**
+  **긍정 근거 하나가 옆의 부재 추론을 정당화하지 못한다.**
+- 재검증: 호스트 Grep `RequestRateLimiter` on 저장소 → `RateLimit429IntegrationTest` 즉시 발견.
+  **Grep은 잘리지 않았다. 처음부터 Grep이었으면 안 틀렸다.**
+- → [도구 규율] 절의 부재 주장 규율 3(잘림 표시 = 전수 아님)이 이 사건으로 들어왔다.
