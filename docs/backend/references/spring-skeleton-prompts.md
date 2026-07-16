@@ -11,7 +11,7 @@ Java 21 + Spring Boot 3.5 기반 신규 서비스 스켈레톤을 Claude Code로
 
 - **`CLAUDE.md`** (프로젝트 루트) — 공유 변수 + 전역 원칙 + Claude Code 행동 규약.
   Claude Code가 세션 내내 자동 참조한다. **새 프로젝트는 이 파일의 변수 값만 채우면 된다.**
-- **`docs/backend/notes/spring-skeleton-prompts.md`** (이 문서) — 단계별 "무엇을 만들지" 실행 지시.
+- **`docs/backend/references/spring-skeleton-prompts.md`** (이 문서) — 단계별 "무엇을 만들지" 실행 지시.
   변수는 정의하지 않고 CLAUDE.md 를 참조한다. 프로젝트와 무관하게 재사용된다.
 
 ### 실행 원칙

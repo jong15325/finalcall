@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * 테마 의존 토큰 값 (design-system [2.4]). 잠정 A안 — 비주얼 확정 시 값만 교체(토큰명 불변).
+ * :root = 라이트 기본값, [data-theme="dark"] = 다크 오버라이드(A안 기본). U-005 토글 1회.
+ * Tailwind 는 tailwind.config.js 에서 var(--color-*) 로 이 값을 참조한다.
+ */
+:root {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-subtle: #94a3b8;
+  --color-primary-fg: #ffffff;
+  --color-focus-ring: #6366f1;
+}
+
+[data-theme='dark'] {
+  --color-bg: #0b0f1a;
+  --color-surface: #141a29;
+  --color-surface-raised: #1c2436;
+  --color-border: #2a3448;
+  --color-text: #e8edf7;
+  --color-text-muted: #9aa7bd;
+  --color-text-subtle: #6b7890;
+  --color-primary-fg: #ffffff;
+  --color-focus-ring: #8b8ff5;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-text;
+    font-family: theme('fontFamily.sans');
+  }
+
+  /* 포커스 가시성 — focus-ring 토큰(대비 확보, design-system [2.4]) */
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* design-system [3] font-num — 금액·카운트다운·수량 폭 고정(레이아웃 점프 방지) */
+  .font-num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* 접근성: 모션 감소 존중 (design-system [4]) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
