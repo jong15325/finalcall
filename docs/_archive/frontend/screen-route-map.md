@@ -1,3 +1,15 @@
+> **폐기 — 읽지 않고 인용하지 않는다**(`rules [3.5]`). 이관 2026-07-16 · 판정 F-003 · 근거 C-073 [3].
+> 원 경로: `docs/frontend/notes/screen-route-map.md`.
+> **왜 죽었나**: ① `[1]` 라우트 맵이 `screen-spec.md`(기획 소유 정본)와 이중화된다 — 어긋나도 뭐가
+> 맞는지 규칙이 없다. ② 전문이 **계약 v1.2 기준**인데 계약은 **v1.4**다. 델타 미검토.
+> ③ `[6]`의 3건 중 2건이 이미 죽었다(실시간 채널 → 059로 F-001 폴링 확정 · `templates §18` →
+> 현행 `templates [12]`. **[18]은 실재하지 않는 절이다**). ④ `[2]`·`[3]`·`[5]`는 각각
+> `frontend/rules.md [3]`·스켈레톤 `types/` 실물 코드·`rules.md [4]`+F-001로 이미 옮겨갔다.
+> **대체 정본**: `spec/api-contract.md` v1.4 · `skeleton-plan.md` v0.2 · `screen-spec.md` v0.3 ·
+> `frontend/rules.md` · `frontend/decision-log.md` F-001·F-002.
+
+---
+
 # 화면·라우트 맵 / feature 구조 작업 노트
 
 성격: 미확정 분석/초안 — 타 역할 근거 인용 금지 (D-014 유형 4). 근거는 api-contract v1.2(확정 스펙)만 인용.

@@ -48,3 +48,44 @@
 
 레퍼런스
 - 실행은 프론트 Claude Code(작업 프롬프트 outbox/003, templates §18). 저장소 생성·커밋은 사용자(D-061·D-030).
+
+---
+
+## F-003. `screen-route-map.md`는 죽었다 — `references/`가 아니라 `_archive/`로 보낸다
+
+상태: ACCEPTED · 소유: 프론트 · 관련: C-073 [3](행선지 판정은 프론트) · relates-to F-001·F-002 · 2026-07-16
+
+맥락
+- C-073 [3]이 `notes/screen-route-map.md`의 행선지를 `references/`(유형 2 · 인용 가능) 또는
+  `_archive/`(인용 금지) 중 **내 판정**으로 넘겼다.
+- 실측(호스트 Read, `docs/frontend/notes/screen-route-map.md` 전문 109줄):
+  - `[1]` 라우트 맵 = `screen-spec.md`(기획 소유, v0.3)와 **같은 것을 두 번 말한다.**
+  - 헤더·본문 전체가 **계약 v1.2 기준**이다. 계약 정본은 **v1.4**(`spec/api-contract.md`). 델타 미검토.
+  - `[6]:104` = *"Claude Code 작업 프롬프트 형식 → 현행 `templates §18`"*. **`templates`에 `[18]`은 없다.**
+    현행은 `[12]`다. `[6]:107` 실시간 채널 공백도 059로 이미 닫혔다.
+  - `[2]`·`[3]`·`[5]`의 내용은 각각 `frontend/rules.md [3]` · 스켈레톤 `types/` 실물 코드 ·
+    `rules.md [4]`+F-001로 **이미 옮겨갔다.** CC 006은 이 노트를 참조하지 않고 완주했다
+    (`notes/cc-reports/006-skeleton-scaffold.md` 필독 목록에 없다).
+
+결정
+- `docs/_archive/frontend/screen-route-map.md`로 이관하고 헤더에 폐기 주를 단다. `references/`로 보내지 않는다.
+
+결과
+- 좋아짐: v1.2 기준 문서가 `references/`(인용 가능)에 앉아 **v1.4 계약과 조용히 어긋나는 것**을 막는다.
+  `[1]` IA 이중 정본이 사라진다 — 어긋나도 뭐가 맞는지 규칙이 없는 상태였다.
+- 나빠짐: 라우트↔엔드포인트 대응표를 잃는다. item·auction·bid 구현 착수 시 **재작성 비용이 든다.**
+  `screen-spec` v0.3이 IA를 갖지만 그것은 기획 관점이고, 내 구현 분해(feature 경계·쿼리 키·페이징 축)는
+  다시 세워야 한다.
+- 못 푸는 것: 이 결정은 **낡은 참조를 없앨 뿐 v1.2 → v1.4 델타를 검토하지 않는다.** 델타는 여전히
+  미검토 상태로 남고, 구현 착수 시 계약 v1.4를 직접 읽어야 한다. `_archive/`로 보낸다고 델타가 풀리지 않는다.
+
+기각된 대안
+- `references/`로 이관 + 헤더에 "v1.2 기준, 인용 전 계약 대조 필수" 경고: **경고는 실패 신호가 아니다.**
+  `_broadcast/001`(컨설턴트)과 `_broadcast/002` [3]ⓓ가 같은 형태를 두 번 경고했다 — *"열었더니 뭔가
+  있었다는 건 정합의 증거가 아니다."* 인용 가능한 자리에 낡은 값을 두는 것이 정확히 그 함정이다.
+- v1.4로 갱신 후 `references/` 이관: **기능 착수 금지**(`_broadcast/002` [4]). 계약 델타 검토는
+  재정리가 아니라 구현 작업이다.
+
+집행: `docs/_archive/frontend/screen-route-map.md` 실재 + `docs/frontend/notes/screen-route-map.md` 부재.
+확인 방법 — `Grep(".", path="docs/frontend/notes", files_with_matches)`에 `screen-route-map` 미포함
+(호스트 Glob은 거짓 0건을 내므로 쓰지 않는다).

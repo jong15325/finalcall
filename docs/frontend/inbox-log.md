@@ -2,6 +2,14 @@
 
 | 처리일 | 메시지 | 처리 내용 |
 |---|---|---|
+| 2026-07-16 | management/outbox/_broadcast/002-전역할-재정리-D093-범위확정.md | **작업 지시(D-093·D-094·D-095).** 재설계 아닌 재정리 — `spec/`·코드·V1~V4 동결선 인지. ⓪-b + ① 한 블록 집행 → `outbox/REFORM/001`. [5] 프론트 배치 수용(킥오프 placeholder화 + 상태 정보 handover 이관 — 총괄 실측이 옳다, 이의 없음). [6] Glob 격상 발신 불요로 닫힘 → handover 미발신 항목 삭제. [5-b] `작업 리스트 보여줘` 명령어(templates [15]) · `common/status.md` 폐기(D-095) 적용 — 내 문서 인용 0건 |
+| 2026-07-16 | consulting/outbox/_broadcast/006-전역할-폴더구조정형화-C073.md | **구조 정본(C-073).** 프론트 행 3건 전건 집행 — `CLAUDE.md` → `rules.md` · `notes/claude-code-kickoff.md` → `references/` · `notes/screen-route-map.md` **행선지 판정 = `_archive/`**(F-003 발번). `[3.12]` 사용자 확인 받고 집행. [4] 함정 기준(*"열었더니 뭔가 있었다는 건 정합의 증거가 아니다"*) 적용 → **내 `outbox/001:14`에 QA와 동형의 `templates 15` 참조 발견**(불변이라 미정정, REFORM/001 ⓓ에 관측) |
+| 2026-07-16 | management/outbox/_broadcast/001-전역할-spec경로변경-마운트절단경고.md | **`spec/` 경로 이동 + bash 절단 경고.** 살아있는 참조 2건 정정(`rules.md`:11 원본 경로 · 킥오프 필독 4 → `docs\spec\api-contract.md`). 불변 문서(outbox·decision-log·inbox-log) 미정정. [3] 프론트 별건(계약 복사본 확인) — **repo 미생성이라 복사본 없음**(062·cc-reports/006·handover 3중 확인), repo 생성 시 헤더 원본 경로를 `spec/`로. bash는 이 세션에서 `rm`에만 사용 |
+| 2026-07-16 | consulting/outbox/_broadcast/001-전역할-5절번호밀림-인용대조표.md | `rules [5]` 절 번호 밀림 대조표. 자기 폴더 실측 `Grep("\[5\.\d+\]", path="docs/frontend")` → **0건. 안 물렸다.** 조치 불요 |
+| 2026-07-16 | consulting/outbox/_broadcast/002-전역할-규약감축-156에서100.md | 규약 감축(C-066). 조항 감축은 조치 대상 없음 — 내 문서에 삭제 조항 인용 0건 |
+| 2026-07-16 | consulting/outbox/_broadcast/003-전역할-정본변경-사용자확인-템플릿감축.md | **`[3.12]` 신설 적용** — 유형 2(`rules.md`·`references/`) 변경은 변경분 전수 표 제시 후 사용자 확인. 이번 ⓪-b에서 실제로 걸었고 승인받아 집행. templates 골격 `[1]`~`[14]` 무변경 확인 |
+| 2026-07-16 | consulting/outbox/_broadcast/004-전역할-체계종료-대기모드.md | 컨설턴트 대기 모드(C-070). 체계 안건은 **실제로 막힐 때만** 회부. `screen-route-map` 행선지 판정을 회부하지 않고 자율 판정(F-003) — 기동 조건 미달 |
+| 2026-07-16 | consulting/outbox/_broadcast/005-전역할-작업리스트-templates15.md | `templates [15]` 작업 리스트 신설(C-072). `작업 리스트 보여줘` 시 채팅에 트리로 산출, 파일 미생성. 적용 확인. **[15] 신설이 내 `outbox/001:14`의 `templates 15` 참조를 조용히 틀리게 만든 경로다**(REFORM/001 ⓓ 관측) |
 | 2026-07-14 | management/outbox/039-전역할-G3통과전파.md | G3 통과·계약 v1.1 확정 인지. 프론트 할 일(기동·계약 복사본·화면·상태 설계) 착수. 적용 확인 → decision-log F-001, notes/screen-route-map.md, outbox/001 |
 | 2026-07-14 | management/outbox/025-전역할-커밋방식변경.md | docs 커밋 사용자 단일 실행(D-061) 적용. 완료 보고 말미 커밋 메시지만 제안, git 대행·`git add -A` 금지. CLAUDE.md 6절과 정합 |
 | 2026-07-14 | consulting/outbox/011-C029-커밋실행일원화.md | 커밋 실행 일원화(→D-061로 승격). 025와 동일 취지, 별도 조치 불요 |

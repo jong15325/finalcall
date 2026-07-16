@@ -1,7 +1,12 @@
-# 프론트엔드 CLAUDE.md (D-039 — 프론트 저장소 생성 시 루트로 이관)
+# 프론트 규칙 (F)
 
 Spring Boot 백엔드(finalcall)와 짝을 이루는 프론트엔드 저장소의 Claude Code 지침이다.
 협업 규약은 백엔드 저장소 docs/common/rules.md, 형식은 docs/common/templates.md를 따른다.
+
+- **소유·개정**: 프론트 제안 + 컨설턴트 승인. 개정하면 덮어쓴다(불변 아님, 이력은 git).
+- 이관 2026-07-16: `docs/frontend/CLAUDE.md` → 이 파일(C-073 [3]). 내용은 헤더·:11 원본 경로 외 무변경.
+- **주(D-039)**: D-039는 이 문서를 프론트 저장소 생성 시 루트 `CLAUDE.md`로 이관한다고 서 있다.
+  C-073 구조(`<역할>/rules.md`)와 충돌 예정이다. repo 미생성이라 지금은 안 막힌다 — 생성 시점에 총괄에 올린다.
 
 ## 1. 프로젝트 정보
 
@@ -9,7 +14,7 @@ Spring Boot 백엔드(finalcall)와 짝을 이루는 프론트엔드 저장소�
 - 스택(D-032 확정): TypeScript(strict) + React SPA(Vite) + TanStack Query + Zustand
   + Tailwind CSS. SSR 미도입.
 - 유일한 API 기준: 이 저장소의 docs/api-contract.md 복사본(헤더에 원본 경로·버전·해시).
-  복사본과 원본이 어긋나면 원본(백엔드 저장소)이 우선한다.
+  원본 = `finalcall/docs/spec/api-contract.md`. 복사본과 원본이 어긋나면 원본(백엔드 저장소)이 우선한다.
 
 ## 2. Claude Code 행동 규약
 
