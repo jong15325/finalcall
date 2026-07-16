@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침이다.
-단계별 실행 지시는 `docs/backend/references/spring-skeleton-prompts.md` 를 참조한다. 이 파일은 그 전 과정에서 공유되는
-변수, 전역 원칙, Claude Code 행동 규약을 담는다.
+**스켈레톤(Stage 0~G)은 전건 완료·커밋됐다.** 그 과정의 기록은 `docs/backend/references/spring-skeleton-prompts.md`에
+있다 — **실행 지시가 아니라 참고 자료다**(부록 C 실무 함정 15건이 도메인 구현에서 유효).
+이 파일은 변수, 전역 원칙, Claude Code 행동 규약을 담는다.
 
 **모노레포다**(D-098). `finalcall/{backend/{src,gateway}, frontend, config, docs}`.
 코드 경로는 `backend/src/**`·`backend/gateway/**`, 스타일 정본은 루트 `config/`, 문서는 루트 `docs/`.
@@ -36,8 +37,6 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
 - **한 번에 한 단계만 진행한다.** 순서: `0 → 1 → 2 → 3 → 4 → 5 → D → E1 → E2 → F1 → F2 → G`.
   사용자가 "다음 단계"라고 지시하기 전까지 다음 단계로 넘어가지 않는다.
 - **각 단계 종료 시 "완료 기준" 충족 여부를 검증하고 사용자에게 보고한다.** 스스로 넘어가지 않는다.
-- 각 단계는 `docs/backend/references/spring-skeleton-prompts.md` 의 **"이번 단계에서 하지 말 것"** 범위 제한을 반드시 지킨다.
-  범위를 벗어나는 코드를 만들지 않는다.
 - **git commit / push 는 사용자가 직접 한다. Claude Code 는 커밋·푸시하지 않는다.
   단계 완료 시 섹션 6 컨벤션을 따른 커밋 메시지를 제안한다(실행은 사용자).**
   (역할 대화의 커밋은 `docs/common/rules.md [9.8]`을 따른다 — **사용자가 지시하면 대행한다.**
