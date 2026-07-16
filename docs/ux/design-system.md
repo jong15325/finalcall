@@ -2,7 +2,7 @@
 
 상태: DRAFT v0.2 — 디자인 초안. 비주얼 방향 **확정**(U-016 원게임 UI 스킨 차용) + **[2] 색 토큰 게임 팔레트 실측값으로 전면 재정의 완료**(U-020). [1]·[2]는 확정, [3]~[6]은 초안.
 소유: 디자인(UX/UI)
-근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마·[2.5] 회원 리소스·[1.6] 엣지 오류), erd v0.7(item_template.element), frontend/CLAUDE.md 5절, design-guide 3·4·11절, U-001~003·005~010·U-016·U-020
+근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마·[2.5] 회원 리소스·[1.6] 엣지 오류), erd v0.7(item_template.element), frontend/CLAUDE.md 5절, ux/rules.md 3·4·11절, U-001~003·005~010·U-016·U-020
 기준: 계약이 최상위. 이 문서는 프론트 구현의 참고 지침이며 계약·도메인 규칙과 충돌 시 계약 우선. 상류 조율은 기획(P, D-079).
 
 | 버전 | 날짜 | 내용 |
@@ -252,7 +252,7 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 ## 5. 컴포넌트 스펙 (핸드오프 핵심)
 
-각 컴포넌트는 상태(default/hover/focus/active/disabled/error/loading)·변형·사용 토큰·반응형·접근성을 명세한다(design-guide 4절). 모바일 우선. 아래는 v0 우선 세트(U-007).
+각 컴포넌트는 상태(default/hover/focus/active/disabled/error/loading)·변형·사용 토큰·반응형·접근성을 명세한다(ux/rules.md 4절). 모바일 우선. 아래는 v0 우선 세트(U-007).
 
 ### 5.1 Button
 

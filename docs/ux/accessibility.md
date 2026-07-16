@@ -2,7 +2,7 @@
 
 상태: DRAFT v0 — 디자인 초안. WCAG 2.1 AA 기준 + FinalCall 적용.
 소유: 디자인(UX/UI)
-근거: WCAG 2.1 AA, design-guide 6절, design-system.md(토큰·컴포넌트), ux-flows.md(플로우)
+근거: WCAG 2.1 AA, ux/rules.md 6절, design-system.md(토큰·컴포넌트), ux-flows.md(플로우)
 기준: 프론트 구현·QA 검증의 공통 접근성 기준. 컴포넌트 스펙(design-system 5절)의 "접근성" 항목과 1:1.
 
 | 버전 | 날짜 | 내용 |
