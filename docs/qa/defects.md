@@ -1,10 +1,10 @@
-# QA 결함 트래킹 (QA-NNN, D-038·templates §10)
+# QA 결함 트래킹 (QA-NNN, D-038·templates [11])
 
 결함 티켓 누적(전 역할 열람). 심각도 Critical|Major|Minor, 상태 OPEN|FIXED|WONTFIX.
-결함 티켓은 삭제하지 않는다(qa-guide §5). Critical(돈·정합성 훼손)은 발견 즉시 총괄 push.
+결함 티켓은 삭제하지 않는다(qa/rules.md §5). Critical(돈·정합성 훼손)은 발견 즉시 총괄 push.
 
 기준: 확정 스펙 3종 **api-contract v1.4 · domain-spec v0.5 · erd v0.7([1] 규약 포함)** + ACCEPTED
-결정만(qa-guide [1], 추측 금지). 검증 대상 범위: backend/outbox/019(auth 완결) · 021(게이트웨이 완결).
+결정만(qa/rules.md [1], 추측 금지). 검증 대상 범위: backend/outbox/019(auth 완결) · 021(게이트웨이 완결).
 검증 방법: Q-001(정적 정합 검증 + 재실행 가능한 스위트) + **Q-004(기준에 erd 포함)**.
 
 ---
@@ -134,4 +134,4 @@ QA 관찰(백엔드 참고 — 패턴 과적용 주의): D-081 패턴은 **자�
 
 - OBS-1 password 최소 길이 미검증(@Size max=72만, min 없음): 계약 §2에 최소 길이 규정 없어 v1.2
   기준 정합. 보안 게이트2 이월분(B-016)과 동일 사안 — QA 결함 아님, 중복 등재 안 함.
-- OBS-2 로그인 타이밍 사이드채널(B-017): 공격자 관점 → 보안 파트 소관(qa-guide §1 역할 경계). QA 비대상.
+- OBS-2 로그인 타이밍 사이드채널(B-017): 공격자 관점 → 보안 파트 소관(qa/rules.md §1 역할 경계). QA 비대상.

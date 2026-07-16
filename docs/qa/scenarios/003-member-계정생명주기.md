@@ -1,4 +1,4 @@
-# member·계정 생애주기 시나리오 (QA-S-MBR, qa-guide §4)
+# member·계정 생애주기 시나리오 (QA-S-MBR, qa/rules.md §4)
 
 도메인: 회원 리소스(§2.5 GET/PATCH/DELETE `/me`) + 계정 생애주기(가입→탈퇴→재가입→재탈퇴).
 기준: api-contract **v1.4** [2.5]·[5] · domain-spec **v0.5** [6.1] · **erd v0.7** [1](soft delete 자연키

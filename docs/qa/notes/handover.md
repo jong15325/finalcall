@@ -1,10 +1,17 @@
-# QA handover (2026-07-15)
+# QA handover (2026-07-16)
 
 성격: 세션 재개용 — **파일에 없는 기억만**. 기존 내용은 경로 참조(D-059, templates [17]). 덮어쓰기.
 
 ## 진행 중
 
-없음 — 레인 대기 상태. 마지막 작업 = 096(QA-001 FIXED 수용) 반영 + D-092 근거 줄 stale 자진 정정.
+- **⓪-b 파일 정리 완료**(2026-07-16) — `qa-guide.md` → `qa/rules.md` + `:14` 정정. 잔여 = 유형 2 내용
+  정정 2건이 **`[3.12]` 사용자 확인 대기**(`rules.md` `:22`·`:55` `templates 10` → `[11]` · `:72`
+  `templates §18` → `[12]`). 셋 다 **결번을 가리켜 실패 신호는 난다** — `:14`(조용히 틀림)와 등급이 다르다.
+- **RETEST-1·2 재검증** — 착수 <2026-07-16 · 지시 `management/outbox/QA/001` · 트리거 도달(백엔드 025).
+  지금 어디까지: 미착수(`:14` 정정 선행, 사용자 지시). 다음 한 수: `backend/notes/cc-reports/025` +
+  게이트웨이 소스·테스트 단언을 계약 [1.6]에 정적 대조 → CLOSE 판정 → `defects.md` RETEST 표 갱신 → 완료 보고.
+- **① 재정리 보고 4항(ⓐ~ⓓ)** — `_broadcast/002`. RETEST 뒤(QA/001 [3] 순서 확정). ⓓ 재료는 위 잔여 2건.
+
 내 SENT 4건(outbox/001~004) **전부 ANSWERED**. 미회신 대기 없음.
 
 ## 대기 중 (트리거 3종 — 오는 순서 무관)
@@ -49,7 +56,7 @@
 
 ## 재개 필독 (순서대로)
 
-1. `docs/qa/qa-guide.md` — 특히 [6] 실행 분업(D-078 두뇌/손)
+1. `docs/qa/rules.md` — 특히 [6] 실행 분업(D-078 두뇌/손). **`qa-guide.md`에서 개명·이동됨**(C-073, 2026-07-16) · `:14` `templates 15` → `common/rules.md [6]` 정정 완료
 2. `docs/qa/test-plan.md` — 기준 3종(api-contract v1.4·domain-spec v0.5·**erd v0.7**)·리스크 표·상시 규칙
 3. `docs/qa/defects.md` — QA-001(FIXED)·RETEST-1·2 표
 4. `docs/qa/decision-log.md` — Q-001~004 + 작성 규약(집행 필드)

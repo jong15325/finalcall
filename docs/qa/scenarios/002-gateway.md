@@ -1,4 +1,4 @@
-# 게이트웨이 시나리오 (QA-S-GW, qa-guide §4)
+# 게이트웨이 시나리오 (QA-S-GW, qa/rules.md §4)
 
 대상: SCG 엣지 게이트웨이(D-068) — 라우팅·rate limit·직접접근 차단. 기준: api-contract **v1.4**
 [1.6](엣지 오류 명세)·[5](GATEWAY_429·GATEWAY_403)·[2](rate limit 담당)·[1.2](인증 관문).
