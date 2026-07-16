@@ -1,6 +1,6 @@
 # FinalCall 위협 모델 (STRIDE-lite)
 
-방식: 전면 STRIDE 워크숍 대신 자금 흐름 중심 도메인별 표 1개(security-guide 3절).
+방식: 전면 STRIDE 워크숍 대신 자금 흐름 중심 도메인별 표 1개(security/rules.md 3절).
 STRIDE = Spoofing(위장)/Tampering(변조)/Repudiation(부인)/Information disclosure(정보노출)/
 Denial of service(서비스거부)/Elevation of privilege(권한상승).
 대상: api-contract v0.1. 잔여 리스크는 findings.md(SEC-NNN) 연계.
