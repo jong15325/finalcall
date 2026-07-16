@@ -1,14 +1,15 @@
 # FinalCall 디자인 시스템 (design-system.md)
 
-상태: DRAFT v0.2.1 — 디자인 초안. 비주얼 방향 **확정**(U-016 원게임 UI 스킨 차용) + **[2] 색 토큰 게임 팔레트 실측값으로 전면 재정의 완료**(U-020). [1]·[2]는 확정, [3]~[6]은 초안.
+상태: DRAFT v0.2.2 — 디자인 초안. 비주얼 방향 **확정**(U-016 원게임 UI 스킨 차용) + **[2] 색 토큰 게임 팔레트 실측값으로 전면 재정의 완료**(U-020). [1]·[2]는 확정, [3]~[6]은 초안.
 소유: 디자인(UX/UI)
-근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마·[2.5] 회원 리소스·[1.6] 엣지 오류), erd v0.7(item_template.element), frontend/CLAUDE.md 5절, ux/rules.md 3·4·11절, U-001~003·005~010·U-016·U-020
+근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마·[2.5] 회원 리소스·[1.6] 엣지 오류), erd v0.7(item_template.element), `frontend/rules.md [5]`, `ux/rules.md [3]`·`[4]`·`[11]`, U-001~003·005~010·U-016·U-020
 기준: 계약이 최상위. 이 문서는 프론트 구현의 참고 지침이며 계약·도메인 규칙과 충돌 시 계약 우선. 상류 조율은 기획(P, D-079).
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v0 | 2026-07-14 | 초안 — 비주얼 방향(선택지), 토큰(색·타이포·간격·반경·그림자·모션) + Tailwind 매핑, 우선 컴포넌트 스펙 |
 | v0.1 | 2026-07-14 | 계약 v1.2 정합 — 등급(grade) 축 제거(D-073, U-004 SUPERSEDED→U-010). grade 토큰·GradeBadge 폐기, 시각 축을 속성(4색)·레벨·골드포스·스킬로 재조정 |
+| v0.2.2 | 2026-07-17 | **실물 코드 실측 반영**(프론트 `TOKEN/001` → 회신 020) — [2.5] `link` 토큰 신설(**`text` + 상시 underline**. `border`는 `surface` 위 **4.49**로 AA 0.01 미달이라 기각 — 019 추천을 내가 뒤집었다) · [2.5] `focus-ring` 행 추가(표에서 빠져 있었다) · **라이트 값 0개임을 명시**(`:root, [data-theme="dark"]` 한 규칙 — focus-ring만의 문제가 아니다) · 019의 `1.06:1` 눈대중을 계산값 **1.04**로 정정 · [5.1] Button hover에 `border` 병행이 **필수임을 명문화**(채우기 인접 대비 1.12). **값 변경 0** |
 | v0.2.1 | 2026-07-16 | **U-020 누락 보정**(프론트 009 → 회신 019) — [2.6] 매핑에 `focus-ring` 추가(정의는 [2.2]에 있었으나 매핑 표에서 누락, 드롭인 블록이 승계) · [2.2]에 `outline-offset: 2px`가 AA 조건인 근거 명시(offset 0 시 `primary-selected` 1.82:1) · [2.6]에 동일 hex 3토큰의 처리 차이 명시. **값 변경 0 — 새 결정 아님** |
 | v0.2 | 2026-07-15 | **비주얼 방향 확정 + 색 토큰 전면 재정의(U-020)** — [1] A/B/C 3안 폐기 → 게임 UI 스킨 실측 팔레트. [2] 크롬·조작·정보·아이템 4계층 재구성, element 4색을 아트 픽셀 실측으로 교체(earth·wind 종전값 오답 반증), 전 토큰 WCAG AA 계산 검증. 색 사용 3계층 규칙 신설([1.2]). 계약 v1.3·v1.4 델타 반영(D-092 ①): [5.2] Checkbox 신설, [5.6] 429 백오프 |
 
@@ -113,7 +114,7 @@
 
 - `-soft`(배경 톤)는 **해당 색 12% 알파를 `bg` 위에 합성**해 만든다. 다크 단일 스킨이라 라이트 테마용 파스텔 톤(`#DCFCE7` 등)은 불필요하며, 알파 합성이 토큰 수를 4개 줄인다.
 - `-strong`은 두지 않는다 — 위 4색이 이미 `bg` 위에서 본문 AA를 통과해 별도 진한 톤이 필요 없다(다크 스킨의 이점).
-- **색만으로 정보 전달 금지** — 아이콘/텍스트 병기(accessibility 2절). `warning`과 활성 탭 황금이 같은 값이라 이 규칙이 여기선 접근성 요구를 넘어 **의미 구분의 필수 조건**이다.
+- **색만으로 정보 전달 금지** — 아이콘/텍스트 병기(`accessibility [2]`). `warning`과 활성 탭 황금이 같은 값이라 이 규칙이 여기선 접근성 요구를 넘어 **의미 구분의 필수 조건**이다.
 
 ### 2.4 아이템 계층 — element ([1.2] ③, U-010)
 
@@ -156,8 +157,19 @@
 | text | #FAF7D5 | 15.92:1 | 본문 [실측] |
 | text-muted | #B8C4D9 | 9.8:1 | 보조 텍스트 |
 | text-subtle | #6B8CA6 | 4.88:1 | 캡션·placeholder (AA 통과 — placeholder도 읽혀야 한다) |
-| primary-fg | #FAF7D5 | — | `primary` 위 텍스트 |
+| focus-ring | #FAF7D5 | 15.92:1 | 포커스 링([2.2]) — 표면 위에 그려지므로 표면 계열이다 |
+| primary-fg | #FAF7D5 | — | `primary` 위 텍스트. **정적값 — 조작 계층은 테마 무관**([2.6]) |
 | on-accent-fg | #001C33 | — | `primary-pressed`·`primary-selected`·`warning` 위 텍스트 |
+| **link** | **`text` + 상시 underline** | 15.92 / 13.50 | **인라인 텍스트 링크**(U-020 보정, 020 계산) |
+
+**★ 인라인 링크는 색으로 구분하지 않는다 — 이 팔레트에선 성립하지 않는다.** WCAG 1.4.1은 링크를 색으로만 구분하려면 **인접 본문 텍스트와 3:1**을 요구하는데, `text-muted`(#B8C4D9) 옆에서 **후보 전건이 미달한다**: `border` 1.86 · `text` 1.62 · `element-water` 1.35. 3:1을 넘는 유일한 색 `primary`(3.24)는 **배경 위 본문 AA가 3.03으로 깨진다.** → **underline이 선택이 아니라 필수다**(`hover:underline`만으론 기본 상태가 색 단독이라 위반).
+- **underline이 상시면 3:1 요건이 사라진다**(색이 유일한 단서가 아니게 된다). 남는 요건은 배경 대비 4.5:1뿐이고 `text`가 어디서든 통과한다.
+- **`border`(#3394DE)를 쓰지 않는다** — `bg` 위 5.30이나 **`surface` 위 4.49로 AA를 0.01 미달한다.** 카드가 `bg`냐 `surface`냐에 따라 갈리는 값은 토큰으로 쓸 수 없다.
+- 어포던스는 **밝기 차 + underline**이 만든다: 본문 `text-muted`(9.83) 옆에서 링크 `text`(15.92)가 밝다.
+
+**★ 라이트 값은 0개다 — 이 표의 토큰 전부가 그렇다.** [2.6] CSS 블록의 셀렉터가 **`:root, [data-theme="dark"]` 한 규칙**이다. `:root`(기본값 자리)에 **다크 값이 들어간다.** `focus-ring`도 예외가 아니다 — **"라이트 focus-ring이 뭐냐"는 질문은 `bg`·`text`·`border`에도 똑같이 성립하고, 답은 셋 다 "없다"이다.** 한 토큰만 라이트 값을 가지면 그게 불균질이다.
+
+**"라이트에서 크림 링은 1.04:1"은 정적값 금지의 근거이지 `:root` 다크 값 금지의 근거가 아니다**(020 정정 — 019가 1.06으로 적은 건 내 눈대중이고 계산값은 **1.04**다). **지금 흰 배경이 없다.** `focus-ring`을 CSS 변수로 두는 이유가 바로 **U-005가 오면 그때 라이트 값을 덮기 위해서**다 — 변수인 채로 다크 값을 갖는 것이 그 준비된 상태다.
 
 **테마 구조는 유지하되 라이트 값은 정의하지 않는다.** 게임 스킨은 단일 다크 계열이고(U-016), U-005(라이트/다크 양립)는 총괄이 ON-HOLD·후순위로 등재했다(095 [6절]). CSS 변수 구조는 그대로 두므로 라이트를 나중에 넣어도 구조 변경이 없다 — **지금 라이트 값을 지어내면 근거 없는 색이 정본에 박힌다.**
 
@@ -264,14 +276,14 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 ## 5. 컴포넌트 스펙 (핸드오프 핵심)
 
-각 컴포넌트는 상태(default/hover/focus/active/disabled/error/loading)·변형·사용 토큰·반응형·접근성을 명세한다(ux/rules.md 4절). 모바일 우선. 아래는 v0 우선 세트(U-007).
+각 컴포넌트는 상태(default/hover/focus/active/disabled/error/loading)·변형·사용 토큰·반응형·접근성을 명세한다(`ux/rules.md [4]`). 모바일 우선. 아래는 v0 우선 세트(U-007).
 
 ### 5.1 Button
 
 - variant: `primary`(bg-primary / text-primary-fg) · `outline`(border + text) · `ghost`(투명 + text) · `danger`(bg-danger / text-on-accent-fg).
   **`accent` variant는 폐기**(U-020) — 종전 accent(amber)는 조작 계층에서 게임 활성 황금과 충돌한다([1.2]). 즉시구매·입찰 CTA의 강조는 **색이 아니라 크기·배치**(lg + 주 액션 위치)로 만든다.
 - size: sm(h32, px3, text-sm) · md(h40, px4, text-base) · lg(h48, px5, text-lg). 반경 rounded-md.
-- 상태(게임 상태 언어, [2.2]): hover(`primary-hover` + `border`를 #3394DE로 밝힘 — 채우기만으론 지각 안 됨) / focus(`focus-ring` 크림 2px + offset 2px — 크롬이 파랑 일색이라 파랑 링은 묻힌다) / **active·pressed(`primary-pressed` 주황 + 전경 `on-accent-fg` 남색 — 명도가 아니라 hue가 바뀐다)** / disabled(`primary-disabled` + `text-subtle`, pointer-none) / loading(스피너 + 라벨 유지 또는 "처리 중", 중복 클릭 차단).
+- 상태(게임 상태 언어, [2.2]): hover(`primary-hover` + **`border`를 #3394DE로 밝힘 — 병행이 필수다. 채우기 인접 대비가 1.12라 채우기만 바꾸면 hover가 없는 것과 같다**(020 계산). Tailwind로는 `border border-primary hover:border-border`가 동반돼야 하고, **`hover:bg-primary-hover` 단독은 미충족이다**) / focus(`focus-ring` 크림 2px + offset 2px — 크롬이 파랑 일색이라 파랑 링은 묻힌다) / **active·pressed(`primary-pressed` 주황 + 전경 `on-accent-fg` 남색 — 명도가 아니라 hue가 바뀐다)** / disabled(`primary-disabled` + `text-subtle`, pointer-none) / loading(스피너 + 라벨 유지 또는 "처리 중", 중복 클릭 차단).
 - 접근성: 최소 타깃 44x44(sm은 터치 맥락에서 md 사용). 아이콘 전용 버튼은 aria-label 필수. loading 시 aria-busy.
 - 예: 입찰=primary md, 즉시구매=primary lg(크기로 강조), 취소=ghost/danger, 로그인=primary lg.
 
@@ -346,4 +358,4 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 - 토큰 → `tailwind.config.js theme.extend`(2.5·3·4절 표) + 테마 변수는 전역 CSS(:root / [data-theme=dark]).
 - 컴포넌트 → 프론트 `components/`(공용: Button·Field·Modal·Toast·Pagination·MoneyAmount·Countdown·SearchFilterBar) / feature별(ItemCard는 item, StatusChip은 도메인 상태).
-- 상태·에러 → 계약 §5 ErrorCode 상수와 1:1 매핑(frontend/CLAUDE.md 5절). 필드 에러·토스트 카피는 ux-flows.md 참조.
+- 상태·에러 → 계약 `[5]` ErrorCode 상수와 1:1 매핑(`frontend/rules.md [5]`). 필드 에러·토스트 카피는 ux-flows.md 참조.
