@@ -23,4 +23,4 @@ gate: null
 
 ## 완료 (게이트3, 2026-07-17)
 - 전 하위 done + FC-010 통합 리뷰 passed(critical/major 0, minor 3) + 위임 승인. 빌드·테스트 그린(reviewer 재확인).
-- **미push** — push는 사용자 직접(게이트3 훅). 후속: minor 1 위생 티켓(FC-011, cashAmount 상한) 백로그로 분리.
+- **원격 push됨**(`4239e38`, 사용자 직접). 후속: minor 1 위생 티켓(FC-011, cashAmount 상한) 백로그로 분리.

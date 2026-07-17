@@ -14,7 +14,7 @@
 - **워크플로우**: 4에이전트 오케스트레이션(architect/backend-impl/frontend-impl/reviewer) + portfolio-writer(**등록 완료**, CLAUDE.md 섹션 8·9) + consultant(휴면). 게이트3 push 차단 훅 활성(`.claude/hooks/block-git-push.js`).
 - **완료 에픽**:
   - EPIC-MEMBER(회원 프로필/수정/탈퇴, KAN-2~7) — **원격 push됨**(마지막 push `1fac4cc`).
-  - EPIC-CURRENCY(화폐 잔액·교환, KAN-9~13) — **done(게이트3, 미push)**:
+  - EPIC-CURRENCY(화폐 잔액·교환, KAN-9~13) — **done(게이트3) · 원격 push됨**(`4239e38`):
     - FC-007 ✅ done — 교환비율=`@ConfigurationProperties`(1캐시=1,000,000), money_exchange 멱등 게이트2 승인 → erd v0.8.
     - FC-008 ✅ done — UserBalance 원자 증감 5연산(`91e1138`). review_status=passed는 FC-010 통합 리뷰서 부여(80스레드 경합 실증).
     - FC-009 ✅ done — 교환(money_exchange+V5+POST /exchanges+EXC_001/002, 커밋 `eb48b96`). 멱등: ExchangeService(오케스트레이터)+ExchangeWriter(원자 쓰기 빈) 분리, 복합 UK로 동시경쟁 승자 재조회.
@@ -22,12 +22,11 @@
 - **독립 완료**: FC-006(User.java unique=true 정리, KAN-8).
 - **백로그 신규**: FC-011(todo, 에픽 미귀속) — 교환 cashAmount 상한 위생(FC-010 minor 1 파생, 오버플로 500→검증 400/422).
 - **대기 게이트**: 없음.
-- **미push**: EPIC-CURRENCY(커밋 `eb48b96`·`cba14bb`·`f74f694` 포함) + portfolio + FC-006 등 다수 로컬 커밋. **push는 사용자 직접**(게이트3 훅).
+- **push 상태**: `master` origin과 동기(마지막 push `4239e38`). 이 보드 동기 커밋만 미push 가능성(다음 push에 포함).
 
 ## 다음 수
-1. **사용자 push** — EPIC-CURRENCY + portfolio + 누적 로컬 커밋 원격 반영(에이전트 불가).
-2. 다음 에픽 착수 판단 — 후보: EPIC-CHARGE(충전, 외부 연동·시크릿) 또는 프론트 member 에픽(백엔드 계약 확정됨). 게이트1 분해안 상신.
-3. (백로그) FC-011 위생 티켓 — 여유 시 backend-impl 위임.
+1. 다음 에픽 착수 판단 — 후보: EPIC-CHARGE(충전, 외부 연동·시크릿) 또는 프론트 member 에픽(백엔드 계약 확정됨). 게이트1 분해안 상신.
+2. (백로그) FC-011 위생 티켓 — 여유 시 backend-impl 위임.
 
 ## 대기 안건(백로그)
 - FC-011: 교환 cashAmount 상한 위생(FC-010 minor 1). 독립 백로그.
