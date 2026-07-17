@@ -28,7 +28,7 @@ export function ErrorState({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-2 rounded-md border border-border px-4 py-2 text-sm text-text transition-colors duration-fast hover:bg-surface-raised"
+          className="mt-2 rounded-md border border-border-strong px-4 py-2 text-sm text-text transition-colors duration-fast hover:bg-surface-sunken"
         >
           다시 시도
         </button>

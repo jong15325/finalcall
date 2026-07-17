@@ -1,11 +1,11 @@
 /**
  * FinalCall Tailwind 토큰 매핑.
- * 정본: docs/ux/design-system.md [2]~[4]. 토큰명 1:1, 값 복제 금지 — 정본이 바뀌면 여기가 따라간다.
- * - 테마 무관(primary·on-accent-fg·semantic·element·surface-slot): 정적값.
- * - 테마 의존(bg·surface·border·text·focus-ring): CSS 변수 참조(var()) → src/index.css.
- * U-020 확정 팔레트 반영(2026-07-16, ux/017 [4] 드롭인 + ux/019 + ux/020 보정).
- * 폐기: primary 6단 스케일(50~700) · accent(500·600) · 의미색 -soft/-strong — design-system [2.6].
- * 등급(grade) 토큰은 만들지 않는다(D-073).
+ * 정본: docs/ux/design-system.md [2.6] Tailwind+CSS 드롭인(라이트 커머스 U-021). 토큰명 1:1, 값 복제 금지 —
+ * 정본이 바뀌면 여기가 따라간다. DESIGN.md(루트 시드) 값과 대조 완료.
+ * - 테마 무관(ink·primary·on-accent-fg·semantic·element·element-soft·surface-slot·social): 정적값.
+ * - 테마 의존(bg·surface·surface-sunken·border·text·focus-ring): CSS 변수 참조(var()) → src/index.css.
+ * U-021 라이트 커머스 확정(2026-07-17). CTA=블랙(ink), 퍼플=액센트만(버튼 채움 아님).
+ * U-016·U-020 남색 게임스킨은 SUPERSEDED. 등급(grade) 토큰은 만들지 않는다(D-073).
  */
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -14,41 +14,55 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 조작 계층 — 게임 상태 언어(테마 무관 정적값). design-system [1.2]① [2.2]
-        // 상태는 명도가 아니라 hue 전환이다: 기본 파랑 → 눌림 주황 → 활성 황금.
+        // 조작 계층 — CTA 블랙 + 퍼플 액센트(테마 무관 정적값). design-system [1.2]① [2.2]
+        // 주 CTA = ink 블랙 채움. 퍼플(primary)은 링크·포커스·선택 액센트만(채움 아님).
+        ink: '#18181B',
         primary: {
-          DEFAULT: '#0667BD',
-          hover: '#0560AD',
-          pressed: '#E25706',
-          selected: '#E2B206',
-          disabled: '#0A3A63',
-          fg: '#FAF7D5', // 정적값 — 파랑 위의 전경. 테마 무관(019 안건2). text 와 hex 가 같아도 다른 토큰이다
+          DEFAULT: '#6E2A9F',
+          hover: '#5C2185',
+          pressed: '#491A6C',
+          selected: '#F1EAF5',
+          soft: '#F1EAF5',
+          disabled: '#E4E4E7',
+          fg: '#FFFFFF', // 정적값 — ink·primary 위 전경. 테마 무관
         },
-        'on-accent-fg': '#001C33', // 밝은 계열(pressed·selected·warning) 위의 전경
+        'on-accent-fg': '#18181B', // element 칩 라벨 등 잔존 용도(near-black)
 
-        // 정보 계층 — 의미색(-soft 는 12% 알파 합성, 별도 토큰 없음). design-system [2.3]
-        success: '#4ADE80',
-        warning: '#E2B206',
-        danger: '#FF4D4D',
-        info: '#3394DE',
+        // 정보 계층 — 의미색(-soft 는 8% 알파 합성, 별도 토큰 없음). design-system [2.3]
+        success: '#14742F',
+        warning: '#A0510A',
+        danger: '#C81E1E',
+        info: '#1D4ED8',
 
-        // 아이템 계층 — 아트 픽셀 실측(변경 금지). design-system [2.3]
-        // element 칩은 bg 위에만 놓는다 — primary 위에서 water 2.4:1 로 무너진다(ux/017 [5]#1)
+        // 아이템 계층 — 아트 픽셀 실측(변경 금지) + 라이트용 소프트 틴트. design-system [2.7]
+        // element 칩은 소프트 틴트 위에만 놓는다 — 흰 배경 위 텍스트 직접·퍼플 위 배치 금지([1.2] Containment)
         element: {
           water: '#19B2FF',
           fire: '#FF5500',
           earth: '#95B259',
           wind: '#66CCCC',
         },
+        'element-soft': {
+          water: '#DDF3FF',
+          fire: '#FFE6D9',
+          earth: '#EFF3E6',
+          wind: '#E8F7F7',
+        },
 
-        // 표면·텍스트 — CSS 변수 참조(src/index.css). design-system [2.4]
-        // 라이트 값은 0개다. U-005 확정 시 [data-theme="light"] 블록을 얹어 덮는다(ux/020 [2])
+        // 소셜 로그인 — 외부 브랜드 규격(팔레트 예외, 재색 금지). design-system [2.8]
+        kakao: '#FEE500',
+        naver: '#03C75A',
+
+        // 표면·텍스트 — CSS 변수 참조(src/index.css). design-system [2.6]
+        // :root = 라이트 기본. [data-theme="dark"] 다크값은 U-005 확정 시 얹는다(지금 미창작)
         bg: 'var(--color-bg)',
         surface: 'var(--color-surface)',
         'surface-raised': 'var(--color-surface-raised)',
+        'surface-sunken': 'var(--color-surface-sunken)',
         'surface-slot': '#000000',
         border: 'var(--color-border)',
         'border-muted': 'var(--color-border-muted)',
+        'border-strong': 'var(--color-border-strong)',
         text: 'var(--color-text)',
         'text-muted': 'var(--color-text-muted)',
         'text-subtle': 'var(--color-text-subtle)',
@@ -60,17 +74,17 @@ export default {
         num: ['Pretendard', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       borderRadius: {
-        // design-system [4] 반경
+        // design-system [4] 반경(무신사식 각진 감성으로 낮춤 — U-021)
         sm: '4px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
+        md: '6px',
+        lg: '8px',
+        xl: '12px',
       },
       boxShadow: {
-        // design-system [4] 그림자 (라이트 기준값; 다크는 표면 밝기차 우선)
-        sm: '0 1px 2px rgba(15,23,42,.06)',
-        md: '0 4px 12px rgba(15,23,42,.10)',
-        lg: '0 12px 32px rgba(15,23,42,.14)',
+        // design-system [4] 그림자 (라이트 지배값 — 그림자가 실제 부양(elevation)에 쓰인다)
+        sm: '0 1px 3px rgba(15,23,42,.06)',
+        md: '0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06)',
+        lg: '0 8px 24px rgba(15,23,42,.10)',
       },
       transitionDuration: {
         // design-system [4] 모션

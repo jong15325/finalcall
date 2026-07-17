@@ -12,7 +12,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       aria-label={theme === 'dark' ? '라이트 테마로 전환' : '다크 테마로 전환'}
-      className="rounded-md border border-border px-3 py-1.5 text-sm text-text transition-colors duration-fast hover:bg-surface-raised"
+      className="rounded-md border border-border-strong px-3 py-1.5 text-sm text-text transition-colors duration-fast hover:bg-surface-sunken"
     >
       {theme === 'dark' ? '라이트' : '다크'}
     </button>
