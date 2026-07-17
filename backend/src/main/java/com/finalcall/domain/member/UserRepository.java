@@ -26,6 +26,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /** 로그인 아이디로 활성 회원 조회(로그인·refresh) — 탈퇴행 제외로 다건 반환을 방지한다. */
     Optional<User> findByLoginIdAndIsDeletedFalse(String loginId);
 
+    /** PK로 활성 회원 조회(내 프로필·수정·탈퇴 주체) — 탈퇴행 제외(D-081). 탈퇴 계정은 조회에서 빠진다. */
+    Optional<User> findByIdAndIsDeletedFalse(Long id);
+
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default User findByIdOrThrow(Long id, ErrorCode errorCode) {
         return findById(id).orElseThrow(() -> new BusinessException(errorCode));
