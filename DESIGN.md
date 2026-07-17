@@ -1,7 +1,7 @@
 ---
 theme: light
 base:
-  bg: "#FAFAFA"
+  bg: "#FFFFFF"
   surface: "#FFFFFF"
   surface-sunken: "#F4F4F5"
   slot: "#000000"
@@ -45,7 +45,7 @@ radius:
 **Creative North Star: "신뢰가 먼저 보이는 커머스, 게임은 아이템에서만 드러난다"**
 
 **Key Characteristics:**
-- 라이트 커머스 베이스 — 오프화이트 배경, near-black 텍스트, 얇은 그레이 선(무신사식 각진·절제)
+- 라이트 커머스 베이스 — 순백(#FFFFFF) 배경, near-black 텍스트, 얇은 그레이 선(무신사식 각진·절제)
 - 고유 딥퍼플 브랜드 액센트(컬리 무드 참조, 컬리색 미복제)
 - 이원 구조 — 계정·거래 화면엔 게임색 전무, 아이템 카드가 게임이 드러나는 유일한 창
 - 강한 타입 위계 + 넉넉한 여백, 낮은 반경(4~8px)
@@ -58,8 +58,8 @@ radius:
 라이트 베이스(#FAFAFA/#FFFFFF) 위 전 토큰 대비를 sRGB 상대휘도로 계산 검증했다. 조작색(primary)·의미색·아이템색(element)은 계층으로 분리하며 한 컴포넌트 안에서 섞지 않는다.
 
 ### Base
-- **bg** (#FAFAFA): 페이지 배경(오프화이트).
-- **surface** (#FFFFFF): 카드·패널·인풋 표면.
+- **bg** (#FFFFFF): 페이지 배경(순백, 확정). 카드는 색이 아니라 **얇은 선(border)·그림자로 분리**(무신사식).
+- **surface** (#FFFFFF): 카드·패널·인풋 표면(bg와 동색 — 경계는 border/shadow).
 - **surface-sunken** (#F4F4F5): 함몰 존·비활성 인풋.
 - **slot** (#000000): 아이템 아트 슬롯 배경 — 아이템 표시 전용.
 
