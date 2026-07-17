@@ -19,6 +19,7 @@ Java 21 + Spring Boot 3.5 모놀리식 서비스 + SCG 엣지 게이트웨이(�
 |---|---|---|
 | [skeleton.md](skeleton.md) | 완료 | Stage 0~G 프로덕션 스켈레톤 — 분산락·회복탄력성·JWT·관측성 + SCG 엣지 게이트웨이(rate limit·직접접근 차단) + 모노레포. 대규모 트래픽·동시성 인프라 선점. |
 | [orchestration.md](orchestration.md) | 완료·운영 중 | 파일 티켓 보드 기반 멀티에이전트 오케스트레이션 — contract-first·게이트 정책·상태 머신·Jira 단방향 미러·게이트3 push 차단 훅. "AI 협업 개발 프로세스 설계"라는 메타 성과. |
+| [process-log.md](process-log.md) | 누적 로그 | 프로세스 개선·트러블슈팅·열린 논의의 누적 이력. 항목1=Jira 미러 드리프트 사건→규율화(해결됨, warn-only 훅+HANDOVER 패리티). 항목2=보안 층 도입 논의(**OPEN·미결**). 케이스 스터디가 아니라 재개용 이슈·의사결정 로그. |
 | [member.md](member.md) | 완료·push됨 | 회원 도메인(EPIC-MEMBER) — 프로필/수정/탈퇴. refresh 회전·세션 일괄 폐기(SEC-006), soft delete 재가입 UK(D-081), 열거 방지(COMMON_005/SEC-007), 탈퇴 잔액 소멸 동의(D-080). |
 | [fe-member.md](fe-member.md) | 완료·게이트3 Done | 프론트 내 계정(EPIC-FE-MEMBER) — auth·마이페이지·잔액 표시. contract-first 단일 1패스(팬아웃 교차 분석), `GET /me` 하이드레이션(계약 변경 없이 정합), 디자인 U-020 남색→U-021 라이트 커머스 실코드 교체, COMMON_005 열거방지·메모리 세션·탈퇴 동의(D-080), Jira 미러 누락→규율 전환. |
 
@@ -33,4 +34,4 @@ Java 21 + Spring Boot 3.5 모놀리식 서비스 + SCG 엣지 게이트웨이(�
 - **아이템/카테고리(item/category)** — 미착수.
 - **프론트엔드** — 백엔드 계약 확정 후 별도 에픽.
 
-_최종 갱신: 2026-07-18 (portfolio-writer, EPIC-FE-MEMBER 도시에 추가)_
+_최종 갱신: 2026-07-18 (portfolio-writer, process-log.md 신설 — 미러 드리프트 규율화 + 보안 층 논의 OPEN)_
