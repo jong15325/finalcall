@@ -8,7 +8,7 @@ export function NotFoundPage() {
       <p className="text-sm text-text-muted">요청한 페이지를 찾을 수 없습니다.</p>
       <Link
         to={ROUTES.home}
-        className="rounded-md border border-primary bg-primary px-4 py-2 text-sm text-primary-fg transition-colors duration-fast hover:border-border hover:bg-primary-hover"
+        className="inline-flex items-center justify-center rounded-md bg-ink px-4 py-2 text-sm font-medium text-primary-fg transition-colors duration-fast hover:bg-[#33333a] active:bg-black"
       >
         홈으로
       </Link>
