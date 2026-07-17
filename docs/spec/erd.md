@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v0.7 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v0.8 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -15,6 +15,7 @@
 | v0.5 | 2026-07-14 | D-073 반영 — item_template.grade 제거, 유니크 (main_category,sub_group,element,kind), §5 인덱스 (element,kind), Mermaid 정정 |
 | v0.7 | 2026-07-14 | [6] Flyway 채번 동기화(B-012 방식 b) — 백엔드 V4 실물(`V4__user_natural_key_uk.sql`, backend/033) 등재. 부수: v0.6 편집 시 [4] 말미 주가 `temp_storage` 표 선언과 컬럼 표 사이에 삽입돼 표가 분리됐던 구조 오류 복구(원인 = bash 마운트 뷰가 [5]·[6]을 서빙하지 않아 문서 말미로 오판. 호스트 Read로 발견·정정) |
 | v0.6 | 2026-07-14 | D-081 반영(074) — [1] soft delete 자연키 UK 구현 지침 명문화(생성 컬럼 패턴 + 기각 해석 2종 + 동반 필수 + 대리키 예외 + 트리거 조건), [4.1] `user` 표에 `login_id_active`·`nickname_active` 생성 컬럼 UK 반영(원본 컬럼 존치), [4] 말미에 자연키 스윕 결과 주 신설(적용 대상 user 1건·그 외 0건·조건부 리스크 3건). 사유: 기존 [1] 한 줄이 의도만 말하고 구현 해석을 열어둬 V3가 함정을 밟음(backend/028 발견, QA-001) |
+| v0.8 | 2026-07-17 | 게이트2 승인 반영 — [4.1] `money_exchange` 표에 `idempotency_key VARCHAR NOT NULL` + `(user_id, idempotency_key)` 복합 UK(멱등 앵커) 신설, [5] 정합성 인덱스·제약 절에 동 복합 UK 등재. 사유: 교환 멱등 DB 강제(SEC-004). 클라이언트 공급 키라 전역 아닌 사용자 스코프 복합 UK — charge.pg_tx_id(SEC-001) 선례 동류. 부수: applied_rate precision/scale 구현(V5) 확정 비고 1줄 |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -205,7 +206,10 @@ table `money_exchange` — 캐시↔게임머니 교환. 교환 비율은 파라
 | user_id | BIGINT | N | FK→user | |
 | cash_amount | BIGINT | N | | 차감 캐시 |
 | game_money_amount | BIGINT | N | | 지급 게임머니 |
-| applied_rate | DECIMAL | N | | 적용 교환 비율(당시 파라미터 스냅샷) |
+| applied_rate | DECIMAL | N | | 적용 교환 비율(당시 파라미터 스냅샷). precision/scale은 구현(V5)에서 확정 |
+| idempotency_key | VARCHAR | N | UK(복합) | 멱등 앵커 — 클라이언트 공급 키. 중복 교환 재실행 DB 차단(SEC-004) |
+
+유니크: (user_id, idempotency_key) 복합 UK. 클라이언트 공급 키라 전역이 아니라 사용자 스코프(charge.pg_tx_id 멱등 앵커 선례 동류, SEC-004).
 
 table `money_hold` — 입찰 시 게임머니 홀드(에스크로, D-052). 상위 입찰 시 즉시 해제(P-008), 낙찰 시 차감.
 
@@ -390,6 +394,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 - 종료성 전이(auction·shop status)는 조건부 CAS UPDATE(WHERE status='ACTIVE')로 단일 승자. 별도 인덱스보다 status 조건이 핵심.
 - 출품 중복 방지는 item_instance.location 전이(INVENTORY→LISTED) CAS 단일 승자로 보증(플래그 B). "활성 리스팅 instance 유니크"용 부분 유니크 인덱스는 불요.
 - charge.idempotency_key UK로 충전 콜백 멱등(D-051).
+- money_exchange (user_id, idempotency_key) 복합 UK로 교환 멱등(SEC-004). 클라이언트 공급 키라 사용자 스코프(charge.pg_tx_id 선례 동류).
 
 ## 6. Flyway 매핑 (D-036, B-012 정정)
 
