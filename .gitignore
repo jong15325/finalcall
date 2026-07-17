@@ -43,6 +43,11 @@ boot*.log
 /logs/
 /app.pid
 
+# impeccable 디자인 스킬(로컬 설치 — 활성 훅이 settings.local.json 로컬에만 있어 설치물도 로컬 취급).
+# 팀 벤더링(커밋)을 원하면 아래 두 줄을 제거한다.
+.claude/skills/impeccable/
+.impeccable/
+
 # docs 작업 로그는 제외하지 않는다 (C-067, supersedes C-058).
 # C-058이 inbox-log·handover를 여기 넣었다가 철회했다 — 호스트 Grep이 gitignore 대상 파일을
 # 스코프에 따라 조용히 건너뛰어 `rules [9.1]`(호스트 도구로 판단)의 신뢰성이 깨졌다.
