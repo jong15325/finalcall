@@ -276,3 +276,110 @@ INCLUDE_AWS_SPEC_HINT = true
   게이트웨이(`backend/gateway`) 편집 시에는 `./gradlew :backend:gateway:spotlessApply`를 실행한다.
   새 세션·전 도메인 동일 적용한다(Claude Code 킥오프도 이 절을 따른다).
 - **범위**: 스타일 층만 담당한다. 도메인 설계 규칙은 섹션 5, 커밋 형식은 섹션 6을 따른다.
+
+---
+
+## 섹션 8: 에이전트 오케스트레이션 (위임 정책)
+
+스켈레톤 완료 후 도메인 개발은 **메인세션이 총괄로서 서브에이전트를 오케스트레이션**하는 방식으로 진행한다.
+
+**우선순위**: 이 절부터 섹션 13까지(오케스트레이션 모드)는 섹션 1~7의 개발 규약 위에서 동작한다. **커밋·단계 진행에 관해 섹션 2·6과 충돌하면 이 절들이 우선한다**(섹션 2의 "한 단계씩·Claude Code 커밋 안 함", 섹션 6의 "커밋은 사용자 전담"은 스켈레톤 스테이징 기준이며 도메인 개발엔 섹션 13이 정본).
+
+- **총괄 = 메인세션 자체**(서브에이전트 아님). 위임·게이트 판정·티켓 상태 전이·Jira 미러를 담당한다.
+- **실행 서브에이전트 4종 + 컨설턴트(휴면)**:
+
+| 에이전트 | 트리거(언제 쓰나) | 권한 | 모델 |
+|---|---|---|---|
+| architect | 기능 착수 시 계약/spec 확정. 구현 전 필수 선행 | 읽기 + spec/ 쓰기 | Opus 4.8 |
+| backend-impl | 계약 확정 후 서버 구현·테스트 | Read/Write/Edit/Bash | Opus 4.8 |
+| frontend-impl | 계약 확정 후 클라이언트 구현(디자인 흡수). 새 화면은 디자인 게이트 후 | Read/Write/Edit/Bash | Opus 4.8 |
+| reviewer | 구현 후 Done 전 필수. 보안+QA+접근성/UX 통합 판단 | 읽기 전용(Read/Grep/Glob/Bash) | Opus 4.8 |
+| consultant | **구조적 규약 개정 시에만** 명시적 소환. 평상시 휴면 | 읽기 + docs 규약 | Opus 4.8 |
+
+- **에이전트 간 직접 통신 금지**. 서브에이전트는 **파일 read/write + 메인세션 반환**만 한다. 다른 에이전트를 호출하거나 대화하지 않는다.
+- **무상태**: 에이전트는 세션 상태를 남기지 않는다. 모든 상태는 티켓 파일(섹션 11)에 영속한다.
+- **컨설턴트 휴면**: 평상시 프로세스 규칙은 메인세션이 적용한다. 규약·프로세스 변경이 필요할 때만 소환한다. description을 좁게 걸어 오발동을 막는다.
+
+## 섹션 9: 워크플로우
+
+- **contract-first**: 기능 착수 시 **architect가 API 계약/spec을 먼저 확정**(게이트2 통과)한 뒤에만 구현 에이전트를 팬아웃한다. 프론트/백엔드 실시간 협상을 설계로 제거한다.
+- **파이프라인**:
+
+```
+architect(계약 확정)
+  → [디자인 게이트: 새 화면/주요 UI]
+  → backend-impl  ∥  frontend-impl        (병렬)
+  → reviewer(보안+QA+접근성)
+  → Done            (reviewer 통과가 필수 선행)
+```
+
+- **팬아웃(병행) 판정**: 두 위임을 병렬로 내는 조건은 **의존 없음 + 쓰기 파일 집합 무교차** 둘 다 충족일 때다. "같은 도메인"이 아니라 "같은 파일"로 센다.
+- **에픽/티켓 경계 판단**: 총괄이 규모로 자동 판단한다.
+  - **에픽** = 여러 하위 작업으로 분해됨(다수 파일 변경 · 병렬 팬아웃 가능 · 게이트2 결정 포함 중 하나 이상).
+  - **티켓** = 단일 파일·단일 DoD로 닫힘.
+  - 에픽 분해안은 **게이트1에서 사용자에게 제시해 조정**받는다. 하위 티켓은 자동 진행하며 개별 보고하지 않는다.
+
+## 섹션 10: 게이트 정책
+
+| 게이트 | 발동 조건 | 동작 |
+|---|---|---|
+| **게이트1 (에픽 승인)** | 에픽 착수 시 | 총괄이 분해안(하위 티켓·의존)을 사용자에게 제시 → 승인·조정. 하위는 자동 진행 |
+| **게이트2 (스키마/계약/성능)** | 스키마·API계약·성능 영향·되돌리기 큰 결정 | **자동 진행 중에도 예외적으로 멈추고** 사용자에 상신. 그 이하는 총괄 자율 |
+| **디자인 게이트** | frontend-impl이 **새 화면·주요 UI** 구현 전 | 디자인 방향을 사용자에 제시 → 승인·조정 후 구현. **단순 수정은 자동** |
+| **게이트3 (push + Done)** | 에픽 완료 시 | **push는 사용자가 직접 실행**(에이전트 불가, PreToolUse 훅이 차단). **Done 전이는 사용자 승인**. 커밋은 게이트 없음 |
+
+- **권한 집중 방지**: 프로젝트 축 결정은 게이트2로, 체계 축(규약·프로세스) 변경은 컨설턴트 소환으로, **둘 다 사용자에게 수렴**한다.
+- **spec 확정 후 변경**: 사용자가 언제든 요청 가능하되, **architect가 영향받는 티켓 목록을 먼저 제시 → 사용자 확인 후 진행**(contract-first 파급 관리).
+
+## 섹션 11: 티켓·에픽 (파일 티켓 보드)
+
+- **canonical 진실원 = 레포 내 티켓 파일**. 위치: `docs/board/{tickets/, epics/, reviews/}`. **티켓당 파일 1개**(모놀리식 보드 금지 — 병렬 쓰기 충돌 회피).
+- **스키마** — YAML 프론트매터:
+
+```yaml
+---
+id: FC-014
+type: task                 # task | epic
+epic: EPIC-MEMBER          # 귀속 에픽(task). epic이면 삭제
+derived_from: FC-012       # 직접 부모 티켓. 최초 발생이면 null
+jira_key: KAN-7            # 미러 대상. 최초 생성 시 기록 후 불변
+title: member 잔액 원자적 증감 구현
+state: doing               # todo | doing | review | blocked | done
+owner: backend-impl        # architect | backend-impl | frontend-impl | reviewer | main
+depends_on: [FC-012]
+blocks: [FC-016]
+gate: null                 # 대기 게이트: gate2 | gate3 | design | null
+review_status: pending     # pending | passed | changes-requested (게이트3 훅이 참조)
+contract_ref: docs/spec/api-contract.md 4.2절
+artifacts:
+  - backend/src/.../UserBalance.java
+  - docs/board/reviews/FC-014-review.md
+---
+## 목표 / DoD / 근거인용 / 검증
+## 파생 경위: <파생 티켓이면 한 줄. 최초 발생이면 삭제>
+```
+
+- **에픽 파일**: `type: epic` + `children: [...]`. `state`는 하위 롤업(손으로 관리 안 함): 전부 todo면 todo, 하나라도 doing이면 doing, 전부 review 이상이면 review, **전부 done + 사용자 승인이면 done**.
+- **상태 머신** — 전이 주체는 **메인세션만**(에이전트는 산출물만 반환):
+
+```
+todo ──위임──▶ doing ──구현 완료──▶ review ──reviewer 통과──▶ done*
+review ──critical/major 발견──▶ doing (재작업)
+doing/review ──선행 미충족·게이트2 대기──▶ blocked ──해소──▶ 직전 상태
+* done 전이 = 게이트3(에픽 완료 시 사용자 승인). review_status=passed 필수 선행
+```
+
+- **reviewer 통과 표현**: `review_status` 필드로 티켓에 명시한다. 게이트3 훅이 이를 참조해 미통과 티켓의 done/push를 막는다.
+
+## 섹션 12: Jira 미러 (사용자 대시보드)
+
+- **파일 → Jira 단방향**. Jira(Atlassian MCP, KAN)는 **사용자 전용 읽기 미러**다. 에이전트는 **Jira를 읽지 않는다**(서브에이전트 도구셋에서 Atlassian MCP 제외).
+- **트리거**: **메인세션만** 상태 전이 시 실시간 반영한다. **비차단** — 미러 실패해도 파일 작업을 멈추지 않는다(가시성 도구, 게이트 아님).
+- **매핑**: state→status(칸반 컬럼) · owner→라벨 `agent:<owner>` · epic→Jira Epic(+Epic Link) · depends_on/blocks→issue link · gate→라벨 `gate:*`.
+- **역류 방지**: Jira 변경은 파일에 **영향 없음**. `jira_key`로 식별하는 **멱등 upsert**(생성 아닌 갱신). 파일과 어긋나면 **파일이 정본**, 다음 미러가 덮어쓴다.
+
+## 섹션 13: 커밋·push 규약 (오케스트레이션 모드)
+
+- **커밋 = 자동, 게이트 없음**. 메시지는 섹션 6 Conventional Commits 형식을 준수한다. 코드는 atomic 커밋을 유지한다.
+- **push = 에픽 완료 시 사용자가 직접 실행**. 에이전트는 push 권한이 없다. **PreToolUse 훅이 `git push`를 차단하고 `git commit`은 통과**시킨다(게이트3 훅 · settings.json).
+- **Done 전이 = 사용자 승인**(게이트3).
