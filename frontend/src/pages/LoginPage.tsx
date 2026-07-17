@@ -1,73 +1,114 @@
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '@/stores/authStore';
+import { useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Field } from '@/components/ui/Field';
+import { useLogin } from '@/features/auth/api/useAuth';
+import { useRateLimit } from '@/features/auth/hooks/useRateLimit';
+import { hasErrorCode, isRateLimited } from '@/lib/api/errors';
+import { toFieldErrorMap } from '@/lib/api/fieldErrors';
 import { sanitizeReturnUrl } from '@/lib/returnUrl';
 import { ROUTES } from '@/routes/paths';
+import { ERROR_CODES } from '@/types/errorCodes';
+
+/** 회원가입 성공 후 /login 이동 시 넘어오는 state(loginId prefill + 안내). */
+interface LoginLocationState {
+  signupSuccess?: boolean;
+  loginId?: string;
+}
 
 /**
- * 로그인 화면 placeholder.
- * 실제 로그인(POST /auth/login) 폼·검증·플로우(P-009·P-010)는 auth feature 단계에서 구현한다.
- *
- * 스켈레톤 범위: returnUrl 안전 파싱(P-011) + 인증 가드 복귀 경로 검증.
- * 아래 "임시 세션" 버튼은 **스켈레톤 검증 전용**(가드 → login → returnUrl 복귀 동작 확인용)이며,
- * auth feature 착수 시 실제 로그인 호출로 대체·제거된다. 실 API·자격 검증은 하지 않는다.
+ * 로그인 (`/login`, AuthFormLayout). 계약 §2 · spec §3.1.
+ * POST /auth/login → GET /me 하이드레이션 → setSession → returnUrl 복귀.
+ * AuthFormLayout 이 인증 시 홈으로 되돌리므로 별도 처리 불요.
  */
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const returnUrl = sanitizeReturnUrl(searchParams.get('returnUrl'));
   const navigate = useNavigate();
-  const setSession = useAuthStore((s) => s.setSession);
+  const state = (useLocation().state ?? null) as LoginLocationState | null;
 
-  const handleStubSignIn = (asAdmin: boolean): void => {
-    // 스켈레톤 전용 stub 세션 — 실제 토큰 발급 아님(메모리 세션, persist 없음).
-    setSession({
-      accessToken: 'skeleton-stub-access-token',
-      accessExpiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
-      refreshToken: 'skeleton-stub-refresh-token',
-      user: {
-        userPublicId: '00000000000000000000000000',
-        nickname: asAdmin ? '관리자(stub)' : '사용자(stub)',
-        isAdmin: asAdmin,
+  const loginMutation = useLogin();
+  const rateLimit = useRateLimit();
+
+  const [loginId, setLoginId] = useState(state?.loginId ?? '');
+  const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const busy = loginMutation.isPending;
+  const disabled = busy || rateLimit.isLimited;
+
+  const onSubmit = (e: FormEvent): void => {
+    e.preventDefault();
+    setFormError(null);
+    setFieldErrors({});
+    loginMutation.mutate(
+      { loginId, password },
+      {
+        onSuccess: () => navigate(returnUrl, { replace: true }),
+        onError: (error) => {
+          if (isRateLimited(error)) {
+            rateLimit.trigger(error.retryAfterMs);
+            return;
+          }
+          if (hasErrorCode(error, ERROR_CODES.AUTH_003)) {
+            // 계정/비번 어느 쪽인지 특정 금지(열거 완화 SEC-007)
+            setFormError('아이디 또는 비밀번호가 올바르지 않습니다.');
+            return;
+          }
+          const fe = toFieldErrorMap(error);
+          if (Object.keys(fe).length > 0) {
+            setFieldErrors(fe);
+            return;
+          }
+          setFormError(error instanceof Error ? error.message : '로그인에 실패했습니다.');
+        },
       },
-    });
-    navigate(returnUrl, { replace: true });
+    );
   };
 
   return (
-    <section className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold text-text">로그인</h1>
-      <p className="text-sm text-text-muted">
-        로그인 폼은 auth feature 단계에서 구현됩니다(스켈레톤 placeholder).
-      </p>
+    <section className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold text-text">로그인</h1>
 
-      <div className="rounded-md border border-border bg-surface p-3 text-xs text-text-subtle">
-        복귀 경로(returnUrl): <span className="font-num text-text-muted">{returnUrl}</span>
-      </div>
+      {state?.signupSuccess ? (
+        <Alert tone="success">회원가입이 완료되었습니다. 로그인해 주세요.</Alert>
+      ) : null}
+      {formError ? <Alert tone="danger">{formError}</Alert> : null}
+      {rateLimit.isLimited ? (
+        <Alert tone="warning">
+          요청이 많습니다. {rateLimit.secondsLeft}초 후 다시 시도할 수 있습니다.
+        </Alert>
+      ) : null}
 
-      <div className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
-        <p className="text-xs text-text-subtle">
-          스켈레톤 검증 전용 — 가드 복귀(returnUrl) 동작 확인용. auth feature 착수 시 제거됩니다.
-        </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => handleStubSignIn(false)}
-            className="rounded-md border border-primary bg-primary px-3 py-2 text-sm text-primary-fg transition-colors duration-fast hover:border-border hover:bg-primary-hover"
-          >
-            임시 세션(사용자)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleStubSignIn(true)}
-            className="rounded-md border border-border px-3 py-2 text-sm text-text transition-colors duration-fast hover:bg-surface-raised"
-          >
-            임시 세션(관리자)
-          </button>
-        </div>
-      </div>
+      <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
+        <Field
+          label="아이디"
+          type="text"
+          autoComplete="username"
+          value={loginId}
+          onChange={(e) => setLoginId(e.target.value)}
+          error={fieldErrors.loginId}
+          required
+        />
+        <Field
+          label="비밀번호"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={fieldErrors.password}
+          required
+        />
+        <Button type="submit" size="lg" isLoading={busy} disabled={disabled} className="mt-2">
+          {busy ? '로그인 중' : '로그인'}
+        </Button>
+      </form>
 
       <p className="text-sm text-text-muted">
         계정이 없나요?{' '}
-        <Link to={ROUTES.signup} className="text-text underline">
+        <Link to={ROUTES.signup} className="text-primary underline">
           회원가입
         </Link>
       </p>

@@ -20,7 +20,7 @@ TypeScript(strict) + React SPA(Vite) + TanStack Query + Zustand + Tailwind CSS. 
 
 ```
 src/
-├── features/     # 도메인별 응집 (스켈레톤 단계 비움 — README 참조)
+├── features/     # 도메인별 응집 (auth·member·wallet 구현 — 그 외 도메인은 착수 시)
 ├── components/   # 공용 컴포넌트 (layout·feedback·ThemeToggle·ErrorBoundary)
 ├── stores/       # Zustand 전역 (인증 세션·테마)
 ├── lib/          # api 클라이언트·queryClient·유틸
@@ -31,8 +31,9 @@ src/
 
 ## 계약
 
-유일한 API 기준은 백엔드 저장소의 `docs/api-contract.md`(현재 **v1.4**)다. repo 생성 시 이 저장소로
-복사본을 두고 헤더에 원본 경로·버전·해시를 기입한다(D-030). 복사본과 원본이 어긋나면 원본이 우선한다.
+유일한 API 기준은 레포 루트의 `docs/spec/api-contract.md`(현재 **v1.5**)다. 모노레포 단일 정본을
+직접 참조한다(D-098). 사본을 두지 않는다 — 이중 관리·drift 회피(D-030 사본 규약은 프론트가 별도
+저장소였을 때의 것으로, 단일 워킹트리에서 폐기).
 
 ## 환경 변수
 

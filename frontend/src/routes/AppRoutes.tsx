@@ -6,6 +6,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { PagePlaceholder } from '@/pages/PagePlaceholder';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ROUTES } from '@/routes/paths';
 
@@ -46,7 +47,7 @@ export function AppRoutes() {
           path={ROUTES.walletChargeConfirm}
           element={<PagePlaceholder title="충전 승인 콜백" />}
         />
-        <Route path={ROUTES.profile} element={<PagePlaceholder title="마이페이지" />} />
+        <Route path={ROUTES.profile} element={<ProfilePage />} />
       </Route>
 
       {/* 관리자 — 인증 + isAdmin */}

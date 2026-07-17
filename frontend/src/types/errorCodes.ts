@@ -6,6 +6,7 @@
 export const ERROR_CODES = {
   // 공통
   COMMON_004: 'COMMON_004', // 분산락 획득 실패 (409)
+  COMMON_005: 'COMMON_005', // 세션 무효(탈퇴 주체 등, §2.5) (401)
 
   // 인증·회원
   AUTH_001: 'AUTH_001', // 중복 loginId (409)

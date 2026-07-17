@@ -39,6 +39,8 @@ interface AuthState {
   setSession: (session: AuthSession) => void;
   /** refresh 회전 — 신규 토큰만 갱신(user 유지, 계약 [2] 회전 정책) */
   updateTokens: (tokens: SessionTokens) => void;
+  /** user 요약 부분 갱신(닉네임 수정 반영 — 헤더 동기화). 세션 없으면 무시. */
+  updateUser: (partial: Partial<UserSummary>) => void;
   /** 로그아웃·세션 만료 — 전체 정리 */
   clearSession: () => void;
 }
@@ -63,6 +65,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessExpiresAt: tokens.accessExpiresAt,
       refreshToken: tokens.refreshToken,
     }),
+
+  updateUser: (partial) =>
+    set((state) => (state.user ? { user: { ...state.user, ...partial } } : {})),
 
   clearSession: () =>
     set({
