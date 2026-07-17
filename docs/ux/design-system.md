@@ -1,216 +1,229 @@
 # FinalCall 디자인 시스템 (design-system.md)
 
-상태: DRAFT v0.2.2 — 디자인 초안. 비주얼 방향 **확정**(U-016 원게임 UI 스킨 차용) + **[2] 색 토큰 게임 팔레트 실측값으로 전면 재정의 완료**(U-020). [1]·[2]는 확정, [3]~[6]은 초안.
+상태: DRAFT v0.3 — 비주얼 방향 **라이트 커머스 전환 확정**(U-021 — 무신사 미니멀 에디토리얼 + 마켓컬리 프리미엄 퍼플 **참조**, 자산·실hex 미복제·고유값 창작). [1]·[2] 색 토큰 전면 재정의(**순백 베이스** · **CTA 블랙 `ink`** · **퍼플 브랜드 액센트** · 의미색 라이트 재검증 · element 라이트 **역할 반전** · OAuth 자리 확보). 남색 게임스킨(U-016·U-020)은 **SUPERSEDED**. [3]·[4]는 유지(반경 낮춤). [5]는 [5.1]·[5.11] 개정, 나머지 초안.
 소유: 디자인(UX/UI)
-근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마·[2.5] 회원 리소스·[1.6] 엣지 오류), erd v0.7(item_template.element), `frontend/rules.md [5]`, `ux/rules.md [3]`·`[4]`·`[11]`, U-001~003·005~010·U-016·U-020
+근거: api-contract v1.4(최상위, 등급 제거 D-073·[3.3] 응답 스키마·[2.5] 회원 리소스·[1.6] 엣지 오류), erd v0.7(item_template.element), `redesign-commerce-proposal.md` v1(**전 색 대비 계산 출처**), `DESIGN.md`(루트, impeccable 시드 토큰 — 값 대조 정본), `frontend/rules.md [5]`, `ux/rules.md [3]`·`[4]`·`[11]`, U-001~003·005~010·U-012·**U-021**(U-016·U-020 SUPERSEDED)
 기준: 계약이 최상위. 이 문서는 프론트 구현의 참고 지침이며 계약·도메인 규칙과 충돌 시 계약 우선. 상류 조율은 기획(P, D-079).
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v0 | 2026-07-14 | 초안 — 비주얼 방향(선택지), 토큰(색·타이포·간격·반경·그림자·모션) + Tailwind 매핑, 우선 컴포넌트 스펙 |
 | v0.1 | 2026-07-14 | 계약 v1.2 정합 — 등급(grade) 축 제거(D-073, U-004 SUPERSEDED→U-010). grade 토큰·GradeBadge 폐기, 시각 축을 속성(4색)·레벨·골드포스·스킬로 재조정 |
-| v0.2.2 | 2026-07-17 | **실물 코드 실측 반영**(프론트 `TOKEN/001` → 회신 020) — [2.5] `link` 토큰 신설(**`text` + 상시 underline**. `border`는 `surface` 위 **4.49**로 AA 0.01 미달이라 기각 — 019 추천을 내가 뒤집었다) · [2.5] `focus-ring` 행 추가(표에서 빠져 있었다) · **라이트 값 0개임을 명시**(`:root, [data-theme="dark"]` 한 규칙 — focus-ring만의 문제가 아니다) · 019의 `1.06:1` 눈대중을 계산값 **1.04**로 정정 · [5.1] Button hover에 `border` 병행이 **필수임을 명문화**(채우기 인접 대비 1.12). **값 변경 0** |
-| v0.2.1 | 2026-07-16 | **U-020 누락 보정**(프론트 009 → 회신 019) — [2.6] 매핑에 `focus-ring` 추가(정의는 [2.2]에 있었으나 매핑 표에서 누락, 드롭인 블록이 승계) · [2.2]에 `outline-offset: 2px`가 AA 조건인 근거 명시(offset 0 시 `primary-selected` 1.82:1) · [2.6]에 동일 hex 3토큰의 처리 차이 명시. **값 변경 0 — 새 결정 아님** |
-| v0.2 | 2026-07-15 | **비주얼 방향 확정 + 색 토큰 전면 재정의(U-020)** — [1] A/B/C 3안 폐기 → 게임 UI 스킨 실측 팔레트. [2] 크롬·조작·정보·아이템 4계층 재구성, element 4색을 아트 픽셀 실측으로 교체(earth·wind 종전값 오답 반증), 전 토큰 WCAG AA 계산 검증. 색 사용 3계층 규칙 신설([1.2]). 계약 v1.3·v1.4 델타 반영(D-092 ①): [5.2] Checkbox 신설, [5.6] 429 백오프 |
+| **v0.3** | **2026-07-17** | **U-021 — 비주얼 방향 라이트 커머스 전환**(무신사+컬리 참조). [1] 방향 교체 · [2] 색 토큰 전면 재정의(순백 베이스 · **CTA 블랙 `ink`** · 퍼플 브랜드 액센트 · 의미색 라이트 재검증 · element 라이트 **역할 반전**) · [2.6] Tailwind+CSS 드롭인 라이트 역전 · [5.1] Button variant 개정(primary=ink 블랙) + [5.11] OAuth 컴포넌트 신설. 반경 낮춤(sm4/md6/lg8). 전 색 대비는 redesign-commerce-proposal 계산 인용. **U-016·U-020 SUPERSEDED** |
+| v0.2.2 | 2026-07-17 | (SUPERSEDED→U-021) **실물 코드 실측 반영**(프론트 `TOKEN/001` → 회신 020) — [2.5] `link` 토큰 신설(**`text` + 상시 underline**. `border`는 `surface` 위 **4.49**로 AA 0.01 미달이라 기각 — 019 추천을 내가 뒤집었다) · [2.5] `focus-ring` 행 추가(표에서 빠져 있었다) · **라이트 값 0개임을 명시**(`:root, [data-theme="dark"]` 한 규칙 — focus-ring만의 문제가 아니다) · 019의 `1.06:1` 눈대중을 계산값 **1.04**로 정정 · [5.1] Button hover에 `border` 병행이 **필수임을 명문화**(채우기 인접 대비 1.12). **값 변경 0** |
+| v0.2.1 | 2026-07-16 | (SUPERSEDED→U-021) **U-020 누락 보정**(프론트 009 → 회신 019) — [2.6] 매핑에 `focus-ring` 추가(정의는 [2.2]에 있었으나 매핑 표에서 누락, 드롭인 블록이 승계) · [2.2]에 `outline-offset: 2px`가 AA 조건인 근거 명시(offset 0 시 `primary-selected` 1.82:1) · [2.6]에 동일 hex 3토큰의 처리 차이 명시. **값 변경 0 — 새 결정 아님** |
+| v0.2 | 2026-07-15 | (SUPERSEDED→U-021) **비주얼 방향 확정 + 색 토큰 전면 재정의(U-020)** — [1] A/B/C 3안 폐기 → 게임 UI 스킨 실측 팔레트. [2] 크롬·조작·정보·아이템 4계층 재구성, element 4색을 아트 픽셀 실측으로 교체(earth·wind 종전값 오답 반증), 전 토큰 WCAG AA 계산 검증. 색 사용 3계층 규칙 신설([1.2]). 계약 v1.3·v1.4 델타 반영(D-092 ①): [5.2] Checkbox 신설, [5.6] 429 백오프 |
 
 핸드오프 원칙: 토큰명은 프론트 Tailwind 유틸과 1:1(U-001). 이 표의 키를 `tailwind.config.js` `theme.extend`에 그대로 넣으면 `bg-primary`, `text-muted`, `rounded-lg` 등으로 사용된다.
 
+**U-021 개정 성격**: 토큰 **구조·이름은 유지, 값과 라이트/다크 기본을 교체**한다. 핵심 원칙(WCAG AA 계산 병기·3계층·색 단독 전달 금지·element 아트 hex 불변)은 계승한다. 상세 근거는 `redesign-commerce-proposal.md`(대비 계산 출처)와 결정 로그 U-021.
+
 ---
 
-## 1. 비주얼 방향 (톤·무드) — 확정 (U-016)
+## 1. 비주얼 방향 (톤·무드) — 확정 (U-021, 라이트 커머스)
 
-**원게임(SurvivalProject) UI 스킨 전면 차용.** 사용자 직접 확정(2026-07-15). 종전 A/B/C 3안(Dark Arena·Clean Marketplace·Neon Night)은 **폐기**한다(U-009 SUPERSEDED → U-016).
+**라이트 커머스로 전환.** 사용자 직접 정정(2026-07-17). 종전 원게임(SurvivalProject) 남색 단일 다크 게임스킨(U-016·U-020)은 **폐기**한다(SUPERSEDED → U-021). 게임 아이템 정보창의 색을 자금 거래 커머스 전체 팔레트로 채택한 것이 오류였다.
 
-실행 방식은 **게임 UI 이미지를 부착하는 것이 아니라, 게임의 색·형태 언어를 토큰으로 추출해 CSS로 재현**하는 것이다. 차용 대상은 시각 언어(팔레트·테두리·패널 형태·타이포 위계)이지 비트맵이 아니다. 비트맵 차용은 **아이템 아트 스프라이트 한정**(U-012 이미지 슬롯).
+방향은 **무신사(Musinsa)식 미니멀 에디토리얼**(near-black 고대비 흑백 기조, 얇은 그레이 선, 각진 낮은 반경, 강한 타입 위계, 넉넉한 여백)에 **마켓컬리(Market Kurly)식 프리미엄 퍼플 무드**를 얹은 것이다. 참조 대상은 **감각·무드**이며 **자산·로고·실hex를 복제하지 않는다** — 값·형태는 FinalCall 고유로 창작한다(상표·저작권 회피).
 
-이유(U-016): 게임 버튼은 텍스트가 이미지에 구워져 있어 웹에 필요한 카피(`로그인`·`입찰하기`·`회원 탈퇴`·`충전하기`)를 만들 수 없고, 스크린리더가 읽지 못하며(accessibility 위반), 고정 해상도 전제라 360px 모바일에 늘어나지 않는다. CSS 재현이면 원본 감성을 지키면서 카피·반응형·접근성·다국어를 모두 살린다.
+이유(U-021): 사용자는 실제 돈에 준하는 캐시·게임머니를 다룬다. UI의 첫인상은 "게임"이 아니라 "믿을 수 있는 거래처"여야 한다. 무신사식 미니멀 에디토리얼로 크롬을 조용히 두고, 컬리계 퍼플을 브랜드 포인트로 절제해 쓴다. **게임 감성은 아이템에만** 국한해 드러낸다.
 
-### 1.1 실측 원천 (육안 추정 아님)
+### 1.1 참조 원천 · 이원 구조
 
-색값은 **원본 자산 픽셀 샘플링으로 실측**했다. U-016 발번 시점의 "육안 추정(잠정)" 한계는 해소됐다.
+- **크롬·조작·의미색 = 커머스 고유값 창작**(무신사+컬리 감각 참조, 실hex 미복제). WCAG 2.1 AA를 라이트 베이스(`#FFFFFF`)에서 sRGB 상대휘도로 실제 계산해 정한다(`redesign-commerce-proposal.md` 계산 출처).
+- **element 4색·아이템 아트 슬롯(검정) = 원게임 아트 실측값 그대로 차용**(hex 불변). 단 **아이템 표시 영역에만** 살아남는다(브랜드/조작/크롬 색으로 쓰지 않는다).
+
+**이원 구조가 이 시스템의 핵심이다.** 깨끗한 커머스 셸(화이트·그레이·퍼플) 안에 **아이템 카드 한 장만 게임이 드러나는 "창"**(검정 슬롯 + element색)이다. 로그인·가입·마이페이지·탈퇴 등 계정/거래 크롬엔 element색·검정 슬롯이 **전무**하다. 커머스 신뢰감과 게임 감성이 한 화면에서 충돌하지 않게 하는 격리 장치다.
 
 | 원천 | 경로 | 추출 |
 |---|---|---|
-| UI 크롬 | `interface/global/card_info/` (`wnd_cardinfo.png` 211×307 등) | 창 배경·패널·테두리·텍스트·상태 3색 |
-| 아이템 아트 | `card/card_image/gold_black/level{1..9}/{l,s}/{element}/{kind}.png` | element 4색 (속성별 `l` 81파일 전수 히스토그램, PNG 청크 CRC 전건 검증) |
+| 커머스 크롬·조작·의미색 | 고유값 창작(무신사+컬리 참조) | 베이스·표면·텍스트·테두리·CTA·퍼플 액센트·의미색 4색 — 라이트 위 AA 계산 |
+| 아이템 아트 | `docs/game_ui/item_info/card_image/**`(typeCode 매핑, `l`=상세·`s`=목록), 941개 자산(common·item_info/card_image·item_register) | element 4색(속성별 `l` 픽셀 히스토그램) · 검정 아트 슬롯 |
 
 주의 — **`#0000FF`(순수 파랑, 자산의 3~6%)는 구형 투명 키 컬러다.** 디자인 색으로 오인 금지. 샘플링에서 제외했다.
 
 ### 1.2 색 사용 3계층 규칙 (이 시스템의 핵심 제약)
 
-게임 팔레트는 **좁다**(남색·파랑·주황·황금·크림). 웹이 필요로 하는 색 축(브랜드·상태·의미·속성)을 여기에 다 넣으면 hue가 겹친다. 실측이 드러낸 충돌:
-
-- element-water(200°) ↔ 크롬 패널 파랑(208°) — **8° 차이, 사실상 같은 색**
-- element-fire(20°) ↔ 눌림 주황(22°) — **2° 차이**
-- element-water(200°) ↔ element-wind(180°) — 20° 차이(게임에선 아트 형태가 구분하지만 웹 칩은 색만 남는다)
-
-색을 재배치해 피할 수도 있으나, 그러면 **칩 색과 카드 아트 색이 어긋난다**(아트가 정본이고 크롬은 CSS라 양보 가능한 쪽은 크롬이 아니라 웹의 배치 규칙이다). 따라서 색이 아니라 **계층으로 분리**한다:
+계층 구조는 U-020에서 계승하되 **각 계층의 색을 라이트 커머스로 교체**한다. 세 축(조작·정보·아이템)을 색이 아니라 계층으로 분리해 한 컴포넌트 안에서 섞지 않는다.
 
 | 계층 | 쓰는 색 | 적용 대상 | 금지 |
 |---|---|---|---|
-| ① 조작 | 게임 상태 언어 — 기본 파랑 / 눌림 주황 / 활성 황금 | 버튼·탭·인풋·페이지네이션 등 **누를 수 있는 것** | 의미색·element색을 조작 상태로 쓰지 않는다 |
-| ② 정보 | 의미색 — success·warning·danger·info | 상태 칩·토스트·필드 에러·잔액 경고 | 조작 가능성을 암시하지 않는다 |
-| ③ 아이템 | element 4색(아트 실측) | element 칩·필터 칩·카드 테두리 | **색 단독 사용 금지 — 아이콘+라벨 필수** |
+| ① 조작 | **CTA = 블랙(`ink`)** · **액센트 = 퍼플(`primary`)** — 링크·포커스·선택 상태 | 버튼·탭·인풋·페이지네이션 등 **누를 수 있는 것** | 의미색·element색을 조작 상태로 쓰지 않는다. **퍼플을 CTA 채움으로 쓰지 않는다**(액센트만) |
+| ② 정보 | 의미색 — success·warning·danger·info(라이트 재검증) | 상태 칩·토스트·필드 에러·잔액 경고 | 조작 가능성을 암시하지 않는다 |
+| ③ 아이템 | element 4색(아트 실측, hex 불변) | element 배지·아이템 필터 칩·아이템 카드 속성 마커 | **색 단독 사용 금지 — 아이콘+라벨 필수.** 아이템 카드·속성 배지·필터 칩 **밖 사용 금지**(Game-Color Containment) |
 
-- **세 계층은 같은 컴포넌트 안에서 색으로 섞이지 않는다.** 예: 버튼 안에 element 색을 넣지 않는다. element 칩에 hover 주황을 넣지 않는다.
-- **element 칩은 창 배경(`bg`) 위에만 놓는다.** 패널 파랑(`primary`) 위에 놓으면 water 2.4:1 · fire 1.78:1로 무너진다(계산은 [2.4]).
-- 한계 명시: **황금(`#E2B206`)은 ①의 "활성"과 ②의 `warning`에 모두 쓰인다.** hue 재고가 없어 계층 분리로만 구분한다 — 탭에서 황금은 "선택됨", 칩에서 황금은 "주의"다. 이 중의성은 형태(탭 언더라인 vs 둥근 칩)와 위치로 해소하며, 실사용에서 혼동이 관측되면 ②의 `warning`을 재배치한다(되돌리기 비용은 토큰 1개 값 교체).
+- **세 계층은 같은 컴포넌트 안에서 색으로 섞이지 않는다.** 예: 버튼 안에 element 색을 넣지 않는다. element 칩에 hover 퍼플을 넣지 않는다.
+- **Game-Color Containment**: element 4색·검정 슬롯은 **아이템 카드·속성 배지·아이템 필터 칩에만** 쓴다. 버튼·탭·인풋·크롬·페이지 배경·본문·링크·내비에는 절대 쓰지 않는다 — 게임색이 조작/크롬으로 새면 이원 구조가 무너지고 커머스 신뢰감이 흐려진다.
+- **element 칩은 라이트 표면(`bg`/`surface`) 위에 [2.7] 틴트/채움 패턴으로만** 놓는다. 흰 배경 위 텍스트로 직접 쓰면 대비가 무너진다(water 2.37 — 계산은 [2.7]). 구 시스템의 "패널 파랑 위 배치 금지"는 이제 "**퍼플 위 배치 금지 + 흰 배경 위 텍스트 직접 사용 금지**"로 대체된다.
+- **CTA vs 액센트 분리**(무신사식): 주 CTA는 **블랙(`ink`)**, 퍼플은 **링크·포커스·선택 액센트만**. 즉시구매·입찰 CTA의 강조는 색(퍼플)이 아니라 **블랙 채움 + 크기·배치**로 만든다. 구 U-020의 "황금/주황 hue 전환 상태 언어"는 폐기한다.
 
-레퍼런스: 원게임 카드창 UI(정본), 거래소·핀테크 UI의 tabular 숫자, 다크 UI 대비 설계(WCAG 2.1 AA).
+레퍼런스: 무신사(미니멀 에디토리얼 커머스)·마켓컬리(화이트+퍼플)의 감각/무드(값 미복제), 거래소·핀테크 UI의 tabular 숫자, WCAG 2.1 AA 대비 설계.
 
 ---
 
 ## 2. 색 토큰 (Color)
 
-의미 기반(semantic) 토큰을 최상위로 둔다. 컴포넌트는 원색(`#0667BD` 같은 팔레트값)이 아니라 의미 토큰(`primary`, `surface`, `text`)을 참조한다 — 테마 전환·리브랜딩이 토큰 교체만으로 되게 하기 위함이다.
+의미 기반(semantic) 토큰을 최상위로 둔다. 컴포넌트는 원색(`#6E2A9F` 같은 팔레트값)이 아니라 의미 토큰(`ink`, `primary`, `surface`, `text`)을 참조한다 — 테마 전환·리브랜딩이 토큰 교체만으로 되게 하기 위함이다.
 
-표기 규칙: **[실측]** = 원본 자산 픽셀 샘플링값(변경 금지, 게임 정본). **[파생]** = 실측값에서 웹 요구(대비·상태 단계)를 위해 계산한 값(조정 가능). 대비비는 전부 창 배경 `#001C33` 기준이며 WCAG 2.1 상대휘도 공식으로 계산했다(본문 AA 4.5:1 / 대형·UI 3:1).
+표기 규칙: **[아트 실측]** = 원본 자산 픽셀 샘플링값(변경 금지, 게임 정본 — element·슬롯). **[창작]** = 커머스 요구(대비·상태 단계)로 계산·창작한 라이트 값(조정 가능). **대비비는 전부 `redesign-commerce-proposal.md`가 sRGB 상대휘도 공식으로 실제 계산한 값을 인용**하며, 라이트 베이스 **순백 `#FFFFFF`**(페이지·카드 동색) 기준이다(본문 AA 4.5:1 / 대형·UI 3:1).
 
-### 2.1 크롬 팔레트 (게임 실측 — 이 시스템의 기준점)
+> **베이스 확정 주**: proposal 표는 초기값 `#FAFAFA`(오프화이트)와 `#FFFFFF`를 함께 검증했으나, 최종 확정은 **순백 `#FFFFFF`**(DESIGN.md 시드·확정 목업)다. 페이지·카드가 동색이므로 카드 구획은 색이 아니라 **border·shadow**가 만든다(무신사식). 따라서 대비는 proposal의 **"on #FFF" 열**을 지배값으로 인용한다(순백이 오프화이트보다 대비가 미세하게 높아 전건 AA 여유).
+
+### 2.1 베이스 · 표면
 
 | 토큰 | 값 | 원천 | 용도 |
 |---|---|---|---|
-| bg | #001C33 | [실측] 창 배경(자산의 52%) | 페이지 배경 — 이 색 위에서 모든 대비가 계산된다 |
-| primary | #0667BD | [실측] 패널·헤더 파랑(19%) | 기본 액션·헤더·패널 강조 |
-| border | #3394DE | [실측] 밝은 파랑 테두리 | 구분선·인풋/패널 테두리 (5.3:1 — UI 3:1 통과) |
-| text | #FAF7D5 | [실측] 크림 | 본문 (**15.92:1** — 최상위 대비) |
-| slot | #000000 | [실측] 이미지 슬롯 | 아이템 아트 슬롯 배경(아트가 검정 전제로 그려짐 — 다른 색 금지) |
+| bg | #FFFFFF | [창작] 순백 | 페이지 배경 — 카드는 색이 아니라 **border·shadow**로 분리(무신사식) |
+| surface | #FFFFFF | [창작] | 카드·패널·인풋 본체(`bg`와 동색 — 경계는 border/shadow) |
+| surface-raised | #FFFFFF | [창작] | 모달·팝오버·드로어 — **라이트에선 그림자로 부양**([4] shadow-md/lg. 다크 스킨의 "표면 밝기차"를 대체) |
+| surface-sunken | #F4F4F5 | [창작] **신설** | 약한 함몰 영역(읽기전용 행·비활성 인풋 배경·코드블록) |
+| surface-slot | #000000 | [아트 실측] | 아이템 아트 슬롯(아트가 검정 전제로 그려짐 — 아이템 표시 외 사용 금지) |
 
-`bg` 위 `text`가 15.92:1인 것이 이 팔레트의 최대 자산이다. 게임이 남색·크림 조합을 고른 이유가 여기 있다 — 장시간 열람에 유리하고 AA를 여유 있게 넘는다.
+라이트 베이스라 다크 스킨의 "표면 밝기 차 레이어링"은 성립하지 않는다. **부양(elevation)은 그림자가 만든다**([4] Elevation).
 
-### 2.2 조작 계층 — 게임 상태 언어 ([1.2] ①)
+### 2.2 조작 계층 — CTA 블랙 + 퍼플 액센트 ([1.2] ①)
 
-게임 UI는 버튼·탭의 상태를 **명도가 아니라 hue 전환**으로 표현한다(normal/click 쌍 비교로 도출). 웹 관례(파랑을 어둡게)를 따르지 않고 게임을 따른다 — 이게 "전면 차용"의 실체다.
+무신사식으로 **주 CTA는 블랙(`ink`)**, 컬리계 퍼플(`primary`)은 **브랜드 액센트**(링크·포커스·선택 상태)로만 쓴다. 구 U-020의 게임식 "상태=hue 전환"(파랑→주황→황금)은 폐기하고 **명도 램프**로 돌아간다 — 전경은 흰색으로 통일돼 훨씬 단순하다.
 
-| 토큰 | 값 | 원천 | 상태 | 전경색 | 대비 |
+| 토큰 | 값 | 원천 | 상태 | 전경색 | 대비(on #FFF) |
 |---|---|---|---|---|---|
-| primary | #0667BD | [실측] | 기본 | `primary-fg` #FAF7D5 | 5.25:1 ✅ |
-| primary-hover | #0560AD | [파생] 실측 파랑 −명도 | hover | #FAF7D5 | 5.89:1 ✅ |
-| primary-pressed | #E25706 | [실측] 눌림 주황 | active/pressed | **#001C33** | 4.61:1 ✅ |
-| primary-selected | #E2B206 | [실측] 활성 탭 황금 | 선택된 탭·현재 페이지 | **#001C33** | 8.74:1 ✅ |
-| primary-disabled | #0A3A63 | [파생] 실측 파랑 −채도·명도 | 비활성 | `text-subtle` | — |
+| **ink** | #18181B | [창작] near-black | **주 CTA 채움**(로그인·가입·저장) | #FFFFFF | **17.72:1** ✅ |
+| primary | #6E2A9F | [창작] 컬리계 딥 퍼플(고유값) | **브랜드 액센트**(링크·포커스·선택·소소한 포인트) | #FFFFFF | 8.42:1 ✅ |
+| primary-hover | #5C2185 | [창작] 명도 하강 | 퍼플 요소 hover | #FFFFFF | 10.44:1 ✅ |
+| primary-pressed | #491A6C | [창작] 명도 추가 하강 | active/pressed | #FFFFFF | 12.75:1 ✅ |
+| primary-selected | #F1EAF5 | [창작] soft 틴트 | 선택된 탭·활성 내비 배경 | `primary` 텍스트 | 7.15:1 ✅ (틴트 위 퍼플) |
+| primary-soft | #F1EAF5 | [창작] 퍼플 8~10% 틴트 | ghost hover·선택 배경·강조 존 | `primary` | 7.15:1 ✅ |
+| primary-disabled | #E4E4E7 | [창작] 중립 그레이 | 비활성(라이트에선 탈색 퍼플 대신 중립 그레이가 자연) | #A1A1AA | — |
+| primary-fg | #FFFFFF | [창작] | `ink`·`primary`/hover/pressed 위 텍스트. **정적값 — 테마 무관** | — | — |
 
-**hover는 게임에 없는 상태다** — 게임 자산은 normal/click 2종뿐이다(마우스 hover 전제 UI가 아니다). 그래서 [파생]인데, 이 팔레트에서 **채우기 색만으로는 hover가 안 보인다**: 밝히면 크림 전경이 AA를 깨고(#1E7FD4 = 3.83:1 미달), 어둡게 하면 대비는 벌지만 기본색과의 인접 대비가 1.12로 사실상 구분되지 않는다. → **hover = 채우기 미세 변화(#0560AD) + `border`를 #3394DE로 밝힘**의 조합으로 정의한다. 지각 신호는 테두리가 만들고 채우기는 거들기만 한다.
+**★ CTA는 블랙, 퍼플은 액센트다** (U-021 확정). 무신사 주 CTA가 블랙(#18181B)이고 컬리가 퍼플인데, 본 시스템은 **블랙 CTA + 퍼플 액센트**로 확정했다. CTA 강조는 색(퍼플)이 아니라 **블랙 채움 + 크기·배치**로 만든다. 퍼플을 버튼 채움으로 쓰면 이원 구조의 "액센트" 역할이 흐려진다.
 
-**전경색 판정 — 게임을 그대로 베끼면 깨지는 지점이다.** 주황·황금 위에 크림을 얹으면 3.45:1 · **1.82:1**로 AA를 크게 미달한다. 게임은 버튼 텍스트가 이미지에 구워져 있어(U-016) 이 문제를 겪지 않지만 **웹은 겪는다.** 따라서 주황·황금 버튼의 전경은 **창 배경 남색(#001C33)** 으로 반전한다(4.61 / 8.74). 색은 게임 그대로, 전경만 웹 요구로 보정한 것이다.
+**★ 조작 상태 모델이 근본적으로 단순해졌다.** 구 U-020은 게임의 "상태=hue 전환"을 차용해 `pressed`(주황)/`selected`(황금)에 전경 반전(`on-accent-fg` 남색)이 필요했다. 라이트 커머스에서는 **명도 램프**(퍼플→더 진한 퍼플, 또는 블랙 CTA hover 미세 밝힘)로 돌아가고 전경은 흰색으로 통일된다. 구 `on-accent-fg`(밝은 채움 위 남색 전경)의 역할은 버튼에서 사라지고 **element 칩 라벨**(near-black)에서만 살아남는다([2.7]).
 
-| focus-ring | #FAF7D5 | [실측 크림] | 포커스 링 — 크롬이 파랑 일색이라 파랑 링은 묻힌다. **`outline: 2px solid` + `outline-offset: 2px`** (테마 의존 → CSS 변수) |
+| focus-ring | #6E2A9F | [창작 퍼플] | 포커스 링 — **`outline: 2px solid` + `outline-offset: 2px`**(테마 의존 → CSS 변수) | — | 8.42(흰)/8.06(페이지) |
 
-**★ `outline-offset: 2px`는 장식이 아니라 AA 조건이다** (U-020 보정, 019 계산). offset이 있으면 링의 인접색은 **부모 표면뿐**이고 전건 통과한다(`bg` 15.92 · `surface` 13.50 · `surface-raised` 10.82 · `primary` **5.25** — 최악값). **offset을 0으로 줄이면 링이 요소 자체 채우기에 닿고 `primary-selected`(황금)에서 1.82:1, `success`에서 1.60:1로 무너진다** — 황금 위 크림이 AA를 깨는 것과 같은 수치다(전경 반전을 요구한 그 지점). 활성 탭·현재 페이지는 정확히 "포커스 가능한 것"이라 이게 급소다.
+**★ `outline-offset: 2px`는 장식이 아니라 AA 조건이다**(구 시스템의 offset AA 논리를 라이트에서도 계승). offset이 퍼플 링과 요소 채움 사이에 **흰 간격**을 만들어 링을 살린다. offset이 있으면 링의 인접색은 **부모 표면(흰)뿐**이라 퍼플 링이 8.42:1로 여유 통과한다. offset을 0으로 줄여 링이 퍼플 버튼 채움에 닿으면 퍼플-퍼플 인접 대비가 무너진다.
 
-- **`:focus`가 아니라 `:focus-visible`을 쓴다** — 마우스 클릭마다 링이 뜨면 조작 계층([1.2] ①)이 지저분해진다. 키보드 도달성은 그대로다(`accessibility.md`).
+- **`:focus`가 아니라 `:focus-visible`을 쓴다** — 마우스 클릭마다 링이 뜨면 조작 계층이 지저분해진다. 키보드 도달성은 그대로다(`accessibility.md`).
 - `overflow:hidden` 컨테이너가 offset을 자르는 자리에서는 **offset을 지우지 말고** `box-shadow` 2중 링으로 대체한다.
 
-### 2.3 정보 계층 — 의미색 ([1.2] ②)
+### 2.3 정보 계층 — 의미색 (라이트 재검증, [1.2] ②)
 
-게임에 없는 축이다(게임은 *보여주는* UI, 웹은 *거래시키는* UI). 크롬 hue(파랑 206~208°)와 겹치지 않는 hue를 골랐다.
+구 의미색은 남색 위 기준이라 라이트에선 대부분 너무 밝다 → **흰 위 4.5:1을 만족하도록 진하게 재정의**했다. 크롬 퍼플·element hue와 겹치지 않는 hue를 유지한다.
 
-| 토큰 | 값 | hue | 대비 | 용도 |
-|---|---|---|---|---|
-| success | #4ADE80 | 142° | 9.93:1 ✅ | 낙찰·구매 완료·잔액 충분 |
-| warning | #E2B206 | 47° | 8.74:1 ✅ | 마감 임박·주의(잔액 근접) — **게임 황금 재사용**([1.2] 한계 참조) |
-| danger | #FF4D4D | 0° | 5.29:1 ✅ | 실패·유찰/종료·잔액 부족·취소 |
-| info | #3394DE | 206° | 5.3:1 ✅ | 안내·중립 알림 — **크롬 테두리색 재사용**(중립 정보는 크롬과 같은 계열이 자연스럽다) |
-
-- `-soft`(배경 톤)는 **해당 색 12% 알파를 `bg` 위에 합성**해 만든다. 다크 단일 스킨이라 라이트 테마용 파스텔 톤(`#DCFCE7` 등)은 불필요하며, 알파 합성이 토큰 수를 4개 줄인다.
-- `-strong`은 두지 않는다 — 위 4색이 이미 `bg` 위에서 본문 AA를 통과해 별도 진한 톤이 필요 없다(다크 스킨의 이점).
-- **색만으로 정보 전달 금지** — 아이콘/텍스트 병기(`accessibility [2]`). `warning`과 활성 탭 황금이 같은 값이라 이 규칙이 여기선 접근성 요구를 넘어 **의미 구분의 필수 조건**이다.
-
-### 2.4 아이템 계층 — element ([1.2] ③, U-010)
-
-등급(grade)/희귀도 축은 D-073으로 제거됐다(원게임 무등급). 시각 축은 속성(element)·레벨·골드포스·스킬이며 레어리티 티어 색은 없다.
-
-**값은 아트에서 추출했다** — 속성별 `l` 81파일(9레벨 × 9종류) 전 픽셀을 HSV 히스토그램으로 집계해 최빈 색상군을 취했다(투명 키 컬러 `#0000FF`·검정 슬롯·무채색 제외).
-
-| element 토큰 | 값 | hue | 대비 | 아트 실측 소견 |
-|---|---|---|---|---|
-| element-water | #19B2FF | 200° | 7.29:1 ✅ | 최빈군 그대로 |
-| element-fire | #FF5500 | 20° | 5.4:1 ✅ | **최빈군 `#E62600`은 3.82:1로 AA 미달** → 2순위 군(#FF5500) 채택 |
-| element-earth | #95B259 | 80° | 7.24:1 ✅ | **올리브/연두다. 종전 토큰의 amber(#D97706)는 오답이었다** |
-| element-wind | #66CCCC | 180° | 9.12:1 ✅ | **청록(teal)이다. 종전 토큰의 green(#10B981)은 오답이었다** |
-
-종전 4색은 "물=파랑, 불=빨강, 흙=amber, 바람=green"이라는 **관례 추정**이었고, 아트 실측은 흙·바람 2건에서 이를 반증했다. 칩 색이 카드 아트와 어긋나면 사용자는 같은 속성을 두 색으로 배운다 — 실측이 정본인 이유다.
-
-배치 제약(계산 근거):
-
-| 배치 | water | fire | 판정 |
+| 토큰 | 값 | 대비(on #FFF) | 용도 |
 |---|---|---|---|
-| `bg`(#001C33) 위 | 7.29 | 5.4 | ✅ 허용 |
-| `primary`(#0667BD) 위 | **2.4** | **1.78** | ❌ **금지** |
+| success | #14742F | 5.88:1 ✅ | 낙찰·구매 완료·잔액 충분 |
+| warning | #A0510A | 5.71:1 ✅ | 마감 임박·주의(잔액 근접) — 딥 앰버(게임 황금 재사용 폐기, 라이트에서 무너짐) |
+| danger | #C81E1E | 5.74:1 ✅ | 실패·유찰/종료·잔액 부족·취소·파괴적 액션 |
+| info | #1D4ED8 | 6.70:1 ✅ | 안내·중립 알림 — 딥 블루(element-water 시안과 hue 분리) |
 
-→ **element 칩은 창 배경 위에만 놓는다.** 패널·헤더 파랑 영역에 element 칩을 얹지 않는다.
+- **`-soft`(칩·토스트 배경)** = 해당 색 **8% 알파를 흰 위에 합성**한다. 이 위 칩 텍스트는 해당 의미색 base로 두며 전건 **≥ 4.5:1**(계산값: danger 5.04 · info 4.65 · warning 4.50 · success 4.57 — darker base가 여유 확보). 라이트 베이스라 다크 스킨의 `-strong`은 불필요하다.
+  - 참고 합성값(8% 렌더): success-soft ≈ `#ECF5EF` · warning-soft ≈ `#F9F1EB` · danger-soft ≈ `#FBEDED` · info-soft ≈ `#EEF3FD`(확정 목업 렌더값과 일치). **알파 합성이 정본이며 hex는 참고값이다**(토큰 4개 절약).
+- **색만으로 정보 전달 금지** 계승 — 아이콘/텍스트 병기(`accessibility.md` [2]). U-020의 "황금이 활성 탭과 warning에 겹치는 중의성"은 라이트 전환으로 **해소**됐다(warning은 딥 앰버, 조작 활성은 퍼플/블랙 — hue가 분리됨).
 
-주: 레벨은 강조 숫자(font-num, tabular-nums) — 단 아트에 레벨 배지가 구워져 있어 중복 표기 주의(P-013: 상세는 아트 위임, **목록 `s` 26×28은 판독성 판정 후 결정**). 골드포스는 잔여시간 칩(만료 임박 시 `warning`), 스킬1/2는 태그(`skillPercent` 병기). 색 위계로 "희귀함"을 나타내지 않는다(등급 폐기 정합).
+### 2.4 텍스트 (무신사 near-black + 뉴트럴 그레이)
 
-### 2.5 표면 · 텍스트
-
-`bg`·`primary`·`border`·`text`는 [2.1] 실측값이며, 아래는 그 사이를 메우는 [파생] 층이다.
-
-| 토큰 | 값 | 대비(on bg) | 용도 |
+| 토큰 | 값 | 대비(on #FFF) | 용도 |
 |---|---|---|---|
-| bg | #001C33 | — | 페이지 배경 [실측] |
-| surface | #012A4A | 1.18:1 | 카드·패널 본체 — 경계는 명도가 아니라 `border`가 만든다(게임 방식) |
-| surface-raised | #013A63 | 1.47:1 | 모달·팝오버·드로어 |
-| surface-slot | #000000 | — | 아이템 아트 슬롯 [실측] |
-| border | #3394DE | 5.3:1 | 테두리·구분선 [실측] |
-| border-muted | #14496E | 1.82:1 | 약한 구분선(표 행 등) |
-| text | #FAF7D5 | 15.92:1 | 본문 [실측] |
-| text-muted | #B8C4D9 | 9.8:1 | 보조 텍스트 |
-| text-subtle | #6B8CA6 | 4.88:1 | 캡션·placeholder (AA 통과 — placeholder도 읽혀야 한다) |
-| focus-ring | #FAF7D5 | 15.92:1 | 포커스 링([2.2]) — 표면 위에 그려지므로 표면 계열이다 |
-| primary-fg | #FAF7D5 | — | `primary` 위 텍스트. **정적값 — 조작 계층은 테마 무관**([2.6]) |
-| on-accent-fg | #001C33 | — | `primary-pressed`·`primary-selected`·`warning` 위 텍스트 |
-| **link** | **`text` + 상시 underline** | 15.92 / 13.50 | **인라인 텍스트 링크**(U-020 보정, 020 계산) |
+| text | #18181B | 17.72:1 | 본문·제목(near-black — 순수 검정보다 부드러운 프리미엄 톤) |
+| text-muted | #52525B | 7.73:1 | 보조 텍스트·메타·라벨 |
+| text-subtle | #71717A | 4.83:1 | 캡션·placeholder(AA 통과 — placeholder도 읽혀야 한다) |
 
-**★ 인라인 링크는 색으로 구분하지 않는다 — 이 팔레트에선 성립하지 않는다.** WCAG 1.4.1은 링크를 색으로만 구분하려면 **인접 본문 텍스트와 3:1**을 요구하는데, `text-muted`(#B8C4D9) 옆에서 **후보 전건이 미달한다**: `border` 1.86 · `text` 1.62 · `element-water` 1.35. 3:1을 넘는 유일한 색 `primary`(3.24)는 **배경 위 본문 AA가 3.03으로 깨진다.** → **underline이 선택이 아니라 필수다**(`hover:underline`만으론 기본 상태가 색 단독이라 위반).
-- **underline이 상시면 3:1 요건이 사라진다**(색이 유일한 단서가 아니게 된다). 남는 요건은 배경 대비 4.5:1뿐이고 `text`가 어디서든 통과한다.
-- **`border`(#3394DE)를 쓰지 않는다** — `bg` 위 5.30이나 **`surface` 위 4.49로 AA를 0.01 미달한다.** 카드가 `bg`냐 `surface`냐에 따라 갈리는 값은 토큰으로 쓸 수 없다.
-- 어포던스는 **밝기 차 + underline**이 만든다: 본문 `text-muted`(9.83) 옆에서 링크 `text`(15.92)가 밝다.
+`text`(#18181B)는 `ink`(주 CTA 채움)와 동일 hex다 — **near-black을 본문·CTA 양쪽에 쓴다**(무신사식). 처리 차이는 [2.6] 참조(`text`=변수/표면 계열, `ink`=정적/조작 계층).
 
-**★ 라이트 값은 0개다 — 이 표의 토큰 전부가 그렇다.** [2.6] CSS 블록의 셀렉터가 **`:root, [data-theme="dark"]` 한 규칙**이다. `:root`(기본값 자리)에 **다크 값이 들어간다.** `focus-ring`도 예외가 아니다 — **"라이트 focus-ring이 뭐냐"는 질문은 `bg`·`text`·`border`에도 똑같이 성립하고, 답은 셋 다 "없다"이다.** 한 토큰만 라이트 값을 가지면 그게 불균질이다.
+### 2.5 뉴트럴 스케일 · 테두리 (무신사 그레이 — 얇은 선)
 
-**"라이트에서 크림 링은 1.04:1"은 정적값 금지의 근거이지 `:root` 다크 값 금지의 근거가 아니다**(020 정정 — 019가 1.06으로 적은 건 내 눈대중이고 계산값은 **1.04**다). **지금 흰 배경이 없다.** `focus-ring`을 CSS 변수로 두는 이유가 바로 **U-005가 오면 그때 라이트 값을 덮기 위해서**다 — 변수인 채로 다크 값을 갖는 것이 그 준비된 상태다.
+| 토큰 | 값 | 대비(on #FFF) | 용도 |
+|---|---|---|---|
+| border | #E4E4E7 | 1.27 (장식) | 카드 외곽선·구분선(무신사식 얇은 선). **장식 경계라 3:1 면제** |
+| border-muted | #F1F1F3 | 1.13 (장식) | 가장 옅은 내부 구분선(표 행 등) |
+| border-strong | #8A8A8F | **3.44:1** ✅ | **신설 — 인풋·셀렉트·체크박스 등 조작 컨트롤 외곽선**(WCAG 1.4.11 필수 식별 3:1 충족) |
 
-**테마 구조는 유지하되 라이트 값은 정의하지 않는다.** 게임 스킨은 단일 다크 계열이고(U-016), U-005(라이트/다크 양립)는 총괄이 ON-HOLD·후순위로 등재했다(095 [6절]). CSS 변수 구조는 그대로 두므로 라이트를 나중에 넣어도 구조 변경이 없다 — **지금 라이트 값을 지어내면 근거 없는 색이 정본에 박힌다.**
+**★ `border-strong` 신설 근거.** 라이트 순백 위에서 단일 border 값으로는 "무신사식 whisper-thin 카드 선(≈1.3:1)"과 "인풋 컨트롤 경계 3:1"을 **동시에 만족할 수 없다**(순백 위 3:1 = `#949494` 이상으로, 카드 선으로 쓰면 무겁다). 컨트롤 경계는 1.4.11상 "요소 식별에 필수"라 3:1을 지켜야 하므로 별도 토큰으로 분리한다(구 시스템이 `on-accent-fg` 등을 신설한 것과 같은 정당한 구조 추가).
 
-### 2.6 Tailwind 매핑 (theme.extend.colors)
+### 2.6 Tailwind 매핑 + CSS 드롭인 (라이트 역전)
+
+**테마 전제가 역전됐다.** 구 시스템은 "단일 다크·라이트값 0개"였고 `:root, [data-theme="dark"]` 한 규칙에 다크값을 넣었다. U-021은 이를 **정확히 역전**한다 — **구조는 그대로 두고 값만 뒤집는다.** `:root`(기본값 자리)에 **이제 라이트값**이 들어간다. `[data-theme="dark"]`는 U-005 확정 시 얹는 미래 오버레이이며, **지금 다크값을 지어내지 않는다**(구 문서가 라이트를 미룬 규율을, 방향만 반대로 적용).
 
 ```
 colors: {
-  // 조작 계층 — 게임 상태 언어(테마 무관 정적값)
-  primary: { DEFAULT:'#0667BD', hover:'#0560AD', pressed:'#E25706', selected:'#E2B206', disabled:'#0A3A63', fg:'#FAF7D5' },
-  'on-accent-fg': '#001C33',
+  // 조작 계층 — CTA 블랙 + 퍼플 액센트(테마 무관 정적값)
+  ink: '#18181B',
+  primary: { DEFAULT:'#6E2A9F', hover:'#5C2185', pressed:'#491A6C', selected:'#F1EAF5', soft:'#F1EAF5', disabled:'#E4E4E7', fg:'#FFFFFF' },
+  'on-accent-fg': '#18181B',   // element 칩 라벨 등 잔존 용도(near-black)
 
-  // 정보 계층 — 의미색(-soft 는 12% 알파 합성, 별도 토큰 없음)
-  success:'#4ADE80', warning:'#E2B206', danger:'#FF4D4D', info:'#3394DE',
+  // 정보 계층 — 의미색(-soft 는 8% 알파 합성, 별도 토큰 없음)
+  success:'#14742F', warning:'#A0510A', danger:'#C81E1E', info:'#1D4ED8',
 
-  // 아이템 계층 — 아트 실측(변경 금지)
+  // 아이템 계층 — 아트 실측(변경 금지) + 라이트용 소프트 틴트([2.7])
   element: { water:'#19B2FF', fire:'#FF5500', earth:'#95B259', wind:'#66CCCC' },
+  'element-soft': { water:'#DDF3FF', fire:'#FFE6D9', earth:'#EFF3E6', wind:'#E8F7F7' },
 
-  // 표면·텍스트 — CSS 변수 + [data-theme] 오버라이드(라이트 값은 U-005 확정 시 추가)
+  // 소셜 로그인 — 외부 브랜드 규격(팔레트 예외, 재색 금지)
+  kakao:'#FEE500', naver:'#03C75A',
+
+  // 표면·텍스트 — CSS 변수 + [data-theme] 오버라이드(다크 값은 U-005 확정 시 추가)
   bg:'var(--color-bg)', surface:'var(--color-surface)', 'surface-raised':'var(--color-surface-raised)',
-  'surface-slot':'#000000',
-  border:'var(--color-border)', 'border-muted':'var(--color-border-muted)',
+  'surface-sunken':'var(--color-surface-sunken)', 'surface-slot':'#000000',
+  border:'var(--color-border)', 'border-muted':'var(--color-border-muted)', 'border-strong':'var(--color-border-strong)',
   text:'var(--color-text)', 'text-muted':'var(--color-text-muted)', 'text-subtle':'var(--color-text-subtle)',
   'focus-ring':'var(--color-focus-ring)',
 }
 ```
 
 ```css
-:root, [data-theme="dark"] {
-  --color-bg: #001C33;            --color-surface: #012A4A;
-  --color-surface-raised: #013A63; --color-border: #3394DE;
-  --color-border-muted: #14496E;   --color-text: #FAF7D5;
-  --color-text-muted: #B8C4D9;     --color-text-subtle: #6B8CA6;
-  --color-focus-ring: #FAF7D5;
+:root {                            /* 기본 = 라이트 커머스 (U-021 역전) */
+  --color-bg: #FFFFFF;             --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF; --color-surface-sunken: #F4F4F5;
+  --color-border: #E4E4E7;         --color-border-muted: #F1F1F3;
+  --color-border-strong: #8A8A8F;
+  --color-text: #18181B;          --color-text-muted: #52525B;
+  --color-text-subtle: #71717A;   --color-focus-ring: #6E2A9F;
 }
+/* [data-theme="dark"] 는 U-005 확정 시 얹는 미래 오버레이. 지금 다크값을 지어내지 않는다
+   — 구 문서가 라이트를 미룬 것과 같은 규율을, 방향만 반대로 적용한다. */
 ```
 
-**이 블록은 [2.1]~[2.5] 정의 절과 대조해 만든다(24토큰 전건).** v0.2 발행 시 `focus-ring`이 여기서 빠졌고, 드롭인 교체 블록(`outbox/017` [4])이 이 표를 베껴 같은 구멍을 물려받았다 — 프론트가 잡았다(`frontend/outbox/009`, 회신 `outbox/019`). **[2.6]이 핸드오프의 유일한 소비 표면인데 정의 절과 이중 관리라 벌어진다.**
+**이 블록은 [2.1]~[2.5] 정의 절과 대조해 만든다(전건).** 프론트가 소비하는 유일한 핸드오프 표면이 [2.6]이므로 정의 절과 어긋나면 여기가 정본이다.
 
-**같은 hex `#FAF7D5`가 세 자리에 있고 처리가 셋 다 다르다 — 우연이 아니라 구조다.** `text`(변수, 표면 계열) · `focus-ring`(변수, 표면 위에 그려짐) · `primary.fg`(**정적**, 조작 계층은 테마 무관). 다크에서 우연히 일치할 뿐이고 라이트가 오면 앞의 둘만 바뀐다. **`text`로 통합하면 라이트에서 파랑 버튼 위 글자가 검정이 된다.**
+**★ 2분할(정적/변수) 구조는 불변, 값만 교체된다.** 정적 토큰(테마 무관): `ink`·`primary.*`·`primary-fg`·`on-accent-fg`·의미색·`element.*`·`element-soft.*`·`surface-slot`·소셜색. 테마 의존 변수: 베이스·표면·텍스트·테두리·focus-ring. **역전의 대칭성** — 구 시스템 "다크 기본, 라이트 미룸" → U-021 "라이트 기본, 다크 미룸". `focus-ring`을 변수로 둔 이유(테마 오면 덮기 위해)도 그대로 유효하며 방향만 반대다.
 
-**프론트 스켈레톤 영향(skeleton-plan [4] 정합)**: 구조는 그대로다 — 테마 무관 정적값 / 테마 의존 CSS 변수 2분할 유지, 값만 교체된다. 단 **토큰 3개가 신설**됐다: `primary.pressed`·`primary.selected`·`on-accent-fg`. 게임의 상태 언어가 명도가 아니라 hue 전환이라 종전 `primary-600/700`(어둡게) 스케일로는 표현되지 않기 때문이다. 종전 `primary-50/100/300/500/600/700` 6단 스케일은 **폐기**한다(게임 UI에 옅은 파랑 층이 없다 — 쓰지 않을 토큰이다). `accent-500/600`도 폐기하고 `warning`·`primary.selected`로 흡수했다. 프론트에 정보 공유로 통지한다(D-024, U-001 명칭 1:1 규약).
+**같은 hex `#18181B`가 세 자리에 있고 처리가 다르다 — 구조다.** `text`(변수, 표면 계열) · `on-accent-fg`(정적, element 라벨) · `ink`(정적, 조작 CTA). 라이트에서 우연히 일치할 뿐이고 다크가 오면 `text`만 바뀐다(밝은 텍스트로). `ink`·`on-accent-fg`로 통합하면 다크에서 CTA·라벨이 함께 뒤집혀 깨진다.
+
+**신설 토큰(U-021)**: `ink`·`primary-soft`·`border-strong`·`surface-sunken`(각 근거 [2.2]·[2.5]) + `element-soft.*`(라이트 역할 반전 [2.7]) + `kakao`·`naver`(OAuth [5.11]). 라이트 커머스가 실제 요구하는 것만 최소 추가했다.
+
+### 2.7 아이템 계층 — element (아트 실측 hex 불변, 라이트 역할 반전, [1.2] ③, U-010)
+
+**hex는 아트 픽셀 실측값 그대로 불변**(카드 아트가 정본). 등급(grade)/희귀도 축은 D-073으로 제거됐다(원게임 무등급). 그러나 **역할이 라이트에서 바뀐다** — 아래가 재검증 결과다.
+
+| element 토큰 | 값(불변) | **텍스트 on 흰**(구 남색값) | near-black 라벨 on 채움 | white on 채움 | on 슬롯(#000) |
+|---|---|---|---|---|---|
+| element-water | #19B2FF | **2.37** ❌ (남색 위 7.29였음) | 7.47 ✅ | 2.37 ❌ | 8.85 ✅ |
+| element-fire | #FF5500 | **3.21** ❌ (5.40였음) | 5.53 ✅ | 3.21 ❌ | 6.55 ✅ |
+| element-earth | #95B259 | **2.39** ❌ (7.24였음) | 7.42 ✅ | 2.39 ❌ | 8.79 ✅ |
+| element-wind | #66CCCC | **1.90** ❌ (9.12였음) | 9.34 ✅ | 1.90 ❌ | 11.07 ✅ |
+
+**★ 남색 위에서 빛나던 4색이 흰 배경에서 전건 무너진다**(텍스트 대비 1.90~3.21, 모두 4.5 미달이고 water/earth/wind는 3:1도 미달). 정확히 다크→라이트의 역전 현상이다. 종전 4색(earth=올리브 80°, wind=청록 180°)이 관례 추정(amber·green)을 반증한 아트 실측 소견은 그대로 유효하다. 따라서 라이트에서 element색의 **역할을 반전**한다(hex는 불변, 전경만 뒤집는다):
+
+- **다크 스킨(구)**: element = 남색 위 **밝은 텍스트**(칩 글자색).
+- **라이트 스킨(U-021)**: element = **채움/틴트 배경 + near-black(#18181B) 라벨**.
+  - **권장 패턴(미니멀 정합)**: element **소프트 틴트** 배경(water `#DDF3FF`·fire `#FFE6D9`·earth `#EFF3E6`·wind `#E8F7F7`) + near-black 라벨(7.4~9.3:1) + **solid element색 아이콘/도트**로 속성 hue를 소면적에 노출. 라벨이 항상 병기되므로 도트가 3:1 미달이어도 1.4.1(색 단독 금지)·1.4.11(필수 식별) 위반이 아니다.
+  - **강조 패턴(아트 위 오버레이 배지)**: solid element 채움 + near-black 라벨(5.5~9.3:1). 아이템 카드 아트 영역 위에서 더 강한 속성 정체성이 필요할 때.
+- 아이템 아트 슬롯 `#000000`은 아트 표시 전용(6.5~11:1, 아트 맥락).
+
+배치 제약: **element 칩은 라이트 표면(`bg`/`surface`) 위에 위 틴트/채움 패턴으로만** 놓는다. **퍼플(`primary`) 위·흰 배경 위 텍스트 직접 사용 금지.** 아이템 카드·속성 배지·아이템 필터 칩 밖에 쓰지 않는다(Game-Color Containment, [1.2]).
+
+주: 레벨은 강조 숫자(font-num, tabular-nums) — 단 아트에 레벨 배지가 구워져 있어 중복 표기 주의(P-013: 상세는 아트 위임, **목록 `s` 26×28은 판독성 판정 후 결정**). 골드포스는 잔여시간 칩(만료 임박 시 `warning`), 스킬1/2는 태그(`skillPercent` 병기). 색 위계로 "희귀함"을 나타내지 않는다(등급 폐기 정합).
+
+### 2.8 소셜 로그인 색 (OAuth — 외부 브랜드 규격, 팔레트 예외)
+
+| 토큰 | 값 | 라벨 | 비고 |
+|---|---|---|---|
+| kakao | #FEE500 | 검정 라벨/로고 | 공식 카카오 버튼 규격 준수(**재색 금지**) |
+| naver | #03C75A | 흰 라벨/로고 | 공식 네이버 버튼 규격 준수(**재색 금지**) |
+
+브랜드 규격색이라 우리 팔레트의 예외다(대비 계산·재정의 대상 아님). 컴포넌트 스펙은 [5.11]. **기능(OAuth 백엔드)은 미래 에픽** — 현 계약 §2는 loginId/password만 다룬다. 지금은 로그인·회원가입 레이아웃에 **자리만 확보**한다.
 
 ---
 
@@ -233,7 +246,7 @@ colors: {
 | text-2xl | 1.5/2.0 | 페이지 제목 |
 | text-3xl | 1.875/2.375 | 상세 히어로(현재가 등) |
 
-굵기: regular 400 / medium 500 / semibold 600 / bold 700. 제목은 600~700, 본문 400~500. 금액 강조는 semibold + font-num.
+굵기: regular 400 / medium 500 / semibold 600 / bold 700. **무신사식 강한 타입 위계** — 제목은 700(디스플레이는 800·자간 −0.03em), 본문 400~500. 금액 강조는 semibold~bold + font-num. 자간은 제목에서 살짝 조인다(−0.01~−0.03em).
 
 Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 `tabular-nums`도 사용 가능하나, 금액·시간 컴포넌트는 `font-num` 토큰으로 통일 권장.
 
@@ -241,25 +254,27 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 ## 4. 간격 · 반경 · 그림자 · 모션
 
-간격(spacing): 4px 기준 배수 — Tailwind 기본 스케일 준용(1=4, 2=8, 3=12, 4=16, 6=24, 8=32, 12=48, 16=64). 컴포넌트 내부 패딩은 2~4, 섹션 간격은 6~12를 기본으로 한다.
+간격(spacing): 4px 기준 배수 — Tailwind 기본 스케일 준용(1=4, 2=8, 3=12, 4=16, 6=24, 8=32, 12=48, 16=64). 컴포넌트 내부 패딩은 2~4, 섹션 간격은 6~12를 기본으로 한다. **무신사식 넉넉한 여백**을 위해 섹션 간격은 후하게 준다.
 
-반경(radius):
+반경(radius) — **무신사식 각진 감성으로 낮춤(U-021)**:
 
 | 토큰 | 값 | 용도 |
 |---|---|---|
-| rounded-sm | 4px | 뱃지·칩 |
-| rounded-md | 8px | 버튼·인풋 |
-| rounded-lg | 12px | 카드 |
-| rounded-xl | 16px | 모달·큰 패널 |
-| rounded-full | 9999px | 아바타·상태 점 |
+| rounded-sm | 4px | 뱃지·칩·체크박스 |
+| rounded-md | 6px | 버튼·인풋 |
+| rounded-lg | 8px | 카드 |
+| rounded-xl | 12px | 모달·큰 패널 |
+| rounded-full | 9999px | 아바타·상태 점·상태 칩(pill) |
 
-그림자(shadow) — 다크에선 그림자보다 표면 밝기 차로 레이어 표현:
+그림자(shadow) — **라이트 베이스라 그림자가 실제 부양(elevation)에 쓰인다**(U-021. 다크 스킨의 "표면 밝기 차"를 대체):
 
-| 토큰 | 라이트 | 다크 |
+| 토큰 | 값(라이트, 지배값) | 비고 |
 |---|---|---|
-| shadow-sm | 0 1px 2px rgba(15,23,42,.06) | 없음(surface-raised 밝기 차로 대체) |
-| shadow-md | 0 4px 12px rgba(15,23,42,.10) | 0 4px 12px rgba(0,0,0,.4) |
-| shadow-lg | 0 12px 32px rgba(15,23,42,.14) | 0 12px 32px rgba(0,0,0,.5) |
+| shadow-sm | 0 1px 3px rgba(15,23,42,.06) | 미세 부양 |
+| shadow-md | 0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06) | 카드(인증 카드 등 부양 표면) |
+| shadow-lg | 0 8px 24px rgba(15,23,42,.10) | 아이템 카드 hover·모달 부양 |
+
+`surface-raised`(모달·팝오버·드로어)는 `shadow-md`/`lg`로 뜬다. 다크 테마값은 U-005 확정 시 정의한다(지금 미창작).
 
 모션(motion):
 
@@ -276,48 +291,52 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 ## 5. 컴포넌트 스펙 (핸드오프 핵심)
 
-각 컴포넌트는 상태(default/hover/focus/active/disabled/error/loading)·변형·사용 토큰·반응형·접근성을 명세한다(`ux/rules.md [4]`). 모바일 우선. 아래는 v0 우선 세트(U-007).
+각 컴포넌트는 상태(default/hover/focus/active/disabled/error/loading)·변형·사용 토큰·반응형·접근성을 명세한다(`ux/rules.md [4]`). 모바일 우선. 아래는 v0 우선 세트(U-007) + U-021 신설(SocialLoginButton).
 
 ### 5.1 Button
 
-- variant: `primary`(bg-primary / text-primary-fg) · `outline`(border + text) · `ghost`(투명 + text) · `danger`(bg-danger / text-on-accent-fg).
-  **`accent` variant는 폐기**(U-020) — 종전 accent(amber)는 조작 계층에서 게임 활성 황금과 충돌한다([1.2]). 즉시구매·입찰 CTA의 강조는 **색이 아니라 크기·배치**(lg + 주 액션 위치)로 만든다.
-- size: sm(h32, px3, text-sm) · md(h40, px4, text-base) · lg(h48, px5, text-lg). 반경 rounded-md.
-- 상태(게임 상태 언어, [2.2]): hover(`primary-hover` + **`border`를 #3394DE로 밝힘 — 병행이 필수다. 채우기 인접 대비가 1.12라 채우기만 바꾸면 hover가 없는 것과 같다**(020 계산). Tailwind로는 `border border-primary hover:border-border`가 동반돼야 하고, **`hover:bg-primary-hover` 단독은 미충족이다**) / focus(`focus-ring` 크림 2px + offset 2px — 크롬이 파랑 일색이라 파랑 링은 묻힌다) / **active·pressed(`primary-pressed` 주황 + 전경 `on-accent-fg` 남색 — 명도가 아니라 hue가 바뀐다)** / disabled(`primary-disabled` + `text-subtle`, pointer-none) / loading(스피너 + 라벨 유지 또는 "처리 중", 중복 클릭 차단).
+- variant(U-021 개정):
+  - **`primary`(주 CTA) = `ink` 블랙 채움 + `primary-fg` 흰 글자.** 로그인·가입하기·저장·입찰·즉시구매 등 주 액션. hover 살짝 밝힘(`#33333a`), active 순검정(`#000`).
+  - `outline` = `surface` 배경 + `border-strong` 경계 + `text`. 보조 액션(취소 등). hover `surface-sunken`.
+  - `ghost` = 투명 + `primary`(퍼플) 텍스트. 최소 강조. hover `primary-soft` 배경.
+  - `danger` = `danger` 채움 + 흰 글자. 탈퇴 등 파괴적 액션.
+  - **`accent`(퍼플 채움) variant는 폐기 유지**(U-020에서 폐기, U-021 계승) — **퍼플은 버튼 채움에 쓰지 않는다**(액센트=링크·포커스·선택만). 즉시구매·입찰 CTA의 강조는 **블랙(`ink`) + 크기·배치**(lg + 주 액션 위치)로 만든다.
+- size: sm(h32, px3, text-sm) · md(h40~44, px4, text-base) · lg(h48~50, px5, text-lg). 반경 `rounded-md`(6px).
+- 상태(라이트 명도 램프, [2.2]): hover(`ink` 미세 밝힘 / 퍼플계는 `primary-hover` 명도 하강 — **구 U-020의 "채우기+테두리 병행 필수" 규칙은 라이트에선 불요**, 명도 램프만으로 지각된다) / focus(`focus-ring` 퍼플 2px + **offset 2px** — 요소 채움에 링이 닿지 않게) / active·pressed(순검정 또는 `primary-pressed` — **명도 하강, 구 hue 전환·전경 반전 폐기**) / disabled(`primary-disabled` 중립 그레이 + `#A1A1AA`, pointer-none) / loading(스피너 + 라벨 유지 또는 "처리 중", 중복 클릭 차단).
 - 접근성: 최소 타깃 44x44(sm은 터치 맥락에서 md 사용). 아이콘 전용 버튼은 aria-label 필수. loading 시 aria-busy.
-- 예: 입찰=primary md, 즉시구매=primary lg(크기로 강조), 취소=ghost/danger, 로그인=primary lg.
+- 예: 입찰=primary(ink) md, 즉시구매=primary(ink) lg(크기로 강조), 취소=outline/ghost, 파괴적=danger, 로그인·가입=primary(ink) lg.
 
 ### 5.2 Field (Input · Select · NumberInput)
 
 - 구성: 라벨(label for=id) + 인풋 + 힌트/에러 텍스트. 라벨은 항상 가시(placeholder를 라벨 대용 금지).
-- 상태: default(border) / focus(border-primary + focus-ring) / error(border-danger + 에러 메시지 aria-describedby) / disabled.
+- 상태: default(**`border-strong` 경계** — 라이트 컨트롤은 1.4.11상 3:1 필요, [2.5]) / focus(`primary` 경계 + `primary-soft` 링 box-shadow 3px) / error(`danger` 경계 + `danger-soft` 링 + 에러 메시지 aria-describedby) / disabled(`surface-sunken` 배경 + `text-subtle`). 높이 44px, 반경 `rounded-md`(6px).
 - NumberInput(금액·입찰가): font-num, 우측 단위(게임머니) suffix, 최소 증분/상한 힌트 표시(계약 BID_001·BID_002 대응). 서버 검증 실패 시 계약 에러코드→필드 에러 매핑.
-- **Checkbox** (U-020 신설 — 계약 v1.4 [2.5] 델타): 게임 자산에 체크박스가 없어 전량 CSS 재현이다.
-  - 상태: default(`border` 1px, 투명 채우기) / checked(`primary` 채우기 + `primary-fg` 체크 표시) / focus(`focus-ring`) / disabled / **error**(`border-danger` — 미동의 상태로 제출 시도).
+- **Checkbox** (U-020 신설 — 계약 v1.4 [2.5] 델타. 게임 자산에 없어 전량 CSS 재현):
+  - 상태: default(`border-strong` 2px, 투명 채우기) / checked(`primary` 퍼플 채우기 + 흰 체크 표시) / focus(`focus-ring`) / disabled / **error**(`border-danger` — 미동의 상태로 제출 시도).
   - 타깃 44×44(시각 박스는 20×20, 히트 영역을 라벨까지 확장). 라벨 클릭으로 토글(`label for`), `aria-describedby`로 경고문 연결.
   - 용도: **탈퇴 명시 동의**(미체크 시 제출 버튼 `disabled` + 비활성 사유 문장 병기 — 사유 없는 비활성은 금지), 약관 동의.
-  - **신설 사유**: v0 우선 세트(U-007)에 Checkbox가 없었다. v1.4 `DELETE /me`가 "동의 누락 시 400"을 규정해(계약 [2.5]) 동의 체크가 계약상 필수 입력이 됐는데, 세트에 대응 컴포넌트가 없었다 — wireframe-member.html에 구조로만 존재했다.
+  - **신설 사유**: v0 우선 세트(U-007)에 Checkbox가 없었다. v1.4 `DELETE /me`가 "동의 누락 시 400"을 규정해(계약 [2.5]) 동의 체크가 계약상 필수 입력이 됐는데, 세트에 대응 컴포넌트가 없었다.
 - 반응형: 폼은 모바일 1열, ≥md 2열 그리드 가능. 터치 타깃 h44 이상.
 
 ### 5.3 ItemCard (매물 카드)
 
 - 용도: 경매·고정가 목록의 매물 표시(계약 §3.3 AuctionSummary·ShopSummary + item 블록).
-- 구조(U-012 — 게임 이미지 + 웹 상거래 정보 결합): 세로형 카드. [상단] 게임 카드 이미지 슬롯(사용자 제공 게임 아트, 원본 카드 형태·비율 유지) + 오버레이(레벨·속성은 게임 아트에 이미 포함될 수 있음). [하단 웹 상거래 영역] 아이템명(nameSnapshot)·가격(경매 highestBidAmount 또는 startPrice / 고정가 price, font-num)·카운트다운(경매 endAt)·입찰수(bidCount)·판매유형 칩·판매자(sellerNickname). 게임 카드에 없는 상거래 정보는 이 하단 영역이 담당.
-- 게임 아트 밖에서 웹이 별도 표기할 때만 ElementBadge(속성) 사용. 등급/희귀도 표현 없음(D-073). 속성은 색+속성명 텍스트 병기(색만 전달 금지).
+- 구조(U-012 — 게임 이미지 + 웹 상거래 정보 결합, **이원 구조의 유일한 게임 창**): 세로형 카드. [상단] **검정(#000000) 아트 슬롯**(사용자 제공 게임 아트, 원본 카드 형태·비율 유지. 실물 아트 `docs/game_ui/item_info/card_image/**`, typeCode 매핑, l=상세·s=목록) + 오버레이(레벨·속성은 게임 아트에 이미 포함될 수 있음). [하단 웹 상거래 영역] 아이템명(nameSnapshot)·가격(경매 highestBidAmount 또는 startPrice / 고정가 price, font-num)·카운트다운(경매 endAt)·입찰수(bidCount)·판매유형 칩·판매자(sellerNickname). 게임 카드에 없는 상거래 정보는 이 하단 영역이 담당하며 **전부 커머스 토큰**(near-black·의미색).
+- 게임 아트 밖에서 웹이 별도 표기할 때만 ElementBadge(속성) 사용 — **소프트 틴트 배경 + near-black 라벨 + solid 도트**([2.7]). 등급/희귀도 표현 없음(D-073). 속성은 색+속성명 텍스트 병기(색만 전달 금지).
 - 이미지 파이프라인: 게임 카드 아트는 typeCode(item_template) 기준 자산으로 매핑(사용자 제공). 자산 부재 시 플레이스홀더.
-- 상태: default/hover(surface-raised + shadow-md·다크는 밝기차) / loading(스켈레톤) / 종료(딤 처리 + "마감/판매완료" 오버레이).
+- 상태: default / hover(`shadow-lg` 부양 + `border-strong` — **라이트는 그림자로 부양**, 다크식 밝기차 폐기) / loading(스켈레톤) / 종료(딤 처리 + "마감/판매완료" 오버레이).
 - 반응형: 목록 그리드 1열(모바일)→2(sm)→3(lg)→4(xl). 카드 내부는 세로 스택.
 
 ### 5.4 ListGrid + SearchFilterBar
 
 - ListGrid: ItemCard 반응형 그리드 + 빈 상태 + 로딩 스켈레톤 + 무한스크롤 센티넬(cursor) 또는 페이지네이션(offset).
-- SearchFilterBar(계약 §3 공통 필터, 등급 없음 D-073): mainCategory·subGroup·element·kind·minLevel/maxLevel·skill1/skill2·goldforceActive·minPrice/maxPrice·status. 정렬은 화이트리스트만(경매 price·endAt·createdAt·highestBidAmount / 고정가 price·endAt·createdAt). 모바일은 필터를 시트/드로어로, 데스크톱은 좌측 레일 또는 상단 바.
+- SearchFilterBar(계약 §3 공통 필터, 등급 없음 D-073): mainCategory·subGroup·element·kind·minLevel/maxLevel·skill1/skill2·goldforceActive·minPrice/maxPrice·status. 정렬은 화이트리스트만(경매 price·endAt·createdAt·highestBidAmount / 고정가 price·endAt·createdAt). 모바일은 필터를 시트/드로어로, 데스크톱은 좌측 레일 또는 상단 바. **element 필터 칩은 [2.7] 라이트 패턴**(소프트 틴트 + near-black 라벨 + 도트).
 - 접근성: 필터 컨트롤 키보드 조작, 적용된 필터는 제거 가능한 칩으로 표시(현재 상태 가시화).
 
 ### 5.5 Modal / Dialog
 
 - 용도: 입찰 확인, 즉시구매 확인, 판매자 취소 확인, 교환 실행 등.
-- 구조: 오버레이(scrim) + surface-raised 패널 + 제목 + 본문 + 액션(우측 하단, 주 액션 우측).
+- 구조: 오버레이(scrim) + `surface-raised` 패널(**`shadow-lg` 부양**) + 제목 + 본문 + 액션(우측 하단, 주 액션 우측).
 - 접근성: role=dialog, aria-modal, 열릴 때 포커스 트랩·첫 포커스 이동, 닫을 때 트리거로 복귀, Esc 닫기, 스크린리더 제목 연결(aria-labelledby).
 - 상태: 확인 액션 loading(중복 제출 차단). 파괴적 액션(취소·강제취소)은 danger 버튼.
 
@@ -325,7 +344,7 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 
 - 용도: 입찰 성공·상위 입찰 발생·낙찰·구매 완료·에러 알림.
 - 배치: 화면 상단 또는 하단 고정, 자동 소멸(성공 3~4s) + 수동 닫기. 에러는 자동 소멸 지양(사용자 확인).
-- variant: success/warning/danger/info(의미색 + 아이콘 + 텍스트). 접근성: aria-live(polite=정보, assertive=에러). 색만으로 구분 금지.
+- variant: success/warning/danger/info(의미색 `-soft` 배경 + 의미색 텍스트 + 아이콘 + 텍스트). 접근성: aria-live(polite=정보, assertive=에러). 색만으로 구분 금지.
 - **rate limit(`GATEWAY_429`) 표현** (U-020 신설 — 계약 v1.3 [1.6] 델타): `warning` 토스트 + **`Retry-After` 초를 카운트다운으로 노출**하고, 그동안 트리거 버튼을 `disabled`로 잠근다. 카피는 사용자 잘못이 아니라 대기임을 말한다 — "요청이 많습니다. N초 후 다시 시도할 수 있습니다"(Countdown 컴포넌트 [5.9] 재사용, 신규 파서·신규 컴포넌트 없음).
   - 특히 로그인·가입 연속 시도에서 발생한다(SEC-005 인증 계열 rate limit). 가입 성공 → 자동 로그인을 하지 않기로 한 P-010의 근거도 이 429다 — **같은 위험을 플로우와 토스트 양쪽에서 막는다.**
   - `GATEWAY_403`(게이트웨이 미경유 직접접근)은 **디자인 무영향** — 계약 [1.6]이 "정상 경유 클라이언트는 만나지 않으며 QA·보안의 음성 테스트 기준으로만 명세한다(프론트 별도 처리 불요)"고 명시했다. 화면 표현을 만들지 않는다.
@@ -333,29 +352,41 @@ Tailwind: `fontFamily.sans`/`fontFamily.num`에 매핑. 숫자 강조는 유틸 
 ### 5.7 Pagination
 
 - cursor(무한스크롤): 경매·고정가·임시보관·주문·충전내역 — 센티넬 관찰 + "더 보기" 폴백 버튼(키보드·스크린리더 접근). hasNext=false 시 종료 표시.
-- offset(페이지 번호): item-templates·입찰내역 — 이전/다음 + 현재 페이지. 총페이지 표시.
+- offset(페이지 번호): item-templates·입찰내역 — 이전/다음 + 현재 페이지. 총페이지 표시. 현재 페이지는 `primary-selected`(퍼플 soft 틴트 + 퍼플 텍스트, [2.2]).
 
 ### 5.8 Badge / StatusChip (+ ElementBadge)
 
-- StatusChip: 경매 status(SCHEDULED/ACTIVE/SOLD/UNSOLD/CANCELLED)·고정가(ACTIVE/SOLD/EXPIRED/CANCELLED)·주문 상태. **의미색 12% 알파 배경 + 의미색 텍스트 + 상태명**([2.3] — `-soft`/`-strong` 토큰은 폐기, 알파 합성으로 대체). 색+텍스트(+아이콘) 병기.
-- ElementBadge: element 색([2.4] 아트 실측값) + **속성명/아이콘 필수 병기**. **`bg` 위에만 배치**([2.4] 배치 제약 — 패널 파랑 위에서 water 2.4:1 · fire 1.78:1로 무너진다). 등급(GradeBadge)은 D-073으로 폐기 — 사용 금지.
+- StatusChip: 경매 status(SCHEDULED/ACTIVE/SOLD/UNSOLD/CANCELLED)·고정가(ACTIVE/SOLD/EXPIRED/CANCELLED)·주문 상태. **의미색 8% 알파 배경(`-soft`) + 의미색 텍스트 + 상태명**([2.3]). 색+텍스트(+아이콘) 병기. 반경 `rounded-full`(pill).
+- ElementBadge: element 색([2.7] 아트 실측값) + **속성명/아이콘 필수 병기**. **라이트 패턴 필수**([2.7]): 소프트 틴트 배경(`element-soft.*`) + near-black 라벨 + solid element색 도트. **흰 배경 위 텍스트 직접 사용·퍼플 위 배치 금지**(water 2.37로 무너진다). 아이템 카드·속성 배지·아이템 필터 칩 밖 사용 금지(Game-Color Containment, [1.2]). 등급(GradeBadge)은 D-073으로 폐기 — 사용 금지.
 - resultType(BID/BUYNOW)은 보조 라벨로 표기(낙찰 사유).
 
 ### 5.9 Countdown (마감 카운트다운)
 
 - 용도: 경매 남은 시간. font-num, `HH:MM:SS` 또는 `Nd HH:MM`. 폴링 기준(U-006) 서버 endAt과 동기.
-- 임박 단계 색 전이: 여유(text-muted)→임박 T-5분(warning)→T-30초 소프트클로즈 윈도우(danger·강조). 소프트클로즈로 endAt 연장 시 즉시 반영(값 점프 허용, 트윈 최소).
+- 임박 단계 색 전이: 여유(`text-muted`)→임박 T-5분(`warning`)→T-30초 소프트클로즈 윈도우(`danger`·강조). 소프트클로즈로 endAt 연장 시 즉시 반영(값 점프 허용, 트윈 최소).
 - 접근성: aria-live=off(초당 갱신 스팸 방지), 대신 임박/마감 전환 시점에만 폴라이트 안내. 종료 시 "마감" 정적 표시.
 
 ### 5.10 MoneyAmount (금액 표시)
 
 - 용도: 게임머니·캐시·수수료·정산액. font-num + 단위 라벨. 잔액 4종(cashBalance·gameMoneyBalance·gameMoneyHeld·gameMoneyAvailable)은 라벨로 구분(특히 held=홀드/available=가용).
-- 부족 상태(BID_005·SHOP_005·EXC_001) 강조 시 danger. 큰 금액은 천단위 구분. 통화 혼동 방지 — 캐시/게임머니 아이콘·색 구분.
+- 부족 상태(BID_005·SHOP_005·EXC_001) 강조 시 `danger`. 홀드 강조는 `warning`-soft 배경. 큰 금액은 천단위 구분. 통화 혼동 방지 — 캐시/게임머니 아이콘·색 구분.
+
+### 5.11 SocialLoginButton (OAuth) — U-021 신설
+
+- 용도: 로그인·회원가입의 소셜 로그인 진입. **자리 확보용** — 기능(OAuth 백엔드)은 미래 에픽(현 계약 §2는 loginId/password만, [2.8]).
+- variant(외부 브랜드 규격, 팔레트 예외 — **재색 금지**):
+  - `kakao` = `#FEE500` 배경 + 검정 라벨/로고. "카카오로 계속하기".
+  - `naver` = `#03C75A` 배경 + 흰 라벨/로고. "네이버로 계속하기".
+- 배치: 로그인·회원가입 폼의 주 CTA(`ink`) 아래 **"또는" 구분선**(양쪽 `border` 라인 + 중앙 `text-subtle` "또는") + 소셜 버튼을 세로 스택. 높이 46px, 반경 `rounded-md`(6px), 전폭.
+- 상태: 지금은 자리 확보라 "추후 연동" 안내문(`text-subtle`)을 병기하거나 disabled 처리. 기능 에픽 착수 시 실제 OAuth 플로우 연결(재설계 불요 — 레이아웃이 이미 수용).
+- 접근성: 브랜드 로고는 `aria-hidden`, 버튼 라벨은 텍스트로 명시. 최소 타깃 44 이상.
+- **자리 확보 원칙**: 지금 소셜을 레이아웃에 수용해 두면, OAuth 백엔드가 붙을 때 화면 재설계가 불요하다. 계약 §2 확장(소셜 식별자) 필요 — 계약 게이트 대상(디자인은 자리만).
 
 ---
 
 ## 6. 프론트 매핑 요약
 
-- 토큰 → `tailwind.config.js theme.extend`(2.5·3·4절 표) + 테마 변수는 전역 CSS(:root / [data-theme=dark]).
-- 컴포넌트 → 프론트 `components/`(공용: Button·Field·Modal·Toast·Pagination·MoneyAmount·Countdown·SearchFilterBar) / feature별(ItemCard는 item, StatusChip은 도메인 상태).
+- 토큰 → `tailwind.config.js theme.extend`([2.6] Tailwind 매핑 표 + [3]·[4]) + 테마 변수는 전역 CSS(:root=라이트 기본 / [data-theme=dark]=U-005 대기). **실코드(`tailwind.config.js`·`index.css`) 갱신은 frontend-impl/총괄 소관** — 이 정본 값과 대조해 반영한다(디자인은 [2.6] 드롭인 블록으로 재도출 비용 0 제공).
+- 컴포넌트 → 프론트 `components/`(공용: Button·Field·Modal·Toast·Pagination·MoneyAmount·Countdown·SearchFilterBar·**SocialLoginButton**) / feature별(ItemCard는 item, StatusChip은 도메인 상태).
 - 상태·에러 → 계약 `[5]` ErrorCode 상수와 1:1 매핑(`frontend/rules.md [5]`). 필드 에러·토스트 카피는 ux-flows.md 참조.
+- 시각 근거: 확정 목업 `docs/ux/mockups/redesign-commerce.html`(블랙 CTA·OAuth·순백·element 역할 반전 반영본). 대비 계산 출처: `redesign-commerce-proposal.md`.
