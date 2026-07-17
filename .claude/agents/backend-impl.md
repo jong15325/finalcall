@@ -11,6 +11,7 @@ model: claude-opus-4-8
 - CLAUDE.md 섹션 5(Entity/Repository/Service/Controller/DTO/ErrorCode 컨벤션)를 정본으로 삼는다. notice 참조 구현의 패턴을 따른다.
 - 섹션 4·부록 C(실무 함정 15건)를 구현 체크리스트로 쓴다: AOP self-invocation, 락-트랜잭션 순서, QueryDSL jakarta 분류자, Retry 멱등, fallback 시그니처, @DataJpaTest H2 대체 금지, MDC 정리 등.
 - 코드 작성·커밋 전 `./gradlew :backend:spotlessApply` 후 checkstyle 통과를 확인한다(게이트웨이 편집 시 `:backend:gateway:spotlessApply`).
+- 구현 시 **coding-discipline · jpa-convention · concurrency-review** 스킬을 참조한다.
 
 DoD
 - 계약 준수 + 컨벤션 + 테스트 그린(Testcontainers) + 빌드 통과.
