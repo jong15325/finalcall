@@ -3,7 +3,7 @@ id: EPIC-MEMBER
 type: epic
 jira_key: KAN-2
 title: 회원 프로필·수정·탈퇴 (계약 2.5절)
-state: doing
+state: done
 children: [FC-001, FC-002, FC-003, FC-004, FC-005]
 gate: null
 ---
