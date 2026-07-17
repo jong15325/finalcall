@@ -3,7 +3,7 @@ id: EPIC-CURRENCY
 type: epic
 jira_key: KAN-9
 title: 화폐 — 잔액 원자적 증감 + 캐시↔게임머니 교환 (계약 4.4절)
-state: doing
+state: done
 children: [FC-007, FC-008, FC-009, FC-010]
 gate: null
 ---
@@ -20,3 +20,7 @@ gate: null
 의존: FC-007 → FC-008 → FC-009 → FC-010
 결정: **교환비율 = 1 캐시 = 1,000,000 게임머니**, 추후 변경 가능(DB 추적표 또는 옵션 — 기전은 FC-007 확정). 각 교환은 applied_rate 스냅샷 기록.
 비고: FC-008(잔액 원자화)은 교환·충전·입찰(홀드)·정산이 공통으로 쓰는 핵심 기반.
+
+## 완료 (게이트3, 2026-07-17)
+- 전 하위 done + FC-010 통합 리뷰 passed(critical/major 0, minor 3) + 위임 승인. 빌드·테스트 그린(reviewer 재확인).
+- **미push** — push는 사용자 직접(게이트3 훅). 후속: minor 1 위생 티켓(FC-011, cashAmount 상한) 백로그로 분리.
