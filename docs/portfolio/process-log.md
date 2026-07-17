@@ -63,19 +63,21 @@
 
 ---
 
-## 항목 2 — 보안 층 도입 논의 · 상태: OPEN (미결 · 사용자 결정 대기 · 재론 예정)
+## 항목 2 — 보안 층 도입 논의 → 확정·codify·배선 · 상태: 해결 (2026-07-18, 잔여는 사용자 영역)
 
-> **주의**: 이 항목은 **아직 결정되지 않았다**. 어떤 제안도 "채택됨"으로 읽어선 안 된다. 아래는 세션
-> 대화에만 존재하는 미결 논의를 추후 재개를 위해 기록한 것이다. 실제 반영·구현은 없다.
+> **상태 전이 이력**: OPEN(미결·사용자 결정 대기) → **해결**(사용자 5개 판단 확정 → CLAUDE.md 섹션
+> 8~13 codify → 위협모델 정본 승격 → CI 초안 배선). 아래는 최초 OPEN 시점의 논의를 보존한 뒤(맥락),
+> 무엇이 어떻게 확정·반영됐는지 전이 결과를 이어 기록한다. 단, **완전 종결은 아니다** — 저장소
+> Secrets·PR 워크플로우 등 **사용자 영역 잔여**가 남아 있으며 아래 "잔여"에 정확히 명시한다.
 
-### 배경 · 제안 (사용자)
+### 배경 · 제안 (사용자, OPEN 시점 원안 — 보존)
 상주 5번째 "보안 에이전트"를 두지 **않는다**(과거 코드 감사 과중을 재유발하므로). 대신 보안을 별도
 **"역할"이 아니라 별도 "패스(pass)"**로 여러 층에 얹는다. 근거:
 - Anthropic 설계는 보안을 범용 리뷰에 섞지 않고 **신선 컨텍스트 + 보안 전용 프롬프트의 별도 패스**로
   돌린다(자기 채점 편향 회피).
 - LLM 보안 리뷰는 완결이 아니라 **defense-in-depth의 한 층**으로 다룬다.
 
-### 제안 파이프라인 (미확정)
+### 제안 파이프라인 (OPEN 시점 원안 — 보존)
 기존 골격(architect → backend-impl ∥ frontend-impl → reviewer → Done)은 유지하고 **보안 층만 추가**:
 - 구현 중 security-guidance 플러그인 훅 자동 발동
 - reviewer를 보안 "확인소"로 재정의(인가·`/me` IDOR·세션 폐기 최종판정)
@@ -83,32 +85,71 @@
 - push 시 원격 CI 정적분석 + 의존성 스캔
 - 공통 위협모델 체크리스트 문서
 
-### 총괄(메인세션) 판단 5건 (예비 · 확정 아님)
-1. **consultant 소환 대상 여부 → 소환 필요(예비)**: 섹션 8·9·10·13 다중 섹션 구조 개정이라 consultant가
-   필요. 단 **방향 확정 후 codify 용도로만** 소환하며, 제품 결정 자체는 사용자에게 수렴.
-2. **기존 규약 충돌 → 수정 필요 3건**:
-   - (a) 섹션 13 "커밋 게이트 없음" ↔ 플러그인 커밋 훅은 반드시 warn-only(비차단)여야 충돌 회피.
-   - (b) 게이트3 push 차단 ↔ "push 시 CI"는 로컬 pre-push가 아니라 **원격 CI(post-push)**여야 무간섭.
-   - (c) 모델 핀을 opus-4-8로(보안 패스의 신선 컨텍스트 유지).
-3. **토큰 비용 → 수정 채택(예비)**: 전 턴 무조건 발동은 보류. **위협 표면(auth·bid·settlement·`/me`·
-   SecurityContext·정산) 패턴에 게이트 + 에픽 완료 온디맨드**. 한도 압박 시 자동층을 끄고 온디맨드만 유지하는
-   폴백을 명문화. 민감 도메인 좌측 이동(shift-left) 이득으로 순이득 판단.
-4. **Windows/PowerShell 제약 → 조건부 채택(예비)**: venv 없이 single-shot 폴백도 위협모델 프롬프트 +
-   신선 컨텍스트로 가치 유지. 단 도입 전 **헤드리스 스모크 필수**. Python 도구 의존이 크면 원격 CI(리눅스)로
-   이관해 이중화.
-5. **도입 시점 → 경매(입찰·정산) 에픽부터(예비)**: 위협모델의 핵심(동시성 자금 이동)이 경매에 있음. member는
-   소급 저가치. **깔기(배선)는 지금(에픽 간 공백)이 최적**.
+### 사용자 확정 (전이 결과) — 5개 판단 채택 (3번만 메커니즘 교정)
+OPEN 시점의 "총괄 예비 판단 5건"을 사용자가 검토해 **방향 전건 채택**했다. 다만 **3번(토큰 비용)은
+메커니즘을 교정**했다 — 위협 표면 "경로 게이팅" 대신 **상시 구성으로 단순화**:
+1. **consultant 소환 → 채택**: 섹션 8·9·10·13 다중 섹션 개정이라 방향 확정 후 **codify 용도로만** 반영.
+2. **규약 충돌 3건 → 채택**: (a) 커밋 보안 리뷰 warn-only(섹션 13·10) (b) 원격 CI post-push(섹션 13)
+   (c) 모델 opus-4-8 핀(섹션 13·CI).
+3. **토큰 비용 → 채택하되 메커니즘 교정**: 경로 게이팅(위협 표면 패턴 매칭 발동) 대신 **상시 구성**으로 —
+   end-of-turn 리뷰 **기본 off**(`ENABLE_STOP_REVIEW=0`, 최고위험 구간만 한시 on), 커밋 보안 리뷰
+   **warn-only 상시**, 온디맨드 `/security-review` **에픽 완료 시 상시 1회**. 한도 폴백 명문화(자동층 off,
+   온디맨드 유지).
+4. **Windows 제약 → 채택**: 정적도구 의존이 크면 원격 CI(리눅스)로 이관해 이중화. 헤드리스 스모크 전제.
+5. **도입 시점 → 채택**: 경매(입찰·정산) 에픽부터 첫 적용, member/account 소급 안 함.
 
-### 다음 절차 (확정 시)
-사용자 채택/조정 → consultant codify(정본 반영 + 위협모델 문서 초안) → 메인세션 배선·스모크 →
-경매 에픽 첫 적용.
+### codify (CLAUDE.md 섹션 8~13 반영 — 커밋 `b125456`)
+- **섹션 8**: reviewer를 **확인소**로 재정의(보안 첫 검문소 아님, 도메인 인가 최종 판정) + "보안 층은
+  상주 에이전트 아님"(별도 도구 층으로 구현) 불릿(line 296·303).
+- **섹션 9**: 보안 층 5요소 불릿 — 커밋 warn-only·reviewer 확인소·온디맨드 `/security-review`·post-push
+  CI·공통 위협모델 체크리스트, 경매 에픽부터·member 소급 안 함(line 324).
+- **섹션 10**: "보안 리뷰는 게이트 아님" — 커밋 게이트 신설 안 함, 보안 결정은 게이트2로 수렴(line 335).
+- **섹션 13**: "보안 층 구성" 소절 — warn-only·end-of-turn 기본 off·post-push CI·모델 opus-4-8 핀·한도
+  폴백·Windows 스모크 전제·재프롬프트↔review 타이밍 주의(line 393~402).
+- 섹션 11·12 무변경.
+
+### 위협모델 정본 승격 (A 구조: 색인 + 상세 — 커밋 `5c10d97`)
+- **압축 색인** `.claude/claude-security-guidance.md`: 플러그인 8KB 캡을 지키려 8416B→**7985B 트림**
+  (≤8000·8192 통과), **항목 ID 36개 보존**. 플러그인 자동 리뷰·reviewer가 공유 참조.
+- **전문 정본** `docs/security/threat-model-checklist.md`(25744B): draft 전문 + 보강 1~3(로깅 위생 LOG·
+  레이트리밋 경계 RL·마이너). 기존 STRIDE 원장(`threat-model.md`) 인용 보존. draft는 호스트 rm으로
+  삭제(git mv 회피, C-075).
+
+### 배선 (CI 초안 — 커밋 `a690f67`)
+- **빌트인 `/security-review`** = **live**(온디맨드·에픽 완료 층). 지금 가동.
+- `.github/workflows/security.yml`: npm-audit(프론트, push+PR, 리포트 전용 continue-on-error) +
+  dependency-review(PR, gradle·npm, GitHub 네이티브·시크릿 불요) + claude-security-review(PR, Anthropic
+  액션에 우리 위협모델 `docs/security/threat-model-checklist.md` 주입, `claude-model: claude-opus-4-8` 핀).
+- `.github/dependabot.yml`: gradle·npm·github-actions 주간 의존성 감시.
+
+### 트러블슈팅 노트 (신규) — Windows 로컬 Python 부재 → 정적분석 원격 이관
+- **증상**: 로컬 Windows의 `python`이 **WindowsApps 스토어 스텁**이라 실행이 무효였다 → 플러그인이 부르는
+  정적도구(Python 의존)가 로컬에서 작동하지 않음을 확인.
+- **조치**: 계획 item 4대로 **정적분석을 원격 CI(리눅스 러너)로 이관**해 흡수(`security.yml`이 ubuntu-latest).
+  로컬은 LLM 패스(`/security-review`), 원격은 정적분석·의존성 스캔으로 이중화. 커밋 warn-only 플러그인은
+  로컬 정적도구 부재로 **LLM-only 한계**가 있어 **보류**(필요 시 추후 추가).
+
+### 잔여 (사용자 영역 — 전부 해결 아님)
+- 저장소 **Secrets에 `CLAUDE_API_KEY` 추가** 전까지 `claude-security-review` 잡은 dormant.
+- 현재 **master 직접 커밋**이라 PR 트리거 잡(dependency-review·claude-security-review)은 미발동 —
+  **PR 워크플로우 도입은 백로그**. 도입 시 활성.
+- npm-audit·dependabot은 시크릿 불요라 push부터 가동(잔여 아님).
+- **보안 플러그인(커밋 warn-only) 도입**은 추후 선택(로컬 Python 부재로 보류 중).
 
 ### 증거 · 근거
-- 이 항목은 **세션 대화에만 존재**하며 코드·spec·보드·CLAUDE.md에 아직 반영된 바 없다(미결).
-- 관련 규약 접점(수정 대상 후보): CLAUDE.md 섹션 8(에이전트 5종 + consultant 휴면)·섹션 9(파이프라인)·
-  섹션 10(게이트 정책)·섹션 13(커밋·push, 게이트3 훅).
-- 선례: 항목 1의 warn-only 훅(`check-mirror-drift.js`)이 "커밋 비차단 훅"의 구현 패턴 참고가 됨.
+- codify: CLAUDE.md 섹션 8(line 296·303)·섹션 9(line 324)·섹션 10(line 335)·섹션 13(line 393~402) —
+  커밋 `b125456`.
+- 위협모델: `.claude/claude-security-guidance.md`(7985B, ID 36개)·`docs/security/threat-model-checklist.md`
+  (25744B) — 커밋 `5c10d97`.
+- 배선: `.github/workflows/security.yml`·`.github/dependabot.yml` — 커밋 `a690f67`.
+- 선례: 항목 1의 warn-only·fail-open 훅(`check-mirror-drift.js`)이 "커밋 비차단 리뷰"의 설계 패턴 선례.
+
+### 교훈
+**"보안은 역할이 아니라 층."** 상주 감사자를 늘리는 대신 신선 컨텍스트의 별도 패스를 여러 지점(커밋 warn-only
+·reviewer 확인소·에픽 완료 온디맨드·post-push CI)에 얇게 얹어 defense-in-depth를 구성했다. 로컬 플랫폼
+제약(Windows Python 부재)은 정적분석을 원격 CI로 이관해 우회 — **환경 한계를 층 재배치로 흡수**한 사례.
 
 ---
 
 _최초 작성: 2026-07-18 (portfolio-writer, 프로세스 로그 신설 — 항목 1 해결됨 · 항목 2 OPEN)_
+_갱신: 2026-07-18 (portfolio-writer, 항목 2 OPEN → 해결 전이 — 확정·codify `b125456`·정본 `5c10d97`·배선 `a690f67`, 사용자 영역 잔여 명시)_
