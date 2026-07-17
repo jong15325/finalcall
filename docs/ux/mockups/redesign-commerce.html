@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinalCall — 라이트 커머스 개정 목업 (redesign-commerce)</title>
+<style>
+/* redesign-commerce-proposal.md 개정 팔레트 적용. 자체완결(외부 폰트/CDN 없음, 시스템폰트 fallback).
+   무신사 미니멀 에디토리얼 + 컬리 프리미엄 퍼플. 게임 차용(element색·검정 슬롯)은 아이템 카드에만. */
+:root{
+  /* 베이스·표면 */
+  --bg:#FAFAFA; --surface:#FFFFFF; --surface-raised:#FFFFFF; --surface-sunken:#F4F4F5; --slot:#000000;
+  /* 텍스트 */
+  --text:#18181B; --text-muted:#52525B; --text-subtle:#71717A;
+  /* 테두리 */
+  --border:#E4E4E7; --border-muted:#F1F1F3; --border-strong:#8A8A8F;
+  /* primary(컬리계 퍼플, 고유값) */
+  --primary:#6E2A9F; --primary-hover:#5C2185; --primary-pressed:#491A6C;
+  --primary-selected:#F1EAF5; --primary-soft:#F1EAF5; --primary-disabled:#E4E4E7;
+  --primary-fg:#FFFFFF; --on-accent-fg:#18181B; --ink:#18181B;
+  /* 의미색(라이트 재검증) */
+  --success:#14742F; --warning:#A0510A; --danger:#C81E1E; --info:#1D4ED8;
+  --success-soft:#ECF5EF; --warning-soft:#F9F1EB; --danger-soft:#FBEDED; --info-soft:#EEF3FD;
+  /* element(아트 실측 불변) + 라이트용 소프트 틴트 */
+  --el-water:#19B2FF; --el-fire:#FF5500; --el-earth:#95B259; --el-wind:#66CCCC;
+  --el-water-soft:#DDF3FF; --el-fire-soft:#FFE6D9; --el-earth-soft:#EFF3E6; --el-wind-soft:#E8F7F7;
+  --focus:#6E2A9F;
+  --r-sm:4px; --r-md:6px; --r-lg:8px;   /* 낮은 반경 = 무신사 각진 감성 */
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums;}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}  /* offset 2px = AA 조건 */
+a{color:var(--primary); text-decoration:underline; text-underline-offset:2px;}
+
+.wrap{max-width:1180px; margin:0 auto; padding:40px 24px 80px;}
+
+/* ── 헤더 ── */
+.masthead{border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:40px;}
+.brand{display:flex; align-items:baseline; gap:12px;}
+.logo{font-size:1.65rem; font-weight:800; letter-spacing:-0.03em;}
+.logo .dot{color:var(--primary);}
+.masthead .tagline{color:var(--text-muted); font-size:.875rem; margin:6px 0 0;}
+.eyebrow{font-size:.6875rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--text-subtle);}
+
+/* ── 스와치 패널 ── */
+.swatches{margin-bottom:52px;}
+.sw-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:16px;}
+.sw{border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; background:var(--surface);}
+.sw .chip{height:52px; display:flex; align-items:flex-end; padding:6px 8px;}
+.sw .meta{padding:7px 9px; border-top:1px solid var(--border-muted);}
+.sw .nm{font-size:.75rem; font-weight:600;}
+.sw .hx{font-size:.6875rem; color:var(--text-subtle);}
+.sw .use{font-size:.6875rem; color:var(--text-muted); margin-top:2px; line-height:1.35;}
+.sw .tag-hex{font-size:.625rem; font-weight:700; padding:1px 5px; border-radius:3px; background:rgba(255,255,255,.85); color:#18181B;}
+.grouplabel{font-size:.75rem; font-weight:700; color:var(--text-muted); margin:22px 0 6px; letter-spacing:.02em;}
+
+/* ── 화면 그리드 ── */
+.section-title{font-size:1.25rem; font-weight:700; letter-spacing:-0.01em; margin:48px 0 4px;}
+.section-sub{color:var(--text-muted); font-size:.875rem; margin:0 0 20px;}
+.screens{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:24px; align-items:start;}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:28px;}
+.card-shadow{box-shadow:0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06);}
+.card-head{font-size:1.0625rem; font-weight:700; letter-spacing:-0.01em; margin:0 0 2px;}
+.card-desc{color:var(--text-subtle); font-size:.8125rem; margin:0 0 22px;}
+.divider{border:0; border-top:1px solid var(--border); margin:22px 0;}
+
+/* 폼 */
+.field{margin-bottom:18px;}
+.field > label{display:block; font-size:.8125rem; font-weight:600; margin-bottom:7px; color:var(--text);}
+.req{color:var(--text-subtle); font-weight:400; font-size:.75rem;}
+.input{
+  width:100%; height:44px; padding:0 13px; font:inherit; font-size:.9375rem;
+  border:1px solid var(--border-strong); border-radius:var(--r-md);
+  background:var(--surface); color:var(--text); transition:border-color .12s, box-shadow .12s;
+}
+.input::placeholder{color:var(--text-subtle);}
+.input:hover{border-color:#6f6f75;}
+.input:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.input:disabled{background:var(--surface-sunken); color:var(--text-subtle); border-color:var(--border); cursor:not-allowed;}
+.input[aria-invalid="true"]{border-color:var(--danger); box-shadow:0 0 0 3px var(--danger-soft);}
+.hint{font-size:.75rem; color:var(--text-subtle); margin-top:6px;}
+.err{font-size:.75rem; color:var(--danger); margin-top:6px; display:flex; gap:5px; align-items:center; font-weight:500;}
+
+/* 버튼 */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  height:44px; padding:0 20px; font:inherit; font-size:.9375rem; font-weight:700;
+  border:1px solid transparent; border-radius:var(--r-md); cursor:pointer;
+  background:var(--primary); color:var(--primary-fg); transition:background .12s;
+}
+.btn:hover{background:var(--primary-hover);}
+.btn:active{background:var(--primary-pressed);}
+.btn:disabled{background:var(--primary-disabled); color:#A1A1AA; cursor:not-allowed;}
+.btn-lg{height:50px; font-size:1rem; width:100%;}
+.btn-ink{background:var(--ink);} .btn-ink:hover{background:#000;}
+.btn-outline{background:var(--surface); color:var(--text); border-color:var(--border-strong);}
+.btn-outline:hover{background:var(--surface-sunken);}
+.btn-ghost{background:transparent; color:var(--primary); border-color:transparent;}
+.btn-ghost:hover{background:var(--primary-soft);}
+.btn-danger{background:var(--danger); color:#fff;} .btn-danger:hover{background:#A81818;}
+.btn-danger:disabled{background:var(--primary-disabled); color:#A1A1AA;}
+.btn-row{display:flex; gap:10px;}
+.center-link{text-align:center; font-size:.875rem; color:var(--text-muted); margin-top:22px;}
+
+/* 읽기전용 프로필 행 */
+dl.ro{margin:0; border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;}
+dl.ro > div{display:flex; justify-content:space-between; gap:16px; padding:13px 16px; border-bottom:1px solid var(--border-muted); background:var(--surface);}
+dl.ro > div:nth-child(even){background:var(--surface-sunken);}
+dl.ro > div:last-child{border-bottom:0;}
+dl.ro dt{color:var(--text-subtle); font-size:.8125rem;}
+dl.ro dd{margin:0; font-weight:600; text-align:right; font-size:.875rem;}
+
+/* 상태 칩 */
+.chip{display:inline-flex; align-items:center; gap:5px; font-size:.75rem; font-weight:700; padding:3px 9px; border-radius:9999px;}
+.chip-success{background:var(--success-soft); color:var(--success);}
+.chip-warning{background:var(--warning-soft); color:var(--warning);}
+.chip-danger{background:var(--danger-soft); color:var(--danger);}
+.chip-info{background:var(--info-soft); color:var(--info);}
+
+/* 잔액 카드 */
+.bal-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.bal{border:1px solid var(--border); border-radius:var(--r-md); padding:14px 16px; background:var(--surface);}
+.bal .k{font-size:.75rem; color:var(--text-subtle);}
+.bal .v{font-size:1.25rem; font-weight:700; margin-top:4px;}
+.bal .u{font-size:.75rem; color:var(--text-muted); font-weight:500; margin-left:3px;}
+.bal.hold{background:var(--warning-soft); border-color:#EAD9C4;}
+.bal.hold .v{color:var(--warning);}
+
+/* 탈퇴 위험 박스 */
+.danger-box{border:1px solid #EBC9C9; background:var(--danger-soft); border-radius:var(--r-md); padding:18px;}
+.forfeit{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:14px 16px; margin:14px 0;}
+.forfeit .fr{display:flex; justify-content:space-between; padding:5px 0; font-size:.875rem;}
+.forfeit .fr .num{font-weight:700;}
+.check{display:flex; gap:11px; align-items:flex-start; cursor:pointer; padding:12px 0; user-select:none;}
+.check input{appearance:none; width:20px; height:20px; flex:none; margin:2px 0 0; border-radius:var(--r-sm);
+  border:2px solid var(--border-strong); background:var(--surface); cursor:pointer; position:relative; transition:.12s;}
+.check input:checked{background:var(--primary); border-color:var(--primary);}
+.check input:checked::after{content:"✓"; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font-size:.8125rem; font-weight:800;}
+.check span{font-size:.875rem; line-height:1.45;}
+
+/* ── 샘플 아이템 카드 (게임 부분차용 시연) ── */
+.item-lane{display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap;}
+.item-card{width:280px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; transition:box-shadow .15s, border-color .15s;}
+.item-card:hover{box-shadow:0 8px 24px rgba(15,23,42,.10); border-color:var(--border-strong);}
+.art{position:relative; aspect-ratio:4/3; background:var(--slot);   /* 검정 슬롯 = 아이템 아트 전용 */
+  display:flex; align-items:center; justify-content:center;}
+.art .art-ph{color:#3a3a3a; font-size:.75rem; letter-spacing:.04em;}
+/* 아트 위 별빛 느낌(게임 아트 자리표시 — 실자산은 여기 매핑) */
+.art .glow{position:absolute; width:120px; height:120px; border-radius:50%;
+  background:radial-gradient(circle, rgba(25,178,255,.55), rgba(25,178,255,0) 70%); filter:blur(4px);}
+.art .sword{position:relative; width:14px; height:96px; border-radius:3px;
+  background:linear-gradient(#dff3ff,#8fb8cc 60%,#4a6a80); box-shadow:0 0 18px rgba(120,200,255,.6);}
+.el-badge{position:absolute; left:10px; top:10px; display:inline-flex; align-items:center; gap:5px;
+  font-size:.6875rem; font-weight:700; padding:3px 8px 3px 6px; border-radius:9999px;
+  background:var(--el-water-soft); color:var(--on-accent-fg); border:1px solid rgba(0,0,0,.06);}
+.el-dot{width:9px; height:9px; border-radius:50%; background:var(--el-water); flex:none;}
+.item-body{padding:14px 16px 16px;}
+.item-name{font-weight:700; font-size:.9375rem; letter-spacing:-0.01em;}
+.item-meta{display:flex; align-items:center; gap:8px; margin-top:4px; color:var(--text-subtle); font-size:.75rem;}
+.item-price{display:flex; align-items:baseline; justify-content:space-between; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);}
+.item-price .lab{font-size:.6875rem; color:var(--text-subtle);}
+.item-price .amt{font-size:1.25rem; font-weight:800;} .item-price .amt .u{font-size:.75rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+.item-foot{display:flex; align-items:center; justify-content:space-between; margin-top:12px;}
+.seller{font-size:.75rem; color:var(--text-muted);}
+
+.callout{border-left:3px solid var(--primary); background:var(--primary-soft); border-radius:0 var(--r-md) var(--r-md) 0; padding:14px 16px; font-size:.8125rem; color:var(--text-muted);}
+.callout strong{color:var(--text);}
+.footnote{color:var(--text-subtle); font-size:.75rem; margin-top:40px; border-top:1px solid var(--border); padding-top:20px; line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ═══ 헤더 ═══ -->
+  <header class="masthead">
+    <div class="brand"><span class="logo">Final<span class="dot">Call</span></span>
+      <span class="eyebrow">Item Commerce</span></div>
+    <p class="tagline">디자인 개정 목업 — 무신사 미니멀 에디토리얼 + 마켓컬리 프리미엄 퍼플. 게임 감성은 아이템에만.</p>
+  </header>
+
+  <!-- ═══ 스와치 패널 ═══ -->
+  <section class="swatches">
+    <div class="eyebrow">Palette</div>
+    <h2 class="section-title" style="margin-top:4px">개정 색 토큰 스와치</h2>
+    <p class="section-sub">각 토큰의 hex·용도. 라이트 베이스 위 WCAG 2.1 AA 계산 검증 완료.</p>
+
+    <div class="grouplabel">베이스 · 표면 · 텍스트</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="chip" style="background:#FAFAFA"><span class="tag-hex">#FAFAFA</span></div><div class="meta"><div class="nm">bg</div><div class="use">페이지 배경(오프화이트)</div></div></div>
+      <div class="sw"><div class="chip" style="background:#FFFFFF"><span class="tag-hex">#FFFFFF</span></div><div class="meta"><div class="nm">surface</div><div class="use">카드·패널·인풋</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F4F4F5"><span class="tag-hex">#F4F4F5</span></div><div class="meta"><div class="nm">surface-sunken</div><div class="use">함몰 존·비활성 인풋 (신설)</div></div></div>
+      <div class="sw"><div class="chip" style="background:#18181B"><span class="tag-hex" style="background:rgba(255,255,255,.9)">#18181B</span></div><div class="meta"><div class="nm">text</div><div class="use">본문 near-black · 17.7:1</div></div></div>
+      <div class="sw"><div class="chip" style="background:#52525B"><span class="tag-hex">#52525B</span></div><div class="meta"><div class="nm">text-muted</div><div class="use">보조 텍스트 · 7.7:1</div></div></div>
+      <div class="sw"><div class="chip" style="background:#71717A"><span class="tag-hex">#71717A</span></div><div class="meta"><div class="nm">text-subtle</div><div class="use">캡션·placeholder · 4.8:1</div></div></div>
+    </div>
+
+    <div class="grouplabel">테두리 (무신사 얇은 선)</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="chip" style="background:#E4E4E7"><span class="tag-hex">#E4E4E7</span></div><div class="meta"><div class="nm">border</div><div class="use">카드·구분선(장식)</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F1F1F3"><span class="tag-hex">#F1F1F3</span></div><div class="meta"><div class="nm">border-muted</div><div class="use">가장 옅은 내부선</div></div></div>
+      <div class="sw"><div class="chip" style="background:#8A8A8F"><span class="tag-hex">#8A8A8F</span></div><div class="meta"><div class="nm">border-strong</div><div class="use">인풋·컨트롤 경계 · 3.4:1 (신설, 1.4.11)</div></div></div>
+    </div>
+
+    <div class="grouplabel">primary — 컬리계 딥 퍼플(고유값) · 조작</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="chip" style="background:#6E2A9F"><span class="tag-hex">#6E2A9F</span></div><div class="meta"><div class="nm">primary</div><div class="use">기본 액션·포인트 · 흰글자 8.4:1</div></div></div>
+      <div class="sw"><div class="chip" style="background:#5C2185"><span class="tag-hex">#5C2185</span></div><div class="meta"><div class="nm">primary-hover</div><div class="use">hover(명도↓)</div></div></div>
+      <div class="sw"><div class="chip" style="background:#491A6C"><span class="tag-hex">#491A6C</span></div><div class="meta"><div class="nm">primary-pressed</div><div class="use">pressed</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F1EAF5"><span class="tag-hex">#F1EAF5</span></div><div class="meta"><div class="nm">primary-soft/selected</div><div class="use">선택·ghost hover 배경 (신설)</div></div></div>
+      <div class="sw"><div class="chip" style="background:#E4E4E7"><span class="tag-hex">#E4E4E7</span></div><div class="meta"><div class="nm">primary-disabled</div><div class="use">비활성(중립 그레이)</div></div></div>
+      <div class="sw"><div class="chip" style="background:#18181B"><span class="tag-hex" style="background:rgba(255,255,255,.9)">#18181B</span></div><div class="meta"><div class="nm">ink</div><div class="use">무신사식 블랙 CTA 대안 (신설·열린질문)</div></div></div>
+    </div>
+
+    <div class="grouplabel">의미색 (라이트 재검증)</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="chip" style="background:#14742F"><span class="tag-hex">#14742F</span></div><div class="meta"><div class="nm">success</div><div class="use">완료·충분 · 5.9:1</div></div></div>
+      <div class="sw"><div class="chip" style="background:#A0510A"><span class="tag-hex">#A0510A</span></div><div class="meta"><div class="nm">warning</div><div class="use">임박·주의 · 5.7:1</div></div></div>
+      <div class="sw"><div class="chip" style="background:#C81E1E"><span class="tag-hex">#C81E1E</span></div><div class="meta"><div class="nm">danger</div><div class="use">실패·부족 · 5.7:1</div></div></div>
+      <div class="sw"><div class="chip" style="background:#1D4ED8"><span class="tag-hex">#1D4ED8</span></div><div class="meta"><div class="nm">info</div><div class="use">안내 · 6.7:1</div></div></div>
+    </div>
+
+    <div class="grouplabel">element — 아트 실측 불변 · <span style="color:var(--danger)">아이템 표시 전용</span> (라이트에선 채움+near-black 라벨)</div>
+    <div class="sw-grid">
+      <div class="sw"><div class="chip" style="background:#19B2FF"><span class="tag-hex">#19B2FF</span></div><div class="meta"><div class="nm">element-water</div><div class="use">흰 위 텍스트 2.4:1 ❌ → 채움+검정라벨 7.5:1 ✅</div></div></div>
+      <div class="sw"><div class="chip" style="background:#FF5500"><span class="tag-hex">#FF5500</span></div><div class="meta"><div class="nm">element-fire</div><div class="use">텍스트 3.2:1 ❌ → 채움 5.5:1 ✅</div></div></div>
+      <div class="sw"><div class="chip" style="background:#95B259"><span class="tag-hex">#95B259</span></div><div class="meta"><div class="nm">element-earth</div><div class="use">텍스트 2.4:1 ❌ → 채움 7.4:1 ✅</div></div></div>
+      <div class="sw"><div class="chip" style="background:#66CCCC"><span class="tag-hex">#66CCCC</span></div><div class="meta"><div class="nm">element-wind</div><div class="use">텍스트 1.9:1 ❌ → 채움 9.3:1 ✅</div></div></div>
+      <div class="sw"><div class="chip" style="background:#000000"><span class="tag-hex" style="background:rgba(255,255,255,.9)">#000000</span></div><div class="meta"><div class="nm">surface-slot</div><div class="use">아이템 아트 슬롯(검정) 전용</div></div></div>
+    </div>
+  </section>
+
+  <!-- ═══ 인증 화면 ═══ -->
+  <div class="eyebrow">Account</div>
+  <h2 class="section-title" style="margin-top:4px">① 로그인 · ② 회원가입</h2>
+  <p class="section-sub">중앙 정렬 카드. 게임색·검정 슬롯 전무 — 순수 커머스 크롬.</p>
+  <div class="screens">
+
+    <!-- 로그인 -->
+    <section class="card card-shadow" style="max-width:420px">
+      <div class="eyebrow" style="margin-bottom:14px">Sign in</div>
+      <h3 class="card-head">다시 오신 걸 환영합니다</h3>
+      <p class="card-desc">FinalCall 계정으로 로그인하세요.</p>
+      <div class="field">
+        <label for="l-id">아이디</label>
+        <input class="input" id="l-id" placeholder="loginId" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="l-pw">비밀번호</label>
+        <input class="input" id="l-pw" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-lg">로그인</button>
+      <div class="center-link">계정이 없으신가요? <a href="#">회원가입</a></div>
+    </section>
+
+    <!-- 회원가입 -->
+    <section class="card card-shadow" style="max-width:420px">
+      <div class="eyebrow" style="margin-bottom:14px">Sign up</div>
+      <h3 class="card-head">계정 만들기</h3>
+      <p class="card-desc">몇 가지만 입력하면 됩니다.</p>
+      <div class="field">
+        <label for="s-id">아이디 <span class="req">필수</span></label>
+        <input class="input" id="s-id" placeholder="loginId">
+      </div>
+      <div class="field">
+        <label for="s-pw">비밀번호 <span class="req">필수</span></label>
+        <input class="input" id="s-pw" type="password" placeholder="8자 이상">
+      </div>
+      <div class="field">
+        <label for="s-pw2">비밀번호 확인 <span class="req">필수</span></label>
+        <input class="input" id="s-pw2" type="password" value="••••••" aria-invalid="true" aria-describedby="s-pw2-e">
+        <div class="err" id="s-pw2-e"><span aria-hidden="true">⚠</span> 비밀번호가 일치하지 않습니다 (클라이언트 검증)</div>
+      </div>
+      <div class="field">
+        <label for="s-nick">닉네임 <span class="req">필수</span></label>
+        <input class="input" id="s-nick" placeholder="표시 이름">
+        <div class="hint">가입 후 마이페이지에서 변경할 수 있습니다.</div>
+      </div>
+      <button class="btn btn-lg">가입하기</button>
+      <div class="center-link">이미 계정이 있으신가요? <a href="#">로그인</a></div>
+    </section>
+  </div>
+
+  <!-- ═══ 마이페이지 ═══ -->
+  <div class="eyebrow" style="margin-top:8px">My Account</div>
+  <h2 class="section-title" style="margin-top:4px">③ 마이페이지 — 프로필 조회 · 닉네임 수정 · 탈퇴</h2>
+  <p class="section-sub">세로 3블록. 잔액은 표시만(충전·교환은 별도 에픽). 탈퇴는 D-080 4요소.</p>
+  <div class="screens">
+
+    <!-- 프로필 + 닉네임 수정 -->
+    <section class="card">
+      <h3 class="card-head">프로필</h3>
+      <p class="card-desc">GET /api/v1/me</p>
+      <dl class="ro">
+        <div><dt>닉네임</dt><dd>달빛상인</dd></div>
+        <div><dt>가입일</dt><dd class="num">2025-11-03</dd></div>
+        <div><dt>회원 ID</dt><dd class="num" style="color:var(--text-muted); font-size:.75rem">u_8f3a…c21b</dd></div>
+      </dl>
+
+      <hr class="divider">
+      <h3 class="card-head" style="font-size:.9375rem">닉네임 수정</h3>
+      <p class="card-desc">PATCH /api/v1/me</p>
+      <div class="field">
+        <label for="m-nick">닉네임 <span class="chip chip-danger" style="vertical-align:middle">MEMBER_001 · 409</span></label>
+        <input class="input" id="m-nick" value="바람의검객" aria-invalid="true" aria-describedby="m-nick-e">
+        <div class="err" id="m-nick-e"><span aria-hidden="true">⚠</span> 이미 사용 중인 닉네임입니다.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" style="flex:1">저장</button>
+        <button class="btn btn-outline" style="flex:1">취소</button>
+      </div>
+    </section>
+
+    <!-- 잔액 카드 -->
+    <section class="card">
+      <h3 class="card-head">잔액</h3>
+      <p class="card-desc">GET /api/v1/me/balance · 표시 전용</p>
+      <div class="bal-grid">
+        <div class="bal"><div class="k">캐시</div><div class="v num">128,000<span class="u">원</span></div></div>
+        <div class="bal"><div class="k">게임머니</div><div class="v num">2,450,000<span class="u">G</span></div></div>
+        <div class="bal"><div class="k">가용 게임머니</div><div class="v num">2,150,000<span class="u">G</span></div></div>
+        <div class="bal hold"><div class="k">홀드 중</div><div class="v num">300,000<span class="u">G</span></div></div>
+      </div>
+      <div class="callout" style="margin-top:16px">
+        <strong>홀드</strong>는 진행 중인 입찰에 묶인 금액입니다. 마이페이지·탈퇴 화면이 같은 쿼리를 공유합니다.
+      </div>
+      <hr class="divider">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+        <span class="chip chip-success">✔ 낙찰 완료</span>
+        <span class="chip chip-warning">⏱ 마감 임박</span>
+        <span class="chip chip-danger">✕ 잔액 부족</span>
+        <span class="chip chip-info">ℹ 안내</span>
+      </div>
+      <p class="hint" style="margin-top:10px">의미색 칩 — 라이트 베이스 재검증(색+아이콘+텍스트 병기).</p>
+    </section>
+
+    <!-- 탈퇴 -->
+    <section class="card">
+      <h3 class="card-head">회원 탈퇴</h3>
+      <p class="card-desc">DELETE /api/v1/me</p>
+      <div class="danger-box">
+        <div style="font-weight:700; margin-bottom:4px; color:var(--danger)">탈퇴하면 되돌릴 수 없습니다</div>
+        <div class="forfeit">
+          <div class="fr"><span style="color:var(--text-subtle)">소멸 캐시</span><span class="num">128,000원</span></div>
+          <div class="fr"><span style="color:var(--text-subtle)">소멸 게임머니</span><span class="num">2,450,000 G</span></div>
+          <div class="fr" style="border-top:1px solid var(--border); margin-top:4px; padding-top:8px">
+            <span style="color:var(--warning); font-weight:600">그중 홀드 중</span><span class="num" style="color:var(--warning)">300,000 G</span></div>
+        </div>
+        <p class="hint" style="color:var(--text-muted)">환불·역환전은 범위 밖입니다. 잔액이 0이어도 동의는 필수입니다.</p>
+        <label class="check">
+          <input type="checkbox" id="ack">
+          <span>잔존 캐시·게임머니가 <strong>소멸하며 복구되지 않는다</strong>는 것에 동의합니다.</span>
+        </label>
+        <button class="btn btn-danger" id="delBtn" style="width:100%" disabled>회원 탈퇴</button>
+        <p class="hint" id="delHint" style="margin-top:8px">동의해야 탈퇴할 수 있습니다.</p>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:.75rem; color:var(--text-subtle); margin-bottom:8px">차단된 경우 — <span class="chip chip-danger">MEMBER_002 · 409</span></div>
+        <div class="danger-box">
+          <div style="font-weight:700; margin-bottom:4px">진행 중인 거래가 있어 탈퇴할 수 없습니다</div>
+          <p class="hint" style="color:var(--text-muted); margin:0">정리한 뒤 다시 시도해 주세요.</p>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn btn-outline" style="flex:1; height:40px; font-size:.8125rem">내 경매 보기</button>
+            <button class="btn btn-outline" style="flex:1; height:40px; font-size:.8125rem">내 입찰 보기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═══ 샘플 아이템 카드 (게임 부분차용 시연) ═══ -->
+  <div class="eyebrow" style="margin-top:8px">Item</div>
+  <h2 class="section-title" style="margin-top:4px">④ 샘플 아이템 카드 — 부분 게임차용 시연</h2>
+  <p class="section-sub">깨끗한 커머스 카드에 <strong>게임이 드러나는 유일한 창</strong>: 검정 아트 슬롯 + element 배지. 나머지 정보(가격·판매자·상태)는 전부 커머스 크롬.</p>
+  <div class="item-lane">
+
+    <article class="item-card">
+      <div class="art">
+        <div class="glow"></div>
+        <div class="sword"></div>
+        <span class="art-ph" style="position:absolute; bottom:8px; right:10px">게임 아트 슬롯</span>
+        <!-- element 배지: 소프트 틴트 + 검정 라벨 + solid 도트 (권장 패턴, 15:1) -->
+        <span class="el-badge"><span class="el-dot"></span>물 속성</span>
+      </div>
+      <div class="item-body">
+        <div class="item-name">서리한 롱소드</div>
+        <div class="item-meta"><span>Lv. 7</span><span>·</span><span class="chip chip-info" style="padding:1px 7px">경매</span></div>
+        <div class="item-price">
+          <span class="lab">현재 최고가</span>
+          <span class="amt num">1,280,000<span class="u">G</span></span>
+        </div>
+        <div class="item-foot">
+          <span class="seller">판매자 <strong style="color:var(--text)">달빛상인</strong></span>
+          <span class="chip chip-warning">⏱ 04:12</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 경계 규칙 설명 -->
+    <div style="flex:1; min-width:280px; max-width:520px">
+      <div class="callout" style="border-left-color:var(--el-water)">
+        <strong>이원 구조.</strong> 위 카드에서 게임색(element)과 검정 슬롯은 <strong>아트 영역 + 속성 배지에만</strong> 있습니다.
+        가격·판매자·상태 칩·카운트다운은 전부 커머스 토큰(near-black·의미색)입니다.
+      </div>
+      <table style="border-collapse:collapse; width:100%; margin-top:16px; font-size:.8125rem">
+        <thead><tr>
+          <th style="text-align:left; padding:8px 10px; border-bottom:2px solid var(--border-strong); color:var(--text-muted)">게임 차용 허용</th>
+          <th style="text-align:left; padding:8px 10px; border-bottom:2px solid var(--border-strong); color:var(--text-muted)">금지</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--border)">element 속성 배지</td><td style="padding:8px 10px; border-bottom:1px solid var(--border)">버튼·탭·인풋 색</td></tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--border)">아이템 카드 아트 슬롯(검정)</td><td style="padding:8px 10px; border-bottom:1px solid var(--border)">페이지·모달 배경</td></tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--border)">아이템 필터 element 칩</td><td style="padding:8px 10px; border-bottom:1px solid var(--border)">본문 텍스트·링크·내비</td></tr>
+        </tbody>
+      </table>
+      <p class="hint" style="margin-top:12px">element색은 흰 배경 위 텍스트로 쓰면 무너지므로(water 2.4:1) <strong>소프트 틴트 배경 + near-black 라벨 + solid 도트</strong> 패턴을 씁니다.</p>
+    </div>
+  </div>
+
+  <p class="footnote">
+    근거: redesign-commerce-proposal.md v1 · design-system.md v0.2.2(구조·컴포넌트 계승) · accessibility.md v0 · frontend-account-spec.md v1 · api-contract v1.5.
+    사용자 색 정정(2026-07-17, 무신사+마켓컬리 참조). 모든 대비는 sRGB 상대휘도 계산값(WCAG 2.1 AA). element 아트 hex 불변, 컬리·무신사 자산 미복제(고유값).
+    <strong>제안 목업이며 canonical design-system.md·코드·계약은 미수정</strong> — 승인 후 총괄이 반영.
+  </p>
+
+</div>
+
+<script>
+  var ack=document.getElementById('ack'), del=document.getElementById('delBtn'), hint=document.getElementById('delHint');
+  ack.addEventListener('change', function(){
+    del.disabled=!ack.checked;
+    hint.textContent=ack.checked?'되돌릴 수 없습니다.':'동의해야 탈퇴할 수 있습니다.';
+  });
+</script>
+</body>
+</html>
