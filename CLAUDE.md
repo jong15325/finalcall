@@ -272,6 +272,7 @@ INCLUDE_AWS_SPEC_HINT = true
 - **기반**: Naver 캠퍼스 핵데이 Java 컨벤션(https://naver.github.io/hackday-conventions-java/).
   들여쓰기는 스페이스 4로 커스터마이즈(하드탭 미사용).
 - **강제**: `build`(check)에 checkstyle·spotlessCheck 를 연결, 위반 시 빌드 실패(maxWarnings 0).
-- **적용 의무**: 코드 작성·커밋 전 `./gradlew spotlessApply` 실행 후 checkstyle 통과를 확인한다.
+- **적용 의무**: 코드 작성·커밋 전 `./gradlew :backend:spotlessApply` 실행 후 checkstyle 통과를 확인한다.
+  게이트웨이(`backend/gateway`) 편집 시에는 `./gradlew :backend:gateway:spotlessApply`를 실행한다.
   새 세션·전 도메인 동일 적용한다(Claude Code 킥오프도 이 절을 따른다).
 - **범위**: 스타일 층만 담당한다. 도메인 설계 규칙은 섹션 5, 커밋 형식은 섹션 6을 따른다.

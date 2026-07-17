@@ -1,49 +1,32 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+# dependencies
+node_modules
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# build output
+dist
+dist-ssr
 
-### IntelliJ IDEA ###
+# local env — 실제 시크릿은 커밋 금지, .env.example만 추적
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
 .idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
-.vscode/
-
-# 로컬 bootRun 리다이렉트 로그(임시)
-boot*.log
-
-# Stage G: 앱 JSON 로그 파일(Alloy tail 대상)
-/logs/
-/app.pid
-
-# docs 작업 로그는 제외하지 않는다 (C-067, supersedes C-058).
-# C-058이 inbox-log·handover를 여기 넣었다가 철회했다 — 호스트 Grep이 gitignore 대상 파일을
-# 스코프에 따라 조용히 건너뛰어 `rules [9.1]`(호스트 도구로 판단)의 신뢰성이 깨졌다.
-# IDE 커밋 목록 청결과 정본 신뢰성을 맞바꾼 것이었고, 후자가 크다.
+# ts build info
+*.tsbuildinfo
