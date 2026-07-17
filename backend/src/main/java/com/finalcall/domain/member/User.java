@@ -43,13 +43,15 @@ public class User extends BaseTimeEntity {
     @Column(name = "public_id", nullable = false, unique = true, updatable = false, length = 26)
     private String publicId;
 
-    @Column(name = "login_id", nullable = false, unique = true, length = 50)
+    // 유일성은 V4 login_id_active 생성 컬럼 UK로 강제(D-081). 원본 컬럼 UK 미부여.
+    @Column(name = "login_id", nullable = false, length = 50)
     private String loginId;
 
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
 
-    @Column(nullable = false, unique = true, length = 30)
+    // 유일성은 V4 nickname_active 생성 컬럼 UK로 강제(D-081). 원본 컬럼 UK 미부여.
+    @Column(nullable = false, length = 30)
     private String nickname;
 
     @Column(name = "is_admin", nullable = false)
