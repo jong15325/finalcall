@@ -26,7 +26,7 @@
     - 스켈레톤 성숙: lib/api/client(401 회전)·authStore·레이아웃4종·feedback 재사용. login/signup은 stub 세션 → 실 API 대체.
 - **독립 완료**: FC-006(User.java unique=true 정리, KAN-8).
 - **백로그 신규**: FC-011(todo, 에픽 미귀속) — 교환 cashAmount 상한 위생(FC-010 minor 1 파생, 오버플로 500→검증 400/422).
-- **디자인(중대 정정 2026-07-17)**: 구 `design-system.md` U-020(남색 게임스킨 전면)은 **오류** — 사용자 정정으로 **무신사(미니멀 에디토리얼)+마켓컬리(화이트+딥퍼플) 참조 라이트 커머스**로 개정. 게임색(element)은 **아이템 표시 전용 부분차용**. 개정 제안·목업: `docs/ux/redesign-commerce-proposal.md`·`mockups/redesign-commerce.html`(커밋 `de06c4e`, 아티팩트 게시됨). **미확정 4개 질문**: CTA 퍼플vs블랙·퍼플톤·베이스(#FAFAFA vs #FFFFFF)·element 배지강도. 확정 시 `design-system.md`+`DESIGN.md` 갱신. 참조는 감각만·자산/hex 복제 금지(고유 퍼플 #6E2A9F).
+- **디자인(중대 정정 2026-07-17)**: 구 `design-system.md` U-020(남색 게임스킨 전면)은 **오류** — 사용자 정정으로 **무신사(미니멀 에디토리얼)+마켓컬리(화이트+딥퍼플) 참조 라이트 커머스**로 개정. 게임색(element)은 **아이템 표시 전용 부분차용**. 개정 제안·목업: `docs/ux/redesign-commerce-proposal.md`·`mockups/redesign-commerce.html`(커밋 `de06c4e`, 아티팩트 게시됨). **Q1 확정: CTA=블랙(ink #18181B), 퍼플은 액센트로 격하**. **OAuth(카카오·네이버) 자리확보**(디자인만, 기능은 미래 에픽). 남은 Q2 퍼플톤·Q3 베이스·Q4 배지강도. 참조는 감각만·자산/hex 복제 금지(고유 퍼플 #6E2A9F). 게임자산=`docs/game_ui/`(941개, 사용자 제공). impeccable 훅으로 목업 side-tab·dark-glow tell 해소(em-dash·numbered는 목업 문서 오탐, 유지).
 - **impeccable 도입**: 디자인 스킬 impeccable 설치(frontend-design 상위집합, 택일). `.claude/skills/impeccable/`(로컬·gitignore), PostToolUse 훅=UI편집 후 안티패턴 탐지(settings.local.json). **`DESIGN.md`(루트) 개정 팔레트로 시드 완료·파서 검증**(커밋 `08c7458`). **PRODUCT.md 미생성** — `/impeccable init` 인터뷰로 사용자가 생성(전략·브랜드). **주의: `/impeccable` 슬래시명령은 세션 재시작 후 등록**(중간 설치라 현 세션 미인식).
 - **대기 게이트**: 디자인 게이트(FC-013/014/015 새 화면 — 로그인·가입·마이페이지). 사용자 4개 질문 확정 필요.
 - **push 상태**: origin 마지막 push `4239e38`. 이후 로컬 커밋 다수 미push(`cba14bb`~`08c7458`: 보드·portfolio·FE보드·spec·디자인개정·DESIGN.md). push는 사용자 직접.
@@ -41,7 +41,8 @@
 - FC-011: 교환 cashAmount 상한 위생(FC-010 minor 1). 독립 백로그.
 - Task#1: CLAUDE.md 섹션 2·6 문구 오케스트레이션 정합 정리.
 - EPIC-CHARGE: 충전(토스 test 결제, 외부 연동·시크릿) — 별도 에픽.
-- 디자인 정본 갱신: 4개 질문 확정 후 `design-system.md`를 U-021(라이트 커머스)로 개정(현재는 제안 단계, 목업·DESIGN.md만 반영).
+- **EPIC-OAUTH(미래): 소셜 로그인(카카오·네이버)** — 백엔드 계약 §2 확장(신규 엔드포인트·user 소셜 연동·시크릿) + 프론트 연동. 디자인은 자리확보됨. architect+게이트2 필요.
+- 디자인 정본 갱신: 남은 3개 질문 확정 후 `design-system.md`를 U-021(라이트 커머스)로 개정(현재 제안 단계, 목업·DESIGN.md만 반영).
 - impeccable 벤더링 판단: 현재 로컬 gitignore. 팀 재현 원하면 `.gitignore`의 impeccable 2줄 제거해 커밋.
 - PR 워크플로우 도입 논의(도입 시 게이트3 훅을 "브랜치 push 허용 + main 머지 차단"으로 국소 수정).
 - erd 5절 charge.idempotency_key 표기 불일치(기존 사안) — EPIC-CHARGE에서 정리.

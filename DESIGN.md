@@ -71,11 +71,14 @@ radius:
 - **border-strong** (#8A8A8F): 인풋·컨트롤 경계 · 3.4:1(WCAG 1.4.11 충족).
 
 ### Primary
-- **Primary** (#6E2A9F): 기본 액션·브랜드 포인트(고유 딥퍼플) · 흰 글자 8.4:1.
-- **Primary hover** (#5C2185): hover(명도 낮춤).
-- **Primary pressed** (#491A6C): pressed.
+- **Ink** (#18181B): **주 CTA·주요 액션 버튼 채움**(무신사식 블랙, 확정) · 흰 글자 17.7:1. 로그인·가입하기·저장 등.
+- **Primary** (#6E2A9F): **브랜드 액센트**(고유 딥퍼플) — 링크·포커스 링·선택 상태·소소한 포인트. **CTA 채움 아님**(블랙이 CTA).
+- **Primary hover** (#5C2185): 퍼플 요소 hover.
 - **Primary soft** (#F1EAF5): 선택·ghost hover 배경.
-- **Ink** (#18181B): 무신사식 블랙 CTA 대안(열린 질문 — CTA를 퍼플 vs 블랙).
+
+### Social (OAuth — 외부 브랜드 규격, 팔레트 예외)
+- **Kakao** (#FEE500): 카카오 로그인 버튼 배경 + 검정 라벨. 공식 브랜드 규격 준수(재색 금지).
+- **Naver** (#03C75A): 네이버 로그인 버튼 배경 + 흰 라벨. 공식 브랜드 규격 준수.
 
 ### Semantic
 - **Success** (#14742F): 완료·충분 · 5.9:1.
@@ -117,11 +120,16 @@ radius:
 ## Components
 
 ### Button
-- **Primary:** primary(#6E2A9F) 채움 + 흰 글자. hover 명도 낮춤, pressed 더 낮춤. 높이 44px, 반경 6px.
-- **Ink:** near-black(#18181B) 채움 — 무신사식 블랙 CTA 대안(열린 질문).
-- **Outline:** surface 배경 + border-strong 경계 + text. 보조 액션.
-- **Ghost:** 투명 + primary 텍스트, hover는 primary-soft 배경. 최소 강조.
+- **Primary (CTA):** ink(#18181B) 블랙 채움 + 흰 글자. 로그인·가입하기·저장 등 주 액션. hover 살짝 밝힘, active 순검정. 높이 44px, 반경 6px.
+- **Outline:** surface 배경 + border-strong 경계 + text. 보조 액션(취소 등).
+- **Ghost:** 투명 + primary(퍼플) 텍스트, hover는 primary-soft 배경. 최소 강조.
 - **Danger:** danger(#C81E1E) 채움 — 탈퇴 등 파괴적 액션.
+- **주: 퍼플은 버튼 채움에 쓰지 않는다** — 액센트(링크·포커스·선택)로만. CTA 강조는 색이 아니라 블랙+크기·배치.
+
+### Social login (OAuth)
+- **Kakao:** #FEE500 배경 + 검정 라벨/로고. 공식 버튼 규격 준수. "카카오로 계속하기".
+- **Naver:** #03C75A 배경 + 흰 라벨/로고. 공식 버튼 규격 준수. "네이버로 계속하기".
+- 로그인·회원가입에 "또는" 구분선 아래 소셜 버튼 배치. **자리 확보 — 기능(OAuth 백엔드)은 별도 미래 에픽**(현 계약 §2는 loginId/password만). 지금 화면 레이아웃만 소셜을 수용해 추후 붙여도 재설계 불요.
 
 ### Field
 - **Default:** border-strong 경계(1.4.11 대비), 높이 44px, 반경 6px, 라벨 항상 가시.
@@ -130,13 +138,16 @@ radius:
 - **Checkbox:** 미체크 시 제출 disabled + 비활성 사유 병기(탈퇴 동의 D-080). 게임 자산에 없어 CSS 재현.
 
 ### ItemCard
-- **Art slot:** 검정(#000000) 배경 아이템 아트 슬롯 — 게임이 드러나는 유일한 창.
+- **Art slot:** 검정(#000000) 배경 아이템 아트 슬롯 — 게임이 드러나는 유일한 창. 실물 아트는 `docs/game_ui/item_info/card_image/**`(typeCode 매핑, l=상세 s=목록).
 - **Element badge:** element 소프트 틴트 배경 + near-black 라벨 + solid 도트(색만 전달 금지).
 - **Commerce info:** 이름·가격(tabular-nums)·카운트다운·판매자·상태 칩은 전부 커머스 토큰(near-black·의미색).
+- **게임 자산 소스:** `docs/game_ui/`(사용자 제공·통지) — `common/`(게임 버튼·lock), `item_info/card_image/`(아이템 아트), `item_register/`. 아이템 화면 착수 시 매핑.
 
 ## Do's and Don'ts
 
 ### Do
+- Do 주 CTA·주요 버튼은 블랙(ink) 채움. 퍼플은 링크·포커스·선택 액센트로만.
+- Do 로그인·회원가입에 소셜 로그인(카카오·네이버) 자리 확보("또는" 구분선 + 브랜드 규격 버튼).
 - Do 계정·거래 화면은 순수 커머스 크롬으로(near-black 텍스트, 얇은 그레이 선, 퍼플 포인트).
 - Do element색·검정 슬롯은 아이템 카드·속성 배지·아이템 필터 칩에만.
 - Do 금액·잔액·카운트다운에 tabular-nums로 폭 고정.
@@ -144,6 +155,8 @@ radius:
 - Do 무신사·컬리는 감각/무드만 참조하고 값·형태는 FinalCall 고유로 창작.
 
 ### Don't
+- Don't 퍼플을 버튼 채움(CTA)에 사용 — CTA는 블랙. 퍼플은 액센트만.
+- Don't 카카오·네이버 브랜드색(#FEE500·#03C75A)을 임의 변경 — 공식 규격 준수.
 - Don't element색이나 검정 슬롯을 버튼·탭·인풋·내비·페이지 배경·본문·링크에 사용.
 - Don't 퍼플→블루 그라디언트 히어로(전형적 AI 티) — 브랜드 퍼플은 단색 액센트로만.
 - Don't 무신사·마켓컬리의 로고·자산·실제 hex를 복제(상표·저작권).
