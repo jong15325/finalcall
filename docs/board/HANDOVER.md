@@ -7,8 +7,9 @@
 ## 이어받는 법 (새 세션)
 1. `CLAUDE.md` 섹션 8~13(오케스트레이션·게이트·티켓·Jira·커밋) 숙지.
 2. `docs/board/` 스캔 — 에픽·티켓 상태(YAML `state`), `reviews/`.
-3. `git log --oneline -20` + 미push 확인(`git status`, `@{u}..HEAD`).
-4. 이 파일의 "현재 상태"·"다음 수"로 진행.
+3. **Jira 미러 패리티** — `state`가 todo가 아닌데 `jira_key: null`인 티켓/에픽을 스캔해 백필한다(섹션 12). 미러는 상태 전이마다 즉시 반영하며 `비차단`은 실패 허용이지 생략이 아니다.
+4. `git log --oneline -20` + 미push 확인(`git status`, `@{u}..HEAD`).
+5. 이 파일의 "현재 상태"·"다음 수"로 진행.
 
 ## 현재 상태
 - **워크플로우**: 4에이전트 오케스트레이션(architect/backend-impl/frontend-impl/reviewer) + portfolio-writer(**등록 완료**, CLAUDE.md 섹션 8·9) + consultant(휴면). 게이트3 push 차단 훅 활성(`.claude/hooks/block-git-push.js`).
@@ -30,6 +31,7 @@
 - **impeccable 도입**: 디자인 스킬 impeccable 설치(frontend-design 상위집합, 택일). `.claude/skills/impeccable/`(로컬·gitignore), PostToolUse 훅=UI편집 후 안티패턴 탐지(settings.local.json). **`DESIGN.md`(루트) 개정 팔레트로 시드 완료·파서 검증**(커밋 `08c7458`). **PRODUCT.md 미생성** — `/impeccable init` 인터뷰로 사용자가 생성(전략·브랜드). **주의: `/impeccable` 슬래시명령은 세션 재시작 후 등록**(중간 설치라 현 세션 미인식).
 - **대기 게이트**: 디자인 게이트(FC-013/014/015 새 화면 — 로그인·가입·마이페이지). 사용자 4개 질문 확정 필요.
 - **push 상태**: origin 마지막 push `4239e38`. 이후 로컬 커밋 다수 미push(`cba14bb`~`08c7458`: 보드·portfolio·FE보드·spec·디자인개정·DESIGN.md). push는 사용자 직접.
+- **Jira 미러**: EPIC-FE-MEMBER=KAN-14 · FC-012~016=KAN-15~19 백필 완료(2026-07-18 — 상태·Epic Link·Blocks 링크·라벨 반영, jira_key 보드 기록). 이전: EPIC-MEMBER=KAN-2~7 · EPIC-CURRENCY=KAN-9~13 · FC-006=KAN-8. 미러는 총괄만(서브에이전트 Atlassian MCP 미접근), 상태 전이마다 즉시. 근본원인·규율은 memory `jira-mirror-discipline`.
 
 ## 다음 수
 1. **사용자 push** — 로컬 10커밋 미push(프론트 에픽·portfolio·디자인 U-021·game_ui·DESIGN.md). 디자인 마일스톤 원격 동기.
