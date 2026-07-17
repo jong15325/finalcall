@@ -5,10 +5,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -38,6 +41,7 @@ public class RefreshTokenStore {
     private static final String DELIMITER = ".";
     private static final int SESSION_ID_BYTES = 16; // 128bit — 세션 식별(라우팅)
     private static final int SECRET_BYTES = 32; // 256bit — 실제 비밀값(B-011)
+    private static final int SCAN_COUNT = 100; // SCAN 커서 배치 힌트(블로킹 회피)
 
     /**
      * 회전을 원자적으로 처리하는 Lua CAS(경쟁 시 단일 승자).
@@ -131,6 +135,42 @@ public class RefreshTokenStore {
         Parsed parsed = parse(presentedToken);
         if (parsed != null && parsed.userId().equals(ownerUserId)) {
             redisTemplate.delete(parsed.key());
+        }
+    }
+
+    /**
+     * 사용자의 <b>모든</b> refresh 세션을 일괄 폐기한다(탈퇴, SEC-006 — 잔여 세션 접근 차단).
+     *
+     * <p>세션당 키가 {@code auth:refresh:{userId}:{sessionId}} 스킴이므로 {@code userId} 네임스페이스를
+     * SCAN(논블로킹 커서)으로 훑어 일괄 삭제한다. {@code :} 구분자가 경계라 {@code 10} 이 {@code 100} 을
+     * 오탐하지 않는다. 사용자별 인덱스를 두지 않아 키 스킴을 바꾸지 않는다.
+     *
+     * <p><b>멱등</b>: 세션이 없어도 no-op(오류 없음). <b>원자성</b>: 수집된 키 삭제는 단일 {@code DEL}(원자)
+     * 이며 개별 세션 폐기는 {@link #revoke}/재사용 탐지와 충돌하지 않는다(이미 회전·삭제된 키는 그냥 건너뜀).
+     * SCAN 은 스냅숏이 아니므로 폐기 도중 <b>새로 발급</b>된 세션은 놓칠 수 있다 — 호출 측에서 회원을 먼저
+     * 탈퇴 처리(신규 발급 차단)한 뒤 부르는 것을 전제한다.
+     *
+     * <p><b>인가</b>: 제시 토큰이 없어 {@link #revoke} 식 소유자 대조를 할 수 없다. {@code userId} 는 반드시
+     * 인증 주체(SecurityContext) 여야 하며, 신뢰된 내부 숫자 식별자여서 glob 메타문자를 포함하지 않는다.
+     *
+     * @param userId 세션을 폐기할 내부 사용자 식별자(access 토큰 subject 와 동일)
+     */
+    public void revokeAll(String userId) {
+        if (userId == null || userId.isEmpty()) {
+            return;
+        }
+        ScanOptions options = ScanOptions.scanOptions()
+            .match(KEY_PREFIX + userId + ":*")
+            .count(SCAN_COUNT)
+            .build();
+        List<String> keys = new ArrayList<>();
+        try (Cursor<String> cursor = redisTemplate.scan(options)) {
+            while (cursor.hasNext()) {
+                keys.add(cursor.next());
+            }
+        }
+        if (!keys.isEmpty()) {
+            redisTemplate.delete(keys); // 다중 키 단일 DEL(원자 삭제)
         }
     }
 

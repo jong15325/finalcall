@@ -99,6 +99,38 @@ class RefreshTokenStoreIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void 일괄_폐기하면_사용자의_모든_세션이_무효화된다() {
+        String s1 = refreshTokenStore.issue(USER_ID);
+        String s2 = refreshTokenStore.issue(USER_ID);
+        String s3 = refreshTokenStore.issue(USER_ID);
+
+        refreshTokenStore.revokeAll(USER_ID);
+
+        assertThat(refreshTokenStore.validate(s1)).isEmpty();
+        assertThat(refreshTokenStore.validate(s2)).isEmpty();
+        assertThat(refreshTokenStore.validate(s3)).isEmpty();
+    }
+
+    @Test
+    void 일괄_폐기는_타_사용자_세션에_영향을_주지_않는다() {
+        String mine = refreshTokenStore.issue(USER_ID);
+        String other = refreshTokenStore.issue("2002");
+
+        refreshTokenStore.revokeAll(USER_ID);
+
+        assertThat(refreshTokenStore.validate(mine)).isEmpty();
+        assertThat(refreshTokenStore.validate(other)).contains("2002");
+    }
+
+    @Test
+    void 세션이_없는_사용자를_일괄_폐기해도_오류가_없다_멱등() {
+        refreshTokenStore.revokeAll(USER_ID); // 세션 없음 → no-op
+        refreshTokenStore.revokeAll(USER_ID); // 반복 호출도 안전
+
+        assertThat(redisTemplate.hasKey("auth:refresh:" + USER_ID + ":dummy")).isFalse();
+    }
+
+    @Test
     void 형식이_잘못된_토큰은_무효다() {
         assertThat(refreshTokenStore.validate("garbage")).isEmpty();
         assertThat(refreshTokenStore.rotate("a.b")).isEmpty();
