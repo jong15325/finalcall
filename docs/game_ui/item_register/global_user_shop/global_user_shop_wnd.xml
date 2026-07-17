@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="GlobalUserShopWnd">
+	<NAME_ID NAME="GlobalUserShopWnd" ID="72"/>
+	<SIZE X="262" Y="61"/>
+	<DRAG_RECT LEFT="0" TOP="0" RIGHT="283" BOTTOM="33"/>
+	<NORMAL_IMAGE NAME="global\global_user_shop\global_user_shop_wnd.pgf" LOAD_TYPE="LOAD_SIZE"/>
+	<CLICK_IMAGE NAME="global\global_user_shop\global_user_shop_wnd.pgf"/>
+	<OVER_IMAGE NAME="global\global_user_shop\global_user_shop_wnd.pgf"/>
+	<STYLE>IWS_CANMOVE|IWS_EXIT_ESC</STYLE>
+	<CHILD_LIST>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="reg" ID="100"/>
+			<SIZE X="15" Y="440"/>
+			<NORMAL_IMAGE NAME="global\global_user_shop\reg_btn_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\global_user_shop\reg_btn_c.pgf"/>
+			<OVER_IMAGE NAME="global\global_user_shop\reg_btn_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="x_Button" ID="101"/>
+			<SIZE X="253" Y="5"/>
+			<NORMAL_IMAGE NAME="global\btn_x_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\btn_x_click.pgf"/>
+			<OVER_IMAGE NAME="global\btn_x_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="tab_line" ID="200"/>
+			<SIZE X="9" Y="408"/>
+			<NORMAL_IMAGE NAME="shop\present_wnd\tab_line.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="tab_1" ID="201"/>
+			<SIZE X="13" Y="412"/>
+			<NORMAL_IMAGE NAME="shop\present_wnd\tab_btn1_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="shop\present_wnd\tab_btn1_c.pgf"/>
+			<OVER_IMAGE NAME="shop\present_wnd\tab_btn1_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="첫번째 슬롯"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="tab_2" ID="202"/>
+			<SIZE X="77" Y="412"/>
+			<NORMAL_IMAGE NAME="shop\present_wnd\tab_btn2_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="shop\present_wnd\tab_btn2_c.pgf"/>
+			<OVER_IMAGE NAME="shop\present_wnd\tab_btn2_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="두번째 슬롯"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="tab_3" ID="203"/>
+			<SIZE X="141" Y="412"/>
+			<NORMAL_IMAGE NAME="shop\present_wnd\tab_btn3_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="shop\present_wnd\tab_btn3_c.pgf"/>
+			<OVER_IMAGE NAME="shop\present_wnd\tab_btn3_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="세번째 슬롯"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="tab_4" ID="204"/>
+			<SIZE X="205" Y="412"/>
+			<NORMAL_IMAGE NAME="shop\present_wnd\tab_btn4_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="shop\present_wnd\tab_btn4_c.pgf"/>
+			<OVER_IMAGE NAME="shop\present_wnd\tab_btn4_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="네번째 슬롯"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="slot_1" ID="301"/>
+			<SIZE X="85" Y="271"/>
+			<NORMAL_IMAGE NAME="game\exchange_wnd\cover_slot6.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="slot_2" ID="302"/>
+			<SIZE X="85" Y="305"/>
+			<NORMAL_IMAGE NAME="game\exchange_wnd\cover_slot6.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="slot_3" ID="303"/>
+			<SIZE X="85" Y="339"/>
+			<NORMAL_IMAGE NAME="game\exchange_wnd\cover_slot6.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="slot_4" ID="304"/>
+			<SIZE X="85" Y="373"/>
+			<NORMAL_IMAGE NAME="game\exchange_wnd\cover_slot6.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot1" ID="1001"/>
+			<SIZE X="85" Y="271"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot2" ID="1002"/>
+			<SIZE X="117" Y="271"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot3" ID="1003"/>
+			<SIZE X="149" Y="271"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot4" ID="1004"/>
+			<SIZE X="181" Y="271"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot5" ID="1005"/>
+			<SIZE X="213" Y="271"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot6" ID="1006"/>
+			<SIZE X="245" Y="271"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot7" ID="1007"/>
+			<SIZE X="85" Y="305"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot8" ID="1008"/>
+			<SIZE X="117" Y="305"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot9" ID="1009"/>
+			<SIZE X="149" Y="305"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot10" ID="1010"/>
+			<SIZE X="181" Y="305"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot11" ID="1011"/>
+			<SIZE X="213" Y="305"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot12" ID="1012"/>
+			<SIZE X="245" Y="305"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot13" ID="1013"/>
+			<SIZE X="85" Y="339"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot14" ID="1014"/>
+			<SIZE X="117" Y="339"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot15" ID="1015"/>
+			<SIZE X="149" Y="339"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot16" ID="1016"/>
+			<SIZE X="181" Y="339"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot17" ID="1017"/>
+			<SIZE X="213" Y="339"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot18" ID="1018"/>
+			<SIZE X="245" Y="339"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot19" ID="1019"/>
+			<SIZE X="85" Y="373"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot20" ID="1020"/>
+			<SIZE X="117" Y="373"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot21" ID="1021"/>
+			<SIZE X="149" Y="373"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot22" ID="1022"/>
+			<SIZE X="181" Y="373"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot23" ID="1023"/>
+			<SIZE X="213" Y="373"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot24" ID="1024"/>
+			<SIZE X="245" Y="373"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card_s.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<WINDOW CLASS_NAME="GusRegWnd">
+			<NAME_ID NAME="reg" ID="400"/>
+			<SIZE X="30" Y="127"/>
+			<NORMAL_IMAGE NAME="global\global_user_shop\reg_wnd.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\global_user_shop\reg_wnd.pgf"/>
+			<OVER_IMAGE NAME="global\global_user_shop\reg_wnd.pgf"/>
+			<STYLE>IWS_MODAL</STYLE>
+			<CHILD_LIST>
+				<BUTTON CLASS_NAME="ioButton">
+					<NAME_ID NAME="btn_yes" ID="1"/>
+					<SIZE X="46" Y="188"/>
+					<NORMAL_IMAGE NAME="global\btn_yes_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+					<CLICK_IMAGE NAME="global\btn_yes_click.pgf"/>
+					<OVER_IMAGE NAME="global\btn_yes_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+				</BUTTON>
+				<BUTTON CLASS_NAME="ioButton">
+					<NAME_ID NAME="btn_no" ID="2"/>
+					<SIZE X="111" Y="188"/>
+					<NORMAL_IMAGE NAME="global\btn_no_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+					<CLICK_IMAGE NAME="global\btn_no_click.pgf"/>
+					<OVER_IMAGE NAME="global\btn_no_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+				</BUTTON>
+			</CHILD_LIST>
+                </WINDOW>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_1" ID="0"/>
+			<SIZE X="85" Y="271" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_2" ID="1"/>
+			<SIZE X="117" Y="271" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_3" ID="2"/>
+			<SIZE X="149" Y="271" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_4" ID="3"/>
+			<SIZE X="181" Y="271" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_5" ID="4"/>
+			<SIZE X="213" Y="271" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_6" ID="5"/>
+			<SIZE X="245" Y="271" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_7" ID="6"/>
+			<SIZE X="85" Y="305" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_8" ID="7"/>
+			<SIZE X="117" Y="305" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_9" ID="8"/>
+			<SIZE X="149" Y="305" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_10" ID="9"/>
+			<SIZE X="181" Y="305" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_11" ID="10"/>
+			<SIZE X="213" Y="305" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_12" ID="11"/>
+			<SIZE X="245" Y="305" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_13" ID="12"/>
+			<SIZE X="85" Y="339" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_14" ID="13"/>
+			<SIZE X="117" Y="339" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_15" ID="14"/>
+			<SIZE X="149" Y="339" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_16" ID="15"/>
+			<SIZE X="181" Y="339" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_17" ID="16"/>
+			<SIZE X="213" Y="339" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_18" ID="17"/>
+			<SIZE X="245" Y="339" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_19" ID="18"/>
+			<SIZE X="85" Y="373" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_20" ID="19"/>
+			<SIZE X="117" Y="373" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_21" ID="20"/>
+			<SIZE X="149" Y="373" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_22" ID="21"/>
+			<SIZE X="181" Y="373" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_23" ID="22"/>
+			<SIZE X="213" Y="373" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCard">
+			<NAME_ID NAME="mycard_24" ID="23"/>
+			<SIZE X="245" Y="373" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="카드를 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusElement">
+			<NAME_ID NAME="element_1" ID="24"/>
+			<SIZE X="11" Y="310" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="정령을 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusElement">
+			<NAME_ID NAME="element_2" ID="25"/>
+			<SIZE X="49" Y="310" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="정령을 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusElement">
+			<NAME_ID NAME="element_3" ID="26"/>
+			<SIZE X="11" Y="360" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="정령을 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusElement">
+			<NAME_ID NAME="element_4" ID="27"/>
+			<SIZE X="49" Y="360" WIDTH="30" HEIGHT="32"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+			<EXTRA_INFO SZHELP="정령을 올립니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="GusCode">
+			<NAME_ID NAME="code" ID="28"/>
+			<SIZE X="7" Y="270" WIDTH="72" HEIGHT="30"/>
+			<NORMAL_IMAGE NAME="game\exchange_wnd\select_code_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="game\exchange_wnd\select_code.pgf"/>
+			<OVER_IMAGE NAME="game\exchange_wnd\select_code.pgf"/>
+		</BUTTON>
+		<WINDOW CLASS_NAME="TradeCodeCntInputGlobalWnd">
+			<NAME_ID NAME="codeup" ID="102"/>
+			<SIZE X="5" Y="271" WIDTH="198" HEIGH="32"/>
+			<NORMAL_IMAGE NAME="global\global_user_shop\reg_code.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\global_user_shop\reg_code.pgf"/>
+			<OVER_IMAGE NAME="global\global_user_shop\reg_code.pgf"/>
+			<STYLE>IWS_MODAL</STYLE>
+			<CHILD_LIST>
+				<EDIT CLASS_NAME="ioEdit">
+					<NAME_ID NAME="ID Edit" ID="1"/>
+					<SIZE X="56" Y="11" WIDTH="84" HEIGHT="11"/>
+					<EXTRA_INFO MAX_LEN = "10" R="255" G="255" B="255"/>
+				</EDIT>
+				<BUTTON CLASS_NAME="ioButton">
+					<NAME_ID NAME="btn_yes" ID="2"/>
+					<SIZE X="178" Y="5"/>
+					<NORMAL_IMAGE NAME="game\exchange_wnd\btn_ok_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+					<CLICK_IMAGE NAME="game\exchange_wnd\btn_ok_c.pgf"/>
+					<OVER_IMAGE NAME="game\exchange_wnd\btn_ok_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+					<EXTRA_INFO SZHELP="판매 금액 적용."/>
+				</BUTTON>
+			</CHILD_LIST>
+                </WINDOW>
+		<WINDOW CLASS_NAME="TradeElementCntInputWnd">
+			<NAME_ID NAME="elementup" ID="103"/>
+			<SIZE X="5" Y="271" WIDTH="131" HEIGH="32"/>
+			<NORMAL_IMAGE NAME="game\exchange_wnd\reg_element.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="game\exchange_wnd\reg_element.pgf"/>
+			<OVER_IMAGE NAME="game\exchange_wnd\reg_element.pgf"/>
+			<STYLE>IWS_MODAL</STYLE>
+			<CHILD_LIST>
+				<EDIT CLASS_NAME="ioEdit">
+					<NAME_ID NAME="ID Edit" ID="1"/>
+					<SIZE X="30" Y="11" WIDTH="30" HEIGHT="11"/>
+					<EXTRA_INFO MAX_LEN = "4" R="255" G="255" B="255"/>
+				</EDIT>
+				<BUTTON CLASS_NAME="ioButton">
+					<NAME_ID NAME="btn_yes" ID="2"/>
+					<SIZE X="81" Y="5"/>
+					<NORMAL_IMAGE NAME="game\exchange_wnd\btn_ok_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+					<CLICK_IMAGE NAME="game\exchange_wnd\btn_ok_c.pgf"/>
+					<OVER_IMAGE NAME="game\exchange_wnd\btn_ok_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+					<EXTRA_INFO SZHELP="정령을 올립니다."/>
+				</BUTTON>
+			</CHILD_LIST>
+                </WINDOW>
+	</CHILD_LIST>
+</WINDOW>
+
+
+
