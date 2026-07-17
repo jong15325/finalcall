@@ -19,7 +19,7 @@
   - FC-009 ⏭ todo — 교환(money_exchange 엔티티 + V5 마이그레이션 + POST /exchanges + EXC_001/002). **erd 반영됨·의존 FC-008 충족 → 착수 가능**.
   - FC-010 ⏭ todo — 화폐 통합 리뷰.
 - **독립 완료**: FC-006(User.java unique=true 정리, KAN-8).
-- **미완 설정**: portfolio-writer — `.claude/agents/portfolio-writer.md` 생성됨(미커밋). 남은 것: 도시에 템플릿 + CLAUDE.md 섹션 8/9 등록 + 소급 도시에 생성(스켈레톤+오케스트레이션+member, 한국어, 넓게).
+- **미완 설정**: portfolio-writer — `.claude/agents/portfolio-writer.md` **커밋됨(c367906)**. 남은 것: 도시에 템플릿(`docs/portfolio/_TEMPLATE.md`) + CLAUDE.md 섹션 8 표·9 파이프라인 등록 + 소급 도시에 생성(스켈레톤+오케스트레이션+member, 한국어, 넓게).
 - **대기 게이트**: 없음(FC-009 착수 가능).
 - **미push**: EPIC-CURRENCY + FC-006 + portfolio 에이전트 등 다수 로컬 커밋. push는 사용자 직접.
 
