@@ -7,6 +7,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -46,11 +47,12 @@ public class GlobalExceptionHandler {
             .body(ErrorResponse.of(CommonErrorCode.INVALID_INPUT, errors));
     }
 
-    /** 3-a) 타입 불일치/바디 파싱 실패/필수 파라미터 누락 등 표준 4xx → INVALID_INPUT. */
+    /** 3-a) 타입 불일치/바디 파싱 실패/필수 파라미터·헤더 누락 등 표준 4xx → INVALID_INPUT. */
     @ExceptionHandler({
         MethodArgumentTypeMismatchException.class,
         HttpMessageNotReadableException.class,
-        MissingServletRequestParameterException.class
+        MissingServletRequestParameterException.class,
+        MissingRequestHeaderException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
         log.warn("[BadRequest] {}", ex.getMessage());
