@@ -26,16 +26,16 @@
     - 스켈레톤 성숙: lib/api/client(401 회전)·authStore·레이아웃4종·feedback 재사용. login/signup은 stub 세션 → 실 API 대체.
 - **독립 완료**: FC-006(User.java unique=true 정리, KAN-8).
 - **백로그 신규**: FC-011(todo, 에픽 미귀속) — 교환 cashAmount 상한 위생(FC-010 minor 1 파생, 오버플로 500→검증 400/422).
-- **디자인(중대 정정 2026-07-17)**: 구 `design-system.md` U-020(남색 게임스킨 전면)은 **오류** — 사용자 정정으로 **무신사(미니멀 에디토리얼)+마켓컬리(화이트+딥퍼플) 참조 라이트 커머스**로 개정. 게임색(element)은 **아이템 표시 전용 부분차용**. 개정 제안·목업: `docs/ux/redesign-commerce-proposal.md`·`mockups/redesign-commerce.html`(커밋 `de06c4e`, 아티팩트 게시됨). **Q1 확정: CTA=블랙(ink #18181B), 퍼플은 액센트로 격하**. **OAuth(카카오·네이버) 자리확보**(디자인만, 기능은 미래 에픽). 남은 Q2 퍼플톤·Q3 베이스·Q4 배지강도. 참조는 감각만·자산/hex 복제 금지(고유 퍼플 #6E2A9F). 게임자산=`docs/game_ui/`(941개, 사용자 제공). impeccable 훅으로 목업 side-tab·dark-glow tell 해소(em-dash·numbered는 목업 문서 오탐, 유지).
+- **디자인(중대 정정 2026-07-17)**: 구 `design-system.md` U-020(남색 게임스킨 전면)은 **오류** — 사용자 정정으로 **무신사(미니멀 에디토리얼)+마켓컬리(화이트+딥퍼플) 참조 라이트 커머스**로 개정. 게임색(element)은 **아이템 표시 전용 부분차용**. 개정 제안·목업: `docs/ux/redesign-commerce-proposal.md`·`mockups/redesign-commerce.html`(커밋 `de06c4e`, 아티팩트 게시됨). **디자인 게이트 사실상 닫힘 — `design-system.md` U-021 확정(정본, 커밋 `9652917`)**. 확정: CTA=블랙(ink #18181B)·퍼플=액센트·순백 베이스(#FFFFFF)·OAuth 자리확보·무신사+컬리 참조 고유값(#6E2A9F). U-016/U-020 SUPERSEDED. 남은 건 **Q4(element 배지강도)뿐 — 아이템 에픽으로 이연**(계정 화면 무영향). 게임자산=`docs/game_ui/`(941개 커밋됨 `23199ae`). 목업·아티팩트=`docs/ux/mockups/redesign-commerce.html`. **미반영: tailwind.config.js·index.css 실코드는 구 U-020 남색값 — frontend-impl이 U-021로 교체**(DESIGN.md·design-system.md [2.6] 값 대조 준비됨).
 - **impeccable 도입**: 디자인 스킬 impeccable 설치(frontend-design 상위집합, 택일). `.claude/skills/impeccable/`(로컬·gitignore), PostToolUse 훅=UI편집 후 안티패턴 탐지(settings.local.json). **`DESIGN.md`(루트) 개정 팔레트로 시드 완료·파서 검증**(커밋 `08c7458`). **PRODUCT.md 미생성** — `/impeccable init` 인터뷰로 사용자가 생성(전략·브랜드). **주의: `/impeccable` 슬래시명령은 세션 재시작 후 등록**(중간 설치라 현 세션 미인식).
 - **대기 게이트**: 디자인 게이트(FC-013/014/015 새 화면 — 로그인·가입·마이페이지). 사용자 4개 질문 확정 필요.
 - **push 상태**: origin 마지막 push `4239e38`. 이후 로컬 커밋 다수 미push(`cba14bb`~`08c7458`: 보드·portfolio·FE보드·spec·디자인개정·DESIGN.md). push는 사용자 직접.
 
 ## 다음 수
-1. **(재시작 후) `/impeccable init`** — PRODUCT.md 생성(DESIGN.md는 이미 시드됨 → PRODUCT.md만 물음). 재시작 사유: impeccable 슬래시명령 등록.
-2. **디자인 4개 질문 확정**(아티팩트 목업 리뷰) → 나: `design-system.md`+`DESIGN.md` 확정 갱신.
-3. **frontend-impl 착수**(FC-013/14/15 단일 1패스) — impeccable `audit`/`polish` 자기검증 활용 → FC-016 reviewer → 게이트3.
-4. (백로그) FC-011 위생, EPIC-CHARGE.
+1. **사용자 push** — 로컬 10커밋 미push(프론트 에픽·portfolio·디자인 U-021·game_ui·DESIGN.md). 디자인 마일스톤 원격 동기.
+2. **(재시작 후) `/impeccable init`** — PRODUCT.md 생성(DESIGN.md 시드됨 → PRODUCT.md만 인터뷰). 재시작 사유: impeccable 슬래시명령 등록.
+3. **frontend-impl 착수**(FC-013/14/15 단일 1패스) — **먼저 tailwind.config.js·index.css를 U-021 라이트값으로 교체**(현재 구 U-020 남색값), 그 후 auth·마이페이지·잔액 구현. impeccable `audit`/`polish` 자기검증 → FC-016 reviewer → 게이트3.
+4. (백로그) EPIC-OAUTH(소셜 로그인), FC-011 위생, EPIC-CHARGE. Q4(element 배지)는 아이템 에픽.
 
 ## 대기 안건(백로그)
 - FC-011: 교환 cashAmount 상한 위생(FC-010 minor 1). 독립 백로그.
