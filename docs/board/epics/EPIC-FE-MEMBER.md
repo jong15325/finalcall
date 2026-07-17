@@ -3,7 +3,7 @@ id: EPIC-FE-MEMBER
 type: epic
 jira_key: KAN-14
 title: 프론트 — 내 계정(auth + 마이페이지 + 잔액 표시) 실구현
-state: doing
+state: done
 children: [FC-012, FC-013, FC-014, FC-015, FC-016]
 gate: null
 ---
