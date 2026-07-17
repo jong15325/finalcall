@@ -149,6 +149,28 @@ class ExchangeIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void 캐시금액_상한초과는_400이고_부수효과가_없다() throws Exception {
+        Long userId = seedCash(5L);
+        // 기본 rate(1,000,000) 역산 상한 초과 → cashAmount × rate 가 long 을 넘겨 오버플로 위생 대상(FC-011).
+        long overLimit = Long.MAX_VALUE / 1_000_000L + 1;
+
+        mockMvc.perform(post(URL).with(user(String.valueOf(userId)))
+            .header("Idempotency-Key", "key-overflow")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(requestBody("CASH_TO_GAME", overLimit)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("COMMON_001"))
+            .andExpect(jsonPath("$.errors[0].field").value("cashAmount"));
+
+        // 부수효과 없음: 잔액 불변·원장 미persist(멱등키 미소비).
+        UserBalance balance = userBalanceRepository.findByUserId(userId).orElseThrow();
+        assertThat(balance.getCashBalance()).isEqualTo(5L);
+        assertThat(balance.getGameMoneyBalance()).isZero();
+        assertThat(moneyExchangeRepository.count()).isZero();
+    }
+
+    @Test
     void 멱등키_누락은_400이다() throws Exception {
         Long userId = seedCash(5L);
 
