@@ -206,9 +206,10 @@ class MemberServiceTest {
     private UserBalance balanceOf(long cash, long gameMoney, long held) {
         User user = User.builder().loginId("hong").passwordHash("hash").nickname("홍길동").build();
         UserBalance balance = UserBalance.builder().user(user).build();
-        balance.addCash(cash);
-        balance.addGameMoney(gameMoney);
-        balance.hold(held);
+        // 잔액 증감은 리포지토리 원자 UPDATE 경로라 엔티티 세터가 없다 → 단위 픽스처는 리플렉션으로 상태를 세팅한다.
+        ReflectionTestUtils.setField(balance, "cashBalance", cash);
+        ReflectionTestUtils.setField(balance, "gameMoneyBalance", gameMoney);
+        ReflectionTestUtils.setField(balance, "gameMoneyHeld", held);
         return balance;
     }
 

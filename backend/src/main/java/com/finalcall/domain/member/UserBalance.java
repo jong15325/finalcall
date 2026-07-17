@@ -22,8 +22,9 @@ import lombok.NoArgsConstructor;
  * <p>세 잔액을 BIGINT 로 보유한다: 캐시({@code cashBalance}, 충전 화폐)·게임머니({@code gameMoneyBalance},
  * 거래 화폐)·홀드 합계({@code gameMoneyHeld}). 가용 게임머니 = 잔액 − 홀드.
  *
- * <p><b>범위(006):</b> 잔액 증감 도메인 메서드는 <b>시그니처만</b> 둔다. 실제 원자적 갱신(조건부 UPDATE, D-008)과
- * 홀드/해제/차감의 정합·검증은 화폐 도메인 후속 단위에서 구현한다.
+ * <p><b>잔액 갱신(D-008):</b> 증감은 엔티티 dirty-checking 이 아니라 {@link UserBalanceRepository} 의 조건부
+ * {@code @Modifying} UPDATE 로 원자적으로 수행한다(마감 직전 폭주 시 read-modify-write 경합 제거). 엔티티는 상태
+ * 보유와 파생값({@link #getGameMoneyAvailable()})만 담당하며, 세터·인메모리 증감 메서드는 두지 않는다.
  */
 @Entity
 @Getter
@@ -59,27 +60,5 @@ public class UserBalance extends BaseTimeEntity {
     /** 가용 게임머니(= 잔액 − 홀드). 표현/검증용 파생값. */
     public long getGameMoneyAvailable() {
         return gameMoneyBalance - gameMoneyHeld;
-    }
-
-    // --- 잔액 증감 도메인 메서드(시그니처만, 원자성·검증은 화폐 도메인 후속) ---
-
-    /** 캐시 잔액 증감. */
-    public void addCash(long amount) {
-        this.cashBalance += amount;
-    }
-
-    /** 게임머니 잔액 증감. */
-    public void addGameMoney(long amount) {
-        this.gameMoneyBalance += amount;
-    }
-
-    /** 게임머니 홀드(에스크로 잠금). */
-    public void hold(long amount) {
-        this.gameMoneyHeld += amount;
-    }
-
-    /** 게임머니 홀드 해제. */
-    public void release(long amount) {
-        this.gameMoneyHeld -= amount;
     }
 }
