@@ -1,0 +1,60 @@
+# 보안 CI (post-push 원격 층 — CLAUDE.md 섹션 13 "보안 층 구성").
+# 로컬은 LLM 패스(빌트인 /security-review·플러그인), 원격 CI는 정적분석·의존성 스캔으로 이중화.
+# Windows 로컬에 실 Python이 없어 정적도구를 리눅스 러너로 이관한 것(계획 item 4).
+name: Security
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # 프론트 의존성 취약점 — 초기엔 리포트 전용(continue-on-error). 안정화 후 audit-level 상향/차단.
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: npm audit (frontend)
+        working-directory: frontend
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  # 의존성 변경 리뷰 — gradle·npm 그래프 기반 신규/취약 의존성 플래그(GitHub 네이티브, 시크릿 불요). PR 전용.
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # Claude 보안 리뷰(LLM diff 리뷰) — 우리 위협모델 체크리스트를 주입. PR diff 기반이라 PR 전용.
+  # 활성 전제: (1) 저장소 Secrets에 CLAUDE_API_KEY 추가, (2) PR 워크플로우 도입(현재 master 직접 커밋 — 백로그).
+  claude-security-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+      - uses: anthropics/claude-code-security-review@main
+        with:
+          comment-pr: true
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+          # opus-4-8 핀(신선 컨텍스트). 계정 API 가용 모델 문자열에 맞춰 조정.
+          claude-model: claude-opus-4-8
+          # 우리 도메인 위협모델을 감사 프롬프트에 append(입찰 동시성·정산·IDOR·JWT·로깅).
+          custom-security-scan-instructions: docs/security/threat-model-checklist.md
+          exclude-directories: frontend/dist,frontend/node_modules,build
