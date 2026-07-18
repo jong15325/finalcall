@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinalCall · 골드포스 아웃라인 — 효과 프로토타입</title>
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  탐색용 프로토타입 — 골드포스 애니메이션 골드 아웃라인
+  ══════════════════════════════════════════════════════════════════════════════
+  이 파일은 페이지 목업이 아니라 "효과" 프로토타입이다. 그래서 예외적으로 여러 변형을
+  나란히 놓는다. FC-041 승인 목업(template-home-*.html)과는 별개 파일이며 그쪽을 건드리지 않는다.
+
+  판단 대상: 골드포스(계약 §3.3 goldforceExpireAt · §3 goldforceActive · erd item_instance.gf_expire_at)
+  를 카드에서 어떻게 보일 것인가. 골드 토큰 신설 여부는 이 프로토타입을 보고 사용자가 정한다
+  — design-system.md 에는 아직 아무것도 박지 않았다.
+
+  ── 원본 자산 실측 (지어낸 값 없음) ──────────────────────────────────────────
+  1) docs/game_ui/item_info/out_line/l/gold.png — 50x93, 24bpp, #0000FF 크로마키 투명.
+     테두리는 2px 이고 "단색이 아니라 길이 방향 그라데이션"이 이미 구워져 있다:
+       #B9840F → #C1941B → #D0AD31 → #DFC447 → #F0E163 → #FCF474 → #FFFF83
+     안쪽 1px 은 어두운 금(#987309 / #8B6100 / #592400) — 베벨(입체) 처리다.
+     비교: black.png 은 #666664/#1F1F1C, silver.png 은 #B0C0D5/#122849 — 같은 2px 베벨 구조.
+  2) docs/game_ui/item_info/out_line/l/bcard_twingkle.png — 450x93 = 50px x 9프레임 스트립.
+     반짝임은 "흰색"이다(피크 #E7E7E7~#FCFCFC). 골드 색이 아니다.
+     bcard_gold_event_twingkle.png 도 피크 색이 동일 — 즉 게임은
+     [정적 골드 그라데이션 테두리] + [흰색 셰인 오버레이] 2패스로 합성한다.
+  3) .spr = 프레임 테이블. 헤더 u32=5, 이름 "l.bmp", 프레임수 9, 이어서 9개 rect(l,t,r,b):
+       (0,0,19,36) (50,0,80,57) (100,0,143,78) (150,0,199,91) (200,0,250,93)
+       (250,0,300,93) (300,0,350,93) (350,0,400,93) (400,0,450,93)
+     rect 이 좌상단 작은 상자에서 시작해 전체로 커진다 = 대각선 띠가 ↖에서 들어와 ↘로 빠진다.
+     프레임별 피크 위치도 (0,11)→(0,32)→(0,52)→(0,72)→(0,89)→(49,20)→(22,92)→(43,92) 로
+     좌변을 타고 내려가 우변·하변으로 넘어간다. 사용자가 말한 "왼쪽 상단→오른쪽 하단 대각선"과 일치.
+     ★ .spr 에 시간 필드는 없다(157바이트 이후 전부 0 패딩). 프레임 간격은 엔진 기본값이라
+       원본 속도를 파일에서 복원할 수 없다 → 아래 3안의 속도는 "제안"이며 사용자 조정 대상이다.
+  4) docs/game_ui/게임 차용 디자인 및 erd.txt 35·40행:
+       "아이템 슬롯칸의 아이템 테두리 골드포스 시간이 남았을 경우 out_line/l/gold.png 적용"
+     → 원본에서 골드는 "아이템 아트(카드 그림)" 테두리다. UI 패널 테두리가 아니다.
+       이 사실이 A/B안(아트 프레임)과 C안(카드 프레임)을 가르는 근거다.
+
+  ── 스프라이트를 쓰지 않고 CSS 로 재현한 이유 ──────────────────────────────────
+  원본은 50x93 고정 크기 픽셀 스프라이트다. 웹 카드는 폭이 유동(auto-fit minmax)이라
+  9프레임 스트립을 늘리면 테두리 굵기까지 같이 늘어나 뭉갠다. 반면 원본의 구성은
+  "그라데이션 링 + 대각선 흰 띠" 라는 아주 단순한 2패스라 CSS 로 정확히 옮길 수 있고,
+  색값·방향·베벨은 위 실측값을 그대로 쓴다. 즉 스프라이트를 버리는 게 아니라 분해해서 옮긴다.
+  (아이템 아트 자체는 원본 PNG 를 그대로 쓴다 — 상대경로 ../../game_ui/**)
+
+  자체완결 정적 HTML. 외부 CDN·웹폰트 없음. 다크모드 없음.
+  토큰: design-system.md v0.4 (bg #F7F7F8 · surface #FFFFFF · band #EFEFF1 · sunken #E8E8EB)
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+/* ══ 1. 토큰 (design-system v0.4 실값) ══════════════════════════════════════ */
+:root{
+  --bg:#F7F7F8; --surface:#FFFFFF; --surface-band:#EFEFF1; --surface-sunken:#E8E8EB;
+  --text:#18181B; --text-muted:#52525B; --text-subtle:#67676E;
+  --border:#E4E4E7; --border-muted:#EFEFF1; --border-strong:#818187;
+  --ink:#18181B; --primary:#6D28D9; --focus:#6D28D9;
+  --warning:#B45309; --danger:#B91C1C;
+  --slot:#000000;
+  --el-water:#19B2FF; --el-fire:#FF5500; --el-earth:#95B259; --el-wind:#66CCCC;
+  --el-water-soft:#DDF3FF; --el-fire-soft:#FFE6D9; --el-earth-soft:#EFF3E6; --el-wind-soft:#E8F7F7;
+  --r-sm:4px; --r-md:6px; --r-lg:8px; --r-full:9999px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.06);
+  --sh-md:0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06);
+  --d-fast:120ms; --d-base:200ms; --ease:cubic-bezier(0.4,0,0.2,1);
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
+  --s8:32px; --s10:40px; --s12:48px; --s16:64px;
+
+  /* ── 골드포스 전용 (★ 아직 토큰이 아니다 — 이 파일 안의 지역 변수다) ────────
+     값 출처는 전부 out_line/l/gold.png 픽셀 샘플. 승격 여부는 사용자 판단. */
+  --gf-1:#B9840F;  /* 어두운 금 — 그라데이션 시작 */
+  --gf-2:#D0AD31;
+  --gf-3:#DFC447;
+  --gf-4:#F0E163;
+  --gf-5:#FCF474;  /* 밝은 금 */
+  --gf-6:#FFFF83;  /* 가장 밝은 끝 */
+  --gf-bevel:rgba(89,36,0,.55);   /* #592400 — 원본 안쪽 1px 베벨 */
+}
+
+/* ══ 2. 리셋 · 기반 ═══════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Pretendard","Pretendard Variable","Apple SD Gothic Neo","Malgun Gothic",
+              -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:1rem; line-height:1.5; word-break:keep-all; overflow-wrap:break-word;
+  -webkit-font-smoothing:antialiased;
+}
+img{display:block; max-width:100%;}
+button{font:inherit; color:inherit;}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:2px;}
+.num{font-variant-numeric:tabular-nums;}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+.container{max-width:1200px; margin:0 auto; padding:0 var(--s6);}
+
+/* ══ 3. 프로토타입 크롬 (설명용 — 골드 절대 금지 구역) ═════════════════════ */
+.proto-head{background:var(--surface); border-bottom:1px solid var(--border); padding:var(--s10) 0 var(--s8);}
+.proto-head h1{margin:0; font-size:1.5rem; letter-spacing:-.02em;}
+.proto-head .sub{margin:var(--s2) 0 0; color:var(--text-muted); font-size:.875rem; max-width:74ch;}
+.proto-head .meta{margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-subtle);}
+
+section{padding:var(--s12) 0;}
+section.band{background:var(--surface-band);}
+h2{margin:0 0 var(--s2); font-size:1.125rem; letter-spacing:-.01em;}
+h2 .n{color:var(--text-subtle); font-weight:600; margin-right:var(--s2);}
+.lead{margin:0 0 var(--s6); color:var(--text-muted); font-size:.875rem; max-width:76ch;}
+.note{margin:var(--s5) 0 0; padding:var(--s4); background:var(--surface-sunken);
+  border-radius:var(--r-md); font-size:.8125rem; color:var(--text-muted); max-width:80ch;}
+.note b{color:var(--text);}
+
+/* 컨트롤 바 — 조작 계층(①). 블랙 CTA · 퍼플 액센트만. */
+.controls{position:sticky; top:0; z-index:100; background:var(--surface);
+  border-bottom:1px solid var(--border); box-shadow:var(--sh-sm);}
+.controls .in{display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap; padding:var(--s3) 0;}
+.controls .lb{font-size:.75rem; color:var(--text-subtle); margin-right:var(--s1);}
+.tgl{display:inline-flex; align-items:center; gap:var(--s2); padding:0 var(--s4); height:36px;
+  background:var(--surface); border:1px solid var(--border-strong); border-radius:var(--r-md);
+  font-size:.8125rem; font-weight:600; cursor:pointer;
+  transition:background var(--d-fast) var(--ease), border-color var(--d-fast) var(--ease);}
+.tgl:hover{background:var(--surface-sunken);}
+.tgl[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:#fff;}
+.tgl .dot{width:8px; height:8px; border-radius:var(--r-full); background:var(--border-strong);}
+.tgl[aria-pressed="true"] .dot{background:#fff;}
+
+/* ══ 4. 아이템 카드 (FC-041 규약 그대로 — 골드포스 층만 얹는다) ════════════ */
+.item-card{display:flex; flex-direction:column; background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;
+  text-decoration:none; color:inherit;
+  transition:box-shadow var(--d-base) var(--ease), border-color var(--d-base) var(--ease), transform var(--d-base) var(--ease);}
+.item-card:hover{box-shadow:var(--sh-md); border-color:var(--border-strong); transform:translateY(-2px);}
+.item-card .body{padding:var(--s4) var(--s4) var(--s5); display:flex; flex-direction:column; flex:1;}
+.item-card .nm{font-size:.9375rem; font-weight:700; letter-spacing:-.01em; line-height:1.35;}
+.item-card .kind{margin-top:var(--s1); font-size:.75rem; color:var(--text-subtle);}
+.item-card .price{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s2);
+  margin-top:var(--s4); padding-top:var(--s3); border-top:1px solid var(--border-muted);}
+.item-card .price .k{font-size:.6875rem; color:var(--text-subtle); flex:none;}
+.item-card .price .v{font-size:1.1875rem; font-weight:800; letter-spacing:-.02em;}
+.item-card .price .v .u{font-size:.75rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+
+.slot{position:relative; background:var(--slot); display:grid; place-items:center; overflow:hidden;}
+.slot img{image-rendering:pixelated; image-rendering:crisp-edges;}
+.slot--card{height:210px;} .slot--card img{width:100px; height:186px;}
+
+/* element 배지 — §2.7 라이트 패턴. 골드포스와 무관하게 유지된다 */
+.el{position:absolute; left:var(--s2); bottom:var(--s2);
+  display:inline-flex; align-items:center; gap:5px; padding:3px var(--s2);
+  border-radius:var(--r-full); font-size:.6875rem; font-weight:700; color:var(--text);}
+.el .dot{width:7px; height:7px; border-radius:var(--r-full);}
+.el--water{background:var(--el-water-soft);} .el--water .dot{background:var(--el-water);}
+.el--fire{background:var(--el-fire-soft);}   .el--fire .dot{background:var(--el-fire);}
+.el--earth{background:var(--el-earth-soft);} .el--earth .dot{background:var(--el-earth);}
+.el--wind{background:var(--el-wind-soft);}   .el--wind .dot{background:var(--el-wind);}
+
+/* ══ 5. ★ 골드포스 아웃라인 — 핵심 ════════════════════════════════════════
+   기법 선택 근거 (성능):
+   - 링은 mask-composite:exclude 로 만든 "구멍 뚫린 사각형" 1개. 정적이라 래스터 1회 후 캐시된다.
+   - 흐르는 셰인은 링보다 큰 자식 <i> 하나이고 애니메이션 속성은 transform 뿐이다.
+     transform 은 컴포지터에서 처리돼 레이아웃·페인트를 매 프레임 다시 하지 않는다.
+   - box-shadow / filter / background-position 애니메이션은 전부 매 프레임 페인트를 유발한다.
+     특히 box-shadow 는 블러 반경만큼 무효화 영역이 커져 카드 20장에서 최악이다 → 전부 배제.
+   - 링의 금색 그라데이션은 "정적 background" 다. 움직이는 건 흰 띠 하나뿐.
+   - duty cycle: 한 주기의 30% 만 움직이고 나머지는 정지시킨다.
+     20장이 깔려도 대부분의 프레임에서 실제로 움직이는 카드는 소수다.
+   - will-change 는 움직이는 <i> 에만 건다(부모 20개에 걸면 레이어 폭증).
+   ══════════════════════════════════════════════════════════════════════════ */
+.gf{
+  /* z-index 2: 링은 아트 위에 얹힌다. img 가 z-index:0 이라 이 값이 없으면
+     DOM 순서상 먼저 오는 링이 아트에 가려진다(실제로 가려졌다). */
+  position:absolute; inset:0; z-index:2; border-radius:inherit; pointer-events:none;
+  padding:var(--gf-w, 2px);
+  /* 정적 골드 그라데이션 — 원본 gold.png 실측 색을 대각선(↖→↘)으로 */
+  background:linear-gradient(135deg,
+    var(--gf-1) 0%, var(--gf-2) 22%, var(--gf-3) 42%,
+    var(--gf-4) 62%, var(--gf-5) 80%, var(--gf-6) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask-composite:exclude;
+  overflow:hidden;   /* 셰인 자식을 링 박스 안으로 자른다 */
+}
+/* 원본의 안쪽 1px 어두운 베벨(#592400 계열). 정적이라 비용 없음 */
+.gf--bevel::after{
+  content:""; position:absolute; inset:var(--gf-w, 2px); border-radius:inherit;
+  box-shadow:inset 0 0 0 1px var(--gf-bevel);
+}
+/* 흐르는 흰 셰인 — 원본 twingkle 이 흰색(#E7E7E7~#FCFCFC)이라 흰색으로 간다 */
+.gf > i{
+  position:absolute; top:-60%; left:-60%; width:220%; height:220%;
+  background:linear-gradient(135deg,
+    transparent calc(50% - var(--gf-band, 9%)),
+    rgba(255,255,255,var(--gf-peak, .95)) 50%,
+    transparent calc(50% + var(--gf-band, 9%)));
+  transform:translate3d(-72%,-72%,0);
+  animation:gf-sweep var(--gf-cycle, 3s) linear infinite;
+  will-change:transform;
+}
+@keyframes gf-sweep{
+  0%   {transform:translate3d(-72%,-72%,0);}
+  30%  {transform:translate3d(72%,72%,0);}
+  100% {transform:translate3d(72%,72%,0);}  /* 나머지 70% 는 정지 = 페인트 0 */
+}
+
+/* ── 변형 3안 ─────────────────────────────────────────────────────────────
+   A/B 는 "아이템 아트 테두리"(원본 위치 · Containment 안전),
+   C 는 "카드 전체 테두리"(강조 · 골드가 UI 크롬처럼 읽힐 위험) */
+.gf--a{--gf-w:2px;   --gf-band:9%;  --gf-peak:.95; --gf-cycle:3s;}
+.gf--b{--gf-w:1.5px; --gf-band:16%; --gf-peak:.62; --gf-cycle:4.8s;}
+.gf--c{--gf-w:2px;   --gf-band:11%; --gf-peak:1;   --gf-cycle:2.4s;}
+
+/* A·B: 아트를 감싸는 프레임. 검정 슬롯 안에 있어 골드가 아이템 계층에 갇힌다 */
+.art-frame{position:relative; border-radius:2px;}
+.art-frame img{position:relative; z-index:0;}
+
+/* C: 카드 전체를 감싼다 */
+.item-card--gf-card{position:relative; border-color:transparent;}
+.item-card--gf-card > .gf{border-radius:var(--r-lg); z-index:3;}
+
+/* ── 골드포스 배지 — 색 단독 전달 금지(접근성 정본) ────────────────────────
+   골드 아웃라인만으로는 색각 이상·스크린리더에 전달되지 않는다.
+   반드시 "골드포스" 텍스트 + 잔여시간을 병기한다. 아웃라인은 보조 신호일 뿐이다. */
+.gf-badge{position:absolute; left:var(--s2); top:var(--s2); z-index:4;
+  display:inline-flex; align-items:center; gap:5px; padding:3px var(--s2);
+  background:rgba(255,255,255,.94); border-radius:var(--r-full);
+  font-size:.6875rem; font-weight:700; color:var(--text); letter-spacing:-.01em;}
+.gf-badge .dot{width:7px; height:7px; border-radius:var(--r-full);
+  background:linear-gradient(135deg,var(--gf-2),var(--gf-6));}
+/* 만료 임박 — 색이 아니라 문구가 정보를 전달한다(색은 보조) */
+.gf-badge--soon{color:var(--warning);}
+.gf-badge--soon .dot{background:var(--warning);}
+/* 본문 줄 — 배지를 못 본 사용자를 위한 두 번째 경로 */
+.gf-line{display:flex; align-items:center; gap:5px; margin-top:var(--s2);
+  font-size:.75rem; font-weight:600; color:var(--text-muted);}
+.gf-line .dot{width:6px; height:6px; border-radius:var(--r-full);
+  background:linear-gradient(135deg,var(--gf-2),var(--gf-6)); flex:none;}
+.gf-line.is-soon{color:var(--warning);}
+.gf-line.is-soon .dot{background:var(--warning);}
+
+/* ══ 6. 레이아웃 ══════════════════════════════════════════════════════════ */
+.card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(232px,1fr)); gap:var(--s6) var(--s5);}
+.pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:var(--s6); max-width:760px;}
+.variants{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:var(--s6);}
+.spec{margin:var(--s3) 0 0; padding:var(--s3); background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-md); font-size:.75rem; color:var(--text-muted); line-height:1.7;}
+.spec b{color:var(--text); display:block; margin-bottom:2px; font-size:.8125rem;}
+.spec dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:2px var(--s3);}
+.spec dt{color:var(--text-subtle);} .spec dd{margin:0;}
+.cap{margin:0 0 var(--s3); font-size:.8125rem; font-weight:700;}
+.cap span{font-weight:500; color:var(--text-subtle);}
+
+/* ══ 7. 모션 감소 존중 (§4 · accessibility §7) ════════════════════════════
+   흐르는 셰인만 정지시킨다. 정적 골드 그라데이션 링 + 배지는 그대로 남아
+   "골드포스임"이 정지 상태에서도 읽힌다. 정보 손실 없음. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;}
+  .gf > i{animation:none; opacity:0;}   /* 흰 띠 제거 → 순수 골드 그라데이션 링 */
+  .item-card:hover{transform:none;}
+}
+/* 시뮬레이터 — OS 설정을 바꾸지 않고 감소 모드를 미리 볼 수 있게 */
+body.sim-rm .gf > i{animation:none; opacity:0;}
+body.sim-rm .item-card:hover{transform:none;}
+</style>
+</head>
+<body>
+
+<a href="#main" class="sr-only">본문 바로가기</a>
+
+<header class="proto-head">
+  <div class="container">
+    <h1>골드포스 아웃라인 — 효과 프로토타입</h1>
+    <p class="sub">
+      계약 <b>§3.3 <code>goldforceExpireAt</code></b>(nullable · 활성 여부는 클라 파생) ·
+      <b>§3 <code>goldforceActive</code></b> 필터 · erd <code>item_instance.gf_expire_at</code> 를
+      카드에서 어떻게 보일지 고르기 위한 탐색물이다. 확정 목업이 아니다.
+    </p>
+    <p class="meta">
+      원본 실측: <code>out_line/l/gold.png</code>(2px 베벨 · 길이방향 금 그라데이션) +
+      <code>bcard_twingkle.png</code>(9프레임 · <b>흰색</b> 대각 셰인) ·
+      <code>.spr</code>(프레임 rect 9개, <b>시간 필드 없음</b> → 속도는 제안값)
+    </p>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="container">
+    <div class="in">
+      <span class="lb">보기 전환</span>
+      <button type="button" class="tgl" id="btn-rm" aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span> 모션 감소 시뮬레이션
+      </button>
+      <button type="button" class="tgl" id="btn-stress" aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span> 전량 골드포스(부하 확인)
+      </button>
+      <span class="lb" id="stress-hint">그리드 20장 중 2장만 골드포스인 상태</span>
+    </div>
+  </div>
+</div>
+
+<main id="main">
+
+<!-- ══ 1. 활성 vs 비활성 ═════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <h2><span class="n">1</span>골드포스 활성 vs 비활성</h2>
+    <p class="lead">
+      같은 아이템·같은 레이아웃에서 골드포스만 다르다. 차이가 <b>한눈에 읽히는가</b>,
+      그리고 <b>아웃라인을 지워도(색각 이상·모션 감소) 여전히 읽히는가</b>를 같이 본다.
+    </p>
+    <div class="pair">
+      <div>
+        <p class="cap">골드포스 활성 <span>· goldforceActive: true</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
+                   alt="7레벨 불속성 칼 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge">
+              <span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">12일</span>
+            </span>
+            <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
+          </div>
+          <div class="body">
+            <div class="nm">7레벨 칼</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 12일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">1,280,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+      </div>
+      <div>
+        <p class="cap">골드포스 없음 <span>· goldforceExpireAt: null</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
+                   alt="7레벨 불속성 칼 카드 아트" width="100" height="186">
+            </span>
+            <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
+          </div>
+          <div class="body">
+            <div class="nm">7레벨 칼</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">1,190,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+      </div>
+    </div>
+    <p class="note">
+      <b>접근성: 색 단독 전달 금지.</b> 골드 아웃라인은 <b>보조</b> 신호다.
+      정보 자체는 세 경로로 전달된다. ① 슬롯 좌상단 <b>"골드포스" 배지</b>, ② 본문의
+      <b>"골드포스 N일 남음"</b> 줄, ③ 스크린리더용 <code>sr-only</code> 보충 텍스트.
+      아웃라인을 전부 제거해도 정보 손실이 없어야 한다는 것이 합격선이다.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 2. 변형 3안 ═══════════════════════════════════════════════════════ -->
+<section class="band">
+  <div class="container">
+    <h2><span class="n">2</span>아웃라인 변형 3안</h2>
+    <p class="lead">
+      가장 큰 갈림길은 굵기·속도가 아니라 <b>아웃라인을 어디에 두는가</b>다.
+      A·B 는 원본대로 <b>아이템 아트</b>를 감싸고(검정 슬롯 안 = 아이템 계층에 갇힘),
+      C 는 <b>카드 전체</b>를 감싼다(눈에 띄지만 골드가 UI 테두리처럼 읽힐 위험).
+    </p>
+    <div class="variants">
+
+      <!-- A안 -->
+      <div>
+        <p class="cap">A안 · 원본 충실 <span>· 아트 프레임</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level6/l/water/bow.png"
+                   alt="6레벨 물속성 활 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
+            <span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span>
+          </div>
+          <div class="body">
+            <div class="nm">6레벨 활</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 9일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">820,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+        <div class="spec"><b>원본에 가장 가깝다</b>
+          <dl>
+            <dt>굵기</dt><dd>2px + 안쪽 1px 베벨(원본 구조 그대로)</dd>
+            <dt>셰인</dt><dd>좁은 띠(9%) · 흰색 95%</dd>
+            <dt>주기</dt><dd>3s (움직임 0.9s + 정지 2.1s)</dd>
+            <dt>성격</dt><dd>또렷하고 게임 느낌이 남는다. 대비가 세서 그리드에 여러 장이면 시선이 분산될 수 있다.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- B안 -->
+      <div>
+        <p class="cap">B안 · 커머스 절제 <span>· 아트 프레임</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--b" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level6/l/water/bow.png"
+                   alt="6레벨 물속성 활 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
+            <span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span>
+          </div>
+          <div class="body">
+            <div class="nm">6레벨 활</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 9일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">820,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+        <div class="spec"><b>목록에서 가장 안 시끄럽다</b>
+          <dl>
+            <dt>굵기</dt><dd>1.5px · 베벨 없음</dd>
+            <dt>셰인</dt><dd>넓고 흐린 띠(16%) · 흰색 62%</dd>
+            <dt>주기</dt><dd>4.8s (움직임 1.4s + 정지 3.4s)</dd>
+            <dt>성격</dt><dd>"금테" 자체는 남고 반짝임은 스쳐 지나간다. 20장 그리드에 여러 장 섞여도 견딘다.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- C안 -->
+      <div>
+        <p class="cap">C안 · 카드 프레임 강조 <span>· 카드 전체</span></p>
+        <a href="#" class="item-card item-card--gf-card">
+          <span class="gf gf--c" aria-hidden="true"><i></i></span>
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/gold_black/level6/l/water/bow.png"
+                 alt="6레벨 물속성 활 카드 아트" width="100" height="186">
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
+            <span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span>
+          </div>
+          <div class="body">
+            <div class="nm">6레벨 활</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 9일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">820,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+        <div class="spec"><b>가장 눈에 띄지만 위험하다</b>
+          <dl>
+            <dt>굵기</dt><dd>2px · 카드 외곽 8px 반경</dd>
+            <dt>셰인</dt><dd>중간 띠(11%) · 흰색 100%</dd>
+            <dt>주기</dt><dd>2.4s (움직임 0.7s + 정지 1.7s)</dd>
+            <dt>성격</dt><dd>골드가 <b>카드 테두리 = UI 크롬</b>으로 읽힌다. 원본(아트 테두리)과도 다르고 Containment 취지와 마찰이 있다. 비교용으로 넣었다.</dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+    <p class="note">
+      <b>Containment(§1.2) 관점.</b> 게임 원본 노트는 "<b>아이템 테두리</b>에 gold.png 적용"이라고 못박는다.
+      즉 원본에서도 골드는 아이템 아트의 것이지 패널의 것이 아니다.
+      A·B 는 검정 슬롯 <b>안쪽</b>에 갇혀 카드 테두리·버튼·헤더와 물리적으로 접촉하지 않는다.
+      C 는 카드 외곽선을 골드로 바꾸므로 <b>표면 경계(크롬)에 게임색이 닿는다</b>.
+      기술적으로는 아이템 카드 안이지만, 읽히기로는 크롬이다. 이 프로토타입의 핵심 질문이다.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 3. 그리드 혼재 ════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <h2><span class="n">3</span>실제 목록: 20장 중 골드포스 2장</h2>
+    <p class="lead">
+      효과는 단독으로 보면 늘 예뻐 보인다. 판단은 <b>목록에서</b> 해야 한다.
+      골드포스가 적절히 눈에 띄는가, 아니면 나머지 18장을 눌러버리는가.
+      상단 <b>전량 골드포스</b> 토글로 최악의 경우(20장 전부)도 확인하라.
+    </p>
+    <div class="card-grid" id="grid"><!-- JS 생성 --></div>
+    <p class="note">
+      <b>성능.</b> 애니메이션 속성은 <code>transform</code> 하나뿐이고 링의 금 그라데이션은 정적 배경이다.
+      <code>box-shadow</code>·<code>filter</code>·<code>background-position</code> 애니메이션은
+      매 프레임 페인트를 유발하고 특히 <code>box-shadow</code> 는 블러 반경만큼 무효화 영역이 커져
+      20장에서 가장 먼저 무너진다. 전부 배제했다.
+      추가로 한 주기의 <b>30%만 움직이고 70%는 정지</b>시켜(duty cycle) 동시에 실제로 그려지는 카드 수를 줄였다.
+      <code>will-change</code> 는 움직이는 자식 하나에만 건다(부모 20개에 걸면 레이어가 폭증한다).
+      <b>운영 반영 시</b>: <code>IntersectionObserver</code> 로 뷰포트 밖 카드의 애니메이션을 멈추는 것을 권한다(이 프로토타입엔 미포함).
+    </p>
+  </div>
+</section>
+
+<!-- ══ 4. 만료 표현 ══════════════════════════════════════════════════════ -->
+<section class="band">
+  <div class="container">
+    <h2><span class="n">4</span>만료 임박 표현이 필요한가</h2>
+    <p class="lead">
+      골드포스는 시간제라 <code>goldforceExpireAt</code> 에서 잔여가 파생된다(D-066: 시세 집계 키에서는 제외, 필터로만).
+      구매자에게 <b>"내가 사면 얼마나 남아 있나"</b>는 실제 가치 판단 정보다. 잔여를 숨기면 안 된다.
+      다만 <b>긴급성을 연출하면</b> 가짜 압박이 된다(PRODUCT.md 반-레퍼런스). 3단계만 제안한다.
+    </p>
+    <div class="variants">
+      <div>
+        <p class="cap">여유 <span>· 24시간 초과</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level4/l/earth/armor.png"
+                   alt="4레벨 땅속성 갑옷 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">21일</span></span>
+            <span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span>
+          </div>
+          <div class="body">
+            <div class="nm">4레벨 갑옷</div><div class="kind">블랙 · 방어구</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 21일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">310,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+        <div class="spec">중립 표기. 아웃라인 그대로.</div>
+      </div>
+      <div>
+        <p class="cap">임박 <span>· 24시간 이내</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level4/l/earth/armor.png"
+                   alt="4레벨 땅속성 갑옷 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge gf-badge--soon"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">만료 임박, 남은 시간</span> <span class="num">6시간</span></span>
+            <span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span>
+          </div>
+          <div class="body">
+            <div class="nm">4레벨 갑옷</div><div class="kind">블랙 · 방어구</div>
+            <div class="gf-line is-soon"><span class="dot" aria-hidden="true"></span>골드포스 6시간 뒤 만료</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">296,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+        <div class="spec"><b>문구가 바뀐다.</b> "N일 남음" → "<b>N시간 뒤 만료</b>".
+          색(<code>warning</code>)은 보조일 뿐 정보는 문구가 나른다. 아웃라인은 <b>건드리지 않는다</b>.
+          깜빡이게 만들면 가짜 긴급성이 된다.</div>
+      </div>
+      <div>
+        <p class="cap">만료됨 <span>· goldforceActive: false</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <img src="../../game_ui/item_info/card_image/gold_black/level4/l/earth/armor.png"
+                   alt="4레벨 땅속성 갑옷 카드 아트" width="100" height="186">
+            </span>
+            <span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span>
+          </div>
+          <div class="body">
+            <div class="nm">4레벨 갑옷</div><div class="kind">블랙 · 방어구</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">240,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+        <div class="spec">아웃라인·배지·본문줄 <b>전부 사라진다</b>. "만료됨" 이라고 <b>표시하지 않는다</b>.
+          없는 상태가 기본값이므로 굳이 부재를 말하면 목록이 시끄러워진다.</div>
+      </div>
+    </div>
+    <p class="note">
+      <b>미결.</b> 임박 기준을 24시간으로 둘지, 그리고 <b>목록 카드에도</b> 잔여를 표시할지
+      아니면 <b>상세에서만</b> 보일지는 사용자 판단 사안이다.
+      목록에 잔여를 노출하면 "골드포스 12일" 같은 문자열이 20장에 반복돼 밀도가 올라간다.
+      대안: 목록은 <b>배지만</b>(잔여 없음), 상세는 <b>정확한 만료 시각</b>.
+    </p>
+  </div>
+</section>
+
+<!-- ══ 5. 모션 감소 폴백 ═════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <h2><span class="n">5</span>모션 감소 폴백</h2>
+    <p class="lead">
+      상단 <b>모션 감소 시뮬레이션</b> 토글을 켜 보라(OS 설정 <code>prefers-reduced-motion: reduce</code> 와 동일하게 동작한다).
+      흐르는 흰 띠만 사라지고 <b>정적 골드 그라데이션 링과 배지·본문줄은 그대로 남는다</b>.
+      정지 상태에서도 골드포스임이 읽혀야 한다는 조건을 이 구조가 만족한다. 정보는 애초에 애니메이션이 아니라
+      링과 텍스트에 실려 있기 때문이다.
+    </p>
+    <div class="pair">
+      <div>
+        <p class="cap">정지 상태 <span>· 흰 셰인 제거 · 링과 텍스트만</span></p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--a gf--bevel" aria-hidden="true"><i style="animation:none;opacity:0;"></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level8/l/wind/wand.png"
+                   alt="8레벨 바람속성 완드 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">5일</span></span>
+            <span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span>
+          </div>
+          <div class="body">
+            <div class="nm">8레벨 완드</div><div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 5일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">2,050,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+      </div>
+      <div>
+        <p class="cap">비교 · 애니메이션 유지</p>
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <span class="art-frame">
+              <span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level8/l/wind/wand.png"
+                   alt="8레벨 바람속성 완드 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스
+              <span class="sr-only">적용됨, 남은 기간</span> <span class="num">5일</span></span>
+            <span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span>
+          </div>
+          <div class="body">
+            <div class="nm">8레벨 완드</div><div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 5일 남음</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">2,050,000<span class="u">G</span></span></div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. 남은 판단 ══════════════════════════════════════════════════════ -->
+<section class="band">
+  <div class="container">
+    <h2><span class="n">6</span>사용자 판단이 필요한 것</h2>
+    <div class="note" style="max-width:88ch;">
+      <b>① 위치:</b> 아트 프레임(A·B, 원본·Containment 안전) vs 카드 프레임(C, 강조·크롬 접촉). 가장 큰 결정.<br>
+      <b>② 강도:</b> A(또렷) vs B(절제). 3번 그리드에서 20장 깔린 상태로 보고 정하는 게 맞다.<br>
+      <b>③ 속도:</b> 원본 <code>.spr</code> 에 시간 정보가 없어 복원 불가. 2.4s / 3s / 4.8s 는 제안값이다.<br>
+      <b>④ 잔여 노출 범위:</b> 목록에도 "N일 남음"을 쓸지, 목록은 배지만 두고 상세에서만 시각을 보일지.<br>
+      <b>⑤ 토큰 승격:</b> 골드를 <code>design-system.md</code> 토큰으로 올릴지. 이 파일은 아직 지역 변수로만 쓴다.<br>
+      <b>⑥ 전용 아트:</b> <code>card_image/gold_force/</code> 에 골드포스 전용 카드 아트 9종이 따로 있다.
+      아웃라인 대신(혹은 함께) 이 아트를 쓸지는 도메인 의미 확인이 먼저다.
+      "골드포스 상태의 표시"인지 "별도 아이템 종류"인지 아직 확정되지 않았다.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* 그리드 생성 — 20장, 기본은 2장만 골드포스(index 2, 11) */
+(function(){
+  var els=[['water','물'],['fire','불'],['earth','땅'],['wind','바람']];
+  var kinds=['sword','bow','armor','wand','shield','axe','boots','magic','pendant'];
+  var names={sword:'칼',bow:'활',armor:'갑옷',wand:'완드',shield:'방패',axe:'도끼',boots:'신발',magic:'마법서',pendant:'펜던트'};
+  var gfIdx=[2,11], grid=document.getElementById('grid'), html='';
+  for(var i=0;i<20;i++){
+    var e=els[i%4], k=kinds[i%9], lv=(i%8)+1, gf=gfIdx.indexOf(i)>-1;
+    var price=(120000+i*73000).toLocaleString('ko-KR');
+    var days=(i%9)+3;
+    html+=''
+      +'<a href="#" class="item-card" data-gf-slot="'+(gf?'1':'0')+'">'
+      +  '<div class="slot slot--card">'
+      +    '<span class="art-frame">'
+      +      (gf?'<span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>':'')
+      +      '<img src="../../game_ui/item_info/card_image/gold_black/level'+lv+'/l/'+e[0]+'/'+k+'.png" '
+      +        'alt="'+lv+'레벨 '+e[1]+'속성 '+names[k]+' 카드 아트" width="100" height="186" loading="lazy">'
+      +    '</span>'
+      +    (gf?'<span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스'
+           +'<span class="sr-only">적용됨, 남은 기간</span> <span class="num">'+days+'일</span></span>':'')
+      +    '<span class="el el--'+e[0]+'"><span class="dot" aria-hidden="true"></span>'+e[1]+'</span>'
+      +  '</div>'
+      +  '<div class="body">'
+      +    '<div class="nm">'+lv+'레벨 '+names[k]+'</div>'
+      +    '<div class="kind">블랙 · 아이템</div>'
+      +    (gf?'<div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 '+days+'일 남음</div>':'')
+      +    '<div class="price"><span class="k">최고가</span><span class="v num">'+price+'<span class="u">G</span></span></div>'
+      +  '</div>'
+      +'</a>';
+  }
+  grid.innerHTML=html;
+
+  /* 전량 골드포스 토글 — 최악의 부하를 눈으로 확인하기 위한 것 */
+  var stress=false, btn=document.getElementById('btn-stress'), hint=document.getElementById('stress-hint');
+  btn.addEventListener('click',function(){
+    stress=!stress; btn.setAttribute('aria-pressed',String(stress));
+    hint.textContent = stress ? '그리드 20장 전부 골드포스(최악의 경우)' : '그리드 20장 중 2장만 골드포스인 상태';
+    grid.querySelectorAll('.item-card').forEach(function(card,i){
+      var on = stress || card.dataset.gfSlot==='1';
+      var frame=card.querySelector('.art-frame'), body=card.querySelector('.body'), slot=card.querySelector('.slot');
+      var ring=frame.querySelector('.gf'), badge=slot.querySelector('.gf-badge'), line=body.querySelector('.gf-line');
+      if(on && !ring){
+        frame.insertAdjacentHTML('afterbegin','<span class="gf gf--a gf--bevel" aria-hidden="true"><i></i></span>');
+        slot.insertAdjacentHTML('beforeend','<span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스'
+          +'<span class="sr-only">적용됨, 남은 기간</span> <span class="num">'+((i%9)+3)+'일</span></span>');
+        body.querySelector('.kind').insertAdjacentHTML('afterend',
+          '<div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 '+((i%9)+3)+'일 남음</div>');
+      } else if(!on && ring && card.dataset.gfSlot!=='1'){
+        ring.remove(); if(badge) badge.remove(); if(line) line.remove();
+      }
+    });
+  });
+
+  /* 모션 감소 시뮬레이션 */
+  var rm=false, rbtn=document.getElementById('btn-rm');
+  rbtn.addEventListener('click',function(){
+    rm=!rm; rbtn.setAttribute('aria-pressed',String(rm));
+    document.body.classList.toggle('sim-rm',rm);
+  });
+})();
+</script>
+</body></html>
