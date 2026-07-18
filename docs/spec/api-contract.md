@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.6 — G3 확정(2026-07-14) + 6절 계약 변경 6건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.7 — G3 확정(2026-07-14) + 6절 계약 변경 7건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -18,6 +18,7 @@
 | v1.4 | 2026-07-14 | 6절 계약 변경 — §2.5 회원 리소스 신설(GET/PATCH/DELETE `/me`) + §2 제목 "인증·회원" + `MEMBER_001`·`MEMBER_002` §5 등재 + §2 말미 전방 참조 미이행 정정("3절" → §2.5·§4.4). 사유: 회원 프로필·수정·탈퇴 계약 부재(backend/022 발견, 068 승인, 지시 069). 탈퇴 잔액 소멸 동의 = D-080 |
 | v1.5 | 2026-07-17 | 6절 계약 변경 — §2.5 GET·PATCH·DELETE `/me` 탈퇴(soft delete) 주체가 만료 전 access로 호출한 경우를 401 `COMMON_005`(세션 무효)로 명시. 미인증·만료 토큰 401과 동일 코드·포맷이라 탈퇴 여부가 응답으로 드러나지 않는다. 사유: 게이트2 승인 — 회원 열거 방지(SEC-007) |
 | v1.6 | 2026-07-18 | 6절 계약 변경 — §5에 `ITEM_003`(relocate 대상 아이템이 임시보관 TEMP 상태 아님, 409) 등재 + §4.2 relocate 에러 목록에 반영. 사유: EPIC-ITEM 구현 정합(FC-022 신설 코드, 도메인 enum↔계약 1:1 규약 · 프론트 분기 명확). 총괄 등재 승인 |
+| v1.7 | 2026-07-18 | 6절 계약 변경 — EPIC-AUCTION 게이트2(FC-025) 결정 반영: (f) §3.1 등록·§5 `AUCTION_001`을 "403/409" → **403 단일**로 정밀화(미소유·미보유·미존재 통일, enum↔계약 1:1 + SEC-007 열거 방지; "이미 출품중"만 `AUCTION_002` 409). (G6) §3.1 취소 대상 상태를 "ACTIVE만" → **"SCHEDULED\|ACTIVE & 입찰0(highest_bidder_id IS NULL)"**로 정밀화(예약 경매 에스크로 잠김 해소, domain-spec §5 정합). 사유: 게이트2 승인(2026-07-18), auction-domain-spec v0.2 |
 
 ---
 
@@ -142,7 +143,8 @@ POST /api/v1/auctions — 경매 등록
 - 동작: 아이템을 인벤토리→출품 에스크로(location LISTED)로 CAS 이동(중복 출품 차단). SCHEDULED(startAt 있으면)/ACTIVE로 생성.
 - 서버 검증(SEC-009): `endAt > now`, `startAt ≤ endAt`(startAt 있으면), `maxEndAt ≥ endAt`, `softCloseWindowSec·softCloseExtendSec`는 양수·상한 이내. 위반 시 422.
 - 응답 201: `{ auctionPublicId, status, endAt }`
-- 에러: `AUCTION_001` 아이템 미소유·미보유(403/409), `AUCTION_002` 이미 출품중(409), `AUCTION_003` buyNowPrice ≤ startPrice(422), `AUCTION_008` 시간 파라미터 위반(422)
+- 에러: `AUCTION_001` 아이템 미소유·미보유·미존재(403), `AUCTION_002` 이미 출품중(409), `AUCTION_003` buyNowPrice ≤ startPrice(422), `AUCTION_008` 시간 파라미터 위반(422)
+  - 주(v1.7, EPIC-AUCTION 게이트2): `AUCTION_001`은 **403 단일**이다. 미소유(not-owner)·미보유(소유하나 인벤토리에 없음, 예: TEMP)·미존재(item-not-found)를 403으로 통일한다 — 도메인 ErrorCode enum ↔ 계약 1:1(§5) 준수 + 소유·보유 여부가 403/409 차이로 누설되지 않게(SEC-007 열거 방지). "이미 출품중"(LISTED 상태 충돌)만 `AUCTION_002` 409로 분리한다(상태 충돌 노출은 무해).
 
 GET /api/v1/auctions — 경매 목록
 - 인증: 불요
@@ -174,7 +176,8 @@ POST /api/v1/auctions/{auctionPublicId}/purchase — 즉시구매(buyNow)
 
 POST /api/v1/auctions/{auctionPublicId}/cancel — 판매자 취소
 - 인증: 필요(판매자 본인). 관리자 강제 취소는 별도 관리자 API(4절).
-- 동작: 입찰 0건 & ACTIVE일 때만 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
+- 동작: 입찰 0건 & (SCHEDULED | ACTIVE)일 때만 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
+  - 주(v1.7, EPIC-AUCTION 게이트2): 취소 대상 상태를 **SCHEDULED|ACTIVE**로 정밀화한다(종전 "ACTIVE만" → 예약 경매의 에스크로가 startAt 도달 전까지 묶이는 문제 해소, domain-spec §5 "SCHEDULED|ACTIVE→CANCELLED" 정합). "입찰 0건" 판정은 `highest_bidder_id IS NULL` 앵커(입찰=EPIC-BID). 종료 상태(SOLD/UNSOLD/CANCELLED)면 `AUCTION_006`.
 - 응답 200: `{ status }`
 - 에러: `AUCTION_007` 입찰 존재로 취소 불가(409), `AUCTION_006` 이미 종료(409)
 
@@ -340,7 +343,7 @@ POST /api/v1/admin/auctions/{auctionPublicId}/force-cancel — 관리자 강제 
 | AUTH_005 | 권한 없음(관리자 등) | 403 |
 | MEMBER_001 | 닉네임 중복(프로필 수정, §2.5) | 409 |
 | MEMBER_002 | 진행 중 거래 보유로 탈퇴 불가(§2.5) | 409 |
-| AUCTION_001 | 아이템 미소유·미보유 | 403/409 |
+| AUCTION_001 | 아이템 미소유·미보유·미존재(출품 불가) | 403 |
 | AUCTION_002 | 이미 출품중 | 409 |
 | AUCTION_003 | buyNowPrice ≤ startPrice | 422 |
 | AUCTION_004 | 경매 없음 | 404 |
