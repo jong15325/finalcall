@@ -1,4 +1,7 @@
 {
+  "env": {
+    "ENABLE_STOP_REVIEW": "1"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -11,6 +14,16 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mirror-drift.js\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-security-review.js\""
           }
         ]
       }

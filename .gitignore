@@ -48,6 +48,10 @@ boot*.log
 .claude/skills/impeccable/
 .impeccable/
 
+# end-of-turn 보안 리뷰 훅의 중복 억제 상태(런타임 산출물, 세션 로컬).
+# 추적하면 git status에 잡혀 훅 서명이 매 턴 바뀌고 중복 억제가 무력화된다.
+.claude/.stop-review-state
+
 # docs 작업 로그는 제외하지 않는다 (C-067, supersedes C-058).
 # C-058이 inbox-log·handover를 여기 넣었다가 철회했다 — 호스트 Grep이 gitignore 대상 파일을
 # 스코프에 따라 조용히 건너뛰어 `rules [9.1]`(호스트 도구로 판단)의 신뢰성이 깨졌다.
