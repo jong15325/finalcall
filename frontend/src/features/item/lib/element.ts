@@ -2,30 +2,35 @@
  * 아이템 속성(element) 코드 ↔ 표시 매핑.
  *
  * 계약 [3.3] item 블록의 `element`는 **정수 코드**다(erd item_template.element INT "속성(물/불/흙/바람) — 십의 자리").
- * 코드값은 erd 열거 순서 + 시드(V9__item_seed.sql: 1=물의 검/도, 2=불의 검/도)로 확정한 1·2를 기준으로,
- * 나머지 3·4를 문서 순서(흙·바람)에 맞춘다. 시드에 3·4가 없어 실측 확인은 EPIC-ITEM 시드 확장 시로 이연한다.
+ *
+ * ★ **코드값 정본은 1·2 뿐이다**(계약 v1.9 §3.3). erd 는 축의 의미만 규정하고 코드↔속성 매핑을 열거하지
+ * 않는다. 시드(V9__item_seed.sql)로 확인되는 값도 `1=물`·`2=불` 둘뿐이며, `3`·`4`는 erd 서술의 나열
+ * 순서로 흙·바람이 **추정**될 뿐 근거가 없어 계약이 확정하지 않았다. 따라서 아래 표에 3·4를 등재하지
+ * 않는다 — 등재하면 필터 칩이 항상 빈 목록을 내고, 나중에 3=바람으로 밝혀질 때 배지·아트 슬롯·상세
+ * 속성명이 **조용히 오표기**된다(무음 실패). 미등록 코드는 중립 표기("속성 N")로 폴백한다.
+ * EPIC-ITEM 시드 확장에서 실측 확정되면 `ELEMENT_CODES` 에 줄만 추가하면 복구된다.
+ *
+ * 코드 집합 크기를 가정한 하드코딩(배열 인덱싱·exhaustive switch)을 두지 않는다 — 소비처는 전부
+ * 이 모듈이 내보내는 목록·폴백 함수를 통해서만 코드를 다룬다.
  *
  * 색 사용은 design-system [1.2] Game-Color Containment 를 따른다 — element 색은
  * **아이템 카드·속성 배지·아이템 필터 칩 안에서만** 쓴다(버튼·탭·크롬·링크 금지).
  */
 
-/** 4속성 키(디자인 토큰 element.* 와 1:1). */
+/**
+ * 속성 키 = 디자인 토큰 `element.*` 와 1:1(design-system [2.7]).
+ * 토큰은 4색이 확정값이라 키 타입은 4종 그대로 둔다 — 미확정인 것은 **코드↔키 매핑**이지 토큰이 아니다.
+ */
 export type ElementKey = 'water' | 'fire' | 'earth' | 'wind';
 
-/** 코드 → 키. 미등록 코드는 undefined(표시는 '속성 미상'으로 폴백). */
-const CODE_TO_KEY: Record<number, ElementKey> = {
-  1: 'water',
-  2: 'fire',
-  3: 'earth',
-  4: 'wind',
-};
-
-const KEY_TO_CODE: Record<ElementKey, number> = {
-  water: 1,
-  fire: 2,
-  earth: 3,
-  wind: 4,
-};
+/**
+ * ★ 정본이 확정한 코드만 등재한다(계약 v1.9 §3.3). 이 목록이 코드↔키의 단일 진실이며
+ * 필터 칩의 표시 순서이기도 하다. 여기 없는 코드는 전부 미등록 폴백으로 흐른다.
+ */
+export const ELEMENT_CODES: readonly { code: number; key: ElementKey }[] = [
+  { code: 1, key: 'water' },
+  { code: 2, key: 'fire' },
+];
 
 /** 속성명(색 단독 전달 금지 — 배지·칩은 이 라벨을 항상 병기한다, accessibility [2]). */
 export const ELEMENT_LABEL: Record<ElementKey, string> = {
@@ -34,9 +39,6 @@ export const ELEMENT_LABEL: Record<ElementKey, string> = {
   earth: '흙',
   wind: '바람',
 };
-
-/** 필터 칩·범례의 표시 순서. */
-export const ELEMENT_KEYS: ElementKey[] = ['water', 'fire', 'earth', 'wind'];
 
 /**
  * 라이트 패턴 클래스(design-system [2.7]): 소프트 틴트 배경 + near-black 라벨.
@@ -66,14 +68,9 @@ export const ELEMENT_BORDER_CLASS: Record<ElementKey, string> = {
   wind: 'border-element-wind',
 };
 
-/** 코드 → 키. 미등록 코드는 null. */
+/** 코드 → 키. **미등록(미확정) 코드는 null** — 소비처는 중립 표기로 폴백한다. */
 export function toElementKey(code: number): ElementKey | null {
-  return CODE_TO_KEY[code] ?? null;
-}
-
-/** 키 → 코드(목록 필터 쿼리 파라미터 `element`는 정수다). */
-export function toElementCode(key: ElementKey): number {
-  return KEY_TO_CODE[key];
+  return ELEMENT_CODES.find((entry) => entry.code === code)?.key ?? null;
 }
 
 /** 코드 → 표시 라벨. 미등록 코드는 코드 자체를 노출한다(무음 실패 방지). */

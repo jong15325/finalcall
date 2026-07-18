@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import {
+  ELEMENT_CODES,
   ELEMENT_DOT_CLASS,
-  ELEMENT_KEYS,
   ELEMENT_LABEL,
   ELEMENT_TINT_CLASS,
   elementLabelOf,
-  toElementCode,
 } from '@/features/item/lib/element';
 import { formatMoney } from '@/lib/format';
 import {
@@ -133,12 +132,15 @@ export function AuctionFilterBar({
         </Button>
       </form>
 
-      {/* 속성 필터 칩 — element 색이 허용된 몇 안 되는 자리다([1.2] Containment) */}
+      {/*
+       * 속성 필터 칩 — element 색이 허용된 몇 안 되는 자리다([1.2] Containment).
+       * 칩은 **계약이 확정한 코드**(ELEMENT_CODES)로만 만든다 — 미확정 코드로 칩을 노출하면
+       * 누를 때마다 빈 목록이 뜨고 근거 없는 분류 체계를 확정된 것처럼 제시하게 된다(계약 v1.9 §3.3).
+       */}
       <fieldset className="flex flex-wrap items-center gap-2">
         <legend className="sr-only">속성 필터</legend>
         <span className="text-sm font-medium text-text">속성</span>
-        {ELEMENT_KEYS.map((key) => {
-          const code = toElementCode(key);
+        {ELEMENT_CODES.map(({ code, key }) => {
           const selected = filters.element === code;
           return (
             <button
