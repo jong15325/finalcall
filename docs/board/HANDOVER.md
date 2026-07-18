@@ -28,7 +28,10 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
   - **EPIC-AUCTION(경매, KAN-30~35) ✅ 완료·push됨**. FC-025 architect(spec v0.2·계약 v1.7, 게이트2 6결정) / FC-026~028 backend-impl 순차 단일패스(V10) — 등록·목록·상세·취소 + item LISTED CAS(G4 교정)·에스크로 왕복, 테스트 슬라이스5+통합21+동시성1 / FC-029 reviewer PASSED(critical 0·major 0·minor 8).
   - **보안 층 첫 실적용 완료**(섹션 13): 에픽 완료 온디맨드 `/security-review` 1회 실행 → **HIGH/MEDIUM 발견 0건**. 인가(주체=SecurityContext·IDOR 없음)·SecurityConfig permitAll GET 한정 스코프·에스크로 CAS 단일승자·QueryDSL 인젝션 없음·응답 PII 미노출 전부 확인. 기준미달 관찰 3건은 백로그 등재.
   - 주의: 스킬이 `origin/HEAD` 미설정으로 1차 실패 → `git remote set-head origin master`로 해소. 또 **push 완료 후엔 기본 diff 범위가 비므로** 범위를 수동 지정해야 한다(이번엔 `415e6e3..HEAD`).
-- **EPIC-BID(입찰, KAN-36~42) — 착수(게이트1 승인 2026-07-18)**: 티켓 FC-030~035 생성·Jira 미러 완료, 전건 `todo`. 다음 수 1번대로 FC-030 architect부터.
+- **EPIC-BID(입찰, KAN-36~42) ✅ 완료·Done**. FC-030 architect(게이트2 5결정·계약 v1.8→v1.9·erd v1.0) / FC-031 스키마·홀드(V11) / FC-032 ★입찰 API(**auction 행 비관적 락 + 금전 조건부 CAS** — Redis 분산락은 게이트2에서 기각) / FC-033 내역조회·최고가 실값 대체·`minNextBidAmount`·keyset 교정 / FC-034 동시성 불변식 I1~I10 전수 검증(뮤테이션 검증 1건 포함) / FC-035 reviewer **PASS**(critical 0·major 0·minor 9). **전체 235 테스트 / 실패 0.**
+  - **에픽 완료 `/security-review` 발견 0건** — 음수 금액 반전 공격 4중 차단(`@Positive`→`BID_001`→서비스 검증→DB CHECK), 단일 트랜잭션 경계가 롤백 테스트로 실증, 데드락은 "각 TX가 경매 락 1개만 잡음"으로 원리적 불가 확인.
+  - **`ENABLE_STOP_REVIEW` = `0` 복귀 완료**(한시 on 구간 종료).
+  - **후속 티켓 필요(FC-035 minor, 백엔드 재개 시)**: m1 락 후 시각 재포착(**I8 유일 사각**) + m2 `applyBid` CAS 가드 / **m4 `MEMBER_002` 탈퇴 TOCTOU — EPIC-BID가 활성화시킨 갭이라 EPIC-CLOSING DoD 구속 필수** / m6 마스킹 3번째 사본 위임 / m8 계약에 `COMMON_004` 추가 / m9 Flyway append-only 규율. 추가로 `/security-review` 관찰 2건(잘못된 커서·빈 바디가 400 대신 500).
 - **end-of-turn 보안 리뷰 = 배선·on**(2026-07-18 신규): `.claude/hooks/stop-security-review.js` + `settings.json`(`Stop` 훅 + `env.ENABLE_STOP_REVIEW=1`).
   - 섹션 13에 `ENABLE_STOP_REVIEW`가 있었지만 **실배선은 없었다**(문서상 의도만). 이번에 Node로 신규 구현 — 민감경로(bid·auction·settlement·currency·auth·money_hold·SecurityConfig·jwt/token/secret·db/migration) 변경 시 재프롬프트, **warn-only**(커밋·push 무간섭). Python 의존 없음.
   - 스모크 7케이스 검증 통과. 중복 억제 서명은 **민감파일 내용 해시 기반**(git status 문자열 기반은 dirty 파일 재편집을 못 잡아 폐기). 상태파일 `.claude/.stop-review-state`는 gitignore(추적 시 서명이 매 턴 바뀜).
@@ -59,11 +62,26 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
   4. **이월 minor 5건은 EPIC-BID 후속 유지**: m1(SR "0분 남음") · m2(**소프트클로즈 연장 안내 — 입찰 붙는 순간 accessibility §6 실효 요건**) · m3(마지막 페이지 포커스 소실) · m4(IntersectionObserver 재구독) · m5(목록 카드 시간 반응성). n1(라벨 중복)은 UI 도달 불가라 코드 사전 확정 시 자연 소멸.
   5. **EPIC-BID 프론트 티켓 DoD에 명시할 것**: `BID_003`(자기 경매)·`BID_007`(미개시) **화면 분기가 없다**. 상세가 판매자 본인 여부를 알 수 없고(`sellerNickname`만 내려옴) `SCHEDULED` CTA도 "입찰 준비 중"으로 뭉뚱그려져 있다. 계약 v1.8 주가 "안내 문구·재시도 가능성이 정반대"라 못 박았다. `errorCodes.ts`에 `BID_007` 미등재.
 
+## ★ 방침 전환 (2026-07-18, 사용자 지시) — **백엔드 동결 · 디자인 우선**
+
+**계기**: 사용자가 처음으로 브라우저에서 화면을 열어보고 "디자인이 거의 안 되어 있다"고 지적. 조사 결과 사실이었다 — **라우트 16개 중 12개가 `PagePlaceholder`**("스켈레톤 placeholder — feature 단계에서 구현됩니다"), **홈(첫 화면)부터 placeholder**. 실구현은 로그인·회원가입·프로필·경매목록·경매상세 5개뿐. `PublicLayout`은 얇은 헤더 + 텍스트 링크 3개, 푸터·브랜드 표현 없음(주석이 스스로 "도메인 콘텐츠는 없다(스켈레톤)"라고 적어둠).
+
+**총괄 보고 오류 — 반복 금지**: "디자인 시스템 준수"를 "디자인 완성"으로 전달했다. 셋이 겹쳤다 —
+1. `design-system.md`는 **토큰·컴포넌트 계약 명세**지 시각 디자인이 아니다("무슨 prop·무슨 상태·무슨 a11y"이지 "어떻게 보여야 하는가"가 아니다).
+2. FC-038 리뷰 프롬프트에 총괄이 **"판단이 아니라 위반 여부만 볼 것"**이라고 명시했다. 그 PASS는 "규칙을 어기지 않았다"이지 "보기 좋다"가 아니다.
+3. 총괄이 그 차이를 짚지 않고 PASS를 그대로 전달했다.
+→ **교훈: 리뷰가 답한 질문과 사용자가 궁금해한 질문이 같은지 항상 확인할 것.**
+
+**확정 방침(정정 3회 반영)**:
+1. **백엔드 개발 전면 중지.** EPIC-BID까지 닫고 동결. EPIC-CLOSING·SHOP 착수 금지.
+2. **디자인 템플릿 HTML을 페이지별로 먼저 완성한다.** 선례: `docs/ux/mockups/redesign-commerce.html`.
+3. 그 다음 **기능 에픽은 프론트 + 백엔드 동반 진행**(프론트가 뒤처지는 구조를 없앤다).
+4. **디자인/프론트 에이전트를 늘리지 않는다.** 기존 frontend-impl + `impeccable` 스킬로 진행. §8 개정·consultant 소환 없음.
+
 ## 다음 수
-1. **FC-030 architect 소환**(KAN-37) — EPIC-BID 계약 검증·bid-domain-spec 확정·슬라이싱. **게이트2 5건 상신 예정**(직렬화 메커니즘★·홀드 원자성 경계·소프트클로즈 연장 규칙·SCHEDULED→ACTIVE 영속 전이·BID_004 판정 근거) → 사용자 승인 후 FC-031 착수.
-2. 이후 FC-031→032→033→034→035 순차. 각 티켓 완료마다 보드·Jira 전이.
-3. **에픽 종료 시 필수**: `ENABLE_STOP_REVIEW`를 `0`으로 복귀(`.claude/settings.json`) + 에픽 완료 `/security-review` 1회.
-4. (병렬 가능) EPIC-GAME-PROFILE 합의(리서치 완료됨) — 사용자 결정 시.
+1. **디자인 템플릿 HTML 착수** — 페이지 목록·우선순위 확정 후 진행. 홈(랜딩)·공통 셸(헤더/푸터)·인증 화면이 먼저다(첫인상 + 12개 placeholder의 기준이 된다).
+2. **사용자 push** — 미push 커밋(EPIC-BID 마감분 포함).
+3. (동결) EPIC-CLOSING·EPIC-SHOP·FC-039 데모 시드·FC-040 시각 점검 — 디자인 완성 후 재개.
 
 ## 대기 안건(백로그)
 - **EPIC-BID**(다음 로드맵) → **EPIC-CLOSING**(마감·정산·주문·즉시구매) → **EPIC-SHOP**(고정가).

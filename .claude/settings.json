@@ -1,6 +1,6 @@
 {
   "env": {
-    "ENABLE_STOP_REVIEW": "1"
+    "ENABLE_STOP_REVIEW": "0"
   },
   "hooks": {
     "PreToolUse": [
