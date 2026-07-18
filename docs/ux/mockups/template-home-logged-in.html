@@ -1,13 +1,16 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
+<html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FinalCall · 공통 셸 + 홈/랜딩 (FC-041)</title>
+<title>FinalCall · 홈 (로그인 후) — 디자인 템플릿</title>
 <!--
   ══════════════════════════════════════════════════════════════════════════════
-  FC-041 · EPIC-DESIGN-TEMPLATE — 공통 셸(헤더·푸터·브랜드) + 홈/랜딩
+  FC-041 · EPIC-DESIGN-TEMPLATE — 홈/랜딩 · 로그인 후(회원)
   ══════════════════════════════════════════════════════════════════════════════
+  이 파일은 로그인한 회원이 보는 홈이다. 헤더 우측에 가용 게임머니·홀드·알림·계정이 상주하고,
+  2행 우측이 보조 링크 대신 판매하기(ink CTA)로 바뀐다. 고정가 목록에는 잔액 부족 판정이 나타난다.
+  로그인 전 상태는 template-home-logged-out.html 에 있다 — 같은 페이지이고 셸 상태만 다르다.
+
   자체완결 정적 HTML. 외부 CDN·웹폰트 없음(시스템 폰트 스택). 빌드·서버 불요.
   게임 아트만 상대경로로 참조한다: ../../game_ui/**  (레포 안 자산, 외부 아님)
 
@@ -601,27 +604,6 @@ main{display:block;}
 .footer-bottom .policies a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
 .footer-bottom .policies a.strong{color:var(--text); font-weight:700;}
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   9. 목업 전용 컨트롤 — 실제 UI 아님. 로그인 전/후 상태 전환용
-   ══════════════════════════════════════════════════════════════════════════════ */
-.mockctl{
-  position:fixed; right:16px; bottom:16px; z-index:var(--z-mock);
-  display:flex; align-items:center; gap:8px; padding:8px 10px;
-  background:#18181B; color:#fff; border-radius:var(--r-md); box-shadow:var(--sh-lg);
-  font-size:.75rem; font-weight:600;
-}
-.mockctl .lb{color:#A1A1AA; letter-spacing:.02em;}
-.mockctl button{
-  padding:var(--s1) var(--s3); border:1px solid #3F3F46; border-radius:var(--r-sm);
-  background:transparent; color:#E4E4E7; font-size:.75rem; font-weight:700; cursor:pointer;
-}
-.mockctl button[aria-pressed="true"]{background:#fff; color:#18181B; border-color:#fff;}
-@media print{ .mockctl{display:none;} }
-
-/* 로그인 상태에 따른 표시 전환 */
-body[data-auth="out"] .auth-in{display:none !important;}
-body[data-auth="in"]  .auth-out{display:none !important;}
-
 /* ── 모션 감소 존중 (§4 · accessibility §7) ──────────────────────────────────── */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{
@@ -635,14 +617,14 @@ body[data-auth="in"]  .auth-out{display:none !important;}
 </style>
 </head>
 
-<body data-auth="out">
+<body>
 
 <a href="#main" class="sr-only">본문 바로가기</a>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      헤더 (결정 ②)
      ══════════════════════════════════════════════════════════════════════════ -->
-<header class="site-header" id="siteHeader">
+<header class="site-header" id="siteHeader" data-scrolled="false">
   <div class="container">
     <div class="hdr-main">
       <!-- 브랜드 (결정 ①) — 활자 워드마크. 로고 이미지 없음 -->
@@ -654,34 +636,33 @@ body[data-auth="in"]  .auth-out{display:none !important;}
       <form class="hdr-search" role="search" onsubmit="return false;">
         <label for="q" class="sr-only">아이템 검색</label>
         <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"></circle>
+          <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
         </svg>
         <input id="q" type="search" placeholder="아이템·판매자 검색" autocomplete="off">
       </form>
 
       <div class="hdr-actions">
         <!-- ── 비로그인 상태 ───────────────────────────────────────────────── -->
-        <a href="#" class="hdr-signin auth-out">로그인</a>
-        <a href="#" class="btn btn--outline btn--sm auth-out">회원가입</a>
+        
+        
 
         <!-- ── 로그인 상태 ─────────────────────────────────────────────────
              잔액을 헤더에 상주시킨다: 자금 거래 제품에서 "지금 입찰할 수 있는가"는
              매 화면의 1차 정보다. 홀드 금액은 warning 점으로 병기(색 단독 전달 아님). -->
-        <div class="hdr-balance auth-in">
+        <div class="hdr-balance">
           <span class="k">가용 게임머니</span>
           <span class="v num">2,150,000<span class="u">G</span></span>
           <span class="hold num">300,000G 홀드 중</span>
         </div>
-        <button class="icon-btn auth-in" type="button" aria-label="알림 3건">
+        <button class="icon-btn" type="button" aria-label="알림 3건">
           <svg viewBox="0 0 20 20" width="19" height="19" fill="none" aria-hidden="true">
-            <path d="M10 3a4.5 4.5 0 0 0-4.5 4.5c0 3-1 4-1.5 4.5h12c-.5-.5-1.5-1.5-1.5-4.5A4.5 4.5 0 0 0 10 3Z"
-                  stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M8.25 15a1.9 1.9 0 0 0 3.5 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M10 3a4.5 4.5 0 0 0-4.5 4.5c0 3-1 4-1.5 4.5h12c-.5-.5-1.5-1.5-1.5-4.5A4.5 4.5 0 0 0 10 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path>
+            <path d="M8.25 15a1.9 1.9 0 0 0 3.5 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
           </svg>
           <span class="badge" aria-hidden="true"></span>
         </button>
-        <a href="#" class="hdr-account auth-in">
+        <a href="#" class="hdr-account">
           <span class="avatar" aria-hidden="true">달</span>
           <span class="nick">달빛상인</span>
         </a>
@@ -702,11 +683,8 @@ body[data-auth="in"]  .auth-out{display:none !important;}
           </ul>
         </nav>
         <!-- 비로그인: 보조 링크가 오른쪽. 로그인: 판매 CTA(주 액션)가 오른쪽 -->
-        <div class="nav-aside auth-out">
-          <a href="#">이용 안내</a>
-          <a href="#">수수료</a>
-        </div>
-        <div class="nav-cta auth-in"><a href="#" class="btn btn--sm">판매하기</a></div>
+        
+        <div class="nav-cta"><a href="#" class="btn btn--sm">판매하기</a></div>
       </div>
     </div>
   </div>
@@ -718,8 +696,8 @@ body[data-auth="in"]  .auth-out{display:none !important;}
     <form class="box" role="search" onsubmit="return false;">
       <label for="qm" class="sr-only">아이템 검색</label>
       <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"></circle>
+        <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
       </svg>
       <input id="qm" type="search" placeholder="아이템·판매자 검색" autocomplete="off">
     </form>
@@ -741,8 +719,8 @@ body[data-auth="in"]  .auth-out{display:none !important;}
           <p class="meta"><span class="pulse" aria-hidden="true"></span> 10초마다 갱신 · 마지막 갱신 19:42:10</p>
           <div class="actions">
             <a href="#" class="btn">경매 전체 보기</a>
-            <a href="#" class="btn btn--outline auth-out">회원가입</a>
-            <a href="#" class="btn btn--outline auth-in">판매하기</a>
+            
+            <a href="#" class="btn btn--outline">판매하기</a>
           </div>
 
           <!-- 속성으로 바로 좁히기: 좌측 열을 채우는 장식이 아니라 실제 진입 경로다.
@@ -762,8 +740,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
           <!-- 서열 1위만 카드 크기를 깬다. 그리드 안에서 크기로 위계를 만드는 유일한 지점 -->
           <a href="#" class="item-card item-card--feature">
             <div class="slot slot--feature">
-              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
-                   alt="7레벨 불속성 칼 카드 아트" width="150" height="279">
+              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png" alt="7레벨 불속성 칼 카드 아트" width="150" height="279">
               <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
             </div>
             <div class="deadline-bar" role="presentation"><i style="--from:.09; animation-duration:178s;"></i></div>
@@ -776,7 +753,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
               </div>
               <div class="foot">
                 <span class="seller">판매자 <b>달빛상인</b></span>
-                <span class="chip chip--warning"><span aria-hidden="true">○</span> <span class="num" data-countdown="178">02:58</span></span>
+                <span class="chip chip--warning"><span aria-hidden="true">○</span> <span class="num" data-countdown="178" data-left="177">02:57</span></span>
               </div>
             </div>
           </a>
@@ -793,7 +770,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
                   <span class="sub"><span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span> 블랙 · 무기 · 입찰 12회</span>
                 </span>
                 <span class="price"><span class="k">최고가</span><br><span class="v num">640,000<span class="u">G</span></span></span>
-                <span class="timer"><span class="t t--warn num" data-countdown="252">04:12</span><br><span class="k">남음</span></span>
+                <span class="timer"><span class="t t--warn num" data-countdown="252" data-left="251">04:11</span><br><span class="k">남음</span></span>
               </a></li>
 
               <li><a class="closing-row" href="#">
@@ -805,7 +782,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
                   <span class="sub">펫 · 입찰 31회</span>
                 </span>
                 <span class="price"><span class="k">최고가</span><br><span class="v num">3,900,000<span class="u">G</span></span></span>
-                <span class="timer"><span class="t num" data-countdown="1043">17:23</span><br><span class="k">남음</span></span>
+                <span class="timer"><span class="t num" data-countdown="1043" data-left="1042">17:22</span><br><span class="k">남음</span></span>
               </a></li>
 
               <li><a class="closing-row" href="#">
@@ -817,7 +794,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
                   <span class="sub">강화 · 잔여 72시간 · 입찰 4회</span>
                 </span>
                 <span class="price"><span class="k">최고가</span><br><span class="v num">180,000<span class="u">G</span></span></span>
-                <span class="timer"><span class="t num" data-countdown="1580">26:20</span><br><span class="k">남음</span></span>
+                <span class="timer"><span class="t num" data-countdown="1580" data-left="1579">26:19</span><br><span class="k">남음</span></span>
               </a></li>
 
               <li><a class="closing-row" href="#">
@@ -829,7 +806,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
                   <span class="sub"><span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span> 화이트 · 입찰 2회</span>
                 </span>
                 <span class="price"><span class="k">최고가</span><br><span class="v num">45,000<span class="u">G</span></span></span>
-                <span class="timer"><span class="t num" data-countdown="2461">41:01</span><br><span class="k">남음</span></span>
+                <span class="timer"><span class="t num" data-countdown="2461" data-left="2460">41:00</span><br><span class="k">남음</span></span>
               </a></li>
             </ol>
           </div>
@@ -912,7 +889,7 @@ body[data-auth="in"]  .auth-out{display:none !important;}
             <div class="price"><span class="k">최고가</span><span class="v num">640,000<span class="u">G</span></span></div>
             <div class="foot">
               <span class="seller">입찰 <b class="num">12</b>회</span>
-              <span class="chip chip--neutral"><span aria-hidden="true">·</span> <span class="num" data-countdown="512">08:32</span></span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> <span class="num" data-countdown="512" data-left="511">08:31</span></span>
             </div>
           </div>
         </a>
@@ -1083,13 +1060,13 @@ body[data-auth="in"]  .auth-out{display:none !important;}
             <span class="nm"><a href="#">아바타 투구</a></span>
             <span class="sub">
               아바타 · 방어구 · 판매자 <b>달빛상인</b>
-              <span class="chip chip--danger auth-in"><span aria-hidden="true">!</span> 가용 게임머니 부족</span>
+              <span class="chip chip--danger"><span aria-hidden="true">!</span> 가용 게임머니 부족</span>
             </span>
           </span>
           <span class="price"><span class="v num">2,900,000<span class="u">G</span></span></span>
           <span class="act">
-            <button class="btn btn--sm auth-out" type="button">즉시구매</button>
-            <button class="btn btn--sm auth-in" type="button" disabled aria-describedby="lackHint">즉시구매</button>
+            
+            <button class="btn btn--sm" type="button" disabled="" aria-describedby="lackHint">즉시구매</button>
             <span id="lackHint" class="sr-only">가용 게임머니가 부족해 즉시구매할 수 없습니다.</span>
           </span>
         </div>
@@ -1285,25 +1262,9 @@ body[data-auth="in"]  .auth-out{display:none !important;}
 </footer>
 
 <!-- 목업 전용 — 실제 UI 아님 -->
-<div class="mockctl" role="group" aria-label="목업 상태 전환">
-  <span class="lb">셸 상태</span>
-  <button type="button" id="mkOut" aria-pressed="true">비로그인</button>
-  <button type="button" id="mkIn"  aria-pressed="false">로그인</button>
-</div>
+
 
 <script>
-/* ── 목업 컨트롤: 로그인 전/후 셸 전환 ──────────────────────────────────────── */
-(function(){
-  var b=document.body, out=document.getElementById('mkOut'), inn=document.getElementById('mkIn');
-  function set(state){
-    b.setAttribute('data-auth', state);
-    out.setAttribute('aria-pressed', String(state==='out'));
-    inn.setAttribute('aria-pressed', String(state==='in'));
-  }
-  out.addEventListener('click', function(){ set('out'); });
-  inn.addEventListener('click', function(){ set('in'); });
-})();
-
 /* ── 스크롤 시 헤더 그림자 (상태 표현이지 장식이 아니다) ────────────────────── */
 (function(){
   var h=document.getElementById('siteHeader');
@@ -1333,5 +1294,6 @@ body[data-auth="in"]  .auth-out{display:none !important;}
   setInterval(tick, 1000);
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>

@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinalCall · 홈 (로그인 전) — 디자인 템플릿</title>
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  FC-041 · EPIC-DESIGN-TEMPLATE — 홈/랜딩 · 로그인 전(비회원)
+  ══════════════════════════════════════════════════════════════════════════════
+  이 파일은 비회원이 처음 보는 홈이다. 헤더 우측은 로그인·회원가입, 2행 우측은 보조 링크(이용 안내·수수료).
+  로그인 후 상태는 template-home-logged-in.html 에 있다 — 같은 페이지이고 셸 상태만 다르다.
+
+  자체완결 정적 HTML. 외부 CDN·웹폰트 없음(시스템 폰트 스택). 빌드·서버 불요.
+  게임 아트만 상대경로로 참조한다: ../../game_ui/**  (레포 안 자산, 외부 아님)
+
+  토큰 출처(실값 대조 완료):
+    docs/ux/design-system.md §2·§3·§4 · frontend/src/index.css · frontend/tailwind.config.js
+  다크모드 값은 만들지 않는다(design-system §2.6 — U-005 확정 시 얹는 미래 오버레이).
+
+  ── 이 목업이 내린 4개 시각 결정 (상세 근거는 각 섹션 주석) ────────────────────
+  ① 브랜드 = 활자 워드마크 + "마감선" 모티프. 로고 이미지 파일을 만들지 않는다.
+  ② 헤더 = 2행(검색 우선 커머스 행 / 카테고리 내비 행). 검색이 마켓플레이스의 1차 IA다.
+  ③ 홈 = 마케팅 히어로가 아니라 "거래소 첫 화면". 최상단이 실데이터(마감 임박)다.
+  ④ 게임 아트 = 검정 아트 슬롯 안에서만. 원본 픽셀을 정수배 확대(nearest-neighbor)해
+     흐릿함을 의도된 픽셀아트로 전환한다. 원본 l=50×93px, s=26×28px.
+  ─────────────────────────────────────────────────────────────────────────────
+-->
+<style>
+/* ══════════════════════════════════════════════════════════════════════════════
+   1. 토큰 — design-system.md §2·§3·§4 실값 (창작 금지, 대조 반영)
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* 베이스·표면 */
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-raised:#FFFFFF; --surface-sunken:#F4F4F5;
+  --slot:#000000;                              /* 아이템 아트 슬롯 — 아이템 표시 전용 */
+  /* 텍스트 (on #FFF: 17.72 / 7.73 / 4.83) */
+  --text:#18181B; --text-muted:#52525B; --text-subtle:#71717A;
+  /* 테두리 */
+  --border:#E4E4E7; --border-muted:#F1F1F3; --border-strong:#8A8A8F;
+  /* 조작 — CTA=블랙(ink), 퍼플=액센트만 (§1.2 ①) */
+  --ink:#18181B; --ink-hover:#33333A; --ink-pressed:#000000;
+  --primary:#6E2A9F; --primary-hover:#5C2185; --primary-pressed:#491A6C;
+  --primary-soft:#F1EAF5; --primary-selected:#F1EAF5; --primary-disabled:#E4E4E7;
+  --primary-fg:#FFFFFF; --on-accent-fg:#18181B; --focus:#6E2A9F;
+  /* 정보 — 의미색 (§2.3) + 8% 알파 합성 참고값 */
+  --success:#14742F; --warning:#A0510A; --danger:#C81E1E; --info:#1D4ED8;
+  --success-soft:#ECF5EF; --warning-soft:#F9F1EB; --danger-soft:#FBEDED; --info-soft:#EEF3FD;
+  /* 아이템 — element 4색 아트 실측 불변 (§2.7). 아이템 표시 밖 사용 금지 */
+  --el-water:#19B2FF; --el-fire:#FF5500; --el-earth:#95B259; --el-wind:#66CCCC;
+  --el-water-soft:#DDF3FF; --el-fire-soft:#FFE6D9; --el-earth-soft:#EFF3E6; --el-wind-soft:#E8F7F7;
+
+  /* 반경 (§4 — 무신사식 각진 감성) */
+  --r-sm:4px; --r-md:6px; --r-lg:8px; --r-xl:12px; --r-full:9999px;
+  /* 그림자 (§4 — 라이트 베이스라 그림자가 실제 부양) */
+  --sh-sm:0 1px 3px rgba(15,23,42,.06);
+  --sh-md:0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06);
+  --sh-lg:0 8px 24px rgba(15,23,42,.10);
+  /* 모션 (§4) */
+  --d-fast:120ms; --d-base:200ms; --d-slow:320ms; --ease:cubic-bezier(0.4,0,0.2,1);
+  /* 간격 — 4px 기준 배수 (§4). 리듬용 시맨틱 이름 */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
+  --s8:32px; --s10:40px; --s12:48px; --s16:64px; --s20:80px; --s24:96px;
+  /* z 스케일 — 의미 기반(999 금지) */
+  --z-header:100; --z-overlay:200; --z-mock:900;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   2. 리셋 · 타이포 기반 (§3)
+   ══════════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  /* Pretendard 우선(프로젝트 §3) → 없으면 한글 시스템 폰트로 폴백. 외부 로드 없음 */
+  font-family:"Pretendard","Pretendard Variable","Apple SD Gothic Neo","Malgun Gothic",
+              -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:1rem; line-height:1.5; font-kerning:normal;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  /* 한글 줄바꿈: 기본값은 어절 중간에서 끊어 "진여 72시/간"처럼 쪼갠다.
+     keep-all 은 공백에서만 끊는다(국문 조판 표준). 긴 영문·URL 만 예외로 강제 분리. */
+  word-break:keep-all; overflow-wrap:break-word;
+}
+img{display:block; max-width:100%;}
+button,input{font:inherit; color:inherit;}
+a{color:var(--primary); text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;}
+a:hover{color:var(--primary-hover);}
+/* §2.2 — outline-offset 2px 는 장식이 아니라 AA 조건. :focus 아니라 :focus-visible */
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:2px;}
+.num{font-variant-numeric:tabular-nums;}   /* 금액·카운트다운 폭 고정 — 갱신 시 레이아웃 점프 방지 */
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+.container{max-width:1200px; margin:0 auto; padding:0 var(--s6);}
+@media (max-width:640px){ .container{padding:0 var(--s4);} }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   3. 브랜드 워드마크 — 결정 ①
+   ──────────────────────────────────────────────────────────────────────────────
+   현행: `text-lg font-bold` 한 줄 = 브랜드가 아니라 그냥 텍스트였다.
+   대안 검토:
+     (a) Final + Call 을 퍼플로 색분할 → 퍼플이 브랜드 채움으로 새고, 색 하나에 기대는
+         가장 흔한 처리. 액센트 규율(§1.2)과도 어긋나 기각.
+     (b) 로고 이미지 제작 → 티켓 금지(가짜 브랜드 자산). 기각.
+     (c) [채택] 활자 자체로 무게를 만든다 — 대문자 + 800 + 자간 -0.02em 로 덩어리를 만들고,
+         "CALL" 구간에만 2px 퍼플 마감선(rule)을 깐다.
+   마감선 = 이 제품의 단 하나의 주장("마감 순간에도 흔들리지 않는다")을 표시하는 모티프이며,
+   경매 카드의 잔여시간 게이지와 같은 형태로 반복돼 브랜드-기능이 한 언어를 쓴다.
+   퍼플은 2px 헤어라인으로만 등장하므로 액센트 규율을 지킨다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.wordmark{
+  display:inline-flex; align-items:baseline; gap:0;
+  font-weight:800; letter-spacing:-.02em; line-height:1;
+  color:var(--text); text-decoration:none; white-space:nowrap;
+}
+.wordmark:hover{color:var(--text);}
+.wordmark .wm-a{font-size:1.375rem;}
+.wordmark .wm-b{
+  font-size:1.375rem; position:relative;
+  /* 마감선 — 브랜드 모티프. 퍼플은 2px 선으로만(액센트 규율 준수) */
+  box-shadow:inset 0 -2px 0 0 var(--primary);
+}
+.wordmark--sm .wm-a,.wordmark--sm .wm-b{font-size:1.0625rem;}
+.wordmark--lg .wm-a,.wordmark--lg .wm-b{font-size:1.75rem;}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   4. 버튼 — §5.1 (primary = ink 블랙 채움. accent(퍼플 채움) variant 는 폐기)
+   ══════════════════════════════════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);
+  height:44px; padding:0 var(--s5); border:1px solid transparent; border-radius:var(--r-md);
+  font-size:.9375rem; font-weight:700; letter-spacing:-.01em; cursor:pointer;
+  background:var(--ink); color:var(--primary-fg); text-decoration:none;
+  transition:background var(--d-fast) var(--ease);
+}
+.btn:hover{background:var(--ink-hover); color:var(--primary-fg);}
+.btn:active{background:var(--ink-pressed);}
+.btn:disabled{background:var(--primary-disabled); color:#A1A1AA; cursor:not-allowed;}
+.btn--sm{height:36px; padding:0 var(--s4); font-size:.875rem;}
+.btn--lg{height:50px; padding:0 var(--s6); font-size:1rem;}
+.btn--outline{background:var(--surface); color:var(--text); border-color:var(--border-strong);}
+.btn--outline:hover{background:var(--surface-sunken); color:var(--text);}
+.btn--ghost{background:transparent; color:var(--primary); border-color:transparent;}
+.btn--ghost:hover{background:var(--primary-soft); color:var(--primary-hover);}
+
+/* 텍스트 링크형 액션 — 섹션 헤더의 "더 보기" 등 */
+.link-more{
+  display:inline-flex; align-items:center; gap:var(--s1);
+  font-size:.875rem; font-weight:600; color:var(--text-muted);
+  text-decoration:none; padding:var(--s2) 0; white-space:nowrap;
+}
+.link-more:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+.link-more .arrow{transition:transform var(--d-fast) var(--ease);}
+.link-more:hover .arrow{transform:translateX(2px);}
+
+/* 상태 칩 — §5.8 (의미색 -soft 배경 + 의미색 텍스트 + 아이콘/텍스트 병기) */
+.chip{
+  display:inline-flex; align-items:center; gap:var(--s1);
+  font-size:.75rem; font-weight:700; line-height:1.4;
+  padding:var(--s1) var(--s2); border-radius:var(--r-full); white-space:nowrap;
+}
+.chip--success{background:var(--success-soft); color:var(--success);}
+.chip--warning{background:var(--warning-soft); color:var(--warning);}
+.chip--danger {background:var(--danger-soft);  color:var(--danger);}
+.chip--info   {background:var(--info-soft);    color:var(--info);}
+.chip--neutral{background:var(--surface-sunken); color:var(--text-muted);}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   5. 헤더 — 결정 ②
+   ──────────────────────────────────────────────────────────────────────────────
+   현행: 얇은 선 1개 + 텍스트 링크 3개. 검색 없음. 위계 없음. 상태 표현 = 링크 문구 교체뿐.
+   설계:
+     · 2행 구조. 마켓플레이스에서 1차 IA 는 카테고리가 아니라 **검색**이므로 1행에 올린다.
+       (1행) 브랜드 | 검색 | 인증/보조 액션    ← 정체성 + 진입 + 상태
+       (2행) 판매 유형 내비 | 판매하기 CTA      ← 주 내비. 활성 항목은 2px near-black 밑줄
+     · 주 내비(2행) vs 보조 액션(1행 우측)을 **행으로 분리**해 위계를 만든다.
+       한 줄에 섞으면 지금처럼 전부 같은 무게의 텍스트 링크가 된다.
+     · 로그인 후에는 **가용 게임머니**를 헤더에 상주시킨다. 자금 거래 제품에서 잔액은
+       장식이 아니라 입찰 가능 여부를 결정하는 1차 정보다. 홀드가 있으면 warning 점으로 병기.
+     · 활성 표시는 퍼플이 아니라 near-black 밑줄 — 강조는 색이 아니라 무게로(§1.2).
+   ══════════════════════════════════════════════════════════════════════════════ */
+.site-header{
+  position:sticky; top:0; z-index:var(--z-header);
+  background:var(--surface); border-bottom:1px solid var(--border);
+  transition:box-shadow var(--d-base) var(--ease);
+}
+.site-header[data-scrolled="true"]{box-shadow:var(--sh-sm);}
+
+.hdr-main{display:flex; align-items:center; gap:var(--s6); height:68px;}
+.hdr-brand{flex:none;}
+
+/* 검색 — §5.2 컨트롤 경계는 border-strong(1.4.11 3:1) */
+.hdr-search{flex:1 1 auto; max-width:460px; position:relative;}
+.hdr-search input{
+  width:100%; height:40px; padding:0 var(--s4) 0 var(--s10);
+  background:var(--surface-sunken); color:var(--text);
+  border:1px solid var(--border-strong); border-radius:var(--r-md);
+  font-size:.875rem; transition:border-color var(--d-fast), background var(--d-fast), box-shadow var(--d-fast);
+}
+.hdr-search input::placeholder{color:var(--text-subtle);}
+.hdr-search input:hover{border-color:#6F6F75;}
+.hdr-search input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.hdr-search .ico{
+  position:absolute; left:var(--s3); top:50%; transform:translateY(-50%);
+  width:16px; height:16px; color:var(--text-subtle); pointer-events:none;
+}
+
+.hdr-actions{flex:none; display:flex; align-items:center; gap:var(--s3); margin-left:auto;}
+
+/* 아이콘 버튼 — 시각 24px, 타깃 44px(§4 접근성) */
+.icon-btn{
+  position:relative; width:40px; height:40px; display:inline-grid; place-items:center;
+  background:transparent; border:1px solid transparent; border-radius:var(--r-md);
+  color:var(--text-muted); cursor:pointer; transition:background var(--d-fast), color var(--d-fast);
+}
+.icon-btn:hover{background:var(--surface-sunken); color:var(--text);}
+.icon-btn::after{content:""; position:absolute; inset:-2px;}   /* 히트 영역 44 확보 */
+.icon-btn .badge{
+  position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:var(--r-full);
+  background:var(--primary); box-shadow:0 0 0 2px var(--surface);   /* 퍼플 = 액센트(상태 점) */
+}
+
+/* 잔액 — 로그인 후에만. font-num 으로 폭 고정 */
+.hdr-balance{
+  display:flex; flex-direction:column; align-items:flex-end; gap:1px;
+  padding:0 var(--s3); border-left:1px solid var(--border); line-height:1.2;
+}
+.hdr-balance .k{font-size:.6875rem; color:var(--text-subtle);}
+.hdr-balance .v{font-size:.9375rem; font-weight:700; letter-spacing:-.01em;}
+.hdr-balance .v .u{font-size:.75rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+.hdr-balance .hold{
+  display:inline-flex; align-items:center; gap:var(--s1); font-size:.6875rem; color:var(--warning); font-weight:600;
+}
+.hdr-balance .hold::before{content:""; width:5px; height:5px; border-radius:var(--r-full); background:var(--warning);}
+
+.hdr-account{
+  display:inline-flex; align-items:center; gap:var(--s2); padding:var(--s1) var(--s2) var(--s1) var(--s1);
+  border-radius:var(--r-md); text-decoration:none; color:var(--text);
+  transition:background var(--d-fast);
+}
+.hdr-account:hover{background:var(--surface-sunken); color:var(--text);}
+.hdr-account .avatar{
+  width:28px; height:28px; border-radius:var(--r-full); flex:none;
+  background:var(--surface-sunken); border:1px solid var(--border);
+  display:grid; place-items:center; font-size:.75rem; font-weight:700; color:var(--text-muted);
+}
+.hdr-account .nick{font-size:.875rem; font-weight:600; letter-spacing:-.01em;}
+
+.hdr-signin{font-size:.875rem; font-weight:600; color:var(--text); text-decoration:none; padding:var(--s2) var(--s1);}
+.hdr-signin:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+
+/* 2행 — 주 내비 */
+.hdr-nav{border-top:1px solid var(--border-muted);}
+.hdr-nav .inner{display:flex; align-items:center; gap:var(--s6); height:46px;}
+.nav-list{display:flex; align-items:center; gap:var(--s6); list-style:none; margin:0; padding:0; min-width:0;}
+.nav-list a{
+  position:relative; display:inline-flex; align-items:center; height:46px;
+  font-size:.9375rem; font-weight:600; letter-spacing:-.01em;
+  color:var(--text-muted); text-decoration:none; white-space:nowrap;
+  transition:color var(--d-fast);
+}
+.nav-list a:hover{color:var(--text);}
+.nav-list a[aria-current="page"]{color:var(--text); font-weight:700;}
+/* 활성 = near-black 2px 밑줄. 색이 아니라 무게·형태로 표시한다(§1.2) */
+.nav-list a[aria-current="page"]::after{
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--text);
+}
+.hdr-nav .nav-cta{margin-left:auto; flex:none;}
+.hdr-nav .nav-aside{
+  margin-left:auto; display:flex; align-items:center; gap:var(--s4); flex:none;
+  font-size:.8125rem; color:var(--text-subtle);
+}
+.hdr-nav .nav-aside a{color:var(--text-muted); text-decoration:none;}
+.hdr-nav .nav-aside a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+
+/* 모바일 헤더: 검색을 2행으로 내리고, 내비는 가로 스크롤 */
+.hdr-mobile-only{display:none;}
+@media (max-width:860px){
+  .hdr-main{height:56px; gap:var(--s3);}
+  .hdr-search{display:none;}
+  .hdr-mobile-only{display:flex;}
+  .hdr-balance{display:none;}
+  .hdr-account .nick{display:none;}
+  .hdr-nav .inner{gap:var(--s4); height:44px;}
+  .nav-list{gap:var(--s5); overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;}
+  .nav-list::-webkit-scrollbar{display:none;}
+  .nav-list a{height:44px; font-size:.875rem;}
+  .hdr-nav .nav-aside{display:none;}
+  .hdr-nav .nav-cta .btn{height:32px; padding:0 var(--s3); font-size:.8125rem;}
+}
+/* 모바일 검색 바 — 헤더 아래 별도 행 */
+.mobile-search{display:none; border-bottom:1px solid var(--border); background:var(--surface); padding:var(--s3) 0;}
+.mobile-search .box{position:relative;}
+.mobile-search input{
+  width:100%; height:40px; padding:0 var(--s4) 0 var(--s10);
+  background:var(--surface-sunken); border:1px solid var(--border-strong); border-radius:var(--r-md); font-size:.875rem;
+}
+.mobile-search input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.mobile-search .ico{position:absolute; left:var(--s3); top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-subtle);}
+@media (max-width:860px){ .mobile-search{display:block;} }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   6. 아이템 아트 슬롯 — 결정 ④ (Game-Color Containment 의 유일한 창)
+   ──────────────────────────────────────────────────────────────────────────────
+   원본 자산은 l=50×93px, s=26×28px 의 작은 스프라이트다(실측). 이걸 카드 폭에 맞춰
+   늘리면 뭉개진다 → 대안 3개를 검토했다:
+     (a) 원본 1x 그대로   → 너무 작아 목록에서 아이템이 안 읽힌다. 기각.
+     (b) 부드러운 업스케일 → 5배 확대 시 흐릿함이 "저해상도 사고"로 보인다. 기각.
+     (c) [채택] 정수배 nearest-neighbor 확대(2x/3x) + 검정 슬롯에 여백을 두고 중앙 배치.
+         흐림이 사라지고 원본 픽셀 그리드가 살아 "의도된 픽셀 아트"로 읽힌다.
+         비정수배(1.5x 등)는 픽셀이 불균등 복제돼 지저분하므로 쓰지 않는다.
+   슬롯은 검정(#000000) — 아트가 검정 전제로 그려졌다(§2.1). 아트 밖으로 확장하지 않는다.
+   레벨은 아트에 이미 구워져 있으므로 웹이 "Lv.7"을 중복 표기하지 않는다(P-013).
+   ══════════════════════════════════════════════════════════════════════════════ */
+.slot{
+  position:relative; background:var(--slot); display:grid; place-items:center; overflow:hidden;
+}
+.slot img{ image-rendering:pixelated; image-rendering:crisp-edges; }
+.slot--card   {height:210px;}          .slot--card img{width:100px; height:186px;}   /* l 2x */
+.slot--feature{height:300px;}          .slot--feature img{width:150px; height:279px;} /* l 3x */
+.slot--row    {width:64px; height:64px; border-radius:var(--r-sm); flex:none;}
+.slot--row img{width:52px; height:56px;}                                             /* s 2x */
+.slot--tile   {width:44px; height:44px; border-radius:var(--r-sm); flex:none;}
+.slot--tile img{width:26px; height:28px;}                                            /* s 1x */
+
+/* element 배지 — §2.7 라이트 패턴: 소프트 틴트 배경 + near-black 라벨 + solid 도트.
+   흰 배경 위 텍스트 직접 사용 금지(water 2.37:1). 라벨 병기라 1.4.1 위반 아님. */
+.el{
+  display:inline-flex; align-items:center; gap:var(--s1);
+  font-size:.6875rem; font-weight:700; line-height:1.4;
+  padding:var(--s1) var(--s2); border-radius:var(--r-full);
+  color:var(--on-accent-fg); border:1px solid rgba(0,0,0,.06);
+}
+.el .dot{width:8px; height:8px; border-radius:var(--r-full); flex:none;}
+.el--water{background:var(--el-water-soft);} .el--water .dot{background:var(--el-water);}
+.el--fire {background:var(--el-fire-soft);}  .el--fire  .dot{background:var(--el-fire);}
+.el--earth{background:var(--el-earth-soft);} .el--earth .dot{background:var(--el-earth);}
+.el--wind {background:var(--el-wind-soft);}  .el--wind  .dot{background:var(--el-wind);}
+.slot .el{position:absolute; left:10px; top:10px;}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   7. 홈 — 결정 ③ : 무엇을 어떤 순서로 보여줄 것인가
+   ──────────────────────────────────────────────────────────────────────────────
+   PRODUCT.md 의 반-레퍼런스가 "과장 마케팅·가짜 긴급성·과장된 배너"를 금지한다.
+   그래서 큰 카피 + 큰 버튼의 마케팅 히어로는 **쓰지 않는다**. 대신 첫 화면을
+   "거래소의 첫 화면"으로 만든다 — 최상단이 곧 실제 매물이다.
+
+   순서와 근거:
+     1) 마감 임박   — 첫 스크롤 0px. "경매 서비스"임을 3초 안에 증명하는 것은 카피가 아니라
+                      돌아가는 카운트다운이다. 동시에 이 제품의 단 하나의 주장(마감 순간의
+                      정확성)을 첫 화면이 직접 시연한다. 긴급성이 조작이 아니라 실데이터다.
+     2) 카테고리    — 첫 방문자의 다음 질문은 "무엇이 거래되나". 게임의 실제 아이템 축
+                      (블랙/실버/화이트/골드포스/아바타/펫/이벤트)을 그대로 쓴다.
+     3) 진행 중 경매 — 페이지의 본문. 4열 그리드.
+     4) 즉시구매(고정가) — 경매가 부담스러운 사용자의 대안 경로. 그리드가 아니라 **행 목록**으로
+                      구조를 바꿔 카드 그리드 반복(동일 카드 그리드 금지)을 끊는다.
+     5) 최근 시세   — 표. 밀집 tabular 데이터가 "값이 정확한 거래처"라는 주장의 증거가 된다.
+                      카드 두 번 뒤에 오는 표는 리듬상으로도 대비를 만든다.
+     6) 거래 안전   — 신뢰 설명은 **맨 아래**. 위에서 실물을 다 보여준 뒤의 보증이지,
+                      첫인상 자리를 차지할 마케팅 문구가 아니다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+main{display:block;}
+/* 섹션 리듬 — 모든 섹션에 같은 여백을 주면 페이지가 한 박자로만 흐른다.
+   밀도에 따라 3단으로 나눈다: 밀집(표·행 목록) 48px < 기본(카드 그리드) 64px < 여유(마무리) 80px */
+.section{padding:var(--s16) 0;}                 /* 기본: 카드 그리드 */
+.section--tight{padding:var(--s12) 0;}          /* 밀집: 카테고리·고정가·시세 */
+.section--airy{padding:var(--s20) 0 var(--s16);} /* 여유: 마지막 신뢰 블록 */
+.section + .section{border-top:1px solid var(--border-muted);}
+@media (max-width:860px){
+  .section{padding:var(--s12) 0;}
+  .section--tight{padding:var(--s10) 0;}
+  .section--airy{padding:var(--s12) 0;}
+}
+
+.section-head{display:flex; align-items:flex-end; justify-content:space-between; gap:var(--s4); margin-bottom:var(--s6);}
+.section-head h2{
+  margin:0; font-size:1.375rem; font-weight:700; letter-spacing:-.02em; line-height:1.3;
+  text-wrap:balance;
+}
+.section-head .sub{margin:var(--s1) 0 0; font-size:.875rem; color:var(--text-muted); text-wrap:pretty;}
+
+/* ── 7.1 마감 임박 밴드 ──────────────────────────────────────────────────────── */
+.closing{padding:var(--s12) 0 var(--s16); background:var(--bg);}
+.closing .grid{display:grid; grid-template-columns:300px 1fr; gap:var(--s10); align-items:start;}
+@media (max-width:1040px){ .closing .grid{grid-template-columns:1fr; gap:var(--s8);} }
+
+.closing-intro h1{
+  margin:0; font-size:2rem; font-weight:800; letter-spacing:-.03em; line-height:1.2;
+  text-wrap:balance;
+}
+.closing-intro p{margin:var(--s3) 0 0; font-size:.9375rem; color:var(--text-muted); max-width:34ch; text-wrap:pretty;}
+.closing-intro .meta{
+  display:inline-flex; align-items:center; gap:var(--s2); margin-top:var(--s5);
+  font-size:.75rem; color:var(--text-subtle);
+}
+.closing-intro .meta .pulse{
+  width:7px; height:7px; border-radius:var(--r-full); background:var(--primary); flex:none;
+  animation:pulse 2.4s var(--ease) infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+.closing-intro .actions{display:flex; gap:var(--s3); margin-top:var(--s6); flex-wrap:wrap;}
+
+.closing-body{display:grid; grid-template-columns:264px 1fr; gap:var(--s6); align-items:start;}
+@media (max-width:760px){ .closing-body{grid-template-columns:1fr;} }
+
+/* 마감선 게이지 — 브랜드 워드마크의 퍼플 rule 과 같은 형태. 남은 시간 비율을 그대로 그린다 */
+.deadline-bar{height:2px; background:var(--border); overflow:hidden;}
+.deadline-bar > i{
+  display:block; height:100%; background:var(--danger); transform-origin:left center;
+  animation:deplete linear forwards;
+}
+.deadline-bar--warn > i{background:var(--warning);}
+@keyframes deplete{from{transform:scaleX(var(--from,1));} to{transform:scaleX(0);}}
+
+/* 임박 목록(우측) — 카드가 아니라 행. 카드 그리드 반복을 피하고 밀도를 만든다 */
+.closing-list{border-top:1px solid var(--border); }
+.closing-list li{list-style:none;}
+.closing-list ol{margin:0; padding:0;}
+.closing-row{
+  display:flex; align-items:center; gap:var(--s4); padding:var(--s4) var(--s2);
+  border-bottom:1px solid var(--border); text-decoration:none; color:inherit;
+  transition:background var(--d-fast);
+}
+.closing-row:hover{background:var(--surface-sunken); color:inherit;}
+.closing-row .info{min-width:0; flex:1;}
+.closing-row .nm{font-size:.9375rem; font-weight:700; letter-spacing:-.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.closing-row .sub{display:flex; align-items:center; gap:var(--s2); margin-top:var(--s1); font-size:.75rem; color:var(--text-subtle); flex-wrap:wrap;}
+.closing-row .price{text-align:right; flex:none;}
+.closing-row .price .k{font-size:.6875rem; color:var(--text-subtle);}
+.closing-row .price .v{font-size:1.0625rem; font-weight:700; letter-spacing:-.01em;}
+.closing-row .price .v .u{font-size:.75rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+/* 잔여시간 3단계 — §5.9. 여유(text)→T-5분(warning)→T-30초(danger).
+   전 구간을 빨갛게 칠하면 색이 정보를 잃고, 가짜 긴급성이 된다(PRODUCT.md 반-레퍼런스). */
+.closing-row .timer{width:88px; text-align:right; flex:none;}
+.closing-row .timer .t{font-size:1rem; font-weight:700; color:var(--text); letter-spacing:-.01em;}
+.closing-row .timer .t--warn{color:var(--warning);}
+.closing-row .timer .t--crit{color:var(--danger);}
+.closing-row .timer .k{font-size:.6875rem; color:var(--text-subtle);}
+
+/* 속성 퀵필터 — 좌측 열의 실질 진입점. element 색이 허용되는 자리(아이템 필터 칩, §1.2 ③) */
+.el-filters{margin-top:var(--s8); padding-top:var(--s6); border-top:1px solid var(--border);}
+.el-filters .lb{font-size:.75rem; color:var(--text-subtle); display:block; margin-bottom:var(--s3);}
+.el-filters .row{display:flex; flex-wrap:wrap; gap:var(--s2);}
+.el-filters a{
+  text-decoration:none; transition:box-shadow var(--d-fast) var(--ease);
+}
+.el-filters a:hover .el{box-shadow:0 0 0 1px var(--border-strong);}
+@media (max-width:560px){
+  .closing-row{flex-wrap:wrap;}
+  .closing-row .price{margin-left:auto;}
+  .closing-row .timer{width:auto; margin-left:var(--s4);}
+}
+
+/* ── 7.2 아이템 카드 (§5.3) ─────────────────────────────────────────────────── */
+.item-card{
+  display:flex; flex-direction:column; background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;
+  text-decoration:none; color:inherit;
+  transition:box-shadow var(--d-base) var(--ease), border-color var(--d-base) var(--ease), transform var(--d-base) var(--ease);
+}
+.item-card:hover{box-shadow:var(--sh-lg); border-color:var(--border-strong); color:inherit; transform:translateY(-2px);}
+.item-card .body{padding:var(--s4) var(--s4) var(--s5); display:flex; flex-direction:column; flex:1;}
+.item-card .nm{font-size:.9375rem; font-weight:700; letter-spacing:-.01em; line-height:1.35;}
+.item-card .kind{margin-top:var(--s1); font-size:.75rem; color:var(--text-subtle);}
+.item-card .price{
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--s2);
+  margin-top:var(--s4); padding-top:var(--s3); border-top:1px solid var(--border-muted);
+}
+.item-card .price .k{font-size:.6875rem; color:var(--text-subtle); flex:none;}
+.item-card .price .v{font-size:1.1875rem; font-weight:800; letter-spacing:-.02em;}
+.item-card .price .v .u{font-size:.75rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+.item-card .foot{display:flex; align-items:center; justify-content:space-between; gap:var(--s2); margin-top:var(--s3);}
+.item-card .seller{font-size:.75rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.item-card .seller b{color:var(--text); font-weight:600;}
+
+/* 종료 상태 — 딤 + 오버레이(§5.3). 색만이 아니라 텍스트로 확정 */
+.item-card--ended .slot img{opacity:.35; filter:grayscale(1);}
+.item-card--ended .price .v{color:var(--text-muted);}
+.slot .ended-mask{
+  position:absolute; inset:0; display:grid; place-items:center;
+  background:rgba(0,0,0,.55); color:#fff; font-size:.8125rem; font-weight:700; letter-spacing:.02em;
+}
+
+/* 카드 그리드 — 브레이크포인트 없이 auto-fit */
+.card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(232px,1fr)); gap:var(--s6) var(--s5);}
+@media (max-width:520px){ .card-grid{grid-template-columns:repeat(2,1fr); gap:var(--s5) var(--s3);} }
+
+/* 피처드 카드(마감 임박 1위) — 한 번만 크기를 깨서 서열을 만든다 */
+.item-card--feature .body{padding:var(--s5);}
+.item-card--feature .nm{font-size:1.0625rem;}
+.item-card--feature .price .v{font-size:1.5rem;}
+
+/* ── 7.3 카테고리 진입 ───────────────────────────────────────────────────────── */
+/* 카드가 아니라 타일 나열. 얇은 선 격자로만 구획해 홈에서 카드 반복을 늘리지 않는다 */
+.cat-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr));
+  border-top:1px solid var(--border); border-left:1px solid var(--border);
+}
+.cat-tile{
+  display:flex; align-items:center; gap:var(--s3); padding:var(--s4);
+  border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+  text-decoration:none; color:inherit; transition:background var(--d-fast);
+}
+.cat-tile:hover{background:var(--surface-sunken); color:inherit;}
+.cat-tile .t{min-width:0;}
+/* 이름·개수는 각각 한 줄을 차지한다. inline 으로 두면 좁은 열에서 개수가 이름 뒤로 흘러 붙는다 */
+.cat-tile .t .nm{display:block; font-size:.875rem; font-weight:700; letter-spacing:-.01em; white-space:nowrap;}
+.cat-tile .t .ct{display:block; font-size:.75rem; color:var(--text-subtle); margin-top:1px; white-space:nowrap;}
+
+/* ── 7.4 고정가 행 목록 ──────────────────────────────────────────────────────── */
+.fixed-list{border-top:1px solid var(--border);}
+.fixed-row{
+  display:flex; align-items:center; gap:var(--s4);
+  padding:var(--s4) var(--s2); border-bottom:1px solid var(--border);
+}
+.fixed-row:hover{background:var(--surface-sunken);}
+.fixed-row .info{flex:1; min-width:0;}
+.fixed-row .nm{font-size:.9375rem; font-weight:700; letter-spacing:-.01em;}
+.fixed-row .nm a{color:inherit; text-decoration:none;}
+.fixed-row .nm a:hover{text-decoration:underline; text-underline-offset:3px;}
+.fixed-row .sub{display:flex; align-items:center; gap:var(--s2); margin-top:var(--s1); font-size:.75rem; color:var(--text-subtle); flex-wrap:wrap;}
+.fixed-row .price{text-align:right; flex:none; min-width:132px;}
+.fixed-row .price .v{font-size:1.125rem; font-weight:800; letter-spacing:-.02em;}
+.fixed-row .price .v .u{font-size:.75rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+.fixed-row .act{flex:none;}
+@media (max-width:640px){
+  .fixed-row{flex-wrap:wrap; gap:var(--s3);}
+  .fixed-row .price{min-width:0; margin-left:auto; text-align:right;}
+  .fixed-row .act{width:100%;} .fixed-row .act .btn{width:100%;}
+}
+
+/* ── 7.5 시세 표 ─────────────────────────────────────────────────────────────── */
+.price-table{width:100%; border-collapse:collapse; font-size:.875rem;}
+.price-table caption{
+  caption-side:bottom; text-align:left; margin-top:var(--s3);
+  font-size:.75rem; color:var(--text-subtle);
+}
+.price-table th{
+  text-align:left; font-size:.75rem; font-weight:600; color:var(--text-muted);
+  padding:var(--s2) var(--s3); border-bottom:1px solid var(--border-strong); white-space:nowrap;
+}
+.price-table td{padding:var(--s3); border-bottom:1px solid var(--border-muted); vertical-align:middle;}
+.price-table tbody tr:hover{background:var(--surface-sunken);}
+.price-table .r{text-align:right;}
+.price-table .item{display:flex; align-items:center; gap:var(--s3); min-width:0;}
+.price-table .item .nm{font-weight:600; letter-spacing:-.01em; white-space:nowrap;}
+.price-table .amt{font-weight:700; letter-spacing:-.01em;}
+.price-table .delta{display:inline-flex; align-items:center; gap:var(--s1); font-weight:700; font-size:.8125rem;}
+.price-table .delta--up{color:var(--danger);}      /* 상승=적, 하락=청 (국내 거래 관례) */
+.price-table .delta--down{color:var(--info);}
+.price-table .delta--flat{color:var(--text-subtle);}
+.table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+@media (max-width:640px){ .price-table{min-width:560px;} }
+
+/* ── 7.6 거래 안전 ───────────────────────────────────────────────────────────── */
+.trust{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:var(--s8) var(--s10);}
+.trust h3{margin:0 0 var(--s2); font-size:.9375rem; font-weight:700; letter-spacing:-.01em;}
+.trust h3::before{
+  content:""; display:block; width:24px; height:2px; background:var(--text); margin-bottom:var(--s3);
+}
+.trust p{margin:0; font-size:.875rem; color:var(--text-muted); line-height:1.65; max-width:44ch; text-wrap:pretty;}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   8. 푸터
+   ──────────────────────────────────────────────────────────────────────────────
+   현행: 없음. 국내 커머스에서 신뢰의 상당 부분은 푸터의 사업자 고지·고객센터에서 온다.
+   3단 구성: (a) 링크 열 + 고객센터  (b) 사업자/법적 고지(함몰 배경)  (c) 워드마크·저작권.
+   고지값은 실제 사업자 정보가 없으므로 자리표시자임을 명시한다(가짜 등록번호 창작 금지).
+   ══════════════════════════════════════════════════════════════════════════════ */
+.site-footer{border-top:1px solid var(--border); background:var(--surface);}
+.footer-top{display:grid; grid-template-columns:1.4fr repeat(3,1fr) 1.3fr; gap:var(--s8); padding:var(--s16) 0 var(--s12);}
+@media (max-width:960px){ .footer-top{grid-template-columns:1fr 1fr; gap:var(--s8) var(--s6); padding:var(--s12) 0 var(--s8);} }
+@media (max-width:560px){ .footer-top{grid-template-columns:1fr;} }
+
+.footer-brand .tagline{margin:var(--s3) 0 0; font-size:.8125rem; color:var(--text-muted); line-height:1.7; max-width:30ch;}
+.footer-col h3{margin:0 0 var(--s3); font-size:.8125rem; font-weight:700; letter-spacing:-.01em;}
+.footer-col ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:var(--s2);}
+.footer-col a{font-size:.8125rem; color:var(--text-muted); text-decoration:none;}
+.footer-col a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+
+.footer-support{border-left:1px solid var(--border); padding-left:var(--s6);}
+@media (max-width:960px){ .footer-support{border-left:0; padding-left:0; grid-column:1/-1; border-top:1px solid var(--border); padding-top:var(--s6);} }
+.footer-support h3{margin:0 0 var(--s2); font-size:.8125rem; font-weight:700;}
+.footer-support .tel{font-size:1.375rem; font-weight:800; letter-spacing:-.02em; line-height:1.2;}
+.footer-support .hours{margin:var(--s2) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.7;}
+.footer-support .btn{margin-top:var(--s4);}
+
+.footer-legal{background:var(--surface-sunken); border-top:1px solid var(--border); padding:var(--s6) 0;}
+.footer-legal dl{
+  margin:0; display:flex; flex-wrap:wrap; gap:var(--s1) var(--s5);
+  font-size:.75rem; color:var(--text-muted); line-height:1.8;
+}
+.footer-legal dl > div{display:flex; gap:var(--s2);}
+.footer-legal dt{color:var(--text-subtle);}
+.footer-legal dd{margin:0;}
+.footer-legal .disclaimer{
+  margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.75; max-width:78ch; text-wrap:pretty;
+}
+.footer-bottom{padding:var(--s5) 0 var(--s10); display:flex; align-items:center; justify-content:space-between; gap:var(--s4); flex-wrap:wrap;}
+.footer-bottom .copy{font-size:.75rem; color:var(--text-subtle);}
+.footer-bottom .policies{display:flex; gap:var(--s4); flex-wrap:wrap;}
+.footer-bottom .policies a{font-size:.75rem; color:var(--text-muted); text-decoration:none;}
+.footer-bottom .policies a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+.footer-bottom .policies a.strong{color:var(--text); font-weight:700;}
+
+/* ── 모션 감소 존중 (§4 · accessibility §7) ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important; scroll-behavior:auto !important;
+  }
+  /* 게이지는 애니메이션 대신 현재 비율을 정적으로 그린다(정보 손실 방지) */
+  .deadline-bar > i{animation:none; transform:scaleX(var(--from,1));}
+  .item-card:hover{transform:none;}
+}
+</style>
+</head>
+
+<body>
+
+<a href="#main" class="sr-only">본문 바로가기</a>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     헤더 (결정 ②)
+     ══════════════════════════════════════════════════════════════════════════ -->
+<header class="site-header" id="siteHeader" data-scrolled="false">
+  <div class="container">
+    <div class="hdr-main">
+      <!-- 브랜드 (결정 ①) — 활자 워드마크. 로고 이미지 없음 -->
+      <a href="#" class="wordmark hdr-brand" aria-label="FinalCall 홈">
+        <span class="wm-a">FINAL</span><span class="wm-b">CALL</span>
+      </a>
+
+      <!-- 검색: 마켓플레이스의 1차 IA. 헤더 1행 중앙에 상주 -->
+      <form class="hdr-search" role="search" onsubmit="return false;">
+        <label for="q" class="sr-only">아이템 검색</label>
+        <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"></circle>
+          <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+        <input id="q" type="search" placeholder="아이템·판매자 검색" autocomplete="off">
+      </form>
+
+      <div class="hdr-actions">
+        <!-- ── 비로그인 상태 ───────────────────────────────────────────────── -->
+        <a href="#" class="hdr-signin">로그인</a>
+        <a href="#" class="btn btn--outline btn--sm">회원가입</a>
+
+        <!-- ── 로그인 상태 ─────────────────────────────────────────────────
+             잔액을 헤더에 상주시킨다: 자금 거래 제품에서 "지금 입찰할 수 있는가"는
+             매 화면의 1차 정보다. 홀드 금액은 warning 점으로 병기(색 단독 전달 아님). -->
+        
+        
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- 2행: 주 내비 + 판매 CTA -->
+  <div class="hdr-nav">
+    <div class="container">
+      <div class="inner">
+        <nav aria-label="주 메뉴">
+          <ul class="nav-list">
+            <li><a href="#" aria-current="page">홈</a></li>
+            <li><a href="#">경매</a></li>
+            <li><a href="#">고정가</a></li>
+            <li><a href="#">시세</a></li>
+          </ul>
+        </nav>
+        <!-- 비로그인: 보조 링크가 오른쪽. 로그인: 판매 CTA(주 액션)가 오른쪽 -->
+        <div class="nav-aside">
+          <a href="#">이용 안내</a>
+          <a href="#">수수료</a>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 모바일 검색 행 — 데스크톱에서는 헤더 1행에 있던 것이 내려온다 -->
+<div class="mobile-search">
+  <div class="container">
+    <form class="box" role="search" onsubmit="return false;">
+      <label for="qm" class="sr-only">아이템 검색</label>
+      <svg class="ico" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"></circle>
+        <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+      <input id="qm" type="search" placeholder="아이템·판매자 검색" autocomplete="off">
+    </form>
+  </div>
+</div>
+
+<main id="main">
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ① 마감 임박 — 홈의 첫 화면. 카피가 아니라 실데이터가 히어로다.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <section class="closing" aria-labelledby="h-closing">
+    <div class="container">
+      <div class="grid">
+
+        <div class="closing-intro">
+          <h1 id="h-closing">지금 마감되는 경매</h1>
+          <p>남은 시간과 최고가는 서버 시각 기준으로 표시됩니다. 마감 직전 30초에 입찰이 들어오면 마감이 자동 연장됩니다.</p>
+          <p class="meta"><span class="pulse" aria-hidden="true"></span> 10초마다 갱신 · 마지막 갱신 19:42:10</p>
+          <div class="actions">
+            <a href="#" class="btn">경매 전체 보기</a>
+            <a href="#" class="btn btn--outline">회원가입</a>
+            
+          </div>
+
+          <!-- 속성으로 바로 좁히기: 좌측 열을 채우는 장식이 아니라 실제 진입 경로다.
+               element 색은 여기(아이템 필터 칩)에서 허용된다 — 소프트 틴트 + near-black 라벨 + 도트. -->
+          <div class="el-filters">
+            <span class="lb">속성으로 좁혀 보기</span>
+            <div class="row">
+              <a href="#"><span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span></a>
+              <a href="#"><span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span></a>
+              <a href="#"><span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span></a>
+              <a href="#"><span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="closing-body">
+          <!-- 서열 1위만 카드 크기를 깬다. 그리드 안에서 크기로 위계를 만드는 유일한 지점 -->
+          <a href="#" class="item-card item-card--feature">
+            <div class="slot slot--feature">
+              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png" alt="7레벨 불속성 칼 카드 아트" width="150" height="279">
+              <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
+            </div>
+            <div class="deadline-bar" role="presentation"><i style="--from:.09; animation-duration:178s;"></i></div>
+            <div class="body">
+              <div class="nm">7레벨 칼</div>
+              <div class="kind">블랙 · 무기 · 채널당 고수채널</div>
+              <div class="price">
+                <span class="k">현재 최고가</span>
+                <span class="v num">1,280,000<span class="u">G</span></span>
+              </div>
+              <div class="foot">
+                <span class="seller">판매자 <b>달빛상인</b></span>
+                <span class="chip chip--warning"><span aria-hidden="true">○</span> <span class="num" data-countdown="178" data-left="177">02:57</span></span>
+              </div>
+            </div>
+          </a>
+
+          <!-- 나머지는 행 목록. 같은 카드를 4번 반복하지 않는다 -->
+          <div class="closing-list">
+            <ol>
+              <li><a class="closing-row" href="#">
+                <span class="slot slot--row">
+                  <img src="../../game_ui/item_info/card_image/gold_black/level5/s/water/bow.png" alt="5레벨 물속성 활 카드 아트" width="52" height="56">
+                </span>
+                <span class="info">
+                  <span class="nm">5레벨 활</span>
+                  <span class="sub"><span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span> 블랙 · 무기 · 입찰 12회</span>
+                </span>
+                <span class="price"><span class="k">최고가</span><br><span class="v num">640,000<span class="u">G</span></span></span>
+                <span class="timer"><span class="t t--warn num" data-countdown="252" data-left="251">04:11</span><br><span class="k">남음</span></span>
+              </a></li>
+
+              <li><a class="closing-row" href="#">
+                <span class="slot slot--row">
+                  <img src="../../game_ui/item_info/card_image/pet/s/fire_dragon.png" alt="레드 드래곤 펫 카드 아트" width="52" height="56">
+                </span>
+                <span class="info">
+                  <span class="nm">레드 드래곤</span>
+                  <span class="sub">펫 · 입찰 31회</span>
+                </span>
+                <span class="price"><span class="k">최고가</span><br><span class="v num">3,900,000<span class="u">G</span></span></span>
+                <span class="timer"><span class="t num" data-countdown="1043" data-left="1042">17:22</span><br><span class="k">남음</span></span>
+              </a></li>
+
+              <li><a class="closing-row" href="#">
+                <span class="slot slot--row">
+                  <img src="../../game_ui/item_info/card_image/gold_force/s/scard_gold_force_sword.png" alt="골드포스 무기 카드 아트" width="52" height="56">
+                </span>
+                <span class="info">
+                  <span class="nm">골드포스 · 무기</span>
+                  <span class="sub">강화 · 잔여 72시간 · 입찰 4회</span>
+                </span>
+                <span class="price"><span class="k">최고가</span><br><span class="v num">180,000<span class="u">G</span></span></span>
+                <span class="timer"><span class="t num" data-countdown="1580" data-left="1579">26:19</span><br><span class="k">남음</span></span>
+              </a></li>
+
+              <li><a class="closing-row" href="#">
+                <span class="slot slot--row">
+                  <img src="../../game_ui/item_info/card_image/white/s/wind.png" alt="바람 정령 카드 아트" width="52" height="56">
+                </span>
+                <span class="info">
+                  <span class="nm">바람 정령 카드</span>
+                  <span class="sub"><span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span> 화이트 · 입찰 2회</span>
+                </span>
+                <span class="price"><span class="k">최고가</span><br><span class="v num">45,000<span class="u">G</span></span></span>
+                <span class="timer"><span class="t num" data-countdown="2461" data-left="2460">41:00</span><br><span class="k">남음</span></span>
+              </a></li>
+            </ol>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ② 카테고리 — "무엇이 거래되나". 게임의 실제 카드 축을 그대로 쓴다.
+          아트는 검정 슬롯 안에만 들어간다(Containment). 타일 자체는 커머스 크롬.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--tight" aria-labelledby="h-cats">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 id="h-cats">무엇이 거래되나</h2>
+          <p class="sub">원게임의 카드 종류 그대로 분류합니다. 레벨·속성으로 다시 좁힐 수 있습니다.</p>
+        </div>
+        <a href="#" class="link-more">전체 카테고리 <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="cat-grid">
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/gold_black/level7/s/fire/sword.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">블랙카드</span><span class="ct num">1,284개</span></span>
+        </a>
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/silver/s/silver_char1.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">실버카드</span><span class="ct num">862개</span></span>
+        </a>
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/white/s/water.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">정령카드</span><span class="ct num">2,013개</span></span>
+        </a>
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/gold_force/s/scard_gold_force_armor.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">골드포스</span><span class="ct num">431개</span></span>
+        </a>
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/avatar/s/item1_armor.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">아바타</span><span class="ct num">596개</span></span>
+        </a>
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/pet/s/leo.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">펫</span><span class="ct num">318개</span></span>
+        </a>
+        <a class="cat-tile" href="#">
+          <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/event/s/event_card_1_s.png" alt="" width="26" height="28"></span>
+          <span class="t"><span class="nm">이벤트</span><span class="ct num">77개</span></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ③ 진행 중인 경매 — 페이지의 본문
+       ════════════════════════════════════════════════════════════════════════ -->
+  <section class="section" aria-labelledby="h-auctions">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 id="h-auctions">진행 중인 경매</h2>
+          <p class="sub">최근 등록순 · <span class="num">3,412</span>건</p>
+        </div>
+        <a href="#" class="link-more">경매 전체 보기 <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="card-grid">
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/gold_black/level5/l/water/bow.png" alt="5레벨 물속성 활 카드 아트" width="100" height="186">
+            <span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span>
+          </div>
+          <div class="body">
+            <div class="nm">5레벨 활</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">640,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">12</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> <span class="num" data-countdown="512" data-left="511">08:31</span></span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/gold_black/level3/l/wind/wand.png" alt="3레벨 바람속성 완드 카드 아트" width="100" height="186">
+            <span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span>
+          </div>
+          <div class="body">
+            <div class="nm">3레벨 완드</div>
+            <div class="kind">블랙 · 무기</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">210,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">5</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> 2일 03:11</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/gold_black/level6/l/earth/armor.png" alt="6레벨 땅속성 갑옷 카드 아트" width="100" height="186">
+            <span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span>
+          </div>
+          <div class="body">
+            <div class="nm">6레벨 갑옷</div>
+            <div class="kind">블랙 · 방어구</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">880,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">19</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> 1일 11:40</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/pet/l/leo.png" alt="레오 펫 카드 아트" width="100" height="186">
+          </div>
+          <div class="body">
+            <div class="nm">레오</div>
+            <div class="kind">펫</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">2,450,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">27</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> 0일 06:02</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/white/l/fire.png" alt="불 정령 카드 아트" width="100" height="186">
+            <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
+          </div>
+          <div class="body">
+            <div class="nm">불 정령 카드</div>
+            <div class="kind">화이트 · 정령</div>
+            <div class="price"><span class="k">시작가</span><span class="v num">38,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">0</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> 3일 20:15</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/avatar/l/item1_weapon1.png" alt="아바타 무기 카드 아트" width="100" height="186">
+          </div>
+          <div class="body">
+            <div class="nm">아르메 블랑슈</div>
+            <div class="kind">아바타 · 무기</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">520,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">8</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> 0일 22:47</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="item-card">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/silver/l/silver_char1.png" alt="실버 캐릭터 카드 아트" width="100" height="186">
+          </div>
+          <div class="body">
+            <div class="nm">실버 · 자이로</div>
+            <div class="kind">실버 · 캐릭터</div>
+            <div class="price"><span class="k">최고가</span><span class="v num">96,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">3</b>회</span>
+              <span class="chip chip--neutral"><span aria-hidden="true">·</span> 1일 04:33</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- 종료 상태 — 홈에도 마감 직후 매물이 남는다. 딤 + 텍스트로 확정(색 단독 금지) -->
+        <div class="item-card item-card--ended" aria-label="마감된 경매">
+          <div class="slot slot--card">
+            <img src="../../game_ui/item_info/card_image/gold_force/l/bcard_gold_force_bow.png" alt="골드포스 활 카드 아트" width="100" height="186">
+            <span class="ended-mask">마감 · 낙찰</span>
+          </div>
+          <div class="body">
+            <div class="nm">골드포스 · 활</div>
+            <div class="kind">강화 · 잔여 72시간</div>
+            <div class="price"><span class="k">낙찰가</span><span class="v num">175,000<span class="u">G</span></span></div>
+            <div class="foot">
+              <span class="seller">입찰 <b class="num">14</b>회</span>
+              <span class="chip chip--success"><span aria-hidden="true">✓</span> 낙찰 완료</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ④ 즉시구매(고정가) — 구조를 바꾼다: 카드 그리드가 아니라 행 목록.
+          홈에서 같은 카드 격자가 두 번 반복되는 것을 막는 장치다.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--tight" aria-labelledby="h-fixed">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 id="h-fixed">기다리지 않고 바로 사기</h2>
+          <p class="sub">고정가 매물은 입찰 없이 즉시 거래됩니다.</p>
+        </div>
+        <a href="#" class="link-more">고정가 전체 보기 <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="fixed-list">
+        <div class="fixed-row">
+          <span class="slot slot--row"><img src="../../game_ui/item_info/card_image/gold_black/level9/s/water/sword.png" alt="9레벨 물속성 칼 카드 아트" width="52" height="56"></span>
+          <span class="info">
+            <span class="nm"><a href="#">9레벨 칼</a></span>
+            <span class="sub"><span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span> 블랙 · 무기 · 판매자 <b>바람의검객</b></span>
+          </span>
+          <span class="price"><span class="v num">4,100,000<span class="u">G</span></span></span>
+          <span class="act"><button class="btn btn--sm" type="button">즉시구매</button></span>
+        </div>
+
+        <div class="fixed-row">
+          <span class="slot slot--row"><img src="../../game_ui/item_info/card_image/pet/s/penguin.png" alt="펭귄 펫 카드 아트" width="52" height="56"></span>
+          <span class="info">
+            <span class="nm"><a href="#">펭귄</a></span>
+            <span class="sub">펫 · 판매자 <b>서리한</b></span>
+          </span>
+          <span class="price"><span class="v num">760,000<span class="u">G</span></span></span>
+          <span class="act"><button class="btn btn--sm" type="button">즉시구매</button></span>
+        </div>
+
+        <div class="fixed-row">
+          <span class="slot slot--row"><img src="../../game_ui/item_info/card_image/white/s/earth.png" alt="땅 정령 카드 아트" width="52" height="56"></span>
+          <span class="info">
+            <span class="nm"><a href="#">땅 정령 카드</a></span>
+            <span class="sub"><span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span> 화이트 · 정령 · 판매자 <b>초원지기</b></span>
+          </span>
+          <span class="price"><span class="v num">41,000<span class="u">G</span></span></span>
+          <span class="act"><button class="btn btn--sm" type="button">즉시구매</button></span>
+        </div>
+
+        <!-- 잔액 부족 상태 — 로그인 후에만 판정 가능. 비활성 사유를 반드시 병기한다 -->
+        <div class="fixed-row">
+          <span class="slot slot--row"><img src="../../game_ui/item_info/card_image/avatar/s/item2_helm.png" alt="아바타 투구 카드 아트" width="52" height="56"></span>
+          <span class="info">
+            <span class="nm"><a href="#">아바타 투구</a></span>
+            <span class="sub">
+              아바타 · 방어구 · 판매자 <b>달빛상인</b>
+              
+            </span>
+          </span>
+          <span class="price"><span class="v num">2,900,000<span class="u">G</span></span></span>
+          <span class="act">
+            <button class="btn btn--sm" type="button">즉시구매</button>
+            
+            <span id="lackHint" class="sr-only">가용 게임머니가 부족해 즉시구매할 수 없습니다.</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ⑤ 최근 시세 — 표. 밀집 tabular 데이터가 "값이 정확하다"는 주장의 증거다.
+          카드가 두 번 지나간 뒤라 리듬상으로도 대비를 만든다.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--tight" aria-labelledby="h-prices">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 id="h-prices">최근 낙찰 시세</h2>
+          <p class="sub">체결된 거래만 집계합니다. 등록가·호가는 포함하지 않습니다.</p>
+        </div>
+        <a href="#" class="link-more">시세 전체 보기 <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="table-scroll">
+        <table class="price-table">
+          <caption>2026-07-18 19:40 기준 · 최근 7일 체결 <span class="num">1,942</span>건 집계. 시세는 참고값이며 실제 체결가를 보장하지 않습니다.</caption>
+          <thead>
+            <tr>
+              <th scope="col">아이템</th>
+              <th scope="col" class="r">최근 낙찰가</th>
+              <th scope="col" class="r">7일 평균</th>
+              <th scope="col" class="r">전주 대비</th>
+              <th scope="col" class="r">체결</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="item">
+                <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/gold_black/level7/s/fire/sword.png" alt="" width="26" height="28"></span>
+                <span class="nm">7레벨 칼 · 불</span></span></td>
+              <td class="r amt num">1,310,000</td>
+              <td class="r num">1,246,500</td>
+              <td class="r"><span class="delta delta--up"><span aria-hidden="true">▲</span> <span class="num">5.1%</span></span></td>
+              <td class="r num">148</td>
+            </tr>
+            <tr>
+              <td><span class="item">
+                <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/gold_black/level5/s/water/bow.png" alt="" width="26" height="28"></span>
+                <span class="nm">5레벨 활 · 물</span></span></td>
+              <td class="r amt num">628,000</td>
+              <td class="r num">651,200</td>
+              <td class="r"><span class="delta delta--down"><span aria-hidden="true">▼</span> <span class="num">3.6%</span></span></td>
+              <td class="r num">92</td>
+            </tr>
+            <tr>
+              <td><span class="item">
+                <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/pet/s/fire_dragon.png" alt="" width="26" height="28"></span>
+                <span class="nm">레드 드래곤 · 펫</span></span></td>
+              <td class="r amt num">3,880,000</td>
+              <td class="r num">3,875,000</td>
+              <td class="r"><span class="delta delta--flat"><span aria-hidden="true">±</span> <span class="num">0.1%</span></span></td>
+              <td class="r num">21</td>
+            </tr>
+            <tr>
+              <td><span class="item">
+                <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/white/s/wind.png" alt="" width="26" height="28"></span>
+                <span class="nm">바람 정령 카드</span></span></td>
+              <td class="r amt num">46,500</td>
+              <td class="r num">44,100</td>
+              <td class="r"><span class="delta delta--up"><span aria-hidden="true">▲</span> <span class="num">5.4%</span></span></td>
+              <td class="r num">613</td>
+            </tr>
+            <tr>
+              <td><span class="item">
+                <span class="slot slot--tile"><img src="../../game_ui/item_info/card_image/gold_force/s/scard_gold_force_armor.png" alt="" width="26" height="28"></span>
+                <span class="nm">골드포스 · 방어구</span></span></td>
+              <td class="r amt num">168,000</td>
+              <td class="r num">172,400</td>
+              <td class="r"><span class="delta delta--down"><span aria-hidden="true">▼</span> <span class="num">2.6%</span></span></td>
+              <td class="r num">204</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       ⑥ 거래 안전 — 맨 아래. 위에서 실물을 다 보여준 뒤의 보증이다.
+          아이콘 원 3개짜리 카드 그리드를 쓰지 않는다(활자 + 짧은 rule 만).
+       ════════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--airy" aria-labelledby="h-trust">
+    <div class="container">
+      <div class="section-head"><div><h2 id="h-trust">거래가 안전한 이유</h2></div></div>
+      <div class="trust">
+        <div>
+          <h3>입찰하면 금액이 홀드됩니다</h3>
+          <p>입찰한 금액은 즉시 사용할 수 없도록 잠깁니다. 상위 입찰에 밀리면 자동으로 풀립니다. 잔액이 없는 입찰은 애초에 성립하지 않습니다.</p>
+        </div>
+        <div>
+          <h3>마감 30초 안의 입찰은 마감을 미룹니다</h3>
+          <p>마지막 순간에 값을 던져 낚아채는 방식을 막습니다. 남은 시간이 30초 아래일 때 입찰이 들어오면 마감 시각이 다시 늘어납니다.</p>
+        </div>
+        <div>
+          <h3>낙찰 대금은 정산까지 보관됩니다</h3>
+          <p>구매 대금은 곧장 판매자에게 가지 않고 정산 단계에서 옮겨집니다. 취소·유찰이면 홀드된 금액이 그대로 돌아옵니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     푸터
+     ══════════════════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="wordmark wordmark--sm"><span class="wm-a">FINAL</span><span class="wm-b">CALL</span></span>
+        <p class="tagline">마감 직전에도 최고가와 남은 시간이 흔들리지 않는 게임 아이템 경매.</p>
+      </div>
+
+      <div class="footer-col">
+        <h3>거래</h3>
+        <ul>
+          <li><a href="#">경매</a></li>
+          <li><a href="#">고정가</a></li>
+          <li><a href="#">시세</a></li>
+          <li><a href="#">판매하기</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h3>내 계정</h3>
+        <ul>
+          <li><a href="#">인벤토리</a></li>
+          <li><a href="#">주문 내역</a></li>
+          <li><a href="#">지갑·충전</a></li>
+          <li><a href="#">프로필</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h3>안내</h3>
+        <ul>
+          <li><a href="#">이용 안내</a></li>
+          <li><a href="#">수수료 정책</a></li>
+          <li><a href="#">입찰·낙찰 규칙</a></li>
+          <li><a href="#">자주 묻는 질문</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-support">
+        <h3>고객센터</h3>
+        <p class="tel num">1670-0000</p>
+        <p class="hours">평일 10:00–18:00 (점심 13:00–14:00)<br>주말·공휴일 휴무 · 문의는 24시간 접수</p>
+        <a href="#" class="btn btn--outline btn--sm">1:1 문의하기</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 사업자 고지 — 국내 커머스 신뢰의 실체. 실제 값이 없으므로 자리표시자임을 명시한다
+       (가짜 사업자등록번호·통신판매업신고번호를 창작하지 않는다) -->
+  <div class="footer-legal">
+    <div class="container">
+      <dl>
+        <div><dt>상호</dt><dd>(주)파이널콜</dd></div>
+        <div><dt>대표</dt><dd>미정</dd></div>
+        <div><dt>사업자등록번호</dt><dd class="num">000-00-00000</dd></div>
+        <div><dt>통신판매업신고</dt><dd class="num">제0000-서울0000-0000호</dd></div>
+        <div><dt>주소</dt><dd>미정</dd></div>
+        <div><dt>개인정보보호책임자</dt><dd>미정</dd></div>
+      </dl>
+      <p class="disclaimer">
+        FinalCall은 이용자 간 게임 아이템 거래를 중개하는 통신판매중개자이며, 개별 거래의 당사자가 아닙니다.
+        게임머니·캐시는 서비스 내에서만 사용되며 현금으로 역환전되지 않습니다.
+        <strong>위 사업자 정보는 자리표시자입니다.</strong> 실제 사업자 등록 후 확정값으로 교체합니다.
+      </p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="footer-bottom">
+      <p class="copy">© 2026 FinalCall. All rights reserved.</p>
+      <nav class="policies" aria-label="정책">
+        <a href="#">이용약관</a>
+        <a href="#" class="strong">개인정보처리방침</a>
+        <a href="#">환불·취소 정책</a>
+        <a href="#">청소년 보호정책</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<!-- 목업 전용 — 실제 UI 아님 -->
+
+
+<script>
+/* ── 스크롤 시 헤더 그림자 (상태 표현이지 장식이 아니다) ────────────────────── */
+(function(){
+  var h=document.getElementById('siteHeader');
+  function onScroll(){ h.setAttribute('data-scrolled', String(window.scrollY > 4)); }
+  onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+})();
+
+/* ── 카운트다운: 실제로 흐르게 둔다 ────────────────────────────────────────────
+   목적은 데모가 아니라 검증이다 — tabular-nums 로 폭이 고정돼 매초 갱신에도
+   레이아웃이 튀지 않는지를 눈으로 확인할 수 있어야 한다(§5.9 / PRODUCT.md).
+   값 갱신에 트윈을 걸지 않는다. aria-live 도 걸지 않는다(초당 스팸 금지, a11y §6). */
+(function(){
+  var nodes=[].slice.call(document.querySelectorAll('[data-countdown]'));
+  if(!nodes.length) return;
+  nodes.forEach(function(n){ n.dataset.left = n.dataset.countdown; });
+  function pad(v){ return v<10 ? '0'+v : ''+v; }
+  function tick(){
+    nodes.forEach(function(n){
+      var s = parseInt(n.dataset.left,10);
+      if(s<=0){ n.textContent='마감'; return; }
+      s -= 1; n.dataset.left = s;
+      var m = Math.floor(s/60);
+      if(m>=60){ n.textContent = Math.floor(m/60)+':'+pad(m%60)+':'+pad(s%60); }
+      else{ n.textContent = pad(m)+':'+pad(s%60); }
+    });
+  }
+  setInterval(tick, 1000);
+})();
+</script>
+
+
+</body></html>
