@@ -38,7 +38,17 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
 - **게임데이터 통합 논의(OPEN)**: `docs/portfolio/process-log.md` 항목3. new_sp가 라이브 인게임 DB로도 쓰일 예정 → 정규화 시 단일진실원 이원화·크로스DB 조인·화폐 소유권 문제. 업계 리서치 완료(옵션 A read-only복제·B CDC·C API·절충=읽기 복제·쓰기 소유자 위임). 합의는 EPIC-GAME-PROFILE 착수 시.
 - **디자인**: U-021 라이트 커머스 실코드 반영. 게임차용 노트 `docs/game_ui/게임 차용 디자인 및 erd.txt`(미커밋 참조자료).
 - **push 상태**: origin/master = `08c31d7`까지 push 완료(EPIC-AUCTION 전건 포함). 이 Done 전이 커밋만 미push.
-- **미커밋(의도적)**: `frontend/vite.config.ts`(dev 프록시 편의)·`docs/game_ui/` 참조자료 2건.
+- **미커밋(의도적)**: `docs/game_ui/` 참조자료. (`frontend/vite.config.ts`는 2026-07-18 FC-036 커밋 `e6f2476`에 포함돼 **정식 추적으로 전환**됐다 — dev 프록시 `/api`→`:8080`은 레포 설정이 맞다고 판단해 수용. 종전 "의도적 미커밋" 규약은 폐기.)
+- **EPIC-FE-AUCTION 후속 과제(FC-036 산출에서 발생)**:
+  1. ~~계약 §3.3 item 블록 필드 타입 미명시~~ → **해소**(계약 v1.9, 2026-07-18). 필드별 타입 표 명기, nullable 3개(`skill1`·`skill2`·`goldforceExpireAt`)만 식별.
+  2. **★ 코드 사전(code dictionary) 부재 — EPIC-ITEM 정본화 필요**: `element`뿐 아니라 **`mainCategory`·`subGroup`·`kind` 전부 계약·erd에 코드값 열거가 없다.**
+     - `element`는 시드 V9 기준 **1=물·2=불만 확인**됐다. 3=흙·4=바람은 erd 서술의 나열 순서에서 나온 **추정일 뿐 정본 근거가 없어** 계약 v1.9가 의도적으로 미확정으로 남겼다.
+     - 계약이 클라이언트 의무를 규정했다: **미등록 코드는 중립 표기("속성 N") 폴백 + 코드 집합 크기를 가정한 하드코딩(배열 인덱싱·exhaustive switch) 금지.** 현 프론트 구현과 정합.
+     - **더 큰 문제**: 시드상 `kind 1·2`가 대분류별로 다른 의미(검/도 vs 방패/갑옷)를 갖는 것으로 보인다 → **축 해석이 `mainCategory`에 의존**한다는 뜻이라 필터 UI 설계 시 문제가 된다. 현재는 프론트가 표시명 스냅샷에 의존해 우회 중이라 당장 막히지는 않는다.
+  2-1. **spec 메타 드리프트(경미)**: `bid-domain-spec` 근거 줄이 "api-contract v1.8"로 고정(현재 v1.9). architect가 인용 조항 무변경이라 의도적으로 미갱신 — 필요 시 "메타 정정(내용 무변경·버전 미상향)" 서식으로 한 줄 추가.
+  3. **`StatusChip` `neutral` 톤 추가** — §5.8에 `SCHEDULED`(예정) 대응 의미색이 없어 `surface-sunken`+`text-muted`로 처리(새 색 아님). design-system.md에 반영할지 검토.
+  4. **실데이터 미검증** — 백엔드 :8080 미기동으로 cursor 연속 로드·정렬 전환 시 커서 초기화·빈 상태를 확인 못 함. 백엔드 기동 시 확인 필요.
+  5. **판매유형 칩 미구현**(의도) — 경매 전용 목록에서 상수 반복은 노이즈라는 판단, 총괄 수용. 경매·고정가 혼합 화면(EPIC-SHOP) 도입 시 재검토.
 
 ## 다음 수
 1. **FC-030 architect 소환**(KAN-37) — EPIC-BID 계약 검증·bid-domain-spec 확정·슬라이싱. **게이트2 5건 상신 예정**(직렬화 메커니즘★·홀드 원자성 경계·소프트클로즈 연장 규칙·SCHEDULED→ACTIVE 영속 전이·BID_004 판정 근거) → 사용자 승인 후 FC-031 착수.
@@ -67,5 +77,6 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
 - **총괄은 코드를 직접 검증(빌드·테스트·코드리뷰)하지 않는다** — reviewer/backend-impl에 위임.
 - **보안 = 별도 역할 아닌 별도 패스**(섹션 13). reviewer 확인소, 커밋 warn-only(플러그인 보류), 온디맨드 /security-review(에픽 완료·경매부터), CI post-push. 경매(입찰·정산) 최고위험.
 - 단독 backend 에이전트는 gradle 빌드 허용(병렬 시 경합 주의). 앱 :8080 부팅은 사용자 IntelliJ 점유 → 에이전트는 테스트로만 검증.
-- 파일 이동 git mv 금지(C-075). 통신은 파일로. Jira 미러·프로세스 로그 규율은 memory `jira-mirror-discipline`·`portfolio-process-log`.
+- 파일 이동 git mv 금지(C-075). 통신은 파일로.
+- **총괄은 워킹트리를 파괴하는 git 명령을 쓰지 않는다**(`reset --hard`·`checkout --` 광범위 사용·`clean -fd`). 2026-07-18 훅 스모크 테스트 정리에 `git reset --hard HEAD~1`을 썼다가 **서브에이전트 2종이 병렬 작업 중인 미커밋 변경을 날렸다**(커밋은 무사). 테스트 정리는 개별 파일 `rm`·`git checkout -- <특정파일>`로 한정한다. 에이전트에게는 의미 단위마다 커밋을 지시한다(커밋=자동 원칙이 사고 보호막이기도 하다). Jira 미러·프로세스 로그 규율은 memory `jira-mirror-discipline`·`portfolio-process-log`.
 - 아이템/경매 팬아웃은 전부 순차 단일패스였음(FK 선형 의존 + Flyway 단일 채번 + 공유 파일 교차). EPIC-BID도 유사 예상.

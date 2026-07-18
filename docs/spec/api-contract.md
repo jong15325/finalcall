@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.8 — G3 확정(2026-07-14) + 6절 계약 변경 8건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.9 — G3 확정(2026-07-14) + 6절 계약 변경 9건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -21,6 +21,7 @@
 | v1.7 | 2026-07-18 | 6절 계약 변경 — EPIC-AUCTION 게이트2(FC-025) 결정 반영: (f) §3.1 등록·§5 `AUCTION_001`을 "403/409" → **403 단일**로 정밀화(미소유·미보유·미존재 통일, enum↔계약 1:1 + SEC-007 열거 방지; "이미 출품중"만 `AUCTION_002` 409). (G6) §3.1 취소 대상 상태를 "ACTIVE만" → **"SCHEDULED\|ACTIVE & 입찰0(highest_bidder_id IS NULL)"**로 정밀화(예약 경매 에스크로 잠김 해소, domain-spec §5 정합). 사유: 게이트2 승인(2026-07-18), auction-domain-spec v0.2 |
 
 | v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
+| v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
 
 ---
 
@@ -228,6 +229,26 @@ item: { typeCode, mainCategory, subGroup, element, kind, level,
         skill1?, skill2?, skillPercent, goldforceExpireAt?,
         nameSnapshot, specSnapshot }
 ```
+
+필드 타입(v1.9 — 종전 타입 미표기로 클라이언트가 `string` 추정, FC-036 발견):
+
+| 필드 | 타입 | null | 출처 | 설명 |
+|---|---|---|---|---|
+| `typeCode` | `integer` | N | `item_template.type_code` | 자리값 합성 코드(= main×1000 + sub×100 + element×10 + kind). 템플릿 외부 식별자 |
+| `mainCategory` | `integer` | N | `item_template.main_category` | 대분류(천의 자리) |
+| `subGroup` | `integer` | N | `item_template.sub_group` | 중분류/슬롯군(백의 자리) |
+| `element` | `integer` | N | `item_template.element` | 속성(십의 자리). **코드값 정본은 아래 주 참조** |
+| `kind` | `integer` | N | `item_template.kind` | 종류(일의 자리) |
+| `level` | `integer` | N | `item_instance.level` | 인스턴스 강화 레벨 |
+| `skill1` | `integer` | **Y** | `skill_definition.skill_code` | 슬롯1 스킬 코드. 슬롯이 비면 `null` |
+| `skill2` | `integer` | **Y** | `skill_definition.skill_code` | 슬롯2 스킬 코드. 슬롯이 비면 `null` |
+| `skillPercent` | `integer` | N | `item_instance.skill_percent` | 스킬 발동 확률(%) |
+| `goldforceExpireAt` | `string` (ISO-8601 UTC) | **Y** | `item_instance.gf_expire_at` | 골드포스 만료 시각. 미적용이면 `null`. 활성 여부·잔여는 클라 파생(§3.3 서두) |
+| `nameSnapshot` | `string` | N | 등록 시점 auction 스냅샷 | 표시명(D-045) |
+| `specSnapshot` | `string` | N | 등록 시점 auction 스냅샷 | 표시 스펙(D-045) |
+
+- 5개 코드 축(`typeCode`·`mainCategory`·`subGroup`·`element`·`kind`)과 `level`·`skillPercent`는 **모두 정수**다. erd `item_template`·`item_instance` 컬럼이 전부 `INT`이며 서버 응답 record도 `int`다. 클라이언트는 문자열로 다루지 않는다(정렬·필터·비교가 사전순으로 깨진다).
+- **`element` 코드값은 미확정이다.** erd는 축의 의미("속성(물/불/흙/바람) — 십의 자리")만 규정하고 **코드↔속성 매핑을 열거하지 않는다**. 현재 시드(V9)에 실재하는 값은 **`1`·`2` 두 개뿐**이고, 시드 표시명 기준으로 `1=물`·`2=불`이 확인된다. `3`·`4`는 erd 서술의 나열 순서로 흙·바람이 **추정**될 뿐 실데이터·정본 어디에도 근거가 없다 → **계약에 못 박지 않는다.** EPIC-ITEM 시드 확장 시 실측으로 확정하고 그때 계약에 등재한다(6절 절차). 그때까지 클라이언트는 **미등록 코드를 중립 표기(예: "속성 N")로 폴백**해야 하며, 코드 집합을 4개로 가정한 하드코딩(배열 인덱싱·exhaustive switch)을 두지 않는다. `kind`·`subGroup`·`mainCategory`도 동일하게 코드값 열거가 없으므로 같은 규칙을 적용한다.
 
 AuctionSummary (GET /auctions content 항목):
 ```

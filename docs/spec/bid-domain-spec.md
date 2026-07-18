@@ -1,6 +1,6 @@
 # FinalCall Bid Domain Spec (입찰 도메인 스펙)
 
-상태: v0.2 — FC-030(EPIC-BID 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18, 전건 승인)**. 기존 정본(api-contract §3.1·§3.3·§5, erd §4.1·§4.2·§5·§6, domain-spec §4·§5·§6·§8·§9·§10)의 **검증·동시성 설계·구현 슬라이싱·갭 식별**을 담는다.
+상태: v0.3 — FC-030(EPIC-BID 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18, 전건 승인)** + **§4.6 구현 확인 정정(FC-031·032 완료 후)**. 기존 정본(api-contract §3.1·§3.3·§5, erd §4.1·§4.2·§5·§6, domain-spec §4·§5·§6·§8·§9·§10)의 **검증·동시성 설계·구현 슬라이싱·갭 식별**을 담는다.
 소유: architect (spec). 게이트2 5항목(a~e) + 계약·erd 정밀화 6건(F1~F6) 전부 승인 완료(§13) → **구현 착수 근거.**
 근거: api-contract **v1.8** §3.1(`/bids` 2개)·§3.3(`BidSummary`·`minNextBidAmount`)·§5(`BID_001~007`), erd **v1.0** §4.1(`money_hold`·`user_balance`)·§4.2(`bid`·`auction`)·§5·§6, domain-spec **v0.6** §4(입찰 규칙 D-004·P-008)·§5·§6·§8(동시성 D-008)·§9·§10, auction-domain-spec v0.2 §9-a·§9-b·§9-e(EPIC-AUCTION 인계), item-domain-spec v0.3, CLAUDE.md 섹션 4·섹션 5.
 범위: 정본을 대체하지 않는다. 본 문서는 **EPIC-BID 구현 지침의 단일 참조점**이다.
@@ -9,6 +9,7 @@
 |---|---|---|
 | v0.1 | 2026-07-18 | FC-030 착수 — 계약·erd 검증, 동시성 설계 초안, 갭 11건, 게이트2 5건 + F1~F6 상신 |
 | v0.2 | 2026-07-18 | **게이트2 전건 승인 반영** — (a) auction 행 비관적 락 확정, (b) 단일 TX 확정, (c) 소프트클로즈 식 확정, (d) 기회적 영속 승격 확정, (e) `highest_bidder_id` 앵커 확정. F1~F6을 계약 v1.8·erd v1.0에 반영 완료(`bid.public_id`·`BidSummary`·`minNextBidAmount`·`BID_007`·첫 입찰 하한·auction 인덱스). 실행 순서 031→032→**034**→033 확정. 선결 검토(에스크로 CAS owner) EPIC-CLOSING 이연 확정 |
+| v0.3 | 2026-07-18 | **§4.6 구현 확인 정정(계약 변경 아님 — 설계 서술 보정)** — v0.2의 "스칼라 프로젝션으로 1차 캐시를 우회하면 최신 값을 본다"가 **불완전**했다. FC-032 구현·테스트로 스테일 읽기가 **두 층**(① JPA 1차 캐시, ② InnoDB REPEATABLE READ 일관읽기 스냅샷)임이 확인됐고, ②는 프로젝션으로 우회되지 않아 **잠금 읽기(`@Lock(PESSIMISTIC_WRITE)`)가 필수**다. §4.6.1(두 층 표·`findCancelStateForUpdate` 확정)·§4.6.2(CAS 0행 원인 판정 일반 규칙, EPIC-CLOSING 선반영) 추가. 근거: `AuctionRepository.findCancelStateForUpdate`, `AuctionService.cancel`, 대조군 테스트 `취소_원인판정_재조회는_동시_입찰이_채운_최고입찰자를_본다`. **엔드포인트·스키마·에러코드 무변경** |
 
 **EPIC-BID 경계(게이트1 승인 2026-07-18)**: `bid`·`money_hold` 도입 + `POST /auctions/{id}/bids`(직렬화·홀드·직전홀드 즉시해제·최고가 갱신·소프트클로즈 연장) + `GET /auctions/{id}/bids` + auction 목록/상세 최고가 실값 대체 + 동시성 테스트. **마감·낙찰·정산·`sale_order`·소유이전·즉시구매(`/purchase`)는 EPIC-CLOSING, 고정가는 EPIC-SHOP.** 본 에픽은 `bid.status` = ACTIVE/OUTBID만, `money_hold.status` = HELD/RELEASED만 세팅한다(WON·CAPTURED = EPIC-CLOSING).
 
@@ -216,10 +217,28 @@ COMMIT  → 행 락 해제
 > `★ EPIC-BID 진입 시: 동시 입찰이 로드 이후 highest_bidder 를 채우는 경쟁은 fresh/locking 재조회가 필요하다.`
 
 - **증상**: 취소 로드 직후 첫 입찰이 커밋되면 CAS가 0행이 되는데, 스테일 엔티티는 `highestBidder == null`이라 `AUCTION_007`(입찰 존재) 대신 `AUCTION_006`(이미 종료)을 반환한다. **정합성 결함은 아니고**(취소는 정확히 차단된다) **에러코드 오분류**다.
-- **조치(FC-032)**: 0행 이후 원인 판정을 **스칼라 프로젝션 재조회**(`SELECT status, highest_bidder_id FROM auction WHERE id = ?`)로 바꾼다.
-  - **`findById` 재조회는 해법이 아니다** — `cancelIfCancellable`에 `clearAutomatically`가 없어 1차 캐시가 스테일 엔티티를 그대로 반환한다. 스칼라/DTO 프로젝션이어야 1차 캐시를 우회한다.
-- 취소 자체에 락은 불요하다(CAS가 단일 승자를 보증). 정정 대상은 분기 근거뿐이다.
-- 회귀 테스트: FC-034 시나리오 5(§10 I9).
+
+#### 4.6.1 ★★ 스테일 읽기는 두 층이다 (구현 확인 정정 — v0.3)
+
+v0.2는 "스칼라 프로젝션으로 1차 캐시를 우회하면 최신 값을 본다"고 썼다. **이는 절반만 맞다.** FC-032 구현으로 확인된 실제는 스테일 읽기의 원인이 **독립된 두 층**이라는 것이다. 한 층만 우회하면 증상이 그대로 재현된다.
+
+| 층 | 원인 | 우회 수단 | 이것만으로 충분한가 |
+|---|---|---|---|
+| **① JPA 영속성 컨텍스트(1차 캐시)** | `cancelIfCancellable`에 `clearAutomatically`가 없어(§4.2 근거 — 붙이면 안 된다) `findById` 재조회가 이미 managed 인 스테일 엔티티를 그대로 반환 | 스칼라/DTO 프로젝션(엔티티가 아니므로 1차 캐시를 거치지 않는다) | **아니다** |
+| **② DB MVCC 스냅샷(InnoDB REPEATABLE READ 일관읽기)** | 취소 트랜잭션이 주체 검증을 위해 경매를 **이미 한 번 읽은 뒤**라 일관읽기 스냅샷이 그 시점으로 고정됐다. 그 후 커밋된 동시 입찰의 `highest_bidder_id`는 일반 SELECT에 **원리적으로 보이지 않는다** — 쿼리를 몇 번 다시 던지든, 1차 캐시를 비우든 동일하다 | **잠금 읽기(locking read)** = `SELECT ... FOR UPDATE`. 잠금 읽기는 스냅샷이 아니라 **최신 커밋 버전**을 읽는다(InnoDB 규정) | 이 층에 대해서는 그렇다 |
+
+- **조치(FC-032, 확정)**: 원인 판정 재조회는 **스칼라 프로젝션 + `@Lock(PESSIMISTIC_WRITE)`** 둘 다여야 한다 → `AuctionRepository.findCancelStateForUpdate` (`AuctionCancelState(status, highestBidderId)` 프로젝션). 어느 하나만으로는 오분류가 남는다.
+- **락 비용은 사실상 없다**: CAS가 0행을 반환했다는 것은 경합 트랜잭션이 **이미 커밋을 끝냈다**는 뜻이고(진행 중이었다면 CAS UPDATE 자체가 행 락에서 대기했을 것이다), 호출 측은 이 값을 읽은 직후 예외로 롤백한다. 잠금 보유 구간이 극히 짧다.
+- 취소 **판정 자체**에 락이 필요한 것은 아니다(CAS가 단일 승자를 보증). 락이 필요한 것은 **실패 원인을 최신 값으로 읽어야 하는 재조회**뿐이다 — 목적이 상호배제가 아니라 **가시성**이다.
+- 회귀 테스트: `BidConcurrencyIntegrationTest.취소_원인판정_재조회는_동시_입찰이_채운_최고입찰자를_본다`(FC-034 시나리오 5 · §10 I9). 이 테스트는 취소 트랜잭션의 순서(① 첫 로드로 스냅샷 개방 → ② 타 스레드 입찰 커밋 → ③ 재조회)를 리포지토리 수준에서 재현하고, **일반 재조회는 옛 값을 본다**는 대조군 단언으로 두 층의 존재를 고정한다.
+
+#### 4.6.2 일반 규칙 — "CAS 0행의 원인 판정"은 잠금 읽기로 (EPIC-CLOSING 선반영)
+
+이 함정은 취소 고유가 아니다. **조건부 UPDATE(CAS)로 단일 승자를 뽑고, 0행일 때 사유를 분기하려 재조회하는 패턴 전부**에 적용된다. EPIC-CLOSING(마감·낙찰·정산)은 이 패턴을 반복한다 — 마감 CAS(`status='ACTIVE'` → `CLOSED`), 홀드 확정 CAS(`money_hold.status='HELD'` → `CAPTURED`), 소유 이전 CAS 등.
+
+> **규칙**: 조건부 UPDATE가 0행을 반환한 뒤 그 원인을 DB에서 다시 읽어 분기한다면, 재조회는 **(1) 엔티티가 아닌 스칼라/DTO 프로젝션**이고 **(2) 잠금 읽기(`@Lock(PESSIMISTIC_WRITE)`)**여야 한다. 전자는 JPA 1차 캐시를, 후자는 DB 일관읽기 스냅샷을 우회한다. 둘 중 하나라도 빠지면 **경합 시 조용한 에러코드 오분류**가 남는다(예외도 로그도 남지 않아 탐지가 어렵다).
+>
+> 적용 제외: 트랜잭션이 해당 행을 **아직 한 번도 읽지 않았고** 재조회가 그 트랜잭션의 첫 읽기라면 스냅샷이 그 시점에 열리므로 ②는 불요하다. 다만 이 조건은 호출 경로 변경으로 쉽게 깨지므로(검증용 선행 조회가 하나만 추가돼도 무너진다) **기본값은 잠금 읽기**로 둔다.
 
 ---
 
@@ -395,7 +414,7 @@ FC-034는 아래 불변식을 **DB 상태 직접 검증**으로 옮긴다(API �
 - `api/bid/BidController.java`(신규 — POST), `BidPlaceRequest.java`, `BidPlaceResponse.java`
 - `domain/bid/BidService.java`(신규 — `place`), `BidPlaceCommand.java`, `BidPlaceResult.java`
 - `domain/bid/BidIncrementProperties.java`(`@ConfigurationProperties` + `@Validated`) + `application*.yml` 편집
-- `domain/auction/AuctionRepository.java`(**편집** — `@Lock(PESSIMISTIC_WRITE)` 조회 + 최고가/연장/status 갱신 UPDATE + cancel 0행 스칼라 프로젝션)
+- `domain/auction/AuctionRepository.java`(**편집** — `@Lock(PESSIMISTIC_WRITE)` 조회 + 최고가/연장/status 갱신 UPDATE + cancel 0행 원인 판정용 **잠금 읽기 스칼라 프로젝션**, §4.6.1)
 - `domain/auction/AuctionService.java`(**편집** — §4.6 cancel 0행 분기 정정)
 - `infra/config/SecurityConfig.java`(**편집** — `GET /auctions/*/bids` 공개. **POST는 인증 유지**)
 - (테스트) `domain/bid/BidServiceTest.java`, `integration/BidApiIntegrationTest.java`
