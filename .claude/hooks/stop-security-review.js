@@ -34,25 +34,16 @@ function git(args) {
   });
 }
 
-// 리뷰 범위 = 미push 커밋 + 워킹트리. 에픽 단위로 push 하므로 에픽 누적분이 대상이 된다.
+// 리뷰 범위 = **미push 커밋만**. 에픽 단위로 push 하므로 에픽 누적분이 대상이 된다.
 // (push 이후에는 자연히 비므로 다음 에픽 변경분부터 다시 잡힌다.)
+//
+// 워킹트리(dirty·untracked)는 일부러 제외한다. 서브에이전트가 백그라운드로 도는 구조에서는
+// **턴 종료 ≠ 작업 완료**라, 워킹트리를 포함하면 매 턴 "작성 중인 미완성 코드"를 가리키게 된다.
+// 미완성 코드 리뷰는 오탐만 만들고 완성 후 재리뷰가 필요해 값이 낮다. 에이전트에게는 의미 단위마다
+// 커밋하도록 지시하므로 "커밋됨 = 정착됨"이 신뢰할 수 있는 완료 신호다.
 let changed = [];
-let headSha = "";
 try {
-  headSha = git(["rev-parse", "HEAD"]).trim();
-  const committed = git([
-    "diff",
-    "--name-only",
-    "origin/master...HEAD",
-  ]);
-  const working = git(["diff", "--name-only", "HEAD"]);
-  const untracked = git([
-    "ls-files",
-    "--others",
-    "--exclude-standard",
-  ]);
-  changed = [committed, working, untracked]
-    .join("\n")
+  changed = git(["diff", "--name-only", "origin/master...HEAD"])
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
@@ -82,18 +73,20 @@ if (hits.length === 0) {
 }
 
 // 동일 상태에서 매 턴 반복 발동하지 않도록 서명으로 중복 억제.
-// 서명은 "리뷰 대상의 실제 내용"으로 만든다 — headSha(미push 커밋분) + 민감파일 내용 해시.
-// git status 문자열만 쓰면 이미 dirty 한 파일을 더 고쳤을 때 서명이 그대로라 재발동하지 않는다.
-const h = crypto.createHash("sha256").update(headSha);
-for (const f of [...hits].sort()) {
-  h.update("\n" + f + "\n");
-  try {
-    h.update(fs.readFileSync(path.join(projectDir, f)));
-  } catch (_) {
-    h.update("<missing>"); // 삭제된 파일도 상태 변화로 반영.
-  }
+// 서명 = 리뷰 대상 파일들의 **HEAD 기준 blob 해시**. 내용이 실제로 달라질 때만 서명이 바뀐다.
+//
+// headSha 를 그대로 쓰지 않는다 — 민감 파일이 하나도 안 바뀌어도 무관한 커밋(문서 등) 하나에
+// 서명이 바뀌어 재발동한다. 그 경고는 새 정보가 없어 경고 피로만 만들고, 피로해진 층은 무시당한다.
+// 워킹트리에서 읽지 않는 이유는 위 범위 결정과 같다(작성 중 내용이 서명을 흔든다).
+let signature;
+try {
+  signature = crypto
+    .createHash("sha256")
+    .update(git(["ls-tree", "HEAD", "--", ...[...hits].sort()]))
+    .digest("hex");
+} catch (_) {
+  process.exit(0); // 서명을 못 만들면 중복 억제가 불가능 → 침묵(경고 피로 방지 우선).
 }
-const signature = h.digest("hex");
 const stateFile = path.join(projectDir, ".claude", ".stop-review-state");
 try {
   if (fs.existsSync(stateFile)) {
@@ -109,7 +102,7 @@ try {
 const shown = hits.slice(0, 15);
 const more = hits.length - shown.length;
 const reason =
-  "end-of-turn 보안 리뷰(ENABLE_STOP_REVIEW=1, 섹션 13). 보안 민감 경로가 변경됐습니다:\n" +
+  "end-of-turn 보안 리뷰(ENABLE_STOP_REVIEW=1, 섹션 13). 미push 커밋에 보안 민감 경로 변경이 있습니다:\n" +
   shown.map((f) => `  - ${f}`).join("\n") +
   (more > 0 ? `\n  ... 외 ${more}건` : "") +
   "\n\n턴을 마치기 전에 이 변경분을 보안 관점으로 점검하세요 — 도메인 인가(주체=SecurityContext·IDOR)," +
