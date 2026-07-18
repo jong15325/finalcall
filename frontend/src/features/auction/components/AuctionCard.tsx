@@ -6,6 +6,7 @@ import { ItemArtSlot } from '@/features/item/components/ItemArtSlot';
 import { formatMoney } from '@/lib/format';
 import { buildPath } from '@/routes/paths';
 import type { AuctionSummary } from '@/types/schema';
+import { isAuctionEnded, isTerminalStatus } from '../lib/auctionStatus';
 import { AUCTION_STATUS_META } from '../types';
 
 /**
@@ -17,16 +18,10 @@ import { AUCTION_STATUS_META } from '../types';
  *
  * 카드 전체가 하나의 링크다 — 탭 정지점을 1개로 유지해 20장 그리드의 키보드 주행을 짧게 만든다.
  */
-const TERMINAL_STATUSES = ['SOLD', 'UNSOLD', 'CANCELLED'] as const;
-
-function isTerminal(status: AuctionSummary['status']): boolean {
-  return (TERMINAL_STATUSES as readonly string[]).includes(status);
-}
-
 export function AuctionCard({ auction }: { auction: AuctionSummary }) {
   const { item, status } = auction;
   const meta = AUCTION_STATUS_META[status];
-  const ended = isTerminal(status) || new Date(auction.endAt).getTime() <= Date.now();
+  const ended = isAuctionEnded(auction);
 
   return (
     <article className="group h-full">
@@ -40,7 +35,7 @@ export function AuctionCard({ auction }: { auction: AuctionSummary }) {
           {ended ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60">
               <span className="text-lg font-bold text-white">
-                {isTerminal(status) ? meta.label : '마감'}
+                {isTerminalStatus(status) ? meta.label : '마감'}
               </span>
             </div>
           ) : null}

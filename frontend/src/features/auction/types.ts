@@ -1,4 +1,4 @@
-import type { AuctionStatus } from '@/types/schema';
+import type { AuctionStatus, ResultType } from '@/types/schema';
 import type { StatusTone } from '@/components/ui/StatusChip';
 
 /**
@@ -28,6 +28,12 @@ export const AUCTION_STATUS_META: Record<AuctionStatus, { label: string; tone: S
   SOLD: { label: '낙찰', tone: 'success' },
   UNSOLD: { label: '유찰', tone: 'danger' },
   CANCELLED: { label: '취소됨', tone: 'danger' },
+};
+
+/** 낙찰 사유 라벨(design-system [5.8] — resultType 은 상태 칩이 아니라 **보조 라벨**로 표기). */
+export const RESULT_TYPE_LABEL: Record<ResultType, string> = {
+  BID: '입찰 낙찰',
+  BUYNOW: '즉시구매',
 };
 
 /** 상태 필터 선택지. 미지정(전체)은 서버가 SCHEDULED·ACTIVE 만 노출하므로 라벨을 정직하게 적는다. */

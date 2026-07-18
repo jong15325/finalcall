@@ -55,6 +55,13 @@ export interface AuctionDetail extends AuctionSummary {
   extensionCount: number;
   maxEndAt: string;
   createdAt: string;
+  /**
+   * 다음 입찰이 충족해야 할 최소 금액(계약 v1.8 F3 — 서버 파생).
+   * 입찰이 없으면 `startPrice`, 있으면 `현재 최고가 + 구간 증분`이다. **종료 상태 경매에서는 null.**
+   * 계단식 증분은 서버 설정값이므로 **클라이언트가 구간표를 복제하지 않는다** — 값이 없으면 계산하지 않고 비워 둔다.
+   * (EPIC-BID 구현 전에는 서버가 아직 이 필드를 싣지 않아 undefined 로 온다.)
+   */
+  minNextBidAmount?: number;
 }
 
 /** GET /shops content 항목 (계약 [3.3]) */

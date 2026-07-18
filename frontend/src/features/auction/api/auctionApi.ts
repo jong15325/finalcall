@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import type { CursorPage } from '@/types/api';
-import type { AuctionSummary } from '@/types/schema';
+import type { AuctionDetail, AuctionSummary } from '@/types/schema';
 import type { AuctionFilters, AuctionSortValue } from '../types';
 
 /** 목록 페이지 크기(계약 §1.3 `size`). 4열 그리드 기준 5행. */
@@ -29,4 +29,12 @@ export function getAuctions(query: AuctionListQuery): Promise<CursorPage<Auction
       size: AUCTION_PAGE_SIZE,
     },
   });
+}
+
+/**
+ * GET /auctions/{auctionPublicId} — 경매 상세(계약 §3.1). 인증 불요.
+ * 404 는 `AUCTION_004` envelope 로 오며 client 가 ApiError 로 정규화한다 — 여기서 삼키지 않는다.
+ */
+export function getAuction(auctionPublicId: string): Promise<AuctionDetail> {
+  return apiClient.get<AuctionDetail>(`/auctions/${auctionPublicId}`, { auth: false });
 }
