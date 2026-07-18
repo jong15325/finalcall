@@ -60,14 +60,21 @@ function formatVerbose(remainingMs: number): string {
   return `마감까지 ${parts.join(' ')} 남음`;
 }
 
+/** 표시 크기 — 목록 카드는 sm, 상세의 거래 패널은 주 정보라 lg. 규칙(색 전이·안내)은 공통이다. */
+const SIZE_CLASS = {
+  sm: 'text-sm',
+  lg: 'text-2xl font-semibold',
+} as const;
+
 interface CountdownProps {
   /** 마감 시각(계약 Instant ISO-8601 UTC). */
   endAt: string;
   /** 전환 안내에 붙일 맥락(예: 아이템명). 목록에서 어떤 매물인지 식별시키기 위함. */
   label?: string;
+  size?: keyof typeof SIZE_CLASS;
 }
 
-export function Countdown({ endAt, label }: CountdownProps) {
+export function Countdown({ endAt, label, size = 'sm' }: CountdownProps) {
   const endMs = new Date(endAt).getTime();
   const [now, setNow] = useState(() => Date.now());
   const [announcement, setAnnouncement] = useState('');
@@ -95,12 +102,15 @@ export function Countdown({ endAt, label }: CountdownProps) {
   }, [phase, label]);
 
   return (
-    <span className={`inline-flex items-center gap-1 text-sm ${PHASE_CLASS[phase]}`}>
+    <span
+      className={`inline-flex items-baseline gap-1.5 ${SIZE_CLASS[size]} ${PHASE_CLASS[phase]}`}
+    >
       {phase === 'ended' ? (
         <span className="font-medium">마감</span>
       ) : (
         <>
-          {phase !== 'normal' ? <span className="font-medium">마감 임박</span> : null}
+          {/* 임박 신호는 색이 아니라 이 텍스트가 1차다(accessibility [2]). 값보다 작게 둬 숫자를 가리지 않는다. */}
+          {phase !== 'normal' ? <span className="text-sm font-medium">마감 임박</span> : null}
           <span className="font-num tabular-nums" aria-hidden="true">
             {formatCompact(remaining)}
           </span>

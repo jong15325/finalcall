@@ -5,6 +5,7 @@ import { ProtectedLayout } from '@/components/layout/ProtectedLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { PagePlaceholder } from '@/pages/PagePlaceholder';
 import { AuctionListPage } from '@/pages/AuctionListPage';
+import { AuctionDetailPage } from '@/pages/AuctionDetailPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -23,7 +24,7 @@ export function AppRoutes() {
       <Route element={<PublicLayout />}>
         <Route path={ROUTES.home} element={<PagePlaceholder title="홈" />} />
         <Route path={ROUTES.auctions} element={<AuctionListPage />} />
-        <Route path={ROUTES.auctionDetail} element={<PagePlaceholder title="경매 상세" />} />
+        <Route path={ROUTES.auctionDetail} element={<AuctionDetailPage />} />
         <Route path={ROUTES.shops} element={<PagePlaceholder title="고정가 목록" />} />
         <Route path={ROUTES.shopDetail} element={<PagePlaceholder title="고정가 상세" />} />
         <Route path={ROUTES.itemDetail} element={<PagePlaceholder title="아이템 상세" />} />
