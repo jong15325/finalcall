@@ -68,11 +68,19 @@ public class MoneyHoldService {
      * @param amount        홀드액(= 입찰액, I3 — 두 값이 갈라지는 경로를 만들지 않는다)
      * @param previousBidId 직전 최고 입찰 PK. 첫 입찰이면 {@code null}
      * @return 생성된 홀드 원장(HELD)
-     * @throws BusinessException {@code BID_005} 가용 게임머니 부족 / {@code COMMON_999} 직전 홀드 해제 불변식 위반
+     * @throws BusinessException {@code BID_005} 가용 게임머니 부족 / {@code COMMON_999} 홀드액이 양수가 아니거나
+     *                           직전 홀드 해제 불변식 위반
      */
     @ServiceLog
     @Transactional(propagation = Propagation.MANDATORY)
     public MoneyHold placeHold(Long bidderId, Long bidId, long amount, Long previousBidId) {
+        // ★ 부호 검증(심층방어). 홀드 CAS 조건은 `가용 잔액 >= :amount` 라 amount 가 음수면 조건이 자명하게 참이 되고
+        //   game_money_held 가 오히려 줄어든다 — 영향행이 1이라 BID_005 가드도 통과해 무자본 획득이 성립한다.
+        //   호출 측(BidService)도 최소 증분(BID_001)으로 걸러내지만, "유일한 진입점이라 검증할 곳이 하나"라는 이 빈의
+        //   전제를 스스로 지키려면 여기에도 못이 박혀 있어야 한다. DB CHECK(amount > 0)가 세 번째 방어선이다.
+        //   비즈니스 실패가 아니라 호출 계약 위반이므로 500(COMMON_999) — 사용자에게 재시도를 안내할 성질이 아니다.
+        Preconditions.validate(amount > 0, CommonErrorCode.INTERNAL_ERROR);
+
         MoneyHoldSnapshot previous = findPreviousHold(previousBidId);
 
         // (1) 잔액 갱신 — user_id 오름차순 강제(§4.4). 여기서만 두 잔액 행에 락이 걸린다.

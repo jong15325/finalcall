@@ -28,6 +28,10 @@ CREATE TABLE bid
     KEY ix_bid_auction_amount (auction_id, amount DESC),
     -- 사용자 입찰 내역 조회.
     KEY ix_bid_bidder (bidder_id),
+    -- 금액 부호 최종 방어선(심층방어). 앱 검증(최소 증분 BID_001)과 별개로 DB 가 0·음수를 거부한다.
+    --   음수 입찰액은 홀드 CAS 조건(가용 >= amount)을 자명하게 통과시켜 홀드를 되레 줄이는 경로가 되므로,
+    --   검증이 한 군데라도 빠지면 무자본 획득으로 이어진다. 스키마에 못을 박아 그 가능성을 없앤다.
+    CONSTRAINT ck_bid_amount_positive CHECK (amount > 0),
     CONSTRAINT fk_bid_auction FOREIGN KEY (auction_id) REFERENCES auction (id),
     CONSTRAINT fk_bid_bidder FOREIGN KEY (bidder_id) REFERENCES user (id)
 ) ENGINE = InnoDB
@@ -53,6 +57,8 @@ CREATE TABLE money_hold
     UNIQUE KEY uk_money_hold_bid (bid_id),
     -- 사용자 홀드 합계·해제 대상 조회(erd §5). fk_money_hold_user 의 FK 인덱스도 겸한다.
     KEY ix_money_hold_user_status (user_id, status),
+    -- bid 와 동일한 부호 방어선. money_hold.amount 는 항상 bid.amount 와 같아야 하므로(I3) 제약도 대칭이다.
+    CONSTRAINT ck_money_hold_amount_positive CHECK (amount > 0),
     CONSTRAINT fk_money_hold_user FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT fk_money_hold_bid FOREIGN KEY (bid_id) REFERENCES bid (id)
 ) ENGINE = InnoDB
