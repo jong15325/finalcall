@@ -20,7 +20,8 @@ export function useAuctionList(query: Omit<AuctionListQuery, 'cursor'>) {
     queryKey: auctionKeys.list(query),
     queryFn: ({ pageParam }) => getAuctions({ ...query, cursor: pageParam }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => (lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
     // 마감 카운트다운이 도는 실시간 목록이라 기본(30s)보다 짧게 둔다. 폴링은 하지 않는다(U-006 폴링은 상세 소관).
     staleTime: 15_000,
   });

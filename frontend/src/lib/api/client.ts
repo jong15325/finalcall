@@ -1,16 +1,7 @@
 import type { ApiEnvelope } from '@/types/api';
 import { ERROR_CODES } from '@/types/errorCodes';
-import {
-  ApiError,
-  networkError,
-  normalizeErrorResponse,
-} from './errors';
-import {
-  applyRotatedTokens,
-  clearSession,
-  getAccessToken,
-  getRefreshToken,
-} from './session';
+import { ApiError, networkError, normalizeErrorResponse } from './errors';
+import { applyRotatedTokens, clearSession, getAccessToken, getRefreshToken } from './session';
 
 /** base URL (계약 [1.1] `/api/v1`). env 오버라이드 가능(.env.example). */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';

@@ -1,9 +1,4 @@
-import {
-  ELEMENT_DOT_CLASS,
-  ELEMENT_LABEL,
-  ELEMENT_TINT_CLASS,
-  toElementKey,
-} from '../lib/element';
+import { ELEMENT_DOT_CLASS, ELEMENT_LABEL, ELEMENT_TINT_CLASS, toElementKey } from '../lib/element';
 
 /**
  * ElementBadge — design-system [5.8] + [2.7] 라이트 패턴.
@@ -30,7 +25,10 @@ export function ElementBadge({ element }: { element: number }) {
     <span
       className={`inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs font-medium text-on-accent-fg ${ELEMENT_TINT_CLASS[key]}`}
     >
-      <span className={`h-2 w-2 shrink-0 rounded-full ${ELEMENT_DOT_CLASS[key]}`} aria-hidden="true" />
+      <span
+        className={`h-2 w-2 shrink-0 rounded-full ${ELEMENT_DOT_CLASS[key]}`}
+        aria-hidden="true"
+      />
       {ELEMENT_LABEL[key]}
     </span>
   );

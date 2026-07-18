@@ -76,7 +76,13 @@ export function WithdrawDialog({ open, onClose, onWithdrawn }: WithdrawDialogPro
   );
 
   return (
-    <Modal open={open} onClose={onClose} titleId="withdraw-dialog-title" title="회원 탈퇴" footer={footer}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      titleId="withdraw-dialog-title"
+      title="회원 탈퇴"
+      footer={footer}
+    >
       {blockedMessage ? <Alert tone="danger">{blockedMessage}</Alert> : null}
       {formError ? <Alert tone="danger">{formError}</Alert> : null}
 

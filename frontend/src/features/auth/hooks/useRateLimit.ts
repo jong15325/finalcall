@@ -18,6 +18,7 @@ export function useRateLimit() {
     secondsLeft,
     isLimited: secondsLeft > 0,
     /** retryAfterMs(없으면 1초 폴백) → 초 단위 카운트다운 시작 */
-    trigger: (retryAfterMs?: number) => setSecondsLeft(Math.max(1, Math.ceil((retryAfterMs ?? 1000) / 1000))),
+    trigger: (retryAfterMs?: number) =>
+      setSecondsLeft(Math.max(1, Math.ceil((retryAfterMs ?? 1000) / 1000))),
   };
 }

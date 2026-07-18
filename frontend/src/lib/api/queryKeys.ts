@@ -3,11 +3,7 @@
  * 도메인별 구체 키는 각 feature 의 api/ 훅에서 이 헬퍼로 만든다(스켈레톤은 규약만 제공 —
  * 도메인 지식을 스켈레톤에 넣지 않는다, skeleton-plan [1]).
  */
-export function queryKey(
-  domain: string,
-  resource: string,
-  params?: Record<string, unknown>,
-) {
+export function queryKey(domain: string, resource: string, params?: Record<string, unknown>) {
   return params !== undefined
     ? ([domain, resource, params] as const)
     : ([domain, resource] as const);

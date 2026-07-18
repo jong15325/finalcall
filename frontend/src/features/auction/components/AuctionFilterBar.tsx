@@ -41,12 +41,7 @@ interface AuctionFilterBarProps {
   onSortChange: (next: AuctionSortValue) => void;
 }
 
-export function AuctionFilterBar({
-  filters,
-  sort,
-  onChange,
-  onSortChange,
-}: AuctionFilterBarProps) {
+export function AuctionFilterBar({ filters, sort, onChange, onSortChange }: AuctionFilterBarProps) {
   // 가격은 드래프트(문자열)로 들고 있다가 제출 때 커밋한다. 외부(칩 제거·초기화)에서 바뀌면 동기화한다.
   const [minDraft, setMinDraft] = useState(filters.minPrice?.toString() ?? '');
   const [maxDraft, setMaxDraft] = useState(filters.maxPrice?.toString() ?? '');
