@@ -101,9 +101,12 @@ function PriceBlock({
       <dl className="flex flex-col gap-1.5">
         <InfoRow label="입찰" value={`${auction.bidCount}회`} />
         <InfoRow label="최고 입찰자" value={auction.highestBidderMasked ?? '없음'} />
-        {hasBid ? (
-          <InfoRow label="시작가" value={`${formatMoney(auction.startPrice)} 게임머니`} />
-        ) : null}
+        {/*
+         * 시작가는 **항상 렌더**한다. 입찰 유무로 줄을 껐다 켜면 첫 입찰이 붙는 순간 패널 높이가
+         * 한 줄 늘어 레이아웃이 튄다 — 이 패널의 "자리 유지" 원칙(위 ★)과 어긋난다.
+         * 입찰 전에는 위 MoneyAmount 와 같은 값이지만, 라벨이 다르므로 중복 정보가 아니다.
+         */}
+        <InfoRow label="시작가" value={`${formatMoney(auction.startPrice)} 게임머니`} />
         {/*
          * `minNextBidAmount`(계약 v1.8 F3)는 **서버가 계산해 주는 값**이다 — 계단식 증분표는 서버 설정이라
          * 클라이언트가 복제하면 드리프트가 난다. 그래서 값이 없어도 **직접 계산하지 않고** 자리만 비워 둔다.
@@ -128,15 +131,7 @@ function PriceBlock({
   );
 }
 
-function InfoRow({
-  label,
-  value,
-  emphasis,
-}: {
-  label: string;
-  value: string;
-  emphasis?: boolean;
-}) {
+function InfoRow({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <dt className="text-sm text-text-muted">{label}</dt>

@@ -34,7 +34,14 @@ export function getAuctions(query: AuctionListQuery): Promise<CursorPage<Auction
 /**
  * GET /auctions/{auctionPublicId} — 경매 상세(계약 §3.1). 인증 불요.
  * 404 는 `AUCTION_004` envelope 로 오며 client 가 ApiError 로 정규화한다 — 여기서 삼키지 않는다.
+ *
+ * 경로 세그먼트는 **항상 `encodeURIComponent` 로 감싼다.** publicId 는 서버 발급 UUID 라 지금은
+ * 이스케이프할 문자가 없지만, 이 값은 URL 파라미터를 통해 사용자 입력으로 유입된다 —
+ * 인코딩하지 않으면 `/`·`?`·`#` 가 경로 구조를 바꿔 다른 엔드포인트로 새어 나간다.
+ * 코드베이스 최초의 경로 보간이므로 여기서 관례를 세운다(이후 경로 보간은 전부 이 형태).
  */
 export function getAuction(auctionPublicId: string): Promise<AuctionDetail> {
-  return apiClient.get<AuctionDetail>(`/auctions/${auctionPublicId}`, { auth: false });
+  return apiClient.get<AuctionDetail>(`/auctions/${encodeURIComponent(auctionPublicId)}`, {
+    auth: false,
+  });
 }

@@ -51,6 +51,9 @@ function AuctionDetailView({ auction }: { auction: AuctionDetail }) {
    * 상세 진입 시 포커스 관리(accessibility [3]): SPA 는 페이지 전환에도 포커스가 이전 화면(목록 카드 링크)에
    * 남아 스크린리더가 새 화면을 인지하지 못한다. 데이터가 도착해 제목이 확정된 시점에 제목으로 옮긴다.
    * `tabIndex={-1}` 은 프로그램 포커스 전용(탭 순서에는 넣지 않는다).
+   * 포커스 링은 지우지 않는다 — `outline-none` 을 두면 전역 `:focus-visible`(index.css)을 utility 가
+   * 이겨 **키보드 사용자에게 포커스가 어디로 갔는지 보이지 않는다.** 마우스 클릭 유입에서는
+   * `:focus-visible` 이 매칭되지 않아 링이 뜨지 않으므로 시각적 노이즈도 없다.
    */
   useEffect(() => {
     headingRef.current?.focus();
@@ -65,11 +68,7 @@ function AuctionDetailView({ auction }: { auction: AuctionDetail }) {
           <StatusChip tone={meta.tone}>{meta.label}</StatusChip>
           <ElementBadge element={item.element} />
         </div>
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-2xl font-bold text-text outline-none sm:text-3xl"
-        >
+        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-text sm:text-3xl">
           {item.nameSnapshot}
         </h1>
         <p className="text-sm text-text-muted">
