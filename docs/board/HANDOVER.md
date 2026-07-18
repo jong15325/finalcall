@@ -38,7 +38,9 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
 - **게임데이터 통합 논의(OPEN)**: `docs/portfolio/process-log.md` 항목3. new_sp가 라이브 인게임 DB로도 쓰일 예정 → 정규화 시 단일진실원 이원화·크로스DB 조인·화폐 소유권 문제. 업계 리서치 완료(옵션 A read-only복제·B CDC·C API·절충=읽기 복제·쓰기 소유자 위임). 합의는 EPIC-GAME-PROFILE 착수 시.
 - **디자인**: U-021 라이트 커머스 실코드 반영. 게임차용 노트 `docs/game_ui/게임 차용 디자인 및 erd.txt`(미커밋 참조자료).
 - **push 상태**: origin/master = `08c31d7`까지 push 완료(EPIC-AUCTION 전건 포함). 이 Done 전이 커밋만 미push.
-- **미커밋(의도적)**: `docs/game_ui/` 참조자료. (`frontend/vite.config.ts`는 2026-07-18 FC-036 커밋 `e6f2476`에 포함돼 **정식 추적으로 전환**됐다 — dev 프록시 `/api`→`:8080`은 레포 설정이 맞다고 판단해 수용. 종전 "의도적 미커밋" 규약은 폐기.)
+- **미커밋 없음**(2026-07-18 기준). 종전 "의도적 미커밋" 2건이 모두 정식 추적으로 전환됐다:
+  - `frontend/vite.config.ts` — FC-036 커밋 `e6f2476`. dev 프록시 `/api`→`:8080`은 레포 설정이 맞다고 판단해 수용.
+  - `docs/game_ui/` — 사용자 지시로 커밋(982파일·3.84MB, 대부분 소형 PNG라 LFS 불요). 게임 차용 UI 참조자료·원게임 캡처. D-067 실데이터 소스이자 EPIC-ITEM 아트 매핑 원천이라 레포에 두는 게 맞다.
 - **EPIC-FE-AUCTION 후속 과제(FC-036 산출에서 발생)**:
   1. ~~계약 §3.3 item 블록 필드 타입 미명시~~ → **해소**(계약 v1.9, 2026-07-18). 필드별 타입 표 명기, nullable 3개(`skill1`·`skill2`·`goldforceExpireAt`)만 식별.
   2. **★ 코드 사전(code dictionary) 부재 — EPIC-ITEM 정본화 필요**: `element`뿐 아니라 **`mainCategory`·`subGroup`·`kind` 전부 계약·erd에 코드값 열거가 없다.**

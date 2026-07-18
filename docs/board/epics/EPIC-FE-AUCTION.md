@@ -3,7 +3,7 @@ id: EPIC-FE-AUCTION
 type: epic
 jira_key: KAN-43
 title: 경매 프론트 — 목록·상세 화면 (FE-1·FE-2)
-state: doing
+state: done
 children: [FC-036, FC-037, FC-038]
 gate: null
 ---
