@@ -1,0 +1,40 @@
+
+게임 UI 차용 디자인 목록이다. 해당 페이지 진행 시 자세한 디자인 및 설계 논의
+
+1. 인벤토리(마이페이지)
+2. 아이템 정보(아이템 클릭 시 상세 정보)
+3. 프로필(마이페이지)
+
+백엔드 erd 검토 후 추가/변경 진행 컬럼명은 현재 finalcall에 맞춘다 해당 게임 데이터를 기존 finalcall user에 넣을지 아니면 정규화할지 검토,
+게임 차용 이미지와 값 매핑은 추후에 해당 부분 진행할때 매핑한다
+
+게임 백업 테이블 user
+
+usr_char = 유저의 주 캐릭터 설정값으로 해당 설정에 따라 사용자 프로필 이미지, 값 10~280(10단위)
+usr_level = 유저의 레벨
+usr_type = 유저의 타입(초보,중수,고수) 값 10~30(10단위)
+usr_points = 유저의 현재 경험치
+usr_code = 인게임 머니
+usr_conis = 인게임 코인
+usr_cash = 인게임 캐시
+usr_water,fier,earth,wind = 유저의 화이트 카드(정령) 갯수
+usr_inventory = 유저가 사용 가능한 인벤토리 수(인게임 캐시 아이템 구매로 슬롯을 확장하는 형식 최대 96칸)
+usr_wins = 프로필에 들어가는 것으로 게임에서 이긴 횟수
+usr_losses = 프로필에 들어가는 것으로 게임에서 진 횟수
+usr_ko = 게임에서 kill한 횟수
+usr_down = 게임에서 죽은 횟수
+usr_mission = 게임의 미션 모드의 달성 레벨
+
+
+
+
+추후 게임 차용 디자인 시 참고 예시
+1. 인벤토리
+ - 디자인 관련 게임 UI 차용 하는 부분 인벤토리 디자인 D:\Java\finalcall\docs\game_ui\my_card\wnd_mycard.png
+ - "카드 장착" 하단(D:\Java\finalcall\docs\game_ui\item_info\card_image\gold_black\아이템레벨\s) 아이콘
+ - "카드 장착" 하단칸의 아이템 아이콘 테두리 골드포스 시간이 남았을 경우 D:\Java\finalcall\docs\game_ui\item_info\out_line\s\gold.png 적용
+ - % 부분은 계산이 필요한 부분이라 일단 제외
+ - "정령카드" 하단 D:\Java\finalcall\docs\game_ui\item_info\card_image\white\s 경로 fire,water,wind,earth 순으로 배치
+ - 아이템 슬롯칸은 D:\Java\finalcall\docs\game_ui\item_info\card_image\white\s\아이템레벨\l\아이템속성
+ - 아이템 레벨,속성 매칭은 추후 진행
+ - 아이템 슬롯칸의 아이템 테두리 골드포스 시간이 남았을 경우 D:\Java\finalcall\docs\game_ui\item_info\out_line\l\gold.png 적용

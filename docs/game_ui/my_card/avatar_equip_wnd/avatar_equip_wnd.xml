@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="AvatarEquipWnd">
+	<NAME_ID NAME="AvatarEquipWnd" ID="152"/>
+	<SIZE X="220" Y="15"/>
+	<DRAG_RECT LEFT="0" TOP="0" RIGHT="221" BOTTOM="33"/>
+	<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_equip_wnd.pgf" LOAD_TYPE="LOAD_SIZE"/>
+	<CLICK_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_equip_wnd.pgf"/>
+	<OVER_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_equip_wnd.pgf"/>
+	<STYLE>IWS_CANMOVE</STYLE>
+	<CHILD_LIST>
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="0" ID="0"/>
+			<SIZE X="178" Y="196" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="1" ID="1"/>
+			<SIZE X="141" Y="196" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="2" ID="2"/>
+			<SIZE X="13" Y="136" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="3" ID="3"/>
+			<SIZE X="178" Y="136" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>		
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="4" ID="4"/>
+			<SIZE X="50" Y="196" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="5" ID="5"/>
+			<SIZE X="13" Y="196" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="AvatarSlotBtn">
+			<NAME_ID NAME="6" ID="6"/>
+			<SIZE X="104" Y="196" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>		
+		<STATIC>
+			<NAME_ID NAME="element1" ID="250"/>
+			<SIZE X="201" Y="63"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_1.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element2" ID="260"/>
+			<SIZE X="201" Y="63"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_2.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element3" ID="270"/>
+			<SIZE X="201" Y="63"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_3.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element4" ID="280"/>
+			<SIZE X="201" Y="63"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_4.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+	</CHILD_LIST>
+</WINDOW>

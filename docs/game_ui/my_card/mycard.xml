@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="MyCardWnd">
+	<NAME_ID NAME="MyCardWnd" ID="11"/>
+	<SIZE X="330" Y="15"/>
+	<DRAG_RECT LEFT="0" TOP="0" RIGHT="350" BOTTOM="33"/>
+	<NORMAL_IMAGE NAME="global\my_card\wnd_mycard.pgf" LOAD_TYPE="LOAD_SIZE"/>
+	<CLICK_IMAGE NAME="global\my_card\wnd_mycard.pgf"/>
+	<OVER_IMAGE NAME="global\my_card\wnd_mycard.pgf"/>
+	<STYLE>IWS_CANMOVE|IWS_EXIT_ESC</STYLE>
+	<CHILD_LIST>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="x_Button" ID="300"/>
+			<SIZE X="320" Y="5"/>
+			<NORMAL_IMAGE NAME="global\btn_x_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\btn_x_click.pgf"/>
+			<OVER_IMAGE NAME="global\btn_x_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="창닫기(ESC)"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="Slot1" ID="401"/>
+			<SIZE X="9" Y="127"/>
+			<NORMAL_IMAGE NAME="global\my_card\wnd_mycard_extra.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="Slot2" ID="402"/>
+			<SIZE X="9" Y="225"/>
+			<NORMAL_IMAGE NAME="global\my_card\wnd_mycard_extra.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="Slot3" ID="403"/>
+			<SIZE X="9" Y="323"/>
+			<NORMAL_IMAGE NAME="global\my_card\wnd_mycard_extra.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="Slot4" ID="404"/>
+			<SIZE X="9" Y="421"/>
+			<NORMAL_IMAGE NAME="global\my_card\wnd_mycard_extra.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<BUTTON CLASS_NAME="MySlotBtn">
+			<NAME_ID NAME="0" ID="110"/>
+			<SIZE X="12" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MySlotBtn">
+			<NAME_ID NAME="1" ID="111"/>
+			<SIZE X="44" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MySlotBtn">
+			<NAME_ID NAME="2" ID="112"/>
+			<SIZE X="76" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MySlotBtn">
+			<NAME_ID NAME="3" ID="113"/>
+			<SIZE X="118" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="좌클릭 장착해제 - 우클릭 상세보기"/>
+		</BUTTON>		
+		<BUTTON CLASS_NAME="SlotCardBtn">
+			<NAME_ID NAME="SlotCardBtn" ID="400"/>
+			<SIZE X="16" Y="524" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="AvatarCoinCardBtn">
+			<NAME_ID NAME="AvatarCoinCardBtn" ID="405"/>
+			<SIZE X="311" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyWhiteBtn">
+			<NAME_ID NAME="0" ID="100"/>
+			<SIZE X="164" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyWhiteBtn">
+			<NAME_ID NAME="1" ID="101"/>
+			<SIZE X="199" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyWhiteBtn">
+			<NAME_ID NAME="2" ID="102"/>
+			<SIZE X="234" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="우클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyWhiteBtn">
+			<NAME_ID NAME="3" ID="103"/>
+			<SIZE X="269" Y="68" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="우클릭 상세보기"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="tab_line" ID="500"/>
+			<SIZE X="50" Y="520"/>
+			<NORMAL_IMAGE NAME="global\my_card\tab_line.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<BUTTON CLASS_NAME="MyCardTabBtn">
+			<NAME_ID NAME="tab_1" ID="501"/>
+			<SIZE X="54" Y="524"/>
+			<NORMAL_IMAGE NAME="global\my_card\tab_btn1_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\my_card\tab_btn1_c.pgf"/>
+			<OVER_IMAGE NAME="global\my_card\tab_btn1_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="첫번째 슬롯"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyCardTabBtn">
+			<NAME_ID NAME="tab_2" ID="502"/>
+			<SIZE X="124" Y="524"/>
+			<NORMAL_IMAGE NAME="global\my_card\tab_btn2_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\my_card\tab_btn2_c.pgf"/>
+			<OVER_IMAGE NAME="global\my_card\tab_btn2_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="두번째 슬롯"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyCardTabBtn">
+			<NAME_ID NAME="tab_3" ID="503"/>
+			<SIZE X="194" Y="524"/>
+			<NORMAL_IMAGE NAME="global\my_card\tab_btn3_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\my_card\tab_btn3_c.pgf"/>
+			<OVER_IMAGE NAME="global\my_card\tab_btn3_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="세번째 슬롯"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="MyCardTabBtn">
+			<NAME_ID NAME="tab_4" ID="504"/>
+			<SIZE X="264" Y="524"/>
+			<NORMAL_IMAGE NAME="global\my_card\tab_btn4_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\my_card\tab_btn4_c.pgf"/>
+			<OVER_IMAGE NAME="global\my_card\tab_btn4_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="네번째 슬롯"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="OneSlot1" ID="1001"/>
+			<SIZE X="9" Y="127"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot2" ID="1002"/>
+			<SIZE X="65" Y="127"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot3" ID="1003"/>
+			<SIZE X="121" Y="127"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot4" ID="1004"/>
+			<SIZE X="177" Y="127"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot5" ID="1005"/>
+			<SIZE X="233" Y="127"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot6" ID="1006"/>
+			<SIZE X="289" Y="127"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot7" ID="1007"/>
+			<SIZE X="9" Y="225"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot8" ID="1008"/>
+			<SIZE X="65" Y="225"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot9" ID="1009"/>
+			<SIZE X="121" Y="225"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot10" ID="1010"/>
+			<SIZE X="177" Y="225"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot11" ID="1011"/>
+			<SIZE X="233" Y="225"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot12" ID="1012"/>
+			<SIZE X="289" Y="225"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot13" ID="1013"/>
+			<SIZE X="9" Y="323"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot14" ID="1014"/>
+			<SIZE X="65" Y="323"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot15" ID="1015"/>
+			<SIZE X="121" Y="323"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot16" ID="1016"/>
+			<SIZE X="177" Y="323"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot17" ID="1017"/>
+			<SIZE X="233" Y="323"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot18" ID="1018"/>
+			<SIZE X="289" Y="323"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot19" ID="1019"/>
+			<SIZE X="9" Y="421"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot20" ID="1020"/>
+			<SIZE X="65" Y="421"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot21" ID="1021"/>
+			<SIZE X="121" Y="421"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot22" ID="1022"/>
+			<SIZE X="177" Y="421"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot23" ID="1023"/>
+			<SIZE X="233" Y="421"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="OneSlot24" ID="1024"/>
+			<SIZE X="289" Y="421"/>
+			<NORMAL_IMAGE NAME="global\lock_one_card.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+	</CHILD_LIST>
+</WINDOW>
