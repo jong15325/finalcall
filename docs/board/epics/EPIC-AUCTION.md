@@ -3,7 +3,7 @@ id: EPIC-AUCTION
 type: epic
 jira_key: KAN-30
 title: 경매 백엔드 — 등록·목록·상세·판매자취소 + FSM
-state: doing
+state: done
 children: [FC-025, FC-026, FC-027, FC-028, FC-029]
 gate: null
 ---
@@ -23,4 +23,11 @@ gate: null
 의존/팬아웃: FC-025 → FC-026 → (FC-027 ∥ FC-028?, architect 판정 — auction 엔티티·Flyway 공유 시 순차) → FC-029.
 파이프라인: architect → backend-impl → reviewer → Done.
 보안 층 첫 실적용: 도메인 인가(자기 아이템만 출품·판매자 본인만 취소·주체=SecurityContext) reviewer 확인소, 에픽 완료 시 /security-review 1회.
-로드맵: EPIC-ITEM(done) → **EPIC-AUCTION** → EPIC-BID → EPIC-CLOSING → EPIC-SHOP.
+로드맵: EPIC-ITEM(done) → **EPIC-AUCTION(done)** → EPIC-BID → EPIC-CLOSING → EPIC-SHOP.
+
+## 완료 기록 (게이트3, 2026-07-18)
+- 하위 FC-025~029 전건 done. Jira KAN-30~35 완료 미러.
+- reviewer(FC-029) PASSED — critical 0 · major 0 · minor 8(비차단). `docs/board/reviews/FC-029-review.md`.
+- **에픽 완료 온디맨드 `/security-review` 1회 실행 — HIGH/MEDIUM 발견 0건**(보안 층 첫 실적용). 검증 범위: 도메인 인가·IDOR / SecurityConfig permitAll 스코프(GET 한정) / 에스크로 CAS 정합 / QueryDSL 인젝션 / 응답 데이터 노출.
+- 기준미달 관찰 3건은 HANDOVER 백로그에 등재(특히 **에스크로 CAS owner 조건** — EPIC-CLOSING 소유권 이전 도입 시 TOCTOU화, 선결 검토 대상).
+- 사용자 Done 승인 2026-07-18.
