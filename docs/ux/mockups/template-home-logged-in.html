@@ -32,12 +32,23 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 :root{
   /* 베이스·표면 */
-  --bg:#FFFFFF; --surface:#FFFFFF; --surface-raised:#FFFFFF; --surface-sunken:#F4F4F5;
+  /* ★ 표면 4단 층(개정). 종전엔 bg·surface·surface-raised 가 전부 #FFFFFF 였다 —
+     페이지·카드·부양면이 색으로 구분되지 않아 깊이가 전부 그림자·얇은 선에만 걸렸고,
+     화면이 한 장의 흰 종이로 읽혀 밋밋했다. 카드만 순백으로 남기고 페이지를 내린다. */
+  --bg:#F7F7F8;                  /* 페이지 캔버스 — 순백 카드가 뜨는 바탕 */
+  --surface:#FFFFFF;             /* 카드·패널·인풋 — 유일한 순백 = "떠 있음"의 신호 */
+  --surface-raised:#FFFFFF;      /* 모달·팝오버 — surface 와 같은 순백이되, 이제 의미가 있다:
+                                    페이지가 더는 흰색이 아니므로 순백 자체가 부양을 뜻한다.
+                                    추가 구분은 shadow-lg + scrim 이 맡는다(라이트에선 흰색 위로 못 간다) */
+  --surface-band:#EFEFF1;        /* 신설 — 섹션 전체 폭 밴드(면 리듬용) */
+  --surface-sunken:#E8E8EB;      /* 함몰 웰 — 비활성 인풋·표 행·법적 고지 */
   --slot:#000000;                              /* 아이템 아트 슬롯 — 아이템 표시 전용 */
-  /* 텍스트 (on #FFF: 17.72 / 7.73 / 4.83) */
-  --text:#18181B; --text-muted:#52525B; --text-subtle:#71717A;
+  /* 텍스트 — 배경이 내려가면 대비도 내려간다. text-subtle 은 종전 #71717A 로는
+     band(4.40)·sunken(3.99) 에서 AA 4.5 미달이라 #67676E 로 낮췄다(가장 깊은 면에서도 4.59). */
+  --text:#18181B; --text-muted:#52525B; --text-subtle:#67676E;
   /* 테두리 */
-  --border:#E4E4E7; --border-muted:#F1F1F3; --border-strong:#8A8A8F;
+  /* border-strong 도 동일 사유 — 종전 #8A8A8F 는 sunken 위 2.81 로 1.4.11(3:1) 미달 */
+  --border:#E4E4E7; --border-muted:#F1F1F3; --border-strong:#818187;
   /* 조작 — CTA=블랙(ink), 퍼플=액센트만 (§1.2 ①) */
   --ink:#18181B; --ink-hover:#33333A; --ink-pressed:#000000;
   --primary:#6E2A9F; --primary-hover:#5C2185; --primary-pressed:#491A6C;
@@ -367,6 +378,16 @@ main{display:block;}
 .section--tight{padding:var(--s12) 0;}          /* 밀집: 카테고리·고정가·시세 */
 .section--airy{padding:var(--s20) 0 var(--s16);} /* 여유: 마지막 신뢰 블록 */
 .section + .section{border-top:1px solid var(--border-muted);}
+
+/* ── 섹션 밴드 ────────────────────────────────────────────────────────────────
+   면 리듬은 얇은 선이 아니라 "큰 면"이 만든다. 기계적 교차(홀짝) 대신 성격으로 묶는다:
+   고정가(지금 살 수 있는 것) + 시세(값이 얼마인지) = 시장 데이터 한 덩어리 → 하나의 큰 밴드.
+   밴드 안의 목록·표는 흰 패널로 올려 층이 3단(밴드<페이지<패널)으로 읽히게 한다. */
+.band{background:var(--surface-band);}
+.band > .section + .section{border-top:1px solid var(--border);}  /* 같은 면 안의 구분선은 한 단계 진하게 */
+
+/* 흰 패널 — 목록·표를 페이지/밴드 위로 띄운다 */
+.panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;}
 @media (max-width:860px){
   .section{padding:var(--s12) 0;}
   .section--tight{padding:var(--s10) 0;}
@@ -414,9 +435,10 @@ main{display:block;}
 @keyframes deplete{from{transform:scaleX(var(--from,1));} to{transform:scaleX(0);}}
 
 /* 임박 목록(우측) — 카드가 아니라 행. 카드 그리드 반복을 피하고 밀도를 만든다 */
-.closing-list{border-top:1px solid var(--border); }
+.closing-list{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;}
 .closing-list li{list-style:none;}
 .closing-list ol{margin:0; padding:0;}
+.closing-list ol > li:last-child .closing-row{border-bottom:0;}
 .closing-row{
   display:flex; align-items:center; gap:var(--s4); padding:var(--s4) var(--s2);
   border-bottom:1px solid var(--border); text-decoration:none; color:inherit;
@@ -495,7 +517,8 @@ main{display:block;}
 /* 카드가 아니라 타일 나열. 얇은 선 격자로만 구획해 홈에서 카드 반복을 늘리지 않는다 */
 .cat-grid{
   display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr));
-  border-top:1px solid var(--border); border-left:1px solid var(--border);
+  background:var(--surface); border-top:1px solid var(--border); border-left:1px solid var(--border);
+  border-radius:var(--r-lg); overflow:hidden;
 }
 .cat-tile{
   display:flex; align-items:center; gap:var(--s3); padding:var(--s4);
@@ -509,7 +532,8 @@ main{display:block;}
 .cat-tile .t .ct{display:block; font-size:.75rem; color:var(--text-subtle); margin-top:1px; white-space:nowrap;}
 
 /* ── 7.4 고정가 행 목록 ──────────────────────────────────────────────────────── */
-.fixed-list{border-top:1px solid var(--border);}
+.fixed-list{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;}
+.fixed-list .fixed-row:last-child{border-bottom:0;}
 .fixed-row{
   display:flex; align-items:center; gap:var(--s4);
   padding:var(--s4) var(--s2); border-bottom:1px solid var(--border);
@@ -550,7 +574,8 @@ main{display:block;}
 .price-table .delta--up{color:var(--danger);}      /* 상승=적, 하락=청 (국내 거래 관례) */
 .price-table .delta--down{color:var(--info);}
 .price-table .delta--flat{color:var(--text-subtle);}
-.table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--s2) var(--s4) var(--s4);}
 @media (max-width:640px){ .price-table{min-width:560px;} }
 
 /* ── 7.6 거래 안전 ───────────────────────────────────────────────────────────── */
@@ -568,7 +593,7 @@ main{display:block;}
    3단 구성: (a) 링크 열 + 고객센터  (b) 사업자/법적 고지(함몰 배경)  (c) 워드마크·저작권.
    고지값은 실제 사업자 정보가 없으므로 자리표시자임을 명시한다(가짜 등록번호 창작 금지).
    ══════════════════════════════════════════════════════════════════════════════ */
-.site-footer{border-top:1px solid var(--border); background:var(--surface);}
+.site-footer{border-top:1px solid var(--border); background:var(--surface-band);}
 .footer-top{display:grid; grid-template-columns:1.4fr repeat(3,1fr) 1.3fr; gap:var(--s8); padding:var(--s16) 0 var(--s12);}
 @media (max-width:960px){ .footer-top{grid-template-columns:1fr 1fr; gap:var(--s8) var(--s6); padding:var(--s12) 0 var(--s8);} }
 @media (max-width:560px){ .footer-top{grid-template-columns:1fr;} }
@@ -579,14 +604,14 @@ main{display:block;}
 .footer-col a{font-size:.8125rem; color:var(--text-muted); text-decoration:none;}
 .footer-col a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
 
-.footer-support{border-left:1px solid var(--border); padding-left:var(--s6);}
+.footer-support{padding-left:var(--s6);}  /* 밴드 위에선 border 가 1.06 로 안 읽힌다 — 여백으로 가른다 */
 @media (max-width:960px){ .footer-support{border-left:0; padding-left:0; grid-column:1/-1; border-top:1px solid var(--border); padding-top:var(--s6);} }
 .footer-support h3{margin:0 0 var(--s2); font-size:.8125rem; font-weight:700;}
 .footer-support .tel{font-size:1.375rem; font-weight:800; letter-spacing:-.02em; line-height:1.2;}
 .footer-support .hours{margin:var(--s2) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.7;}
 .footer-support .btn{margin-top:var(--s4);}
 
-.footer-legal{background:var(--surface-sunken); border-top:1px solid var(--border); padding:var(--s6) 0;}
+.footer-legal{background:var(--surface-sunken); padding:var(--s6) 0;}  /* 면 전환 자체가 구분선이다 */
 .footer-legal dl{
   margin:0; display:flex; flex-wrap:wrap; gap:var(--s1) var(--s5);
   font-size:.75rem; color:var(--text-muted); line-height:1.8;
@@ -1012,7 +1037,10 @@ main{display:block;}
        ④ 즉시구매(고정가) — 구조를 바꾼다: 카드 그리드가 아니라 행 목록.
           홈에서 같은 카드 격자가 두 번 반복되는 것을 막는 장치다.
        ════════════════════════════════════════════════════════════════════════ -->
-  <section class="section section--tight" aria-labelledby="h-fixed">
+  <!-- ④+⑤ 를 하나의 큰 밴드로 묶는다 — 얇은 선이 아니라 면이 리듬을 만든다.
+       두 섹션은 성격이 같다: "지금 살 수 있는 것"과 "그게 얼마인지". 기계적 홀짝 교차가 아니다. -->
+  <div class="band">
+<section class="section section--tight" aria-labelledby="h-fixed">
     <div class="container">
       <div class="section-head">
         <div>
@@ -1151,6 +1179,9 @@ main{display:block;}
       </div>
     </div>
   </section>
+
+  
+  </div>
 
   <!-- ════════════════════════════════════════════════════════════════════════
        ⑥ 거래 안전 — 맨 아래. 위에서 실물을 다 보여준 뒤의 보증이다.
