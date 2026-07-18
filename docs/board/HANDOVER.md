@@ -38,6 +38,8 @@
 ## 대기 안건(백로그)
 - **EPIC-CHARGE**: 충전(토스 test 결제, 외부 연동·시크릿) — 별도 에픽. erd 5절 charge.idempotency_key 표기 불일치 함께 정리.
 - **EPIC-OAUTH**: 소셜 로그인(카카오·네이버) — 계약 §2 확장(신규 엔드포인트·소셜 연동·시크릿) + 프론트 연동. 프론트 자리확보됨. architect+게이트2 필요.
+- **EPIC-GAME-PROFILE(가칭)**: 게임 차용(프로필·인벤토리 UI) + 게임데이터 통합. **선결 설계 미결** — new_sp가 라이브 인게임 DB로도 쓰일 예정이라 정규화 시 단일진실원 이원화·크로스DB 조인·화폐 소유권 문제. 착수 전 **업계 레퍼런스 조사 → 합의**(architect+게이트2). 상세 = `docs/portfolio/process-log.md` 항목3. 소스 = `new_sp` DB(docker)·`docs/game_ui/`.
+- **EPIC-ITEM 위생 후속(minor 3, 비차단)**: (1) 자동배정 relocate 경합 시 INV_002 메시지 오해 소지(패자 1회 재시도 or 전용 메시지), (2) temp-storage `size` @Min/@Max 무경계(notice `getByCursor`와 동일 구조 → 일괄 개선), (3) 카탈로그 max page size 미지정. 근거 = `docs/board/reviews/FC-024-review.md` minor절.
 - **PR 워크플로우 도입 논의**(도입 시 게이트3 훅을 "브랜치 push 허용 + main 머지 차단"으로 국소 수정. 도입하면 CI claude-security-review·dependency-review 활성).
 - 보안 플러그인(커밋 warn-only) 도입 — 로컬 Python 설치 시 LLM+정적 재검토(현재 보류).
 - design-system.md Q4(element 배지강도) — 아이템 에픽에서 확정.
