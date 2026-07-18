@@ -47,7 +47,7 @@ class AuctionCancelVsBidConcurrencyIntegrationTest extends BidConcurrencyTestBas
         }
 
         for (int round = 0; round < ROUNDS; round++) {
-            Auction auction = persistAuction(seller, 8501 + round, secondsLater(3600));
+            Auction auction = persistAuction(seller, 8521 + round, secondsLater(3600));
             // 홀수 라운드는 입찰 1건을 미리 커밋해 <b>취소가 반드시 밀리는 쪽</b>을 결정적으로 만든다. 이렇게 하지
             //   않으면 실행마다 취소가 계속 이겨 AUCTION_007 분기가 한 번도 밟히지 않을 수 있다(무증상 미검증).
             boolean bidCommittedFirst = round % 2 == 1;
@@ -115,7 +115,7 @@ class AuctionCancelVsBidConcurrencyIntegrationTest extends BidConcurrencyTestBas
     void 입찰이_있는_경매의_취소는_AUCTION_007로_거부된다() throws Exception {
         User seller = persistUser("cvb_det_seller", "결정판매자", 0L);
         User bidder = persistUser("cvb_det_bidder", "결정입찰자", BALANCE);
-        Auction auction = persistAuction(seller, 8510, secondsLater(3600));
+        Auction auction = persistAuction(seller, 8530, secondsLater(3600));
         placeInTransaction(bidder, auction.getPublicId(), START_PRICE);
 
         assertThat(cancelAndCaptureCode(seller, auction.getPublicId())).isEqualTo("AUCTION_007");
