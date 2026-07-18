@@ -60,6 +60,14 @@
   /* 아이템 — element 4색 아트 실측 불변 (§2.7). 아이템 표시 밖 사용 금지 */
   --el-water:#19B2FF; --el-fire:#FF5500; --el-earth:#95B259; --el-wind:#66CCCC;
   --el-water-soft:#DDF3FF; --el-fire-soft:#FFE6D9; --el-earth-soft:#EFF3E6; --el-wind-soft:#E8F7F7;
+  /* 아트 슬롯 딥 글로우 (§2.7 · v0.5) — 검정 단일 슬롯을 대체한다.
+     확정 element 1(물)·2(불)만 매핑하고, 미확정(3·4)·무속성은 중립 글로우로 폴백한다. */
+  --glow-water-core:#12384A; --glow-water-edge:#0A2430;
+  --glow-fire-core:#4A2412;  --glow-fire-edge:#301A0A;
+  --glow-neutral-core:#26262B; --glow-neutral-edge:#131316;
+  /* 골드포스 아웃라인 — out_line/l/gold.png 픽셀 실측(§5.12) */
+  --gf-1:#B9840F; --gf-2:#D0AD31; --gf-3:#DFC447; --gf-4:#F0E163; --gf-5:#FCF474; --gf-6:#FFFF83;
+  --gf-bev-1:#7A5A00; --gf-bev-2:#8B6100; --gf-bev-3:#99770C; --gf-bev-4:#A98A14;
 
   /* 반경 (§4 — 무신사식 각진 감성) */
   --r-sm:4px; --r-md:6px; --r-lg:8px; --r-xl:12px; --r-full:9999px;
@@ -334,6 +342,65 @@ a:hover{color:var(--primary-hover);}
 .slot--row img{width:52px; height:56px;}                                             /* s 2x */
 .slot--tile   {width:44px; height:44px; border-radius:var(--r-sm); flex:none;}
 .slot--tile img{width:26px; height:28px;}                                            /* s 1x */
+
+/* ── 아트 슬롯 딥 글로우 (§5.3 v0.5) ─────────────────────────────────────────
+   검정 단일 슬롯을 속성별 방사 그라데이션으로 교체한다. 코어는 아트가 덮는 한가운데,
+   엣지는 아트 좌우로 드러나는 띠다. 채도는 금색 대비를 지키려고 S61%로 눌러 놨다
+   (S77% 원안은 코어 위 금색이 5.31까지 떨어졌다). 작은 썸네일(row·tile)은
+   44~64px라 그라데이션이 보이지 않으므로 중립 글로우만 준다. */
+.slot--glow-water  {background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-water-core) 0%,var(--glow-water-edge) 72%);}
+.slot--glow-fire   {background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-fire-core) 0%,var(--glow-fire-edge) 72%);}
+.slot--glow-neutral{background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-neutral-core) 0%,var(--glow-neutral-edge) 72%);}
+.slot--row, .slot--tile{background:var(--glow-neutral-edge);}
+
+/* ── 골드포스 아웃라인 (§5.12) ───────────────────────────────────────────────
+   원본은 [밝은 금 링] + [흰 셰인] 2패스 합성이다. 두께는 --art-scale 파생이고
+   9px에서 상한을 건다. 애니메이션 속성은 transform 하나뿐(컴포지터). */
+.art-frame{
+  position:relative;
+  --art-scale:2;
+  --gf-bright:min(calc(1px * var(--art-scale) + 1px), 5px);
+  --gf-bev:min(calc(1px * var(--art-scale)), 4px);
+  border-radius:calc(1px * var(--art-scale) + 1px);
+  overflow:hidden;   /* 아트 네 모서리의 #0000FF 크로마키 1px을 잘라낸다 */
+}
+.art-frame--x3{--art-scale:3;}
+.art-frame img{position:relative; z-index:0;}
+/* 안쪽 어두운 금 베벨 겹. .gf 는 content-box를 도려낸 마스크라 그 안에 두면 잘린다 */
+.art-frame.has-gf::after{
+  content:""; position:absolute; z-index:1; inset:var(--gf-bright); border-radius:inherit;
+  padding:var(--gf-bev);
+  background:linear-gradient(135deg,var(--gf-bev-1) 0%,var(--gf-bev-2) 38%,var(--gf-bev-3) 72%,var(--gf-bev-4) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+}
+.gf{position:absolute; inset:0; z-index:2; border-radius:inherit; pointer-events:none;
+  padding:var(--gf-bright);
+  background:linear-gradient(135deg,var(--gf-1) 0%,var(--gf-2) 22%,var(--gf-3) 42%,
+    var(--gf-4) 62%,var(--gf-5) 80%,var(--gf-6) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude; overflow:hidden;}
+.gf > i{position:absolute; top:-60%; left:-60%; width:220%; height:220%;
+  background:linear-gradient(135deg,transparent calc(50% - 9%),rgba(255,255,255,.95) 50%,transparent calc(50% + 9%));
+  transform:translate3d(-72%,-72%,0);
+  animation:gf-sweep 3s linear infinite; will-change:transform;}
+@keyframes gf-sweep{
+  0%{transform:translate3d(-72%,-72%,0);}
+  30%{transform:translate3d(72%,72%,0);}
+  100%{transform:translate3d(72%,72%,0);}}
+/* 색 단독 정보 전달 금지 — 아웃라인은 보조다. 배지·본문줄이 정보를 나른다 */
+.gf-badge{position:absolute; left:var(--s2); top:var(--s2); z-index:4;
+  display:inline-flex; align-items:center; gap:5px; padding:3px var(--s2);
+  background:rgba(255,255,255,.94); border-radius:var(--r-full);
+  font-size:.6875rem; font-weight:700; color:var(--text); letter-spacing:-.01em;}
+.gf-badge .dot{width:7px; height:7px; border-radius:var(--r-full);
+  background:linear-gradient(135deg,var(--gf-2),var(--gf-6));}
+.gf-line{display:flex; align-items:center; gap:5px; margin-top:var(--s2);
+  font-size:.75rem; font-weight:600; color:var(--text-muted);}
+.gf-line .dot{width:6px; height:6px; border-radius:var(--r-full);
+  background:linear-gradient(135deg,var(--gf-2),var(--gf-6)); flex:none;}
 
 /* element 배지 — §2.7 라이트 패턴: 소프트 틴트 배경 + near-black 라벨 + solid 도트.
    흰 배경 위 텍스트 직접 사용 금지(water 2.37:1). 라벨 병기라 1.4.1 위반 아님. */
@@ -637,6 +704,8 @@ main{display:block;}
   }
   /* 게이지는 애니메이션 대신 현재 비율을 정적으로 그린다(정보 손실 방지) */
   .deadline-bar > i{animation:none; transform:scaleX(var(--from,1));}
+  /* 골드포스: 흐르는 흰 셰인만 정지. 정적 금 2겹 링·배지·본문줄은 남는다 */
+  .gf > i{animation:none; opacity:0;}
   .item-card:hover{transform:none;}
 }
 </style>
@@ -764,14 +833,19 @@ main{display:block;}
         <div class="closing-body">
           <!-- 서열 1위만 카드 크기를 깬다. 그리드 안에서 크기로 위계를 만드는 유일한 지점 -->
           <a href="#" class="item-card item-card--feature">
-            <div class="slot slot--feature">
-              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png" alt="7레벨 불속성 칼 카드 아트" width="150" height="279">
+            <div class="slot slot--feature slot--glow-fire">
+              <span class="art-frame art-frame--x3 has-gf">
+                <span class="gf" aria-hidden="true"><i></i></span>
+                <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png" alt="7레벨 불속성 칼 카드 아트" width="150" height="279">
+              </span>
+              <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스<span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
               <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
             </div>
             <div class="deadline-bar" role="presentation"><i style="--from:.09; animation-duration:178s;"></i></div>
             <div class="body">
               <div class="nm">7레벨 칼</div>
               <div class="kind">블랙 · 무기 · 채널당 고수채널</div>
+              <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 9일 남음</div>
               <div class="price">
                 <span class="k">현재 최고가</span>
                 <span class="v num">1,280,000<span class="u">G</span></span>
@@ -904,13 +978,18 @@ main{display:block;}
       <div class="card-grid">
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
-            <img src="../../game_ui/item_info/card_image/gold_black/level5/l/water/bow.png" alt="5레벨 물속성 활 카드 아트" width="100" height="186">
+          <div class="slot slot--card slot--glow-water">
+            <span class="art-frame has-gf">
+              <span class="gf" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level5/l/water/bow.png" alt="5레벨 물속성 활 카드 아트" width="100" height="186">
+            </span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스<span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
             <span class="el el--water"><span class="dot" aria-hidden="true"></span>물</span>
           </div>
           <div class="body">
             <div class="nm">5레벨 활</div>
             <div class="kind">블랙 · 무기</div>
+            <div class="gf-line"><span class="dot" aria-hidden="true"></span>골드포스 9일 남음</div>
             <div class="price"><span class="k">최고가</span><span class="v num">640,000<span class="u">G</span></span></div>
             <div class="foot">
               <span class="seller">입찰 <b class="num">12</b>회</span>
@@ -920,7 +999,7 @@ main{display:block;}
         </a>
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-neutral">
             <img src="../../game_ui/item_info/card_image/gold_black/level3/l/wind/wand.png" alt="3레벨 바람속성 완드 카드 아트" width="100" height="186">
             <span class="el el--wind"><span class="dot" aria-hidden="true"></span>바람</span>
           </div>
@@ -936,7 +1015,7 @@ main{display:block;}
         </a>
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-neutral">
             <img src="../../game_ui/item_info/card_image/gold_black/level6/l/earth/armor.png" alt="6레벨 땅속성 갑옷 카드 아트" width="100" height="186">
             <span class="el el--earth"><span class="dot" aria-hidden="true"></span>땅</span>
           </div>
@@ -952,7 +1031,7 @@ main{display:block;}
         </a>
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-neutral">
             <img src="../../game_ui/item_info/card_image/pet/l/leo.png" alt="레오 펫 카드 아트" width="100" height="186">
           </div>
           <div class="body">
@@ -967,7 +1046,7 @@ main{display:block;}
         </a>
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-fire">
             <img src="../../game_ui/item_info/card_image/white/l/fire.png" alt="불 정령 카드 아트" width="100" height="186">
             <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
           </div>
@@ -983,7 +1062,7 @@ main{display:block;}
         </a>
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-neutral">
             <img src="../../game_ui/item_info/card_image/avatar/l/item1_weapon1.png" alt="아바타 무기 카드 아트" width="100" height="186">
           </div>
           <div class="body">
@@ -998,7 +1077,7 @@ main{display:block;}
         </a>
 
         <a href="#" class="item-card">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-neutral">
             <img src="../../game_ui/item_info/card_image/silver/l/silver_char1.png" alt="실버 캐릭터 카드 아트" width="100" height="186">
           </div>
           <div class="body">
@@ -1014,7 +1093,7 @@ main{display:block;}
 
         <!-- 종료 상태 — 홈에도 마감 직후 매물이 남는다. 딤 + 텍스트로 확정(색 단독 금지) -->
         <div class="item-card item-card--ended" aria-label="마감된 경매">
-          <div class="slot slot--card">
+          <div class="slot slot--card slot--glow-neutral">
             <img src="../../game_ui/item_info/card_image/gold_force/l/bcard_gold_force_bow.png" alt="골드포스 활 카드 아트" width="100" height="186">
             <span class="ended-mask">마감 · 낙찰</span>
           </div>
