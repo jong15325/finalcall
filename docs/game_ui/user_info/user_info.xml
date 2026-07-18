@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="UserInfo">
+	<NAME_ID NAME="serverlist_Wnd" ID="29"/>
+	<SIZE X="550" Y="50"/>
+	<DRAG_RECT LEFT="0" TOP="0" RIGHT="204" BOTTOM="33"/>
+	<NORMAL_IMAGE NAME="global\user_info\wnd_userinfo.pgf" LOAD_TYPE="LOAD_SIZE"/>
+	<CLICK_IMAGE NAME="global\user_info\wnd_userinfo.pgf"/>
+	<OVER_IMAGE NAME="global\user_info\wnd_userinfo.pgf"/>
+	<STYLE>IWS_CANMOVE|IWS_EXIT_ESC</STYLE>
+	<CHILD_LIST>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="whisper_btn" ID="1"/>
+			<SIZE X="133" Y="107"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_00_whisper_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_00_whisper_click.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_00_whisper_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="해당 유저에게 귓말 하기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="Eun_btn" ID="2"/>
+			<SIZE X="133" Y="179"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_message_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_message_click.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_message_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="쪽지 보내기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="change_btn" ID="8"/>
+			<SIZE X="133" Y="203"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_08_change_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_08_change_c.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_08_change_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="교환 하기" SZNOTIFY="커뮤니티 모드에서 사용이 가능합니다."/>
+			<STYLE>IWS_INACTIVE</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="black_list_btn" ID="4"/>
+			<SIZE X="133" Y="227"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_05_blacklist_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_05_blacklist_click.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_05_blacklist_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="블랙리스트 등록"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="friend_btn" ID="5"/>
+			<SIZE X="133" Y="155"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_02_friends_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_02_friends_click.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_02_friends_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="친구 등록"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="find_user_btn" ID="6"/>
+			<SIZE X="133" Y="131"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_01_finduser_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_01_finduser_click.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_01_finduser_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="위치 찾기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="invite_btn" ID="7"/>
+			<SIZE X="133" Y="251"/>
+			<NORMAL_IMAGE NAME="global\user_info\btn_06_invite_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\user_info\btn_06_invite_click.pgf"/>
+			<OVER_IMAGE NAME="global\user_info\btn_06_invite_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="초대하기" SZNOTIFY="룸 및 게임내에서 사용이 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="card_1" ID="11"/>
+			<SIZE X="64" Y="65" WIDTH="30" HEIGHT="32"/>
+			<EXTRA_INFO SZHELP="상세 설명 보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="card_2" ID="12"/>
+			<SIZE X="96" Y="65" WIDTH="30" HEIGHT="32"/>
+			<EXTRA_INFO SZHELP="상세 설명 보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="card_3" ID="13"/>
+			<SIZE X="128" Y="65" WIDTH="30" HEIGHT="32"/>
+			<EXTRA_INFO SZHELP="상세 설명 보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="card_4" ID="14"/>
+			<SIZE X="168" Y="65" WIDTH="30" HEIGHT="32"/>
+			<EXTRA_INFO SZHELP="상세 설명 보기"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="01_xyrho" ID="101"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_01_xyrho.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="02_shamoo" ID="102"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_02_shamoo.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="03_sven" ID="103"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_03_sven.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="04_cream" ID="104"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_04_cream.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="05_roland" ID="105"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_05_roland.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="06_aurelli" ID="106"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_06_aurelli.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="07_hawk" ID="107"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_07_hawk.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="08_hazel" ID="108"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_08_hazel.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="09_cara" ID="109"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_09_cara.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="10_warrior" ID="110"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_10_warrior.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="11_lucy" ID="111"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_11_lucy.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="12_will" ID="112"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_12_darkelf.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="13_avatar" ID="113"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_13_avatar.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="14_avatar" ID="114"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_14_avatar.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="15_avatar" ID="115"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_15_avatar.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="16_avatar" ID="116"/>
+			<SIZE X="6" Y="39"/>
+			<NORMAL_IMAGE NAME="global\user_info\uc_16_avatar.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element1" ID="250"/>
+			<SIZE X="184" Y="278"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_1.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element2" ID="260"/>
+			<SIZE X="184" Y="278"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_2.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element3" ID="270"/>
+			<SIZE X="184" Y="278"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_3.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="element4" ID="280"/>
+			<SIZE X="184" Y="278"/>
+			<NORMAL_IMAGE NAME="global\my_card\avatar_equip_wnd\avatar_element_4.pgf" LOAD_TYPE="LOAD_SIZE"/>
+		 	<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="x_Button" ID="10"/>
+			<SIZE X="176" Y="5"/>
+			<NORMAL_IMAGE NAME="global\btn_x_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\btn_x_click.pgf"/>
+			<OVER_IMAGE NAME="global\btn_x_normal.pgf" LOAD_TYPE="LOAD_NOT" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="창닫기(ESC)"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="0" ID="21"/>
+			<SIZE X="166" Y="406" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="1" ID="22"/>
+			<SIZE X="129" Y="406" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="2" ID="23"/>
+			<SIZE X="8" Y="365" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="3" ID="24"/>
+			<SIZE X="166" Y="365" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="4" ID="25"/>
+			<SIZE X="45" Y="406" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="5" ID="26"/>
+			<SIZE X="8" Y="406" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="UserInfoCardBtn">
+			<NAME_ID NAME="6" ID="27"/>
+			<SIZE X="92" Y="406" WIDTH="30" HEIGHT="32"/>			
+			<EXTRA_INFO SZHELP="클릭 상세보기"/>
+		</BUTTON>
+	</CHILD_LIST>
+</WINDOW>
