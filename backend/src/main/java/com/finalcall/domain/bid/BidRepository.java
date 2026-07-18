@@ -21,7 +21,7 @@ import com.finalcall.common.exception.ErrorCode;
  * 갖고 있어(bid-domain-spec §4.2) 같은 함정을 확산시키지 않는다. 호출 측은 값 스냅샷({@link BidSnapshot})을
  * 근거로 동작하도록 설계돼 있어 자동 clear 가 필요 없다.
  */
-public interface BidRepository extends JpaRepository<Bid, Long> {
+public interface BidRepository extends JpaRepository<Bid, Long>, BidRepositoryCustom {
 
     /** public_id 로 입찰 조회(외부 식별자 B-004). */
     Optional<Bid> findByPublicId(String publicId);

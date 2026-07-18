@@ -24,6 +24,14 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
     Optional<Auction> findByPublicId(String publicId);
 
     /**
+     * public_id → 내부 PK 해석(외부 식별자 B-004). 경매 본문이 필요 없는 종속 리소스 조회
+     * (예: {@code GET /auctions/{id}/bids})가 경매 전체 행·연관을 끌어오지 않도록 스칼라만 읽는다.
+     * 비어 있으면 {@code AUCTION_004}(404) 판정의 근거가 된다.
+     */
+    @Query("SELECT a.id FROM Auction a WHERE a.publicId = :publicId")
+    Optional<Long> findIdByPublicId(@Param("publicId") String publicId);
+
+    /**
      * 판매자 취소 조건부 CAS(auction-domain-spec §4.2 · 게이트2 e/G6, FC-028). 상태가 SCHEDULED|ACTIVE 이고
      * 입찰이 없을 때(highest_bidder_id IS NULL)만 CANCELLED 로 단일 승자 전이한다.
      *

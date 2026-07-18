@@ -2,6 +2,8 @@ package com.finalcall.domain.bid;
 
 import java.time.Instant;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -113,6 +115,26 @@ public class BidService {
     }
 
     /**
+     * 입찰 이력을 조회한다(계약 §3.1 {@code GET /auctions/{id}/bids}) — <b>인증 불요</b> 공개 조회다.
+     *
+     * <p>경매 존재를 먼저 확인해 {@code AUCTION_004}(404)를 내는 이유는, 없는 경매에 빈 페이지를 돌려주면
+     * 클라이언트가 "입찰 0건"과 "잘못된 링크"를 구분할 수 없기 때문이다. 경매 존재 여부는 공개 상세로 이미
+     * 노출되는 정보라 열거 리스크가 없다(SEC-007 무관).
+     *
+     * <p>응답에는 입찰자 실식별자(userPublicId·loginId·실 nickname)와 자금 정보(홀드·잔액)를 싣지 않는다 —
+     * 마스킹·필드 선별은 표현 계층({@code BidSummaryResponse})이 수행한다.
+     *
+     * @return 입찰 이력 페이지(금액 내림차순). 입찰이 없으면 빈 페이지
+     * @throws BusinessException 경매가 없으면 {@code AUCTION_004}
+     */
+    @ServiceLog
+    public Page<Bid> getBids(String auctionPublicId, Pageable pageable) {
+        Long auctionId = auctionRepository.findIdByPublicId(auctionPublicId)
+            .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_NOT_FOUND));
+        return bidRepository.findPageByAuctionId(auctionId, pageable);
+    }
+
+    /**
      * 검증 순서(§3.1 확정): 상태(2·3) → 주체(4·5) → 금액(6·7). 자금(8)은 {@code placeHold} 가 마지막에 판정한다.
      *
      * <p>자금 검증을 뒤로 미루는 것은 의도적이다 — 앞선 검증에서 어차피 거부될 요청이 잔액 행 배타 락을 잡지
@@ -151,13 +173,13 @@ public class BidService {
         return started && now.isBefore(auction.endAt());
     }
 
-    /** 첫 입찰이면 시작가, 후속이면 최고가 + 해당 구간 증분(§3.3). */
+    /**
+     * 첫 입찰이면 시작가, 후속이면 최고가 + 해당 구간 증분(§3.3). 산출은 {@link BidIncrementProperties} 가 단독으로
+     * 책임진다 — 경매 상세의 {@code minNextBidAmount} 파생값도 같은 메서드를 호출하므로 안내 금액과 검증 하한이
+     * 갈라질 수 없다.
+     */
     private long minNextBidAmount(AuctionBidContext auction) {
-        Long highest = auction.highestBidAmount();
-        if (highest == null) {
-            return auction.startPrice();
-        }
-        return highest + incrementProperties.incrementFor(highest);
+        return incrementProperties.minNextBidAmount(auction.startPrice(), auction.highestBidAmount());
     }
 
     /**

@@ -386,10 +386,11 @@ class BidApiIntegrationTest extends IntegrationTest {
         flushClear();
 
         // GET /auctions/*/bids 는 2세그먼트라 기존 permitAll(/auctions/*) 에 걸리지 않아 별도 등재했다.
-        //   조회 핸들러는 FC-033 소유라 아직 없으므로 405 가 정답이다 — 중요한 건 401 이 아니라는 것이다.
-        //   같은 경로의 POST 는 위 테스트대로 401 을 유지한다(GET 만 열었다는 증거).
+        //   FC-033 에서 조회 핸들러가 붙어 이제 200 이다. 같은 경로의 POST 는 위 테스트대로 401 을 유지한다
+        //   — 화이트리스트가 HTTP 메서드 단위로 좁게 열렸다는 증거다.
         mockMvc.perform(get("/api/v1/auctions/{id}/bids", auction.getPublicId()))
-            .andExpect(status().isMethodNotAllowed());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
     // ---------------- helpers ----------------

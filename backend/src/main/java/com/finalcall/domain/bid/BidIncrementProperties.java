@@ -58,6 +58,24 @@ public record BidIncrementProperties(
     }
 
     /**
+     * ★ 다음 입찰이 충족해야 할 최소 금액(bid-domain-spec §3.3, 계약 v1.8 F3) — <b>이 프로젝트의 단일 진실원</b>이다.
+     *
+     * <p>같은 규칙을 두 곳에서 쓴다: 입찰 검증({@code BidService.place} 의 {@code BID_001} 판정)과 경매 상세 응답의
+     * {@code minNextBidAmount} 파생값이다. 두 곳이 각자 구현하면 "화면이 안내한 금액으로 입찰했는데 거부되는"
+     * 드리프트가 생기므로, 양쪽 모두 이 메서드만 호출한다.
+     *
+     * @param startPrice       경매 시작가(첫 입찰의 하한, F5)
+     * @param highestBidAmount 현재 최고가. null 이면 입찰이 없다는 뜻이다
+     * @return 첫 입찰이면 시작가, 후속이면 최고가 + 해당 구간 증분
+     */
+    public long minNextBidAmount(long startPrice, Long highestBidAmount) {
+        if (highestBidAmount == null) {
+            return startPrice;
+        }
+        return highestBidAmount + incrementFor(highestBidAmount);
+    }
+
+    /**
      * 증분 구간 하나.
      *
      * @param threshold 구간 하한(이상). 최저 구간은 0
