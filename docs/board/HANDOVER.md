@@ -2,56 +2,62 @@
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
 갱신: 에픽 완료마다 + 세션이 무거워질 때(덮어씀, 이력은 git).
-갱신: 2026-07-18 (일 마감 — EPIC-FE-MEMBER 완료 + 백로그 3건 완료 + PRODUCT.md + Jira 전건 동기·드리프트 가드레일 + 보안 층 codify·배선 반영)
+갱신: 2026-07-18 (**PC 재부팅 대비 마감** — EPIC-ITEM 완료·push / EPIC-AUCTION 구현·리뷰 PASSED·커밋(미push)·Done 잔여 / new_sp 게임DB 임포트 / 게임데이터 통합 리서치 완료)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 아래 "다음 수"부터 진행한다.
 
 ## 이어받는 법 (새 세션)
-1. `CLAUDE.md` 섹션 8~13(오케스트레이션·게이트·티켓·Jira·커밋 + **섹션 13 보안 층 구성**) 숙지.
+1. `CLAUDE.md` 섹션 8~13(오케스트레이션·게이트·티켓·Jira·커밋 + 섹션 13 보안 층) 숙지.
 2. `docs/board/` 스캔 — 에픽·티켓 상태(YAML `state`), `reviews/`.
-3. **Jira 미러 패리티** — `state`가 todo가 아닌데 `jira_key: null`인 티켓/에픽을 스캔해 백필한다(섹션 12). 미러는 상태 전이마다 즉시 반영하며 `비차단`은 실패 허용이지 생략이 아니다. (커밋 전 `check-mirror-drift.js` 훅이 계층① 자동 경고.)
+3. **Jira 미러 패리티** — `state`가 todo 아닌데 `jira_key: null`인 티켓/에픽 스캔·백필(섹션 12). (커밋 전 `check-mirror-drift.js` 훅이 계층① 자동 경고.)
 4. `git log --oneline -20` + 미push 확인(`git status`, `@{u}..HEAD`).
 5. 이 파일의 "현재 상태"·"다음 수"로 진행.
 
-## 현재 상태
-- **워크플로우**: 4에이전트 오케스트레이션(architect/backend-impl/frontend-impl/reviewer) + portfolio-writer + consultant(휴면). 훅 2개 활성: `block-git-push.js`(게이트3 push 차단) · `check-mirror-drift.js`(Jira 미러 계층① warn-only). settings.json에 배선.
-- **완료 에픽(전건 done·Jira 완료)**:
-  - EPIC-MEMBER(회원 프로필/수정/탈퇴, KAN-2~7).
-  - EPIC-CURRENCY(화폐 잔액·교환, KAN-9~13).
-  - **EPIC-FE-MEMBER(프론트 내 계정 — auth+마이페이지+잔액, KAN-14~19) ✅ 완료**(오늘). FC-012 architect / FC-013·14·15 frontend-impl 단일 1패스 / FC-016 reviewer passed. spec `docs/spec/frontend-account-spec.md`, 리뷰 `docs/board/reviews/FC-016-review.md`. 하이드레이션(login→GET /me)·COMMON_005 열거방지·탈퇴 동의(Modal)·닉네임 수정(Modal) 구현.
-- **완료 백로그(독립, done·Jira 완료)**:
-  - FC-006(User.java unique 정리, KAN-8).
-  - FC-011(교환 cashAmount @Max 상한, 오버플로 500→400, KAN-20).
-  - FC-017(NotFoundPage CTA→ink, KAN-21) · FC-018(ThemeToggle no-op→기본 light+숨김, KAN-22). 리뷰 `docs/board/reviews/FC-011-017-018-review.md`.
-- **디자인**: U-021 라이트 커머스 **실코드 반영 완료**(tailwind.config.js·index.css 남색 U-020→라이트값 교체, 커밋 `e9744dd`). CTA=블랙(ink #18181B)·퍼플 액센트(#6E2A9F)·순백 베이스. 디자인 게이트 닫힘. 남은 Q4(element 배지강도)는 아이템 에픽 이연. 게임자산 `docs/game_ui/`(941개). `PRODUCT.md`(루트) 생성(impeccable init — register=product·platform=web).
-- **보안 층(오늘 codify·배선)**: CLAUDE.md 섹션 8~13 codify(reviewer=확인소·보안 층 비상주·커밋 보안리뷰 warn-only·게이트 아님·CI post-push·모델 opus-4-8 핀·한도 폴백). 위협모델 정본 A구조 = `.claude/claude-security-guidance.md`(압축 색인 7985B ≤8KB, 항목 ID 36개) + `docs/security/threat-model-checklist.md`(전문). 빌트인 `/security-review`=live(온디맨드·에픽완료). CI 초안 `.github/workflows/security.yml`(npm-audit·dependency-review·claude-code-security-review 액션+위협모델 주입)·`.github/dependabot.yml`. **경매 에픽부터 첫 실적용**. 상세·전이이력은 `docs/portfolio/process-log.md` 항목2.
-- **Jira 미러**: KAN-1~22 **전건 완료, 드리프트 0**(2026-07-18 전수 검증). 보드 21항목(티켓18+에픽3)↔KAN-2~22 1:1. 미러는 총괄만(서브에이전트 Atlassian MCP 미접근). 규율 memory `jira-mirror-discipline`.
-- **impeccable**: `.claude/skills/impeccable/`(로컬 gitignore), PostToolUse 훅(settings.local.json). DESIGN.md·PRODUCT.md 루트 시드 완료.
-- **push 상태**: origin/master 마지막 push `b125456`. 미push 4건: `5c10d97`(위협모델 승격)·`a690f67`(보안 CI)·`55c2456`(process-log)·(이 핸드오버 커밋). push는 사용자 직접.
+## ★ 재부팅 후 환경 복구 (2026-07-18 마감 — 필수 선행)
+재부팅으로 Docker 컨테이너·백그라운드 프로세스가 내려간다. **작업 트리·git·Docker 볼륨(데이터)은 디스크에 보존**된다.
+1. **Docker 인프라 기동**: `cd D:/Java/finalcall/backend && docker compose -f docker-compose.local.yml up -d` → MySQL(3306)·Redis(6379). (finalcall DB + new_sp DB 볼륨 보존됨.)
+2. **백엔드**: IntelliJ에서 `FinalcallApplication` 실행(default 프로파일=local, JDK 21 `C:\Users\howee\.jdks\ms-21.0.11`). 부팅 시 Flyway V1~V10 검증.
+3. **프론트(선택)**: `cd D:/Java/finalcall/frontend && npm run dev`(:5173, vite 프록시 `/api/v1`→:8080 + X-Gateway-Token 주입 — `vite.config.ts`, **미커밋** dev 편의). 화면 확인 시에만.
+4. **게임 DB**: `new_sp`(docker finalcall-mysql 내, 유저 `sp/sp`, 42테이블) 볼륨 보존 — 재임포트 불요.
 
-## 다음 수
-1. **사용자 push** — 미push 4건(위협모델·CI·process-log·핸드오버) 원격 동기.
-2. **다음 대형 에픽 착수 = 아이템/경매 백엔드**(architect 선행). 핵심 도메인 순: category·item(경매 대상 준비) → **auction·bid(경매·입찰 — 마감 폭주 동시성, 프로젝트 핵심 기술 도전)** → settlement(정산). **경매(입찰·정산)가 보안 층 첫 실적용 대상** — architect 착수 시 위협모델 체크리스트(`docs/security/threat-model-checklist.md`) 참조, reviewer는 확인소로 도메인 인가 최종판정.
-3. (보안 잔여, 사용자 영역) 저장소 Secrets에 `CLAUDE_API_KEY` 추가 + PR 워크플로우 도입 시 CI claude-security-review·dependency-review 활성(현재 master 직접 커밋 = dormant). dependabot·npm-audit는 push부터 가동.
-4. (선택) 로컬 Python 설치(`winget install Python.Python.3.12` + 스토어 별칭 끄기) — 보안 플러그인 로컬 정적분석을 원할 때만. 현 구성(빌트인+CI)은 불요.
+## 현재 상태
+- **워크플로우**: 4에이전트 오케스트레이션 + portfolio-writer + consultant(휴면). 훅 2개: `block-git-push.js`·`check-mirror-drift.js`.
+- **완료 에픽(done·Jira 완료·push됨)**:
+  - EPIC-MEMBER(KAN-2~7) · EPIC-CURRENCY(KAN-9~13) · EPIC-FE-MEMBER(KAN-14~19) · 백로그 FC-006/011/017/018(KAN-8/20/21/22).
+  - **EPIC-ITEM(아이템·인벤토리, KAN-23~29) ✅ 완료·push됨**. FC-019 architect / FC-020~023 backend-impl 순차(V6~V9) / FC-024 reviewer PASSED. item_template·item_instance·인벤토리(96칸+temp)·소유이력 + 카탈로그/상세/인벤토리 API + 최소 시드. spec `docs/spec/item-domain-spec.md`(v0.2), erd v0.9.
+- **EPIC-AUCTION(경매, KAN-30~35) — 구현·리뷰 완료, Done 미완(재부팅으로 중단)**:
+  - FC-025 architect **done**(KAN-31 완료) — auction-domain-spec v0.2·api-contract v1.7. 게이트2 6결정 승인 반영.
+  - FC-026~028 backend-impl **review·review_status=passed**(KAN-32~34 검토중) — 순차 단일패스(V10). 등록·목록·상세·취소 + item LISTED CAS(G4 교정)·에스크로 왕복. 테스트 BUILD SUCCESSFUL(슬라이스5+통합21+동시성1).
+  - FC-029 reviewer **PASSED**(KAN-35, review_status=passed) — critical 0·major 0·minor 8(비차단). 리뷰 `docs/board/reviews/FC-029-review.md`.
+  - **커밋됨(미push)**: `2da8230`(feat auction)·`1eaa937`(spec)·`b9671c6`(board). **Done 전이·push·에픽완료 /security-review는 잔여**(아래 다음 수).
+- **new_sp 게임 DB**: 원게임(SP) 백업 임포트 완료(docker finalcall-mysql, DB `new_sp`, 유저 `sp/sp`, 42테이블·user 2440행). D-067 원게임 실데이터 소스·게임 차용 UI 매핑 원천. finalcall과 격리.
+- **게임데이터 통합 논의(OPEN)**: `docs/portfolio/process-log.md` 항목3. new_sp가 라이브 인게임 DB로도 쓰일 예정 → 정규화 시 단일진실원 이원화·크로스DB 조인·화폐 소유권 문제. 업계 리서치 완료(옵션 A read-only복제·B CDC·C API·절충=읽기 복제·쓰기 소유자 위임). 합의는 EPIC-GAME-PROFILE 착수 시.
+- **디자인**: U-021 라이트 커머스 실코드 반영. 게임차용 노트 `docs/game_ui/게임 차용 디자인 및 erd.txt`(미커밋 참조자료).
+- **push 상태**: origin/master 마지막 push `415e6e3`(EPIC-ITEM). **미push 4건**: `d62522a`(게임데이터 리서치)·`2da8230`·`1eaa937`·`b9671c6`(EPIC-AUCTION) + 이 핸드오버 커밋. 커밋은 디스크 보존이라 재부팅 안전.
+
+## 다음 수 (재부팅 후)
+1. **환경 복구**(위 절차) — docker up + IntelliJ 백엔드.
+2. **EPIC-AUCTION 마무리(게이트3)**:
+   - (a) **에픽 완료 온디맨드 `/security-review` 1회** — 보안 층 첫 실적용(경매 에픽부터). 빌트인 스킬.
+   - (b) 통과 시 **게이트3 사용자 Done 승인** → FC-025~029 + EPIC-AUCTION **done 전이**(보드 + Jira KAN-30~35 완료).
+   - (c) **사용자 push**(미push 5건).
+3. **로드맵 다음 = EPIC-BID**(입찰 — 마감 폭주 동시성·money_hold 에스크로·소프트클로즈·분산락, **프로젝트 핵심 기술 도전 + 보안 최고위험**). architect 선행. 계약 §3.1 /bids. end-of-turn 보안 리뷰 한시 on 검토(입찰·정산 구간).
+4. (병렬 가능) EPIC-GAME-PROFILE 합의(리서치 완료됨) — 사용자 결정 시.
 
 ## 대기 안건(백로그)
-- **EPIC-CHARGE**: 충전(토스 test 결제, 외부 연동·시크릿) — 별도 에픽. erd 5절 charge.idempotency_key 표기 불일치 함께 정리.
-- **EPIC-OAUTH**: 소셜 로그인(카카오·네이버) — 계약 §2 확장(신규 엔드포인트·소셜 연동·시크릿) + 프론트 연동. 프론트 자리확보됨. architect+게이트2 필요.
-- **EPIC-GAME-PROFILE(가칭)**: 게임 차용(프로필·인벤토리 UI) + 게임데이터 통합. **선결 설계 미결** — new_sp가 라이브 인게임 DB로도 쓰일 예정이라 정규화 시 단일진실원 이원화·크로스DB 조인·화폐 소유권 문제. 착수 전 **업계 레퍼런스 조사 → 합의**(architect+게이트2). 상세 = `docs/portfolio/process-log.md` 항목3. 소스 = `new_sp` DB(docker)·`docs/game_ui/`.
-- **EPIC-ITEM 위생 후속(minor 3, 비차단)**: (1) 자동배정 relocate 경합 시 INV_002 메시지 오해 소지(패자 1회 재시도 or 전용 메시지), (2) temp-storage `size` @Min/@Max 무경계(notice `getByCursor`와 동일 구조 → 일괄 개선), (3) 카탈로그 max page size 미지정. 근거 = `docs/board/reviews/FC-024-review.md` minor절.
-- **PR 워크플로우 도입 논의**(도입 시 게이트3 훅을 "브랜치 push 허용 + main 머지 차단"으로 국소 수정. 도입하면 CI claude-security-review·dependency-review 활성).
-- 보안 플러그인(커밋 warn-only) 도입 — 로컬 Python 설치 시 LLM+정적 재검토(현재 보류).
-- design-system.md Q4(element 배지강도) — 아이템 에픽에서 확정.
-- impeccable 벤더링: 현재 로컬 gitignore. 팀 재현 원하면 `.gitignore` 2줄 제거해 커밋.
-- Task#1: CLAUDE.md 섹션 2·6 문구 오케스트레이션 정합 정리.
+- **EPIC-BID**(다음 로드맵) → **EPIC-CLOSING**(마감·정산·주문·즉시구매) → **EPIC-SHOP**(고정가).
+- **EPIC-GAME-PROFILE(가칭)**: 게임 차용(프로필·인벤토리 UI) + 게임데이터 통합. 선결 설계 리서치 완료(process-log 항목3), 합의 대기.
+- **EPIC-AUCTION 위생 후속(minor, 비차단)**: (1) AUCTION_003 이중용도(startPrice≤0 메시지 오해) 메시지 일반화 or 계약 각주. (2) cancel 경로 자동슬롯 INV_002 표면화 — 재시도 도입 or 계약 각주. 근거 `reviews/FC-029-review.md`.
+- **문서 드리프트(architect 후속)**: `item-domain-spec.md §3.1`이 제거된 `markListed()`를 전이 메서드로 언급 → 갱신 필요(FC-029 판단#5).
+- **EPIC-ITEM 위생 후속(minor)**: 자동배정 relocate INV_002 메시지 · temp-storage size @Min/@Max · 카탈로그 max page size. 근거 `reviews/FC-024-review.md`.
+- **EPIC-CHARGE**(충전·토스 결제·시크릿) · **EPIC-OAUTH**(소셜 로그인) · PR 워크플로우 도입(도입 시 CI claude-security-review·dependency-review 활성) · 보안 플러그인(로컬 Python 부재로 보류) · design-system Q4(아이템 에픽) · impeccable 벤더링 · Task#1(CLAUDE.md 섹션 2·6 문구 정합).
+- (보안 잔여, 사용자 영역) 저장소 Secrets `CLAUDE_API_KEY` + PR 워크플로우 도입 시 CI 활성.
 
 ## 핵심 결정·컨벤션(파일에 없는 맥락)
 - 커밋 자동·게이트 없음 / push는 사용자 직접(훅 차단) / Done 전이 사용자 승인(게이트3).
-- 게이트2 = 스키마·API계약·성능 결정(자동 진행 중에도 정지·상신). 보안 결정(스키마·계약·인가 모델)도 게이트2 수렴.
-- **총괄은 코드를 직접 검증(빌드·테스트·코드리뷰)하지 않는다** — reviewer 에이전트에 위임(2026-07-17 사용자 정정).
-- **보안 = 별도 역할 아닌 별도 패스**(CLAUDE.md 섹션 13). reviewer는 확인소, 자동 층은 커밋 warn-only(비차단)·온디맨드 /security-review·CI. 커밋 보안 리뷰 재프롬프트가 턴 연장 → **후속 편집 수렴 뒤 review 전이**.
-- 병렬 backend 에이전트는 gradle 빌드 경합 주의 — 단독 실행 에이전트는 빌드 허용.
-- **파일 이동은 git mv 금지(C-075 FUSE 인덱스 손상)** — 호스트 rm/write로.
-- 통신은 대화가 아니라 파일로(전달 손상 회피) — consultant 초안은 파일로 반환·검토.
-- Jira 미러·프로세스 로그 규율은 memory `jira-mirror-discipline`·`portfolio-process-log`.
+- 게이트2 = 스키마·API계약·성능·인가모델 결정(자동 진행 중에도 정지·상신).
+- **총괄은 코드를 직접 검증(빌드·테스트·코드리뷰)하지 않는다** — reviewer/backend-impl에 위임.
+- **보안 = 별도 역할 아닌 별도 패스**(섹션 13). reviewer 확인소, 커밋 warn-only(플러그인 보류), 온디맨드 /security-review(에픽 완료·경매부터), CI post-push. 경매(입찰·정산) 최고위험.
+- 단독 backend 에이전트는 gradle 빌드 허용(병렬 시 경합 주의). 앱 :8080 부팅은 사용자 IntelliJ 점유 → 에이전트는 테스트로만 검증.
+- 파일 이동 git mv 금지(C-075). 통신은 파일로. Jira 미러·프로세스 로그 규율은 memory `jira-mirror-discipline`·`portfolio-process-log`.
+- 아이템/경매 팬아웃은 전부 순차 단일패스였음(FK 선형 의존 + Flyway 단일 채번 + 공유 파일 교차). EPIC-BID도 유사 예상.
