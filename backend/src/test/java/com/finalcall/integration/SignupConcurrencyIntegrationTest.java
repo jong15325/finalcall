@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import com.finalcall.domain.member.UserBalanceRepository;
 import com.finalcall.domain.member.UserRepository;
 import com.finalcall.support.IntegrationTest;
+import com.finalcall.support.SeedTestSupport;
 
 /**
  * 회원가입 동시성 검증(auth, M1) — 실제 MySQL(Testcontainers).
@@ -41,8 +42,8 @@ class SignupConcurrencyIntegrationTest extends IntegrationTest {
     @BeforeEach
     @AfterEach
     void cleanUsers() {
-        userBalanceRepository.deleteAllInBatch(); // FK: 잔액 먼저
-        userRepository.deleteAllInBatch();
+        // V9 시드 user(item FK 참조)는 보존하고 테스트가 만든 user·잔액만 정리한다.
+        SeedTestSupport.deleteNonSeedUsers(userRepository, userBalanceRepository);
     }
 
     @Test

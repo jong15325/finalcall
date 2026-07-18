@@ -20,6 +20,7 @@ import com.finalcall.domain.member.UserBalance;
 import com.finalcall.domain.member.UserBalanceRepository;
 import com.finalcall.domain.member.UserRepository;
 import com.finalcall.support.IntegrationTest;
+import com.finalcall.support.SeedTestSupport;
 
 /**
  * 잔액 원자적 증감(D-008) 동시성 검증(member) — 실제 MySQL(Testcontainers).
@@ -45,8 +46,8 @@ class UserBalanceConcurrencyIntegrationTest extends IntegrationTest {
     @BeforeEach
     @AfterEach
     void clean() {
-        userBalanceRepository.deleteAllInBatch(); // FK: 잔액 먼저
-        userRepository.deleteAllInBatch();
+        // V9 시드 user(item FK 참조)는 보존하고 테스트가 만든 user·잔액만 정리한다.
+        SeedTestSupport.deleteNonSeedUsers(userRepository, userBalanceRepository);
     }
 
     @Test

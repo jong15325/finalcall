@@ -24,6 +24,7 @@ import com.finalcall.domain.member.UserBalanceRepository;
 import com.finalcall.domain.member.UserRepository;
 import com.finalcall.infra.config.ExchangeProperties;
 import com.finalcall.support.IntegrationTest;
+import com.finalcall.support.SeedTestSupport;
 
 /**
  * 캐시→게임머니 교환 통합 검증(currency, FC-009) — 실제 MySQL/Redis(Testcontainers) + Security 필터 체인.
@@ -56,8 +57,8 @@ class ExchangeIntegrationTest extends IntegrationTest {
     @AfterEach
     void clean() {
         moneyExchangeRepository.deleteAllInBatch();
-        userBalanceRepository.deleteAllInBatch(); // FK: 잔액 먼저
-        userRepository.deleteAllInBatch();
+        // V9 시드 user(item FK 참조)는 보존하고 테스트가 만든 user·잔액만 정리한다.
+        SeedTestSupport.deleteNonSeedUsers(userRepository, userBalanceRepository);
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.finalcall.infra.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -46,7 +47,10 @@ public class SecurityConfig {
                 // 데모/참조(sample, notice)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
                 // (notice 는 비인증 생성 시 createdBy=null 을 시연하기 위해 의도적으로 공개)
                 .requestMatchers("/sample/**", "/notices/**").permitAll()
-                // 그 외(예: /api/v1/auth/logout)는 인증 필요.
+                // 아이템 카탈로그·인스턴스 상세는 공개(계약 §4.1 인증 불요 / items 상세는 인증 optional).
+                //   me/** 인벤토리는 아래 anyRequest().authenticated() 로 인증을 강제한다(계약 §4.2).
+                .requestMatchers(HttpMethod.GET, "/api/v1/item-templates", "/api/v1/items/**").permitAll()
+                // 그 외(예: /api/v1/auth/logout, /api/v1/me/**)는 인증 필요.
                 .anyRequest().authenticated())
             .exceptionHandling(eh -> eh
                 .authenticationEntryPoint(authenticationEntryPoint) // 401
