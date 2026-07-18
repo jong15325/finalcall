@@ -29,7 +29,9 @@ import lombok.NoArgsConstructor;
  * 개별 아이템 엔티티(item, FC-021) — 템플릿 FK + 레벨·스킬 2슬롯·발동확률·골드포스 + 소유자 + 위치(erd §4.3).
  *
  * <p>위치 디스크리미네이터(플래그 B)는 {@link ItemLocation} 단일 진실원이며, 위치 전이는 전용 도메인 메서드로만
- * 수행한다(spec §3.1, {@code @Setter} 금지). soft delete 없음(소유 이전·이력 보존 모델, G10) → 시각만 감사하는
+ * 수행한다(spec §3.1, {@code @Setter} 금지). 단, 출품(INVENTORY→LISTED)은 중복 출품 방지를 위해 리포지토리 조건부
+ * CAS({@link ItemInstanceRepository#markListedIfInInventory})로만 전이한다(auction-domain-spec §4.1 G4 —
+ * dirty-checking 은 두 트랜잭션이 모두 성공해 CAS 가 아니므로 제거). soft delete 없음(소유 이전·이력 보존 모델, G10) → 시각만 감사하는
  * {@link BaseTimeEntity} 상속. slot 유일성은 DB 생성 컬럼 UK({@code slot_key}, V8)가 최종 강제하며 엔티티에는
  * 매핑하지 않는다(읽기·쓰기 대상 아님, spec §3.2).
  */
@@ -112,12 +114,6 @@ public class ItemInstance extends BaseTimeEntity {
     /** 임시보관으로 이동(FC-022). location TEMP + slot_no 해제(연계 temp_storage 행은 서비스가 동일 TX 로 관리). */
     public void moveToTemp() {
         this.location = ItemLocation.TEMP;
-        this.slotNo = null;
-    }
-
-    /** 출품(에스크로)으로 이동. location LISTED + slot_no 해제. 실제 LISTED 전이는 auction/shop 에픽 소유. */
-    public void markListed() {
-        this.location = ItemLocation.LISTED;
         this.slotNo = null;
     }
 }

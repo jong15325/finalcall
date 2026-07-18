@@ -50,7 +50,10 @@ public class SecurityConfig {
                 // 아이템 카탈로그·인스턴스 상세는 공개(계약 §4.1 인증 불요 / items 상세는 인증 optional).
                 //   me/** 인벤토리는 아래 anyRequest().authenticated() 로 인증을 강제한다(계약 §4.2).
                 .requestMatchers(HttpMethod.GET, "/api/v1/item-templates", "/api/v1/items/**").permitAll()
-                // 그 외(예: /api/v1/auth/logout, /api/v1/me/**)는 인증 필요.
+                // 경매 목록·상세는 공개(계약 §3.1 인증 불요). 등록(POST)·취소(POST .../cancel)는 아래 인증 강제.
+                //   GET "/api/v1/auctions/*" 는 단일 세그먼트라 취소 경로(.../cancel, POST)와 겹치지 않는다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/auctions", "/api/v1/auctions/*").permitAll()
+                // 그 외(예: /api/v1/auth/logout, /api/v1/me/**, POST /api/v1/auctions)는 인증 필요.
                 .anyRequest().authenticated())
             .exceptionHandling(eh -> eh
                 .authenticationEntryPoint(authenticationEntryPoint) // 401

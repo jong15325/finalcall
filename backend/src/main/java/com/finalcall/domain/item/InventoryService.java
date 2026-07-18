@@ -1,5 +1,6 @@
 package com.finalcall.domain.item;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -92,6 +93,35 @@ public class InventoryService {
             throw toSlotConflict(ex);
         }
         return targetSlot;
+    }
+
+    /**
+     * 출품(LISTED) 아이템의 에스크로를 해제한다(auction 취소·유찰 복귀 경로, FC-028 신규 §4.2 — relocate 와 방향 반대).
+     * 소유자 인벤토리에 여유가 있으면 빈 슬롯으로 복귀(LISTED→INVENTORY), 만실(96칸)이면 임시보관(LISTED→TEMP)한다.
+     *
+     * <p>호출 측(취소) 트랜잭션에 참여한다(propagation REQUIRED — 별도 빈이라 프록시 경유, self-invocation 아님).
+     * 따라서 실패 시 취소 CAS 까지 함께 롤백된다(부록 C 락-트랜잭션 순서 정합). 슬롯 정합성의 최종 방어선은
+     * slot_key UK(spec §3.2)이며, 동시 복귀가 같은 빈 슬롯을 노려도 커밋 전 flush 시 하나만 성공한다(나머지 INV_002).
+     *
+     * @param instance LISTED 상태의 managed 인스턴스(소유자=출품 판매자). 상태 선검사는 호출 측 책임이다.
+     */
+    @Transactional
+    public void releaseFromListing(ItemInstance instance) {
+        Long ownerId = instance.getOwner().getId();
+        long used = itemInstanceRepository.countByOwnerIdAndLocation(ownerId, ItemLocation.INVENTORY);
+        if (used >= CAPACITY) {
+            instance.moveToTemp(); // 만실 오버플로우 — 상한 없음(spec §2.5)
+            tempStorageRepository.save(TempStorage.builder()
+                .instance(instance).ownerId(ownerId).storedAt(Instant.now()).build());
+            return;
+        }
+        int targetSlot = resolveSlot(ownerId, null); // 빈 슬롯 자동 배정
+        instance.placeInInventory(targetSlot);
+        try {
+            itemInstanceRepository.flush(); // 커밋 전 강제 flush — 동시 복귀 이중 배정 UK 위반을 이 계층에서 매핑
+        } catch (DataIntegrityViolationException ex) {
+            throw toSlotConflict(ex);
+        }
     }
 
     /** 명시 슬롯이면 점유 선검사, 미지정이면 최소 빈 슬롯을 자동 배정한다. */
