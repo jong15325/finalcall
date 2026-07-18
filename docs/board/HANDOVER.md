@@ -40,7 +40,8 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
 - **push 상태**: origin/master = `08c31d7`까지 push 완료(EPIC-AUCTION 전건 포함). 이 Done 전이 커밋만 미push.
 - **미커밋 없음**(2026-07-18 기준). 종전 "의도적 미커밋" 2건이 모두 정식 추적으로 전환됐다:
   - `frontend/vite.config.ts` — FC-036 커밋 `e6f2476`. dev 프록시 `/api`→`:8080`은 레포 설정이 맞다고 판단해 수용.
-  - `docs/game_ui/` — 사용자 지시로 커밋(982파일·3.84MB, 대부분 소형 PNG라 LFS 불요). 게임 차용 UI 참조자료·원게임 캡처. D-067 실데이터 소스이자 EPIC-ITEM 아트 매핑 원천이라 레포에 두는 게 맞다.
+  - `docs/game_ui/` — 사용자 지시로 커밋(`2cf8236`). **⚠️ 커밋 메시지 정정**: 제목에 "982파일"로 적었으나 **실제 추가는 41파일**(`my_card/` 32 · `ingame/` 8 · 게임 차용 노트 txt 1)이다. 나머지 941파일은 이 세션 전 `23199ae`(chore(assets))로 **이미 추적 중**이었다. 총괄이 `git status`의 미추적 하위 폴더 2개만 보고 "디렉터리 전체가 미추적"으로 넘겨짚었고, 종전 HANDOVER의 "미커밋(의도적) — docs/game_ui" 서술이 그 오해를 굳혔다. **현재 로컬 982 = 추적 982(untracked·ignored 0).** 전체 3.84MB, 최대 파일 0.41MB로 LFS 불요.
+    - 레포에 두는 근거: D-067 원게임 실데이터 소스이자 EPIC-ITEM 아트 매핑 원천. `design-system.md §5.3`이 `docs/game_ui/item_info/card_image/**`를 이미 참조하고 있어, 미추적 상태에서는 정본이 레포 밖 파일을 가리키는 모순이 있었다.
 - **EPIC-FE-AUCTION 후속 과제(FC-036 산출에서 발생)**:
   1. ~~계약 §3.3 item 블록 필드 타입 미명시~~ → **해소**(계약 v1.9, 2026-07-18). 필드별 타입 표 명기, nullable 3개(`skill1`·`skill2`·`goldforceExpireAt`)만 식별.
   2. **★ 코드 사전(code dictionary) 부재 — EPIC-ITEM 정본화 필요**: `element`뿐 아니라 **`mainCategory`·`subGroup`·`kind` 전부 계약·erd에 코드값 열거가 없다.**
