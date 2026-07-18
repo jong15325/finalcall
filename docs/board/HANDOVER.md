@@ -49,6 +49,12 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
   3. **`StatusChip` `neutral` 톤 추가** — §5.8에 `SCHEDULED`(예정) 대응 의미색이 없어 `surface-sunken`+`text-muted`로 처리(새 색 아님). design-system.md에 반영할지 검토.
   4. **실데이터 미검증** — 백엔드 :8080 미기동으로 cursor 연속 로드·정렬 전환 시 커서 초기화·빈 상태를 확인 못 함. 백엔드 기동 시 확인 필요.
   5. **판매유형 칩 미구현**(의도) — 경매 전용 목록에서 상수 반복은 노이즈라는 판단, 총괄 수용. 경매·고정가 혼합 화면(EPIC-SHOP) 도입 시 재검토.
+- **FC-038 리뷰 후속(2차 PASS, 근거 `reviews/FC-038-review.md`)**:
+  1. **★ 프론트 테스트 러너 부재 — 티켓 승격 권고**(m11). vitest·testing-library 미도입으로 회귀 테스트 0건. 이 에픽 결함 2건(M-1 "코드 null" · m6 행 점프)은 **렌더 테스트 1개면 잡혔을 유형**이고 M-1은 리뷰까지 살아남았다. reviewer가 "백로그가 아니라 실제 티켓으로" 승격 권고.
+  2. **chore: prettier 글롭 루트 확대 + `.gitattributes` eol 고정**. `npm run format`이 `src/**`만 대상이라 루트 설정·문서가 영구 사각지대다(`README.md`·`tsconfig.json`·`vite.config.ts`). `vite.config.ts` 위반 실체는 **CRLF 줄바꿈** → `.gitattributes`에 `*.ts text eol=lf` 고정 병행.
+  3. **m7 + n2 묶어 처리 검토(EPIC-BID 착수 전)**: `hasBid` 판정 규칙이 `AuctionCard`·`AuctionTradePanel` 2곳에 독립 존재 + `highestBidAmount as number` 캐스트 잔존(별칭 내로잉이 끊기는 구조). **`hasBid: boolean` 대신 확정 금액을 넘기면 캐스트까지 함께 사라진다.**
+  4. **이월 minor 5건은 EPIC-BID 후속 유지**: m1(SR "0분 남음") · m2(**소프트클로즈 연장 안내 — 입찰 붙는 순간 accessibility §6 실효 요건**) · m3(마지막 페이지 포커스 소실) · m4(IntersectionObserver 재구독) · m5(목록 카드 시간 반응성). n1(라벨 중복)은 UI 도달 불가라 코드 사전 확정 시 자연 소멸.
+  5. **EPIC-BID 프론트 티켓 DoD에 명시할 것**: `BID_003`(자기 경매)·`BID_007`(미개시) **화면 분기가 없다**. 상세가 판매자 본인 여부를 알 수 없고(`sellerNickname`만 내려옴) `SCHEDULED` CTA도 "입찰 준비 중"으로 뭉뚱그려져 있다. 계약 v1.8 주가 "안내 문구·재시도 가능성이 정반대"라 못 박았다. `errorCodes.ts`에 `BID_007` 미등재.
 
 ## 다음 수
 1. **FC-030 architect 소환**(KAN-37) — EPIC-BID 계약 검증·bid-domain-spec 확정·슬라이싱. **게이트2 5건 상신 예정**(직렬화 메커니즘★·홀드 원자성 경계·소프트클로즈 연장 규칙·SCHEDULED→ACTIVE 영속 전이·BID_004 판정 근거) → 사용자 승인 후 FC-031 착수.

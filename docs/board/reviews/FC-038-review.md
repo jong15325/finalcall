@@ -125,3 +125,68 @@ function skillText(skillCode?: number): string {
 4. **`BidCallToAction` 실동작 교체** — 자리·`aria-describedby` 배선은 이미 정확. 단 **`BID_003`(자기 경매)·`BID_007`(미개시) 화면 분기가 없다**(상세가 판매자 본인 여부를 알 수 없고 `SCHEDULED` CTA도 뭉뚱그려짐). 계약 v1.8 주가 "안내 문구·재시도 가능성이 정반대"라 못 박았으므로 **EPIC-BID 프론트 티켓 DoD에 명시할 것**
 5. **m5** — 목록 카드 시간 반응성
 6. **★ `highestBidAmount,desc` 정렬 커서(백엔드 이슈)** — `AuctionRepositoryImpl.java:155`가 "본 에픽 전건 NULL" 전제로 `HIGHEST_BID_AMOUNT` keyset을 **id만으로** 잡고 있다(`case HIGHEST_BID_AMOUNT -> idAfter(lastId, asc)`). **실값이 들어오면 페이지 경계가 깨진다.** 최고가순 칩을 노출하는 것은 프론트이므로 EPIC-BID 종료 전 통합 확인 필요
+
+---
+
+# 재리뷰(2차) — FC-038 / KAN-46
+
+- 대상: `b9dc342`(M-1) · `bebffef`(M-2) · `af8091e`(m6·m8·m10) · `e4e689d`(m9 포맷). 변경 12파일 전부 `frontend/src/`
+- 방식: 정적 리뷰 + `tsc -b --force`(통과) · `eslint`(통과) · `prettier --check "src/**"`(**전건 통과**) · `build`(통과). 백엔드 미기동
+- 판정일: 2026-07-18
+
+## 최종 판정: **PASSED** — critical 0 · **major 0** · minor 9(이월 7 + 신규 2)
+
+major 2건 모두 **근인 층에서 닫혔다.** 회귀 없음. **게이트3 진행 가능.**
+
+## major 해소 판정
+
+### M-1 — 닫힘 (근인 제거)
+`schema.ts` nullable 선언을 계약 v1.9 §3.3 표와 **1:1 대조** — 과·부족 0건. `skill1`·`skill2`·`goldforceExpireAt`·`buyNowPrice`·`highestBidAmount`·`startAt`·`resultType`·`highestBidderMasked`·`minNextBidAmount`·`ShopSummary.endAt` 전부 `?: T | null`로 일치, 정수 7종은 비옵셔널 유지.
+
+**과잉 변경이 아니라 정당한 근인 제거로 판정한다.** 1차 지적의 요지가 *"나머지는 우연히 안전하다"*였고, 우연을 타입으로 승격시키는 것이 그 지적의 내용이었다. `?:`로 남기면 다음 소비처가 `=== undefined`를 쓰는 순간 재발한다.
+
+`ItemSpecList.tsx:52` `skillCode == null` 느슨 비교로 **"코드 null" 경로 소멸**. 전역 grep 결과 nullable wire 필드에 `=== undefined`를 쓴 곳 **0건**.
+
+### M-2 — 닫힘 ("코드 집합 크기 가정 소멸" 검증 완료)
+3표가 확정 코드 단일 목록 `ELEMENT_CODES`(1=water·2=fire)로 통합. **전역 grep 전수 확인 — 크기 가정 0건**: exhaustive switch 없음 · `.length` 가정 없음 · 배열 인덱싱 없음(`.map`·`.find`뿐) · `toElementCode` 제거로 역방향 경로 소멸.
+
+`ELEMENT_LABEL`의 `earth`·`wind`에 **도달하는 코드 경로 없음** — 의도적 비대칭 인정. 미확정인 것은 매핑이지 토큰(§2.7 확정값)이 아니라는 구분이 정확하다. EPIC-ITEM 실측 시 2줄 추가로 복구.
+
+**사용자 영향 소멸**: 항상 빈 목록을 내던 "흙"·"바람" 칩이 UI에서 사라졌다.
+
+## 회귀 — 없음
+디자인 시스템 §1.2·Game-Color Containment(단일 출처·소비처 3곳 유지) · 접근성 골격(`fieldset`/`aria-pressed`/도트 `aria-hidden`/라벨 병기) · 44px 타깃 · 계약 정합 · 보안 전부 보존. m10 인코딩으로 오히려 개선.
+
+**m8 포커스 표시 실제 복원 확인** — `outline-none`이 `src/` 전역 0건, 전역 `:focus-visible` 재적용. `:focus`가 아니라 `:focus-visible`이라 마우스 유입 노이즈 없음.
+
+**★ 중점 4 개선** — m6으로 `dl` 안에서 입찰 유무로 껐다 켜지는 행이 **0개**. 잔존 조건부 2건(`ended`·`buyNowPrice`)은 입찰로 변하는 값이 아니라 EPIC-BID 전환 시 흔들리지 않는다. 1차의 "부분 위반" 완전 해소.
+
+## minor 4건 마감 — 전건 닫힘 (m6·m8·m9·m10)
+
+## 범위 준수 — 통과
+4개 커밋 전건 `frontend/src/` 내부. `backend/**`·계약·보드·리뷰 무변경. 지시 밖 항목 미접촉. `e4e689d` 포맷 전용 확인(식별자·연산자·제어흐름 변경 0).
+
+## 구현자 확인 요청 3건 판정
+
+**1. m9 수치 — 구현자가 옳다. 1차 판정이 틀렸다.** pre-epic 커밋(`434aa26`) 내용을 `prettier --check --stdin-filepath`로 직접 검사 → `ErrorState.tsx`·`useRateLimit.ts`·`client.ts`·`queryKeys.ts`·`WithdrawDialog.tsx` **5건 전부 위반**. "신규 4파일"은 오산이고 누적 부채였다.
+**churn 수용 가능** — 동작 변경 0·별도 커밋 격리·`npm run format` 글롭이 `src/**`다. **도구의 스코프가 변경의 스코프를 정의한다.** 원칙 3 위반 아님.
+
+**2. 루트 스코프 prettier 4건 — 이 티켓 밖, 별도 백로그.** 4건 전부 이 에픽이 만든 위반이 아니다. `vite.config.ts`의 실체는 **CRLF 줄바꿈**(내용 포맷은 정상), 나머지는 `89ef8ff`·`88cdca8` 선행분. 권고: chore 티켓으로 (a) 글롭 루트 확대 + `.prettierignore` 정비 (b) `.gitattributes` `*.ts text eol=lf` 고정. **차단 사유 아님.**
+(구현자 진술 1건 정정: `vite.config.ts`는 "사용자 미커밋"이 아니라 `e6f2476`로 이미 커밋됨. 위반 실체가 CRLF라 결론은 동일.)
+
+**3. m7·m11 — 판정에 영향 없음, minor 유지.** m7은 타입 드리프트만 닫혔고 `hasBid` **판정 규칙 자체**는 여전히 2곳에 독립 존재(위험 등급 하락, 차단 아님). m11 상황 무변경.
+
+## 신규 발견 (minor 2, 비차단)
+
+| # | 위치 | 내용 |
+|---|---|---|
+| n1 | `AuctionFilterBar.tsx:180` | M-2 파생 흔적. URL을 손으로 `?element=3`으로 고치면 칩이 **"속성: 속성 3"**(라벨 중복). `elementLabelOf`가 이미 "속성 "을 붙이는데 칩이 한 번 더 붙인다. **UI로는 도달 불가**(칩이 1·2만 생성), 정보 손실 없음. 코드 사전 확정 시 자연 소멸 |
+| n2 | `AuctionTradePanel.tsx:96`·`AuctionCard.tsx:81` | `highestBidAmount as number` — M-1이 다룬 필드에 남은 **유일한 타입 이스케이프**. `hasBid`가 파라미터로 건너와 TS 별칭 내로잉이 끊기는 구조라 캐스트가 실제로 필요하다. 가드가 있어 현재는 안전하나 **null 안전성이 타입이 아니라 관례로 지켜지는 마지막 지점**. `hasBid: boolean` 대신 확정 금액을 넘기면 캐스트가 사라진다. m7과 같은 뿌리 |
+
+## 메인세션 조치 권고
+1. FC-036·037·038 `review_status: passed`
+2. **EPIC-FE-AUCTION Done 전이 가(可)** — 게이트3 선행 요건 충족. 최종 승인은 사용자 몫
+3. **m11(프론트 테스트 러너 부재)을 백로그가 아닌 실제 티켓으로 승격 권고** — 이 에픽 결함 2건(M-1·m6)은 렌더 테스트 1개면 잡혔을 유형이고 M-1은 리뷰까지 살아남았다
+4. chore 티켓: prettier 글롭 루트 확대 + `.gitattributes` eol 고정
+5. m7·n2를 한 건으로 묶어 EPIC-BID 착수 전 처리 검토 — `hasBid` 단일화가 캐스트까지 함께 제거
+6. 이월 minor m1·m2·m3·m4·m5는 EPIC-BID 후속 유지. 1차 "EPIC-BID 완료 후 손봐야 할 지점" 6항목 중 **1번(m6)만 소진**, 나머지 5개 유효 — 특히 ★6번 `highestBidAmount,desc` 커서 백엔드 이슈는 미해소(FC-033 회부됨)
