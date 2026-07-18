@@ -16,6 +16,7 @@
 | v0.7 | 2026-07-14 | [6] Flyway 채번 동기화(B-012 방식 b) — 백엔드 V4 실물(`V4__user_natural_key_uk.sql`, backend/033) 등재. 부수: v0.6 편집 시 [4] 말미 주가 `temp_storage` 표 선언과 컬럼 표 사이에 삽입돼 표가 분리됐던 구조 오류 복구(원인 = bash 마운트 뷰가 [5]·[6]을 서빙하지 않아 문서 말미로 오판. 호스트 Read로 발견·정정) |
 | v0.6 | 2026-07-14 | D-081 반영(074) — [1] soft delete 자연키 UK 구현 지침 명문화(생성 컬럼 패턴 + 기각 해석 2종 + 동반 필수 + 대리키 예외 + 트리거 조건), [4.1] `user` 표에 `login_id_active`·`nickname_active` 생성 컬럼 UK 반영(원본 컬럼 존치), [4] 말미에 자연키 스윕 결과 주 신설(적용 대상 user 1건·그 외 0건·조건부 리스크 3건). 사유: 기존 [1] 한 줄이 의도만 말하고 구현 해석을 열어둬 V3가 함정을 밟음(backend/028 발견, QA-001) |
 | v0.8 | 2026-07-17 | 게이트2 승인 반영 — [4.1] `money_exchange` 표에 `idempotency_key VARCHAR NOT NULL` + `(user_id, idempotency_key)` 복합 UK(멱등 앵커) 신설, [5] 정합성 인덱스·제약 절에 동 복합 UK 등재. 사유: 교환 멱등 DB 강제(SEC-004). 클라이언트 공급 키라 전역 아닌 사용자 스코프 복합 UK — charge.pg_tx_id(SEC-001) 선례 동류. 부수: applied_rate precision/scale 구현(V5) 확정 비고 1줄 |
+| v0.9 | 2026-07-18 | 게이트2(FC-019, EPIC-ITEM) 승인 반영 — [4.3] `item_instance`에 slot 유일성 생성 컬럼 UK(`slot_key` GENERATED, `uk_item_instance_slot`) 신설(G2, D-081 선례 응용), 불변식에 DB 강제 근거 추가. [5] `temp_storage` 인덱스를 `(owner_id)` → `(owner_id, stored_at, instance_id)`로 보강(G3, cursor 안정 정렬). [5] `item_instance (template_id, level, skill1_id, skill2_id)` 인덱스 이유에 market-prices(§4.1) 집계 = EPIC-ITEM 제외·이연 주석. 사유: FC-019 계약 검증 갭 G2·G3 해소 + market-prices 이연(sale_order 데이터 선행). 진입 경로는 시드-only 확정(관리자 지급 API 미도입 → 계약·스키마 무추가). 근거: 게이트2 승인(2026-07-18) |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -325,8 +326,11 @@ table `item_instance` — 개별 아이템(D-045, ②③④⑤). 위치 디스�
 | gf_expire_at | DATETIME(6) | Y | | 골드포스 만료시각(③). 활성/잔여는 파생 |
 | location | ENUM | N | | INVENTORY / TEMP / LISTED (위치 단일진실, 플래그 B) |
 | slot_no | INT | Y | | INVENTORY일 때 인벤토리 슬롯(0~95). 그 외 NULL |
+| slot_key | VARCHAR(40) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(location='INVENTORY', CONCAT(owner_id,'-',slot_no), NULL)) STORED`. INVENTORY 행만 값 → (owner, slot) 유일 보장·그 외 NULL(다중 허용). slot 이중 배정 DB 차단(G2, v0.9). D-081 생성 컬럼 UK 패턴 응용 |
 
-불변식(XOR): location=INVENTORY ⇒ slot_no NOT NULL · temp_storage 행 없음 / TEMP ⇒ slot_no NULL · temp_storage 행 존재 / LISTED ⇒ 활성 auction·shop이 참조. 앱 + 제약 강제.
+유니크: `uk_item_instance_slot (slot_key)` — 동일 소유자·동일 슬롯의 이중 배정을 DB에서 차단(relocate 동시성 최종 방어선, "정합성은 DB" domain-spec §8).
+
+불변식(XOR): location=INVENTORY ⇒ slot_no NOT NULL(0~95) · slot_key 유일 · temp_storage 행 없음 / TEMP ⇒ slot_no NULL · slot_key NULL · temp_storage 행 존재 / LISTED ⇒ slot_no NULL · slot_key NULL · 활성 auction·shop이 참조. 앱(전용 도메인 메서드) + DB 제약(slot_key UK · temp_storage.instance_id UK · 리스팅 CAS) 강제.
 
 table `item_ownership_history` — 소유 이전 이력(④). 최초 소유자 = 인스턴스별 첫 행(별도 캐시 컬럼 없음).
 
@@ -369,7 +373,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 
 | 테이블 | 인덱스(컬럼) | 이유 |
 |---|---|---|
-| item_instance | (template_id, level, skill1_id, skill2_id) | 시세 집계 단위(§7.7, D-044 조건). "동일 템플릿 다른 가치"를 이 조합 키로 집계. 골드포스 제외(D-066) |
+| item_instance | (template_id, level, skill1_id, skill2_id) | 시세 집계 단위(§7.7, D-044 조건). "동일 템플릿 다른 가치"를 이 조합 키로 집계. 골드포스 제외(D-066). 주(v0.9): 이 키를 쓰는 market-prices(§4.1) 집계 API는 sale_order 거래 데이터 선행이 필요해 **EPIC-ITEM에서 제외·이연**(게이트2). 인덱스는 후속 시세 에픽 대비 존치 |
 | item_instance | (skill1_id, skill2_id) | 특수스킬 조합 필터(§7.7). 스킬만으로 매물 탐색 |
 | item_instance | (gf_expire_at) | 골드포스 활성/잔여 필터·정렬(D-066, 검색 전용·시세 키 제외) |
 | item_instance | (owner_id, location, slot_no) | 사용자 인벤토리 조회(정규 슬롯 나열), 위치별 분리 |
@@ -388,7 +392,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | charge | (user_id, status) | 사용자 충전 내역·진행 상태 |
 | money_hold | (user_id, status) | 사용자 홀드 합계·해제 대상 조회 |
 | item_ownership_history | (instance_id, transferred_at) | 인스턴스 소유 체인 조회(최초=첫 행) |
-| temp_storage | (owner_id) | 사용자 임시보관 목록 |
+| temp_storage | (owner_id, stored_at, instance_id) | 사용자 임시보관 목록 + cursor 안정 정렬(G3, v0.9). 계약 §4.2 `GET /me/temp-storage` cursor 페이지네이션 키(stored_at desc, instance_id desc)를 인덱스로 커버 |
 
 정합성 인덱스·제약(D-008):
 - 종료성 전이(auction·shop status)는 조건부 CAS UPDATE(WHERE status='ACTIVE')로 단일 승자. 별도 인덱스보다 status 조건이 핵심.
@@ -406,8 +410,8 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 1. 사용자·잔액 — user, user_balance (백엔드 `V3__user_and_balance`부터, B-012)
    - 1-a. 자연키 UK 재구성 — 백엔드 `V4__user_natural_key_uk.sql` 실물 채번(backend/033 동기화, D-081). V3가 원본 컬럼 단일 UK(`uk_user_login_id`·`uk_user_nickname`)로 [1] 규약을 위반해 재가입([2.5]·domain-spec [6.1])이 미동작했고, V4가 생성 컬럼 UK(`uk_user_login_id_active`·`uk_user_nickname_active`)로 재구성했다. QA-001(Major) FIX.
 2. 화폐 — charge, money_exchange, money_hold (후속 버전 분리)
-3. 아이템 — item_template, skill_definition, item_instance, item_ownership_history, temp_storage + 인덱스
+3. 아이템 — item_template, skill_definition, item_instance(+slot_key UK), item_ownership_history, temp_storage + 인덱스 (EPIC-ITEM: 백엔드 V6~V8 채번, FC-020/021/022)
 4. 판매·거래 — auction, bid, shop, sale_order + 인덱스·FK
-5. 아이템 시드 — item_template·skill_definition 고정 시드(원게임 실제 명칭·수치·코드, D-067)
+5. 아이템 시드 — 최소 스텁 시드(게이트2 승인, FC-019). **EPIC-ITEM 내로 앞당김**(group 4 판매·거래보다 먼저 — 인벤토리·카탈로그·경매 공급이 시드에 의존): item_template ~8건(대분류2×종류2×속성2) + skill_definition ~5건 + **시드 소유자 user·user_balance(현재 member 시드 부재 → 시드에 포함)** + item_instance ~10건(location=INVENTORY, transfer_type=SEED, ownership_history 첫 행 동반). 원게임 대량 실데이터·정밀 수치는 이연(D-067). 진입 경로 = 시드-only(관리자 지급 API 미도입, 게이트2 2026-07-18)
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).
