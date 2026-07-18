@@ -3,21 +3,22 @@
  * 등급(grade) 없음(D-073). 소유자·최고입찰자는 마스킹.
  * 계약 스키마와 1:1 — 임의 필드 추가·개명 금지.
  *
- * 공백 주(완료 보고 기재): 계약 item 블록의 `element` enum 값(대문자 표기 [1.3])이
- * 계약 본문에 열거돼 있지 않다(design-system·erd는 water/fire/earth/wind 4종).
- * 추측(대문자 매핑)을 피해 wire 타입은 string으로 둔다. 확정 시 유니온으로 좁힌다.
+ * 공백 해소(FC-036): item 블록의 분류 축(typeCode·mainCategory·subGroup·element·kind)은
+ * 계약이 타입을 적지 않아 종전 string 으로 뒀으나, erd(item_template.* INT "속성 — 십의 자리")와
+ * 서버 구현(AuctionItemView: int)이 **정수 코드**로 확정돼 있다. wire 에 맞춰 number 로 정정한다.
+ * 코드↔표시명 매핑은 프론트 소관이다(features/item/lib/element.ts).
  */
 
 /** item 표시 스냅샷 블록 (계약 [3.3] 공통) */
 export interface ItemBlock {
-  typeCode: string;
-  mainCategory: string;
-  subGroup: string;
-  element: string; // 공백: 계약에 enum 값 미열거 → string 유지
-  kind: string;
+  typeCode: number;
+  mainCategory: number;
+  subGroup: number;
+  element: number;
+  kind: number;
   level: number;
-  skill1?: string;
-  skill2?: string;
+  skill1?: number; // 스킬 코드(skill_definition.skill_code). 슬롯이 비면 없음
+  skill2?: number;
   skillPercent: number;
   goldforceExpireAt?: string;
   nameSnapshot: string;
