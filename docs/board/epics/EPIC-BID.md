@@ -3,7 +3,7 @@ id: EPIC-BID
 type: epic
 jira_key: KAN-36
 title: 입찰 — 동시성 직렬화·게임머니 홀드 에스크로·소프트클로즈 연장
-state: todo
+state: doing
 children: [FC-030, FC-031, FC-032, FC-033, FC-034, FC-035]
 gate: null
 ---

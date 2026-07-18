@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v0.8 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v1.0 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -17,6 +17,8 @@
 | v0.6 | 2026-07-14 | D-081 반영(074) — [1] soft delete 자연키 UK 구현 지침 명문화(생성 컬럼 패턴 + 기각 해석 2종 + 동반 필수 + 대리키 예외 + 트리거 조건), [4.1] `user` 표에 `login_id_active`·`nickname_active` 생성 컬럼 UK 반영(원본 컬럼 존치), [4] 말미에 자연키 스윕 결과 주 신설(적용 대상 user 1건·그 외 0건·조건부 리스크 3건). 사유: 기존 [1] 한 줄이 의도만 말하고 구현 해석을 열어둬 V3가 함정을 밟음(backend/028 발견, QA-001) |
 | v0.8 | 2026-07-17 | 게이트2 승인 반영 — [4.1] `money_exchange` 표에 `idempotency_key VARCHAR NOT NULL` + `(user_id, idempotency_key)` 복합 UK(멱등 앵커) 신설, [5] 정합성 인덱스·제약 절에 동 복합 UK 등재. 사유: 교환 멱등 DB 강제(SEC-004). 클라이언트 공급 키라 전역 아닌 사용자 스코프 복합 UK — charge.pg_tx_id(SEC-001) 선례 동류. 부수: applied_rate precision/scale 구현(V5) 확정 비고 1줄 |
 | v0.9 | 2026-07-18 | 게이트2(FC-019, EPIC-ITEM) 승인 반영 — [4.3] `item_instance`에 slot 유일성 생성 컬럼 UK(`slot_key` GENERATED, `uk_item_instance_slot`) 신설(G2, D-081 선례 응용), 불변식에 DB 강제 근거 추가. [5] `temp_storage` 인덱스를 `(owner_id)` → `(owner_id, stored_at, instance_id)`로 보강(G3, cursor 안정 정렬). [5] `item_instance (template_id, level, skill1_id, skill2_id)` 인덱스 이유에 market-prices(§4.1) 집계 = EPIC-ITEM 제외·이연 주석. 사유: FC-019 계약 검증 갭 G2·G3 해소 + market-prices 이연(sale_order 데이터 선행). 진입 경로는 시드-only 확정(관리자 지급 API 미도입 → 계약·스키마 무추가). 근거: 게이트2 승인(2026-07-18) |
+
+| v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -251,6 +253,7 @@ table `bid` — 경매 입찰(D-004). 자기·연속 입찰 금지는 앱 검증
 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
+| public_id | ULID | N | UK | 외부 노출 식별자(B-004·[1]). api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구(v1.0, F1) |
 | auction_id | BIGINT | N | FK→auction | |
 | bidder_id | BIGINT | N | FK→user | 입찰자 |
 | amount | BIGINT | N | | 입찰액(< buy_now_price, D-004) |
@@ -382,7 +385,8 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | auction | (status, start_at) | 예약 시작(SCHEDULED→ACTIVE) 트리거 스캔(D-057) |
 | auction | (seller_id, status) | 판매자 진행/종료 경매 목록 |
 | auction | (item_instance_id) | 출품 아이템 역참조(에스크로 상태 확인) |
-| bid | (auction_id, amount DESC) | 경매별 최고가·입찰 내역 조회 |
+| auction | (status, highest_bid_amount) | 계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount` 실사용(EPIC-BID, v1.0 F6). EPIC-AUCTION 시점엔 전건 NULL이라 이연됐던 항목(auction-domain-spec §7 G5 해소) |
+| bid | (auction_id, amount DESC) | 경매별 최고가·입찰 내역 조회. **"현재 최고 입찰" 식별도 이 인덱스가 커버**한다 — 입찰 금액이 단조 증가(bid-domain-spec §10 I2)해 선두 행이 곧 현재 최고 입찰이므로 `(auction_id, status)` 별도 인덱스는 두지 않는다(bid-domain-spec §11 G4) |
 | bid | (bidder_id) | 사용자 입찰 내역, 연속 입찰 금지 검증 |
 | shop | (status, end_at) | 고정가 만료(EXPIRED) 트리거 스캔(D-057) |
 | shop | (seller_id, status) | 판매자 고정가 목록 |
@@ -410,8 +414,11 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 1. 사용자·잔액 — user, user_balance (백엔드 `V3__user_and_balance`부터, B-012)
    - 1-a. 자연키 UK 재구성 — 백엔드 `V4__user_natural_key_uk.sql` 실물 채번(backend/033 동기화, D-081). V3가 원본 컬럼 단일 UK(`uk_user_login_id`·`uk_user_nickname`)로 [1] 규약을 위반해 재가입([2.5]·domain-spec [6.1])이 미동작했고, V4가 생성 컬럼 UK(`uk_user_login_id_active`·`uk_user_nickname_active`)로 재구성했다. QA-001(Major) FIX.
 2. 화폐 — charge, money_exchange, money_hold (후속 버전 분리)
+   - 2-a. `money_exchange` = 백엔드 `V5__money_exchange.sql`. `money_hold`는 입찰과 동일 TX·동일 생명주기라 **group 4의 `bid`와 함께 V11**에 채번한다(아래 4 참조). `charge`는 충전 도메인 착수 시.
 3. 아이템 — item_template, skill_definition, item_instance(+slot_key UK), item_ownership_history, temp_storage + 인덱스 (EPIC-ITEM: 백엔드 V6~V8 채번, FC-020/021/022)
 4. 판매·거래 — auction, bid, shop, sale_order + 인덱스·FK
+   - 4-a. `auction` = 백엔드 `V10__auction.sql`(EPIC-AUCTION, FC-026).
+   - 4-b. `bid` + `money_hold` = 백엔드 **`V11__bid_and_money_hold.sql`** 단일 채번(EPIC-BID, FC-031). `money_hold.bid_id`가 NOT NULL FK+UK라 `bid` → `money_hold` 순서. 동 파일에 F6 인덱스(`auction (status, highest_bid_amount)`)도 포함한다. `shop`·`sale_order`는 후속 에픽(V12+).
 5. 아이템 시드 — 최소 스텁 시드(게이트2 승인, FC-019). **EPIC-ITEM 내로 앞당김**(group 4 판매·거래보다 먼저 — 인벤토리·카탈로그·경매 공급이 시드에 의존): item_template ~8건(대분류2×종류2×속성2) + skill_definition ~5건 + **시드 소유자 user·user_balance(현재 member 시드 부재 → 시드에 포함)** + item_instance ~10건(location=INVENTORY, transfer_type=SEED, ownership_history 첫 행 동반). 원게임 대량 실데이터·정밀 수치는 이연(D-067). 진입 경로 = 시드-only(관리자 지급 API 미도입, 게이트2 2026-07-18)
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

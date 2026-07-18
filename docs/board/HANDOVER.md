@@ -51,7 +51,9 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
 - **EPIC-GAME-PROFILE(가칭)**: 게임 차용(프로필·인벤토리 UI) + 게임데이터 통합. 선결 설계 리서치 완료(process-log 항목3), 합의 대기.
 - **EPIC-AUCTION 위생 후속(minor, 비차단)**: (1) AUCTION_003 이중용도(startPrice≤0 메시지 오해) 메시지 일반화 or 계약 각주. (2) cancel 경로 자동슬롯 INV_002 표면화 — 재시도 도입 or 계약 각주. 근거 `reviews/FC-029-review.md`.
 - **보안 리뷰 관찰 3건(기준미달·비차단, 2026-07-18 `/security-review`)**:
-  1. **★ 에스크로 CAS에 owner 조건 부재** — `ItemInstanceRepository.markListedIfInInventory`가 `location`만 조건으로 걸고 소유권 확인은 선행 별도 read라 **원자적이지 않다**. `ItemInstance.owner`에 갱신 경로가 없어 현재는 미착취지만, **EPIC-CLOSING이 소유권 이전을 도입하는 순간 실 TOCTOU가 된다**. CAS에 `AND i.owner.id = :sellerId` 추가 = 저렴한 심층방어. **EPIC-BID/CLOSING 선결 검토 대상.**
+  1. **★ 에스크로 CAS에 owner 조건 부재 → EPIC-CLOSING 이연 확정(FC-030 판정·게이트2 승인 2026-07-18)** — `ItemInstanceRepository.markListedIfInInventory`가 `location`만 조건으로 걸고 소유권 확인은 선행 별도 read라 **원자적이지 않다**. `ItemInstance.owner`에 갱신 경로가 없어 현재는 미착취.
+     - **이연 근거**: 지금 고치면 재현할 결함이 없어 회귀 테스트를 쓸 수 없다(정적 확인만 가능). EPIC-CLOSING에서는 **취약해지는 변경(owner UPDATE)과 방어가 같은 리뷰 범위**에 들어와 실제 경합 테스트가 가능하다.
+     - **⚠️ EPIC-CLOSING 소유권 이전 티켓 DoD에 반드시 등재할 것**(이연의 유일한 리스크는 "잊혀짐"): *"`markListedIfInInventory` CAS에 `AND i.owner.id = :ownerId` 추가 + 소유권 이전 ∥ 출품 선점 경합 테스트로 검증"*.
   2. `AuctionCursor` sortValue를 활성 정렬필드 기준으로 미검증 — `AuctionRepositoryImpl:148/161`의 `Long.parseLong`/`Instant.parse`에 try-catch 없음. 페이징 중 `sort` 전환 시 400 대신 500. 가용성·견고성 이슈(보안 아님).
   3. `GET /auctions`의 `size` 상한 없음 + 음수 시 `subList` 예외. 기존 프로젝트 패턴(`InventoryController`·`NoticeController`)과 동일 → 전역 위생 항목으로 묶어 처리 권장.
 - **문서 드리프트(architect 후속)**: `item-domain-spec.md §3.1`이 제거된 `markListed()`를 전이 메서드로 언급 → 갱신 필요(FC-029 판단#5).

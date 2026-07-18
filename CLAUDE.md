@@ -24,7 +24,12 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
   - `category`    : 게임/아이템 유형 분류
   - `item`        : 경매 대상 게임 아이템
   - `auction`     : 경매(시작가·즉시구매가·마감시각·상태: 진행/마감/유찰)
-  - `bid`         : 입찰 — 마감 직전 동시성 제어의 핵심(Redis 분산락 @DistributedLock, E1 활용)
+  - `bid`         : 입찰 — 마감 직전 동시성 제어의 핵심(**auction 행 비관적 락 + 금전 조건부 CAS**,
+                    EPIC-BID 게이트2 승인 2026-07-18). 스켈레톤 기획 시점의 "Redis 분산락 @DistributedLock"
+                    서술을 대체한다 — 실측 결과 `DistributedLockAspect`는 고정 임대(watchdog 부재)라
+                    TX가 임대를 넘기면 상호배제가 깨지고, Redis 장애가 입찰 전면 중단으로 전파된다.
+                    `domain-spec §8`("락은 정확성 보장 수단이 아니다")과도 정합. `@DistributedLock`
+                    자산은 스켈레톤 데모(E1)에 유지된다. 근거 `docs/spec/bid-domain-spec.md`
   - `settlement`  : 낙찰 후 정산(에스크로)
   - (선택) `notification` : 낙찰/유찰/상위입찰 알림
 - **비고**: 위 도메인은 스켈레톤(Stage 0~G)이 완성된 뒤 구현한다. 스켈레톤 단계에서는

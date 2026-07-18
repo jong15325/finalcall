@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.7 — G3 확정(2026-07-14) + 6절 계약 변경 7건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.8 — G3 확정(2026-07-14) + 6절 계약 변경 8건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -19,6 +19,8 @@
 | v1.5 | 2026-07-17 | 6절 계약 변경 — §2.5 GET·PATCH·DELETE `/me` 탈퇴(soft delete) 주체가 만료 전 access로 호출한 경우를 401 `COMMON_005`(세션 무효)로 명시. 미인증·만료 토큰 401과 동일 코드·포맷이라 탈퇴 여부가 응답으로 드러나지 않는다. 사유: 게이트2 승인 — 회원 열거 방지(SEC-007) |
 | v1.6 | 2026-07-18 | 6절 계약 변경 — §5에 `ITEM_003`(relocate 대상 아이템이 임시보관 TEMP 상태 아님, 409) 등재 + §4.2 relocate 에러 목록에 반영. 사유: EPIC-ITEM 구현 정합(FC-022 신설 코드, 도메인 enum↔계약 1:1 규약 · 프론트 분기 명확). 총괄 등재 승인 |
 | v1.7 | 2026-07-18 | 6절 계약 변경 — EPIC-AUCTION 게이트2(FC-025) 결정 반영: (f) §3.1 등록·§5 `AUCTION_001`을 "403/409" → **403 단일**로 정밀화(미소유·미보유·미존재 통일, enum↔계약 1:1 + SEC-007 열거 방지; "이미 출품중"만 `AUCTION_002` 409). (G6) §3.1 취소 대상 상태를 "ACTIVE만" → **"SCHEDULED\|ACTIVE & 입찰0(highest_bidder_id IS NULL)"**로 정밀화(예약 경매 에스크로 잠김 해소, domain-spec §5 정합). 사유: 게이트2 승인(2026-07-18), auction-domain-spec v0.2 |
+
+| v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
 ---
 
@@ -160,12 +162,17 @@ POST /api/v1/auctions/{auctionPublicId}/bids — 입찰 (bid)
 - 인증: 필요
 - 요청(body): `{ amount }`
 - 동작: 경매 단위 직렬화(D-008). 검증 통과 시 게임머니 홀드(에스크로), 직전 최고입찰자 홀드 즉시 해제(P-008), 소프트클로즈 연장 판단(동일 단위). 최고가 갱신.
+- 입찰 하한(v1.8, F5): **첫 입찰(현재 최고가 없음)은 `amount ≥ startPrice`**, 후속 입찰은 `amount ≥ 현재 최고가 + 구간 증분`(계단식, domain-spec §4 — 서버 설정값). 미달 시 `BID_001`. 최소 증분 정책을 클라이언트가 복제하지 않도록 다음 최소 입찰가는 상세 응답 `minNextBidAmount`(§3.3)로 제공한다.
 - 응답 201: `{ bidPublicId, amount, currentHighestAmount, endAt }`
-- 에러: `BID_001` 최소 증분 미달(422), `BID_002` buyNowPrice 이상(422), `BID_003` 자기 경매 입찰(403), `BID_004` 연속(현재 최고가 보유자) 입찰(409), `BID_005` 게임머니 잔액 부족(422), `BID_006` 마감/종료됨(409)
+  - `endAt`은 **소프트클로즈 연장이 반영된** 마감 시각이다(연장이 없으면 기존 값).
+- 에러: `BID_001` 최소 증분 미달·첫 입찰 시작가 미달(422), `BID_002` buyNowPrice 이상(422), `BID_003` 자기 경매 입찰(403), `BID_004` 연속(현재 최고가 보유자) 입찰(409), `BID_005` 게임머니 잔액 부족(422), `BID_006` 마감/종료됨(409), `BID_007` 경매 미개시(409), `AUCTION_004` 경매 없음(404)
+  - 주(v1.8, EPIC-BID 게이트2 F4): 예약 경매가 아직 시작 전(status=SCHEDULED이고 `startAt > now`)인 경우는 **`BID_007`(409)** 이다. `BID_006`("마감/종료됨")과 분리하는 이유는 (1) 도메인 ErrorCode enum ↔ 계약 1:1(§5) 준수, (2) "아직 시작 안 함"과 "이미 끝남"은 클라이언트 안내 문구·재시도 가능성이 정반대이기 때문이다(`ITEM_003` 신설 선례 동류). 경매 상태는 공개 상세로 이미 노출되므로 코드 분리에 따른 열거 리스크는 없다.
 
 GET /api/v1/auctions/{auctionPublicId}/bids — 입찰 내역
 - 인증: 불요(입찰자 식별은 마스킹)
-- 응답 200: offset 페이지(입찰 이력)
+- 쿼리: offset 페이징(`?page=&size=`, §1.3 "관리·소규모는 offset 예외" — 경매당 입찰 수는 소규모). 기본 정렬 `amount desc`(입찰 금액이 단조 증가하므로 최신순과 동일)
+- 응답 200: offset 페이지(`content`: **`BidSummary`** — §3.3)
+- 에러: `AUCTION_004` 경매 없음(404)
 
 POST /api/v1/auctions/{auctionPublicId}/purchase — 즉시구매(buyNow)
 - 인증: 필요
@@ -227,7 +234,17 @@ AuctionSummary (GET /auctions content 항목):
 { auctionPublicId, status, item, startPrice, buyNowPrice?,
   highestBidAmount?, bidCount, startAt?, endAt, sellerNickname }
 ```
-AuctionDetail (GET /auctions/{id}): AuctionSummary + `{ resultType?, highestBidderMasked?, extensionCount, maxEndAt, createdAt }`
+AuctionDetail (GET /auctions/{id}): AuctionSummary + `{ resultType?, highestBidderMasked?, extensionCount, maxEndAt, createdAt, minNextBidAmount }`
+
+- `minNextBidAmount`(v1.8, F3): 다음 입찰이 충족해야 할 **최소 금액**(서버 파생). 입찰이 없으면 `startPrice`, 있으면 `현재 최고가 + 구간 증분`이다(§3.1 입찰 하한). 계단식 증분은 서버 설정값이므로 클라이언트가 구간표를 복제하지 않도록 서버가 계산해 내린다. 종료 상태 경매에서는 null.
+
+BidSummary (GET /auctions/{id}/bids content 항목) — v1.8, F2:
+```
+{ bidPublicId, bidderMasked, amount, status, createdAt }
+```
+- `status`: `ACTIVE`(현재 최고) / `OUTBID`(상위 입찰로 밀림) / `WON`(낙찰). 경매당 `ACTIVE`는 최대 1건이며 그 입찰자가 곧 `highestBidderMasked`다.
+- `bidderMasked`: 입찰자 nickname 마스킹(앞 2자 + `***`) — 상세의 `highestBidderMasked`와 **동일 규약**. 인증 불요 엔드포인트이므로 `userPublicId`·`loginId`·실 nickname을 싣지 않는다(회원 열거 방지, SEC-007).
+- 홀드(에스크로) 금액·잔액 등 자금 정보는 **싣지 않는다**(타인 자금 상태 노출 금지). 입찰액은 경매 진행 정보라 공개 대상이다.
 
 ShopSummary (GET /shops content 항목):
 ```
@@ -358,6 +375,7 @@ POST /api/v1/admin/auctions/{auctionPublicId}/force-cancel — 관리자 강제 
 | BID_004 | 연속(최고가 보유자) 입찰 | 409 |
 | BID_005 | 게임머니 잔액 부족 | 422 |
 | BID_006 | 마감/종료됨 | 409 |
+| BID_007 | 경매 미개시(SCHEDULED·startAt 미도래, §3.1) | 409 |
 | SHOP_001 | 아이템 미소유·미보유 | 403/409 |
 | SHOP_002 | 이미 출품중 | 409 |
 | SHOP_003 | 고정가 없음 | 404 |

@@ -1,6 +1,6 @@
 # FinalCall Item·Inventory Domain Spec (아이템·인벤토리 도메인 스펙)
 
-상태: v0.2 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)**. 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
+상태: v0.3 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)** + **§3.1 LISTED 전이 드리프트 정정(2026-07-18, FC-030)** — 초안의 엔티티 메서드 `markListed()` 서술을 실구현(조건부 CAS `markListedIfInInventory`)에 맞게 갱신했다(FC-029 리뷰 판단 #5). 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
 소유: architect (spec). 게이트2 4항목 전부 승인 완료(§9) → 구현 착수 근거.
 근거: api-contract v1.5 §4.1·§4.2·§5, erd v0.8 §2(결정 플래그 B)·§4.3·§5·§6, domain-spec v0.5 §7, CLAUDE.md 섹션 5(도메인 컨벤션), D-044~047·D-062·D-066·D-067·D-073.
 범위: 정본을 대체하지 않는다. **본 문서는 구현 지침(불변식·응답 필드·에러코드·슬라이싱)의 단일 참조점**이며, 스키마/계약 변경이 필요한 항목은 §7(갭)·§9(게이트2)로 분리해 상신 대상으로 표시한다.
@@ -89,7 +89,9 @@
 | TEMP | NULL | 존재(1:1) | 없음 |
 | LISTED | NULL | 없음 | 존재(참조) |
 
-- **앱 강제**: 위치 전이는 전용 도메인 메서드로만(`ItemInstance.placeInInventory(slotNo)` / `moveToTemp()` / `markListed()`), 각 메서드가 slot_no·연계 행을 원자적으로 세팅. `@Setter` 금지(섹션 5).
+- **앱 강제**: 위치 전이는 전용 경로로만 수행하고 `@Setter`를 두지 않는다(섹션 5).
+  - INVENTORY·TEMP 방향 전이는 도메인 메서드(`ItemInstance.placeInInventory(slotNo)` / `moveToTemp()`)가 slot_no·연계 행을 원자적으로 세팅한다.
+  - **LISTED 전이(출품 선점)는 도메인 메서드가 아니라 조건부 CAS UPDATE다** — `ItemInstanceRepository.markListedIfInInventory(id)`(`WHERE id=? AND location='INVENTORY'`, 영향행 1=선점 성공/0=실패). 초안에 있던 엔티티 메서드 `markListed()`는 dirty-checking PK UPDATE라 두 트랜잭션이 같은 INVENTORY 아이템을 동시에 출품하면 **양쪽 다 성공**(중복 출품 미방지)해 폐기했다. 근거: auction-domain-spec §4.1 G4 · erd §5 "INVENTORY→LISTED CAS 단일 승자". (드리프트 정정 2026-07-18 — FC-029 리뷰 판단 #5)
 - **DB 강제**:
   - INVENTORY↔slot_no 결속 + slot 유일성은 §3.2(생성 컬럼 UK).
   - TEMP↔temp_storage는 `temp_storage.instance_id` UK(1:1) + 앱 트랜잭션(행 생성/삭제와 location 전이 동일 TX).
