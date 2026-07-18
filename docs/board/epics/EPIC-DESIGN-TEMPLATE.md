@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-49
 title: 디자인 템플릿 HTML — 페이지별 시각 디자인 확정
 state: doing
-children: [FC-041, FC-042]
+children: [FC-041, FC-042, FC-043]
 gate: null
 ---
 ## 목표
