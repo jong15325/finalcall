@@ -138,10 +138,14 @@ public class AuctionService {
 
         int affected = auctionRepository.cancelIfCancellable(auction.getId());
         if (affected == 0) {
-            // 0행 원인 분기. 본 에픽 highest_bidder 는 전건 NULL 이라 사실상 종료 상태(AUCTION_006)만 발생하나,
-            // 입찰 존재(AUCTION_007) 분기를 EPIC-BID 대비 유지한다. 로드 엔티티는 CAS 미적용(0행)이라 상태가 정확하다.
-            //   ★ EPIC-BID 진입 시: 동시 입찰이 로드 이후 highest_bidder 를 채우는 경쟁은 fresh/locking 재조회가 필요하다.
-            if (auction.getHighestBidder() != null) {
+            // 0행 원인 분기(bid-domain-spec §4.6, EPIC-BID 인계 정정). 위에서 로드한 엔티티로 판정하면 안 된다 —
+            //   취소 로드 직후 첫 입찰이 커밋되는 경합에서 그 엔티티의 highest_bidder 는 아직 null 이라
+            //   AUCTION_007(입찰 존재) 대신 AUCTION_006(이미 종료)을 반환하는 오분류가 난다.
+            //   cancelIfCancellable 에 clearAutomatically 가 없어 findById 재조회도 같은 스테일 엔티티를 준다 →
+            //   1차 캐시를 우회하는 스칼라 프로젝션 + 잠금 읽기(RR 일관읽기 스냅샷 우회)여야 최신 값을 본다.
+            AuctionCancelState state = auctionRepository.findCancelStateForUpdate(auction.getId())
+                .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_NOT_FOUND));
+            if (state.highestBidderId() != null) {
                 throw new BusinessException(AuctionErrorCode.AUCTION_HAS_BIDS);
             }
             throw new BusinessException(AuctionErrorCode.AUCTION_ALREADY_CLOSED);

@@ -2,6 +2,7 @@ package com.finalcall.common.exception;
 
 import java.util.List;
 
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -74,6 +75,23 @@ public class GlobalExceptionHandler {
         log.warn("[NotFound] {}", ex.getResourcePath());
         return ResponseEntity.status(CommonErrorCode.NOT_FOUND.getStatus())
             .body(ErrorResponse.of(CommonErrorCode.NOT_FOUND));
+    }
+
+    /**
+     * 3-d) 행 락 경합 실패(데드락·락 대기 timeout) → LOCK_ACQUISITION_FAILED(409).
+     *
+     * <p>입찰처럼 행 락으로 직렬화하는 경로는 경합이 심할 때 DB 가 희생자를 골라 롤백시킨다. 이는 서버 결함이
+     * 아니라 <b>재시도하면 성공할 수 있는 일시적 경합</b>이므로 500 이 아니라 409 로 안내한다(bid-domain-spec
+     * §4.4 백스톱). 정합성은 롤백으로 보존되므로 부분 반영은 남지 않는다.
+     *
+     * <p>{@code DeadlockLoserDataAccessException}·{@code CannotAcquireLockException} 이 모두 이 타입의 하위라
+     * 상위 한 곳에서 받는다.
+     */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleLockFailure(PessimisticLockingFailureException ex) {
+        log.warn("[LockFailure] 행 락 경합으로 트랜잭션이 롤백됐다 - {}", ex.getMessage());
+        return ResponseEntity.status(CommonErrorCode.LOCK_ACQUISITION_FAILED.getStatus())
+            .body(ErrorResponse.of(CommonErrorCode.LOCK_ACQUISITION_FAILED));
     }
 
     /** 4) 그 외 미처리 예외 → 500. 내부 정보는 응답에 노출하지 않고 로그에만 전체 스택을 남긴다. */

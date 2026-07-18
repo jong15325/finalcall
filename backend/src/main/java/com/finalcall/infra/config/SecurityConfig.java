@@ -53,6 +53,10 @@ public class SecurityConfig {
                 // 경매 목록·상세는 공개(계약 §3.1 인증 불요). 등록(POST)·취소(POST .../cancel)는 아래 인증 강제.
                 //   GET "/api/v1/auctions/*" 는 단일 세그먼트라 취소 경로(.../cancel, POST)와 겹치지 않는다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/auctions", "/api/v1/auctions/*").permitAll()
+                // 입찰 내역 조회는 공개(계약 §3.1 인증 불요, 응답은 닉네임 마스킹). 위 "/api/v1/auctions/*" 는
+                //   단일 세그먼트라 2세그먼트인 .../bids 에 걸리지 않아 별도 등재가 필요하다.
+                //   ★ GET 만 연다 — POST(입찰)는 아래 anyRequest().authenticated() 로 인증을 유지한다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/auctions/*/bids").permitAll()
                 // 그 외(예: /api/v1/auth/logout, /api/v1/me/**, POST /api/v1/auctions)는 인증 필요.
                 .anyRequest().authenticated())
             .exceptionHandling(eh -> eh

@@ -54,6 +54,27 @@ management:
   # [INCLUDE_TRACE_EXPORT=false] span export 는 이번 단계 범위 밖. 로그 상관관계까지만.
   #   활성화 시: opentelemetry-exporter-otlp 추가 + management.otlp.tracing.endpoint 설정.
 
+# EPIC-BID: 최소 입찰 증분 구간표(domain-spec §4 D-004, bid-domain-spec §3.3).
+#   "신규입찰 >= 현재 최고가 + 해당 구간 증분". 첫 입찰은 증분 미적용(시작가 자체가 하한).
+#   ★ 컴파일 상수가 아니라 운영 정책이라 설정으로 뺐다. 값이 비거나 step 이 0 이하면 부팅이 실패한다
+#     (증분 0 은 최소 증분 검증을 무력화해 1원 단위 입찰 폭주를 허용한다 — 조용한 기본값 대체 금지).
+#   프론트는 이 표를 복제하지 말고 상세 응답의 minNextBidAmount 를 쓴다(계약 v1.8 F3).
+bid:
+  increment:
+    tiers:
+      - threshold: 0
+        step: 100
+      - threshold: 10000
+        step: 1000
+      - threshold: 100000
+        step: 5000
+      - threshold: 1000000
+        step: 10000
+      - threshold: 10000000
+        step: 100000
+      - threshold: 100000000
+        step: 1000000
+
 # Stage 5: /actuator/info 응답 내용(env 컨트리뷰터로 노출)
 info:
   app:
