@@ -72,9 +72,14 @@ class BidDeadlockRegressionIntegrationTest extends BidConcurrencyTestBase {
                 }
             });
 
+            // ★ 라운드마다 즉시 확인한다. 마지막에 몰아서 보면 첫 데드락이 다음 라운드의 역할 배치를 어긋나게
+            //   만들어 BID_004 같은 <b>2차 증상</b>으로 실패하고, 원인이 데드락이라는 사실이 가려진다.
+            assertThat(roundLocks.get())
+                .as("라운드 %d 락 경합 실패 — user_id 오름차순 락 순서(§4.4)가 깨졌다", round)
+                .isZero();
             // 교차 입찰은 어느 쪽도 서로의 성립 조건을 침범하지 않는다 — 데드락만 없다면 둘 다 성립해야 한다.
             assertThat(unexpected).isEmpty();
-            assertThat(success.get() + roundLocks.get()).isEqualTo(2);
+            assertThat(success.get()).isEqualTo(2);
         }
 
         // ★ §4.4 순서 강제가 살아 있으면 순환 대기가 성립할 수 없다 — 락 실패는 0이어야 한다.
