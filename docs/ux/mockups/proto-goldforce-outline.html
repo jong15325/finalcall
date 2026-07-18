@@ -343,8 +343,8 @@ body.sim-rm .item-card:hover{transform:none;}
       <span class="lb">그리드 두께</span>
       <div class="seg" role="group" aria-label="20장 그리드에 적용할 아웃라인 두께">
         <button type="button" data-th="thin"  aria-pressed="false">3px <span class="lb">0.75×</span></button>
-        <button type="button" data-th="true"  aria-pressed="true">4px <span class="lb">1.00×</span></button>
-        <button type="button" data-th="bold"  aria-pressed="false">5px <span class="lb">1.25×</span></button>
+        <button type="button" data-th="true"  aria-pressed="false">4px <span class="lb">1.00×</span></button>
+        <button type="button" data-th="bold"  aria-pressed="true">5px <span class="lb">1.25×</span></button>
       </div>
       <span class="sep" aria-hidden="true"></span>
       <button type="button" class="tgl" id="btn-rm" aria-pressed="false">
@@ -421,7 +421,6 @@ body.sim-rm .item-card:hover{transform:none;}
           </div>
         </a>
         <div class="spec">
-          <span class="rec">권장</span>
           <dl>
             <dt>구성</dt><dd>밝은 겹 2px + 베벨 2px</dd>
             <dt>합계</dt><dd><b>4px</b> · 원본 비율 그대로</dd>
@@ -432,7 +431,7 @@ body.sim-rm .item-card:hover{transform:none;}
 
       <!-- 굵게 -->
       <div>
-        <p class="cap">5px <span>· 원본 대비 1.25×</span></p>
+        <p class="cap">5px <span>· 원본 대비 1.25× · 확정값</span></p>
         <a href="#" class="item-card">
           <div class="slot slot--card">
             <span class="art-frame af--bold has-gf">
@@ -454,7 +453,7 @@ body.sim-rm .item-card:hover{transform:none;}
           <dl>
             <dt>구성</dt><dd>밝은 겹 3px + 베벨 2px</dd>
             <dt>합계</dt><dd><b>5px</b> · 원본 비율의 1.25×</dd>
-            <dt>성격</dt><dd>가장 확실히 보인다. 다만 아트 폭이 100px 이라 5px 이면 <b>양쪽 합계 10%를 테두리가 먹는다</b>. 아이템 그림이 그만큼 눌린다.</dd>
+            <dt>성격</dt><dd><b>사용자 확정값.</b> 가장 확실히 보인다. 다만 아트 폭이 100px 이라 5px 이면 <b>양쪽 합계 10%를 테두리가 먹는다</b>. 아이템 그림이 그만큼 눌린다.</dd>
           </dl>
         </div>
       </div>
@@ -474,7 +473,7 @@ body.sim-rm .item-card:hover{transform:none;}
   <div class="container">
     <h2><span class="n">2</span>골드포스 활성 vs 비활성</h2>
     <p class="lead">
-      같은 아이템·같은 레이아웃에서 골드포스만 다르다(권장 4px 적용). 차이가 <b>한눈에 읽히는가</b>,
+      같은 아이템·같은 레이아웃에서 골드포스만 다르다(확정 5px 적용). 차이가 <b>한눈에 읽히는가</b>,
       그리고 <b>아웃라인을 지워도(색각 이상·모션 감소) 여전히 읽히는가</b>를 같이 본다.
     </p>
     <div class="pair">
@@ -482,7 +481,7 @@ body.sim-rm .item-card:hover{transform:none;}
         <p class="cap">골드포스 활성 <span>· goldforceActive: true</span></p>
         <a href="#" class="item-card">
           <div class="slot slot--card">
-            <span class="art-frame af--true has-gf">
+            <span class="art-frame af--bold has-gf">
               <span class="gf" aria-hidden="true"><i></i></span>
               <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
                    alt="7레벨 불속성 칼 카드 아트" width="100" height="186">
@@ -565,7 +564,7 @@ body.sim-rm .item-card:hover{transform:none;}
         <p class="cap">여유 <span>· 24시간 초과</span></p>
         <a href="#" class="item-card">
           <div class="slot slot--card">
-            <span class="art-frame af--true has-gf">
+            <span class="art-frame af--bold has-gf">
               <span class="gf" aria-hidden="true"><i></i></span>
               <img src="../../game_ui/item_info/card_image/gold_black/level4/l/earth/armor.png"
                    alt="4레벨 땅속성 갑옷 카드 아트" width="100" height="186">
@@ -586,7 +585,7 @@ body.sim-rm .item-card:hover{transform:none;}
         <p class="cap">임박 <span>· 24시간 이내</span></p>
         <a href="#" class="item-card">
           <div class="slot slot--card">
-            <span class="art-frame af--true has-gf">
+            <span class="art-frame af--bold has-gf">
               <span class="gf" aria-hidden="true"><i></i></span>
               <img src="../../game_ui/item_info/card_image/gold_black/level4/l/earth/armor.png"
                    alt="4레벨 땅속성 갑옷 카드 아트" width="100" height="186">
@@ -641,14 +640,14 @@ body.sim-rm .item-card:hover{transform:none;}
       상단 <b>모션 감소 시뮬레이션</b> 토글을 켜 보라(OS 설정 <code>prefers-reduced-motion: reduce</code> 와 동일하게 동작한다).
       흐르는 흰 띠만 사라지고 <b>정적 금 그라데이션 2겹 링과 배지·본문줄은 그대로 남는다</b>.
       정지 상태에서도 골드포스임이 읽혀야 한다는 조건을 이 구조가 만족한다. 정보는 애초에 애니메이션이 아니라
-      링과 텍스트에 실려 있기 때문이다. 두께를 키울수록 이 정지 상태가 더 잘 읽힌다는 점도 4px 을 권하는 이유다.
+      링과 텍스트에 실려 있기 때문이다. 두께를 키울수록 이 정지 상태가 더 잘 읽힌다.
     </p>
     <div class="pair">
       <div>
         <p class="cap">정지 상태 <span>· 흰 셰인 제거 · 2겹 링과 텍스트만</span></p>
         <a href="#" class="item-card">
           <div class="slot slot--card">
-            <span class="art-frame af--true has-gf">
+            <span class="art-frame af--bold has-gf">
               <span class="gf" aria-hidden="true"><i style="animation:none;opacity:0;"></i></span>
               <img src="../../game_ui/item_info/card_image/gold_black/level8/l/wind/wand.png"
                    alt="8레벨 바람속성 완드 카드 아트" width="100" height="186">
@@ -668,7 +667,7 @@ body.sim-rm .item-card:hover{transform:none;}
         <p class="cap">비교 · 애니메이션 유지</p>
         <a href="#" class="item-card">
           <div class="slot slot--card">
-            <span class="art-frame af--true has-gf">
+            <span class="art-frame af--bold has-gf">
               <span class="gf" aria-hidden="true"><i></i></span>
               <img src="../../game_ui/item_info/card_image/gold_black/level8/l/wind/wand.png"
                    alt="8레벨 바람속성 완드 카드 아트" width="100" height="186">
@@ -693,7 +692,7 @@ body.sim-rm .item-card:hover{transform:none;}
   <div class="container">
     <h2><span class="n">6</span>사용자 판단이 필요한 것</h2>
     <div class="note" style="max-width:88ch;">
-      <b>① 두께(이번 결정):</b> 3px / <b>4px(권장)</b> / 5px. 3번 그리드에서 20장 깔린 상태로 보고 정하는 게 맞다.<br>
+      <b>① 두께: <s>결정 완료</s> → 5px 확정.</b> 세그먼트 컨트롤은 재확인용으로 남겨 뒀다.<br>
       <b>② 속도:</b> 원본 <code>.spr</code> 에 시간 정보가 없어 복원 불가. 3s 주기는 제안값이다.<br>
       <b>③ 잔여 노출 범위:</b> 목록에도 "N일 남음"을 쓸지, 목록은 배지만 두고 상세에서만 시각을 보일지.<br>
       <b>④ 임박 기준:</b> 24시간으로 뒀으나 근거는 없다.<br>
@@ -716,7 +715,7 @@ body.sim-rm .item-card:hover{transform:none;}
   var kinds=['sword','bow','armor','wand','shield','axe','boots','magic','pendant'];
   var names={sword:'칼',bow:'활',armor:'갑옷',wand:'완드',shield:'방패',axe:'도끼',boots:'신발',magic:'마법서',pendant:'펜던트'};
   var gfIdx=[2,11], grid=document.getElementById('grid'), html='';
-  var thick='true';   /* 기본 = 원본 비율 4px */
+  var thick='bold';   /* 확정값 = 5px (사용자 결정) */
 
   function gfMarkup(){
     return '<span class="gf" aria-hidden="true"><i></i></span>';
