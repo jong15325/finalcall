@@ -198,10 +198,13 @@ class AuctionApiIntegrationTest extends IntegrationTest {
             .andExpect(jsonPath("$.data.sellerNickname").value("상세판매자1"))
             .andExpect(jsonPath("$.data.item.typeCode").value(9311))
             .andExpect(jsonPath("$.data.item.nameSnapshot").value("경매템플릿"))
+            // 입찰이 없는 경매라 최고가 계열은 여전히 null/0 이다(EPIC-BID 이후에도 "입찰 없음"의 정직한 표현).
             .andExpect(jsonPath("$.data.highestBidAmount").doesNotExist())
             .andExpect(jsonPath("$.data.bidCount").value(0))
             .andExpect(jsonPath("$.data.highestBidderMasked").doesNotExist())
-            .andExpect(jsonPath("$.data.extensionCount").value(0));
+            .andExpect(jsonPath("$.data.extensionCount").value(0))
+            // FC-033: 첫 입찰의 하한은 시작가다(계약 v1.8 F3·F5).
+            .andExpect(jsonPath("$.data.minNextBidAmount").value(1000));
     }
 
     @Test

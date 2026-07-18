@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.bid.BidIncrementProperties;
 import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
@@ -46,6 +47,8 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final ItemInstanceRepository itemInstanceRepository;
     private final InventoryService inventoryService;
+    /** 최소 증분 정책의 단일 진실원(bid 도메인 소유). 상세 응답 파생값 산출에만 쓴다 — 정책을 복제하지 않는다. */
+    private final BidIncrementProperties incrementProperties;
 
     /**
      * 경매를 등록한다(계약 §3.1 POST /auctions, 단일 TX). 소유·시간·가격 검증 후 item 을 INVENTORY→LISTED 로
@@ -102,22 +105,45 @@ public class AuctionService {
     @ServiceLog
     public AuctionSlice getList(AuctionSearchCondition condition, String cursor, int size) {
         AuctionCursor decoded = AuctionCursor.decode(cursor);
-        List<Auction> fetched = auctionRepository.findByCursor(condition, decoded, size, Instant.now());
+        List<AuctionWithBidCount> fetched = auctionRepository.findByCursor(condition, decoded, size, Instant.now());
 
         boolean hasNext = fetched.size() > size;
-        List<Auction> content = hasNext ? fetched.subList(0, size) : fetched;
+        List<AuctionWithBidCount> content = hasNext ? fetched.subList(0, size) : fetched;
         String nextCursor = content.isEmpty() ? null : encodeNext(content, condition.sort());
         return new AuctionSlice(content, nextCursor, hasNext);
     }
 
     /**
-     * 경매 상세(계약 §3.1 GET /auctions/{id}). itemInstance·template·skill·seller 를 fetch join 해 표현 계층 lazy
-     * 접근을 없앤다. status 의 lazy 활성화 파생은 api 계층에서 {@link Auction#displayStatus(Instant)}로 수행한다.
+     * 경매 상세(계약 §3.1 GET /auctions/{id}). itemInstance·template·skill·seller·highestBidder 를 fetch join 해
+     * 표현 계층 lazy 접근을 없앤다. status 의 lazy 활성화 파생은 api 계층에서
+     * {@link Auction#displayStatus(Instant)}로 수행하고, 설정 의존 파생값({@code minNextBidAmount})은 여기서 채운다.
      */
     @ServiceLog
-    public Auction getDetail(String publicId) {
-        return auctionRepository.findDetailByPublicId(publicId)
+    public AuctionDetail getDetail(String publicId) {
+        AuctionWithBidCount row = auctionRepository.findDetailByPublicId(publicId)
             .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_NOT_FOUND));
+        return new AuctionDetail(row.auction(), row.bidCount(), minNextBidAmount(row.auction()));
+    }
+
+    /**
+     * 다음 입찰 최소 금액(계약 v1.8 F3). 산출은 {@link BidIncrementProperties#minNextBidAmount(long, Long)}에
+     * <b>위임</b>한다 — 입찰 검증({@code BID_001})이 쓰는 것과 동일한 메서드다. 여기서 구간표를 다시 구현하면
+     * "화면이 안내한 금액으로 입찰했는데 거부되는" 드리프트가 생긴다.
+     *
+     * <p>종료 상태(SOLD·UNSOLD·CANCELLED)는 null 이다. 마감 시각이 지났지만 status 가 아직 진행 상태인 경매는
+     * 값을 그대로 내린다 — 마감 판정은 status 가 아니라 시각으로 하며(bid-domain-spec §3.2), 그 판정의 정본은
+     * 입찰 트랜잭션의 락 스냅샷이다. 조회 응답이 그 판정을 흉내 내면 두 진실이 생긴다.
+     */
+    private Long minNextBidAmount(Auction auction) {
+        if (isClosed(auction.getStatus())) {
+            return null;
+        }
+        return incrementProperties.minNextBidAmount(auction.getStartPrice(), auction.getHighestBidAmount());
+    }
+
+    /** 종료 상태(더 이상 입찰이 성립하지 않는 상태) 판정. */
+    private boolean isClosed(AuctionStatus status) {
+        return status == AuctionStatus.SOLD || status == AuctionStatus.UNSOLD || status == AuctionStatus.CANCELLED;
     }
 
     /**
@@ -131,6 +157,7 @@ public class AuctionService {
     public AuctionStatus cancel(String publicId) {
         Long sellerId = currentUserId();
         Auction auction = auctionRepository.findDetailByPublicId(publicId)
+            .map(AuctionWithBidCount::auction)
             .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_NOT_FOUND));
         // 타인 취소 차단(IDOR): 주체 ≠ 판매자면 403(게이트2 f — 미소유 통일). seller 는 fetch join 됨.
         Preconditions.validate(
@@ -209,9 +236,13 @@ public class AuctionService {
             ? snapshot.substring(0, SPEC_SNAPSHOT_MAX_LENGTH) : snapshot;
     }
 
-    /** 다음 페이지 커서를 정렬 필드 값 + id 로 인코딩한다. highestBidAmount 는 전건 NULL 이라 null(→ id 경계). */
-    private String encodeNext(List<Auction> content, AuctionSort sort) {
-        Auction last = content.get(content.size() - 1);
+    /**
+     * 다음 페이지 커서를 정렬 필드 값 + id 로 인코딩한다. {@code highestBidAmount} 는 nullable 이라 입찰 없는
+     * 경매가 경계 행이면 sortValue 가 null 로 인코딩되며, 디코드 측이 이를 "NULL 그룹 경계"로 해석한다
+     * ({@code AuctionRepositoryImpl.highestBidKeyset}).
+     */
+    private String encodeNext(List<AuctionWithBidCount> content, AuctionSort sort) {
+        Auction last = content.get(content.size() - 1).auction();
         String sortValue = switch (sort) {
             case PRICE -> String.valueOf(last.getStartPrice());
             case END_AT -> last.getEndAt().toString();

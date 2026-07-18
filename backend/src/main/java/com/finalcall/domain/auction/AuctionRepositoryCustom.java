@@ -10,13 +10,19 @@ import java.util.Optional;
  */
 public interface AuctionRepositoryCustom {
 
-    /** 상세(계약 §3.1 GET /auctions/{id}) — itemInstance·template·skill1/2·seller fetch join. */
-    Optional<Auction> findDetailByPublicId(String publicId);
+    /**
+     * 상세(계약 §3.1 GET /auctions/{id}) — itemInstance·template·skill1/2·seller·highestBidder fetch join +
+     * 입찰 수 상관 서브쿼리. {@code highestBidder} 까지 fetch 하는 이유는 응답의 {@code highestBidderMasked} 가
+     * 닉네임을 읽기 때문이다(OSIV off — 표현 계층 lazy 접근 불가).
+     */
+    Optional<AuctionWithBidCount> findDetailByPublicId(String publicId);
 
     /**
-     * 목록(계약 §3.1 GET /auctions) — 공통 필터 + keyset cursor. hasNext 판단을 위해 {@code size + 1}건 조회한다.
+     * 목록(계약 §3.1 GET /auctions) — 공통 필터 + keyset cursor + 입찰 수 상관 서브쿼리.
+     * hasNext 판단을 위해 {@code size + 1}건 조회한다.
      *
      * @param now goldforceActive 필터 기준 시각(gf_expire_at 비교)
      */
-    List<Auction> findByCursor(AuctionSearchCondition condition, AuctionCursor cursor, int size, Instant now);
+    List<AuctionWithBidCount> findByCursor(
+        AuctionSearchCondition condition, AuctionCursor cursor, int size, Instant now);
 }

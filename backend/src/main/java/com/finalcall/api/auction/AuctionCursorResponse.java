@@ -18,7 +18,7 @@ public record AuctionCursorResponse(
 
     public static AuctionCursorResponse from(AuctionSlice slice, Instant now) {
         return AuctionCursorResponse.builder()
-            .content(slice.content().stream().map(auction -> AuctionSummaryResponse.from(auction, now)).toList())
+            .content(slice.content().stream().map(row -> AuctionSummaryResponse.from(row, now)).toList())
             .nextCursor(slice.nextCursor())
             .hasNext(slice.hasNext())
             .build();

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
@@ -84,11 +86,12 @@ class AuctionRepositorySliceTest {
         em.flush();
         em.clear();
 
-        Auction found = auctionRepository.findDetailByPublicId(auction.getPublicId()).orElseThrow();
+        AuctionWithBidCount found = auctionRepository.findDetailByPublicId(auction.getPublicId()).orElseThrow();
 
-        assertThat(found.getItemInstance().getTemplate().getTypeCode()).isEqualTo(9203);
-        assertThat(found.getSeller().getNickname()).isEqualTo("상세판매자");
-        assertThat(found.getItemNameSnapshot()).isEqualTo("경매템플릿");
+        assertThat(found.auction().getItemInstance().getTemplate().getTypeCode()).isEqualTo(9203);
+        assertThat(found.auction().getSeller().getNickname()).isEqualTo("상세판매자");
+        assertThat(found.auction().getItemNameSnapshot()).isEqualTo("경매템플릿");
+        assertThat(found.bidCount()).isZero(); // 입찰 없는 경매 — 상관 서브쿼리 집계 0
     }
 
     @Test
@@ -106,16 +109,19 @@ class AuctionRepositorySliceTest {
         em.clear();
 
         AuctionSearchCondition condition = defaultCondition();
-        List<Auction> firstPage = auctionRepository.findByCursor(condition, AuctionCursor.first(), 2, Instant.now());
+        List<AuctionWithBidCount> firstPage = auctionRepository.findByCursor(condition, AuctionCursor.first(), 2,
+            Instant.now());
 
         assertThat(firstPage).hasSize(3); // size(2) + 1(hasNext 판단분). CANCELLED 는 제외.
-        assertThat(firstPage.get(0).getId()).isEqualTo(a1.getId()); // endAt asc — 가장 임박
-        assertThat(firstPage.get(1).getId()).isEqualTo(a2.getId());
+        assertThat(firstPage.get(0).auction().getId()).isEqualTo(a1.getId()); // endAt asc — 가장 임박
+        assertThat(firstPage.get(1).auction().getId()).isEqualTo(a2.getId());
 
         // 두 번째 페이지: 첫 페이지 마지막(a2)을 커서로.
         AuctionCursor next = new AuctionCursor(a2.getEndAt().toString(), a2.getId());
-        List<Auction> secondPage = auctionRepository.findByCursor(condition, next, 2, Instant.now());
-        assertThat(secondPage).extracting(a -> a.getItemInstance().getTemplate().getTypeCode()).containsExactly(9213);
+        List<AuctionWithBidCount> secondPage = auctionRepository.findByCursor(condition, next, 2, Instant.now());
+        assertThat(secondPage)
+            .extracting(row -> row.auction().getItemInstance().getTemplate().getTypeCode())
+            .containsExactly(9213);
     }
 
     @Test
@@ -130,10 +136,100 @@ class AuctionRepositorySliceTest {
         AuctionSearchCondition condition = new AuctionSearchCondition(
             1, null, null, null, null, null, null, null, null, null, null, null,
             AuctionSort.END_AT, true);
-        List<Auction> result = auctionRepository.findByCursor(condition, AuctionCursor.first(), 10, Instant.now());
+        List<AuctionWithBidCount> result = auctionRepository.findByCursor(condition, AuctionCursor.first(), 10,
+            Instant.now());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getItemInstance().getTemplate().getMainCategory()).isEqualTo(1);
+        assertThat(result.get(0).auction().getItemInstance().getTemplate().getMainCategory()).isEqualTo(1);
+    }
+
+    // ---------------- highestBidAmount 정렬 keyset(FC-033) ----------------
+
+    /**
+     * ASC 는 NULL 그룹이 먼저다(MySQL 네이티브 = NULL 최소). 입찰 없는 경매가 목록에서 사라지지도, 두 번 나오지도
+     * 않아야 한다 — 페이지를 끝까지 이어 받아 전체 순서를 그대로 재구성해 확인한다.
+     */
+    @Test
+    void 최고가_ASC_연속_페이지는_NULL을_먼저_두고_중복_누락이_없다() {
+        List<Auction> fixture = persistHighestBidFixture();
+
+        List<Long> ids = pageThroughByHighestBid(true, 2);
+
+        // null(id asc) → 1000 → 5000(동값은 id asc tiebreak)
+        assertThat(ids).containsExactly(
+            fixture.get(0).getId(), fixture.get(1).getId(), fixture.get(2).getId(),
+            fixture.get(3).getId(), fixture.get(4).getId());
+    }
+
+    /**
+     * DESC 는 NULL 그룹이 맨 뒤다. 경계식에서 {@code isNull()} 항을 빠뜨리면 입찰 없는 경매가 2페이지 이후에서
+     * <b>통째로 사라진다</b> — 예외도 로그도 없는 무음 누락이라 이 테스트가 유일한 방어선이다.
+     */
+    @Test
+    void 최고가_DESC_연속_페이지는_NULL을_마지막에_두고_중복_누락이_없다() {
+        List<Auction> fixture = persistHighestBidFixture();
+
+        List<Long> ids = pageThroughByHighestBid(false, 2);
+
+        // 5000(id desc) → 1000 → null(id desc)
+        assertThat(ids).containsExactly(
+            fixture.get(4).getId(), fixture.get(3).getId(), fixture.get(2).getId(),
+            fixture.get(1).getId(), fixture.get(0).getId());
+    }
+
+    /** 페이지 크기가 1이면 경계가 매 건 갱신돼 keyset 결함이 가장 잘 드러난다(그룹 전이가 전부 경계가 된다). */
+    @Test
+    void 최고가_정렬은_페이지크기_1에서도_전건을_한_번씩만_반환한다() {
+        List<Auction> fixture = persistHighestBidFixture();
+        List<Long> expected = fixture.stream().map(Auction::getId).toList();
+
+        assertThat(pageThroughByHighestBid(true, 1)).containsExactlyElementsOf(expected);
+        assertThat(pageThroughByHighestBid(false, 1)).containsExactlyElementsOf(expected.reversed());
+    }
+
+    /**
+     * 최고가 5건: NULL 2건 + 1,000 1건 + 5,000 2건(동값 tiebreak 유도). id 는 auto increment 라 생성 순 = id 순이다.
+     * 다른 테스트 데이터와 섞이지 않도록 전용 mainCategory(7) 대역을 쓴다.
+     */
+    private List<Auction> persistHighestBidFixture() {
+        User owner = persistUser("keyset_owner", "키셋판매자");
+        Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
+        Long[] amounts = {null, null, 1_000L, 5_000L, 5_000L};
+        List<Auction> saved = new ArrayList<>();
+        int typeCode = 7801;
+        for (Long amount : amounts) {
+            Auction auction = auctionWithEnd(owner, persistItem(owner, typeCode++), end);
+            if (amount != null) {
+                // 엔티티에 setter 가 없다(CAS UPDATE 가 단일 진실원). 픽스처 한정으로 필드를 직접 심는다.
+                ReflectionTestUtils.setField(auction, "highestBidAmount", amount);
+            }
+            saved.add(auctionRepository.save(auction));
+        }
+        em.flush();
+        em.clear();
+        return saved;
+    }
+
+    /** 커서를 이어 받아 끝까지 페이지를 순회한다(프로덕션 {@code AuctionService.encodeNext} 와 동일한 인코딩). */
+    private List<Long> pageThroughByHighestBid(boolean asc, int pageSize) {
+        AuctionSearchCondition condition = new AuctionSearchCondition(
+            7, null, null, null, null, null, null, null, null, null, null, null,
+            AuctionSort.HIGHEST_BID_AMOUNT, asc);
+        List<Long> ids = new ArrayList<>();
+        AuctionCursor cursor = AuctionCursor.first();
+        while (true) {
+            List<AuctionWithBidCount> fetched = auctionRepository.findByCursor(condition, cursor, pageSize,
+                Instant.now());
+            boolean hasNext = fetched.size() > pageSize;
+            List<AuctionWithBidCount> content = hasNext ? fetched.subList(0, pageSize) : fetched;
+            content.forEach(row -> ids.add(row.auction().getId()));
+            if (!hasNext || content.isEmpty()) {
+                return ids;
+            }
+            Auction last = content.get(content.size() - 1).auction();
+            Long amount = last.getHighestBidAmount();
+            cursor = new AuctionCursor(amount == null ? null : String.valueOf(amount), last.getId());
+        }
     }
 
     private AuctionSearchCondition defaultCondition() {
