@@ -7,6 +7,11 @@
  * 계약이 타입을 적지 않아 종전 string 으로 뒀으나, erd(item_template.* INT "속성 — 십의 자리")와
  * 서버 구현(AuctionItemView: int)이 **정수 코드**로 확정돼 있다. wire 에 맞춰 number 로 정정한다.
  * 코드↔표시명 매핑은 프론트 소관이다(features/item/lib/element.ts).
+ *
+ * nullable 표기(FC-038 M-1): 계약 [3.3] 표에서 null 이 **Y** 인 필드는 `?: T | null` 로 적는다.
+ * `?:` 만 쓰면 타입이 `T | undefined` 라 **null 을 배제한 거짓말**이 된다 — 서버는 NON_NULL 설정이
+ * 없어 wire 에 `"skill1": null` 을 그대로 싣고, `=== undefined` 비교가 이를 놓쳐 화면에 "코드 null"이
+ * 새어 나왔다. 소비처는 `== null`(느슨 비교)·`??` 로 양쪽을 함께 받는다.
  */
 
 /** item 표시 스냅샷 블록 (계약 [3.3] 공통) */
@@ -17,10 +22,10 @@ export interface ItemBlock {
   element: number;
   kind: number;
   level: number;
-  skill1?: number; // 스킬 코드(skill_definition.skill_code). 슬롯이 비면 없음
-  skill2?: number;
+  skill1?: number | null; // 스킬 코드(skill_definition.skill_code). 슬롯이 비면 null
+  skill2?: number | null;
   skillPercent: number;
-  goldforceExpireAt?: string;
+  goldforceExpireAt?: string | null;
   nameSnapshot: string;
   specSnapshot: string;
 }
@@ -40,18 +45,18 @@ export interface AuctionSummary {
   status: AuctionStatus;
   item: ItemBlock;
   startPrice: number;
-  buyNowPrice?: number;
-  highestBidAmount?: number;
+  buyNowPrice?: number | null;
+  highestBidAmount?: number | null;
   bidCount: number;
-  startAt?: string;
+  startAt?: string | null;
   endAt: string;
   sellerNickname: string;
 }
 
 /** GET /auctions/{id} (계약 [3.3] — AuctionSummary + 추가) */
 export interface AuctionDetail extends AuctionSummary {
-  resultType?: ResultType;
-  highestBidderMasked?: string;
+  resultType?: ResultType | null;
+  highestBidderMasked?: string | null;
   extensionCount: number;
   maxEndAt: string;
   createdAt: string;
@@ -61,7 +66,7 @@ export interface AuctionDetail extends AuctionSummary {
    * 계단식 증분은 서버 설정값이므로 **클라이언트가 구간표를 복제하지 않는다** — 값이 없으면 계산하지 않고 비워 둔다.
    * (EPIC-BID 구현 전에는 서버가 아직 이 필드를 싣지 않아 undefined 로 온다.)
    */
-  minNextBidAmount?: number;
+  minNextBidAmount?: number | null;
 }
 
 /** GET /shops content 항목 (계약 [3.3]) */
@@ -70,7 +75,7 @@ export interface ShopSummary {
   status: ShopStatus;
   item: ItemBlock;
   price: number;
-  endAt?: string;
+  endAt?: string | null;
   sellerNickname: string;
 }
 

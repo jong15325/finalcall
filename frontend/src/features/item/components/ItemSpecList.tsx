@@ -45,13 +45,16 @@ function SpecRow({ label, value }: { label: string; value: string }) {
 /**
  * 스킬은 코드(`skill_definition.skill_code`)로만 내려온다 — 코드→이름 매핑 API가 계약에 아직 없다.
  * 이름을 지어내지 않고 코드를 그대로 밝힌다(무음 실패 방지, element 미등록 코드 폴백과 같은 태도).
+ *
+ * 빈 슬롯 판정은 `== null` 이다(`=== undefined` 아님) — 계약 §3.3 에서 `skill1`·`skill2` 는 nullable 이고
+ * 서버가 wire 에 `null` 을 실어 보낸다. 엄격 비교로 두면 빈 슬롯이 "코드 null"로 새어 나온다(FC-038 M-1).
  */
-function skillText(skillCode?: number): string {
-  return skillCode === undefined ? '없음' : `코드 ${skillCode}`;
+function skillText(skillCode?: number | null): string {
+  return skillCode == null ? '없음' : `코드 ${skillCode}`;
 }
 
 /** 골드포스 활성/잔여는 클라 파생이다(계약 §3.3 주) — 서버는 만료시각만 준다. */
-function goldforceText(expireAt?: string): string {
+function goldforceText(expireAt?: string | null): string {
   if (!expireAt) return '없음';
   const expireMs = new Date(expireAt).getTime();
   if (Number.isNaN(expireMs)) return expireAt;
