@@ -176,9 +176,28 @@ OPEN 시점의 "총괄 예비 판단 5건"을 사용자가 검토해 **방향 �
 4. **업계 레퍼런스로 합의 필요**: 현재 업계에서 쓰는 설계 레퍼런스(게임 플랫폼/컴패니언 서비스의 공유 DB vs
    API 연동, CDC/복제, read-replica, 소유 경계 등)를 찾아 **합의점**을 도출해야 함. 미조사.
 
+### 조사 결과 (병렬 리서치, 2026-07-18 — general-purpose, 출처 35건)
+> EPIC-AUCTION architect와 병렬로 업계 레퍼런스를 조사(WebSearch/WebFetch). 결정 아님, 합의 근거.
+
+**패턴별 트레이드오프**(write 소유권이 게임에 있다는 제약 하): 공유DB 양방향 write=최악(Fowler "integration
+database") / 공유DB read-only=강경론 반대·절충론은 ACL 전제 조건부 / read replica=조회 OK·write 판단엔 stale
+위험 / API 동기 연동=경계 깨끗하나 게임팀 API 필요·가용성 결합 / CDC(Debezium)=게임 앱 무변경·eventual /
+Outbox+CDC=결합 최저·게임 코드 변경 필요. **핵심: 결합 낮을수록 게임팀 협조 비용↑, 협조 불요일수록 게임 스키마 결합↑**(정반대).
+
+**변하지 않는 원칙 4**: (1) new_sp write 소유권은 게임(single writer), 마켓은 참조만. (2) 잔액·에스크로·정산=마켓
+소유(감사 원장), 게임 내 화폐·아이템 상태=게임 소유(Steam·AWS 지갑 모델). (3) 크로스DB 조인 회피=로컬 reference
+복제/API composition/CQRS 뷰. (4) 낙찰 후 게임 아이템 이전은 마켓이 new_sp 직접 write 금지 → 게임 API/이벤트 위임.
+
+**후보 3안**: A) read-only 참조 + 로컬 reference 복제(경량·협조 최소·복제지연/스키마결합 단점). B) CDC(Debezium)
+→이벤트→마켓 로컬 뷰(표준·확장·Kafka 운영부담). C) 게임이 데이터/지갑 API 제공(경계 최상·협조 최대·raw DB엔 API 없음).
+**현실적 절충**: 조회=A/B(eventual OK), 거래 확정·아이템 이전 write만=C(게임 API, 강정합) — "읽기는 복제, 쓰기는 소유자 위임".
+
+**합의 시 분기점**: (i) 같은 MySQL 인스턴스 read-only 조회 허용 여부(강경 vs 절충), (ii) eventual consistency 수용
+범위와 강정합 요구 지점(경매 확정·이중판매 방지). 전문·인용 = 스크래치패드 `game-integration-research.md`(휘발성).
+
 ### 다음 (해당 에픽 착수 시)
-- architect가 (a) 업계 레퍼런스 조사 → (b) 통합 방식 후보(공유DB 직참조 / 정규화 복제 / API·CDC 연동)
-  장단점 → (c) 화폐·소유권 경계 확정 → (d) 조인/동기화 리스크 완화안을 게이트2로 상신.
+- 위 조사 기반 **사용자+총괄 합의**(옵션 A/B/C·read-only 쟁점) → architect가 (c) 화폐·소유권 경계 확정 →
+  (d) 조인/동기화 리스크 완화안을 게이트2로 상신.
 - UI 차용 상세 설계·이미지·값 매핑은 그 뒤(노트가 "추후"로 명시).
 
 ### 증거
