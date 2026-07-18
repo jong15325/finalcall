@@ -2,7 +2,7 @@
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
 갱신: 에픽 완료마다 + 세션이 무거워질 때(덮어씀, 이력은 git).
-갱신: 2026-07-18 (**EPIC-AUCTION 완료** — 보안 리뷰 발견 0건 · 게이트3 Done 승인 · KAN-30~35 완료 미러. 다음 = EPIC-BID)
+갱신: 2026-07-18 (**EPIC-AUCTION 완료·push** / **EPIC-BID 게이트1 승인·티켓 생성(KAN-36~42)** / end-of-turn 보안 훅 신규 배선·on / old_sp DB 임포트)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 아래 "다음 수"부터 진행한다.
 
@@ -28,6 +28,12 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
   - **EPIC-AUCTION(경매, KAN-30~35) ✅ 완료·push됨**. FC-025 architect(spec v0.2·계약 v1.7, 게이트2 6결정) / FC-026~028 backend-impl 순차 단일패스(V10) — 등록·목록·상세·취소 + item LISTED CAS(G4 교정)·에스크로 왕복, 테스트 슬라이스5+통합21+동시성1 / FC-029 reviewer PASSED(critical 0·major 0·minor 8).
   - **보안 층 첫 실적용 완료**(섹션 13): 에픽 완료 온디맨드 `/security-review` 1회 실행 → **HIGH/MEDIUM 발견 0건**. 인가(주체=SecurityContext·IDOR 없음)·SecurityConfig permitAll GET 한정 스코프·에스크로 CAS 단일승자·QueryDSL 인젝션 없음·응답 PII 미노출 전부 확인. 기준미달 관찰 3건은 백로그 등재.
   - 주의: 스킬이 `origin/HEAD` 미설정으로 1차 실패 → `git remote set-head origin master`로 해소. 또 **push 완료 후엔 기본 diff 범위가 비므로** 범위를 수동 지정해야 한다(이번엔 `415e6e3..HEAD`).
+- **EPIC-BID(입찰, KAN-36~42) — 착수(게이트1 승인 2026-07-18)**: 티켓 FC-030~035 생성·Jira 미러 완료, 전건 `todo`. 다음 수 1번대로 FC-030 architect부터.
+- **end-of-turn 보안 리뷰 = 배선·on**(2026-07-18 신규): `.claude/hooks/stop-security-review.js` + `settings.json`(`Stop` 훅 + `env.ENABLE_STOP_REVIEW=1`).
+  - 섹션 13에 `ENABLE_STOP_REVIEW`가 있었지만 **실배선은 없었다**(문서상 의도만). 이번에 Node로 신규 구현 — 민감경로(bid·auction·settlement·currency·auth·money_hold·SecurityConfig·jwt/token/secret·db/migration) 변경 시 재프롬프트, **warn-only**(커밋·push 무간섭). Python 의존 없음.
+  - 스모크 7케이스 검증 통과. 중복 억제 서명은 **민감파일 내용 해시 기반**(git status 문자열 기반은 dirty 파일 재편집을 못 잡아 폐기). 상태파일 `.claude/.stop-review-state`는 gitignore(추적 시 서명이 매 턴 바뀜).
+  - **EPIC-BID 종료 시 `0` 복귀 필수.**
+- **old_sp 웹 DB**: `sp_web-210715.sql`(phpMyAdmin 5.6 덤프, 80KB) → docker finalcall-mysql DB `old_sp`(utf8mb3), 유저 `sp/sp` 권한 부여. 임포트 exit 0. **⚠️ 검증(테이블 수·행수·한글 정합) 미실시** — 사용자 지시로 생략. 사용 전 확인 필요.
 - **new_sp 게임 DB**: 원게임(SP) 백업 임포트 완료(docker finalcall-mysql, DB `new_sp`, 유저 `sp/sp`, 42테이블·user 2440행). D-067 원게임 실데이터 소스·게임 차용 UI 매핑 원천. finalcall과 격리.
 - **게임데이터 통합 논의(OPEN)**: `docs/portfolio/process-log.md` 항목3. new_sp가 라이브 인게임 DB로도 쓰일 예정 → 정규화 시 단일진실원 이원화·크로스DB 조인·화폐 소유권 문제. 업계 리서치 완료(옵션 A read-only복제·B CDC·C API·절충=읽기 복제·쓰기 소유자 위임). 합의는 EPIC-GAME-PROFILE 착수 시.
 - **디자인**: U-021 라이트 커머스 실코드 반영. 게임차용 노트 `docs/game_ui/게임 차용 디자인 및 erd.txt`(미커밋 참조자료).
@@ -35,11 +41,10 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
 - **미커밋(의도적)**: `frontend/vite.config.ts`(dev 프록시 편의)·`docs/game_ui/` 참조자료 2건.
 
 ## 다음 수
-1. **사용자 push** — Done 전이 커밋 1건.
-2. **EPIC-BID 착수**(입찰 — 마감 폭주 동시성·money_hold 에스크로·소프트클로즈·분산락, **프로젝트 핵심 기술 도전 + 보안 최고위험**). 게이트1 분해안 → architect 선행. 계약 §3.1 `/bids`.
-   - **선결**: 백로그의 "에스크로 CAS owner 조건"(아래)을 EPIC-BID/CLOSING 설계에 반영할지 architect가 판단.
-   - end-of-turn 보안 리뷰 한시 on 검토(`ENABLE_STOP_REVIEW=1`, 입찰·정산 구간 한정 → 구간 종료 시 off 복귀).
-3. (병렬 가능) EPIC-GAME-PROFILE 합의(리서치 완료됨) — 사용자 결정 시.
+1. **FC-030 architect 소환**(KAN-37) — EPIC-BID 계약 검증·bid-domain-spec 확정·슬라이싱. **게이트2 5건 상신 예정**(직렬화 메커니즘★·홀드 원자성 경계·소프트클로즈 연장 규칙·SCHEDULED→ACTIVE 영속 전이·BID_004 판정 근거) → 사용자 승인 후 FC-031 착수.
+2. 이후 FC-031→032→033→034→035 순차. 각 티켓 완료마다 보드·Jira 전이.
+3. **에픽 종료 시 필수**: `ENABLE_STOP_REVIEW`를 `0`으로 복귀(`.claude/settings.json`) + 에픽 완료 `/security-review` 1회.
+4. (병렬 가능) EPIC-GAME-PROFILE 합의(리서치 완료됨) — 사용자 결정 시.
 
 ## 대기 안건(백로그)
 - **EPIC-BID**(다음 로드맵) → **EPIC-CLOSING**(마감·정산·주문·즉시구매) → **EPIC-SHOP**(고정가).
