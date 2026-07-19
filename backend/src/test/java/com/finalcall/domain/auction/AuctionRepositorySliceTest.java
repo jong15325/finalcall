@@ -270,14 +270,24 @@ class AuctionRepositorySliceTest {
         return item;
     }
 
-    /** 축(main/sub/element/kind)을 typeCode 자리값에서 파생해 복합 UK 도 유일하게 만든다(시드 규약 동일). */
+    /**
+     * 축(main/sub/element/kind)을 typeCode 자리값에서 파생해 복합 UK 도 유일하게 만든다(시드 규약 동일).
+     *
+     * <p>type_code 는 UK 라 <b>find-or-create</b> 로 재사용한다 — 시드(V12)가 상품군 1 대역 40종을 이미
+     * 채워 두므로 1xxx 를 무조건 persist 하면 중복키로 깨진다(형제 통합 테스트와 동일한 패턴).
+     */
     private ItemTemplate persistTemplate(int typeCode) {
-        ItemTemplate template = ItemTemplate.builder()
-            .mainCategory(typeCode / 1000).subGroup(typeCode / 100 % 10)
-            .element(typeCode / 10 % 10).kind(typeCode % 10)
-            .typeCode(typeCode).displayName("경매템플릿").build();
-        em.persist(template);
-        return template;
+        return em.createQuery("select t from ItemTemplate t where t.typeCode = :typeCode", ItemTemplate.class)
+            .setParameter("typeCode", typeCode)
+            .getResultStream().findFirst()
+            .orElseGet(() -> {
+                ItemTemplate template = ItemTemplate.builder()
+                    .mainCategory(typeCode / 1000).subGroup(typeCode / 100 % 10)
+                    .element(typeCode / 10 % 10).kind(typeCode % 10)
+                    .typeCode(typeCode).displayName("경매템플릿").build();
+                em.persist(template);
+                return template;
+            });
     }
 
     private User persistUser(String loginId, String nickname) {

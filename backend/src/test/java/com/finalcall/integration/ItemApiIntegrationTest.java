@@ -22,7 +22,8 @@ import com.finalcall.support.IntegrationTest;
  * 아이템 카탈로그·상세·시드 인벤토리 API 통합 검증(item, FC-020·021·023) — 실제 MySQL(Testcontainers) + Security 필터.
  *
  * <p>계약 §4.1(카탈로그·상세)·§4.2(인벤토리). 상세는 소유자 마스킹 + 소유자 전용 slotNo 이원화(spec §5.2)를,
- * 시드는 GET /item-templates 8건·seed user 인벤토리 10건을 확인한다(FC-023 DoD). 읽기·롤백이라 {@code @Transactional}.
+ * 시드는 GET /item-templates 40건·seed user 인벤토리 42건을 확인한다(FC-023 DoD, V12 재작성 반영).
+ * 읽기·롤백이라 {@code @Transactional}.
  */
 @Transactional
 class ItemApiIntegrationTest extends IntegrationTest {
@@ -37,20 +38,24 @@ class ItemApiIntegrationTest extends IntegrationTest {
     private ItemInstanceRepository itemInstanceRepository;
 
     @Test
-    void 카탈로그는_시드_템플릿_8건을_노출한다() throws Exception {
+    void 카탈로그는_시드_템플릿_40건을_노출한다() throws Exception {
+        // V12(FC-052) 재작성 후 시드는 상품군 1 대역 전수 40종(무기 16 + 방어구 16 + 마법 8)이다.
         mockMvc.perform(get("/api/v1/item-templates").param("size", "100"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.content[?(@.typeCode == 1111)]").exists())
-            .andExpect(jsonPath("$.data.content[?(@.typeCode == 2122)]").exists());
+            .andExpect(jsonPath("$.data.content[?(@.typeCode == 1111)]").exists()) // 무기·물·도끼
+            .andExpect(jsonPath("$.data.content[?(@.typeCode == 1222)]").exists()) // 방어구·불·펜던트
+            .andExpect(jsonPath("$.data.content[?(@.typeCode == 1342)]").exists()) // 마법·바람·특수
+            // 2xxx 는 원본 SILVER 대역 — D2 자리 의미 교정으로 소멸했다.
+            .andExpect(jsonPath("$.data.content[?(@.typeCode == 2122)]").doesNotExist());
     }
 
     @Test
     void 카탈로그_대분류_필터는_해당_축만_반환한다() throws Exception {
         mockMvc.perform(get("/api/v1/item-templates").param("mainCategory", "1").param("size", "100"))
             .andExpect(status().isOk())
-            // 시드 main=1 은 4건(1111·1112·1121·1122). main=2 는 제외.
-            .andExpect(jsonPath("$.data.content[?(@.mainCategory == 2)]").doesNotExist())
+            // 시드는 전건 main=1(상품군 = 아이템 카드). 다른 상품군은 item_template 이 담지 않는다(계약 §3.3.1).
+            .andExpect(jsonPath("$.data.content[?(@.mainCategory != 1)]").doesNotExist())
             .andExpect(jsonPath("$.data.content[?(@.typeCode == 1111)]").exists());
     }
 
@@ -85,14 +90,15 @@ class ItemApiIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void 시드_소유자의_인벤토리는_10건이다() throws Exception {
+    void 시드_소유자의_인벤토리는_42건이다() throws Exception {
+        // V9 10건(slot 0~9) + V12 확장 32건(slot 10~41). 정원 96 이내.
         Long seedSellerId = userRepository.findByLoginIdAndIsDeletedFalse("seed_seller").orElseThrow().getId();
 
         mockMvc.perform(get("/api/v1/me/inventory").with(user(String.valueOf(seedSellerId))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.capacity").value(96))
-            .andExpect(jsonPath("$.data.used").value(10))
-            .andExpect(jsonPath("$.data.items.length()").value(10));
+            .andExpect(jsonPath("$.data.used").value(42))
+            .andExpect(jsonPath("$.data.items.length()").value(42));
     }
 
     @Test
