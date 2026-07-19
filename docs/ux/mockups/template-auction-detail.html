@@ -6,26 +6,30 @@
 <!--
   ══════════════════════════════════════════════════════════════════════════════
   FC-042 · EPIC-DESIGN-TEMPLATE — 경매 상세 (GET /api/v1/auctions/{auctionPublicId})
+  3차 재설계 · 근거: docs/ux/references/auction-detail-references.md
   ══════════════════════════════════════════════════════════════════════════════
   파일 1개 = 페이지 1개. 경매 목록은 template-auction-list.html 에 따로 있다.
-  셸(헤더 2행·푸터·브랜드)은 FC-041(template-home-logged-in.html)이 확정한 것을 그대로 얹었다.
+  셸(헤더 2행·푸터·브랜드)은 FC-041 이 확정한 것을 그대로 얹었다.
+  자체완결 정적 HTML. 외부 CDN·웹폰트 없음. 다크모드 없음.
 
-  자체완결 정적 HTML. 외부 CDN·웹폰트 없음. 다크모드 값 없음.
-  게임 아트만 상대경로로 참조한다: ../../game_ui/**  (레포 안 자산)
+  ── 1·2차가 실패한 이유 ────────────────────────────────────────────────────────
+  "제약을 만족시키는 배치"를 도출했을 뿐 "좋아 보이는 화면"을 목표로 삼지 않았다.
+  이번엔 레퍼런스의 실물 구조에서 출발한다.
 
-  ── 이 페이지가 내린 5개 결정 (근거는 각 섹션 주석) ──────────────────────────
-  가. 2열 비대칭. 좌 = 아이템(아트·스펙·입찰 이력), 우 = 거래 패널(sticky).
-      모바일에서는 거래 패널이 아이템 스펙보다 **위**로 온다. 가격과 마감이 먼저 알고 싶은 정보다.
-  나. ★ 거래 패널의 가격 영역은 **값이 없어도 자리를 비우지 않는다.** 히어로 금액 블록은
-      min-height 로 높이를 고정하고, 부가 5줄(입찰수·최고입찰자·시작가·다음 최소 입찰가·즉시구매가)은
-      값이 없을 때 "없음"을 적어 항상 렌더한다. 첫 입찰이 붙는 순간 패널이 튀면 안 된다.
-  다. 카운트다운은 상세에서 페이지의 최대 활자다. 마감 임박 구간에서는 솔리드 적색 배너로
-      승격시키고, 소프트클로즈 연장 횟수와 상한을 그 자리에서 밝힌다.
-      "왜 아직 안 끝났지"라는 질문이 나오는 자리이기 때문이다.
-  라. 아이템 아트는 l 3배(150×279). 하단에 "Level 7"이 구워져 있어 웹이 레벨 배지를 겹치지 않는다.
-      스펙 표에는 레벨을 적는다. 표는 배지가 아니라 자료다.
-  마. 입찰 이력은 카드가 아니라 표. 밀집 tabular 가 "값이 정확한 거래처"라는 주장의 증거가 된다.
-      금액·시각은 tabular-nums 로 자리를 맞춘다.
+  ── 이 파일이 채택한 것 (레퍼런스 절 번호) ──────────────────────────────────────
+  ① 데스크톱 = 안2. 상단 2단(아트 | 스펙) + 전폭 스티키 입찰 바 + 전폭 입찰 이력.
+     근거: Steam 커뮤니티 마켓 [직접 관찰] §2-1 — "작은 아트 + 조밀한 스펙 + 거래 데이터"라는
+     우리와 동일 조건에서 실제로 채택한 구조. §8-1.
+  ② 아트가 작아도 성립하는 이유는 좌단을 아트가 혼자 채우지 않기 때문이다(§2-1 ①).
+     아트를 키우지 않고 정체성 텍스트를 동반시켜 좌단을 채운다. 확대는 정수배만(§3-4 전략 B+C).
+  ③ 상시 노출 수단이 디바이스마다 다르다(§4-4): 데스크톱=전폭 sticky / 모바일=하단 fixed 바.
+  ④ 반응형 = 배치 접기가 아니라 IA 재설계(§4-3·§8-3): 입찰이력 표↔카드리스트,
+     입찰입력 인라인↔바텀시트, 마감 절대시각↔상대시간, 스펙 펼침↔아코디언.
+  ⑤ 카드 클릭 = 아트 확대 라이트박스. 게임 카드정보 모달은 폐기했다.
+     근거: Baymard §5-1 "스펙 중심 상품에 퀵뷰를 만들지 마라" + D2R §6-1 계승/답습 판정
+     ("계승 대상은 아트이지 창(chrome)이 아니다"). §1.2 Containment 를 원래대로 지킨다.
+  ⑥ 타이포 재설계. FF Pixel Remaster 폰트 사태(§6-2)가 지목한
+     "흔한 산세리프 + 좁은 자간 + 남는 빈 공간"이 곧 "구리다"의 정체다.
   ─────────────────────────────────────────────────────────────────────────────
 -->
 <style>
@@ -45,10 +49,7 @@
   --success-soft:#ECF5EF; --warning-soft:#F9F1EB; --danger-soft:#FBEDED; --info-soft:#EEF3FD;
   --el-water:#19B2FF; --el-fire:#FF5500; --el-earth:#95B259; --el-wind:#66CCCC;
   --el-water-soft:#DDF3FF; --el-fire-soft:#FFE6D9; --el-earth-soft:#EFF3E6; --el-wind-soft:#E8F7F7;
-
-  /* 아트 슬롯 딥 글로우 (§2.7 v0.5). earth·wind 는 design-system 이 남긴 파생 공식
-     (L18% S61% 코어 / L11% 엣지)을 element 확정(계약 v1.10)에 맞춰 적용한 값이다.
-     밝은 금 #DFC345 대비: earth 코어 5.58 · wind 코어 5.72 (전건 AA). 산출 근거는 목록 파일 주석. */
+  /* 아트 슬롯 딥 글로우 (§2.7 v0.5). earth·wind 는 design-system 이 남긴 파생 공식 적용 */
   --glow-water-core:#12384A; --glow-water-edge:#0A2430;
   --glow-fire-core:#4A2412;  --glow-fire-edge:#301A0A;
   --glow-earth-core:#384A12; --glow-earth-edge:#24300A;
@@ -64,11 +65,13 @@
   --d-fast:120ms; --d-base:200ms; --d-slow:320ms; --ease:cubic-bezier(0.4,0,0.2,1);
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
   --s8:32px; --s10:40px; --s12:48px; --s16:64px; --s20:80px; --s24:96px;
-  --z-header:100; --z-overlay:200;
+  --z-header:100; --z-bar:150; --z-overlay:200; --z-dialog:210;
+  --hdr-h:114px;   /* 헤더 2행 실측(68 + 46) — 스티키 바가 붙을 지점 */
 }
+@media (max-width:860px){ :root{ --hdr-h:100px; } }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   2. 리셋 · 타이포 · 셸 — FC-041 과 동일
+   2. 리셋 · 셸 — FC-041 과 동일
    ══════════════════════════════════════════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;}
@@ -85,18 +88,58 @@ button,input,select{font:inherit; color:inherit;}
 a{color:var(--primary); text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;}
 a:hover{color:var(--primary-hover);}
 :focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:2px;}
-.num{font-variant-numeric:tabular-nums;}
 .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
 .container{max-width:1200px; margin:0 auto; padding:0 var(--s6);}
 @media (max-width:640px){ .container{padding:0 var(--s4);} }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   3. ★ 타이포 시스템 — 3차 재설계의 핵심
+   ──────────────────────────────────────────────────────────────────────────────
+   FF Pixel Remaster 폰트 사태(§6-2)가 지목한 실패 3요소를 그대로 뒤집는다.
+     실패 ① 가늘고 작아 읽기 어렵다     → 주인공 수치를 44px/800 으로 크게 올린다
+     실패 ② 흔한 산세리프(정체성 없음)   → 폰트를 못 바꾸므로 위계와 자간으로 정체성을 만든다
+     실패 ③ 자간이 뭉개져 빈 공간이 남음 → 라벨은 넓게(+.12em), 값은 좁게(-.04em) 벌린다
+
+   ★ 핵심 원리: 중간 크기를 없앤다. 11px 라벨과 44px 값 사이에 아무것도 두지 않으면
+   그 간극 자체가 위계가 된다. 1·2차는 12/13/14/15/16px 이 촘촘히 깔려 전부
+   "비슷한 회색 글자"로 뭉갰다 — 그게 밋밋함의 정체다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* 눈썹 라벨 — 작고 넓다. 값과의 대비를 만드는 쪽이 본체다 */
+.eyebrow{display:block; font-size:.6875rem; font-weight:700; line-height:1.2;
+  letter-spacing:.12em; color:var(--text-subtle);}
+.eyebrow--ink{color:var(--text-muted);}
+
+/* 수치 디스플레이 — 크고 좁다. tabular-nums 는 선택이 아니라 필수(§1-6:
+   비례 숫자를 쓰면 자릿수마다 폭이 흔들려 타이머가 "떨린다" = 싸구려의 대표 원인) */
+.figure{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1,"lnum" 1;
+  font-weight:800; letter-spacing:-.04em; line-height:1; color:var(--text);
+  display:inline-block;}
+.figure--xl{font-size:2.75rem;}
+.figure--lg{font-size:1.75rem;}
+.figure--md{font-size:1.25rem;}
+/* 단위는 값의 일부가 아니라 각주다 — 작게, 약하게, 붙여서 */
+.figure .u{font-size:.34em; font-weight:600; letter-spacing:0;
+  color:var(--text-muted); margin-left:.28em; vertical-align:.12em;}
+.num{font-variant-numeric:tabular-nums;}
+
+h1.page-title{margin:0; font-size:2.125rem; font-weight:800; letter-spacing:-.03em;
+  line-height:1.2; text-wrap:balance;}
+.sec-title{margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.02em;}
+.sec-note{margin:var(--s2) 0 0; font-size:.8125rem; color:var(--text-subtle); line-height:1.7;}
+@media (max-width:719px){
+  h1.page-title{font-size:1.625rem;}
+  .figure--xl{font-size:2.125rem;}
+}
+
+/* ── 셸 ───────────────────────────────────────────────────────────────────── */
 .wordmark{display:inline-flex; align-items:baseline; gap:0;
   font-weight:800; letter-spacing:-.02em; line-height:1;
   color:var(--text); text-decoration:none; white-space:nowrap;}
 .wordmark:hover{color:var(--text);}
-.wordmark .wm-a{font-size:1.375rem;}
-.wordmark .wm-b{font-size:1.375rem; position:relative; box-shadow:inset 0 -2px 0 0 var(--primary);}
+.wordmark .wm-a,.wordmark .wm-b{font-size:1.375rem;}
+.wordmark .wm-b{position:relative; box-shadow:inset 0 -2px 0 0 var(--primary);}
 .wordmark--sm .wm-a,.wordmark--sm .wm-b{font-size:1.0625rem;}
 
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);
@@ -106,22 +149,15 @@ a:hover{color:var(--primary-hover);}
   transition:background var(--d-fast) var(--ease);}
 .btn:hover{background:var(--ink-hover); color:var(--primary-fg);}
 .btn:active{background:var(--ink-pressed);}
-/* disabled 는 1.4.3 대비 면제 대상이지만 비활성 사유 문장이 붙으므로 라벨이 읽혀야 한다.
-   #5F5F66 on #E4E4E7 = 4.99:1 로 AA 를 넘긴다. */
 .btn:disabled{background:var(--primary-disabled); color:#5F5F66; cursor:not-allowed;}
 .btn--sm{height:36px; padding:0 var(--s4); font-size:.875rem;}
-.btn--lg{height:50px; padding:0 var(--s6); font-size:1rem;}
+.btn--lg{height:52px; padding:0 var(--s6); font-size:1rem;}
 .btn--outline{background:var(--surface); color:var(--text); border-color:var(--border-strong);}
 .btn--outline:hover{background:var(--surface-sunken); color:var(--text);}
-.btn--ghost{background:transparent; color:var(--primary); border-color:transparent;}
-.btn--ghost:hover{background:var(--primary-soft); color:var(--primary-hover);}
 
 .chip{display:inline-flex; align-items:center; gap:var(--s1);
   font-size:.75rem; font-weight:700; line-height:1.4;
   padding:var(--s1) var(--s2); border-radius:var(--r-full); white-space:nowrap;}
-.chip--success{background:var(--success-soft); color:var(--success);}
-.chip--warning{background:var(--warning-soft); color:var(--warning);}
-.chip--danger {background:var(--danger-soft);  color:var(--danger);}
 .chip--info   {background:var(--info-soft);    color:var(--info);}
 .chip--neutral{background:var(--surface-sunken); color:var(--text-muted);}
 
@@ -134,10 +170,9 @@ a:hover{color:var(--primary-hover);}
 .hdr-search{flex:1 1 auto; max-width:460px; position:relative;}
 .hdr-search input{width:100%; height:40px; padding:0 var(--s4) 0 var(--s10);
   background:var(--surface-sunken); color:var(--text);
-  border:1px solid var(--border-strong); border-radius:var(--r-md);
-  font-size:.875rem; transition:border-color var(--d-fast), background var(--d-fast), box-shadow var(--d-fast);}
+  border:1px solid var(--border-strong); border-radius:var(--r-md); font-size:.875rem;
+  transition:border-color var(--d-fast), background var(--d-fast), box-shadow var(--d-fast);}
 .hdr-search input::placeholder{color:var(--text-subtle);}
-.hdr-search input:hover{border-color:#6F6F75;}
 .hdr-search input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
 .hdr-search .ico{position:absolute; left:var(--s3); top:50%; transform:translateY(-50%);
   width:16px; height:16px; color:var(--text-subtle); pointer-events:none;}
@@ -146,7 +181,6 @@ a:hover{color:var(--primary-hover);}
   background:transparent; border:1px solid transparent; border-radius:var(--r-md);
   color:var(--text-muted); cursor:pointer; transition:background var(--d-fast), color var(--d-fast);}
 .icon-btn:hover{background:var(--surface-sunken); color:var(--text);}
-.icon-btn::after{content:""; position:absolute; inset:-2px;}
 .icon-btn .badge{position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:var(--r-full);
   background:var(--primary); box-shadow:0 0 0 2px var(--surface);}
 .hdr-balance{display:flex; flex-direction:column; align-items:flex-end; gap:1px;
@@ -186,56 +220,24 @@ a:hover{color:var(--primary-hover);}
 .mobile-search .box{position:relative;}
 .mobile-search input{width:100%; height:40px; padding:0 var(--s4) 0 var(--s10);
   background:var(--surface-sunken); border:1px solid var(--border-strong); border-radius:var(--r-md); font-size:.875rem;}
-.mobile-search input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
 .mobile-search .ico{position:absolute; left:var(--s3); top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-subtle);}
 @media (max-width:860px){ .mobile-search{display:block;} }
 
-.site-footer{border-top:1px solid var(--border); background:var(--surface-band); margin-top:var(--s20);}
-.footer-top{display:grid; grid-template-columns:1.4fr repeat(3,1fr) 1.3fr; gap:var(--s8); padding:var(--s16) 0 var(--s12);}
-@media (max-width:960px){ .footer-top{grid-template-columns:1fr 1fr; gap:var(--s8) var(--s6); padding:var(--s12) 0 var(--s8);} }
-@media (max-width:560px){ .footer-top{grid-template-columns:1fr;} }
-.footer-brand .tagline{margin:var(--s3) 0 0; font-size:.8125rem; color:var(--text-muted); line-height:1.7; max-width:30ch;}
-.footer-col h3{margin:0 0 var(--s3); font-size:.8125rem; font-weight:700; letter-spacing:-.01em;}
-.footer-col ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:var(--s2);}
-.footer-col a{font-size:.8125rem; color:var(--text-muted); text-decoration:none;}
-.footer-col a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
-.footer-support{padding-left:var(--s6);}
-@media (max-width:960px){ .footer-support{padding-left:0; grid-column:1/-1; border-top:1px solid var(--border); padding-top:var(--s6);} }
-.footer-support h3{margin:0 0 var(--s2); font-size:.8125rem; font-weight:700;}
-.footer-support .tel{font-size:1.375rem; font-weight:800; letter-spacing:-.02em; line-height:1.2;}
-.footer-support .hours{margin:var(--s2) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.7;}
-.footer-support .btn{margin-top:var(--s4);}
-.footer-legal{background:var(--surface-sunken); padding:var(--s6) 0;}
-.footer-legal dl{margin:0; display:flex; flex-wrap:wrap; gap:var(--s1) var(--s5);
-  font-size:.75rem; color:var(--text-muted); line-height:1.8;}
-.footer-legal dl > div{display:flex; gap:var(--s2);}
-.footer-legal dt{color:var(--text-subtle);} .footer-legal dd{margin:0;}
-.footer-legal .disclaimer{margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.75; max-width:78ch; text-wrap:pretty;}
-.footer-bottom{padding:var(--s5) 0 var(--s10); display:flex; align-items:center; justify-content:space-between; gap:var(--s4); flex-wrap:wrap;}
-.footer-bottom .copy{font-size:.75rem; color:var(--text-subtle);}
-.footer-bottom .policies{display:flex; gap:var(--s4); flex-wrap:wrap;}
-.footer-bottom .policies a{font-size:.75rem; color:var(--text-muted); text-decoration:none;}
-.footer-bottom .policies a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
-.footer-bottom .policies a.strong{color:var(--text); font-weight:700;}
-
 /* ══════════════════════════════════════════════════════════════════════════════
-   3. 아이템 아트 슬롯 (§5.3 · §2.7 v0.5 · §5.12) — 결정 라
+   4. 아이템 아트 슬롯 (§5.3 · §2.7 v0.5 · §5.12)
+   ──────────────────────────────────────────────────────────────────────────────
+   ★ 게임색의 경계선은 슬롯 테두리다(§6-3). 슬롯 안은 어둡고, 그 바깥은 전부 라이트 커머스.
+   확대는 정수배만(§3-4 전략 A "확대"는 뭉개짐 = 싸구려. 최악).
    ══════════════════════════════════════════════════════════════════════════════ */
 .slot{position:relative; background:var(--glow-neutral-edge); display:grid; place-items:center; overflow:hidden;}
 .slot img{image-rendering:pixelated; image-rendering:crisp-edges;}
-.slot--feature{height:360px; border-radius:var(--r-lg);}
-.slot--feature img{width:150px; height:279px;}                       /* l 3x */
-.slot--glow-water  {background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-water-core) 0%,var(--glow-water-edge) 72%);}
-.slot--glow-fire   {background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-fire-core) 0%,var(--glow-fire-edge) 72%);}
-.slot--glow-earth  {background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-earth-core) 0%,var(--glow-earth-edge) 72%);}
-.slot--glow-wind   {background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-wind-core) 0%,var(--glow-wind-edge) 72%);}
-.slot--glow-neutral{background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-neutral-core) 0%,var(--glow-neutral-edge) 72%);}
+.slot--glow-fire{background:radial-gradient(ellipse 72% 58% at 50% 42%,var(--glow-fire-core) 0%,var(--glow-fire-edge) 72%);}
 
 .art-frame{position:relative; --art-scale:2;
   --gf-bright:min(calc(1px * var(--art-scale) + 1px), 5px);
   --gf-bev:min(calc(1px * var(--art-scale)), 4px);
   border-radius:calc(1px * var(--art-scale) + 1px); overflow:hidden;}
-.art-frame--x3{--art-scale:3;}
+.art-frame--x3{--art-scale:3;} .art-frame--x4{--art-scale:4;}
 .art-frame img{position:relative; z-index:0;}
 .art-frame.has-gf::after{content:""; position:absolute; z-index:1; inset:var(--gf-bright); border-radius:inherit;
   padding:var(--gf-bev);
@@ -254,11 +256,11 @@ a:hover{color:var(--primary-hover);}
   background:linear-gradient(135deg,transparent calc(50% - 9%),rgba(255,255,255,.95) 50%,transparent calc(50% + 9%));
   transform:translate3d(-72%,-72%,0); animation:gf-sweep 3s linear infinite; will-change:transform;}
 @keyframes gf-sweep{0%{transform:translate3d(-72%,-72%,0);}30%{transform:translate3d(72%,72%,0);}100%{transform:translate3d(72%,72%,0);}}
-.gf-badge{position:absolute; left:var(--s4); top:var(--s4); z-index:4;
-  display:inline-flex; align-items:center; gap:5px; padding:var(--s1) var(--s3);
+.gf-badge{position:absolute; left:var(--s3); top:var(--s3); z-index:4;
+  display:inline-flex; align-items:center; gap:5px; padding:3px var(--s2);
   background:rgba(255,255,255,.94); border-radius:var(--r-full);
-  font-size:.75rem; font-weight:700; color:var(--text); letter-spacing:-.01em;}
-.gf-badge .dot{width:8px; height:8px; border-radius:var(--r-full);
+  font-size:.6875rem; font-weight:700; color:var(--text); letter-spacing:-.01em;}
+.gf-badge .dot{width:7px; height:7px; border-radius:var(--r-full);
   background:linear-gradient(135deg,var(--gf-2),var(--gf-6));}
 
 .el{display:inline-flex; align-items:center; gap:var(--s1);
@@ -266,409 +268,433 @@ a:hover{color:var(--primary-hover);}
   padding:var(--s1) var(--s2); border-radius:var(--r-full);
   color:var(--on-accent-fg); border:1px solid rgba(0,0,0,.06);}
 .el .dot{width:8px; height:8px; border-radius:var(--r-full); flex:none;}
-.el--water{background:var(--el-water-soft);} .el--water .dot{background:var(--el-water);}
-.el--fire {background:var(--el-fire-soft);}  .el--fire  .dot{background:var(--el-fire);}
-.el--earth{background:var(--el-earth-soft);} .el--earth .dot{background:var(--el-earth);}
-.el--wind {background:var(--el-wind-soft);}  .el--wind  .dot{background:var(--el-wind);}
-.slot .el{position:absolute; right:var(--s4); top:var(--s4); font-size:.75rem; padding:var(--s1) var(--s3);}
+.el--fire{background:var(--el-fire-soft);} .el--fire .dot{background:var(--el-fire);}
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   4. 페이지 골격 — 결정 가
+   5. 페이지 머리
    ══════════════════════════════════════════════════════════════════════════════ */
 .page-head{padding:var(--s6) 0 var(--s5);}
 .crumbs{display:flex; align-items:center; gap:var(--s2); font-size:.75rem; color:var(--text-subtle); margin-bottom:var(--s4);}
 .crumbs a{color:var(--text-muted); text-decoration:none;}
 .crumbs a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
 .title-row{display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; margin-bottom:var(--s3);}
-.page-head h1{margin:0; font-size:1.875rem; font-weight:800; letter-spacing:-.03em; line-height:1.25; text-wrap:balance;}
-.page-head .byline{margin:var(--s3) 0 0; font-size:.8125rem; color:var(--text-muted);}
-.page-head .byline b{color:var(--text); font-weight:700;}
+.byline{margin:var(--s3) 0 0; font-size:.8125rem; color:var(--text-muted);}
+.byline b{color:var(--text); font-weight:700;}
 
-/* ══ 개편(2026-07-19) ═══════════════════════════════════════════════════════════
-   종전 배치(좌 = 아트400 + 스펙 2열 / 우 = 거래 384 sticky)는 **세 덩어리를 동급으로
-   늘어놓아 위계가 없었고**, 좁아질 때 스펙 열이 굶어 죽었다(1025px에서 121px, 값 칸 음수).
+/* ══════════════════════════════════════════════════════════════════════════════
+   6. 상단 2단 — 아트 | 스펙   (안2 / Steam §2-1)
+   ──────────────────────────────────────────────────────────────────────────────
+   ★ Steam 이 증명한 것: 아트가 작아도 좌단이 성립하는 이유는 아트가 혼자 채우지 않기 때문이다.
+   그래서 좌단은 [아트 슬롯 + 정체성 텍스트]가 하나의 블록이고, 우단은 스펙이다.
+   좌우 높이를 맞추려 하지 않는다 — 안1이 실패한 지점이 정확히 그 제약이었다(§8-1 근거2).
+   ══════════════════════════════════════════════════════════════════════════════ */
+.identity{display:grid; grid-template-columns:360px minmax(0,1fr); gap:var(--s10);
+  align-items:start; padding-bottom:var(--s10);}
+@media (max-width:1023px){ .identity{grid-template-columns:300px minmax(0,1fr); gap:var(--s8);} }
+@media (max-width:859px){ .identity{grid-template-columns:1fr; gap:var(--s6);} }
 
-   위계를 먼저 정한다.
-     · 주인공 = **거래**. 이 페이지에 온 이유는 "지금 얼마이고 언제 끝나고 살 수 있는가"다.
-     · 종속1 = **아트**. 신원 확인용이다("내가 찾던 그 물건이 맞나"). 히어로가 아니다.
-     · 종속2 = **스펙**. 검증용이다("정확히 어떤 변종인가"). 라벨:값 짧은 쌍이라 좁은 열이 오히려 맞다.
+/* ★ 아트 패널 폭 상한. 슬롯이 아트(150px)보다 훨씬 넓어지면 남는 면이 전부 어두운 글로우가
+   되어 화면에 검은 구멍이 뚫린다. 2단이 풀리는 ≤859px 에서 패널이 전폭(528~812px)으로
+   늘어나면 좌우 여백이 188~284px 까지 벌어진다 — 상한을 두면 어느 폭에서도 104px 이다. */
+.art-panel{border:1px solid var(--border); border-radius:var(--r-lg);
+  background:var(--surface); overflow:hidden; max-width:360px;}
+@media (max-width:859px){ .art-panel{margin-inline:auto;} }
+/* 아트 전체가 라이트박스 트리거. img 에 onclick 을 걸지 않고 버튼 요소로 감싼다 */
+.art-btn{display:block; width:100%; padding:0; border:0; background:none; cursor:pointer;}
+.art-stage{position:relative; height:392px; display:grid; place-items:center;}
+.art-stage img{width:150px; height:279px;}            /* l 3x — 정수배만 */
+@media (max-width:859px){ .art-stage{height:340px;} }
+.art-btn:hover .art-stage{filter:brightness(1.1);}
+.art-btn:hover .zoom-cue{background:var(--ink); color:var(--primary-fg);}
+/* 확대 신호 — 갤러리 UI(썸네일·화살표·닷)를 흉내 내지 않는다.
+   아트가 1장이면 1장으로 처리한다(§3-2: 빈 껍데기 갤러리가 "AI 템플릿" 느낌의 정체) */
+.zoom-cue{position:absolute; right:var(--s3); bottom:var(--s3); z-index:4;
+  display:inline-flex; align-items:center; gap:var(--s1);
+  height:32px; padding:0 var(--s3); border-radius:var(--r-full);
+  background:rgba(255,255,255,.94); border:1px solid rgba(0,0,0,.08);
+  font-size:.6875rem; font-weight:700; letter-spacing:.02em; color:var(--text);
+  transition:background var(--d-fast) var(--ease), color var(--d-fast) var(--ease);}
 
-   그래서 아트와 스펙을 **하나의 좁은 고정 레일(320px)**로 묶고, 남는 폭을 전부 거래에 준다.
-   두 종속이 한 덩어리가 되면서 (a) 폭 경쟁이 사라져 굶는 열이 없어지고
-   (b) 좁은 레일 vs 넓은 본문이라는 대비 자체가 위계를 만든다.
-   입찰 이력은 레일 아래가 아니라 **전폭**으로 내린다(근거 자료는 넓게 봐야 한다).
-   ═══════════════════════════════════════════════════════════════════════════════ */
-.detail{display:grid; grid-template-columns:320px minmax(0,1fr); gap:var(--s10);
-  padding:var(--s2) 0 var(--s10); align-items:start;}
-@media (max-width:759px){
-  /* 스택: 거래가 아이템보다 위로 온다. 가격·마감이 먼저 알고 싶은 정보다 */
-  .detail{grid-template-columns:1fr; gap:var(--s8);}
-  .detail .col-trade{order:1;} .detail .col-item{order:2;}
+/* 정체성 블록 — 아트 바로 아래. 좌단을 아트와 함께 채우는 쪽(§2-1 ①) */
+.identity-strip{padding:var(--s4) var(--s5) var(--s5); border-top:1px solid var(--border); text-align:left;}
+.identity-strip .line{display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap; margin:var(--s2) 0 0;}
+.identity-strip .type{font-size:1rem; font-weight:700; letter-spacing:-.01em;}
+.identity-strip .lv{font-size:1rem; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+.identity-strip .meta{margin:var(--s2) 0 0; font-size:.75rem; color:var(--text-subtle); line-height:1.6;}
+
+/* 스펙 — 데스크톱 펼침 / 모바일 아코디언 (§8-3 대조표). JS 가 open 을 관리한다 */
+.acc{border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); overflow:hidden;}
+.acc > summary{display:flex; align-items:center; gap:var(--s3); cursor:pointer;
+  padding:var(--s4) var(--s5); font-size:1rem; font-weight:700; letter-spacing:-.01em;
+  list-style:none; min-height:56px;}
+.acc > summary::-webkit-details-marker{display:none;}
+.acc > summary .caret{margin-left:auto; flex:none; width:20px; height:20px; color:var(--text-muted);
+  transition:transform var(--d-fast) var(--ease);}
+.acc[open] > summary .caret{transform:rotate(180deg);}
+.acc > summary:hover{background:var(--surface-band);}
+.acc .acc-body{padding:0 var(--s5) var(--s5);}
+@media (min-width:860px){
+  .acc--desktop-plain > summary{cursor:default; border-bottom:1px solid var(--border-muted);}
+  .acc--desktop-plain > summary .caret{display:none;}
+  .acc--desktop-plain > summary:hover{background:transparent;}
 }
-/* 아이템 레일은 sticky — 입찰 이력을 훑는 동안 "무엇을 보고 있는지"가 화면에 남는다 */
-.col-item{position:sticky; top:132px;}
-@media (max-width:759px){ .col-item{position:static;} }
 
-/* ── 4.1 아이템 레일 (아트 + 스펙) ─────────────────────────────────────────────
-   ★ 아트 슬롯 폭에 상한을 둔다. 슬롯이 아트(150px)보다 훨씬 넓어지면 남는 면이 전부
-   어두운 글로우가 되어 화면에 검은 구멍이 뚫린다. 종전 안은 ≤860px에서 슬롯이
-   608~812px까지 늘어나 좌우 여백이 229~331px에 달했다. 320px 상한이면 최대 84px이다. */
-.art-wrap{position:relative; max-width:320px; border:1px solid var(--border);
-  border-radius:var(--r-lg); overflow:hidden; background:var(--surface);}
-.art-cap{padding:var(--s3) var(--s4); background:var(--surface); border-top:1px solid var(--border);
-  font-size:.75rem; color:var(--text-subtle); line-height:1.6;}
-.art-cap b{color:var(--text-muted); font-weight:600;}
+.spec-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:var(--s5) var(--s8);
+  padding-top:var(--s5);}
+.spec-item .eyebrow{margin-bottom:var(--s2);}
+.spec-item .val{display:block; font-size:1rem; font-weight:700; letter-spacing:-.01em; color:var(--text);}
+.spec-item .val.empty{color:var(--text-subtle); font-weight:500;}
+.spec-item .sub{display:block; margin-top:2px; font-size:.75rem; color:var(--text-subtle);}
+/* 확률 미터 — 계약이 0~100 을 보장하는 유일한 수치라 여기만 미터를 쓴다.
+   레벨은 계약에 상한이 없어 미터로 그리지 않는다(없는 최대치를 지어내지 않는다) */
+.meter{display:block; margin-top:var(--s2); height:6px; border-radius:var(--r-full);
+  background:var(--surface-sunken); overflow:hidden;}
+.meter > i{display:block; height:100%; background:var(--text); border-radius:inherit;}
 
-.block{margin-top:var(--s10);}
-.block > h2{margin:0 0 var(--s4); font-size:1.125rem; font-weight:700; letter-spacing:-.02em;}
-.block > .sub{margin:calc(var(--s4) * -1 + var(--s1)) 0 var(--s4); font-size:.8125rem; color:var(--text-subtle);}
+/* ══════════════════════════════════════════════════════════════════════════════
+   7. ★ 입찰 바 — 데스크톱 전폭 STICKY (§4-4 · §8-2)
+   ──────────────────────────────────────────────────────────────────────────────
+   §4-1 이 정한 필수 3요소를 경매용으로 치환한 것:
+     가격 → 현재가 / 변형·옵션 상태 → 잔여시간 / 주요 CTA → 입찰
+   경매에서 이건 편의가 아니라 정확성 요구다 — 상시 노출이 없으면 사용자는 스크롤 도중
+   낡은 가격을 기억한 채 결정한다(§4-1).
+   높이·폭 고정 + tabular-nums 로 숫자가 바뀌어도 바가 흔들리지 않는다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.bidbar{position:sticky; top:var(--hdr-h); z-index:var(--z-bar);
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg);
+  box-shadow:var(--sh-md);}
+.bidbar-grid{display:grid; grid-template-columns:minmax(190px,230px) minmax(190px,1fr) auto;
+  gap:var(--s8); align-items:center; padding:var(--s5) var(--s6);}
+.bidbar .zone{min-width:0;}
+.bidbar .zone + .zone{border-left:1px solid var(--border-muted); padding-left:var(--s8);}
+.bidbar .stack{margin-top:var(--s2); min-height:48px; display:flex; align-items:center;}
+.bidbar .sub{margin:var(--s2) 0 0; font-size:.75rem; color:var(--text-subtle); line-height:1.6;}
+.bidbar .sub b{color:var(--text-muted); font-weight:700; font-variant-numeric:tabular-nums;}
 
-/* 스펙 표 — 320px 레일 안에서 산다.
-   라벨 열을 88px 로 줄여 값 칸을 198px 확보한다(종전 132px 라벨 + 좁은 열 조합이 파손 원인이었다).
-   레일이 스택되면(≤759px) 전폭을 쓰므로 값 칸은 더 넓어진다. */
-.spec{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;}
-.spec dl{margin:0; display:grid; grid-template-columns:88px minmax(0,1fr);}
-.spec dt, .spec dd{margin:0; padding:var(--s3); border-bottom:1px solid var(--border-muted);
-  font-size:.8125rem; line-height:1.55;}
-.spec dt{background:var(--surface-band); color:var(--text-muted); font-weight:600;}
-.spec dd{color:var(--text);}
-.spec dl > :nth-last-child(-n+2){border-bottom:0;}
-.spec .code-note{display:block; font-size:.6875rem; color:var(--text-subtle); margin-top:2px;}
+/* 시간 구간 3단 — ★ 색만 바꾸지 않는다(§1-6).
+   표현 단위 · 활자 크기 · 갱신 주기 · CTA 문구가 함께 움직인다.
+   긴박의 주된 운반체는 활자 크기다. 색은 보조다 — 빨강은 커머스에서 "할인·오류"로
+   소비됐고 AI 생성물이 긴박에 쓰는 기본값이라 안티-AI 위반이다(§1-6).
+   ※ 퍼플을 임박 신호로 승격하는 안은 디자인 게이트 대상이다(§8-5). 게이트에서 기각되더라도
+     크기·단위·갱신주기가 긴박을 이미 운반하므로 설계는 무너지지 않는다. */
+.tzone .figure{transition:font-size var(--d-base) var(--ease);}
+.tzone[data-phase="calm"] .figure{font-size:1.25rem; letter-spacing:-.02em;}
+.tzone[data-phase="warn"] .figure{font-size:1.75rem; color:var(--primary);}
+.tzone[data-phase="crit"] .figure{font-size:2.75rem; color:var(--primary);}
+.tzone[data-phase="crit"] .eyebrow{color:var(--primary);}
+.tzone[data-phase="crit"]{position:relative;}
+.tzone[data-phase="crit"]::before{content:""; position:absolute; left:0; top:-6px; width:28px; height:2px;
+  background:var(--primary);}
+@media (max-width:719px){ .tzone[data-phase="crit"] .figure{font-size:2.125rem;} }
 
-/* ── 4.2 입찰 이력 표 — 결정 마 ──────────────────────────────────────────────── */
+/* 연장 규칙 고지 — §1-3: 카운트다운이 "연장될 수 있다"는 사실 자체가 UI 요소다.
+   숫자만 보여주면 0이 되는 순간 사용자는 배신감을 느낀다.
+   ※ 연장 규칙 도입 여부는 백엔드 계약·게이트2 사안(§8-5). 도입되든 아니든
+     "연장 여부를 UI에 고지"는 프론트 요구로 남는다. */
+.extend-note{margin:0; padding:var(--s3) var(--s6); background:var(--surface-band);
+  border-top:1px solid var(--border); border-radius:0 0 var(--r-lg) var(--r-lg);
+  font-size:.75rem; color:var(--text-muted); line-height:1.6;
+  display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;}
+.extend-note b{color:var(--text); font-weight:700;}
+/* 갱신 시각 — §2-4: "지금 이 값이 최신인가"를 확인할 수단이 거래 서비스엔 필요하다 */
+.freshness{margin-left:auto; display:inline-flex; align-items:center; gap:var(--s2);
+  font-size:.75rem; color:var(--text-subtle); font-variant-numeric:tabular-nums;}
+.freshness .pulse{width:6px; height:6px; border-radius:var(--r-full); background:var(--success);
+  animation:pulse 2.4s var(--ease) infinite; flex:none;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* 입찰 액션 — §2-2 로스트아크: 마감 직전 폭주 상황에서 금액을 타이핑하게 만드는 건 설계 실패다.
+   [최소가 원클릭] + [금액 직접 입력] 2단 구성. 입력 상한은 즉시구매가로 클램프. */
+.bid-actions{display:flex; align-items:flex-end; gap:var(--s3); flex-wrap:wrap;}
+.bid-field{display:flex; flex-direction:column; gap:var(--s2);}
+.bid-field .row{display:flex; align-items:stretch;}
+.bid-field input{width:168px; height:52px; padding:0 var(--s3);
+  border:1px solid var(--border-strong); border-right:0; border-radius:var(--r-md) 0 0 var(--r-md);
+  font-size:1.0625rem; font-weight:700; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; background:var(--surface);}
+.bid-field input:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.bid-field .unit{display:grid; place-items:center; height:52px; padding:0 var(--s3);
+  border:1px solid var(--border-strong); border-left:0; border-radius:0 var(--r-md) var(--r-md) 0;
+  background:var(--surface-sunken); font-size:.8125rem; font-weight:700; color:var(--text-muted);}
+.bid-field .hint{font-size:.75rem; color:var(--text-subtle);}
+.bid-field .hint b{color:var(--text-muted); font-weight:700; font-variant-numeric:tabular-nums;}
+
+@media (max-width:1023px){
+  .bidbar-grid{grid-template-columns:1fr 1fr; gap:var(--s5) var(--s6); padding:var(--s5);}
+  .bidbar .zone + .zone{border-left:0; padding-left:0;}
+  .bidbar .zone:nth-child(2){border-left:1px solid var(--border-muted); padding-left:var(--s6);}
+  .bidbar .zone:nth-child(3){grid-column:1/-1; border-top:1px solid var(--border-muted); padding-top:var(--s5);}
+}
+/* ★ 모바일에서는 스티키를 쓰지 않는다 — 상시 노출 수단이 하단 fixed 바로 교체된다(§4-4).
+   같은 바를 좁혀 접는 게 아니라, 역할을 다른 컴포넌트에 넘긴다. */
+@media (max-width:719px){
+  .bidbar{position:static; box-shadow:none;}
+  .bidbar-grid{grid-template-columns:1fr; gap:0; padding:var(--s5);}
+  .bidbar .zone:nth-child(2){border-left:0; padding-left:0;}
+  .bidbar .zone + .zone{border-top:1px solid var(--border-muted); padding-top:var(--s5); margin-top:var(--s5);}
+  .bidbar .zone:nth-child(3){grid-column:auto; padding-top:var(--s5);}
+  .bid-actions{flex-direction:column; align-items:stretch;}
+  /* width:100% 를 쓰면 unit 형제와 합쳐 부모를 넘친다. flex-basis 로 나눠 갖게 한다 */
+  .bid-field input{width:auto; flex:1 1 auto; min-width:0;}
+  .bid-actions .btn{width:100%;}
+  .extend-note{padding:var(--s3) var(--s5);}
+  .freshness{margin-left:0; width:100%;}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   8. 입찰 이력 — 데스크톱 표 / 모바일 카드 리스트 (§4-3 · §8-3)
+   ──────────────────────────────────────────────────────────────────────────────
+   ★ 표를 좁은 폭에서 그대로 접으면 가로 스크롤 지옥이 된다. 모바일은 형식 자체를 바꾼다.
+   두 마크업이 DOM 에 함께 있지만 display:none 이라 스크린리더에도 하나만 노출된다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.section{padding:var(--s12) 0 0;}
+.section-head{margin-bottom:var(--s5);}
+
 .bids{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;}
 .bid-table{width:100%; border-collapse:collapse; font-size:.875rem;}
-.bid-table th{text-align:left; font-size:.75rem; font-weight:600; color:var(--text-muted);
-  padding:var(--s3) var(--s4); border-bottom:1px solid var(--border-strong); white-space:nowrap; background:var(--surface);}
-.bid-table td{padding:var(--s3) var(--s4); border-bottom:1px solid var(--border-muted); vertical-align:middle;}
+.bid-table th{text-align:left; font-size:.6875rem; font-weight:700; letter-spacing:.08em;
+  color:var(--text-subtle); padding:var(--s3) var(--s5);
+  border-bottom:1px solid var(--border-strong); white-space:nowrap;}
+.bid-table td{padding:var(--s4) var(--s5); border-bottom:1px solid var(--border-muted); vertical-align:middle;}
 .bid-table tbody tr:last-child td{border-bottom:0;}
 .bid-table tbody tr:hover{background:var(--surface-band);}
 .bid-table .r{text-align:right;}
-.bid-table .amt{font-weight:700; letter-spacing:-.01em;}
+.bid-table .amt{font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; font-size:1rem;}
 .bid-table .who{font-weight:600;}
-.bid-table .when{color:var(--text-subtle); font-size:.8125rem; white-space:nowrap;}
-/* 현재 최고 입찰 행은 배경 틴트가 아니라 좌측 near-black rule 로 표시한다.
-   틴트를 쓰면 hover 배경과 싸우고, 의미색을 쓰면 "성공"으로 오독된다. */
+.bid-table .when{color:var(--text-subtle); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.bid-table .delta{font-size:.8125rem; color:var(--text-subtle); font-variant-numeric:tabular-nums;}
 .bid-table tr.is-top td{background:var(--surface-band);}
 .bid-table tr.is-top td:first-child{box-shadow:inset 3px 0 0 0 var(--text);}
-/* ★ flex-wrap 필수. nowrap 이면 "전체 N건 · 1/3 페이지" + 버튼 5개가 425px 를 요구해
-   ≤414px 뷰포트(가용 288~382px)에서 페이저가 컨테이너를 넘쳤다. */
-.bid-pager{display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
-  flex-wrap:wrap; padding:var(--s3) var(--s4); border-top:1px solid var(--border); background:var(--surface-band);}
-.bid-pager .nav{flex-wrap:wrap;}
-@media (max-width:479px){
-  .bid-pager{justify-content:center;}
-  .bid-pager .pg{width:100%; text-align:center;}
+
+/* 모바일 카드 리스트 — 표가 아니다 */
+.bid-cards{display:none; list-style:none; margin:0; padding:0;}
+.bid-cards li{padding:var(--s4) var(--s5); border-bottom:1px solid var(--border-muted);}
+.bid-cards li:last-child{border-bottom:0;}
+.bid-cards li.is-top{background:var(--surface-band); box-shadow:inset 3px 0 0 0 var(--text);}
+.bid-cards .top{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3);}
+.bid-cards .amt{font-size:1.25rem; font-weight:800; letter-spacing:-.03em; font-variant-numeric:tabular-nums;}
+.bid-cards .amt .u{font-size:.7rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+.bid-cards .bot{display:flex; align-items:center; gap:var(--s2); margin-top:var(--s2);
+  font-size:.75rem; color:var(--text-subtle); flex-wrap:wrap;}
+.bid-cards .who{font-weight:700; color:var(--text-muted);}
+.bid-cards .when{font-variant-numeric:tabular-nums;}
+@media (max-width:719px){
+  .bid-table{display:none;}
+  .bid-cards{display:block;}
 }
+
+.bid-pager{display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
+  flex-wrap:wrap; padding:var(--s3) var(--s5); border-top:1px solid var(--border); background:var(--surface-band);}
 .bid-pager .pg{font-size:.8125rem; color:var(--text-muted);}
-.bid-pager .nav{display:flex; gap:var(--s2);}
-.bid-pager .nav button{height:34px; padding:0 var(--s3); border:1px solid var(--border-strong);
-  border-radius:var(--r-md); background:var(--surface); font-size:.8125rem; font-weight:600; cursor:pointer;}
+.bid-pager .pg b{font-variant-numeric:tabular-nums;}
+.bid-pager .nav{display:flex; gap:var(--s2); flex-wrap:wrap;}
+.bid-pager .nav button{min-width:40px; height:40px; padding:0 var(--s3); border:1px solid var(--border-strong);
+  border-radius:var(--r-md); background:var(--surface); font-size:.8125rem; font-weight:700; cursor:pointer;
+  font-variant-numeric:tabular-nums;}
 .bid-pager .nav button:hover:not(:disabled){background:var(--surface-sunken);}
 .bid-pager .nav button:disabled{color:var(--text-subtle); border-color:var(--border); cursor:not-allowed;}
 .bid-pager .nav .cur{background:var(--primary-selected); border-color:var(--primary); color:var(--primary); cursor:default;}
-@media (max-width:560px){
-  .bid-table th:nth-child(4), .bid-table td:nth-child(4){display:none;}
-  .bid-table th, .bid-table td{padding:var(--s3) var(--s3);}
+@media (max-width:479px){
+  .bid-pager{justify-content:center;} .bid-pager .pg{width:100%; text-align:center;}
+}
+
+/* 빈 상태 — §8-2 가 "반드시 설계하라"고 지목한 항목(안2의 알려진 약점, §7) */
+.empty-state{padding:var(--s16) var(--s5); text-align:center;}
+.empty-state .mark{display:inline-grid; place-items:center; width:44px; height:44px; margin-bottom:var(--s4);
+  border-radius:var(--r-full); background:var(--surface-sunken); color:var(--text-muted);}
+.empty-state .t{margin:0; font-size:1rem; font-weight:700; letter-spacing:-.01em;}
+.empty-state .d{margin:var(--s2) 0 0; font-size:.8125rem; color:var(--text-subtle); line-height:1.7;}
+.empty-state .d b{color:var(--text-muted); font-variant-numeric:tabular-nums;}
+
+/* 유의사항 */
+.notes{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:var(--s6) var(--s10);}
+.notes h3{margin:0 0 var(--s2); font-size:.9375rem; font-weight:700; letter-spacing:-.01em;}
+.notes h3::before{content:""; display:block; width:24px; height:2px; background:var(--text); margin-bottom:var(--s3);}
+.notes p{margin:0; font-size:.8125rem; color:var(--text-muted); line-height:1.75; max-width:46ch; text-wrap:pretty;}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   9. ★ 모바일 하단 고정 바 (§4-1 · §8-3)
+   ──────────────────────────────────────────────────────────────────────────────
+   구현 규칙(§8-3 안티패턴 회피를 그대로 준수):
+     · IntersectionObserver 로 본문 입찰 바를 관측. 스크롤 리스너·픽셀 임계값 금지.
+     · transform+opacity 만 애니메이션. height/top 금지(CLS).
+     · 페이지 하단에 바 높이만큼 패딩 미리 확보.
+     · 탭 타겟 44×44 이상, 대비 4.5:1 이상.
+     · 나타날 때 포커스를 빼앗지 않는다.
+     · 본문 값과 바의 값이 어긋나지 않게 단일 시계에서 구독한다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.mobilebar{display:none; position:fixed; left:0; right:0; bottom:0; z-index:var(--z-bar);
+  background:var(--surface); border-top:1px solid var(--border);
+  box-shadow:0 -4px 16px rgba(15,23,42,.10);
+  padding:var(--s3) var(--s4) calc(var(--s3) + env(safe-area-inset-bottom, 0px));
+  transform:translateY(100%); opacity:0;
+  transition:transform 180ms var(--ease), opacity 180ms var(--ease);}
+.mobilebar[data-shown="true"]{transform:translateY(0); opacity:1;}
+.mobilebar .inner{display:flex; align-items:center; gap:var(--s4);}
+.mobilebar .vals{min-width:0; flex:1;}
+.mobilebar .price{display:block; font-size:1.25rem; font-weight:800; letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums; line-height:1.15;}
+.mobilebar .price .u{font-size:.7rem; font-weight:600; color:var(--text-muted); margin-left:2px;}
+.mobilebar .time{display:block; margin-top:2px; font-size:.8125rem; font-weight:700;
+  font-variant-numeric:tabular-nums; color:var(--text-muted);}
+.mobilebar[data-phase="crit"] .time{color:var(--primary);}
+.mobilebar .btn{flex:none; min-width:130px;}
+@media (max-width:719px){
+  .mobilebar{display:block;}
+  /* 바 높이만큼 하단 패딩 확보 — 콘텐츠를 가리지 않는다 */
+  body{padding-bottom:100px;}
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   5. 거래 패널 — 결정 나·다
+   10. 라이트박스 — 아트 확대 전용 (§5-1 · §6-1)
+   ──────────────────────────────────────────────────────────────────────────────
+   ★ 게임 카드정보 모달은 폐기했다. 근거:
+     · Baymard(§5-1): 스펙 중심 상품에 퀵뷰를 만들지 마라. 속성이 많아 오버레이에 안 들어가고
+       사용자는 무시한다. 211×307 창에 스펙을 다 넣으려 한 건 원본의 제약을 상속한 것이다.
+     · D2R(§6-1) 계승/답습 판정 — 남색 배경·금색 타이틀·점선·211×307 비율은 전부 답습이고,
+       세로 카드 아트만 계승 대상이다. "계승 대상은 아트이지 창(chrome)이 아니다."
+   → 이 라이트박스는 아트를 크게 보여주는 역할만 한다. 스펙·탭·거래 액션을 넣지 않는다.
+     크롬은 100% 라이트 커머스다. 게임색은 아트 슬롯 안에만 있다(§1.2 Containment 원복).
    ══════════════════════════════════════════════════════════════════════════════ */
-/* 거래 패널은 이제 좁은 사이드바가 아니라 **본문 주인공**이다. sticky 를 떼고
-   (주인공을 붙여 둘 이유가 없다 — 붙는 쪽은 종속인 아이템 레일이다) 폭을 넓게 쓴다. */
-.trade{background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--r-lg); box-shadow:var(--sh-md); overflow:hidden;}
+.scrim{position:fixed; inset:0; z-index:var(--z-overlay);
+  background:rgba(15,18,25,.66); opacity:0; transition:opacity var(--d-base) var(--ease);}
+.scrim[data-open="true"]{opacity:1;}
 
-/* 넓어진 폭을 빈 공간으로 흘려보내지 않는다: 값(좌) / 행동(우) 2열로 나눈다.
-   ≥980px 에서만 갈라진다 — 그 아래에서는 값 열이 좁아져 큰 금액이 줄바꿈된다. */
-.trade-split{display:grid; grid-template-columns:minmax(0,1fr) 264px; gap:var(--s8);
-  padding:var(--s5); align-items:start;}
-@media (max-width:979px){ .trade-split{grid-template-columns:1fr; gap:var(--s6);} }
+.lightbox{position:fixed; z-index:var(--z-dialog);
+  left:50%; top:50%; transform:translate(-50%,-50%) scale(.98);
+  width:min(560px, calc(100vw - 32px)); max-height:min(90vh,880px);
+  display:flex; flex-direction:column;
+  background:var(--surface); border-radius:var(--r-xl); box-shadow:0 24px 64px rgba(15,23,42,.28);
+  opacity:0; transition:opacity var(--d-base) var(--ease), transform var(--d-base) var(--ease);}
+.lightbox[data-open="true"]{opacity:1; transform:translate(-50%,-50%) scale(1);}
 
-/* 마감 배너 — 결정 다. 페이지에서 가장 큰 활자다.
-   여유(함몰 회색) / 임박 T-5분(소프트 앰버) / 초임박 T-30초(솔리드 적색) 3단.
-   대비: white on #C81E1E = 5.74 · #A0510A on #F9F1EB = 5.12 · muted on sunken = 6.33 (전건 AA) */
-.deadline{padding:var(--s5) var(--s5) var(--s4);}
-.deadline .k{display:flex; align-items:center; gap:var(--s2); font-size:.75rem; font-weight:700; letter-spacing:.01em;}
-.deadline .pip{width:8px; height:8px; border-radius:var(--r-full); flex:none;}
-.deadline .t{display:block; margin-top:var(--s2); font-size:2.5rem; font-weight:800;
-  letter-spacing:-.03em; line-height:1.05;}
-.deadline .at{display:block; margin-top:var(--s2); font-size:.75rem;}
-.deadline--calm{background:var(--surface-sunken);}
-.deadline--calm .k{color:var(--text-muted);} .deadline--calm .pip{background:var(--border-strong);}
-.deadline--calm .t{color:var(--text);} .deadline--calm .at{color:var(--text-subtle);}
-.deadline--soon{background:var(--warning-soft);}
-.deadline--soon .k{color:var(--warning);} .deadline--soon .pip{background:var(--warning);}
-.deadline--soon .t{color:var(--warning);} .deadline--soon .at{color:var(--text-muted);}
-.deadline--crit{background:var(--danger); color:#FFFFFF;}
-.deadline--crit .k{color:#FFFFFF;} .deadline--crit .pip{background:#FFFFFF; animation:blip 1s steps(1,end) infinite;}
-.deadline--crit .t{color:#FFFFFF;} .deadline--crit .at{color:rgba(255,255,255,.88);}
-@keyframes blip{0%,49%{opacity:1;}50%,100%{opacity:.25;}}
+.lb-grab{display:none; width:36px; height:4px; border-radius:var(--r-full);
+  background:var(--border-strong); margin:var(--s2) auto 0;}
+.lb-head{flex:none; display:flex; align-items:center; gap:var(--s3);
+  padding:var(--s3) var(--s3) var(--s3) var(--s6); border-bottom:1px solid var(--border-muted);}
+.lb-head h2{margin:0; font-size:.9375rem; font-weight:700; letter-spacing:-.01em;}
+.dlg-x{margin-left:auto; flex:none; width:44px; height:44px; display:grid; place-items:center;
+  background:transparent; border:1px solid transparent; border-radius:var(--r-md);
+  color:var(--text-muted); cursor:pointer; transition:background var(--d-fast), color var(--d-fast);}
+.dlg-x:hover{background:var(--surface-sunken); color:var(--text);}
 
-/* 소프트클로즈 안내 — "왜 아직 안 끝났지"가 나오는 자리라 그 자리에서 답한다 */
-.softclose{padding:var(--s3) var(--s5); background:var(--surface-band);
-  border-bottom:1px solid var(--border); font-size:.75rem; color:var(--text-muted); line-height:1.7;}
-.softclose b{color:var(--text); font-weight:700;}
+.lb-body{flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding:var(--s6);}
+/* 확대 아트 — 4x(200×372). §5.12 가 정한 아웃라인 두께 상한(합계 9px) 도달 지점이다 */
+.lb-stage{position:relative; display:grid; place-items:center; padding:var(--s8) var(--s4);
+  border-radius:var(--r-lg); overflow:hidden;}
+.lb-stage img{width:200px; height:372px;}
+/* 정체성 한 줄 — 스펙이 아니다. 이름과 타입만. 스펙은 페이지가 이미 전부 보여준다 */
+.lb-identity{margin-top:var(--s5); text-align:center;}
+.lb-identity .nm{margin:0; font-size:1.375rem; font-weight:800; letter-spacing:-.03em; line-height:1.25;}
+.lb-identity .sub{margin:var(--s3) 0 0; display:flex; align-items:center; gap:var(--s2);
+  flex-wrap:wrap; justify-content:center; font-size:.8125rem; color:var(--text-muted);}
+.lb-note{margin:var(--s5) 0 0; padding-top:var(--s4); border-top:1px solid var(--border-muted);
+  font-size:.75rem; color:var(--text-subtle); line-height:1.7; text-align:center;}
 
-.cta{margin-top:0;}
+/* ★ 모바일은 중앙 모달이 아니라 바텀시트다(§5-4).
+   그랩 핸들 + 보이는 X + ESC/뒤로 닫힘(NN/g §4-2). 시트를 겹쳐 쌓지 않는다. */
+@media (max-width:719px){
+  .lightbox{left:0; right:0; top:auto; bottom:0; width:auto; max-width:none;
+    transform:translateY(100%); border-radius:var(--r-xl) var(--r-xl) 0 0; max-height:88vh;}
+  .lightbox[data-open="true"]{transform:translateY(0);}
+  .lb-grab{display:block;}
+  /* 세로형 아트라 가로 배치가 시트 높이를 낮춘다(§5-4 "안 맞는 지점").
+     세로 스택은 시트를 불필요하게 높게 만든다 */
+  .lb-body{display:grid; grid-template-columns:auto minmax(0,1fr); gap:var(--s5);
+    align-items:center; padding:var(--s5);}
+  .lb-stage{padding:var(--s3);}
+  .lb-stage img{width:150px; height:279px;}
+  .lb-identity{margin-top:0; text-align:left;}
+  .lb-identity .sub{justify-content:flex-start;}
+  .lb-note{grid-column:1/-1; margin-top:0; text-align:left;}
+}
 
-/* ★ 결정 나 — 값 유무로 높이가 흔들리지 않는 가격 영역.
-   히어로 블록은 min-height 고정. 첫 입찰이 붙어 라벨이 "입찰 없음 · 시작가"에서 "현재가"로 바뀌고
-   금액 자릿수가 늘어도 아래 CTA 가 밀리지 않는다. */
-.pricehero{min-height:86px; display:flex; flex-direction:column; justify-content:center;
-  padding-left:var(--s3); border-left:2px solid var(--text);}
-.pricehero .k{font-size:.75rem; font-weight:700; color:var(--text-muted); letter-spacing:-.01em;}
-.pricehero .v{margin-top:var(--s1); font-size:1.875rem; font-weight:800; letter-spacing:-.03em; line-height:1.15; color:var(--text);}
-.pricehero .v .u{font-size:.9375rem; font-weight:600; color:var(--text-muted); margin-left:var(--s1);}
-.pricehero--start{border-left:2px dashed var(--border-strong);}
-.pricehero--start .k{color:var(--text-subtle);}
-.pricehero--start .v{color:var(--text-muted); font-size:1.625rem;}
+/* ══════════════════════════════════════════════════════════════════════════════
+   11. 입찰 바텀시트 — 모바일 액션 (§4-2 · §5-2 · §5-3)
+   ──────────────────────────────────────────────────────────────────────────────
+   NN/g 가 정한 경계선: 상세 페이지는 진짜 페이지여야 하고(딥링크·공유·뒤로가기·새로고침),
+   짧고 일시적인 상호작용만 시트로 올린다. 입찰 금액 입력이 정확히 후자다.
+   로스트아크(§5-3)처럼 "정보 모달"과 "액션 모달"을 분리한다 — 하나에 합치면 둘 다 나빠진다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.sheet{position:fixed; left:0; right:0; bottom:0; z-index:var(--z-dialog);
+  background:var(--surface); border-radius:var(--r-xl) var(--r-xl) 0 0;
+  box-shadow:0 -12px 40px rgba(15,23,42,.24); max-height:92vh; overflow-y:auto;
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+  transform:translateY(100%); transition:transform var(--d-base) var(--ease);}
+.sheet[data-open="true"]{transform:translateY(0);}
+.sheet .grab{display:block; width:36px; height:4px; border-radius:var(--r-full);
+  background:var(--border-strong); margin:var(--s2) auto 0;}
+.sheet-head{display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s3) var(--s3) var(--s5);}
+.sheet-head h2{margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.02em;}
+.sheet-body{padding:0 var(--s5) var(--s6);}
+.sheet-rows{display:flex; flex-direction:column; gap:var(--s3); padding:var(--s4) 0;
+  border-top:1px solid var(--border-muted); border-bottom:1px solid var(--border-muted);}
+.sheet-rows .row{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4);}
+.sheet-rows .row .k{font-size:.8125rem; color:var(--text-muted);}
+.sheet-rows .row .v{font-size:.9375rem; font-weight:700; font-variant-numeric:tabular-nums;}
+.sheet-rows .row.hi .v{font-size:1.25rem; font-weight:800; letter-spacing:-.03em;}
+.sheet-quick{margin-top:var(--s5);}
+.sheet-input{display:flex; align-items:stretch; margin-top:var(--s2);}
+.sheet-input input{flex:1; min-width:0; height:52px; padding:0 var(--s4);
+  border:1px solid var(--border-strong); border-right:0; border-radius:var(--r-md) 0 0 var(--r-md);
+  font-size:1.125rem; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+.sheet-input input:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.sheet-input .unit{display:grid; place-items:center; height:52px; padding:0 var(--s4);
+  border:1px solid var(--border-strong); border-left:0; border-radius:0 var(--r-md) var(--r-md) 0;
+  background:var(--surface-sunken); font-size:.875rem; font-weight:700; color:var(--text-muted);}
+.sheet-cta{margin-top:var(--s5); display:flex; flex-direction:column; gap:var(--s3);}
+.sheet-cta .btn{width:100%;}
+.sheet-note{margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-subtle); line-height:1.7;}
 
-/* 부가 5줄 — 값이 없어도 항상 렌더한다(빈 자리를 지우지 않는다) */
-.kv{margin:var(--s5) 0 0; padding:0; display:flex; flex-direction:column; gap:var(--s2);}
-.kv > div{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4); min-height:22px;}
-.kv dt{font-size:.8125rem; color:var(--text-muted);}
-.kv dd{margin:0; font-size:.8125rem; font-weight:600; color:var(--text); text-align:right;}
-.kv dd.empty{color:var(--text-subtle); font-weight:500;}
-/* 다음 최소 입찰가는 이 패널에서 사용자가 실제로 써야 하는 숫자다. 구분선 + 굵기로 떼어 놓는다.
-   (별도 rule 요소를 dl 자식으로 넣으면 HTML 이 깨진다 — 경계는 행 자체에 건다) */
-.kv .strong{border-top:1px solid var(--border-muted); padding-top:var(--s3); margin-top:var(--s1);}
-.kv .strong dd{font-size:.9375rem; font-weight:800; letter-spacing:-.01em;}
-
-.cta{display:flex; flex-direction:column; gap:var(--s3);}
-.cta .btn{width:100%;}
-.cta .reason{font-size:.75rem; color:var(--text-subtle); line-height:1.7; text-wrap:pretty;}
-/* 잔액 요약 — 자금 거래 제품에서 "지금 입찰할 수 있는가"가 1차 정보다 */
-.wallet{margin-top:var(--s4); padding:var(--s3) var(--s4); background:var(--surface-sunken); border-radius:var(--r-md);}
-.wallet dl{margin:0;}
-.wallet .row{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3); font-size:.8125rem;}
-.wallet .row + .row{margin-top:var(--s2);}
-.wallet .row dt{color:var(--text-muted);} .wallet .row dd{margin:0; font-weight:700;}
-.wallet .row.hold dd{color:var(--warning);}
-.wallet .note{margin:var(--s3) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.7;}
-
-/* 판매자 카드 */
-.seller-card{margin-top:var(--s6); padding:var(--s4); background:var(--surface);
-  border:1px solid var(--border); border-radius:var(--r-lg); display:flex; align-items:center; gap:var(--s3);}
-.seller-card .avatar{width:40px; height:40px; border-radius:var(--r-full); flex:none;
-  background:var(--surface-sunken); border:1px solid var(--border);
-  display:grid; place-items:center; font-size:.875rem; font-weight:700; color:var(--text-muted);}
-.seller-card .t{min-width:0; flex:1;}
-.seller-card .nm{font-size:.9375rem; font-weight:700; letter-spacing:-.01em;}
-.seller-card .s{font-size:.75rem; color:var(--text-subtle); margin-top:2px;}
-
-/* ── 검증 스트립 (목업 전용, 실제 UI 아님) ────────────────────────────────────
-   DoD "값이 있을 때/없을 때 레이아웃이 흔들리지 않아야" 를 사람이 눈으로 대조할 수 있게
-   같은 컴포넌트의 두 상태를 나란히 놓았다. 토글이 아니라 정적 대조다. */
-.verify{margin-top:var(--s16); padding:var(--s5); border:1px dashed var(--border-strong);
+/* ══════════════════════════════════════════════════════════════════════════════
+   12. 목업 검증 스트립 — 실제 UI 아님
+   ══════════════════════════════════════════════════════════════════════════════ */
+.verify{margin-top:var(--s16); padding:var(--s6); border:1px dashed var(--border-strong);
   border-radius:var(--r-md); background:var(--surface);}
 .verify h2{margin:0 0 var(--s2); font-size:.9375rem; font-weight:700;}
-.verify p{margin:0 0 var(--s5); font-size:.8125rem; color:var(--text-muted); line-height:1.7; max-width:70ch; text-wrap:pretty;}
-.verify .pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:var(--s5); align-items:start;}
-.verify .pane{border:1px solid var(--border); border-radius:var(--r-md); padding:var(--s4); background:var(--surface);}
-.verify .pane > .cap{display:block; margin-bottom:var(--s4); font-size:.75rem; font-weight:700; color:var(--text-muted);}
-.verify .pane .kv{margin-top:var(--s4);}
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   6. 카드 정보 모달 — 원본 게임 UI 차용 (C안 하이브리드, 사용자 확정 2026-07-19)
-   ──────────────────────────────────────────────────────────────────────────────
-   ★ Game-Color Containment 판정 (design-system §1.2)
-     §1.2의 허용 자리(아이템 카드·속성 배지·아이템 필터 칩·아트 슬롯)에 모달은 없다.
-     그러나 **카드 정보 모달은 "아이템 표현의 연장"이므로 허용 범위로 판정한다** —
-     v0.5에서 아트 슬롯이 §1.2에 편입된 것과 같은 논리다(아이템 그 자체를 보여주는 면).
-     **모달 밖으로는 절대 새지 않는다**: 트리거 버튼·페이지 배경·헤더·CTA는 라이트 커머스 그대로다.
-     design-system 본문 개정은 디자인 게이트 통과 후 총괄이 한다(이 파일에서 정본을 고치지 않는다).
-
-   ★ 색은 추측이 아니라 `docs/game_ui/card_info/wnd_cardinfo.png`(211×307) **픽셀 실측**이다.
-     비트맵을 얹지 않고 CSS로 재현한다(§5.12가 골드포스 .spr을 해독해 CSS로 재현한 것과 같은 방식).
-       프레임 밴드      #0667BD   (창 테두리 본체, y200 x2..4 / x206..208)
-       최외곽 1px       #021628   (x0, x210)
-       프레임 하이라이트 #1F75C1   (안쪽 1px, x5 / x205)
-       프레임 그림자     #054E90   (x1 / x209)
-       타이틀바         #002762   (y2..30 최빈 333px)
-       패널 웰          #001C33   (스펙·본문 안쪽 최빈 10347px / 14661px)
-       카드 슬롯        #000000   (순검정 3870px)
-       점선 구분선       #8F988D   (y=57,76,95,114 — 19px 등간격 4줄)
-       타이틀 금색       #FFEA00 → #FFCB00 (실측 상위 2)
-
-   ★ 어두운 바탕이라 라이트 토큰(text-subtle 등)은 전부 무효다. 모달 전용 전경색을 새로 도출했고
-     전부 #001C33 기준으로 재계산했다(수치는 각 선언 옆).
-   ══════════════════════════════════════════════════════════════════════════════ */
-.cm-scrim{position:fixed; inset:0; z-index:var(--z-overlay);
-  background:rgba(2,8,20,.62); opacity:0; transition:opacity var(--d-base) var(--ease);}
-.cm-scrim[data-open="true"]{opacity:1;}
-
-.cardmodal{
-  /* 실측 팔레트 */
-  --cm-edge:#021628; --cm-frame:#0667BD; --cm-frame-hi:#1F75C1; --cm-frame-lo:#054E90;
-  --cm-title:#002762; --cm-well:#001C33; --cm-slot:#000000; --cm-divider:#8F988D;
-  /* 전경 — on #001C33 실측 대비 */
-  --cm-fg:#E8F1FA;      /* 15.15 */
-  --cm-fg-dim:#8FAEC9;  /*  7.47 */
-  --cm-gold:#FFC933;    /* 11.25 */
-  --cm-gold-hi:#FFEA00; /* 14.86 */
-  --cm-tab-off:#034078;
-
-  position:fixed; z-index:calc(var(--z-overlay) + 1);
-  left:50%; top:50%; transform:translate(-50%,-50%);
-  width:min(440px, calc(100vw - 24px)); max-height:min(88vh, 760px);
-  display:flex; flex-direction:column;
-  /* 프레임 4겹을 border + box-shadow 로 재현한다(비트맵 9-slice 대체) */
-  background:var(--cm-frame);
-  border:1px solid var(--cm-edge);
-  border-radius:var(--r-md);
-  box-shadow:inset 0 0 0 1px var(--cm-frame-lo),
-             inset 0 0 0 4px var(--cm-frame),
-             inset 0 0 0 5px var(--cm-frame-hi),
-             0 24px 64px rgba(0,10,25,.55);
-  padding:5px;
-  opacity:0; transition:opacity var(--d-base) var(--ease);
-}
-.cardmodal[data-open="true"]{opacity:1;}
-/* 드래그 이동 중에는 중앙정렬 transform 을 끄고 절대좌표로 전환한다 */
-.cardmodal[data-dragged="true"]{transform:none;}
-
-/* ── 6.1 타이틀바 (계승 2: 한글+영문 병기 · 좌 아이콘 · 우 닫기 X) ─────────────
-   원본은 제목이 **비트맵에 구워져** 있어 번역·확대·스크린리더가 불가능했다.
-   우리는 실제 텍스트로 되살린다 — 차용의 핵심은 색·질감이지 래스터 글자가 아니다. */
-.cm-titlebar{flex:none; display:flex; align-items:center; gap:var(--s2);
-  padding:var(--s2) var(--s2) var(--s2) var(--s3);
-  background:var(--cm-title); border-radius:3px 3px 0 0;
-  cursor:grab; user-select:none; touch-action:none;}
-.cm-titlebar:active{cursor:grabbing;}
-.cm-gem{width:22px; height:22px; flex:none; border-radius:var(--r-full);
-  background:radial-gradient(circle at 35% 30%, #BFE4FF 0%, #4E9BD8 45%, #10437A 100%);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
-  display:grid; place-items:center;}
-.cm-gem::after{content:""; width:9px; height:9px; transform:rotate(45deg);
-  background:linear-gradient(135deg,var(--cm-gold-hi),#C09600);
-  box-shadow:0 0 0 1px rgba(0,0,0,.35);}
-.cm-titlebar h2{margin:0; display:flex; align-items:baseline; gap:var(--s2); min-width:0;}
-.cm-titlebar .ko{font-size:1rem; font-weight:800; letter-spacing:-.01em;
-  /* 원본 금색 그라데이션 재현(#FFEA00 → #FFCB00). 단색 폴백은 --cm-gold */
-  color:var(--cm-gold);
-  background:linear-gradient(180deg,var(--cm-gold-hi) 0%,#FFCB00 100%);
-  -webkit-background-clip:text; background-clip:text;
-  -webkit-text-fill-color:transparent;
-  text-shadow:0 1px 0 rgba(0,0,0,.45);}
-.cm-titlebar .en{font-size:.625rem; font-weight:700; letter-spacing:.14em;
-  color:var(--cm-fg); opacity:.85; white-space:nowrap;}   /* on #002762 = 12.54 */
-.cm-x{position:relative; margin-left:auto; flex:none; width:26px; height:26px; display:grid; place-items:center;
-  border:1px solid #7A1414; border-radius:var(--r-sm); cursor:pointer;
-  /* 상단 스톱을 #E24A4A → #D33636 로 낮췄다. 원본 붉은 X 의 밝은 톤을 유지하되
-     흰 글리프 대비가 3.95(미달)에서 4.83(AA)이 된다. 원본 충실도보다 AA 가 우선이다. */
-  background:linear-gradient(180deg,#D33636 0%,#B81C1C 100%); color:#FFFFFF;
-  transition:background var(--d-fast) var(--ease);}
-/* ★ hover 를 filter:brightness() 로 밝히면 흰 글리프 대비가 3.77 로 무너진다(측정).
-   밝히는 폭을 대비가 버티는 지점까지만 준다: 상단 스톱 #D93838 = 4.59(AA). */
-.cm-x:hover{background:linear-gradient(180deg,#D93838 0%,#C22222 100%);}
-.cm-x:active{background:linear-gradient(180deg,#B81C1C 0%,#9C1515 100%);}
-/* 닫기 X 는 시각 크기를 원본 비율(26px)로 지키되 히트 영역만 44px 로 넓힌다 */
-.cm-x::after{content:""; position:absolute; left:50%; top:50%;
-  width:44px; height:44px; transform:translate(-50%,-50%);}
-
-/* ── 6.2 상단 = 카드 슬롯 + 스펙 5행 (원본 y40..135 구조) ────────────────────── */
-.cm-body{flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain;
-  background:var(--cm-frame); padding:5px 0 0;}
-.cm-head{display:grid; grid-template-columns:auto minmax(0,1fr); gap:5px; padding:0 0 5px;}
-/* 원본 창은 프레임 밴드가 4~5px 이고 내용이 그 안쪽에서 시작한다.
-   .cardmodal 의 padding 5px + inset 링 5px 이 그 밴드를 만든다. */
-.cm-cardslot{background:var(--cm-slot); border:1px solid var(--cm-frame-hi); border-radius:3px;
-  padding:var(--s2); display:grid; place-items:center; position:relative;}
-.cm-cardslot img{width:100px; height:186px; image-rendering:pixelated; image-rendering:crisp-edges;}
-/* 골드포스 잔여 배지 — 원본은 카드 좌상단에 숫자만 얹는다. 우리는 라벨을 병기한다(색 단독 금지) */
-.cm-gfbadge{position:absolute; left:5px; top:5px;
-  padding:2px 6px; border-radius:var(--r-full);
-  background:rgba(0,20,40,.86); border:1px solid var(--cm-gold);
-  font-size:.625rem; font-weight:800; color:var(--cm-gold); letter-spacing:-.01em;}
-
-/* 스펙 표 — 원본은 배경 비트맵에 점선 4줄이 구워져 **5행 고정**이었다.
-   우리는 CSS 점선으로 재현하되 행 수는 데이터에 따라 늘 수 있다(비트맵 제약 해소). */
-.cm-spec{margin:0; background:var(--cm-well); border:1px solid var(--cm-frame-hi);
-  border-radius:3px; padding:var(--s2) var(--s3); display:grid;
-  grid-template-columns:auto minmax(0,1fr); align-content:start;}
-.cm-spec dt, .cm-spec dd{margin:0; padding:var(--s2) 0; font-size:.75rem; line-height:1.45;
-  border-bottom:1px dotted var(--cm-divider); min-height:19px;}
-.cm-spec dt{color:var(--cm-gold); font-weight:700; padding-right:var(--s4); white-space:nowrap;}  /* 11.25 */
-.cm-spec dd{color:var(--cm-fg); text-align:right; font-weight:600;}                               /* 15.15 */
-.cm-spec > :nth-last-child(-n+2){border-bottom:0;}
-
-/* ── 6.3 탭 (계승 3: ioRadioButton 은유) ──────────────────────────────────────
-   원본은 탭 6종이 정의돼 있으나 fusion/motion 이 같은 좌표(X=155,Y=144)를 공유해
-   **동시 표시는 최대 4개**이고, 라벨은 51×22 비트맵에 구워진 래스터 글자였다.
-   우리 계약(v1.10 §3.3)으로 채울 수 있는 것은 2개뿐이라 2개만 만든다(빈 탭 금지). */
-.cm-tabs{display:flex; gap:3px; background:var(--cm-frame);}
-.cm-tab{flex:0 1 auto; min-width:76px; height:26px; padding:0 var(--s3);
-  border:1px solid var(--cm-frame-hi); border-bottom:0; border-radius:4px 4px 0 0;
-  background:var(--cm-tab-off); color:var(--cm-fg); font-size:.75rem; font-weight:700;
-  cursor:pointer; transition:background var(--d-fast) var(--ease);}   /* on #034078 = 11.09 */
-.cm-tab:hover{background:#04528F;}
-.cm-tab[aria-selected="true"]{background:var(--cm-well); color:var(--cm-gold);
-  border-color:var(--cm-frame-hi); position:relative; z-index:1;}      /* 11.25 */
-/* 선택 상태를 색에만 싣지 않는다: 아래 경계가 트이고 위에 금색 rule 이 붙는다 */
-.cm-tab[aria-selected="true"]::before{content:""; position:absolute; left:-1px; right:-1px; top:-1px;
-  height:2px; background:var(--cm-gold);}
-
-/* ── 6.4 본문 패널 (원본 y168..270 함몰 웰) ─────────────────────────────────── */
-.cm-panel{background:var(--cm-well); border:1px solid var(--cm-frame-hi); border-radius:0 3px 3px 3px;
-  padding:var(--s4); color:var(--cm-fg); font-size:.8125rem; line-height:1.75; min-height:132px;}
-.cm-panel p{margin:0 0 var(--s3);}
-.cm-panel p:last-child{margin-bottom:0;}
-.cm-panel .dim{color:var(--cm-fg-dim);}                       /* 7.47 */
-.cm-panel ol{margin:0; padding-left:1.3em; display:flex; flex-direction:column; gap:var(--s2);}
-.cm-panel ol li::marker{color:var(--cm-gold); font-weight:700;}
-.cm-panel .kvline{display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4);
-  padding:var(--s2) 0; border-bottom:1px dotted var(--cm-divider);}
-.cm-panel .kvline:last-child{border-bottom:0;}
-.cm-panel .kvline .k{color:var(--cm-gold); font-weight:700; font-size:.75rem;}
-.cm-panel .kvline .v{font-weight:600;}
-.cm-panel .empty{color:var(--cm-fg-dim); font-weight:500;}
-
-/* ── 6.5 하단 액션 (원본 y280, 80×22 두 개) ─────────────────────────────────── */
-.cm-foot{flex:none; display:flex; gap:var(--s2); justify-content:center;
-  padding:var(--s3) 0 0; background:var(--cm-frame);}
-.cm-btn{min-width:104px; height:30px; padding:0 var(--s4);
-  border:1px solid var(--cm-edge); border-radius:var(--r-sm); cursor:pointer;
-  font-size:.75rem; font-weight:800; letter-spacing:-.01em;
-  /* 상단 스톱 #2E8FD8 → #1670B4. 흰 라벨 대비 3.48(미달) → 5.24(AA).
-     원본 버튼의 밝은 파랑 베벨 느낌은 inset 하이라이트가 대신 낸다. */
-  background:linear-gradient(180deg,#1670B4 0%,#0A5091 100%); color:#FFFFFF;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.30);
-  transition:background var(--d-fast) var(--ease);}
-/* hover 도 AA 를 지켜야 한다. brightness(1.12) 는 흰 라벨을 4.35 로 떨어뜨렸다(측정) —
-   상단 스톱을 #1776BB 로 제한하면 4.83 을 유지한다. */
-.cm-btn:hover{background:linear-gradient(180deg,#1776BB 0%,#0C5A9F 100%);}
-.cm-btn:active{background:linear-gradient(180deg,#0A5091 0%,#073E71 100%);}
-.cm-btn--ghost{background:linear-gradient(180deg,#1B4F86 0%,#062F5C 100%);}
-.cm-btn--ghost:hover{background:linear-gradient(180deg,#215C9B 0%,#0A3A6C 100%);}
-.cm-btn--ghost:active{background:linear-gradient(180deg,#062F5C 0%,#04223F 100%);}
-/* 모달 안 포커스 링은 퍼플이 안 보인다 — 금색으로 바꾼다(어두운 바탕 대비 11.25) */
-.cardmodal :focus-visible{outline:2px solid var(--cm-gold); outline-offset:2px;}
-
-/* 트리거 버튼 — **라이트 커머스 그대로**. 게임색이 모달 밖으로 새지 않는 경계다 */
-.art-btn{display:block; width:100%; padding:0; border:0; background:none; cursor:pointer;
-  border-radius:var(--r-lg) var(--r-lg) 0 0; overflow:hidden;}
-.art-btn .slot{transition:filter var(--d-fast) var(--ease);}
-.art-btn:hover .slot{filter:brightness(1.12);}
-.art-hint{display:flex; align-items:center; justify-content:center; gap:var(--s1);
-  padding:var(--s2) var(--s3); background:var(--surface-band); border-top:1px solid var(--border);
-  font-size:.75rem; font-weight:600; color:var(--text-muted);}
-.art-btn:hover .art-hint{background:var(--surface-sunken); color:var(--text);}
-
-@media (max-width:400px){
-  .cm-head{grid-template-columns:1fr;}
-  .cm-cardslot{justify-self:center;}
-  .cm-tab{min-width:0; flex:1;}
-}
+.verify > p{margin:0 0 var(--s6); font-size:.8125rem; color:var(--text-muted); line-height:1.7; max-width:74ch;}
+.verify .trio{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--s5);}
+.verify .pane{border:1px solid var(--border); border-radius:var(--r-md); padding:var(--s5); min-height:172px;}
+.verify .cap{display:block; margin-bottom:var(--s4); font-size:.6875rem; font-weight:700;
+  letter-spacing:.1em; color:var(--text-subtle);}
+.verify .cta-preview{margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.7;}
+.verify .cta-preview b{color:var(--text); font-weight:700;}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important;
     transition-duration:.01ms !important; scroll-behavior:auto !important;}
   .gf > i{animation:none; opacity:0;}
-  .deadline--crit .pip{animation:none;}
-  .cm-scrim, .cardmodal{transition:none;}
+  .freshness .pulse{animation:none;}
 }
+
+/* 푸터 */
+.site-footer{border-top:1px solid var(--border); background:var(--surface-band); margin-top:var(--s20);}
+.footer-top{display:grid; grid-template-columns:1.4fr repeat(3,1fr) 1.3fr; gap:var(--s8); padding:var(--s16) 0 var(--s12);}
+.footer-brand .tagline{margin:var(--s3) 0 0; font-size:.8125rem; color:var(--text-muted); line-height:1.7; max-width:30ch;}
+.footer-col h3{margin:0 0 var(--s3); font-size:.8125rem; font-weight:700; letter-spacing:-.01em;}
+.footer-col ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:var(--s2);}
+.footer-col a{font-size:.8125rem; color:var(--text-muted); text-decoration:none;}
+.footer-col a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+.footer-support{padding-left:var(--s6);}
+.footer-support h3{margin:0 0 var(--s2); font-size:.8125rem; font-weight:700;}
+.footer-support .tel{margin:0; font-size:1.375rem; font-weight:800; letter-spacing:-.02em; line-height:1.2;}
+.footer-support .hours{margin:var(--s2) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.7;}
+.footer-support .btn{margin-top:var(--s4);}
+.footer-legal{background:var(--surface-sunken); padding:var(--s6) 0;}
+.footer-legal dl{margin:0; display:flex; flex-wrap:wrap; gap:var(--s1) var(--s5); font-size:.75rem; color:var(--text-muted); line-height:1.8;}
+.footer-legal dl > div{display:flex; gap:var(--s2);}
+.footer-legal dt{color:var(--text-subtle);} .footer-legal dd{margin:0;}
+.footer-legal .disclaimer{margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-muted); line-height:1.75; max-width:78ch; text-wrap:pretty;}
+.footer-bottom{padding:var(--s5) 0 var(--s10); display:flex; align-items:center; justify-content:space-between; gap:var(--s4); flex-wrap:wrap;}
+.footer-bottom .copy{margin:0; font-size:.75rem; color:var(--text-subtle);}
+.footer-bottom .policies{display:flex; gap:var(--s4); flex-wrap:wrap;}
+.footer-bottom .policies a{font-size:.75rem; color:var(--text-muted); text-decoration:none;}
+.footer-bottom .policies a.strong{color:var(--text); font-weight:700;}
+@media (max-width:960px){
+  .footer-top{grid-template-columns:1fr 1fr; gap:var(--s8) var(--s6); padding:var(--s12) 0 var(--s8);}
+  .footer-support{padding-left:0; grid-column:1/-1; border-top:1px solid var(--border); padding-top:var(--s6);}
+}
+@media (max-width:560px){ .footer-top{grid-template-columns:1fr;} }
 </style>
 </head>
 
@@ -745,7 +771,7 @@ a:hover{color:var(--primary-hover);}
 <main id="main">
   <div class="container">
 
-    <!-- 페이지 헤더 -->
+    <!-- 페이지 머리 -->
     <div class="page-head">
       <nav class="crumbs" aria-label="위치">
         <a href="template-home-logged-in.html">홈</a><span aria-hidden="true">/</span>
@@ -756,250 +782,315 @@ a:hover{color:var(--primary-hover);}
         <span class="chip chip--info"><span aria-hidden="true">●</span> 진행 중</span>
         <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
       </div>
-      <h1>불의 대검 +7</h1>
+      <h1 class="page-title">불의 대검 +7</h1>
       <p class="byline">판매자 <b>달빛상인</b> · 등록 2026-07-17 21:04 · 경매번호 <span class="num">a1f4c9e2</span></p>
     </div>
 
-    <div class="detail">
+    <!-- ══════════════════════════════════════════════════════════════════════
+         상단 2단 — 안2 (Steam §2-1). 좌: 아트 + 정체성 / 우: 스펙
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="identity">
 
-      <!-- ══════════════════════════════════════════════════════════════════
-           좌 레일(320px 고정): 아이템 신원 + 검증. 둘을 한 덩어리로 세로로 쌓는다.
-           종전처럼 아트와 스펙을 가로로 나란히 두면 좁아질 때 서로 폭을 뺏는다.
-           ══════════════════════════════════════════════════════════════════ -->
-      <div class="col-item">
-
-        <!-- 아트 — l 3배(150×279). 하단 "Level 7"이 아트에 구워져 있다.
-             카드 전체가 모달 트리거다. img 에 onclick 을 걸지 않고 버튼 요소로 감싼다. -->
-        <div class="art-wrap">
-          <button type="button" class="art-btn" id="cardTrigger"
-                  aria-haspopup="dialog" aria-controls="cardModal">
-            <span class="slot slot--feature slot--glow-fire">
-              <span class="art-frame art-frame--x3 has-gf">
-                <span class="gf" aria-hidden="true"><i></i></span>
-                <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
-                     alt="7레벨 불속성 검 카드 아트" width="150" height="279">
-              </span>
-              <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스<span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
-              <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
+      <div class="art-panel">
+        <button type="button" class="art-btn" id="artTrigger"
+                aria-haspopup="dialog" aria-controls="lightbox">
+          <span class="art-stage slot slot--glow-fire">
+            <span class="art-frame art-frame--x3 has-gf">
+              <span class="gf" aria-hidden="true"><i></i></span>
+              <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
+                   alt="7레벨 불속성 검 카드 아트" width="150" height="279">
             </span>
-            <span class="art-hint"><span aria-hidden="true">⛶</span> 카드 정보 보기</span>
-          </button>
-          <p class="art-cap">원본 게임 카드 아트를 원본 픽셀 그대로 3배 확대했습니다.</p>
-        </div>
-
-        <!-- 아이템 스펙 (계약 §3.3 item 블록 + §3.3.1 코드 사전) -->
-        <section class="block" aria-labelledby="h-spec">
-          <h2 id="h-spec">아이템 정보</h2>
-          <p class="sub">등록 시점에 저장된 표시 스냅샷입니다.</p>
-          <div class="spec">
-            <dl>
-              <dt>표시명</dt><dd>불의 대검 +7</dd>
-              <dt>대분류</dt><dd>무기 <span class="code-note num">subGroup 1</span></dd>
-              <dt>종류</dt><dd>검 <span class="code-note num">kind 3</span></dd>
-              <dt>속성</dt><dd>불 <span class="code-note num">element 2</span></dd>
-              <dt>레벨</dt><dd class="num">7</dd>
-              <dt>스킬 1</dt><dd>화염 강타 <span class="code-note num">skill 204</span></dd>
-              <dt>스킬 2</dt><dd class="num">없음</dd>
-              <dt>발동 확률</dt><dd class="num">18%</dd>
-              <dt>골드포스</dt><dd>9일 남음 <span class="code-note">2026-07-28 09:00 만료</span></dd>
-              <dt>템플릿 코드</dt><dd class="num">1123 <span class="code-note">1×1000 + 1×100 + 2×10 + 3</span></dd>
-            </dl>
-          </div>
-        </section>
-
-      </div><!-- /.col-item -->
-
-      <!-- ══════════════════════════════════════════════════════════════════
-           우 본문: 거래 패널. 이 페이지의 주인공이라 남는 폭을 전부 가져간다.
-           ══════════════════════════════════════════════════════════════════ -->
-      <div class="col-trade">
-        <section class="trade" aria-label="거래 정보">
-
-          <!-- 마감 배너 (초임박 구간). 여유·임박 상태는 목록 페이지에서 대조할 수 있다 -->
-          <div class="deadline deadline--crit">
-            <span class="k"><span class="pip" aria-hidden="true"></span>마감 임박</span>
-            <span class="t num" data-countdown="47">00:47</span>
-            <span class="at">마감 2026-07-19 19:43:20 (서버 시각 기준)</span>
-          </div>
-
-          <p class="softclose">
-            남은 시간이 <b>30초</b> 아래일 때 입찰이 들어오면 마감이 <b>30초</b> 미뤄집니다.
-            지금까지 <b class="num">2회</b> 연장됐고, 최대 <b>2026-07-19 20:10</b>까지 늘어날 수 있습니다.
-          </p>
-
-          <!-- 넓은 폭을 값(좌) / 행동(우) 2열로 쓴다. ≤979px 에서는 세로로 접힌다 -->
-          <div class="trade-split">
-
-            <div>
-              <!-- ★ 값이 있을 때의 모습. 없을 때와의 대조는 아래 검증 스트립 -->
-              <div class="pricehero">
-                <span class="k">현재가</span>
-                <span class="v num">1,280,000<span class="u">G</span></span>
-              </div>
-
-              <dl class="kv">
-                <div><dt>입찰</dt><dd class="num">23회</dd></div>
-                <div><dt>최고 입찰자</dt><dd>서리***</dd></div>
-                <div><dt>시작가</dt><dd class="num">800,000G</dd></div>
-                <div class="strong"><dt>다음 최소 입찰가</dt><dd class="num">1,300,000G</dd></div>
-                <div><dt>즉시구매가</dt><dd class="num">2,000,000G</dd></div>
-              </dl>
-            </div>
-
-            <div>
-              <!-- CTA — primary 는 블랙(ink). 퍼플 채움은 쓰지 않는다(§5.1).
-                   즉시구매는 되돌릴 수 없는 종결 액션이라 주 액션보다 약한 outline 으로 둔다. -->
-              <div class="cta">
-                <button class="btn btn--lg" type="button">입찰하기</button>
-                <button class="btn btn--outline" type="button">즉시구매 <span class="num">2,000,000G</span></button>
-                <p class="reason">입찰하면 금액이 즉시 홀드됩니다. 상위 입찰에 밀리면 자동으로 풀립니다.</p>
-              </div>
-
-              <!-- 잔액 — 입찰 가능 여부를 결정하는 1차 정보 -->
-              <div class="wallet">
-                <dl>
-                  <div class="row"><dt>가용 게임머니</dt><dd class="num">2,150,000G</dd></div>
-                  <div class="row hold"><dt>홀드 중</dt><dd class="num">300,000G</dd></div>
-                </dl>
-                <p class="note">다음 최소 입찰가 <b class="num">1,300,000G</b>를 낼 수 있습니다.</p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- 판매자 -->
-        <div class="seller-card">
-          <span class="avatar" aria-hidden="true">달</span>
-          <span class="t">
-            <span class="nm">달빛상인</span>
-            <span class="s">거래 <span class="num">184</span>건 · 가입 2025-11</span>
+            <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스<span class="sr-only">적용됨, 남은 기간</span> <span class="num">9일</span></span>
+            <span class="zoom-cue"><span aria-hidden="true">⛶</span> 크게 보기</span>
           </span>
-          <a href="#" class="btn btn--outline btn--sm">판매 목록</a>
+        </button>
+        <!-- 정체성 스트립 — 아트가 좌단을 혼자 채우지 않게 하는 장치(§2-1 ①) -->
+        <div class="identity-strip">
+          <span class="eyebrow">아이템</span>
+          <p class="line">
+            <span class="type">무기 · 검</span>
+            <span class="lv">Lv.7</span>
+          </p>
+          <p class="meta">원본 카드 아트를 정수배(3x)로 확대했습니다. 레벨 표기는 아트에 포함돼 있습니다.</p>
         </div>
       </div>
 
+      <!-- 스펙 — 데스크톱 펼침 / 모바일 아코디언 (§8-3) -->
+      <details class="acc acc--desktop-plain" id="specAcc" open>
+        <summary>
+          아이템 스펙
+          <svg class="caret" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </summary>
+        <div class="acc-body">
+          <div class="spec-grid">
+            <div class="spec-item">
+              <span class="eyebrow">타입</span>
+              <span class="val">무기 · 검</span>
+              <span class="sub num">subGroup 1 · kind 3</span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">속성</span>
+              <span class="val">불</span>
+              <span class="sub num">element 2</span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">레벨</span>
+              <span class="val num">7</span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">스킬 1</span>
+              <span class="val">화염 강타</span>
+              <span class="sub num">skill 204</span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">스킬 2</span>
+              <span class="val empty">없음</span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">발동 확률</span>
+              <span class="val num">18%</span>
+              <span class="meter" role="presentation"><i style="width:18%"></i></span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">골드포스</span>
+              <span class="val num">9일 남음</span>
+              <span class="sub num">2026-07-28 09:00 만료</span>
+            </div>
+            <div class="spec-item">
+              <span class="eyebrow">템플릿 코드</span>
+              <span class="val num">1123</span>
+              <span class="sub num">1×1000 + 1×100 + 2×10 + 3</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
     </div>
 
-      <!-- ══════════════════════════════════════════════════════════════════
-           전폭: 입찰 이력. 근거 자료라 좁은 열이 아니라 넓게 편다.
-           ══════════════════════════════════════════════════════════════════ -->
-      <section class="block" aria-labelledby="h-bids">
-          <h2 id="h-bids">입찰 이력</h2>
-          <p class="sub">입찰자 이름은 마스킹됩니다. 홀드 금액·잔액 등 자금 정보는 공개하지 않습니다.</p>
-          <div class="bids">
-            <table class="bid-table">
-              <caption class="sr-only">입찰 이력, 금액 높은 순</caption>
-              <thead>
-                <tr>
-                  <th scope="col">입찰자</th>
-                  <th scope="col" class="r">입찰가</th>
-                  <th scope="col">상태</th>
-                  <th scope="col" class="r">시각</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="is-top">
-                  <td class="who">서리***</td>
-                  <td class="r amt num">1,280,000</td>
-                  <td><span class="chip chip--info"><span aria-hidden="true">●</span> 현재 최고</span></td>
-                  <td class="r when num">19:41:52</td>
-                </tr>
-                <tr>
-                  <td class="who">달빛***</td>
-                  <td class="r amt num">1,240,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">19:41:33</td>
-                </tr>
-                <tr>
-                  <td class="who">서리***</td>
-                  <td class="r amt num">1,180,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">19:40:08</td>
-                </tr>
-                <tr>
-                  <td class="who">불꽃***</td>
-                  <td class="r amt num">1,120,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">19:37:44</td>
-                </tr>
-                <tr>
-                  <td class="who">달빛***</td>
-                  <td class="r amt num">1,060,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">19:31:20</td>
-                </tr>
-                <tr>
-                  <td class="who">심해***</td>
-                  <td class="r amt num">980,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">18:52:11</td>
-                </tr>
-                <tr>
-                  <td class="who">불꽃***</td>
-                  <td class="r amt num">910,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">17:04:39</td>
-                </tr>
-                <tr>
-                  <td class="who">대장***</td>
-                  <td class="r amt num">850,000</td>
-                  <td><span class="chip chip--neutral">밀림</span></td>
-                  <td class="r when num">15:22:57</td>
-                </tr>
-              </tbody>
-            </table>
-            <!-- offset 페이징(§5.7) — 경매당 입찰 수는 소규모라 커서가 아니라 페이지 번호다 -->
-            <div class="bid-pager">
-              <span class="pg">전체 <b class="num">23</b>건 · 1 / 3 페이지</span>
-              <div class="nav">
-                <button type="button" disabled>이전</button>
-                <button type="button" class="cur num" aria-current="page">1</button>
-                <button type="button" class="num">2</button>
-                <button type="button" class="num">3</button>
-                <button type="button">다음</button>
-              </div>
-            </div>
-          </div>
-        </section>
+    <!-- ══════════════════════════════════════════════════════════════════════
+         ★ 입찰 바 — 전폭. 데스크톱 sticky(헤더 아래 고정) / 모바일 정적
+         3요소 치환(§4-1): 가격→현재가 / 옵션상태→잔여시간 / CTA→입찰
+         ══════════════════════════════════════════════════════════════════════ -->
+    <section class="bidbar" id="bidBar" aria-label="입찰">
+      <div class="bidbar-grid">
 
-        <!-- ── 검증 스트립 (목업 전용) ─────────────────────────────────────── -->
-        <section class="verify" aria-labelledby="h-verify">
-          <h2 id="h-verify">목업 검증: 가격 영역의 값 유무 대조 (실제 UI 아님)</h2>
-          <p>우측 거래 패널의 가격 블록을 두 상태로 나란히 놓았습니다. 왼쪽은 입찰이 붙은 상태,
-             오른쪽은 입찰이 하나도 없는 상태입니다. 두 판의 <b>전체 높이가 같아야</b> 합니다.
-             첫 입찰이 들어오는 순간 패널이 위아래로 튀면 실패입니다.</p>
-          <div class="pair">
-            <div class="pane">
-              <span class="cap">입찰 있음 (highestBidAmount = 1280000)</span>
-              <div class="pricehero">
-                <span class="k">현재가</span>
-                <span class="v num">1,280,000<span class="u">G</span></span>
-              </div>
-              <dl class="kv">
-                <div><dt>입찰</dt><dd class="num">23회</dd></div>
-                <div><dt>최고 입찰자</dt><dd>서리***</dd></div>
-                <div><dt>시작가</dt><dd class="num">800,000G</dd></div>
-                <div class="strong"><dt>다음 최소 입찰가</dt><dd class="num">1,300,000G</dd></div>
-                <div><dt>즉시구매가</dt><dd class="num">2,000,000G</dd></div>
-              </dl>
-            </div>
-            <div class="pane">
-              <span class="cap">입찰 없음 (highestBidAmount = null)</span>
-              <div class="pricehero pricehero--start">
-                <span class="k">입찰 없음 · 시작가</span>
-                <span class="v num">800,000<span class="u">G</span></span>
-              </div>
-              <dl class="kv">
-                <div><dt>입찰</dt><dd class="num">0회</dd></div>
-                <div><dt>최고 입찰자</dt><dd class="empty">없음</dd></div>
-                <div><dt>시작가</dt><dd class="num">800,000G</dd></div>
-                <div class="strong"><dt>다음 최소 입찰가</dt><dd class="num">800,000G</dd></div>
-                <div><dt>즉시구매가</dt><dd class="empty">설정 없음</dd></div>
-              </dl>
-            </div>
+        <!-- 시간: 평시=절대시각 / 주의=상대 분 / 임박=상대 초 (§1-6 표) -->
+        <div class="zone tzone" id="timeZone" data-phase="crit">
+          <span class="eyebrow">남은 시간</span>
+          <div class="stack">
+            <span class="figure" id="timeValue">04:32</span>
           </div>
-        </section>
+          <p class="sub">마감 <b>2026-07-19 19:43:20</b> · 서버 수신 시각 기준</p>
+        </div>
+
+        <!-- 가격: 긴박 표현을 적용하지 않는다(§1-5 ③ — 가격까지 빨개지면 세일 광고가 된다) -->
+        <div class="zone">
+          <span class="eyebrow">현재가</span>
+          <div class="stack">
+            <span class="figure figure--xl" id="priceValue">1,280,000<span class="u">G</span></span>
+          </div>
+          <p class="sub">입찰 <b>23</b>회 · 시작가 <b>800,000G</b> · 즉시구매가 <b>2,000,000G</b></p>
+        </div>
+
+        <!-- 액션: 최소가 원클릭 + 직접 입력 2단 (§2-2 로스트아크) -->
+        <div class="zone">
+          <div class="bid-actions">
+            <div class="bid-field">
+              <label class="eyebrow eyebrow--ink" for="bidAmount">입찰 금액</label>
+              <span class="row">
+                <input id="bidAmount" type="text" inputmode="numeric" value="1,300,000"
+                       aria-describedby="bidHint">
+                <span class="unit" aria-hidden="true">G</span>
+              </span>
+              <span class="hint" id="bidHint">최소 <b>1,300,000G</b> · 최대 <b>2,000,000G</b>(즉시구매가)</span>
+            </div>
+            <button class="btn btn--lg" type="button" id="bidSubmit">지금 입찰</button>
+            <button class="btn btn--outline btn--lg" type="button">즉시구매</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 연장 규칙 고지 + 갱신 시각 (§1-3 · §2-4) -->
+      <p class="extend-note">
+        <span>마감 <b>30초</b> 안에 입찰이 들어오면 마감이 <b>30초</b> 미뤄집니다. 지금까지 <b>2회</b> 연장됐습니다.</span>
+        <span class="freshness"><span class="pulse" aria-hidden="true"></span>방금 갱신됨</span>
+      </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         입찰 이력 — 데스크톱 표 / 모바일 카드 리스트 (§4-3)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <section class="section" aria-labelledby="h-bids">
+      <div class="section-head">
+        <h2 class="sec-title" id="h-bids">입찰 이력</h2>
+        <p class="sec-note">입찰자 이름은 마스킹됩니다. 홀드 금액·잔액 등 자금 정보는 공개하지 않습니다.</p>
+      </div>
+
+      <div class="bids">
+        <!-- 데스크톱: 표. 열이 여럿이라 전폭이 맞다(§2-1 ③) -->
+        <table class="bid-table">
+          <caption class="sr-only">입찰 이력, 금액 높은 순</caption>
+          <thead>
+            <tr>
+              <th scope="col">입찰자</th>
+              <th scope="col" class="r">입찰가</th>
+              <th scope="col" class="r">증분</th>
+              <th scope="col">상태</th>
+              <th scope="col" class="r">시각</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="is-top">
+              <td class="who">서리***</td><td class="r amt">1,280,000</td><td class="r delta">+40,000</td>
+              <td><span class="chip chip--info"><span aria-hidden="true">●</span> 현재 최고</span></td>
+              <td class="r when">19:41:52</td>
+            </tr>
+            <tr>
+              <td class="who">달빛***</td><td class="r amt">1,240,000</td><td class="r delta">+60,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">19:41:33</td>
+            </tr>
+            <tr>
+              <td class="who">서리***</td><td class="r amt">1,180,000</td><td class="r delta">+60,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">19:40:08</td>
+            </tr>
+            <tr>
+              <td class="who">불꽃***</td><td class="r amt">1,120,000</td><td class="r delta">+60,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">19:37:44</td>
+            </tr>
+            <tr>
+              <td class="who">달빛***</td><td class="r amt">1,060,000</td><td class="r delta">+80,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">19:31:20</td>
+            </tr>
+            <tr>
+              <td class="who">심해***</td><td class="r amt">980,000</td><td class="r delta">+70,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">18:52:11</td>
+            </tr>
+            <tr>
+              <td class="who">불꽃***</td><td class="r amt">910,000</td><td class="r delta">+60,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">17:04:39</td>
+            </tr>
+            <tr>
+              <td class="who">대장***</td><td class="r amt">850,000</td><td class="r delta">+50,000</td>
+              <td><span class="chip chip--neutral">밀림</span></td><td class="r when">15:22:57</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 모바일: 카드 리스트. 표를 접은 게 아니라 형식이 다르다 -->
+        <ul class="bid-cards">
+          <li class="is-top">
+            <div class="top"><span class="amt">1,280,000<span class="u">G</span></span>
+              <span class="chip chip--info"><span aria-hidden="true">●</span> 현재 최고</span></div>
+            <div class="bot"><span class="who">서리***</span><span aria-hidden="true">·</span>
+              <span class="when">19:41:52</span><span aria-hidden="true">·</span><span>+40,000</span></div>
+          </li>
+          <li>
+            <div class="top"><span class="amt">1,240,000<span class="u">G</span></span></div>
+            <div class="bot"><span class="who">달빛***</span><span aria-hidden="true">·</span>
+              <span class="when">19:41:33</span><span aria-hidden="true">·</span><span>+60,000</span></div>
+          </li>
+          <li>
+            <div class="top"><span class="amt">1,180,000<span class="u">G</span></span></div>
+            <div class="bot"><span class="who">서리***</span><span aria-hidden="true">·</span>
+              <span class="when">19:40:08</span><span aria-hidden="true">·</span><span>+60,000</span></div>
+          </li>
+          <li>
+            <div class="top"><span class="amt">1,120,000<span class="u">G</span></span></div>
+            <div class="bot"><span class="who">불꽃***</span><span aria-hidden="true">·</span>
+              <span class="when">19:37:44</span><span aria-hidden="true">·</span><span>+60,000</span></div>
+          </li>
+          <li>
+            <div class="top"><span class="amt">1,060,000<span class="u">G</span></span></div>
+            <div class="bot"><span class="who">달빛***</span><span aria-hidden="true">·</span>
+              <span class="when">19:31:20</span><span aria-hidden="true">·</span><span>+80,000</span></div>
+          </li>
+        </ul>
+
+        <div class="bid-pager">
+          <span class="pg">전체 <b>23</b>건 · 1 / 3 페이지</span>
+          <div class="nav">
+            <button type="button" disabled>이전</button>
+            <button type="button" class="cur" aria-current="page">1</button>
+            <button type="button">2</button>
+            <button type="button">3</button>
+            <button type="button">다음</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 거래 유의사항 -->
+    <section class="section" aria-labelledby="h-notes">
+      <div class="section-head"><h2 class="sec-title" id="h-notes">거래 유의사항</h2></div>
+      <div class="notes">
+        <div>
+          <h3>입찰하면 금액이 홀드됩니다</h3>
+          <p>입찰한 금액은 즉시 사용할 수 없도록 잠깁니다. 상위 입찰에 밀리면 자동으로 풀립니다.</p>
+        </div>
+        <div>
+          <h3>마감 직전 입찰은 마감을 미룹니다</h3>
+          <p>남은 시간이 30초 아래일 때 입찰이 들어오면 마감 시각이 다시 늘어납니다. 낙찰 판정은 서버가 입찰을 수신한 시각을 기준으로 합니다.</p>
+        </div>
+        <div>
+          <h3>낙찰 대금은 정산까지 보관됩니다</h3>
+          <p>구매 대금은 곧장 판매자에게 가지 않고 정산 단계에서 옮겨집니다. 취소·유찰이면 홀드된 금액이 그대로 돌아옵니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         목업 검증 스트립 — 실제 UI 아님
+         ══════════════════════════════════════════════════════════════════════ -->
+    <section class="verify" aria-labelledby="h-verify">
+      <h2 id="h-verify">목업 검증 (실제 UI 아님)</h2>
+      <p>임박 3구간은 <b>색만 바꾸지 않는다</b>. 시간 표현 단위·활자 크기·갱신 주기·CTA 문구가
+         함께 움직인다. 아래 세 판을 나란히 두고 실제로 구별되는지 본다.
+         본문 입찰 바는 <b>임박</b> 상태이며 카운트다운이 실제로 흐른다.</p>
+      <div class="trio">
+        <div class="pane">
+          <span class="cap">평시 · CALM</span>
+          <div class="tzone" data-phase="calm">
+            <span class="eyebrow">남은 시간</span>
+            <div class="stack" style="margin-top:var(--s2);"><span class="figure">7월 21일 21:00</span></div>
+          </div>
+          <p class="cta-preview">절대 시각 우선 · 갱신 <b>분 단위</b> · CTA <b>입찰하기</b></p>
+        </div>
+        <div class="pane">
+          <span class="cap">주의 · WARN</span>
+          <div class="tzone" data-phase="warn">
+            <span class="eyebrow">남은 시간</span>
+            <div class="stack" style="margin-top:var(--s2);"><span class="figure">3시간 12분</span></div>
+          </div>
+          <p class="cta-preview">상대 시간으로 교체 · 갱신 <b>분 단위</b> · CTA <b>입찰하기</b></p>
+        </div>
+        <div class="pane">
+          <span class="cap">임박 · CRITICAL</span>
+          <div class="tzone" data-phase="crit">
+            <span class="eyebrow">남은 시간</span>
+            <div class="stack" style="margin-top:var(--s2);"><span class="figure">04:32</span></div>
+          </div>
+          <p class="cta-preview">초 단위 상대 시간 · 갱신 <b>초 단위</b> · CTA <b>지금 입찰</b></p>
+        </div>
+      </div>
+
+      <p style="margin:var(--s8) 0 var(--s5); font-size:.8125rem; color:var(--text-muted);">
+        입찰 이력 <b>빈 상태</b> — 안2의 알려진 약점(하단이 휑해진다)이라 반드시 설계한다.
+      </p>
+      <div class="bids">
+        <div class="empty-state">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 20 20" width="20" height="20" fill="none">
+              <path d="M3 7l7-4 7 4v6l-7 4-7-4V7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <p class="t">아직 입찰이 없습니다</p>
+          <p class="d">첫 입찰자가 되어 보세요. 시작가 <b>800,000G</b>부터 입찰할 수 있습니다.</p>
+        </div>
+      </div>
+    </section>
+
   </div>
 </main>
 
@@ -1015,24 +1106,15 @@ a:hover{color:var(--primary-hover);}
       </div>
       <div class="footer-col">
         <h3>거래</h3>
-        <ul>
-          <li><a href="#">경매</a></li><li><a href="#">고정가</a></li>
-          <li><a href="#">시세</a></li><li><a href="#">판매하기</a></li>
-        </ul>
+        <ul><li><a href="#">경매</a></li><li><a href="#">고정가</a></li><li><a href="#">시세</a></li><li><a href="#">판매하기</a></li></ul>
       </div>
       <div class="footer-col">
         <h3>내 계정</h3>
-        <ul>
-          <li><a href="#">인벤토리</a></li><li><a href="#">주문 내역</a></li>
-          <li><a href="#">지갑·충전</a></li><li><a href="#">프로필</a></li>
-        </ul>
+        <ul><li><a href="#">인벤토리</a></li><li><a href="#">주문 내역</a></li><li><a href="#">지갑·충전</a></li><li><a href="#">프로필</a></li></ul>
       </div>
       <div class="footer-col">
         <h3>안내</h3>
-        <ul>
-          <li><a href="#">이용 안내</a></li><li><a href="#">수수료 정책</a></li>
-          <li><a href="#">입찰·낙찰 규칙</a></li><li><a href="#">자주 묻는 질문</a></li>
-        </ul>
+        <ul><li><a href="#">이용 안내</a></li><li><a href="#">수수료 정책</a></li><li><a href="#">입찰·낙찰 규칙</a></li><li><a href="#">자주 묻는 질문</a></li></ul>
       </div>
       <div class="footer-support">
         <h3>고객센터</h3>
@@ -1063,86 +1145,101 @@ a:hover{color:var(--primary-hover);}
     <div class="footer-bottom">
       <p class="copy">© 2026 FinalCall. All rights reserved.</p>
       <nav class="policies" aria-label="정책">
-        <a href="#">이용약관</a>
-        <a href="#" class="strong">개인정보처리방침</a>
-        <a href="#">환불·취소 정책</a>
-        <a href="#">청소년 보호정책</a>
+        <a href="#">이용약관</a><a href="#" class="strong">개인정보처리방침</a>
+        <a href="#">환불·취소 정책</a><a href="#">청소년 보호정책</a>
       </nav>
     </div>
   </div>
 </footer>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     카드 정보 모달 — 원본 게임 UI 차용(C안 하이브리드). CSS 재현, 비트맵 미사용.
-     Containment: 게임 톤은 이 모달 안에서만 산다(근거는 CSS §6 주석).
+     모바일 하단 고정 바 (§4-1 · §8-3). ≤719px 에서만 표시된다.
      ══════════════════════════════════════════════════════════════════════════ -->
-<div class="cm-scrim" id="cmScrim" hidden></div>
+<div class="mobilebar" id="mobileBar" data-shown="false" data-phase="crit">
+  <div class="inner">
+    <div class="vals">
+      <span class="price">1,280,000<span class="u">G</span></span>
+      <span class="time" id="mbTime">04:32 남음</span>
+    </div>
+    <button class="btn btn--lg" type="button" id="mbBid">입찰하기</button>
+  </div>
+</div>
 
-<div class="cardmodal" id="cardModal" role="dialog" aria-modal="true"
-     aria-labelledby="cmTitleKo" aria-describedby="cmSubtitle" hidden>
-
-  <!-- 계승 2: 타이틀바. 원본은 제목이 비트맵에 구워져 있었으나 실제 텍스트로 되살린다.
-       계승 4-a: 이 바를 끌면 창이 움직인다(원본 DRAG_RECT 0,0,211,33 / IWS_CANMOVE). -->
-  <div class="cm-titlebar" id="cmDrag">
-    <span class="cm-gem" aria-hidden="true"></span>
-    <h2><span class="ko" id="cmTitleKo">카드정보</span><span class="en">CARD INFO</span></h2>
-    <button type="button" class="cm-x" id="cmClose" aria-label="카드 정보 닫기">
-      <svg viewBox="0 0 12 12" width="11" height="11" fill="none" aria-hidden="true">
-        <path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     라이트박스 — 아트 확대 전용. 스펙·탭·거래 액션 없음.
+     데스크톱=중앙 모달 / 모바일=바텀시트(가로 배치)
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="scrim" id="lbScrim" hidden></div>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lbTitle" hidden>
+  <span class="lb-grab" aria-hidden="true"></span>
+  <div class="lb-head">
+    <h2 id="lbTitle">카드 아트</h2>
+    <button type="button" class="dlg-x" id="lbClose" aria-label="닫기">
+      <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+        <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
       </svg>
     </button>
   </div>
-
-  <div class="cm-body">
-    <!-- 원본 y40..135: 좌 카드 슬롯(50×93) + 우 스펙 5행 -->
-    <div class="cm-head">
-      <div class="cm-cardslot">
+  <div class="lb-body">
+    <!-- 게임색은 이 슬롯 안에만 있다. 바깥 크롬은 전부 라이트 커머스다(§6-3) -->
+    <div class="lb-stage slot slot--glow-fire">
+      <span class="art-frame art-frame--x4 has-gf">
+        <span class="gf" aria-hidden="true"><i></i></span>
         <img src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png"
-             alt="7레벨 불속성 검 카드 아트" width="100" height="186">
-        <span class="cm-gfbadge">GF <span class="num">9</span>일</span>
-      </div>
-
-      <!-- 원본 5행: 타입 / 명칭 / 채널제한 / 속성 / 남은 골드 포스.
-           채널제한은 계약에 없어 레벨로 대체했다(원본은 레벨을 아트에 구워 표시). -->
-      <dl class="cm-spec">
-        <dt>타입</dt><dd>무기 · 검</dd>
-        <dt>명칭</dt><dd>불의 대검 +7</dd>
-        <dt>속성</dt><dd>불</dd>
-        <dt>레벨</dt><dd class="num">7</dd>
-        <dt>남은 골드포스</dt><dd class="num">9일</dd>
-      </dl>
+             alt="7레벨 불속성 검 카드 아트, 4배 확대" width="200" height="372">
+      </span>
+      <span class="gf-badge"><span class="dot" aria-hidden="true"></span>골드포스 <span class="num">9일</span></span>
     </div>
-
-    <!-- 계승 3: 탭. 원본 6종 중 계약으로 채울 수 있는 2종만 만든다(빈 탭 금지) -->
-    <div class="cm-tabs" role="tablist" aria-label="카드 정보 분류">
-      <button type="button" class="cm-tab" role="tab" id="cmTab1"
-              aria-selected="true" aria-controls="cmPanel1">기본 특징</button>
-      <button type="button" class="cm-tab" role="tab" id="cmTab2"
-              aria-selected="false" aria-controls="cmPanel2" tabindex="-1">특수 스킬</button>
+    <div class="lb-identity">
+      <p class="nm">불의 대검 +7</p>
+      <p class="sub">
+        <span class="el el--fire"><span class="dot" aria-hidden="true"></span>불</span>
+        <span>무기 · 검 · Lv.<span class="num">7</span></span>
+      </p>
     </div>
-
-    <div class="cm-panel" role="tabpanel" id="cmPanel1" aria-labelledby="cmTab1" tabindex="0">
-      <p id="cmSubtitle">근거리 공격의 속도를 빠르게 해 주는 카드입니다. 물·불·흙·바람의 카드 속성에 따라
-         MP 소모량과 공격 속도를 조절할 수 있습니다.</p>
-      <div class="kvline"><span class="k">템플릿 코드</span><span class="v num">1123</span></div>
-      <div class="kvline"><span class="k">코드 분해</span><span class="v num">1×1000 + 1×100 + 2×10 + 3</span></div>
-      <p class="dim">상품군 1(아이템 카드) · 대분류 1(무기) · 속성 2(불) · 종류 3(검)</p>
-    </div>
-
-    <div class="cm-panel" role="tabpanel" id="cmPanel2" aria-labelledby="cmTab2" tabindex="0" hidden>
-      <div class="kvline"><span class="k">스킬 1</span><span class="v">화염 강타 <span class="num">(204)</span></span></div>
-      <div class="kvline"><span class="k">스킬 2</span><span class="v empty">없음</span></div>
-      <div class="kvline"><span class="k">발동 확률</span><span class="v num">18%</span></div>
-      <p class="dim">발동 확률은 슬롯에 장착된 스킬이 발동할 확률입니다. 스킬 슬롯이 비어 있으면
-         해당 줄은 "없음"으로 표시됩니다.</p>
-    </div>
+    <p class="lb-note">원본 카드 아트를 정수배(4x)로 확대했습니다. 상세 스펙은 페이지 본문에 있습니다.</p>
   </div>
+</div>
 
-  <!-- 원본 하단 버튼 2개(상점에 팔기·포스충전)는 **인벤토리 소유자용**이라 경매 맥락에 맞지 않는다.
-       버튼 2개라는 형태만 계승하고 내용은 경매 맥락으로 바꾼다. -->
-  <div class="cm-foot">
-    <button type="button" class="cm-btn" id="cmPrices">시세 보기</button>
-    <button type="button" class="cm-btn cm-btn--ghost" id="cmCloseFoot">닫기</button>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     입찰 바텀시트 — 모바일 액션 (§4-2 · §5-3). 짧고 일시적인 상호작용만 담는다.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="scrim" id="bsScrim" hidden></div>
+<div class="sheet" id="bidSheet" role="dialog" aria-modal="true" aria-labelledby="bsTitle" hidden>
+  <span class="grab" aria-hidden="true"></span>
+  <div class="sheet-head">
+    <h2 id="bsTitle">입찰하기</h2>
+    <button type="button" class="dlg-x" id="bsClose" aria-label="닫기">
+      <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+        <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="sheet-body">
+    <div class="sheet-rows">
+      <div class="row hi"><span class="k">현재가</span><span class="v">1,280,000G</span></div>
+      <div class="row"><span class="k">다음 최소 입찰가</span><span class="v">1,300,000G</span></div>
+      <div class="row"><span class="k">즉시구매가</span><span class="v">2,000,000G</span></div>
+      <div class="row"><span class="k">남은 시간</span><span class="v" id="bsTime">04:32</span></div>
+      <div class="row"><span class="k">가용 게임머니</span><span class="v">2,150,000G</span></div>
+    </div>
+
+    <div class="sheet-quick">
+      <label class="eyebrow eyebrow--ink" for="bsAmount">입찰 금액</label>
+      <span class="sheet-input">
+        <input id="bsAmount" type="text" inputmode="numeric" value="1,300,000">
+        <span class="unit" aria-hidden="true">G</span>
+      </span>
+    </div>
+
+    <div class="sheet-cta">
+      <!-- §2-2: 마감 직전 폭주에서 금액을 타이핑하게 만드는 건 설계 실패다.
+           최소가 원클릭을 주 액션으로 둔다 -->
+      <button class="btn btn--lg" type="button">최소 입찰가로 입찰 · <span class="num">1,300,000G</span></button>
+      <button class="btn btn--outline" type="button">입력한 금액으로 입찰</button>
+    </div>
+    <p class="sheet-note">입찰하면 금액이 즉시 홀드됩니다. 상위 입찰에 밀리면 자동으로 풀립니다.
+       낙찰 판정은 서버가 입찰을 수신한 시각을 기준으로 합니다.</p>
   </div>
 </div>
 
@@ -1155,148 +1252,141 @@ a:hover{color:var(--primary-hover);}
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   카드 정보 모달 — 열기/닫기 · 포커스 트랩 · ESC · 드래그 이동 · 탭
+   ★ 단일 시계 (§1-2 eBay 실패 사례)
    ──────────────────────────────────────────────────────────────────────────────
-   계승 4: 원본 XML STYLE="IWS_CANMOVE|IWS_EXIT_ESC" 두 가지를 실제로 구현한다.
-   ★ 드래그는 마우스 전용 보조 기능이다. 키보드 사용자가 불이익을 받지 않도록:
-     · 모달은 기본 중앙 정렬이고 아무것도 가리지 않는다(이동할 이유가 없다).
-     · 내용이 길면 모달 **내부가 스크롤**된다(창을 옮겨야만 볼 수 있는 내용이 없다).
-     · 드래그로 옮긴 위치는 닫을 때 초기화된다(다음 열기에서 화면 밖에 남지 않는다).
+   eBay 는 화면마다 독립 타이머를 돌려 상품 페이지와 입찰 확인 팝업의 값이 어긋났다.
+   여기서는 하나의 시계가 모든 구독자에게 같은 값을 밀어 준다 —
+   본문 입찰 바 · 모바일 하단 바 · 입찰 시트가 전부 같은 소스를 본다.
+   실제 구현에서는 서버 시각 1회 동기화 + 클라이언트 오프셋 보정으로 대체한다.
+   ※ 임박 3구간의 정확한 임계값은 데이터·정책 사안이다(§8-5). 아래 300초/4시간은
+     시각 검증을 위한 데모값이며 확정이 아니다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+var Clock=(function(){
+  var left=272;                 /* 데모용 잔여 초 (04:32) */
+  var subs=[];
+  function pad(v){ return v<10 ? '0'+v : ''+v; }
+  function phase(s){ return s<=300 ? 'crit' : (s<=14400 ? 'warn' : 'calm'); }
+  function fmt(s){
+    if(s<=0) return '마감';
+    if(phase(s)==='crit'){ return pad(Math.floor(s/60))+':'+pad(s%60); }
+    if(phase(s)==='warn'){
+      var h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+      return h>0 ? (h+'시간 '+m+'분') : (m+'분');
+    }
+    return '7월 21일 21:00';
+  }
+  function tick(){
+    if(left>0) left-=1;
+    var p=phase(left), t=fmt(left);
+    subs.forEach(function(fn){ fn(t,p,left); });
+  }
+  setInterval(tick,1000);
+  return { on:function(fn){ subs.push(fn); fn(fmt(left),phase(left),left); } };
+})();
+
+/* 구독자 1: 본문 입찰 바 */
+Clock.on(function(text,phase){
+  document.getElementById('timeValue').textContent=text;
+  document.getElementById('timeZone').dataset.phase=phase;
+  /* CTA 문구도 구간에 따라 바뀐다(§1-6 표) — 색만 바꾸지 않는다 */
+  document.getElementById('bidSubmit').textContent = (phase==='crit') ? '지금 입찰' : '입찰하기';
+});
+/* 구독자 2: 모바일 하단 바 — 본문과 값이 어긋나면 안 된다(§8-3) */
+Clock.on(function(text,phase){
+  document.getElementById('mobileBar').dataset.phase=phase;
+  document.getElementById('mbTime').textContent = (phase==='calm') ? (text+' 마감') : (text+' 남음');
+});
+/* 구독자 3: 입찰 시트 */
+Clock.on(function(text){ document.getElementById('bsTime').textContent=text; });
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   스펙 아코디언 — 데스크톱 펼침 / 모바일 접힘 (§8-3 대조표)
+   "좁아지면 접힌다"가 아니라 기본 상태 자체가 디바이스마다 다르다.
    ══════════════════════════════════════════════════════════════════════════════ */
 (function(){
-  var modal=document.getElementById('cardModal'),
-      scrim=document.getElementById('cmScrim'),
-      trigger=document.getElementById('cardTrigger'),
-      dragBar=document.getElementById('cmDrag'),
-      lastFocus=null, scrollY=0;
-
-  var FOCUSABLE='a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
-  function focusables(){
-    return [].slice.call(modal.querySelectorAll(FOCUSABLE))
-      .filter(function(el){ return el.offsetParent!==null; });
-  }
-
-  function open(){
-    lastFocus=document.activeElement;
-    scrollY=window.scrollY;
-    /* 배경 스크롤 잠금. position:fixed 로 잠그고 top 을 보정하지 않으면
-       닫을 때 페이지가 맨 위로 튄다. */
-    document.body.style.position='fixed';
-    document.body.style.top=(-scrollY)+'px';
-    document.body.style.width='100%';
-
-    scrim.hidden=false; modal.hidden=false;
-    requestAnimationFrame(function(){
-      scrim.dataset.open='true'; modal.dataset.open='true';
-    });
-    /* 첫 포커스는 닫기 버튼 — 파괴적이지 않고 탈출 경로를 즉시 알려 준다 */
-    document.getElementById('cmClose').focus();
-    document.addEventListener('keydown', onKey, true);
-  }
-
-  function close(){
-    scrim.dataset.open='false'; modal.dataset.open='false';
-    document.removeEventListener('keydown', onKey, true);
-
-    document.body.style.position=''; document.body.style.top=''; document.body.style.width='';
-    window.scrollTo(0, scrollY);
-
-    modal.removeAttribute('data-dragged');
-    modal.style.left=''; modal.style.top='';
-
-    var hide=function(){ modal.hidden=true; scrim.hidden=true; };
-    if(getComputedStyle(modal).transitionDuration === '0s'){ hide(); }
-    else { setTimeout(hide, 200); }
-
-    if(lastFocus) lastFocus.focus();   /* ★ 열기 전 요소로 포커스 복귀 */
-  }
-
-  function onKey(e){
-    if(e.key==='Escape'){ e.preventDefault(); close(); return; }   /* IWS_EXIT_ESC */
-    if(e.key!=='Tab') return;
-    var f=focusables();
-    if(!f.length) return;
-    var first=f[0], last=f[f.length-1];
-    if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
-    else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
-  }
-
-  trigger.addEventListener('click', open);
-  document.getElementById('cmClose').addEventListener('click', close);
-  document.getElementById('cmCloseFoot').addEventListener('click', close);
-  scrim.addEventListener('click', close);
-
-  /* ── 계승 4-a: 타이틀바 드래그 이동 (원본 DRAG_RECT 0,0,211,33 / IWS_CANMOVE) ── */
-  (function(){
-    var dragging=false, sx=0, sy=0, ox=0, oy=0;
-    dragBar.addEventListener('pointerdown', function(e){
-      if(e.target.closest('.cm-x')) return;      /* 닫기 버튼은 드래그 손잡이가 아니다 */
-      var r=modal.getBoundingClientRect();
-      modal.dataset.dragged='true';
-      modal.style.left=r.left+'px'; modal.style.top=r.top+'px';
-      dragging=true; sx=e.clientX; sy=e.clientY; ox=r.left; oy=r.top;
-      dragBar.setPointerCapture(e.pointerId);
-    });
-    dragBar.addEventListener('pointermove', function(e){
-      if(!dragging) return;
-      var r=modal.getBoundingClientRect();
-      var nx=ox+(e.clientX-sx), ny=oy+(e.clientY-sy);
-      /* 화면 밖으로 완전히 빠지지 않게 가둔다 — 타이틀바는 항상 잡을 수 있어야 한다 */
-      nx=Math.min(Math.max(nx, 80-r.width), window.innerWidth-80);
-      ny=Math.min(Math.max(ny, 0), window.innerHeight-40);
-      modal.style.left=nx+'px'; modal.style.top=ny+'px';
-    });
-    dragBar.addEventListener('pointerup', function(e){
-      dragging=false;
-      try{ dragBar.releasePointerCapture(e.pointerId); }catch(err){}
-    });
-  })();
-
-  /* ── 계승 3: 탭. role=tablist 표준 키보드 조작(←/→/Home/End) ────────────────── */
-  (function(){
-    var tabs=[].slice.call(modal.querySelectorAll('[role="tab"]'));
-    function select(i){
-      tabs.forEach(function(t,n){
-        var on=(n===i);
-        t.setAttribute('aria-selected', String(on));
-        t.tabIndex = on ? 0 : -1;
-        document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
-      });
-      tabs[i].focus();
-    }
-    tabs.forEach(function(t,i){
-      t.addEventListener('click', function(){ select(i); });
-      t.addEventListener('keydown', function(e){
-        var n=null;
-        if(e.key==='ArrowRight') n=(i+1)%tabs.length;
-        else if(e.key==='ArrowLeft') n=(i-1+tabs.length)%tabs.length;
-        else if(e.key==='Home') n=0;
-        else if(e.key==='End') n=tabs.length-1;
-        if(n!==null){ e.preventDefault(); select(n); }
-      });
-    });
-  })();
+  var acc=document.getElementById('specAcc');
+  var mq=window.matchMedia('(min-width: 860px)');
+  function apply(e){ acc.open = e.matches; }
+  apply(mq);
+  if(mq.addEventListener) mq.addEventListener('change', apply);
+  else if(mq.addListener) mq.addListener(apply);
 })();
 
-/* ── 카운트다운 ───────────────────────────────────────────────────────────────
-   상세의 카운트다운은 2.5rem 이라 자릿수 변화가 가장 크게 튄다.
-   tabular-nums 로 폭이 고정되는지, 매초 갱신에 패널이 흔들리지 않는지를 눈으로 확인한다.
-   aria-live 는 걸지 않는다(초당 스팸 금지). 마감 전환 시점에만 안내하는 것이 맞다. */
+/* ══════════════════════════════════════════════════════════════════════════════
+   모바일 하단 고정 바 — IntersectionObserver (§8-3 안티패턴 회피)
+   스크롤 리스너·픽셀 임계값을 쓰지 않는다. 본문 입찰 바가 뷰포트를 벗어나면 나타난다.
+   나타날 때 포커스를 빼앗지 않는다(포커스 조작 없음).
+   ══════════════════════════════════════════════════════════════════════════════ */
 (function(){
-  var nodes=[].slice.call(document.querySelectorAll('[data-countdown]'));
-  if(!nodes.length) return;
-  nodes.forEach(function(n){ n.dataset.left=n.dataset.countdown; });
-  function pad(v){ return v<10 ? '0'+v : ''+v; }
-  setInterval(function(){
-    nodes.forEach(function(n){
-      var s=parseInt(n.dataset.left,10);
-      if(s<=0){ n.textContent='마감'; return; }
-      s-=1; n.dataset.left=s;
-      var m=Math.floor(s/60);
-      if(m>=60){ n.textContent=Math.floor(m/60)+':'+pad(m%60)+':'+pad(s%60); }
-      else{ n.textContent=pad(m)+':'+pad(s%60); }
-    });
-  },1000);
+  var bar=document.getElementById('mobileBar'), target=document.getElementById('bidBar');
+  if(!('IntersectionObserver' in window)){ bar.dataset.shown='true'; return; }
+  new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ bar.dataset.shown = String(!en.isIntersecting); });
+  },{threshold:0}).observe(target);
 })();
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   다이얼로그 공용 — 포커스 트랩 · ESC · 포커스 복귀 · 배경 스크롤 잠금
+   NN/g §4-2: 시트를 겹쳐 쌓지 않는다 → 하나를 열면 다른 하나는 닫는다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+function makeDialog(dialogId, scrimId, firstFocusId){
+  var dlg=document.getElementById(dialogId), scrim=document.getElementById(scrimId);
+  var last=null, scrollY=0, open=false;
+  var SEL='a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
+  function focusables(){
+    return [].slice.call(dlg.querySelectorAll(SEL)).filter(function(el){ return el.offsetParent!==null; });
+  }
+  function onKey(e){
+    if(e.key==='Escape'){ e.preventDefault(); api.close(); return; }
+    if(e.key!=='Tab') return;
+    var f=focusables(); if(!f.length) return;
+    var a=f[0], z=f[f.length-1];
+    if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); }
+    else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); }
+  }
+  var api={
+    isOpen:function(){ return open; },
+    open:function(){
+      if(open) return;
+      open=true; last=document.activeElement; scrollY=window.scrollY;
+      document.body.style.position='fixed';
+      document.body.style.top=(-scrollY)+'px';
+      document.body.style.width='100%';
+      scrim.hidden=false; dlg.hidden=false;
+      requestAnimationFrame(function(){ scrim.dataset.open='true'; dlg.dataset.open='true'; });
+      document.getElementById(firstFocusId).focus();
+      document.addEventListener('keydown', onKey, true);
+    },
+    close:function(){
+      if(!open) return;
+      open=false;
+      scrim.dataset.open='false'; dlg.dataset.open='false';
+      document.removeEventListener('keydown', onKey, true);
+      document.body.style.position=''; document.body.style.top=''; document.body.style.width='';
+      window.scrollTo(0, scrollY);
+      var hide=function(){ dlg.hidden=true; scrim.hidden=true; };
+      if(getComputedStyle(dlg).transitionDuration==='0s'){ hide(); } else { setTimeout(hide,200); }
+      if(last) last.focus();
+    }
+  };
+  scrim.addEventListener('click', api.close);
+  return api;
+}
+
+var Lightbox=makeDialog('lightbox','lbScrim','lbClose');
+var BidSheet=makeDialog('bidSheet','bsScrim','bsClose');
+
+document.getElementById('artTrigger').addEventListener('click', function(){
+  if(BidSheet.isOpen()) BidSheet.close();   /* 시트를 겹쳐 쌓지 않는다(NN/g) */
+  Lightbox.open();
+});
+document.getElementById('lbClose').addEventListener('click', Lightbox.close);
+
+/* 모바일 하단 바의 입찰 → 바텀시트. 데스크톱 입찰은 인라인이라 시트를 쓰지 않는다(§4-4 대조표) */
+document.getElementById('mbBid').addEventListener('click', function(){
+  if(Lightbox.isOpen()) Lightbox.close();
+  BidSheet.open();
+});
+document.getElementById('bsClose').addEventListener('click', BidSheet.close);
 </script>
 </body></html>
