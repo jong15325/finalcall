@@ -4,6 +4,7 @@ import { AuthFormLayout } from '@/components/layout/AuthFormLayout';
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { PagePlaceholder } from '@/pages/PagePlaceholder';
+import { HomePage } from '@/pages/HomePage';
 import { AuctionListPage } from '@/pages/AuctionListPage';
 import { AuctionDetailPage } from '@/pages/AuctionDetailPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -22,7 +23,7 @@ export function AppRoutes() {
     <Routes>
       {/* 공개(인증 불요) */}
       <Route element={<PublicLayout />}>
-        <Route path={ROUTES.home} element={<PagePlaceholder title="홈" />} />
+        <Route path={ROUTES.home} element={<HomePage />} />
         <Route path={ROUTES.auctions} element={<AuctionListPage />} />
         <Route path={ROUTES.auctionDetail} element={<AuctionDetailPage />} />
         <Route path={ROUTES.shops} element={<PagePlaceholder title="고정가 목록" />} />

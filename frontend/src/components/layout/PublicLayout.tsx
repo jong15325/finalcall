@@ -1,57 +1,24 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuthStore, useIsAuthenticated } from '@/stores/authStore';
+import { Outlet, useLocation } from 'react-router-dom';
+import { AppShell } from '@/components/layout/AppShell';
 import { ROUTES } from '@/routes/paths';
 
 /**
- * 공개 레이아웃 — 내비게이션 있는 최상위 셸(인증 불요 영역).
- * 도메인 콘텐츠는 없다(스켈레톤). 링크는 IA 셸(skeleton-plan [3]) 기준.
+ * 공개 레이아웃 — 인증 불요 영역의 공통 셸(FC-048에서 AppShell 로 교체).
+ *
+ * 종전에는 이 파일이 헤더 마크업을 직접 갖고 있었고 ProtectedLayout 에 같은 것이 복제돼 있었다.
+ * 셸은 전 화면에 걸리므로 단일 출처(AppShell)로 모은다.
+ *
+ * **홈만 전폭이다.** 홈은 섹션 밴드(`surface-band`)가 화면 끝까지 흘러 면 리듬을 만드는 구조라
+ * ([2.1]) 컨테이너 안에 가두면 밴드가 "가운데 회색 박스"로 쪼그라든다. 나머지 공개 화면은 종전과
+ * 같은 max-width 컨테이너를 쓴다.
  */
-const navClass = ({ isActive }: { isActive: boolean }): string =>
-  `text-body transition-colors duration-fast hover:text-text ${
-    isActive ? 'text-text font-semibold' : 'text-text-muted'
-  }`;
-
 export function PublicLayout() {
-  const isAuthed = useIsAuthenticated();
-  const nickname = useAuthStore((s) => s.user?.nickname);
+  const { pathname } = useLocation();
+  const isHome = pathname === ROUTES.home;
 
   return (
-    <div className="min-h-screen bg-bg text-text">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          {/* 워드마크 22px 은 [3.3] 스케일 예외 1건 — 브랜드 자산이라 전 화면 동일 수치를 유지한다. */}
-          <Link to={ROUTES.home} className="text-wordmark text-text">
-            FinalCall
-          </Link>
-          <nav className="flex items-center gap-4">
-            <NavLink to={ROUTES.auctions} className={navClass}>
-              경매
-            </NavLink>
-            <NavLink to={ROUTES.shops} className={navClass}>
-              고정가
-            </NavLink>
-            <NavLink to={ROUTES.marketPrices} className={navClass}>
-              시세
-            </NavLink>
-          </nav>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            {isAuthed ? (
-              <NavLink to={ROUTES.profile} className={navClass}>
-                {nickname ?? '마이페이지'}
-              </NavLink>
-            ) : (
-              <NavLink to={ROUTES.login} className={navClass}>
-                로그인
-              </NavLink>
-            )}
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">
-        <Outlet />
-      </main>
-    </div>
+    <AppShell contained={!isHome}>
+      <Outlet />
+    </AppShell>
   );
 }

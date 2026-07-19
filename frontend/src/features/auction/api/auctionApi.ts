@@ -10,6 +10,11 @@ export interface AuctionListQuery extends AuctionFilters {
   sort: AuctionSortValue;
   /** opaque cursor(계약 §1.3). 첫 페이지는 미지정. */
   cursor?: string;
+  /**
+   * 페이지 크기(계약 §1.3 `size`). 미지정 시 목록 화면 기준값.
+   * 홈처럼 **첫 페이지만 미리보기로 쓰는 자리**는 목록 20건이 과하므로 호출부가 직접 줄인다.
+   */
+  size?: number;
 }
 
 /**
@@ -26,7 +31,7 @@ export function getAuctions(query: AuctionListQuery): Promise<CursorPage<Auction
       element: query.element,
       sort: query.sort,
       cursor: query.cursor,
-      size: AUCTION_PAGE_SIZE,
+      size: query.size ?? AUCTION_PAGE_SIZE,
     },
   });
 }
