@@ -1,7 +1,7 @@
 ---
 id: EPIC-FE-REDESIGN
 type: epic
-jira_key: null
+jira_key: KAN-56
 title: 프론트 실코드 반영 — design-system v0.6.1 + 목업 집행
 state: doing
 children: [FC-047, FC-048, FC-049, FC-050, FC-051]
