@@ -27,6 +27,18 @@ import { ROUTES } from '@/configs/routes.config'
  *    `variant="default"`(= 흰 바탕 + `border-gray-300`)로 둬 **두 CTA 가 경쟁하지 않게** 한다.
  *    위계는 색이 아니라 **템플릿이 이미 정해둔 variant 차이**로 만든다.
  *    **폐기**: 종전의 `inkColorClass`(near-black 채움)와 `shared/buttonColors` 파일.
+ *
+ * ★★ **알려진 AA 미달 — 고치지 않고 남겨둔다(FC-057, 사용자 판단 대기).**
+ *    템플릿 기본 프리셋(`themeSchema: ''` = blue)의 `--primary` 램프가 흰 전경에 대해 얕다:
+ *      - `solid` 정지 흰 글자 on `--primary` #2A85FF …… **3.56** (요구 4.5)
+ *      - `solid` hover on `--primary-mild` #4996FF ……… **2.96**
+ *      - `default`·`plain` 도 hover 가 `text-primary`/`text-primary-mild` 로 가 각각 3.56/2.96
+ *    즉 **세 variant 전부** 어느 상태에선가 미달이라 variant 교체로는 해결되지 않는다.
+ *    WCAG 1.4.3 큰 텍스트 예외(≥18.66px bold)도 **적용되지 않는다** — 실측 결과 버튼 활자는
+ *    xs 12 / sm 14 / md 14(body 상속) / lg 16px 이고 전부 `.button` 의 `font-bold` 다.
+ *    **템플릿 안의 유일한 해법은 프리셋 교체**(`themeSchema: 'dark'` → `--primary` #18181B,
+ *    17.72/14.89 통과)인데 그건 앱 전체 액센트가 바뀌는 **사용자 결정**이다.
+ *    → 우리 값으로 토큰을 덮지 않는다. 내비는 (c)로 우회했지만 **버튼은 우회로가 없다.**
  */
 
 const AccountMenu = () => {

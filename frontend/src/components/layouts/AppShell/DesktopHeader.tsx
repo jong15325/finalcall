@@ -29,8 +29,17 @@ import { PRIMARY_DESTINATIONS, isDestinationActive } from './navigation'
  *    `tab-nav-underline`)를 그대로 재사용한다 — 우리가 값을 만들지 않는다.
  *    **폐기**: 종전의 near-black 2px 밑줄(`border-gray-900`).
  *
+ * ★★ **액센트는 형태에, 대비는 라벨에**(사용자 판정 2026-07-19 — 선택지 (c)).
+ *    템플릿 `TabNav` 는 활성 탭에 `text-primary` 도 함께 주지만, `--primary` #2A85FF 는
+ *    흰 배경에서 **3.56:1 로 본문 크기 AA(4.5)에 미달**한다. 그래서
+ *    - **밑줄만 `border-primary`** — 비텍스트라 요구가 3:1 이고 3.56 로 **통과**한다.
+ *    - **라벨은 `text-gray-900 dark:text-gray-100`** — 17.93 / 16.44 로 여유 통과.
+ *    hover 도 같은 이유로 `hover:text-primary`(3.56) 대신 템플릿 `.menu-item-hoverable` 의
+ *    `hover:text-gray-900 dark:hover:text-gray-100` 관례를 쓴다.
+ *    ★ **템플릿 토큰은 건드리지 않았다** — 토큰을 덮는 대신 **어느 토큰을 어디에 쓸지**만 골랐다.
+ *
  * ★ 색만으로 전달하지 않는다(WCAG 1.4.1 — 접근성은 템플릿에 위임하지 않는다):
- *   활성 항목은 **밑줄(형태) + `aria-current="page"`(의미)** 를 색과 함께 갖는다.
+ *   활성 항목은 **밑줄(형태) + `aria-current="page"`(의미)** 를 함께 갖는다.
  */
 
 const NavItem = ({
@@ -49,8 +58,8 @@ const NavItem = ({
             // 템플릿 `_tabs.css` 의 underline 탭 클래스를 그대로 쓴다(`py-3 px-5` 는 셸 높이에 맞춰 제외).
             'tab-nav relative -mb-px h-12 border-b-2 border-transparent px-1 text-sm',
             active
-                ? 'tab-nav-active border-primary text-primary'
-                : 'hover:text-primary',
+                ? 'tab-nav-active border-primary text-gray-900 dark:text-gray-100'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
         )}
     >
         {label}

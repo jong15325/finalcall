@@ -224,6 +224,41 @@ describe('AppShell — 잔액 (계약 §4.4)', () => {
     })
 })
 
+describe('AppShell — 대비 회귀 가드', () => {
+    /*
+     * ★ **색 자체를 단언하지 않는다** — 어떤 색이 예쁜지는 템플릿 소관이고 바뀔 수 있다.
+     *   여기서 막는 것은 **측정된 AA 미달값의 부활**뿐이다: 템플릿 `--primary` #2A85FF 는
+     *   흰 배경에서 3.56:1 이라 본문 크기 라벨에 쓰면 AA(4.5)를 깬다.
+     *   템플릿 `TabNav`·`.menu-item-active` 는 활성 항목에 `text-primary` 를 주므로,
+     *   그 관례를 그대로 복사해 오면 조용히 미달로 돌아간다 — 그걸 잡는다.
+     */
+    it('활성 내비 라벨이 text-primary 를 쓰지 않는다 (흰 배경 3.56:1 미달)', () => {
+        renderWithProviders(<AppShell>본문</AppShell>, { route: '/auctions' })
+
+        for (const nav of [desktopNav(), mobileNav()]) {
+            const active = within(nav)
+                .getAllByRole('link')
+                .find((el) => el.getAttribute('aria-current') === 'page')
+
+            expect(active).toBeDefined()
+            expect(active!.className).not.toMatch(/(^|\s)text-primary(\s|$)/)
+        }
+    })
+
+    it('액센트는 형태(테두리)에 남아 있다 — 활성 표시가 사라진 게 아니다', () => {
+        renderWithProviders(<AppShell>본문</AppShell>, { route: '/auctions' })
+
+        for (const nav of [desktopNav(), mobileNav()]) {
+            const active = within(nav)
+                .getAllByRole('link')
+                .find((el) => el.getAttribute('aria-current') === 'page')
+
+            // 비텍스트 요소라 3:1 요구 → #2A85FF 3.56 통과. 색은 여기에만 남긴다.
+            expect(active!.className).toContain('border-primary')
+        }
+    })
+})
+
 describe('AppShell — 접근성', () => {
     it('본문 바로가기 링크가 main 을 가리킨다', () => {
         const { container } = renderWithProviders(<AppShell>본문</AppShell>)

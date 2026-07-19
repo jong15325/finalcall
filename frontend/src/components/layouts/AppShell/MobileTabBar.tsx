@@ -17,7 +17,12 @@ import type { ReactNode } from 'react'
  *    템플릿 `_menu-item.css` 의 `.menu-item` = `text-gray-600 dark:text-gray-400`,
  *    `.menu-item-active` = `text-primary`. 템플릿에는 **하단 탭바라는 컴포넌트가 없어**
  *    가장 가까운 내비 항목 관례를 빌려온 것이다(보고 대상).
- *    **폐기**: 종전의 "탭 상단 near-black 2px" — 우리가 만든 장치였다.
+ *
+ * ★★ **액센트는 형태에, 대비는 라벨에**(사용자 판정 2026-07-19 — 선택지 (c)).
+ *    데스크톱 밑줄을 **위아래로 뒤집어** 탭 상단 `border-t-2 border-primary` 로 둔다(탭바는
+ *    화면 맨 아래라 밑줄이 기기 가장자리에 먹힌다). 선 색은 **템플릿 `--primary`** 이고
+ *    (비텍스트 3:1 요구 → 3.56 통과) 라벨은 `text-gray-900 dark:text-gray-100`(17.93/16.44)이다.
+ *    종전 near-black 선(우리 값)과 달리 **색은 전부 템플릿 토큰**이다.
  *
  * ★ 5칸 **고정**이다. 균등 분할이라 개수가 바뀌면 모든 탭이 움직이므로 목적지가 늘어도
  *   탭을 늘리지 않는다(`navigation.ts` 참조).
@@ -59,9 +64,9 @@ const MobileTabBar = ({ className }: { className?: string }) => {
                                 aria-current={active ? 'page' : undefined}
                                 className={classNames(
                                     // 템플릿 `_menu-item.css` 의 색·굵기 관례를 따른다.
-                                    'flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-150',
+                                    'flex h-16 flex-col items-center justify-center gap-1 border-t-2 border-transparent text-[11px] font-semibold transition-colors duration-150',
                                     active
-                                        ? 'text-primary'
+                                        ? 'border-primary text-gray-900 dark:text-gray-100'
                                         : 'text-gray-600 dark:text-gray-400',
                                 )}
                             >
