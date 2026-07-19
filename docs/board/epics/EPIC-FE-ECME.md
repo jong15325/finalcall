@@ -3,9 +3,32 @@ id: EPIC-FE-ECME
 type: epic
 jira_key: KAN-65
 title: 프론트 전면 재구축 — Ecme 템플릿 기반
-state: doing
+state: superseded
 children: [FC-055, FC-056, FC-057, FC-058, FC-059, FC-064, FC-060, FC-061, FC-065, FC-063]
 gate: null
+---
+## ★★ SUPERSEDED (2026-07-20) → `EPIC-FE-REBUILD`
+
+사용자가 **디자인 전면 변경**을 결정했다. **Ecme 템플릿과 이 에픽의 UI 산출물을 전부 폐기**하고
+**사용자가 준비하는 목업**을 정본으로 다시 만든다.
+
+> "디자인 전면 변경할 예정이야, 디자인 목업을 준비해올게. 우리가 하던 디자인은 전부 폐기 진행하고
+> 프론트도 작업한 것도 폐기 다시 할 예정"
+
+**티켓은 `done`으로 닫지 않고 이력으로 남긴다**(EPIC-FE-REDESIGN 때와 같은 처리).
+**무엇을 배웠는지가 다음 에픽의 입력**이기 때문이다.
+
+**승계되는 것**: `features/*/lib`·`lib/api`·`lib/queries` **45파일**(계약 종속 로직·전송 층)과
+그 테스트 18파일. 폐기는 `components/ui`·`template`·`assets/styles`·`views` **318파일**이다.
+상세 목록은 `EPIC-FE-REBUILD.md` "보존 목록".
+
+**미완 하위 3건**(FC-060 인증 · FC-061 인벤토리 · FC-063 reviewer)은 **착수 전이라 손실이 없다.**
+**FC-065**(템플릿 결함 2건)는 **템플릿과 함께 자동 소멸**하므로 닫는다.
+
+**★ 이 에픽이 남긴 가장 큰 자산은 화면이 아니라 발견이다** — 계약 공백 6건, `Sheet` 초점 강탈
+패턴, `min` 속성이 제출을 가로채는 함정, 모바일 우선 원칙의 실증, BID 코드 의미. 전부
+`EPIC-FE-REBUILD` "승계된 발견"과 `docs/board/reviews/FC-064-review.md`에 옮겼다.
+
 ---
 ## 목표
 구매한 **Ecme React Tailwind 템플릿**을 기반으로 프론트를 **전면 재구축**한다.
