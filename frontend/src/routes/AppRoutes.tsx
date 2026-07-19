@@ -10,6 +10,8 @@ import { AuctionDetailPage } from '@/pages/AuctionDetailPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { SignupPage } from '@/pages/SignupPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { InventoryPage } from '@/pages/InventoryPage';
+import { TempStoragePage } from '@/pages/TempStoragePage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ROUTES } from '@/routes/paths';
 
@@ -41,8 +43,8 @@ export function AppRoutes() {
       {/* 보호(me 주체) — 미인증 시 login?returnUrl 복귀 */}
       <Route element={<ProtectedLayout />}>
         <Route path={ROUTES.sell} element={<PagePlaceholder title="판매 등록" />} />
-        <Route path={ROUTES.inventory} element={<PagePlaceholder title="인벤토리" />} />
-        <Route path={ROUTES.tempStorage} element={<PagePlaceholder title="임시보관" />} />
+        <Route path={ROUTES.inventory} element={<InventoryPage />} />
+        <Route path={ROUTES.tempStorage} element={<TempStoragePage />} />
         <Route path={ROUTES.orders} element={<PagePlaceholder title="거래 내역" />} />
         <Route path={ROUTES.orderDetail} element={<PagePlaceholder title="주문 상세" />} />
         <Route path={ROUTES.wallet} element={<PagePlaceholder title="지갑" />} />

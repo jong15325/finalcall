@@ -1,3 +1,4 @@
+import type { InventoryItem, ItemSummary, TempStorageItem } from '@/features/inventory/types';
 import type { AuctionDetail, AuctionSummary, ItemBlock } from '@/types/schema';
 
 /**
@@ -56,6 +57,52 @@ export function anAuctionDetail(overrides: Partial<AuctionDetail> = {}): Auction
     maxEndAt: new Date(Date.now() + 7_200_000).toISOString(),
     createdAt: new Date(Date.now() - 3_600_000).toISOString(),
     minNextBidAmount: null,
+    ...overrides,
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   인벤토리·임시보관(계약 §4.2) — FC-054
+   ★ 이 스키마는 위의 `ItemBlock` 과 **다른 물건이다.** 4개 코드 축을 개별 필드로 주지 않고
+     `typeCode` 하나로 접어 보낸다. 기본값 1127 = 상품군1·무기(1)·물(2)·활(4)... 이 아니라
+     자리값대로 mainCategory 1 · subGroup 1 · element 2 · kind 7 이 되므로, 실제로 아트가 존재하는
+     조합을 쓰려면 산식(§3.3.1)대로 조립해야 한다 — 그래서 헬퍼가 축을 받아 `typeCode` 를 굽는다.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/** §3.3.1 산식으로 `typeCode` 조립. 픽스처가 자리값을 손으로 계산하다 틀리는 것을 막는다. */
+export function aTypeCode(subGroup: number, element: number, kind: number): number {
+  return 1000 + subGroup * 100 + element * 10 + kind;
+}
+
+export function anItemSummary(overrides: Partial<ItemSummary> = {}): ItemSummary {
+  return {
+    // 무기 · 불 · 검 → /art/items/level7/{l|s}/fire/sword.png (아트가 실재하는 조합)
+    typeCode: aTypeCode(1, 2, 3),
+    displayName: '시험용 아이템',
+    level: 7,
+    skill1Code: null,
+    skill2Code: null,
+    skillPercent: 0,
+    goldforceExpireAt: null,
+    ...overrides,
+  };
+}
+
+export function anInventoryItem(overrides: Partial<InventoryItem> = {}): InventoryItem {
+  return {
+    itemInstancePublicId: 'item-0001',
+    slotNo: 1,
+    summary: anItemSummary(),
+    ...overrides,
+  };
+}
+
+export function aTempStorageItem(overrides: Partial<TempStorageItem> = {}): TempStorageItem {
+  return {
+    itemInstancePublicId: 'temp-0001',
+    storedAt: '2026-07-18T00:00:00Z',
+    expireAt: null,
+    summary: anItemSummary(),
     ...overrides,
   };
 }

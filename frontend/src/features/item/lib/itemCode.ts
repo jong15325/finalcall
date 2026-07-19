@@ -15,6 +15,40 @@
  * **필터·배지·아트 매핑용 코드 해석**에 쓴다.
  */
 
+/**
+ * `typeCode` 4자리 자리값 분해 (계약 v1.10 §3.3.1).
+ *
+ * ```
+ * typeCode = mainCategory×1000 + subGroup×100 + element×10 + kind
+ * ```
+ *
+ * ★ **왜 필요한가** — 목록/상세의 `item` 블록(§3.3)은 4축을 개별 필드로 내려주지만,
+ * **인벤토리·임시보관의 `summary`(§4.2)는 `typeCode` 하나만 싣는다.** 축이 없으면 아트 경로도
+ * 속성 배지도 만들 수 없다. 계약이 산식을 정본으로 못 박았으므로 클라이언트가 분해한다 —
+ * 서버에 필드 추가를 요구할 사안이 아니다(§3.3.1이 "코드 변환 계층 없음"을 명시).
+ *
+ * ★ **스코프는 `mainCategory = 1`(아이템 카드) 대역뿐이다**(§3.3.1). 다른 상품군(2~6)은 이 산식을
+ * 따르지 않는 평면 SKU라 분해 결과가 무의미하다. 다만 `item_template`이 1 대역만 담으므로 인벤토리에
+ * 다른 대역이 실릴 경로가 없고, 만에 하나 실려도 소비처(`itemArt`·`element`)가 미등록 코드를
+ * 플레이스홀더·중립 표기로 폴백한다 — 여기서 예외를 던져 화면을 막지 않는다.
+ */
+export interface TypeCodeAxes {
+  mainCategory: number;
+  subGroup: number;
+  element: number;
+  kind: number;
+}
+
+export function decodeTypeCode(typeCode: number): TypeCodeAxes {
+  const value = Number.isFinite(typeCode) ? Math.trunc(typeCode) : 0;
+  return {
+    mainCategory: Math.floor(value / 1000),
+    subGroup: Math.floor(value / 100) % 10,
+    element: Math.floor(value / 10) % 10,
+    kind: value % 10,
+  };
+}
+
 /** 대분류(계약 §3.3.1 `subGroup`). 이 목록이 필터 칩의 표시 순서이기도 하다. */
 export const SUB_GROUPS: readonly { code: number; label: string }[] = [
   { code: 1, label: '무기' },
