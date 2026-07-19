@@ -37,7 +37,13 @@ export const sharedRoutes: Routes = [
         component: lazy(() => import('@/views/home')),
         authority: [],
     },
-    placeholderRoute('auctions', ROUTES.auctions, '경매 목록'),
+    /* 경매 목록도 자리표시자를 벗었다(FC-059). 홈과 같은 `lazy` 관례. */
+    {
+        key: 'auctions',
+        path: ROUTES.auctions,
+        component: lazy(() => import('@/views/auctions')),
+        authority: [],
+    },
     placeholderRoute('auctionDetail', ROUTES.auctionDetail, '경매 상세'),
     placeholderRoute('shops', ROUTES.shops, '상점 목록'),
     placeholderRoute('shopDetail', ROUTES.shopDetail, '상점 상세'),

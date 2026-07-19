@@ -1,0 +1,45 @@
+/*
+ * 모바일 필터 바텀시트 모션 (FC-059).
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ 템플릿 `Drawer`/`Dialog` 를 쓸 수 없어 시트를 직접 만들었고, 그 모션이 여기 있다.
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 두 컴포넌트 모두 `framer-motion` 을 임포트한다(`ui/Drawer/Drawer.tsx:4`,
+ * `ui/Dialog/Dialog.tsx:4`). FC-057 이 그 의존을 번들에서 걷어내 592→472KB 를 만들었고
+ * FC-058 이 같은 이유로 `Alert` 를 피했다. 필터 시트 하나로 되돌릴 수 없다.
+ *
+ * ★ **`transform`/`opacity` 만 애니메이션한다** — 합성 단계에서 끝나 레이아웃·페인트를
+ *   다시 돌리지 않는다. 시트 안에는 카드가 없지만 뒤의 목록은 그대로 살아 있으므로
+ *   `height` 같은 속성을 건드리면 그 목록 전체가 매 프레임 재배치된다.
+ *
+ * ★ `prefers-reduced-motion` 에서는 **애니메이션 선언 자체가 없다**(아래 미디어쿼리 밖에
+ *   두지 않는다). 시트는 즉시 최종 위치에 나타나며 기능은 하나도 줄지 않는다.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+    .fc-sheet-backdrop {
+        animation: fc-sheet-fade 160ms ease-out;
+    }
+
+    .fc-sheet-panel {
+        animation: fc-sheet-rise 220ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+}
+
+@keyframes fc-sheet-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fc-sheet-rise {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}

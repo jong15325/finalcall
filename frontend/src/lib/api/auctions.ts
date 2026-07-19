@@ -63,10 +63,31 @@ export interface AuctionSummary {
 }
 
 /**
- * 목록 쿼리. 공통 목록 필터(계약 §3)의 부분집합만 노출한다 — 홈이 쓰는 것만.
- * 필터 전체는 경매 목록 화면(FC-059) 소관이다.
+ * 목록 쿼리 — 계약 §3 공통 목록 필터 (FC-059 에서 전 축으로 확장).
+ *
+ * ★★ **계약에 있는 축 중 세 가지를 일부러 뺐다.** 타입에 없으면 화면이 만들 수 없다:
+ *   - `mainCategory` — 값이 `1` 하나뿐이라(§3.3.1) 축이 되지 않는다. 선택지가 하나인
+ *     필터는 아무것도 거르지 않으면서 자리만 차지한다.
+ *   - `skill1`/`skill2` — **코드→이름 매핑 API 가 계약에 없다.** 숫자 코드를 그대로
+ *     고르게 할 수는 없으므로 선택지를 만들 방법이 없다.
+ *   - `q`/keyword — **계약에 자유문 검색이 없다.** 만들면 동작하지 않는 컨트롤이다.
+ *
+ * ★ `kind` 는 여기서 단독으로 들어올 수 있는 것처럼 보이지만, 화면 쪽 정규화
+ *   (`features/auction/lib/auctionFilters.ts`)가 `subGroup` 없는 `kind` 를 지운다.
+ *   서버는 400 으로 막지 않으므로(§4.1) 그 방어가 클라이언트에만 있다.
  */
 export interface AuctionListQuery {
+    /** 대분류 1=무기 · 2=방어구 · 3=마법 (§3.3.1) */
+    subGroup?: number
+    /** 종류. **의미가 `subGroup` 에 의존한다** — 단독 전송 금지(§4.1) */
+    kind?: number
+    /** 속성 1=물 · 2=불 · 3=흙 · 4=바람 (§3.3.1) */
+    element?: number
+    minLevel?: number
+    maxLevel?: number
+    goldforceActive?: boolean
+    minPrice?: number
+    maxPrice?: number
     status?: AuctionStatus
     /** `<field>,<asc|desc>` — field 화이트리스트는 `price·endAt·createdAt·highestBidAmount` */
     sort?: string
