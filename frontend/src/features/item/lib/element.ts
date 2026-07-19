@@ -70,19 +70,19 @@ export const ELEMENT_BORDER_CLASS: Record<ElementKey, string> = {
  * 아트 슬롯 딥 글로우(design-system [2.7], v0.5 — 종전 `bg-surface-slot` 단일 검정 폐기).
  * 실제 그라데이션은 index.css 의 `.slot-glow-*` 유틸이 갖는다.
  *
- * ★ **코드 매핑과 글로우 값은 정본이 다르다 — 여기서 갈린다.**
- * `ELEMENT_CODES` 의 3·4(흙·바람)는 **계약 v1.10 §3.3.1** 이 확정해 등재됐지만, 슬롯 글로우는
- * **design-system [2.7]** 이 정본이고 그 문서는 v0.6.1 현재도 물·불 두 값만 파생해 뒀다
- * ("3·4는 미확정이라 글로우를 창작하지 않았다"). 색값을 여기서 지어내면 프론트가 디자인 정본을
- * 앞질러 창작하는 것이라, 흙·바람은 계속 `SLOT_GLOW_NEUTRAL` 로 폴백한다.
- * 속성 판별은 어차피 ElementBadge(도트 + 속성명)가 책임지므로([1.2]③) 정보 손실은 없다 —
- * design-system 이 두 값을 파생하면 이 표의 두 줄만 바꾸면 된다.
+ * ★ **흙·바람 파생(FC-049) — 창작이 아니라 정본이 남긴 공식의 적용이다.**
+ * [2.7]은 물·불 두 값만 두고 "**3·4가 확정되면 같은 방식(L18% S61% 코어 / L11% 엣지)으로
+ * 파생한다**"는 조건부 지시를 남겼다. 계약 v1.10 §3.3.1 이 element 1~4를 전건 확정해 그 조건이
+ * 충족됐고, FC-042 목업이 아트 실측 hue에 공식을 적용해 값을 산출했다(대비 재계산 포함, 전건 AA).
+ * 종전 주석의 "미확정이라 중립 폴백" 유보는 그 확정으로 해소됐다. 색값 정본은 tailwind.config.js.
+ *
+ * 속성 판별은 여전히 ElementBadge(도트 + 속성명)가 책임진다([1.2]③) — 글로우는 보조 신호다.
  */
 export const ELEMENT_SLOT_GLOW_CLASS: Record<ElementKey, string> = {
   water: 'slot-glow-water',
   fire: 'slot-glow-fire',
-  earth: 'slot-glow-neutral',
-  wind: 'slot-glow-neutral',
+  earth: 'slot-glow-earth',
+  wind: 'slot-glow-wind',
 };
 
 /** 미등록·무속성 슬롯 폴백. */

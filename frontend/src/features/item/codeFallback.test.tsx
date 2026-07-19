@@ -54,11 +54,16 @@ describe('element 코드 폴백 (계약 v1.10 §3.3.1)', () => {
     expect(screen.getByText(`속성 ${UNREGISTERED}`)).toBeInTheDocument();
   });
 
-  it('ItemArtSlot — 미등록 코드에도 대체텍스트가 온전하다(속성·레벨 포함)', () => {
-    render(<ItemArtSlot name="시험용 아이템" element={UNREGISTERED} level={7} />);
+  it('ItemArtSlot — 미등록 코드에도 대체텍스트가 온전하다(속성·타입·레벨 포함)', () => {
+    // 미등록 element 는 아트 경로를 낼 수 없으므로 플레이스홀더 분기로 떨어진다(FC-049).
+    render(
+      <ItemArtSlot
+        item={anItem({ element: UNREGISTERED, level: 7, nameSnapshot: '시험용 아이템' })}
+      />,
+    );
 
     const slot = screen.getByRole('img');
-    expect(slot).toHaveAccessibleName(`속성 ${UNREGISTERED} 속성 레벨 7 시험용 아이템`);
+    expect(slot).toHaveAccessibleName(`속성 ${UNREGISTERED} 속성 무기 · 도끼 레벨 7 시험용 아이템`);
   });
 
   it('ItemSpecList — 미등록 속성 코드가 표에 중립 표기로 나온다', () => {

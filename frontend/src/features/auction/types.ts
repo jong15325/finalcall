@@ -51,12 +51,18 @@ export function isAuctionStatus(value: string): value is AuctionStatus {
 }
 
 /**
- * 목록 필터 상태.
+ * 목록 필터 상태 (계약 §3 공통 목록 필터).
  *
- * **구현 범위 = 핵심 4종**(status · minPrice/maxPrice · element) — EPIC-FE-AUCTION 디자인 게이트 승인.
- * 계약 §3 공통 필터의 나머지(`mainCategory`·`subGroup`·`kind`·`minLevel`/`maxLevel`·`skill1`/`skill2`·
- * `goldforceActive`)는 **구조만 남기고 UI 를 만들지 않는다** — 현 시드가 빈약해 대부분 빈 결과를 내기 때문이다.
- * 추가 시 이 타입에 필드를 얹고 `toListQuery` 의 통과 목록에 넣으면 API 층은 무변경이다.
+ * FC-049에서 `subGroup`·`kind`·레벨·골드포스를 추가했다(부채 7). 시드(FC-052)가 템플릿 40종으로
+ * element×kind 전수를 덮어 이 축들이 더 이상 빈 결과만 내지 않는다.
+ *
+ * ★ **`kind` 는 독립 축이 아니다.** 계약 §4.1: `kind=1`은 무기의 도끼·방어구의 방패·마법의 일반을
+ * **모두** 반환하며 서버는 이를 400으로 막지 않는다 — "다의성 해소는 클라이언트 책임"이다.
+ * 그래서 `kind`는 `subGroup`이 있을 때만 유효하며, `applyFilters` 가 그 불변식을 강제한다.
+ *
+ * 미구현: `mainCategory`(현재 값이 1뿐이라 축이 되지 않는다) · `skill1`/`skill2`(코드→이름 매핑 API가
+ * 계약에 없어 선택지를 만들 수 없다). 둘 다 UI를 만들지 않고 자리도 두지 않는다 — 쓸 수 없는 축을
+ * 그려 두면 사용자가 누르고 빈 결과를 받는다.
  */
 export interface AuctionFilters {
   status?: AuctionStatus;
@@ -64,6 +70,23 @@ export interface AuctionFilters {
   maxPrice?: number;
   /** 속성 코드(정수, features/item/lib/element.ts 매핑). */
   element?: number;
+  /** 대분류(1 무기 · 2 방어구 · 3 마법). `kind`의 부모 축이다. */
+  subGroup?: number;
+  /** 종류. **`subGroup` 없이 단독으로 세우지 않는다**(계약 §4.1 다의성 경고). */
+  kind?: number;
+  minLevel?: number;
+  maxLevel?: number;
+  /** 만료 시각이 남아 있는 아이템만. */
+  goldforceActive?: boolean;
+}
+
+/**
+ * 필터 확정 — **`kind` 종속 불변식을 여기 한 곳에서 강제**한다.
+ * 대분류가 빠지거나 바뀌면 종류를 함께 떨어뜨린다(부모 없는 자식이 URL·요청에 남지 않게).
+ */
+export function applyFilters(next: AuctionFilters): AuctionFilters {
+  if (next.subGroup === undefined) return { ...next, kind: undefined };
+  return next;
 }
 
 /** 필터가 하나라도 적용됐는지 — 빈 상태 카피·초기화 CTA 분기용. */

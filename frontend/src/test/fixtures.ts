@@ -14,13 +14,18 @@ export function anItem(overrides: Partial<ItemBlock> = {}): ItemBlock {
     subGroup: 1,
     element: 1,
     kind: 1,
-    level: 10,
+    /*
+     * ★ 아트 자산이 존재하는 레벨(1~9)을 기본값으로 둔다(FC-049). 종전 기본값 10은 계약상 유효하지만
+     * 아트가 없어 **모든 테스트가 플레이스홀더 분기만 태웠다** — 실아트 경로가 한 번도 검증되지 않는다.
+     * 범위 밖 레벨은 그 자체를 검증하는 테스트가 명시적으로 override 한다.
+     */
+    level: 7,
     skill1: null,
     skill2: null,
     skillPercent: 0,
     goldforceExpireAt: null,
     nameSnapshot: '시험용 아이템',
-    specSnapshot: 'Lv.10 / skill1=-/skill2=- / 0% / GF=-',
+    specSnapshot: 'Lv.7 / skill1=-/skill2=- / 0% / GF=-',
     ...overrides,
   };
 }

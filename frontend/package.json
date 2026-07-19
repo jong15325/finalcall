@@ -4,8 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "sync-art": "node scripts/sync-game-art.mjs",
+    "predev": "npm run sync-art",
     "dev": "vite",
+    "prebuild": "npm run sync-art",
     "build": "tsc -b && vite build",
+    "prepreview": "npm run sync-art",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { Countdown } from '@/components/ui/Countdown';
+import { CountdownChip, CountdownFigure } from '@/components/ui/Countdown';
 import { useAuctionPreview } from '@/features/auction/api/useAuctions';
 import { AuctionCard, AuctionCardSkeleton } from '@/features/auction/components/AuctionCard';
 import { ElementBadge } from '@/features/item/components/ElementBadge';
@@ -208,7 +208,7 @@ function FeaturedAuction({ auction }: { auction: AuctionSummary }) {
       to={buildPath.auctionDetail(auction.auctionPublicId)}
       className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface no-underline shadow-sm transition duration-fast hover:border-border-strong hover:shadow-lg"
     >
-      <ItemArtSlot name={item.nameSnapshot} element={item.element} level={item.level} />
+      <ItemArtSlot item={item} />
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="rounded-sm bg-surface-sunken px-2 py-0.5 text-label text-text-muted">
@@ -230,7 +230,7 @@ function FeaturedAuction({ auction }: { auction: AuctionSummary }) {
 
         <div className="mt-auto flex flex-col gap-1 border-t border-border-muted pt-3">
           <span className="text-label text-text-muted">남은 시간</span>
-          <Countdown endAt={auction.endAt} label={item.nameSnapshot} size="figure" />
+          <CountdownFigure endAt={auction.endAt} label={item.nameSnapshot} />
         </div>
       </div>
     </Link>
@@ -269,7 +269,7 @@ function ClosingRow({ auction }: { auction: AuctionSummary }) {
       to={buildPath.auctionDetail(auction.auctionPublicId)}
       className="flex items-center gap-4 p-4 text-text no-underline transition-colors duration-fast hover:bg-surface-sunken"
     >
-      <RowThumb level={item.level} />
+      <ItemArtSlot item={item} variant="thumb" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-bold text-text">{item.nameSnapshot}</span>
         <span className="mt-1 flex flex-wrap items-center gap-2 text-micro text-text-subtle">
@@ -287,25 +287,10 @@ function ClosingRow({ auction }: { auction: AuctionSummary }) {
           <span className="ml-0.5 text-micro font-medium text-text-muted">G</span>
         </span>
       </span>
-      <span className="w-[88px] flex-none text-right">
-        <Countdown endAt={auction.endAt} label={item.nameSnapshot} />
+      <span className="w-[104px] flex-none text-right">
+        <CountdownChip endAt={auction.endAt} label={item.nameSnapshot} />
       </span>
     </Link>
-  );
-}
-
-/**
- * 작은 썸네일(56px). **글로우 그라데이션을 쓰지 않는다** — 그 크기에서는 보이지 않으므로
- * 엣지 단색으로 채운다([2.7]). 아트 자산은 아직 배선 전이라 레벨만 표시한다([5.3] 플레이스홀더 조항).
- */
-function RowThumb({ level }: { level: number }) {
-  return (
-    <span
-      className="grid h-14 w-14 flex-none place-items-center rounded-sm bg-glow-neutral-edge"
-      aria-hidden="true"
-    >
-      <span className="font-num text-label text-white">Lv.{level}</span>
-    </span>
   );
 }
 
@@ -314,7 +299,7 @@ function ClosingRowSkeletonList() {
     <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
       {[0, 1, 2, 3].map((index) => (
         <div key={index} className="flex items-center gap-4 p-4">
-          <div className="h-14 w-14 flex-none animate-pulse rounded-sm bg-surface-sunken" />
+          <div className="h-16 w-16 flex-none animate-pulse rounded-sm bg-surface-sunken" />
           <div className="flex-1">
             <div className="h-4 w-2/3 animate-pulse rounded-sm bg-surface-sunken" />
             <div className="mt-2 h-3 w-1/3 animate-pulse rounded-sm bg-surface-sunken" />
@@ -469,7 +454,7 @@ function ShopRow({ shop }: { shop: ShopSummary }) {
       to={buildPath.shopDetail(shop.shopPublicId)}
       className="flex items-center gap-4 p-4 text-text no-underline transition-colors duration-fast hover:bg-surface-sunken"
     >
-      <RowThumb level={item.level} />
+      <ItemArtSlot item={item} variant="thumb" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-bold text-text">{item.nameSnapshot}</span>
         <span className="mt-1 flex flex-wrap items-center gap-2 text-micro text-text-subtle">

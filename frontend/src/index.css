@@ -85,7 +85,29 @@
     background-color: theme('colors.glow-fire-edge');
   }
 
-  /* 미확정 속성(3·4)과 무속성 아이템의 폴백. 근거 없는 글로우를 창작하지 않는다(계약 v1.9 §3.3). */
+  /*
+   * earth(3)·wind(4) — FC-049. [2.7]이 남긴 파생 공식(L18% S61% 코어 / L11% 엣지)을 아트 실측 hue에
+   * 적용한 값이다(계약 v1.10이 element 1~4를 확정해 조건이 충족됐다). 색값 정본은 tailwind.config.js.
+   */
+  .slot-glow-earth {
+    background-image: radial-gradient(
+      ellipse 72% 58% at 50% 42%,
+      theme('colors.glow-earth-core') 0%,
+      theme('colors.glow-earth-edge') 72%
+    );
+    background-color: theme('colors.glow-earth-edge');
+  }
+
+  .slot-glow-wind {
+    background-image: radial-gradient(
+      ellipse 72% 58% at 50% 42%,
+      theme('colors.glow-wind-core') 0%,
+      theme('colors.glow-wind-edge') 72%
+    );
+    background-color: theme('colors.glow-wind-edge');
+  }
+
+  /* 무속성·미등록 코드 폴백. 코드 축이 장차 늘어도 화면이 무너지지 않게 남겨 둔다(계약 §3.3 폴백 의무). */
   .slot-glow-neutral {
     background-image: radial-gradient(
       ellipse 72% 58% at 50% 42%,
@@ -93,6 +115,135 @@
       theme('colors.glow-neutral-edge') 72%
     );
     background-color: theme('colors.glow-neutral-edge');
+  }
+
+  /*
+   * 픽셀 아트 확대 (design-system [5.3]) — **정수배 nearest-neighbor 로만** 키운다.
+   * 브라우저 기본 보간(bilinear)이 걸리면 도트가 뭉개져 그대로 "싸구려"로 읽힌다.
+   */
+  .art-pixel {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /*
+   * 골드포스 아웃라인 (design-system [5.12]) — **아트 프레임 안쪽으로만** 자란다.
+   * 원본 `out_line/l/gold.png` 실측: 바깥 1px 밝은 금(길이방향 그라데이션) + 안쪽 1px 어두운 금 베벨.
+   * 두께는 `--art-scale` 파생이며 상한은 합계 9px(밝은 5 + 베벨 4, 아트 4배 지점).
+   *
+   * ★ 링이 박스 **안쪽**으로만 자라므로 카드 테두리·버튼·헤더에 금색이 닿지 않는다 —
+   *   Game-Color Containment([1.2])가 규칙이 아니라 기하로 보장된다.
+   * ★ 구현 함정([5.12]): 베벨을 밝은 링의 자식/의사요소로 두면 `mask-composite:exclude` 에 잘려
+   *   사라진다. 그래서 베벨은 **프레임의 ::after**, 밝은 링은 **별도 자식 요소**다.
+   * ★ 애니메이션 속성은 `transform` 하나뿐이다(컴포지터). box-shadow·filter 는 금지 — 목록에서
+   *   가장 먼저 무너진다. 한 주기의 30%만 움직이고 70%는 정지시켜(duty cycle) 동시 페인트를 줄인다.
+   */
+  .art-frame {
+    position: relative;
+    --art-scale: 2;
+    --gf-bright: min(calc(1px * var(--art-scale) + 1px), 5px);
+    --gf-bev: min(calc(1px * var(--art-scale)), 4px);
+    border-radius: calc(1px * var(--art-scale) + 1px);
+    overflow: hidden;
+  }
+
+  .art-frame img {
+    position: relative;
+    z-index: 0;
+  }
+
+  .art-frame-x3 {
+    --art-scale: 3;
+  }
+
+  .art-frame-x4 {
+    --art-scale: 4;
+  }
+
+  /* 안쪽 어두운 금 베벨(정적) */
+  .art-frame-gf::after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    inset: var(--gf-bright);
+    border-radius: inherit;
+    padding: var(--gf-bev);
+    background: linear-gradient(
+      135deg,
+      theme('colors.gf-bev-1') 0%,
+      theme('colors.gf-bev-2') 38%,
+      theme('colors.gf-bev-3') 72%,
+      theme('colors.gf-bev-4') 100%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* 바깥 밝은 금 링 */
+  .gf-ring {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+    padding: var(--gf-bright);
+    background: linear-gradient(
+      135deg,
+      theme('colors.gf-1') 0%,
+      theme('colors.gf-2') 22%,
+      theme('colors.gf-3') 42%,
+      theme('colors.gf-4') 62%,
+      theme('colors.gf-5') 80%,
+      theme('colors.gf-6') 100%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    overflow: hidden;
+  }
+
+  /* 흐르는 흰 셰인 — 원본은 [정적 금 링] + [흰 셰인] 2패스 합성이다(금색 셰인이 아니다). */
+  .gf-ring > i {
+    position: absolute;
+    top: -60%;
+    left: -60%;
+    width: 220%;
+    height: 220%;
+    background: linear-gradient(
+      135deg,
+      transparent calc(50% - 9%),
+      rgba(255, 255, 255, 0.95) 50%,
+      transparent calc(50% + 9%)
+    );
+    transform: translate3d(-72%, -72%, 0);
+    animation: gf-sweep 3s linear infinite;
+    will-change: transform;
+  }
+
+  @keyframes gf-sweep {
+    0% {
+      transform: translate3d(-72%, -72%, 0);
+    }
+
+    30% {
+      transform: translate3d(72%, 72%, 0);
+    }
+
+    100% {
+      transform: translate3d(72%, 72%, 0);
+    }
   }
 
   /*
@@ -119,5 +270,15 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /*
+   * 골드포스([5.12] 접근성): 흐르는 흰 셰인만 **끈다**. 정적 금 2겹 링·배지·본문줄은 유지한다 —
+   * 정보가 애초에 애니메이션이 아니라 링과 텍스트에 실려 있어 손실이 없다.
+   * (위 전역 규칙은 duration 만 0으로 만들 뿐 셰인을 화면에 남긴다 — 그래서 여기서 따로 지운다.)
+   */
+  .gf-ring > i {
+    animation: none !important;
+    opacity: 0;
   }
 }

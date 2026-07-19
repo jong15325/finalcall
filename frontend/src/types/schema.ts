@@ -69,6 +69,24 @@ export interface AuctionDetail extends AuctionSummary {
   minNextBidAmount?: number | null;
 }
 
+/** 입찰 상태 (계약 [3.3] `BidSummary.status`). 경매당 `ACTIVE` 는 최대 1건이다. */
+export type BidStatus = 'ACTIVE' | 'OUTBID' | 'WON';
+
+/**
+ * GET /auctions/{id}/bids content 항목 (계약 [3.3] `BidSummary`, v1.8 F2).
+ *
+ * ★ **인증 불요 엔드포인트의 응답이라 필드 집합 자체가 보안 경계다.**
+ * `bidderMasked` 는 마스킹된 닉네임뿐이고(`userPublicId`·`loginId`·실 nickname 없음, SEC-007),
+ * 홀드(에스크로)·잔액 등 **자금 정보는 싣지 않는다**. 화면도 이 경계를 넘겨 추론·표시하지 않는다.
+ */
+export interface BidSummary {
+  bidPublicId: string;
+  bidderMasked: string;
+  amount: number;
+  status: BidStatus;
+  createdAt: string;
+}
+
 /** GET /shops content 항목 (계약 [3.3]) */
 export interface ShopSummary {
   shopPublicId: string;
