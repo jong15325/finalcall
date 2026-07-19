@@ -30,12 +30,13 @@ import { PRIMARY_DESTINATIONS, isDestinationActive } from './navigation'
  *    **폐기**: 종전의 near-black 2px 밑줄(`border-gray-900`).
  *
  * ★★ **액센트는 형태에, 대비는 라벨에**(사용자 판정 2026-07-19 — 선택지 (c)).
- *    템플릿 `TabNav` 는 활성 탭에 `text-primary` 도 함께 주지만, `--primary` #2A85FF 는
- *    흰 배경에서 **3.56:1 로 본문 크기 AA(4.5)에 미달**한다. 그래서
- *    - **밑줄만 `border-primary`** — 비텍스트라 요구가 3:1 이고 3.56 로 **통과**한다.
- *    - **라벨은 `text-gray-900 dark:text-gray-100`** — 17.93 / 16.44 로 여유 통과.
- *    hover 도 같은 이유로 `hover:text-primary`(3.56) 대신 템플릿 `.menu-item-hoverable` 의
- *    `hover:text-gray-900 dark:hover:text-gray-100` 관례를 쓴다.
+ *    템플릿 `TabNav` 는 활성 탭에 `text-primary` 도 함께 주지만, **`--primary` 는 프리셋마다
+ *    바뀌는 값**이라 라벨 가독성을 거기에 묶으면 안 된다. 흰 헤더 위 실측:
+ *    default 3.56 · green 2.87 · purple 3.96 · orange 2.77 · dark 17.72 — **5종 중 4종이
+ *    AA(4.5) 미달**이다(현재 프리셋은 `dark`라 통과하지만 그건 우연에 기대는 것이다).
+ *    - **라벨은 `text-gray-900 dark:text-gray-100`** — 프리셋과 무관하게 17.93 / 16.44.
+ *    - **선만 `border-primary`** — 비텍스트라 요구가 3:1 이고, 현 프리셋에서 17.72 / 17.93.
+ *    hover 도 같은 이유로 템플릿 `.menu-item-hoverable` 관례를 쓴다.
  *    ★ **템플릿 토큰은 건드리지 않았다** — 토큰을 덮는 대신 **어느 토큰을 어디에 쓸지**만 골랐다.
  *
  * ★ 색만으로 전달하지 않는다(WCAG 1.4.1 — 접근성은 템플릿에 위임하지 않는다):

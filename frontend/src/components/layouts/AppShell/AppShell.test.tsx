@@ -227,12 +227,17 @@ describe('AppShell — 잔액 (계약 §4.4)', () => {
 describe('AppShell — 대비 회귀 가드', () => {
     /*
      * ★ **색 자체를 단언하지 않는다** — 어떤 색이 예쁜지는 템플릿 소관이고 바뀔 수 있다.
-     *   여기서 막는 것은 **측정된 AA 미달값의 부활**뿐이다: 템플릿 `--primary` #2A85FF 는
-     *   흰 배경에서 3.56:1 이라 본문 크기 라벨에 쓰면 AA(4.5)를 깬다.
-     *   템플릿 `TabNav`·`.menu-item-active` 는 활성 항목에 `text-primary` 를 주므로,
-     *   그 관례를 그대로 복사해 오면 조용히 미달로 돌아간다 — 그걸 잡는다.
+     *   여기서 막는 것은 **라벨 가독성이 프리셋에 종속되는 것**이다.
+     *
+     * ★★ 근거(실측) — 활성 라벨을 `text-primary` 로 두면 흰 헤더 위 대비가 **프리셋마다
+     *    달라진다**: default 3.56 · green 2.87 · purple 3.96 · orange 2.77 · dark 17.72.
+     *    **5종 중 4종이 AA(4.5) 미달**이다. 지금은 `dark` 프리셋이라 우연히 통과하지만,
+     *    프리셋은 `theme.config.ts` 한 줄이고 사용자가 런타임에도 바꿀 수 있다(ThemeConfigurator).
+     *    → 라벨은 프리셋과 무관한 그레이로 고정하고, **액센트는 비텍스트(3:1)인 선에만** 싣는다.
+     *    템플릿 `TabNav`·`.menu-item-active` 가 활성 항목에 `text-primary` 를 주므로 그 관례를
+     *    그대로 복사해 오기 쉽다 — 그걸 잡는다.
      */
-    it('활성 내비 라벨이 text-primary 를 쓰지 않는다 (흰 배경 3.56:1 미달)', () => {
+    it('활성 내비 라벨이 text-primary 를 쓰지 않는다 (프리셋 5종 중 4종에서 AA 미달)', () => {
         renderWithProviders(<AppShell>본문</AppShell>, { route: '/auctions' })
 
         for (const nav of [desktopNav(), mobileNav()]) {
@@ -253,7 +258,11 @@ describe('AppShell — 대비 회귀 가드', () => {
                 .getAllByRole('link')
                 .find((el) => el.getAttribute('aria-current') === 'page')
 
-            // 비텍스트 요소라 3:1 요구 → #2A85FF 3.56 통과. 색은 여기에만 남긴다.
+            /*
+             * 비텍스트 요소라 요구가 3:1 이고, 프리셋 5종 중 최악(orange #FB732C)도
+             * 흰 위 2.77... 는 3:1 미달이다. 다만 **선은 라벨과 달리 정보 전달의 유일
+             * 채널이 아니다** — `aria-current` 와 위치가 함께 알린다. 색은 여기에만 남긴다.
+             */
             expect(active!.className).toContain('border-primary')
         }
     })
