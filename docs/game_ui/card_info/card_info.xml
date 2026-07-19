@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="CardInfo">
+	<NAME_ID NAME="Card_Info" ID="14"/>
+	<SIZE X="300" Y="100" WIDTH="211" HEIGHT="307"/>
+	<DRAG_RECT LEFT="0" TOP="0" RIGHT="211" BOTTOM="33"/>
+	<NORMAL_IMAGE NAME="global\card_info\wnd_cardinfo.pgf" LOAD_TYPE="LOAD_SIZE"/>
+	<CLICK_IMAGE NAME="global\card_info\wnd_cardinfo.pgf"/>
+	<OVER_IMAGE NAME="global\card_info\wnd_cardinfo.pgf"/>
+	<STYLE>IWS_CANMOVE|IWS_EXIT_ESC</STYLE>
+	<CHILD_LIST>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="x_Button" ID="1"/>
+			<SIZE X="181" Y="5"/>
+			<NORMAL_IMAGE NAME="global\btn_x_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\btn_x_click.pgf"/>
+			<OVER_IMAGE NAME="global\btn_x_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="창닫기(ESC)"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="basic abillity" ID="2"/>
+			<SIZE X="5" Y="144"/>
+			<NORMAL_IMAGE NAME="global\card_info\basic_abillity_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\basic_abillity_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\basic_abillity_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="기본 특징"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="abillity value" ID="3"/>
+			<SIZE X="55" Y="144"/>
+			<NORMAL_IMAGE NAME="global\card_info\abillity_value_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\abillity_value_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\abillity_value_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="능력 수치"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="special skill" ID="4"/>
+			<SIZE X="105" Y="144"/>
+			<NORMAL_IMAGE NAME="global\card_info\special_skill_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\special_skill_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\special_skill_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="특수 스킬" SZNOTIFY="특수 스킬 합성시 사용이 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="fusion" ID="5"/>
+			<SIZE X="155" Y="144"/>
+			<NORMAL_IMAGE NAME="global\card_info\fusion_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\fusion_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\fusion_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="합성 조건"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioRadioButton">
+			<NAME_ID NAME="motion" ID="6"/>
+			<SIZE X="155" Y="144"/>
+			<NORMAL_IMAGE NAME="global\card_info\motion_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\motion_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\motion_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="발동 조건"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="sell shop" ID="10"/>
+			<SIZE X="28" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\sellshop_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\sellshop_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\sellshop_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="상점에 팝니다." SZNOTIFY="장착을 해제한 후 상점에 판매가 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="Force_Charge" ID="11"/>
+			<SIZE X="108" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\forcecharge_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\forcecharge_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\forcecharge_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="포스카드 충전" SZNOTIFY="장착을 해제한 후 포스 충전이 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="Present_btn" ID="17"/>
+			<SIZE X="108" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\persent_btn_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\persent_btn_c.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\persent_btn_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="선물하기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="SlotUse_btn" ID="18"/>
+			<SIZE X="28" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\slot_use_btn_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\slot_use_btn_c.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\slot_use_btn_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="사용하기"/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="Use_btn" ID="19"/>
+			<SIZE X="28" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\shop_use_btn_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\shop_use_btn_c.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\shop_use_btn_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="사용하기"/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="fusionback" ID="13"/>
+			<SIZE X="5" Y="168"/>
+			<NORMAL_IMAGE NAME="global\card_info\back_fusion.pgf" LOAD_TYPE="LOAD_SIZE" DRAW_TYPE="DRAW_DEST"/>
+		</STATIC>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="levelup" ID="14"/>
+			<SIZE X="163" Y="183"/>
+			<NORMAL_IMAGE NAME="global\card_info\levelfusion_normal.pgf" LOAD_TYPE="LOAD_SIZE" DRAW_TYPE="DRAW_DEST"/>
+			<CLICK_IMAGE NAME="global\card_info\levelfusion_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\levelfusion_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="레벨업 합성 하기" SZNOTIFY="장착을 해제한 후 합성이 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="skillup" ID="15"/>
+			<SIZE X="163" Y="235"/>
+			<NORMAL_IMAGE NAME="global\card_info\skillfusion_normal.pgf" LOAD_TYPE="LOAD_SIZE" DRAW_TYPE="DRAW_DEST"/>
+			<CLICK_IMAGE NAME="global\card_info\skillfusion_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\skillfusion_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="스킬업 합성 하기" SZNOTIFY="장착을 해제한 후 합성이 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="sell shop" ID="20"/>
+			<SIZE X="66" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\sellshop_normal.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\sellshop_click.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\sellshop_normal.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="상점에 팝니다." SZNOTIFY="장착을 해제한 후 상점에 판매가 가능합니다."/>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="del_card" ID="21"/>
+			<SIZE X="66" Y="280"/>
+			<NORMAL_IMAGE NAME="global\card_info\del_card_btn_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<CLICK_IMAGE NAME="global\card_info\del_card_btn_c.pgf"/>
+			<OVER_IMAGE NAME="global\card_info\del_card_btn_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZHELP="카드를 삭제합니다." SZNOTIFY="장착을 해제한 후 삭제가 가능합니다."/>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="slot_card" ID="100"/>
+			<SIZE X="7" Y="40"/>
+			<NORMAL_IMAGE NAME="global\card_info\slot_use_card.pgf" LOAD_TYPE="LOAD_SIZE" DRAW_TYPE="DRAW_DEST"/>
+		</STATIC>
+	</CHILD_LIST>
+</WINDOW>
