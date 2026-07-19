@@ -26,11 +26,16 @@ import NewListingsSection from './components/NewListingsSection'
  *   **데이터가 아니라 자리**만 잡았다(`MarketInsightTeaser`).
  *
  * ★ 폭·여백은 셸의 다른 화면(`NotFound`)과 같은 관례를 쓴다(`max-w-[1280px]`).
- *   섹션 간격은 `gap-10`(40px)로 넉넉히 둔다 — 절제가 기본값이고 강조는 여백이 만든다.
+ *   섹션 간격은 모바일 `gap-8` → `lg:gap-10` — 좁은 화면에서 40px 간격은 스크롤만 늘린다.
+ *
+ * ★★ **`max-w-full overflow-x-hidden`** — 참고 대시보드(`EcommerceDashboard`)가 최상위에
+ *    거는 가드를 그대로 가져왔다. 안쪽 어딘가가 폭을 넘겨도 **페이지 전체가 옆으로 밀리지
+ *    않게** 막는 마지막 방어선이다. 원인을 고치는 것과 별개로(그건 각 컴포넌트가 했다),
+ *    가로 스크롤은 모바일에서 가장 티나는 파손이라 그물을 하나 더 둔다.
  */
 const Home = () => {
     return (
-        <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-10 px-4 py-6 sm:px-6 lg:py-8">
+        <div className="mx-auto flex w-full max-w-full flex-col gap-8 overflow-x-hidden px-4 py-6 sm:px-6 lg:gap-10 lg:py-8 xl:max-w-[1280px]">
             <h1 className="sr-only">FinalCall 게임 아이템 경매</h1>
             <ClosingSoonSection />
             <MarketInsightTeaser />

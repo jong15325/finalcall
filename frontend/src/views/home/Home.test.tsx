@@ -255,8 +255,47 @@ describe('★ 골드포스 아웃라인 (design-system §5.12)', () => {
         renderWithProviders(<Home />)
 
         const frame = (await screen.findAllByTestId('item-art-frame'))[0]
-        // 마감 임박 카드는 아트 2배 → --art-scale: 2 (§5.12 사용자 확정값 = 5px).
-        expect(frame.getAttribute('style')).toContain('--art-scale: 2')
+        const style = frame.getAttribute('style') ?? ''
+
+        /*
+         * ★★ 아트 크기와 링 두께가 **같은 변수에서** 파생되는지 고정한다.
+         *   종전엔 링만 `--art-scale` 을 쓰고 아트는 width 속성이라, 좁은 화면에서
+         *   preflight `max-width:100%` 가 아트만 줄여 **비율이 무너졌다.**
+         *   두 값이 한 변수에 묶여 있으면 그 파손이 구조적으로 불가능하다.
+         */
+        expect(style).toContain('--art-scale-wide: 2')
+        expect(style).toContain('--art-scale-narrow: 1')
+        // 원본 치수도 함께 실린다 — CSS 가 배율을 곱한다.
+        expect(style).toContain('--art-w: 50')
+        expect(style).toContain('--art-h: 93')
+    })
+
+    it('★ 좁은 화면 배율이 넓은 화면보다 크지 않다 (아트가 카드를 밀어내지 않는다)', async () => {
+        stubAuctions({
+            closingSoon: [withGoldforce(86_400_000)],
+            newListings: [auction({ auctionPublicId: 'A-plain' })],
+        })
+        renderWithProviders(<Home />)
+
+        await waitFor(() =>
+            expect(screen.getAllByTestId('item-art-frame')).toHaveLength(2),
+        )
+        for (const frame of screen.getAllByTestId('item-art-frame')) {
+            const style = frame.getAttribute('style') ?? ''
+            const wide = Number(/--art-scale-wide: (\d+)/.exec(style)?.[1])
+            const narrow = Number(/--art-scale-narrow: (\d+)/.exec(style)?.[1])
+            expect(narrow).toBeGreaterThanOrEqual(1)
+            expect(narrow).toBeLessThanOrEqual(wide)
+        }
+    })
+
+    it('★ 아트가 preflight 자동 축소를 타지 않는다 (비정수 배율 = 픽셀아트 뭉갬)', async () => {
+        stubAuctions()
+        renderWithProviders(<Home />)
+
+        const images = await screen.findAllByRole('img')
+        // `.fc-art-img` 가 max-width:none + calc 크기를 갖는다(itemOutline.css).
+        expect(images[0]).toHaveClass('fc-art-img')
     })
 
     it('★ 아웃라인을 전부 제거해도 정보 손실이 없다 — "골드포스"가 글자로 남는다', async () => {
@@ -298,16 +337,30 @@ describe('★ 골드포스 아웃라인 (design-system §5.12)', () => {
  * 캐러셀은 그 두 값으로 페이지를 세므로, **실제 브라우저의 치수를 주입**해 검사한다
  * (컴포넌트에 테스트용 분기를 심는 것보다 정직하다 — 프로덕션 경로를 그대로 탄다).
  */
-function stubTrackSize(view: number, content: number) {
+function stubTrackSize(view: number, pitch: number) {
     const track = screen.getByTestId('carousel-track')
+    const slides = Array.from(track.children) as HTMLElement[]
+
     Object.defineProperty(track, 'clientWidth', {
         value: view,
         configurable: true,
     })
     Object.defineProperty(track, 'scrollWidth', {
-        value: content,
+        value: pitch * slides.length,
         configurable: true,
     })
+    // 캐러셀은 슬라이드 **피치**(offsetLeft 차이)로 페이지를 센다 — gap 이 포함된 실측값이다.
+    slides.forEach((slide, index) => {
+        Object.defineProperty(slide, 'offsetLeft', {
+            value: index * pitch,
+            configurable: true,
+        })
+        Object.defineProperty(slide, 'offsetWidth', {
+            value: pitch,
+            configurable: true,
+        })
+    })
+
     // 상태 갱신이 React 밖에서 일어나므로 act 로 감싸 렌더까지 흘려보낸다.
     act(() => {
         track.dispatchEvent(new Event('scroll'))
@@ -347,29 +400,58 @@ describe('★ 마감 임박 — 하나의 영역, 하나의 캐러셀 (라이브
         renderWithProviders(<Home />)
 
         await screen.findByTestId('snap-carousel')
-        stubTrackSize(900, 2400) // 한 화면 900px, 내용 2400px → 3페이지
+        // 한 화면 900px, 슬라이드 피치 300px → 3장씩, 8건이면 3페이지
+        stubTrackSize(900, 300)
 
         expect(screen.getByTestId('carousel-position')).toHaveTextContent(
             '1 / 3',
         )
     })
 
-    it('다음 버튼이 한 화면분을 넘긴다 (보이는 것이 통째로 교체된다)', async () => {
+    it('모바일 1장 기준으로는 8페이지가 된다 (같은 코드가 폭만 보고 판단한다)', async () => {
+        stubAuctions({ closingSoon: auctions(8) })
+        renderWithProviders(<Home />)
+
+        await screen.findByTestId('snap-carousel')
+        // 한 화면 300px, 피치 300px → 1장씩
+        stubTrackSize(300, 300)
+
+        expect(screen.getByTestId('carousel-position')).toHaveTextContent(
+            '1 / 8',
+        )
+    })
+
+    it('★ 다음 버튼이 "화면 폭"이 아니라 "슬라이드 피치×장수"로 넘긴다', async () => {
         const user = userEvent.setup()
         stubAuctions({ closingSoon: auctions(8) })
         renderWithProviders(<Home />)
 
         await screen.findByTestId('snap-carousel')
-        const track = stubTrackSize(900, 2400)
+        const track = stubTrackSize(900, 300)
         const scrollBy = vi.fn()
         track.scrollBy = scrollBy
 
         await user.click(screen.getByRole('button', { name: '다음 매물' }))
 
+        /*
+         * ★ peek 이 있으면 clientWidth(900)와 실제 3장 폭(900)이 어긋날 수 있다.
+         *   피치 기반이라 **정확히 3장 = 900** 만큼만 움직인다 — 누적 오차가 생기지 않는다.
+         */
         expect(scrollBy).toHaveBeenCalledWith({ left: 900 })
         expect(screen.getByTestId('carousel-position')).toHaveTextContent(
             '2 / 3',
         )
+    })
+
+    it('진행 막대가 페이지 수에 맞춰 폭을 갖는다 (점이 아니라 막대라 확장에 강하다)', async () => {
+        stubAuctions({ closingSoon: auctions(8) })
+        renderWithProviders(<Home />)
+
+        await screen.findByTestId('snap-carousel')
+        stubTrackSize(900, 300) // 3페이지
+
+        const bar = screen.getByTestId('carousel-progress')
+        expect(bar.style.width).toBe(`${100 / 3}%`)
     })
 
     it('★ 양 끝에서 버튼이 비활성 — 누를 수 없는 곳으로 안내하지 않는다', async () => {
@@ -377,7 +459,7 @@ describe('★ 마감 임박 — 하나의 영역, 하나의 캐러셀 (라이브
         renderWithProviders(<Home />)
 
         await screen.findByTestId('snap-carousel')
-        stubTrackSize(900, 2400)
+        stubTrackSize(900, 300)
 
         /*
          * ★ `toBeDisabled()` 가 아니라 `aria-disabled` 를 본다 — 템플릿 `ui/Button` 이
@@ -419,6 +501,71 @@ describe('★ 마감 임박 — 하나의 영역, 하나의 캐러셀 (라이브
                     url.includes('sort=endAt%2Casc') && url.includes('size=8'),
             ),
         ).toBe(true)
+    })
+})
+
+describe('★★ 모바일 레이아웃 회귀 가드', () => {
+    /*
+     * ★ 여기서 클래스를 단언하는 이유가 중요하다. 우리는 원래 "색·굵기 같은 취향은 단언하지
+     *   않는다"는 원칙을 지킨다(템플릿 관례가 바뀔 때 무관한 테스트가 붉어지면 안 되므로).
+     *   그러나 이 항목들은 취향이 아니라 **폭 계산으로 파손이 실증된 지점**이다:
+     *     · grid-cols-2 기본 → 320px 에서 아트가 1.08배로 축소(픽셀아트 뭉갬)
+     *     · sm 에서 캐러셀 2분할 → 640px 카드 내부 폭이 320px 때와 같아져 정보열 붕괴
+     *     · 루트 overflow 가드 부재 → 넘침이 페이지 가로 스크롤로 전파
+     *   FC-057 의 "AA 미달값 부활 방지" 가드와 같은 성격이다 — 고정하는 것이 **정확성**이다.
+     */
+
+    it('루트에 가로 넘침 가드가 있다 (페이지가 옆으로 밀리지 않는다)', () => {
+        stubAuctions()
+        const { container } = renderWithProviders(<Home />)
+
+        const root = container.firstElementChild as HTMLElement
+        expect(root.className).toContain('overflow-x-hidden')
+        expect(root.className).toContain('max-w-full')
+    })
+
+    it('새 매물 격자가 1열에서 시작한다 (모바일 우선 — 참고 대시보드 관례)', async () => {
+        stubAuctions()
+        renderWithProviders(<Home />)
+
+        const grid = await screen.findByTestId('new-listings-grid')
+        expect(grid.className).toContain('grid-cols-1')
+        // 2열은 sm 이상에서만 — 기본값이면 320px 에서 아트가 비정수 축소된다.
+        expect(grid.className).not.toMatch(/(^|\s)grid-cols-2(\s|$)/)
+        expect(grid.className).toContain('sm:grid-cols-2')
+    })
+
+    it('★ 캐러셀이 sm(640)에서 분할되지 않는다 — 그 폭에선 카드가 320px 때와 같아진다', async () => {
+        stubAuctions({ closingSoon: auctions(8) })
+        renderWithProviders(<Home />)
+
+        const track = await screen.findByTestId('carousel-track')
+        const slide = track.firstElementChild as HTMLElement
+
+        expect(slide.className).not.toContain('sm:w-[calc')
+        // 분할은 lg(1024) 부터가 실측 안전선이다.
+        expect(slide.className).toContain('lg:w-[calc((100%-1rem)/2)]')
+        expect(slide.className).toContain('xl:w-[calc((100%-2rem)/3)]')
+    })
+
+    it('★ 슬라이드가 100% 가 아니다 — peek 이 "더 있다"를 정적으로 알린다', async () => {
+        stubAuctions({ closingSoon: auctions(8) })
+        renderWithProviders(<Home />)
+
+        const track = await screen.findByTestId('carousel-track')
+        const slide = track.firstElementChild as HTMLElement
+
+        expect(slide.className).toContain('w-[calc(100%-1.5rem)]')
+        expect(slide.className).not.toMatch(/(^|\s)w-full(\s|$)/)
+    })
+
+    it('★ 캐러셀 스크롤이 페이지로 새지 않는다 (뒤로가기 제스처 오발동 방지)', async () => {
+        stubAuctions({ closingSoon: auctions(8) })
+        renderWithProviders(<Home />)
+
+        // overscroll-behavior-x: contain 은 `.fc-carousel-track` 이 갖는다(snapCarousel.css).
+        const track = await screen.findByTestId('carousel-track')
+        expect(track).toHaveClass('fc-carousel-track')
     })
 })
 

@@ -37,19 +37,27 @@ interface CountdownTextProps {
 }
 
 /*
- * ★ `hero` 가 `text-3xl`(30px)인 이유는 실측이다. 카드가 데스크톱에서 캐러셀 1/3 폭(≈400px)
- *   이고 아트·여백을 빼면 정보 열이 ≈250px 다. 여기서 "2일 3시간"을 48px 로 쓰면 **넘친다**
- *   (impeccable 절대금지: *"Text that overflows its container"*). 30px 이 그 폭에서 가장
- *   큰 안전값이라 **카드 안 최대 활자**라는 위계는 지키면서 넘치지 않는다.
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ `hero` 크기는 **폭 실측에서 나왔다** (모바일 파손 수정).
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 카드 정보열의 폭은 화면마다 다르고, **가장 좁은 곳이 모바일이 아니다.**
+ * 캐러셀이 갈라지는 지점마다 다시 좁아진다(실측):
+ *   320px → 128px · 414px → 222px · 1280px(3분할) → 210px
+ * "2일 3시간"은 30px bold 에서 아이콘·여백까지 ≈164px, 20px 에서 ≈114px 다.
+ * 그래서 base 20px → sm 24px → lg 30px 로 **폭이 확보되는 순서대로** 키운다.
+ *
+ * 고정 30px 로 두면 320px 에서 **36px 넘쳐** 카드 밖으로 삐져나온다
+ * (impeccable 절대금지: *"Text that overflows its container"*).
+ * base 에서도 이름(14px)·가격(16px)보다 크므로 **카드 최대 활자**라는 위계는 유지된다.
  */
 const SIZE_CLASS = {
     sm: 'text-sm font-bold leading-none',
-    hero: 'text-3xl font-bold leading-none',
+    hero: 'text-xl font-bold leading-none sm:text-2xl lg:text-3xl',
 } as const
 
 const ICON_CLASS = {
     sm: 'text-base',
-    hero: 'text-2xl',
+    hero: 'text-lg sm:text-xl lg:text-2xl',
 } as const
 
 const CountdownText = ({

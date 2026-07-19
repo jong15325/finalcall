@@ -48,6 +48,15 @@ interface ItemArtSlotProps {
     size?: ArtSize
     /** 정수배 확대율. **아웃라인 두께가 여기서 파생된다**(§5.12 `--art-scale`) */
     scale?: number
+    /**
+     * 좁은 화면(<480px)에서 쓸 배율. 생략하면 `scale` 과 같다.
+     *
+     * ★ **왜 JS 가 아니라 CSS 변수로 넘기는가** — 자바스크립트로 화면 폭을 재서 배율을 고르면
+     *   (a) 첫 렌더가 항상 틀린 값으로 한 번 그려지고 (b) resize 리스너가 카드마다 붙는다.
+     *   미디어쿼리는 두 문제가 다 없고, **아트와 링이 같은 변수에서 파생**되므로 둘이
+     *   어긋날 수 없다(모바일에서 아웃라인 비율이 무너졌던 원인이 바로 그 어긋남이다).
+     */
+    scaleNarrow?: number
     /** 표시명(스냅샷). 대체 텍스트에 쓴다 */
     name?: string
     /** 골드포스 활성 여부 — 아웃라인을 금/블랙으로 가른다(파생은 `lib/goldforce.ts`) */
@@ -65,12 +74,14 @@ const ItemArtSlot = ({
     item,
     size = 'l',
     scale = 2,
+    scaleNarrow,
     name,
     goldforce = false,
     showLevel = false,
     className,
 }: ItemArtSlotProps) => {
-    const art = itemArt(item, size, scale)
+    // 경로·원본 치수는 배율과 무관하다. 배율은 CSS 가 곱한다(아래 --art-w/--art-h).
+    const art = itemArt(item, size, 1)
 
     /*
      * 자산이 없는 조합(범위 밖 레벨·미등록 코드)은 **깨진 이미지 대신 글자**를 낸다.
@@ -116,7 +127,15 @@ const ItemArtSlot = ({
                     'fc-art-frame rounded-[3px]',
                     goldforce ? 'fc-outline-gold' : 'fc-outline-black',
                 )}
-                style={{ '--art-scale': scale } as React.CSSProperties}
+                style={
+                    {
+                        // 아트 크기·링 두께가 **이 두 값에서 함께** 파생된다(itemOutline.css).
+                        '--art-scale-wide': scale,
+                        '--art-scale-narrow': scaleNarrow ?? scale,
+                        '--art-w': art.width,
+                        '--art-h': art.height,
+                    } as React.CSSProperties
+                }
                 data-testid="item-art-frame"
             >
                 {/*
@@ -132,14 +151,18 @@ const ItemArtSlot = ({
                 )}
 
                 <div className="fc-art-bevel">
+                    {/*
+                     * 크기는 `.fc-art-img` 가 `--art-scale` 로 계산한다. `width`/`height` 속성은
+                     * **원본 치수**를 그대로 실어 종횡비를 알린다(CLS 는 CSS 가 이미 막는다).
+                     */}
                     <img
+                        className="fc-art-img"
                         src={art.src}
                         alt={alt}
                         width={art.width}
                         height={art.height}
                         loading="lazy"
                         decoding="async"
-                        style={{ imageRendering: 'pixelated' }}
                     />
                 </div>
             </div>

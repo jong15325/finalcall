@@ -15,8 +15,14 @@ import SectionNotice from './SectionNotice'
 /**
  * 새 매물 섹션 (FC-058 → 재작업).
  *
- * ★ **격자다** — 위 섹션이 캐러셀 + 행목록이었으므로 세 번째 구조를 쓴다.
+ * ★ **격자다** — 위 섹션이 캐러셀이었으므로 다른 구조를 쓴다.
  *   여기서 하는 일은 "훑기"가 아니라 **"고르기"** 라 아트가 크고 나란히 비교된다.
+ *
+ * ★★ **모바일 우선 격자**(참고 대시보드 `EcommerceDashboard` 관례):
+ *    `grid-cols-1 sm:2 lg:3 xl:4`. 종전 `grid-cols-2` 기본이 파손의 원인이었다 —
+ *    320px 에서 열폭이 136px 이라 아트 가용폭이 54px 이고, 100px 짜리 아트가
+ *    preflight `max-width:100%` 에 걸려 **1.08배로 축소**됐다(비정수 = 픽셀아트 뭉갬).
+ *    1열로 시작하면 320px 에서도 가용폭 210px 라 2배 아트가 여유롭게 들어간다.
  *
  * ★ 쿼리: `GET /auctions?sort=createdAt,desc&size=8` (계약 §3.1, 구현 확인됨).
  *   **`status` 필터를 걸지 않는다** — "최근 올라온 것"이 질문이고, 갓 등록된 예약 경매
@@ -76,7 +82,10 @@ const NewListingsSection = () => {
             )}
 
             {!isPending && !isError && auctions.length > 0 && (
-                <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                <ul
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                    data-testid="new-listings-grid"
+                >
                     {auctions.map((auction) => (
                         <AuctionGridCard
                             key={auction.auctionPublicId}
@@ -92,7 +101,7 @@ const NewListingsSection = () => {
 /** 격자와 같은 열 수·같은 카드 높이 — 로딩 종료 시 아래 내용이 밀려 올라가지 않는다. */
 const NewListingsSkeleton = () => (
     <div
-        className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         data-testid="new-listings-skeleton"
     >
         {Array.from({ length: NEW_LISTING_SIZE }).map((_, index) => (

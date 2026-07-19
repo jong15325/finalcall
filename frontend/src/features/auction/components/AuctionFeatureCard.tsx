@@ -56,15 +56,21 @@ const AuctionFeatureCard = ({ auction }: AuctionFeatureCardProps) => {
             <Card
                 clickable
                 className="h-full"
-                bodyClass="flex h-full items-center gap-4"
+                bodyClass="flex h-full items-center gap-3 sm:gap-4"
             >
+                {/*
+                 * ★ 좁은 화면에서 아트를 1배로 낮춘다. 2배(100px)면 320px 화면의 카드 내부
+                 *   248px 중 134px 을 아트가 먹어 정보열이 98px 로 무너진다(실측).
+                 *   1배면 80px 이라 정보열이 152px 남는다. **링 두께도 같이 줄어** 비율이 유지된다.
+                 */}
                 <ItemArtSlot
                     showLevel
                     item={item}
                     scale={2}
+                    scaleNarrow={1}
                     name={item.nameSnapshot}
                     goldforce={goldforce}
-                    className="p-3"
+                    className="p-2 sm:p-3"
                 />
 
                 <div className="flex min-w-0 flex-1 flex-col gap-2">

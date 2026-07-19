@@ -1,0 +1,50 @@
+/*
+ * 캐러셀 트랙 — 스와이프 감각 (FC-058 재설계 3차).
+ *
+ * ★ 컴포넌트 옆에 두고 직접 임포트한다. `assets/styles/**` 는 템플릿 소유라
+ *   FC-057 이 "원본과 diff 0"을 확보해 둔 곳이고, 여기 손대면 그 검증이 깨진다.
+ */
+
+.fc-carousel-track {
+    /*
+     * ★★ **끝에서 밀 때 스크롤이 밖으로 새지 않게 막는다.**
+     * 없으면 마지막 카드에서 한 번 더 밀었을 때 스크롤 체이닝이 일어나 **브라우저
+     * 뒤로가기 제스처**(iOS/Chrome 가로 스와이프)나 페이지 가로 스크롤로 이어진다.
+     * 모바일에서 캐러셀을 넘기다 화면이 통째로 뒤로 가는 사고가 여기서 난다.
+     */
+    overscroll-behavior-x: contain;
+
+    /*
+     * 스크롤바를 숨긴다 — "더 있다"는 이미 **peek(다음 카드가 24px 보임) · 진행 막대 ·
+     * 위치 숫자 · 화살표** 네 경로로 전달된다. 그 위에 스크롤바까지 두면 카드 아래에
+     * 회색 막대가 하나 더 생겨 섹션 간 리듬이 깨진다.
+     * ※ 조작 수단을 없애는 게 아니다 — 드래그·스와이프·키보드·화살표 전부 그대로다.
+     */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.fc-carousel-track::-webkit-scrollbar {
+    display: none;
+}
+
+/*
+ * 스냅이 걸리는 지점에 여유를 준다. `snap-start` 만 쓰면 카드가 컨테이너 왼쪽 모서리에
+ * 딱 붙는데, 카드에 그림자·포커스 링이 있어 살짝 잘려 보인다.
+ */
+.fc-carousel-track {
+    scroll-padding-inline-start: 0.125rem;
+    padding-block-end: 0.125rem;
+}
+
+/*
+ * ★ 감소 모드: 부드러운 이동만 끄고 **이동 자체는 남긴다.**
+ *   Tailwind `motion-safe:scroll-smooth` 가 이미 그 역할을 하나, 상위 스타일이
+ *   `scroll-behavior` 를 물려줄 수 있어 여기서 못박는다.
+ *   (진행 막대의 transition 은 컴포넌트에서 `motion-safe:` 로 처리했다.)
+ */
+@media (prefers-reduced-motion: reduce) {
+    .fc-carousel-track {
+        scroll-behavior: auto;
+    }
+}

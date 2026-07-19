@@ -32,16 +32,54 @@
  *   금 그라데이션 두 겹은 정적이라 래스터 1회 후 캐시된다.
  */
 
+/*
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ 배율은 **CSS 가 정한다** — JS prop 이 아니다 (모바일 파손 수정).
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 종전엔 `--art-scale` 을 JS 가 인라인으로 박고 `<img>` 는 `width`/`height` 속성으로 크기를
+ * 잡았다. 그런데 Tailwind preflight 에 **`img { max-width: 100%; height: auto }`** 가 있어서
+ * 좁은 화면에서 이미지가 **자동으로 축소**됐다 — 그 결과가 **비정수 배율**(실측 1.08x·1.48x·
+ * 1.78x)이고, 픽셀아트가 뭉개진다. 게다가 **링 두께는 `--art-scale` 그대로**라 아트만 줄고
+ * 테두리는 안 줄어 **아웃라인 비율이 무너졌다**.
+ *
+ * → 아트 크기와 링 두께를 **같은 변수 하나**에서 파생시키고, 그 변수를 **미디어쿼리로** 바꾼다.
+ *   이러면 두 값이 절대 어긋날 수 없고, 배율은 언제나 정수다.
+ *   `--art-scale-narrow` / `--art-scale-wide` 를 컴포넌트가 인라인으로 주면 나머지는 CSS 몫이다.
+ */
 .fc-art-frame {
+    --art-scale: var(--art-scale-wide, 2);
+
     /* 두께는 --art-scale 파생. 원본 비율 유지, 합계 상한 9px (§5.12). */
-    --gf-bright: min(calc(1px * var(--art-scale, 1) + 1px), 5px);
-    --gf-bev: min(calc(1px * var(--art-scale, 1)), 4px);
+    --gf-bright: min(calc(1px * var(--art-scale) + 1px), 5px);
+    --gf-bev: min(calc(1px * var(--art-scale)), 4px);
 
     position: relative;
-    isolate: isolate;
     isolation: isolate;
     overflow: hidden;
     padding: var(--gf-bright); /* ← 바깥 겹(밝은 링)이 차지하는 자리 */
+}
+
+/*
+ * 좁은 화면(<480px)에서 한 단계 낮춘다. 480은 실측 경계다 —
+ * 그 미만에서 아트 2배(100px)가 카드 정보열을 60px 아래로 밀어냈다.
+ */
+@media (max-width: 479px) {
+    .fc-art-frame {
+        --art-scale: var(--art-scale-narrow, var(--art-scale-wide, 2));
+    }
+}
+
+/*
+ * ★ `max-width: none` 으로 preflight 를 **의도적으로 끈다.**
+ *   이 이미지는 "부모에 맞춰 줄어들면 되는 사진"이 아니라 **정수배로만 확대해야 하는 도트
+ *   아트**다. 자동 축소를 허용하는 순간 비정수 배율이 되어 뭉개진다.
+ *   크기가 CSS 로 확정되므로 CLS 도 그대로 방지된다.
+ */
+.fc-art-img {
+    width: calc(var(--art-w) * 1px * var(--art-scale));
+    height: calc(var(--art-h) * 1px * var(--art-scale));
+    max-width: none;
+    image-rendering: pixelated;
 }
 
 /* 안쪽 겹(베벨). border 라서 변마다 색을 따로 준다 — 원본이 그렇다. */

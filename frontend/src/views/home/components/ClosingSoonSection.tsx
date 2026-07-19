@@ -27,13 +27,16 @@ import SectionNotice from './SectionNotice'
  * 종전 판단은 이 지시로 대체됐다.
  *
  * ★ **몇 장 보이나 — 반응형은 CSS 가 정한다**(`SnapCarousel` 슬라이드 폭):
- *   | 화면 | 한 번에 | 한 번에 넘기는 양 |
+ *   | 화면 | 한 번에 | 조작 |
  *   |---|---|---|
- *   | 모바일(<640) | **1장** | 1장(스와이프 or 버튼) |
- *   | 태블릿(≥640) | **2장** | 2장 |
- *   | 데스크톱(≥1024) | **3장** | 3장 |
- *   넘기는 단위는 항상 **한 화면분**이라 "보이는 것이 통째로 교체"된다 —
- *   한 장씩 밀면 이미 본 카드가 남아 어디까지 봤는지 헷갈린다.
+ *   | ~1023 | **1장 + 24px peek** | 스와이프(모바일) · sm 이상은 화살표도 |
+ *   | ≥1024 | **2장** | 화살표 · 드래그 |
+ *   | ≥1280 | **3장** | 〃 |
+ *   넘기는 단위는 **보이는 장수만큼**이라 "보이는 것이 통째로 교체"된다.
+ *
+ * ★★ **`sm`(640)에서 2분할하지 않는다.** 처음엔 640부터 2장을 보였는데, 그러면 카드 내부
+ *    폭이 **320px 화면일 때와 같아져**(둘 다 248px) 정보열이 다시 무너졌다.
+ *    분할은 **1024부터**가 실측상 안전선이다.
  *
  * ★ 쿼리: `GET /auctions?status=ACTIVE&sort=endAt,asc&size=8` (계약 §3.1, 구현 확인됨).
  *   `status=ACTIVE` 를 빼면 이미 끝난 경매가 맨 앞에 온다 — 마감 임박의 정의가 무너진다.
@@ -109,18 +112,18 @@ const ClosingSoonSection = () => {
  * 데스크톱 한 화면분(3장)만 그린다. 넘겨야 보이는 것을 미리 그릴 이유가 없다.
  */
 const ClosingSoonSkeleton = () => (
-    <div className="flex gap-4" data-testid="closing-soon-skeleton">
+    <div
+        className="flex gap-4 overflow-hidden"
+        data-testid="closing-soon-skeleton"
+    >
         {Array.from({ length: 3 }).map((_, index) => (
             <Card
                 key={index}
                 className={classNamesForSkeletonSlide(index)}
-                bodyClass="flex items-center gap-4"
+                bodyClass="flex items-center gap-3 sm:gap-4"
             >
-                <Skeleton
-                    height={186}
-                    width={100}
-                    className="shrink-0 rounded-lg"
-                />
+                {/* 아트 자리 — 좁은 화면은 1배(50×93), 그 위는 2배(100×186)로 실제와 같다. */}
+                <Skeleton className="h-[93px] w-[50px] shrink-0 rounded-lg sm:h-[186px] sm:w-[100px]" />
                 <div className="flex flex-1 flex-col gap-3">
                     <Skeleton height={18} width="45%" />
                     <Skeleton height={30} width="70%" />
@@ -132,12 +135,16 @@ const ClosingSoonSkeleton = () => (
     </div>
 )
 
-/** 슬라이드와 같은 반응형 폭 — 2·3번째는 좁은 화면에서 숨어야 한 장만 보인다. */
+/**
+ * 슬라이드와 **같은 반응형 폭**(peek 포함) — 로딩이 끝날 때 카드 폭이 튀지 않는다.
+ * 2·3번째는 해당 브레이크포인트 전까지 감춘다. 안 감추면 좁은 화면에서 트랙 밖으로 밀려
+ * 스켈레톤 단계에만 가로 넘침이 생긴다.
+ */
 function classNamesForSkeletonSlide(index: number): string {
     const base =
-        'w-full shrink-0 sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
-    if (index === 1) return `${base} hidden sm:block`
-    if (index === 2) return `${base} hidden lg:block`
+        'w-[calc(100%-1.5rem)] shrink-0 lg:w-[calc((100%-1rem)/2)] xl:w-[calc((100%-2rem)/3)]'
+    if (index === 1) return `${base} hidden lg:block`
+    if (index === 2) return `${base} hidden xl:block`
     return base
 }
 
