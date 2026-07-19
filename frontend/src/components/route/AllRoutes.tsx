@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import ProtectedRoute from './ProtectedRoute'
 import PublicRoute from './PublicRoute'
 import AuthorityGuard from './AuthorityGuard'
@@ -7,11 +8,12 @@ import {
     protectedRoutes,
     publicRoutes,
     sharedRoutes,
-    ROUTES,
 } from '@/configs/routes.config'
 import { useUserAuthority } from '@/store/authStore'
-import { Routes, Route, Navigate } from 'react-router'
+import { Routes, Route } from 'react-router'
 import type { LayoutType } from '@/@types/theme'
+
+const NotFound = lazy(() => import('@/views/others/NotFound'))
 
 interface ViewsProps {
     pageContainerType?: 'default' | 'gutterless' | 'contained'
@@ -30,13 +32,20 @@ type AllRoutesProps = ViewsProps
  * ★ **catch-all 을 ProtectedRoute 밖으로 뺐다.** 템플릿은 `*` 를 보호 구역 **안**에 두어
  *   비로그인이 오타 URL 로 들어오면 404 가 아니라 **로그인 화면으로 튕겼다**. 없는 페이지는
  *   인증 문제가 아니다.
- *   지금은 홈으로 보내지만 **전용 404 화면이 옳다**(주소를 조용히 갈아끼우면 오타를 알 수 없다).
- *   화면 제작이 이 티켓 범위 밖이라 후속 티켓으로 남긴다.
+ *
+ * ★ FC-057 — 그 자리에 **전용 404 화면**을 넣었다. 종전에는 `<Navigate to="/" />` 라 주소가
+ *   조용히 홈으로 갈려 손님이 오타를 알 수 없었다.
  */
 const AllRoutes = (props: AllRoutesProps) => {
     // 권한 배열은 세션의 `isAdmin` 에서 파생한다(표시 제어 — 인가는 서버, 계약 §1.2).
     const userAuthority = useUserAuthority()
 
+    /*
+     * ★ `footer={false}` — 푸터는 **셸이 소유한다**(`AppShell/AppFooter`, FC-057).
+     *   템플릿 `PageContainer` 기본값은 `footer: true` 이고 그러면 `template/Footer`("Ecme"
+     *   저작권 + `preventDefault` 로 막아둔 링크 2개)가 화면마다 붙는다. `route.meta` 뒤에
+     *   두어 개별 라우트가 되살리지 못하게 한다 — 푸터가 두 벌이 되면 안 된다.
+     */
     return (
         <Routes>
             {/* 공통 — 가드 없음 */}
@@ -45,7 +54,11 @@ const AllRoutes = (props: AllRoutesProps) => {
                     key={route.key}
                     path={route.path}
                     element={
-                        <PageContainer {...props} {...route.meta}>
+                        <PageContainer
+                            {...props}
+                            {...route.meta}
+                            footer={false}
+                        >
                             <AppRoute
                                 routeKey={route.key}
                                 component={route.component}
@@ -67,7 +80,11 @@ const AllRoutes = (props: AllRoutesProps) => {
                                 userAuthority={userAuthority}
                                 authority={route.authority}
                             >
-                                <PageContainer {...props} {...route.meta}>
+                                <PageContainer
+                                    {...props}
+                                    {...route.meta}
+                                    footer={false}
+                                >
                                     <AppRoute
                                         routeKey={route.key}
                                         component={route.component}
@@ -97,7 +114,18 @@ const AllRoutes = (props: AllRoutesProps) => {
                 ))}
             </Route>
 
-            <Route path="*" element={<Navigate replace to={ROUTES.home} />} />
+            {/*
+             * ★ **전용 404**(FC-057). 종전 `<Navigate to="/" />` 는 오타 URL 을 조용히 홈으로
+             *   갈아끼워 손님이 오타를 알 수 없게 했다. 주소는 그대로 두고 화면으로 알린다.
+             */}
+            <Route
+                path="*"
+                element={
+                    <PageContainer {...props} footer={false}>
+                        <NotFound />
+                    </PageContainer>
+                }
+            />
         </Routes>
     )
 }
