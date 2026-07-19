@@ -13,20 +13,21 @@ import type { ReactNode } from 'react'
 /**
  * 모바일 하단 탭바 (FC-057).
  *
- * ★★ **활성 표시를 위아래로 뒤집는다.** 데스크톱 내비는 밑줄이지만 탭바는 화면 **맨 아래**라
- *    밑줄이 기기 가장자리에 먹힌다. 그래서 **탭 상단 2px**로 올린다 — 규칙(2px near-black
- *    선)은 같고 위치만 뒤집힌 것이다.
+ * ★★ **활성 표현은 템플릿 `MenuItem` 관례를 쓴다**(사용자 방침 2026-07-19).
+ *    템플릿 `_menu-item.css` 의 `.menu-item` = `text-gray-600 dark:text-gray-400`,
+ *    `.menu-item-active` = `text-primary`. 템플릿에는 **하단 탭바라는 컴포넌트가 없어**
+ *    가장 가까운 내비 항목 관례를 빌려온 것이다(보고 대상).
+ *    **폐기**: 종전의 "탭 상단 near-black 2px" — 우리가 만든 장치였다.
  *
  * ★ 5칸 **고정**이다. 균등 분할이라 개수가 바뀌면 모든 탭이 움직이므로 목적지가 늘어도
  *   탭을 늘리지 않는다(`navigation.ts` 참조).
  *
- * ★ 색만으로 전달하지 않는다 — 활성 탭은 상단 선 + `font-bold` + `aria-current="page"` 를
- *   함께 갖는다. 아이콘에도 라벨을 반드시 병기한다.
+ * ★ **색 단독 전달 금지**(WCAG 1.4.1 — 접근성은 템플릿에 위임하지 않는다):
+ *   아이콘에 **항상 텍스트 라벨을 병기**하고, 활성 탭은 `aria-current="page"` 로 의미를 준다.
+ *   즉 활성 여부가 색에만 실리지 않는다.
  *
  * ★ 터치 표적 48px 이상(`h-16` = 64px). `pb-[env(safe-area-inset-bottom)]` 로 iOS 홈
  *   인디케이터를 피한다.
- *
- * 대비: 비활성 `gray-600`/흰 **7.81:1**, 활성 `gray-900`/흰 **17.93:1**.
  */
 
 const TAB_ICONS: Record<string, ReactNode> = {
@@ -57,10 +58,11 @@ const MobileTabBar = ({ className }: { className?: string }) => {
                                 to={destination.path}
                                 aria-current={active ? 'page' : undefined}
                                 className={classNames(
-                                    'flex h-16 flex-col items-center justify-center gap-1 border-t-2 text-[11px] transition-colors',
+                                    // 템플릿 `_menu-item.css` 의 색·굵기 관례를 따른다.
+                                    'flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors duration-150',
                                     active
-                                        ? 'border-gray-900 font-bold text-gray-900 dark:border-gray-100 dark:text-gray-100'
-                                        : 'border-transparent font-medium text-gray-600 dark:text-gray-400',
+                                        ? 'text-primary'
+                                        : 'text-gray-600 dark:text-gray-400',
                                 )}
                             >
                                 <span aria-hidden="true" className="text-xl">

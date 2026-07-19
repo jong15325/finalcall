@@ -13,7 +13,6 @@ import {
 import Avatar from '@/components/ui/Avatar/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import LinkButton from '@/components/shared/LinkButton'
-import { inkColorClass } from '@/components/shared/buttonColors'
 import { useAuth } from '@/auth'
 import { ROUTES } from '@/configs/routes.config'
 
@@ -23,8 +22,11 @@ import { ROUTES } from '@/configs/routes.config'
  * ★ **비로그인일 때 사라지지 않는다.** 로그인/가입 CTA 가 그 자리를 지킨다 — 셸의 요점이
  *   "손님도 크롬을 본다"이므로, 계정 자리만 비면 그 요점이 반쯤 무너진다.
  *
- * ★ 가입 CTA 는 **near-black** 이다(`shared/buttonColors` 의 `inkColorClass` — 단일 출처).
- *   로그인은 그보다 약한 `default` variant 로 둬 **두 CTA 가 서로 경쟁하지 않게** 한다.
+ * ★★ **버튼 색은 템플릿 기본값이다**(사용자 방침 2026-07-19). 가입은 템플릿 주 CTA 인
+ *    `variant="solid"`(= `bg-primary text-neutral hover:bg-primary-mild`), 로그인은 기본
+ *    `variant="default"`(= 흰 바탕 + `border-gray-300`)로 둬 **두 CTA 가 경쟁하지 않게** 한다.
+ *    위계는 색이 아니라 **템플릿이 이미 정해둔 variant 차이**로 만든다.
+ *    **폐기**: 종전의 `inkColorClass`(near-black 채움)와 `shared/buttonColors` 파일.
  */
 
 const AccountMenu = () => {
@@ -36,11 +38,7 @@ const AccountMenu = () => {
                 <LinkButton size="sm" to={ROUTES.login}>
                     로그인
                 </LinkButton>
-                <LinkButton
-                    size="sm"
-                    to={ROUTES.signup}
-                    customColorClass={inkColorClass}
-                >
+                <LinkButton size="sm" variant="solid" to={ROUTES.signup}>
                     회원가입
                 </LinkButton>
             </div>

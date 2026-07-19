@@ -15,8 +15,10 @@ import { useMyBalance } from '@/lib/queries/balance'
  *    묶인 금액만큼 **잔액이 줄어든 것처럼 보인다**. 라벨은 "게임머니 가용"이고, 보유·홀드
  *    내역은 스크린리더용 문장으로 함께 준다.
  *
- * ★ §1.2 Game-Color Containment — 여기에 element 색·게임 색이 **하나도 없다.** 금액은
- *   near-black 활자와 tabular 숫자만으로 읽힌다.
+ * ★ 색·타이포는 템플릿 그레이 스케일 관례를 쓴다(라벨 `text-gray-500 dark:text-gray-400`,
+ *   값 `text-gray-900 dark:text-gray-100` — 템플릿 heading 색과 같다).
+ *   `tabular-nums` 만 예외적으로 붙인다 — 취향이 아니라 **자릿수가 흔들리지 않게** 하는
+ *   기능이다(금액이 갱신될 때 폭이 튀면 헤더 전체가 흔들린다).
  */
 
 interface BalanceIndicatorProps {
@@ -26,11 +28,9 @@ interface BalanceIndicatorProps {
 
 const won = new Intl.NumberFormat('ko-KR')
 
-/** 라벨은 작게·자간 넓게, 값은 크게·자간 좁게(design-system [3.1]). */
-const LABEL_CLASS =
-    'text-[11px] leading-none tracking-wide text-gray-500 dark:text-gray-400'
+const LABEL_CLASS = 'text-xs leading-none text-gray-500 dark:text-gray-400'
 const VALUE_CLASS =
-    'text-sm leading-none font-bold tabular-nums tracking-tight text-gray-900 dark:text-gray-100'
+    'text-sm leading-none font-bold tabular-nums text-gray-900 dark:text-gray-100'
 
 const BalanceFigure = ({ label, value }: { label: string; value: number }) => (
     <div className="flex flex-col gap-1">

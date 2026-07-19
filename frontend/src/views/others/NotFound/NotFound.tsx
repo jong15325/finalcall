@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router'
 import LinkButton from '@/components/shared/LinkButton'
-import { inkColorClass } from '@/components/shared/buttonColors'
 import { ROUTES } from '@/configs/routes.config'
 
 /**
@@ -52,10 +51,7 @@ const NotFound = () => {
 
             <div className="flex flex-wrap items-center justify-center gap-2">
                 <LinkButton to={ROUTES.home}>홈으로</LinkButton>
-                <LinkButton
-                    to={ROUTES.auctions}
-                    customColorClass={inkColorClass}
-                >
+                <LinkButton variant="solid" to={ROUTES.auctions}>
                     경매 둘러보기
                 </LinkButton>
             </div>

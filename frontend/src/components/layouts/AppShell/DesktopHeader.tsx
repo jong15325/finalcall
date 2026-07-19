@@ -22,12 +22,15 @@ import { PRIMARY_DESTINATIONS, isDestinationActive } from './navigation'
  * ★ 2행 내비는 **왼쪽 정렬 + 고정 간격**이다. 폭에 분배(`justify-between`)하지 않는 이유는
  *   `navigation.ts` 참조 — 목적지가 늘어도 기존 항목이 움직이지 않게 하려는 것이다.
  *
- * ★ 활성 표시는 **near-black 2px 밑줄**이다(퍼플 아님). 퍼플은 워드마크 마감선 하나로
- *   아껴 쓴다 — 액센트가 두 군데면 액센트가 아니다.
- *   색만으로 전달하지 않는다: 활성 항목은 `font-bold` + `aria-current="page"` 를 함께 갖는다.
+ * ★★ **활성 표현은 템플릿 `Tabs`(underline variant)의 관례를 그대로 쓴다**(사용자 방침
+ *    2026-07-19). 템플릿 `ui/Tabs/TabNav.tsx` 가 활성 탭에 붙이는 조합이
+ *    `tab-nav-active text-primary` + `border-primary` 이고, 비활성은 `border-transparent`
+ *    (`_tabs.css` 의 `.tab-nav-underline`)다. 클래스도 템플릿 CSS(`tab-nav`·
+ *    `tab-nav-underline`)를 그대로 재사용한다 — 우리가 값을 만들지 않는다.
+ *    **폐기**: 종전의 near-black 2px 밑줄(`border-gray-900`).
  *
- * 대비: 비활성 라벨 `gray-600` #525252 / 흰 **7.81:1**, 다크 `gray-400` #A3A3A3 /
- * `gray-900` **7.11:1**. 활성 라벨·밑줄 17.93:1 / 16.44:1.
+ * ★ 색만으로 전달하지 않는다(WCAG 1.4.1 — 접근성은 템플릿에 위임하지 않는다):
+ *   활성 항목은 **밑줄(형태) + `aria-current="page"`(의미)** 를 색과 함께 갖는다.
  */
 
 const NavItem = ({
@@ -43,10 +46,11 @@ const NavItem = ({
         to={to}
         aria-current={active ? 'page' : undefined}
         className={classNames(
-            'relative -mb-px flex h-12 items-center border-b-2 px-1 text-sm transition-colors',
+            // 템플릿 `_tabs.css` 의 underline 탭 클래스를 그대로 쓴다(`py-3 px-5` 는 셸 높이에 맞춰 제외).
+            'tab-nav relative -mb-px h-12 border-b-2 border-transparent px-1 text-sm',
             active
-                ? 'border-gray-900 font-bold text-gray-900 dark:border-gray-100 dark:text-gray-100'
-                : 'border-transparent font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
+                ? 'tab-nav-active border-primary text-primary'
+                : 'hover:text-primary',
         )}
     >
         {label}
