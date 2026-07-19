@@ -9,7 +9,7 @@ import {
     sharedRoutes,
     ROUTES,
 } from '@/configs/routes.config'
-import { useAuth } from '@/auth'
+import { useUserAuthority } from '@/store/authStore'
 import { Routes, Route, Navigate } from 'react-router'
 import type { LayoutType } from '@/@types/theme'
 
@@ -34,7 +34,8 @@ type AllRoutesProps = ViewsProps
  *   화면 제작이 이 티켓 범위 밖이라 후속 티켓으로 남긴다.
  */
 const AllRoutes = (props: AllRoutesProps) => {
-    const { user } = useAuth()
+    // 권한 배열은 세션의 `isAdmin` 에서 파생한다(표시 제어 — 인가는 서버, 계약 §1.2).
+    const userAuthority = useUserAuthority()
 
     return (
         <Routes>
@@ -63,7 +64,7 @@ const AllRoutes = (props: AllRoutesProps) => {
                         path={route.path}
                         element={
                             <AuthorityGuard
-                                userAuthority={user.authority}
+                                userAuthority={userAuthority}
                                 authority={route.authority}
                             >
                                 <PageContainer {...props} {...route.meta}>

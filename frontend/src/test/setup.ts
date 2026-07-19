@@ -1,19 +1,27 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'
+import { useAuthStore } from '@/store/authStore'
+import { __resetRefreshStateForTest } from '@/lib/api/client'
 
 /**
  * 테스트 공통 셋업(FC-051 → FC-055 이관).
  * - jest-dom 매처(`toBeInTheDocument` 등) 등록 + 타입 증강.
  * - 테스트 간 DOM 정리(globals:false 라 auto cleanup 이 걸리지 않는다 — 직접 건다).
  *
- * ★ 종전 셋업은 여기서 `useAuthStore.getState().clearSession()` 을 함께 돌렸다. Zustand 스토어는
- *   모듈 싱글턴이라 세션이 다음 테스트로 새면 "혼자 돌리면 통과, 전체 돌리면 실패"하는 순서 의존이
- *   생기기 때문이다. **인증 스토어는 FC-056 에서 이식하므로 그때 이 초기화를 되살려야 한다.**
- *   지금 없는 모듈을 import 하면 러너가 서지 않아 일단 뺐다 — 잊으면 순서 의존이 조용히 돌아온다.
+ * ★★ **모듈 싱글턴 상태를 매 테스트 뒤에 비운다**(FC-056 복원). 이게 없으면 한 테스트가 심어둔
+ *    세션·in-flight refresh 가 다음 테스트로 새어 **"혼자 돌리면 통과, 전체 돌리면 실패"** 하는
+ *    순서 의존이 생긴다. 그 실패는 원인이 자기 파일 안에 없어서 추적이 유난히 어렵다.
+ *    - `useAuthStore` — zustand 스토어(+persist 저장소)
+ *    - `__resetRefreshStateForTest` — `apiClient` 의 single-flight refresh 프로미스
+ *    새 전역 싱글턴을 만들면 여기에 초기화를 추가하라.
  */
 afterEach(() => {
     cleanup()
+    useAuthStore.getState().clearSession()
+    __resetRefreshStateForTest()
+    localStorage.clear()
+    sessionStorage.clear()
 })
 
 /**
