@@ -128,19 +128,21 @@ class AuctionRepositorySliceTest {
     void 목록_대분류_필터는_해당_템플릿만_반환한다() {
         User owner = persistUser("filter_owner", "필터판매자");
         Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
-        auctionRepository.save(auctionWithEnd(owner, persistItem(owner, 1221), end)); // typeCode 자리값 → mainCategory=1
-        auctionRepository.save(auctionWithEnd(owner, persistItem(owner, 2221), end)); // mainCategory=2
+        // ★ 대역은 6·5를 쓴다 — V13(경매·입찰 데모 시드)이 상품군 1 대역 경매를 커밋해 두므로 mainCategory=1 로
+        //   필터하면 시드 경매까지 잡혀 건수 단언이 깨진다. 검증 취지(대분류 필터가 해당 대분류만 반환)는 동일하다.
+        auctionRepository.save(auctionWithEnd(owner, persistItem(owner, 6221), end)); // typeCode 자리값 → mainCategory=6
+        auctionRepository.save(auctionWithEnd(owner, persistItem(owner, 5221), end)); // mainCategory=5
         em.flush();
         em.clear();
 
         AuctionSearchCondition condition = new AuctionSearchCondition(
-            1, null, null, null, null, null, null, null, null, null, null, null,
+            6, null, null, null, null, null, null, null, null, null, null, null,
             AuctionSort.END_AT, true);
         List<AuctionWithBidCount> result = auctionRepository.findByCursor(condition, AuctionCursor.first(), 10,
             Instant.now());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).auction().getItemInstance().getTemplate().getMainCategory()).isEqualTo(1);
+        assertThat(result.get(0).auction().getItemInstance().getTemplate().getMainCategory()).isEqualTo(6);
     }
 
     // ---------------- highestBidAmount 정렬 keyset(FC-033) ----------------
@@ -232,9 +234,14 @@ class AuctionRepositorySliceTest {
         }
     }
 
+    /**
+     * 목록 기본 조건. ★ mainCategory 를 전용 대역(9)으로 고정한다 — V13(경매·입찰 데모 시드)이 상품군 1 대역
+     * 경매를 커밋해 두므로 무필터로 조회하면 시드 경매가 섞여 순서·건수 단언이 깨진다(본 클래스 자체 데이터는
+     * typeCode 92xx = mainCategory 9).
+     */
     private AuctionSearchCondition defaultCondition() {
         return new AuctionSearchCondition(
-            null, null, null, null, null, null, null, null, null, null, null, null, AuctionSort.END_AT, true);
+            9, null, null, null, null, null, null, null, null, null, null, null, AuctionSort.END_AT, true);
     }
 
     private Auction activeAuction(User seller, ItemInstance item) {

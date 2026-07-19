@@ -90,15 +90,16 @@ class ItemApiIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void 시드_소유자의_인벤토리는_42건이다() throws Exception {
-        // V9 10건(slot 0~9) + V12 확장 32건(slot 10~41). 정원 96 이내.
+    void 시드_소유자의_인벤토리는_24건이다() throws Exception {
+        // V9 10건(slot 0~9) + V12 확장 32건(slot 10~41) = 42건에서 V13(경매·입찰 데모 시드)이 빼간 만큼 줄어든다.
+        // 42 - 15(진행 가능 경매 에스크로 → LISTED) - 3(낙찰 → 낙찰자 인벤토리로 이전) = 24. 정원 96 이내.
         Long seedSellerId = userRepository.findByLoginIdAndIsDeletedFalse("seed_seller").orElseThrow().getId();
 
         mockMvc.perform(get("/api/v1/me/inventory").with(user(String.valueOf(seedSellerId))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.capacity").value(96))
-            .andExpect(jsonPath("$.data.used").value(42))
-            .andExpect(jsonPath("$.data.items.length()").value(42));
+            .andExpect(jsonPath("$.data.used").value(24))
+            .andExpect(jsonPath("$.data.items.length()").value(24));
     }
 
     @Test

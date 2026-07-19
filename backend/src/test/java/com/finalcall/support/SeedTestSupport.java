@@ -23,8 +23,12 @@ import com.finalcall.domain.member.UserRepository;
  */
 public final class SeedTestSupport {
 
-    /** V9 시드가 생성하는 seed user 의 login_id. 시드 SQL 과 동일해야 한다(단일 진실원 주석). */
-    public static final Set<String> SEED_LOGIN_IDS = Set.of("seed_seller", "seed_buyer");
+    /**
+     * 시드가 생성하는 seed user 의 login_id. 시드 SQL 과 동일해야 한다(단일 진실원 주석).
+     * V9 = seed_seller·seed_buyer, V13(경매·입찰 데모 시드) = seed_bidder 추가.
+     * seed_bidder 는 bid·money_hold 가 FK 로 참조하므로 보존 대상에서 빠지면 정리 시 FK 위반으로 깨진다.
+     */
+    public static final Set<String> SEED_LOGIN_IDS = Set.of("seed_seller", "seed_buyer", "seed_bidder");
 
     private SeedTestSupport() {
     }
