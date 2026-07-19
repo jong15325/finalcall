@@ -22,6 +22,50 @@ function successEnvelope(data: unknown): string {
   return JSON.stringify({ success: true, data, timestamp: new Date().toISOString() });
 }
 
+/**
+ * 에러 envelope 스텁(FC-050).
+ *
+ * 인증 화면은 **실패 경로가 본체**다 — 자격 불일치(AUTH_003)·중복(AUTH_001·002)·rate limit(429)이
+ * 각각 다른 UI 계약을 갖고, 특히 "로그인 실패가 필드를 강조하지 않는다"는 **보안 요건**(SEC-007)이라
+ * 테스트로 고정해야 한다. 성공 스텁만으로는 그 경로에 닿을 수 없다.
+ */
+export interface StubErrorRoute {
+  match: string;
+  status: number;
+  /** 계약 [1.4] `code` — 도메인 ErrorCode 또는 `GATEWAY_*`. */
+  code: string;
+  message: string;
+  /** 검증 400 의 `errors[]`. */
+  errors?: { field: string; reason: string }[];
+  /** 429 의 `Retry-After`(초). */
+  retryAfterSeconds?: number;
+}
+
+export function stubApiError(routes: StubErrorRoute[]): void {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const route = routes.find((candidate) => url.includes(candidate.match));
+      if (!route) {
+        return Promise.reject(new Error(`스텁되지 않은 요청: ${url}`));
+      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (route.retryAfterSeconds !== undefined) {
+        headers['Retry-After'] = String(route.retryAfterSeconds);
+      }
+      const body = JSON.stringify({
+        success: false,
+        code: route.code,
+        message: route.message,
+        errors: route.errors,
+        timestamp: new Date().toISOString(),
+      });
+      return Promise.resolve(new Response(body, { status: route.status, headers }));
+    }),
+  );
+}
+
 export function stubApi(routes: StubRoute[]): void {
   vi.stubGlobal(
     'fetch',

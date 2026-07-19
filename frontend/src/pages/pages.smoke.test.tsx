@@ -33,7 +33,8 @@ describe('화면 스모크 — 크래시 없이 렌더된다', () => {
     renderWithProviders(<SignupPage />, { route: '/signup' });
 
     expect(screen.getByRole('heading', { level: 1, name: '회원가입' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '회원가입' })).toBeInTheDocument();
+    // 제목은 "회원가입", CTA 는 "가입하기"다(FC-043 목업 — 문구 확정은 사용자 판단 대기 4건 중 하나)
+    expect(screen.getByRole('button', { name: '가입하기' })).toBeInTheDocument();
   });
 
   it('마이페이지 — /me·/me/balance 응답 반영', async () => {
