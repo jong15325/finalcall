@@ -1,6 +1,6 @@
 # FinalCall Item·Inventory Domain Spec (아이템·인벤토리 도메인 스펙)
 
-상태: v0.3 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)** + **§3.1 LISTED 전이 드리프트 정정(2026-07-18, FC-030)** — 초안의 엔티티 메서드 `markListed()` 서술을 실구현(조건부 CAS `markListedIfInInventory`)에 맞게 갱신했다(FC-029 리뷰 판단 #5). 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
+상태: v0.4 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)** + **§3.1 LISTED 전이 드리프트 정정(2026-07-18, FC-030)** — 초안의 엔티티 메서드 `markListed()` 서술을 실구현(조건부 CAS `markListedIfInInventory`)에 맞게 갱신했다(FC-029 리뷰 판단 #5). **v0.4(2026-07-19, 게이트2 FC-044)**: §2.1 `item_template` 코드 축을 교정된 정의로 갱신(`main_category`=상품군·`sub_group`=대분류) + `kind`의 `sub_group` 의존·마법 2값 검증 주의 + 시드 정합 부채 명기. 코드값 열거 정본은 api-contract §3.3.1. 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
 소유: architect (spec). 게이트2 4항목 전부 승인 완료(§9) → 구현 착수 근거.
 근거: api-contract v1.5 §4.1·§4.2·§5, erd v0.8 §2(결정 플래그 B)·§4.3·§5·§6, domain-spec v0.5 §7, CLAUDE.md 섹션 5(도메인 컨벤션), D-044~047·D-062·D-066·D-067·D-073.
 범위: 정본을 대체하지 않는다. **본 문서는 구현 지침(불변식·응답 필드·에러코드·슬라이싱)의 단일 참조점**이며, 스키마/계약 변경이 필요한 항목은 §7(갭)·§9(게이트2)로 분리해 상신 대상으로 표시한다.
@@ -24,14 +24,18 @@
 ### 2.1 item_template (마스터, 고정 시드)
 | 컬럼 | 타입 | 널 | 키 | 비고 |
 |---|---|---|---|---|
-| main_category | INT | N | | 대분류(타입코드 천의 자리) |
-| sub_group | INT | N | | 중분류(백의 자리) |
-| element | INT | N | | 속성(십의 자리) |
-| kind | INT | N | | 종류(일의 자리) |
-| type_code | INT | N | UK | 자리값 합성 외부 식별자(035, public_id 미부여) |
+| main_category | INT | N | | **상품군**(천의 자리) — 아이템 카드 `1` 고정 |
+| sub_group | INT | N | | **대분류**(백의 자리) — 1=무기·2=방어구·3=마법 |
+| element | INT | N | | 속성(십의 자리) — 1=물·2=불·3=흙·4=바람 |
+| kind | INT | N | | 종류(일의 자리) — **의미가 `sub_group`에 의존** |
+| type_code | INT | N | UK | 자리값 합성 외부 식별자(035, public_id 미부여). 원게임 `itm_type`과 1:1 |
 | display_name | VARCHAR(100) | N | | 표시명(원게임 시드) |
 - UK: `(main_category, sub_group, element, kind)` 조합 1건(D-073, 등급 축 없음) + `type_code` 단독 UK.
 - soft delete 없음(마스터·불변 시드). D-081 패턴 불요.
+- **코드값 정본 = api-contract §3.3.1**(게이트2 FC-044, 2026-07-19). 구현 시 주의 2건:
+  - **`kind` 검증은 `sub_group`별로 다르다** — 무기·방어구는 1~4, **마법은 1~2뿐**이다. `sub_group=3 & kind≥3`은 성립 불가 조합이다.
+  - **카탈로그 필터의 `kind` 단독 조회는 다의적**이나 **400으로 막지 않는다**(계약 §4.1). 서버는 요청대로 처리하고, 다의성 해소는 클라이언트 UI 책임이다.
+- **⚠ 시드 정합 부채**: 현행 `V9__item_seed.sql`은 축 배정 교정(erd v1.1) 전 코드다. 재작성은 동결 해제 후 별도 티켓 — 대조표 `spec/proposals/item-code-dictionary.md` §3.3.
 
 ### 2.2 skill_definition (마스터, 고정 시드)
 | 컬럼 | 타입 | 널 | 키 | 비고 |
@@ -129,7 +133,8 @@ INVENTORY 행만 값을 가져 (owner, slot) 유일, 그 외 NULL(다중 허용)
 
 ### 5.1 GET /item-templates (카탈로그)
 - 인증 불요. 쿼리 필터: `mainCategory, subGroup, element, kind`(전부 optional, 화이트리스트). 페이지네이션 **offset**(§1.3, 카탈로그는 소규모·안정).
-- content 항목: `{ typeCode, mainCategory, subGroup, element, kind, displayName }`.
+- content 항목: `{ typeCode, mainCategory, subGroup, element, kind, displayName }`. 코드값은 계약 §3.3.1.
+- 스코프: `mainCategory = 1`(아이템 카드)만. 다른 상품군은 거래 대상이 아니다(계약 §3.3.1).
 - 정렬 화이트리스트: `typeCode`(기본 asc). (인덱스: element,kind 부분필터 + 소규모 풀스캔 허용 — §7 G1 참조)
 - 소유·마스킹 없음(마스터 데이터).
 
@@ -263,6 +268,7 @@ FC-023 쓰기 파일 집합:
 
 ### (b) 최소 스텁 시드 범위 = **승인**
 - item_template ~8건(대분류2 × 종류2 × 속성2 축 조합) + skill_definition ~5건.
+  - **⚠ 후속(2026-07-19, 게이트2 FC-044)**: 이 8건은 V9에 **축 배정 교정 전 코드**로 실재한다(§2.1 시드 정합 부채). 건수·구성 방침은 유효하나 **코드·표시명은 재작성 대상**이다 — 동결 해제 후 별도 티켓.
 - item_instance ~10건 — 소유자 배정 필요. **현재 member(user) 시드가 전무**(유저는 signup으로만 생성됨)하므로 시드가 **시드 소유자 user·user_balance 행도 함께 생성**해야 한다. instance는 SEED 이력 첫 행을 동반한다.
 - 대량·정밀 실데이터는 이연(D-067).
 

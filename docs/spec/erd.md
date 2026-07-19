@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v1.0 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v1.1 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -19,6 +19,8 @@
 | v0.9 | 2026-07-18 | 게이트2(FC-019, EPIC-ITEM) 승인 반영 — [4.3] `item_instance`에 slot 유일성 생성 컬럼 UK(`slot_key` GENERATED, `uk_item_instance_slot`) 신설(G2, D-081 선례 응용), 불변식에 DB 강제 근거 추가. [5] `temp_storage` 인덱스를 `(owner_id)` → `(owner_id, stored_at, instance_id)`로 보강(G3, cursor 안정 정렬). [5] `item_instance (template_id, level, skill1_id, skill2_id)` 인덱스 이유에 market-prices(§4.1) 집계 = EPIC-ITEM 제외·이연 주석. 사유: FC-019 계약 검증 갭 G2·G3 해소 + market-prices 이연(sale_order 데이터 선행). 진입 경로는 시드-only 확정(관리자 지급 API 미도입 → 계약·스키마 무추가). 근거: 게이트2 승인(2026-07-18) |
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
+
+| v1.1 | 2026-07-19 | 게이트2(FC-044) 승인 반영 — [4.3] `item_template` **코드 축 배정 교정**: `main_category`=상품군(아이템 카드 `1` 고정)·`sub_group`=대분류(무기/방어구/마법). 종전 서술은 두 선두 자리 의미가 뒤바뀐 오배정이라 시드 `2111`이 원게임 SILVER 대역을 침범했다. 교정 후 `type_code`가 원게임 `itm_type`과 **1:1 동일**해진다. 아울러 `kind` 설명의 **평면 나열("검·도·활·방·펜…")을 폐기** — `kind`는 의미가 `sub_group`에 의존하고 마법은 2값뿐(3·4 부재)인데 종전 서술이 이를 감췄다. `type_code` 산식·스코프(상품군 1 한정)·시드 정합 부채를 표 아래 주로 명기. **스키마 무변경**(컬럼·타입·UK·인덱스 전부 그대로) — 교정 대상은 서술과 시드 데이터뿐이다. 근거: 게이트2 승인(2026-07-19), 제안서 `spec/proposals/item-code-dictionary.md` v2. 코드값 열거 정본은 api-contract §3.3.1 |
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). 남은 미확정 — 플랫폼 수수료 정책(ON-HOLD), 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
@@ -77,7 +79,7 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 - `sale_order` — 판매 성립(SOLD) 시 생성되는 거래(결제·정산·소유 이전). 경매·고정가 공통 핸드오프.
 
 아이템 (D-044~047·D-062·D-066)
-- `item_template` — 아이템 정의 마스터. 타입코드 정규화(대분류·중분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073).
+- `item_template` — 아이템 정의 마스터. 타입코드 정규화(상품군·대분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073). 코드값 정본은 api-contract §3.3.1.
 - `skill_definition` — 특수스킬 정의 마스터(가상 시드). 인스턴스 스킬 슬롯이 참조.
 - `item_instance` — 개별 아이템. template FK + 레벨·스킬 2슬롯·발동확률·골드포스 + 소유자 + 위치.
 - `item_ownership_history` — 소유 이전 이력(최초·직전·전체 체인). 비거래 이전도 통합.
@@ -294,16 +296,43 @@ table `sale_order` — 판매 성립 거래(경매 낙찰 + shop 구매 공통, 
 
 table `item_template` — 아이템 정의 마스터. 타입코드 정규화(①). 고정 시드(Flyway). taxonomy 멤버 값·명칭은 원게임(SurvivalProject) 실제 데이터로 시드에서 확정(D-067).
 
+**코드 축 정본 = api-contract §3.3.1(아이템 코드 사전).** 아래는 컬럼 정의이며, 코드값 열거는 계약이 소유한다.
+
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
-| main_category | INT | N | | 대분류(예: 무기) — 타입코드 천의 자리 |
-| sub_group | INT | N | | 중분류/슬롯군(무기·방어구/장신구·필드) — 백의 자리 |
-| element | INT | N | | 속성(물/불/흙/바람) — 십의 자리 |
-| kind | INT | N | | 종류(검·도·활·방·펜…) — 일의 자리 |
+| main_category | INT | N | | **상품군** — 천의 자리. 아이템 카드 = `1` 고정(아래 스코프 주) |
+| sub_group | INT | N | | **대분류** — 백의 자리. 1=무기·2=방어구·3=마법. **`kind`의 의미를 결정한다** |
+| element | INT | N | | 속성 — 십의 자리. 1=물·2=불·3=흙·4=바람 |
+| kind | INT | N | | 종류 — 일의 자리. **⚠ 의미가 `sub_group`에 의존한다**(평면 나열 불가 — 아래 주) |
 | type_code | INT | N | UK | 자리값 합성 코드 — item_template 외부 식별자(035, public_id 미부여) |
 | display_name | VARCHAR | N | | 표시명(원게임 데이터, 시드) |
 
+```
+type_code = main_category×1000 + sub_group×100 + element×10 + kind
+```
+
 유니크: (main_category, sub_group, element, kind) 조합 1건. (등급 축 제거, D-073)
+
+**축 배정(v1.1, 게이트2 FC-044 승인)**: 위 산식은 원게임 `gameshop.itm_type`과 **자릿수·의미가 완전히 일치**한다 —
+`type_code`와 `itm_type`은 1:1 동일하며 변환 계층이 없다. 종전 서술("main=대분류, sub=중분류/슬롯군")은
+두 선두 자리의 의미가 뒤바뀐 오배정이었고, 그 결과 시드 `2111`(물의 방패)이 원게임 `2xxx`(SILVER 상품) 대역을
+침범했다. v1.1에서 **`main_category`=상품군 · `sub_group`=대분류(무기/방어구/마법)**로 교정한다.
+
+**⚠ `kind`를 평면 나열하지 말 것.** 같은 숫자가 `sub_group`마다 다른 것을 가리킨다 —
+`kind=1`은 무기에서 도끼, 방어구에서 방패, 마법에서 일반이다. 또 **마법(`sub_group=3`)은 `kind`가 2값뿐**
+(1=일반·2=특수)이고 3·4가 **존재하지 않는다**. 종전 설명 "종류(검·도·활·방·펜…)"는 이 의존성과
+카디널리티 차이를 감췄다. 전 코드표는 계약 §3.3.1이 대분류별로 분리해 정의한다.
+
+**스코프**: `item_template`은 **상품군 1(아이템 카드)만** 담는다. 원게임의 다른 상품군(2=SILVER,
+3=골드포스 충전권, 4=아바타, 5=펫, 6=속성카드)은 거래 대상이 아니며, 이들은 위 4축 분해를 따르지 않는
+평면 SKU 채번이라 **산식이 성립하지 않는다**(예: 속성카드 `6000~6003`은 속성이 일의 자리에 0-based).
+따라서 현재 `main_category`는 실질 상수 `1`이다 — 자리를 비워두는 것이 아니라 **확장 경로가 정의된 축**이며,
+편입 시 계약 변경 + 게이트2가 선행된다.
+
+**⚠ 시드 정합 부채(2026-07-19)**: 현행 `V9__item_seed.sql`은 **교정 전 축 배정**으로 작성돼 있다
+(`2111` 등 4건이 상품군 자리에 대분류를 넣었고, 표시명 6건이 원본 `kind` 정의와 어긋난다).
+**스키마·산식·UK는 변경 없고 데이터만 교정 대상**이다. 시드 재작성은 백엔드 동결 해제 후 별도 티켓이며,
+대조표는 `spec/proposals/item-code-dictionary.md` §3.3에 있다.
 
 table `skill_definition` — 특수스킬 정의 마스터(②). 원게임(SurvivalProject) 스킬 데이터 시드. 인스턴스 슬롯1/2가 참조.
 
@@ -380,7 +409,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | item_instance | (skill1_id, skill2_id) | 특수스킬 조합 필터(§7.7). 스킬만으로 매물 탐색 |
 | item_instance | (gf_expire_at) | 골드포스 활성/잔여 필터·정렬(D-066, 검색 전용·시세 키 제외) |
 | item_instance | (owner_id, location, slot_no) | 사용자 인벤토리 조회(정규 슬롯 나열), 위치별 분리 |
-| item_template | (element, kind) | 속성·종류 부분 필터 검색(§7.7). 대분류·중분류와 조합 |
+| item_template | (element, kind) | 속성·종류 부분 필터 검색(§7.7). 상품군·대분류와 조합. **`kind` 단독은 `sub_group` 의존이라 비변별적**이나 템플릿이 소규모(수백 미만)라 유지 — 확장은 item-domain-spec §7 G1 |
 | auction | (status, end_at) | 마감 트리거 DB 재구축 스캔(status=ACTIVE AND end_at<=now, D-058). 지연 인덱스 유실 복구 |
 | auction | (status, start_at) | 예약 시작(SCHEDULED→ACTIVE) 트리거 스캔(D-057) |
 | auction | (seller_id, status) | 판매자 진행/종료 경매 목록 |

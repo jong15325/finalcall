@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.9 — G3 확정(2026-07-14) + 6절 계약 변경 9건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.10 — G3 확정(2026-07-14) + 6절 계약 변경 10건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -22,6 +22,7 @@
 
 | v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
+| v1.10 | 2026-07-19 | 6절 계약 변경 — 게이트2(FC-044) 승인 반영: **§3.1 아이템 코드 사전 신설**(4축 전 코드값 정본화). 종전 v1.9가 `element`·`kind`·`subGroup`·`mainCategory` 전 축의 코드값을 "미확정"으로 남겨 프론트가 표시명 스냅샷에만 의존했다. 원게임 `new_sp.gameshop` `itm_type` 전수 조회로 4축이 확정됐다 — **(D4)** `element` 1=물·2=불·**3=흙·4=바람**(4경로 교차확증), **(D3)** `kind`는 **`subGroup`에 의존**(WEAPONE/ARM 각 4값, MAGIC **2값뿐**)이라 대분류별 표를 분리하고 `kind` 단독 필터에 다의성 경고를 명기, **(D1·D2)** 원본 코드 체계를 전면 채택하고 `type_code` **자리 의미를 교정**(`mainCategory`=상품군·`subGroup`=무기/방어구/마법). 동반 필수 조항으로 **`item_template` 스코프 = 상품군 1(아이템 카드)**을 명시했다. 사유: 게이트2 승인(2026-07-19), 제안서 `spec/proposals/item-code-dictionary.md` v2. **엔드포인트·필드 집합·에러코드 무변경**(값 사전·서술 보강). ⚠ **V9 시드는 교정 전 코드라 계약과 불일치** — 시드 재작성은 백엔드 동결 해제 후 별도 티켓(제안서 §3.3 대조표가 작업지시서) |
 
 ---
 
@@ -136,7 +137,7 @@
 
 ## 3. 경매·고정가·입찰
 
-공통 목록 필터(경매·고정가·아이템 검색 공유, ERD 인덱스·§7.7 정합): `mainCategory, subGroup, element, kind, minLevel/maxLevel, skill1/skill2(스킬 코드), goldforceActive(bool), minPrice/maxPrice, status`. (등급 필터 없음 — D-073) 정렬 화이트리스트: `price, endAt, createdAt, highestBidAmount`(경매), `price, endAt, createdAt`(고정가). 목록은 cursor 기본.
+공통 목록 필터(경매·고정가·아이템 검색 공유, ERD 인덱스·§7.7 정합): `mainCategory, subGroup, element, kind, minLevel/maxLevel, skill1/skill2(스킬 코드), goldforceActive(bool), minPrice/maxPrice, status`. (등급 필터 없음 — D-073) **4개 코드 축의 값·의미는 §3.3.1**이며, `kind`는 `subGroup`에 의존해 단독 사용 시 다의적이다(§4.1 경고 동일 적용). 정렬 화이트리스트: `price, endAt, createdAt, highestBidAmount`(경매), `price, endAt, createdAt`(고정가). 목록은 cursor 기본.
 
 ### 3.1 경매 (auction)
 
@@ -234,11 +235,11 @@ item: { typeCode, mainCategory, subGroup, element, kind, level,
 
 | 필드 | 타입 | null | 출처 | 설명 |
 |---|---|---|---|---|
-| `typeCode` | `integer` | N | `item_template.type_code` | 자리값 합성 코드(= main×1000 + sub×100 + element×10 + kind). 템플릿 외부 식별자 |
-| `mainCategory` | `integer` | N | `item_template.main_category` | 대분류(천의 자리) |
-| `subGroup` | `integer` | N | `item_template.sub_group` | 중분류/슬롯군(백의 자리) |
-| `element` | `integer` | N | `item_template.element` | 속성(십의 자리). **코드값 정본은 아래 주 참조** |
-| `kind` | `integer` | N | `item_template.kind` | 종류(일의 자리) |
+| `typeCode` | `integer` | N | `item_template.type_code` | 자리값 합성 코드(= main×1000 + sub×100 + element×10 + kind). 템플릿 외부 식별자. 원게임 `itm_type`과 **1:1 동일**(§3.3.1) |
+| `mainCategory` | `integer` | N | `item_template.main_category` | **상품군**(천의 자리). 아이템 카드 = `1` 고정(§3.3.1 스코프) |
+| `subGroup` | `integer` | N | `item_template.sub_group` | **대분류**(백의 자리) — 1=무기·2=방어구·3=마법. **`kind`의 의미를 결정한다**(§3.3.1) |
+| `element` | `integer` | N | `item_template.element` | 속성(십의 자리). 1=물·2=불·3=흙·4=바람(§3.3.1) |
+| `kind` | `integer` | N | `item_template.kind` | 종류(일의 자리). **의미가 `subGroup`에 의존**(§3.3.1) |
 | `level` | `integer` | N | `item_instance.level` | 인스턴스 강화 레벨 |
 | `skill1` | `integer` | **Y** | `skill_definition.skill_code` | 슬롯1 스킬 코드. 슬롯이 비면 `null` |
 | `skill2` | `integer` | **Y** | `skill_definition.skill_code` | 슬롯2 스킬 코드. 슬롯이 비면 `null` |
@@ -248,7 +249,76 @@ item: { typeCode, mainCategory, subGroup, element, kind, level,
 | `specSnapshot` | `string` | N | 등록 시점 auction 스냅샷 | 표시 스펙(D-045) |
 
 - 5개 코드 축(`typeCode`·`mainCategory`·`subGroup`·`element`·`kind`)과 `level`·`skillPercent`는 **모두 정수**다. erd `item_template`·`item_instance` 컬럼이 전부 `INT`이며 서버 응답 record도 `int`다. 클라이언트는 문자열로 다루지 않는다(정렬·필터·비교가 사전순으로 깨진다).
-- **`element` 코드값은 미확정이다.** erd는 축의 의미("속성(물/불/흙/바람) — 십의 자리")만 규정하고 **코드↔속성 매핑을 열거하지 않는다**. 현재 시드(V9)에 실재하는 값은 **`1`·`2` 두 개뿐**이고, 시드 표시명 기준으로 `1=물`·`2=불`이 확인된다. `3`·`4`는 erd 서술의 나열 순서로 흙·바람이 **추정**될 뿐 실데이터·정본 어디에도 근거가 없다 → **계약에 못 박지 않는다.** EPIC-ITEM 시드 확장 시 실측으로 확정하고 그때 계약에 등재한다(6절 절차). 그때까지 클라이언트는 **미등록 코드를 중립 표기(예: "속성 N")로 폴백**해야 하며, 코드 집합을 4개로 가정한 하드코딩(배열 인덱싱·exhaustive switch)을 두지 않는다. `kind`·`subGroup`·`mainCategory`도 동일하게 코드값 열거가 없으므로 같은 규칙을 적용한다.
+- **4개 코드 축의 값 정본은 §3.3.1(아이템 코드 사전)이다.** v1.9까지 전 축이 "미확정"이었으나 v1.10에서 원게임 실데이터 전수 조회로 확정됐다.
+- **폴백 의무는 유지된다.** 현재 미확정 코드는 없지만, 클라이언트는 여전히 **사전에 없는 코드를 중립 표기(예: "속성 N")로 폴백**해야 하며 코드 집합 크기를 가정한 하드코딩(배열 인덱싱·exhaustive switch)을 두지 않는다. 축이 장차 확장될 수 있고(§3.3.1 스코프 주), 서버·클라이언트 배포 시차 동안 신규 코드가 먼저 내려올 수 있다.
+
+#### 3.3.1 아이템 코드 사전 (v1.10 신설 — 게이트2 FC-044 승인)
+
+`typeCode`는 4자리 자리값 합성이며 **원게임 `gameshop.itm_type`과 1:1로 동일**하다(코드 변환 계층 없음).
+
+```
+typeCode = mainCategory×1000 + subGroup×100 + element×10 + kind
+```
+
+**스코프 — 이 사전과 산식은 `mainCategory = 1`(아이템 카드) 대역에만 적용된다.**
+원게임에는 다른 상품군(2=SILVER, 3=골드포스 충전권, 4=아바타, 5=펫, 6=속성카드)이 존재하나
+**경매·고정가 거래 대상이 아니며 `item_template`이 담지 않는다.** 이들 대역은 위 4축 분해를
+따르지 않는 평면 SKU 채번이므로(예: 속성카드 `6000~6003`은 속성이 일의 자리에 0-based),
+장차 거래 대상으로 편입하려면 **계약 변경(6절) + 게이트2**가 선행되어야 한다.
+
+**`mainCategory` — 상품군**
+
+| 코드 | 의미 |
+|---|---|
+| 1 | 아이템 카드 (현재 유일한 거래 대상) |
+
+**`subGroup` — 대분류.** `kind`의 의미를 결정하는 축이다.
+
+| 코드 | 원본 심볼 | 표시명 |
+|---|---|---|
+| 1 | `WEAPONE` | 무기 |
+| 2 | `ARM` | 방어구 |
+| 3 | `MAGIC` | 마법 |
+
+**`element` — 속성.** 정확히 4값이며 그 이상은 없다.
+
+| 코드 | 원본 심볼 | 표시명 |
+|---|---|---|
+| 1 | `WATER` | 물 |
+| 2 | `FIRE` | 불 |
+| 3 | `EARTH` | 흙 |
+| 4 | `WIND` | 바람 |
+
+**`kind` — 종류. ★ 같은 숫자가 `subGroup`마다 다른 것을 가리킨다.** 반드시 표를 나눠 읽는다.
+
+`subGroup = 1` (무기) — element 1~4 × kind 1~4 전수 존재
+
+| kind | 원본 심볼 | 표시명 |
+|---|---|---|
+| 1 | `AXE` | 도끼 |
+| 2 | `WAND` | 완드 |
+| 3 | `SWORD` | 검 |
+| 4 | `BOW` | 활 |
+
+`subGroup = 2` (방어구) — element 1~4 × kind 1~4 전수 존재
+
+| kind | 원본 심볼 | 표시명 |
+|---|---|---|
+| 1 | `SHIELD` | 방패 |
+| 2 | `PENDANT` | 펜던트 |
+| 3 | `ARMOR` | 갑옷 |
+| 4 | `BOOTS` | 신발 |
+
+`subGroup = 3` (마법) — **kind가 2값뿐이다.** element 1~4 × kind 1~2 = 8건 전수
+
+| kind | 원본 심볼 | 표시명 |
+|---|---|---|
+| 1 | `NOMAL` | 일반 |
+| 2 | `SPECIAL` | 특수 |
+
+- **`kind` 3·4는 마법에 존재하지 않는다.** `subGroup=3 & kind≥3`은 **성립 불가 조합**이며 서버는 그런 템플릿을 갖지 않는다.
+- **원본 심볼은 원게임 표기 그대로다**(`NOMAL`·`WEAPONE`의 철자 포함). **표시명(한국어)은 우리 창작이며 원본 근거가 아니다** — 원본은 영문 코드명만 제공한다. 표시명 변경은 UX 재량이고 계약 변경 대상이 아니다.
+- 실제 표시는 `item.nameSnapshot`·`specSnapshot`(등록 시점 스냅샷, D-045)이 우선한다. 이 사전은 **필터·배지·아트 매핑용 코드 해석**에 쓴다.
 
 AuctionSummary (GET /auctions content 항목):
 ```
@@ -283,9 +353,12 @@ ShopDetail (GET /shops/{id}): ShopSummary + `{ createdAt }`
 
 GET /api/v1/item-templates — 아이템 정의 카탈로그(검색 메타)
 - 인증: 불요
-- 쿼리: `mainCategory, subGroup, element, kind`(필터, 등급 없음 D-073)
-- 응답 200: offset 페이지(템플릿 = 대분류·중분류·속성·종류·표시명·typeCode)
+- 쿼리: `mainCategory, subGroup, element, kind`(필터, 등급 없음 D-073). 코드값은 §3.3.1
+- 응답 200: offset 페이지(템플릿 = 상품군·대분류·속성·종류·표시명·typeCode)
 - 용도: 검색 필터 UI 구성, 원게임 시드 기준(D-067)
+- **스코프**: 카탈로그는 `mainCategory = 1`(아이템 카드)만 담는다(§3.3.1). 다른 상품군은 거래 대상이 아니다.
+- **⚠ `kind` 단독 필터 경고(v1.10)**: `kind`는 **`subGroup`에 의존**하는 축이라 단독으로는 다의적이다 — `kind=1`은 무기의 **도끼**와 방어구의 **방패**와 마법의 **일반**을 **모두** 반환한다. 서버는 이를 400으로 막지 않고 **요청대로 처리**한다(카탈로그가 소규모라 기술적 제약을 두지 않는다). **다의성 해소는 클라이언트 책임**이다 — 필터 UI는 `kind` 선택지를 `subGroup` 선택에 **종속**시키고, `subGroup` 미선택 시 `kind` 필터를 비활성화하거나 "전 대분류 합집합"임을 명시해야 한다.
+- `subGroup=3`(마법)에는 `kind` 3·4가 없다. 성립 불가 조합으로 조회하면 **빈 결과**이며 에러가 아니다.
 - 비고(035 관찰): item_template 외부 식별자는 `typeCode`(고정 시드·유일 조합). public_id를 별도로 두지 않는다 — erd와 일치.
 
 GET /api/v1/items/{itemInstancePublicId} — 아이템 인스턴스 상세
