@@ -1,3 +1,8 @@
+import {
+    PiPackageDuotone,
+    PiPlugsDuotone,
+    PiSparkleDuotone,
+} from 'react-icons/pi'
 import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import LinkButton from '@/components/shared/LinkButton'
@@ -8,9 +13,9 @@ import HomeSection from './HomeSection'
 import SectionNotice from './SectionNotice'
 
 /**
- * 새 매물 섹션 (FC-058).
+ * 새 매물 섹션 (FC-058 → 재작업).
  *
- * ★ **격자다** — 위 섹션이 피처드 + 행목록이었으므로 세 번째 구조를 쓴다.
+ * ★ **격자다** — 위 섹션이 캐러셀 + 행목록이었으므로 세 번째 구조를 쓴다.
  *   여기서 하는 일은 "훑기"가 아니라 **"고르기"** 라 아트가 크고 나란히 비교된다.
  *
  * ★ 쿼리: `GET /auctions?sort=createdAt,desc&size=8` (계약 §3.1, 구현 확인됨).
@@ -35,6 +40,7 @@ const NewListingsSection = () => {
         <HomeSection
             title="새로 올라온 매물"
             description="가장 최근에 등록된 순서입니다."
+            icon={<PiSparkleDuotone />}
             moreTo={ROUTES.auctions}
             moreLabel="경매 전체"
         >
@@ -43,6 +49,7 @@ const NewListingsSection = () => {
             {isError && (
                 <SectionNotice
                     data-testid="new-listings-error"
+                    icon={<PiPlugsDuotone />}
                     title="새 매물을 불러오지 못했습니다"
                     description="잠시 후 다시 시도해 주세요. 위 섹션은 그대로 볼 수 있습니다."
                     action={
@@ -57,6 +64,7 @@ const NewListingsSection = () => {
             {!isPending && !isError && auctions.length === 0 && (
                 <SectionNotice
                     data-testid="new-listings-empty"
+                    icon={<PiPackageDuotone />}
                     title="아직 등록된 매물이 없습니다"
                     description="첫 매물을 올리면 이 자리에 표시됩니다."
                     action={

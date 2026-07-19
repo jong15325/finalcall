@@ -119,6 +119,8 @@ export default tseslint.config(
             globals: {
                 console: 'readonly',
                 process: 'readonly',
+                // PNG 크로마키 변환(pngChromaKey.mjs)이 바이트 버퍼를 다룬다.
+                Buffer: 'readonly',
             },
         },
     },

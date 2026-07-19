@@ -1,21 +1,25 @@
+import { PiArrowClockwiseBold } from 'react-icons/pi'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
 /**
- * 섹션 내부의 빈/에러 자리 (FC-058).
+ * 섹션 내부의 빈/에러 자리 (FC-058 → 재작업).
  *
  * ══════════════════════════════════════════════════════════════════════════════
  * ★★ **자리를 지우지 않는다 — 다음 행동을 준다.**
  * ══════════════════════════════════════════════════════════════════════════════
- * 목록이 비었다고 섹션을 통째로 감추면 (1) 화면이 스크롤할 때마다 다른 높이로 튀고
- * (2) 손님은 **여기가 원래 뭐가 있는 곳인지 모른다.** 빈 상태는 "없음"의 보고가 아니라
- * **"그럼 뭘 하면 되는가"의 안내**다. 에러도 같다 — "실패했습니다"로 끝내지 않고 다시 시도를 준다.
+ * 목록이 비었다고 섹션을 통째로 감추면 (1) 스크롤할 때마다 높이가 튀고 (2) 손님은
+ * **여기가 원래 뭐가 있는 곳인지 모른다.** 빈 상태는 "없음"의 보고가 아니라
+ * **"그럼 뭘 하면 되는가"의 안내**다(product.md: *"Empty states that teach the interface"*).
  *
  * ★ **템플릿 `Alert` 를 쓰지 않았다.** `ui/Alert` 는 `framer-motion` 을 임포트하는데,
- *   FC-057 이 그 의존을 번들에서 걷어내 592→472KB(gzip 196→157KB)를 만들었다.
- *   홈의 빈/에러 자리 하나 때문에 그 성과를 되돌리지 않는다. 대신 `Card` + `Button` +
- *   템플릿 gray 스케일로 같은 일을 한다(`vite.config.ts` 의 `vendor-motion` 라벨 참조).
+ *   FC-057 이 그 의존을 번들에서 걷어내 592→472KB(gzip 196→157)를 만들었다.
+ *   홈의 빈/에러 자리 하나 때문에 그 성과를 되돌리지 않는다.
+ *   대신 `Card` + `Button` + 템플릿 gray 스케일로 같은 일을 한다.
+ *
+ * ★ 아이콘은 **상태마다 다른 모양**을 받는다 — 빈 상태와 실패는 사용자가 해야 할 일이
+ *   다르므로(기다림 vs 재시도) 같은 그림이면 안 된다.
  */
 
 interface SectionNoticeProps {
@@ -23,6 +27,7 @@ interface SectionNoticeProps {
     title: string
     /** 그래서 뭘 하면 되나 */
     description?: string
+    icon?: ReactElement
     /** 행동 — 다시 시도(에러) 또는 다른 곳으로(빈 목록) */
     action?: ReactNode
     onRetry?: () => void
@@ -32,18 +37,27 @@ interface SectionNoticeProps {
 const SectionNotice = ({
     title,
     description,
+    icon,
     action,
     onRetry,
     'data-testid': testId,
 }: SectionNoticeProps) => {
     return (
-        <Card bodyClass="flex flex-col items-center gap-3 py-10 text-center">
+        <Card bodyClass="flex flex-col items-center gap-4 py-12 text-center">
+            {icon && (
+                <span
+                    aria-hidden="true"
+                    className="flex size-12 items-center justify-center rounded-2xl bg-gray-100 text-2xl text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                >
+                    {icon}
+                </span>
+            )}
             <div
-                className="flex flex-col gap-1"
+                className="flex max-w-md flex-col gap-1"
                 data-testid={testId}
                 role="status"
             >
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-base font-bold text-gray-900 dark:text-gray-100">
                     {title}
                 </p>
                 {description && (
@@ -55,7 +69,11 @@ const SectionNotice = ({
             {(action || onRetry) && (
                 <div className="flex flex-wrap items-center justify-center gap-2">
                     {onRetry && (
-                        <Button size="sm" onClick={onRetry}>
+                        <Button
+                            size="sm"
+                            icon={<PiArrowClockwiseBold />}
+                            onClick={onRetry}
+                        >
                             다시 시도
                         </Button>
                     )}

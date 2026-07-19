@@ -1,30 +1,46 @@
+import {
+    PiHourglassHighDuotone,
+    PiPackageDuotone,
+    PiPlugsDuotone,
+} from 'react-icons/pi'
 import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import LinkButton from '@/components/shared/LinkButton'
 import AuctionFeatureCard from '@/features/auction/components/AuctionFeatureCard'
-import AuctionRowItem from '@/features/auction/components/AuctionRowItem'
+import SnapCarousel from '@/features/auction/components/SnapCarousel'
 import { useAuctionList } from '@/lib/queries/auctions'
 import { ROUTES } from '@/configs/routes.config'
 import HomeSection from './HomeSection'
 import SectionNotice from './SectionNotice'
 
 /**
- * 마감 임박 섹션 — 홈 최상단 (FC-058).
+ * 마감 임박 섹션 — 홈 최상단 (FC-058 → 재작업 2차).
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★★ **스크롤 0px 에 실제 카운트다운.**
+ * ★★ **하나의 영역이다** (사용자 지시: *"다음 마감과 합쳐서 슬라이드... 하나의 영역인 거지"*).
  * ══════════════════════════════════════════════════════════════════════════════
- * 홈은 마케팅 랜딩이 아니라 **거래소 첫 화면**이다. "실시간 경매"라고 카피로 주장하는 대신
- * 지금 가장 먼저 끝나는 경매의 남은 시간을 **데이터로** 보여준다.
+ * 종전 구조(피처드 큰 카드 1 + 행목록 4)는 **한 섹션에 두 덩어리**였다. 지금은
+ * **모든 마감 임박 매물이 같은 카드로 같은 캐러셀 안에서** 흐른다. "다음 마감"이라는 별도
+ * 목록이 없다 — 다음 마감은 **오른쪽으로 넘기면 나온다.**
  *
- * ★ **한 섹션 안에서 구조가 둘이다** — 1건은 피처드(가로 큰 카드), 나머지는 행목록.
- *   같은 카드 5개를 늘어놓으면 "가장 급한 것"이 사라진다. 마감 순서는 **크기 차이**로 읽힌다.
+ * 급한 순서는 **슬라이드 순서**가 표현한다(왼쪽이 가장 급함). 크기 차이로 순서를 말하던
+ * 종전 판단은 이 지시로 대체됐다.
  *
- * ★ 쿼리: `GET /auctions?status=ACTIVE&sort=endAt,asc&size=5` (계약 §3.1, 구현 확인됨).
+ * ★ **몇 장 보이나 — 반응형은 CSS 가 정한다**(`SnapCarousel` 슬라이드 폭):
+ *   | 화면 | 한 번에 | 한 번에 넘기는 양 |
+ *   |---|---|---|
+ *   | 모바일(<640) | **1장** | 1장(스와이프 or 버튼) |
+ *   | 태블릿(≥640) | **2장** | 2장 |
+ *   | 데스크톱(≥1024) | **3장** | 3장 |
+ *   넘기는 단위는 항상 **한 화면분**이라 "보이는 것이 통째로 교체"된다 —
+ *   한 장씩 밀면 이미 본 카드가 남아 어디까지 봤는지 헷갈린다.
+ *
+ * ★ 쿼리: `GET /auctions?status=ACTIVE&sort=endAt,asc&size=8` (계약 §3.1, 구현 확인됨).
  *   `status=ACTIVE` 를 빼면 이미 끝난 경매가 맨 앞에 온다 — 마감 임박의 정의가 무너진다.
+ *   8건 = 데스크톱에서 3페이지(3·3·2)라 넘길 맛이 있으면서 첫 화면 요청이 가볍다.
  */
 
-const CLOSING_SOON_SIZE = 5
+const CLOSING_SOON_SIZE = 8
 
 const ClosingSoonSection = () => {
     const { data, isPending, isError, refetch } = useAuctionList({
@@ -34,12 +50,12 @@ const ClosingSoonSection = () => {
     })
 
     const auctions = data?.content ?? []
-    const [featured, ...rest] = auctions
 
     return (
         <HomeSection
             title="마감 임박"
-            description="가장 먼저 끝나는 경매부터 보여줍니다."
+            description="가장 먼저 끝나는 경매부터 순서대로 넘겨 보세요."
+            icon={<PiHourglassHighDuotone />}
             moreTo={ROUTES.auctions}
             moreLabel="경매 전체"
         >
@@ -48,6 +64,7 @@ const ClosingSoonSection = () => {
             {isError && (
                 <SectionNotice
                     data-testid="closing-soon-error"
+                    icon={<PiPlugsDuotone />}
                     title="마감 임박 목록을 불러오지 못했습니다"
                     description="잠시 후 다시 시도해 주세요. 다른 섹션은 그대로 볼 수 있습니다."
                     action={
@@ -62,6 +79,7 @@ const ClosingSoonSection = () => {
             {!isPending && !isError && auctions.length === 0 && (
                 <SectionNotice
                     data-testid="closing-soon-empty"
+                    icon={<PiPackageDuotone />}
                     title="지금 진행 중인 경매가 없습니다"
                     description="가지고 있는 아이템을 올리면 이 자리에 표시됩니다."
                     action={
@@ -72,71 +90,55 @@ const ClosingSoonSection = () => {
                 />
             )}
 
-            {!isPending && !isError && featured && (
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-                    <div className="lg:col-span-3">
-                        <AuctionFeatureCard auction={featured} />
-                    </div>
-
-                    {rest.length > 0 && (
-                        <Card
-                            className="lg:col-span-2"
-                            bodyClass="flex flex-col gap-1"
-                        >
-                            <h3 className="px-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                다음 마감
-                            </h3>
-                            <ul className="flex flex-col divide-y divide-gray-200 dark:divide-gray-600">
-                                {rest.map((auction) => (
-                                    <AuctionRowItem
-                                        key={auction.auctionPublicId}
-                                        auction={auction}
-                                    />
-                                ))}
-                            </ul>
-                        </Card>
-                    )}
-                </div>
+            {!isPending && !isError && auctions.length > 0 && (
+                <SnapCarousel label="마감 임박 매물">
+                    {auctions.map((auction) => (
+                        <AuctionFeatureCard
+                            key={auction.auctionPublicId}
+                            auction={auction}
+                        />
+                    ))}
+                </SnapCarousel>
             )}
         </HomeSection>
     )
 }
 
-/** 최종 배치와 **같은 골격**의 스켈레톤 — 로딩이 끝날 때 레이아웃이 튀지 않는다. */
+/**
+ * 캐러셀과 **같은 골격**의 스켈레톤 — 로딩이 끝날 때 레이아웃이 튀지 않는다.
+ * 데스크톱 한 화면분(3장)만 그린다. 넘겨야 보이는 것을 미리 그릴 이유가 없다.
+ */
 const ClosingSoonSkeleton = () => (
-    <div
-        className="grid grid-cols-1 gap-4 lg:grid-cols-5"
-        data-testid="closing-soon-skeleton"
-    >
-        <Card className="lg:col-span-3" bodyClass="flex gap-5">
-            <Skeleton
-                height={279}
-                width={150}
-                className="shrink-0 rounded-lg"
-            />
-            <div className="flex flex-1 flex-col gap-3">
-                <Skeleton height={24} width="70%" />
-                <Skeleton height={20} width="50%" />
-                <Skeleton height={36} width="40%" />
-                <Skeleton height={20} width="60%" />
-            </div>
-        </Card>
-        <Card className="lg:col-span-2" bodyClass="flex flex-col gap-4">
-            {Array.from({ length: CLOSING_SOON_SIZE - 1 }).map((_, index) => (
-                <div key={index} className="flex items-center gap-3">
-                    <Skeleton
-                        height={93}
-                        width={50}
-                        className="shrink-0 rounded-lg"
-                    />
-                    <div className="flex flex-1 flex-col gap-2">
-                        <Skeleton height={16} width="80%" />
-                        <Skeleton height={14} width="55%" />
-                    </div>
+    <div className="flex gap-4" data-testid="closing-soon-skeleton">
+        {Array.from({ length: 3 }).map((_, index) => (
+            <Card
+                key={index}
+                className={classNamesForSkeletonSlide(index)}
+                bodyClass="flex items-center gap-4"
+            >
+                <Skeleton
+                    height={186}
+                    width={100}
+                    className="shrink-0 rounded-lg"
+                />
+                <div className="flex flex-1 flex-col gap-3">
+                    <Skeleton height={18} width="45%" />
+                    <Skeleton height={30} width="70%" />
+                    <Skeleton height={16} width="85%" />
+                    <Skeleton height={20} width="60%" />
                 </div>
-            ))}
-        </Card>
+            </Card>
+        ))}
     </div>
 )
+
+/** 슬라이드와 같은 반응형 폭 — 2·3번째는 좁은 화면에서 숨어야 한 장만 보인다. */
+function classNamesForSkeletonSlide(index: number): string {
+    const base =
+        'w-full shrink-0 sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
+    if (index === 1) return `${base} hidden sm:block`
+    if (index === 2) return `${base} hidden lg:block`
+    return base
+}
 
 export default ClosingSoonSection
