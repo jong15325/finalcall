@@ -11,7 +11,7 @@ import SnapCarousel from '@/features/auction/components/SnapCarousel'
 import { useAuctionList } from '@/lib/queries/auctions'
 import { ROUTES } from '@/configs/routes.config'
 import HomeSection from './HomeSection'
-import SectionNotice from './SectionNotice'
+import SectionNotice from '@/components/shared/SectionNotice'
 
 /**
  * 마감 임박 섹션 — 홈 최상단 (FC-058 → 재작업 2차).

@@ -2,21 +2,23 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { PiXBold } from 'react-icons/pi'
 import Button from '@/components/ui/Button'
-import './filterSheet.css'
+import classNames from '@/utils/classNames'
+import './sheet.css'
 import type { ReactNode } from 'react'
 
 /**
- * 모바일 필터 바텀시트 (FC-059).
+ * 모달 시트 (FC-059 `FilterSheet` → FC-064 에서 `components/shared/Sheet` 로 일반화).
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★★ **레일을 접는 게 아니라 시트로 교체한다.**
+ * ★★ **왜 옮기고 일반화했나 — 초점 가둠을 두 벌 갖지 않기 위해서다.**
  * ══════════════════════════════════════════════════════════════════════════════
- * 좁은 화면에서 좌측 레일을 그대로 접어 위로 올리면 (a) 목록에 닿기까지 필터를 전부
- * 스크롤해야 하고 (b) 필터를 만지는 동안 결과가 화면 밖에 있다. 시트는 **목록 위에 뜨고
- * 닫으면 사라지므로** 목록이 화면의 주인 자리를 내주지 않는다.
+ * FC-064 가 모달을 둘 더 필요로 한다(입찰 바텀시트 · 아트 확대 라이트박스). 셋 다 하는 일은
+ * **완전히 같다** — 포털 · `role="dialog"` · 초점 이동/가둠/복귀 · Escape · 배경 스크롤 잠금.
+ * 다른 건 **패널의 기하**뿐이라 `placement` 하나로 갈랐다. 복제했다면 접근성 세부 6가지가
+ * 세 곳에서 각자 표류한다(그중 하나만 초점 복귀를 빠뜨려도 키보드 사용자가 문서 처음으로 튕긴다).
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★★ 템플릿 `Drawer` 를 못 쓴 이유 = `framer-motion`(FC-057 성과 보존). 그 대신
+ * ★★ 템플릿 `Drawer`/`Dialog` 를 못 쓴 이유 = `framer-motion`(FC-057 성과 보존). 그 대신
  *    **모달로서 해야 할 일을 직접 다 한다** — 빠뜨리면 "보이기만 하는 시트"가 된다:
  * ══════════════════════════════════════════════════════════════════════════════
  *   ① `role="dialog" aria-modal` + `aria-labelledby` — 무엇이 열렸는지 읽힌다
@@ -26,7 +28,7 @@ import type { ReactNode } from 'react'
  *      초점이 가서 **보이지 않는 곳을 조작**하게 된다
  *   ④ `Escape` 로 닫기 — 모달의 기본 계약
  *   ⑤ **배경 스크롤 잠금** — 시트를 넘겨 끝에 닿으면 뒤의 목록이 딸려 스크롤된다
- *   ⑥ `createPortal` — 시트를 `body` 로 뺀다. 목록 컨테이너에는 `overflow-x-hidden` 과
+ *   ⑥ `createPortal` — 시트를 `body` 로 뺀다. 화면 컨테이너에는 `overflow-x-hidden` 과
  *      `sticky` 가 걸려 있어 그 안에 `fixed` 를 두면 **컨테이닝 블록이 바뀌어** 시트가
  *      화면이 아니라 컨테이너에 갇힌다(뷰포트 하단에 붙지 않는다)
  *
@@ -34,30 +36,50 @@ import type { ReactNode } from 'react'
  *   크고, 그만큼 하단 액션이 화면 밖으로 밀린다. `dvh` 는 지금 보이는 높이다.
  */
 
-interface FilterSheetProps {
+interface SheetProps {
     open: boolean
     title: string
     onClose: () => void
     /** 시트를 연 버튼. 닫을 때 초점을 여기로 되돌린다 */
     triggerRef: React.RefObject<HTMLButtonElement | null>
-    /** 하단 고정 액션(적용·초기화) */
+    /**
+     * `bottom` = 화면 하단에 붙는 바텀시트(필터·입찰).
+     * `center` = 가운데 뜨는 라이트박스(아트 확대).
+     */
+    placement?: 'bottom' | 'center'
+    /** 하단 고정 액션 */
     footer?: ReactNode
+    /** 닫기 버튼의 접근명. 무엇을 닫는지 구분된다 */
+    closeLabel?: string
+    /** 바깥 래퍼 클래스 — 반응형 노출 제어(`lg:hidden` 등)에 쓴다 */
+    className?: string
+    'data-testid'?: string
     children: ReactNode
 }
 
 const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-const FilterSheet = ({
+/** 기하만 다르다 — 접근성 동작은 위에서 공유한다. */
+const PANEL_CLASS = {
+    bottom: 'fc-sheet-panel absolute inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl',
+    center: 'fc-sheet-center absolute inset-x-4 top-1/2 mx-auto max-h-[85dvh] max-w-lg -translate-y-1/2 rounded-2xl sm:inset-x-6',
+} as const
+
+const Sheet = ({
     open,
     title,
     onClose,
     triggerRef,
+    placement = 'bottom',
     footer,
+    closeLabel = '닫기',
+    className,
+    'data-testid': testId,
     children,
-}: FilterSheetProps) => {
+}: SheetProps) => {
     const panelRef = useRef<HTMLDivElement>(null)
-    const headingId = 'filter-sheet-title'
+    const headingId = `sheet-title-${placement}`
 
     useEffect(() => {
         if (!open) return
@@ -115,8 +137,8 @@ const FilterSheet = ({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-50 lg:hidden"
-            data-testid="filter-sheet"
+            className={classNames('fixed inset-0 z-50', className)}
+            data-testid={testId}
         >
             {/*
              * 배경은 클릭으로 닫힌다. 키보드 경로는 Escape 와 닫기 버튼이 이미 있으므로
@@ -133,11 +155,14 @@ const FilterSheet = ({
                 aria-modal="true"
                 aria-labelledby={headingId}
                 tabIndex={-1}
-                className="fc-sheet-panel absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-2xl bg-white shadow-2xl outline-hidden dark:bg-gray-800"
+                className={classNames(
+                    'flex flex-col bg-white shadow-2xl outline-hidden dark:bg-gray-800',
+                    PANEL_CLASS[placement],
+                )}
             >
                 <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                     <h2
-                        className="text-base font-bold text-gray-900 dark:text-gray-100"
+                        className="min-w-0 truncate text-base font-bold text-gray-900 dark:text-gray-100"
                         id={headingId}
                     >
                         {title}
@@ -146,7 +171,7 @@ const FilterSheet = ({
                         shape="circle"
                         size="xs"
                         type="button"
-                        aria-label="필터 닫기"
+                        aria-label={closeLabel}
                         icon={<PiXBold />}
                         onClick={onClose}
                     />
@@ -168,4 +193,4 @@ const FilterSheet = ({
     )
 }
 
-export default FilterSheet
+export default Sheet

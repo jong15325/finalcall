@@ -44,7 +44,14 @@ export const sharedRoutes: Routes = [
         component: lazy(() => import('@/views/auctions')),
         authority: [],
     },
-    placeholderRoute('auctionDetail', ROUTES.auctionDetail, '경매 상세'),
+    /* 경매 상세도 자리표시자를 벗었다(FC-064). 목록과 **별도 청크**다 — 목록만 보고 떠나는
+     * 손님이 입찰 폼 코드를 내려받지 않는다. */
+    {
+        key: 'auctionDetail',
+        path: ROUTES.auctionDetail,
+        component: lazy(() => import('@/views/auctions/AuctionDetail')),
+        authority: [],
+    },
     placeholderRoute('shops', ROUTES.shops, '상점 목록'),
     placeholderRoute('shopDetail', ROUTES.shopDetail, '상점 상세'),
     placeholderRoute('itemDetail', ROUTES.itemDetail, '아이템 상세'),

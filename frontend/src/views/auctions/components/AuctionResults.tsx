@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card'
 import Skeleton from '@/components/ui/Skeleton'
 import LinkButton from '@/components/shared/LinkButton'
 import AuctionGridCard from '@/features/auction/components/AuctionGridCard'
-import SectionNotice from '@/views/home/components/SectionNotice'
+import SectionNotice from '@/components/shared/SectionNotice'
 import { ROUTES } from '@/configs/routes.config'
 import type { AuctionSummary } from '@/lib/api/auctions'
 

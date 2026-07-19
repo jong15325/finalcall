@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { CursorPage } from '@/types/api'
+import type { CursorPage, OffsetPage } from '@/types/api'
 
 /**
  * 경매 목록 API (계약 §3.1 `GET /auctions` · §3.3 AuctionSummary) — FC-058.
@@ -106,3 +106,105 @@ export function getAuctions(
         signal,
     })
 }
+
+/**
+ * AuctionDetail (계약 §3.3) — `AuctionSummary` + 6필드. FC-064.
+ *
+ * ★★ **`resultType` 은 지금 항상 null 이다**(마감 처리는 EPIC-CLOSING 소유). 그래서 이 값으로
+ *    "낙찰/유찰"을 판정하면 **아무 경매도 낙찰로 보이지 않는다.** 화면은 `endAt` 으로 마감을
+ *    판정하고(`features/auction/lib/auctionPhase.ts`), 낙찰 여부는 **단정하지 않는다.**
+ *
+ * ★ `minNextBidAmount` 는 **서버 파생값이다. 증분표를 클라에 복제하지 마라.**
+ *   서버의 `AuctionService`·`BidService` 가 같은 증분 설정을 쓰므로 "안내받은 금액으로
+ *   입찰했는데 거부" 가 구조적으로 불가능하다. 클라가 계산을 흉내내는 순간 그 보장이 깨진다.
+ */
+export interface AuctionDetail extends AuctionSummary {
+    /** 마감 결과. **현재 서버가 채우지 않는다**(항상 null) */
+    resultType: string | null
+    /** 최고 입찰자 닉네임 마스킹(앞 2자 + `***`). 입찰이 없으면 null */
+    highestBidderMasked: string | null
+    /** 소프트클로즈 연장 횟수 */
+    extensionCount: number
+    /** 연장 상한 시각 — 이보다 늦게 마감되지 않는다 */
+    maxEndAt: string
+    createdAt: string
+    /** 다음 입찰의 최소 금액(서버 파생). **종료 상태에서는 null** */
+    minNextBidAmount: number | null
+}
+
+/** BidSummary `status` (계약 §3.3). 경매당 `ACTIVE` 는 최대 1건이다. */
+export type BidStatus =
+    'ACTIVE' | 'OUTBID' | 'WON' | (string & Record<never, never>)
+
+/**
+ * BidSummary (계약 §3.3 — `GET /auctions/{id}/bids` content 항목).
+ *
+ * ★ 자금 정보(홀드액·잔액)는 **계약이 싣지 않는다** — 타인 자금 상태 노출 금지.
+ *   입찰자는 `bidderMasked` 뿐이고 `userPublicId` 는 오지 않는다(회원 열거 방지, SEC-007).
+ *   즉 **"내 입찰"을 이력에서 표시할 방법이 없다** — 만들려 하지 마라.
+ */
+export interface BidSummary {
+    bidPublicId: string
+    bidderMasked: string
+    amount: number
+    status: BidStatus
+    createdAt: string
+}
+
+/** `POST /auctions/{id}/bids` 201 (계약 §3.1). */
+export interface PlaceBidResponse {
+    bidPublicId: string
+    amount: number
+    currentHighestAmount: number
+    /** ★ **소프트클로즈 연장이 반영된** 마감 시각 — 카운트다운을 이 값으로 재동기화한다 */
+    endAt: string
+}
+
+/** `GET /auctions/{id}` — 인증 불요(공개 상세). 없으면 `AUCTION_004`(404). */
+export function getAuction(
+    auctionPublicId: string,
+    signal?: AbortSignal,
+): Promise<AuctionDetail> {
+    return apiClient.get<AuctionDetail>(`/auctions/${auctionPublicId}`, {
+        auth: false,
+        signal,
+    })
+}
+
+/**
+ * `GET /auctions/{id}/bids` — 인증 불요. **offset 페이징**(계약 §1.3 소규모 예외).
+ *
+ * ★ 서버가 `size` 를 **조용히 100 으로 정규화**한다(계약에 미기재). 100 초과를 보내면
+ *   요청한 수와 받은 수가 달라지므로 호출부가 100 이하를 쓴다.
+ */
+export function getAuctionBids(
+    auctionPublicId: string,
+    query: { page: number; size: number },
+    signal?: AbortSignal,
+): Promise<OffsetPage<BidSummary>> {
+    return apiClient.get<OffsetPage<BidSummary>>(
+        `/auctions/${auctionPublicId}/bids`,
+        { query: { ...query }, auth: false, signal },
+    )
+}
+
+/** `POST /auctions/{id}/bids` — **인증 필요**. 실패는 `BID_001~007`·`AUCTION_004`(§5). */
+export function placeBid(
+    auctionPublicId: string,
+    amount: number,
+): Promise<PlaceBidResponse> {
+    return apiClient.post<PlaceBidResponse>(
+        `/auctions/${auctionPublicId}/bids`,
+        { amount },
+    )
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **`POST /auctions/{id}/purchase`(즉시구매)를 여기에 만들지 마라.**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 계약 §3.1 에 **완전히 명세돼 있으나 백엔드에 매핑이 없다** — 호출하면 404 다
+ * (`AUCTION_005`/`AUCTION_009` 도 서버 enum 에 없다. EPIC-CLOSING 소유).
+ * FC-048 이 계약만 보고 `/shops` 를 호출했다가 홈에 에러 배너를 띄운 것과 같은 함정이다.
+ * `buyNowPrice` 는 **정보 표기로만** 쓴다.
+ */

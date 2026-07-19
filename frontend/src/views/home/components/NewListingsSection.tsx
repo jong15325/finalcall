@@ -10,7 +10,7 @@ import AuctionGridCard from '@/features/auction/components/AuctionGridCard'
 import { useAuctionList } from '@/lib/queries/auctions'
 import { ROUTES } from '@/configs/routes.config'
 import HomeSection from './HomeSection'
-import SectionNotice from './SectionNotice'
+import SectionNotice from '@/components/shared/SectionNotice'
 
 /**
  * 새 매물 섹션 (FC-058 → 재작업).

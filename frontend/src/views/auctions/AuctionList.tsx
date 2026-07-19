@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router'
 import { PiFunnelDuotone } from 'react-icons/pi'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import Sheet from '@/components/shared/Sheet'
 import {
     AUCTION_SORT_OPTIONS,
     countActiveFilters,
@@ -15,7 +16,6 @@ import { useAuctionBrowse } from '@/lib/queries/auctions'
 import ActiveFilterChips from './components/ActiveFilterChips'
 import AuctionFilterPanel from './components/AuctionFilterPanel'
 import AuctionResults from './components/AuctionResults'
-import FilterSheet from './components/FilterSheet'
 import type { AuctionFilterState } from '@/features/auction/lib/auctionFilters'
 
 /**
@@ -209,7 +209,10 @@ const AuctionList = () => {
                 </div>
             </div>
 
-            <FilterSheet
+            <Sheet
+                className="lg:hidden"
+                closeLabel="필터 닫기"
+                data-testid="filter-sheet"
                 footer={
                     <div className="flex items-center gap-2">
                         <Button
@@ -247,7 +250,7 @@ const AuctionList = () => {
                     value={filters}
                     onChange={applyFilters}
                 />
-            </FilterSheet>
+            </Sheet>
         </div>
     )
 }
