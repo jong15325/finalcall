@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # ts build info
 *.tsbuildinfo
+
+# vite build output (Ecme 템플릿 관례 — vite.config.ts build.outDir)
+build
