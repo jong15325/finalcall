@@ -128,7 +128,7 @@ Docker 컨테이너는 재부팅 시 내려간다. **작업 트리·git·Docker 
      - **⚠️ EPIC-CLOSING 소유권 이전 티켓 DoD에 반드시 등재할 것**(이연의 유일한 리스크는 "잊혀짐"): *"`markListedIfInInventory` CAS에 `AND i.owner.id = :ownerId` 추가 + 소유권 이전 ∥ 출품 선점 경합 테스트로 검증"*.
   2. `AuctionCursor` sortValue를 활성 정렬필드 기준으로 미검증 — `AuctionRepositoryImpl:148/161`의 `Long.parseLong`/`Instant.parse`에 try-catch 없음. 페이징 중 `sort` 전환 시 400 대신 500. 가용성·견고성 이슈(보안 아님).
   3. `GET /auctions`의 `size` 상한 없음 + 음수 시 `subList` 예외. 기존 프로젝트 패턴(`InventoryController`·`NoticeController`)과 동일 → 전역 위생 항목으로 묶어 처리 권장.
-- **문서 드리프트(architect 후속)**: `item-domain-spec.md §3.1`이 제거된 `markListed()`를 전이 메서드로 언급 → 갱신 필요(FC-029 판단#5).
+- ~~**문서 드리프트(architect 후속)**: `item-domain-spec.md §3.1`이 제거된 `markListed()`를 전이 메서드로 언급 → 갱신 필요(FC-029 판단#5).~~ → **해소 완료. 이 항목이 stale이었다**(2026-07-19 확인). 실제로는 **2026-07-18 FC-030에서 이미 고쳐졌는데** HANDOVER만 갱신되지 않았다. `item-domain-spec.md:98`은 조건부 CAS(`markListedIfInInventory`)를 정확히 서술하고 `markListed()` 폐기 이유(dirty-checking이라 양쪽 다 성공)까지 적혀 있으며, 헤더 v0.3이 정정 사실을 기록하고 있다. 코드도 일치(`ItemInstanceRepository:35`·`AuctionService:77`). **교훈: 후속 항목을 해소했으면 HANDOVER에서도 지워야 한다 — 안 지우면 다음 세션이 이미 끝난 일을 다시 조사한다.**
 - **EPIC-ITEM 위생 후속(minor)**: 자동배정 relocate INV_002 메시지 · temp-storage size @Min/@Max · 카탈로그 max page size. 근거 `reviews/FC-024-review.md`.
 - **EPIC-CHARGE**(충전·토스 결제·시크릿) · **EPIC-OAUTH**(소셜 로그인) · PR 워크플로우 도입(도입 시 CI claude-security-review·dependency-review 활성) · 보안 플러그인(로컬 Python 부재로 보류) · design-system Q4(아이템 에픽) · impeccable 벤더링 · Task#1(CLAUDE.md 섹션 2·6 문구 정합).
 - (보안 잔여, 사용자 영역) 저장소 Secrets `CLAUDE_API_KEY` + PR 워크플로우 도입 시 CI 활성.
