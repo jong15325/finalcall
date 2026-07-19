@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
+import { vi } from 'vitest'
 import { AuthProvider } from '@/auth'
 import { useAuthStore } from '@/store/authStore'
 import type { ReactNode } from 'react'
@@ -61,6 +62,60 @@ export function signInForTest(
             isAdmin: overrides.isAdmin ?? false,
         },
     })
+}
+
+/**
+ * 조작 가능한 `matchMedia` 스텁 (FC-064).
+ *
+ * ★ `test/setup.ts` 의 기본 스텁은 **항상 `matches: false` 이고 리스너가 no-op** 이라
+ *   "폭이 바뀌었다" 를 표현할 수 없다. 뷰포트 전이에 반응하는 동작(모바일 전용 시트의
+ *   자동 닫힘 등)을 검증하려면 리스너를 실제로 부를 수 있어야 한다.
+ *
+ * ★ `afterEach` 의 `unstubGlobals`(vitest 설정)가 원래 구현을 되돌린다.
+ */
+export function stubMatchMedia(initial: Record<string, boolean> = {}) {
+    const matches = { ...initial }
+    const listeners = new Map<
+        string,
+        Set<(event: MediaQueryListEvent) => void>
+    >()
+
+    vi.stubGlobal('matchMedia', (query: string) => ({
+        media: query,
+        get matches() {
+            return matches[query] ?? false
+        },
+        onchange: null,
+        addEventListener: (
+            _type: string,
+            listener: (event: MediaQueryListEvent) => void,
+        ) => {
+            if (!listeners.has(query)) listeners.set(query, new Set())
+            listeners.get(query)?.add(listener)
+        },
+        removeEventListener: (
+            _type: string,
+            listener: (event: MediaQueryListEvent) => void,
+        ) => listeners.get(query)?.delete(listener),
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+    }))
+
+    return {
+        /** 질의 결과를 바꾸고 구독자에게 알린다(브라우저의 폭 변경에 해당). */
+        setMatches(query: string, value: boolean) {
+            matches[query] = value
+            act(() => {
+                for (const listener of listeners.get(query) ?? []) {
+                    listener({
+                        matches: value,
+                        media: query,
+                    } as MediaQueryListEvent)
+                }
+            })
+        },
+    }
 }
 
 /** 성공 envelope 응답 (계약 §1.4) */

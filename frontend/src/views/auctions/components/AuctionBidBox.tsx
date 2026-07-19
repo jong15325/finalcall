@@ -9,6 +9,11 @@ import {
     bidCountLabelOf,
     formatGameMoney,
 } from '@/features/auction/lib/auctionPrice'
+import {
+    isMinRaised,
+    reconcileAmountWithMin,
+    validateBidAmount,
+} from '@/features/auction/lib/bidAmount'
 import { bidErrorViewOf } from '@/features/auction/lib/bidErrors'
 import { isOwnAuction } from '@/features/auction/lib/auctionPhase'
 import { usePlaceBid } from '@/lib/queries/auctions'
@@ -113,47 +118,61 @@ const AuctionBidBox = ({
 
     const [amount, setAmount] = useState('')
     const [localError, setLocalError] = useState<string | null>(null)
+    /** 최소가가 오른 사실을 알리는 안내(값). 사용자가 값을 만지면 사라진다 */
+    const [raisedMin, setRaisedMin] = useState<number | null>(null)
     /** 제출 직전 마감 시각 — 응답과 다르면 소프트클로즈 연장이 일어난 것이다. */
     const endAtAtSubmit = useRef(auction.endAt)
+    /**
+     * 사용자가 금액을 **직접 만졌는가**. 프리필과 사용자 입력을 가르는 유일한 근거다.
+     * ref 인 이유는 아래 effect 가 이 값에 **반응해서는 안 되기** 때문이다 — 읽기만 한다.
+     */
+    const edited = useRef(false)
+    /** 직전 최소가 — 올랐을 때만 안내한다(첫 렌더는 비교 대상이 없다) */
+    const previousMin = useRef<number | null>(null)
 
     /*
-     * ★★ **최소 입찰가가 바뀌면 입력값을 그 값으로 되돌린다.**
-     *    누가 더 높게 입찰하면 서버 파생 최소가가 올라가는데, 입력칸에 옛 금액이 남아 있으면
-     *    사용자는 그대로 눌렀다가 `BID_001` 을 맞는다 — 화면이 이미 아는 사실로 실패시키는 셈이다.
-     *    (폴링이 없으므로 이 동기화는 창 포커스 복귀·입찰 성공 때만 일어난다. 타이핑 중에
-     *    값이 지워지려면 그 사이 실제로 최고가가 바뀌어야 하고, 그때는 옛 금액이 어차피 무효다.)
+     * ★ 판단은 전부 `bidAmount.ts` 의 순수 함수에 있다(리뷰 M-1). 여기는 그 결과를
+     *   상태에 옮기기만 한다 — 금전 규칙이 렌더 타이밍에 얽히지 않게 하려는 분리다.
      */
     useEffect(() => {
-        setAmount(minNextBidAmount !== null ? String(minNextBidAmount) : '')
+        if (minNextBidAmount === null) return
+
+        setAmount((current) =>
+            reconcileAmountWithMin({
+                current,
+                minNextBidAmount,
+                edited: edited.current,
+            }),
+        )
         setLocalError(null)
+
+        if (isMinRaised(previousMin.current, minNextBidAmount)) {
+            setRaisedMin(minNextBidAmount)
+        }
+        previousMin.current = minNextBidAmount
     }, [minNextBidAmount])
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault()
 
-        const parsed = Number(amount)
-        if (!Number.isInteger(parsed) || parsed <= 0) {
-            setLocalError('입찰 금액을 숫자로 입력해 주세요.')
-            return
-        }
-        /*
-         * ★ 최소가 비교는 **증분표 복제가 아니다** — 서버가 내려준 `minNextBidAmount` 와
-         *   그대로 비교할 뿐이다. 계단식 증분 계산을 클라가 흉내내면 그 순간 드리프트가 생긴다.
-         */
-        if (minNextBidAmount !== null && parsed < minNextBidAmount) {
-            setLocalError(
-                `${formatGameMoney(minNextBidAmount)} 이상으로 입찰해 주세요.`,
-            )
+        const check = validateBidAmount(
+            amount,
+            minNextBidAmount,
+            formatGameMoney,
+        )
+        if (!check.ok) {
+            setLocalError(check.message)
             return
         }
 
         setLocalError(null)
+        setRaisedMin(null)
         endAtAtSubmit.current = auction.endAt
         /*
          * ★ **성공해도 시트를 닫지 않는다.** 닫아버리면 소프트클로즈 연장 안내를 아무도 못
          *   보고, 카운트다운이 늘어난 이유를 설명할 자리가 사라진다. 닫기는 사용자가 한다.
          */
-        mutation.mutate(parsed)
+        mutation.mutate(check.amount)
     }
 
     const errorView = mutation.error
@@ -319,7 +338,12 @@ const AuctionBidBox = ({
                             step={1}
                             type="number"
                             value={amount}
-                            onChange={(event) => setAmount(event.target.value)}
+                            onChange={(event) => {
+                                // ★ 여기서부터 이 값은 **사용자 의사**다 — 덮어쓰기 금지 대상.
+                                edited.current = true
+                                setRaisedMin(null)
+                                setAmount(event.target.value)
+                            }}
                         />
                         <Button
                             block
@@ -342,6 +366,23 @@ const AuctionBidBox = ({
                             ? `${formatGameMoney(minNextBidAmount)} GM 이상 입력할 수 있습니다.`
                             : '최소 입찰가를 불러오지 못했습니다.'}
                     </p>
+
+                    {/*
+                     * ★ 최소가가 오른 사실은 **말로 알린다**(리뷰 M-1). 입력칸이 조용히
+                     *   바뀌든 그대로 남든, 사용자가 그 변화를 모른 채 제출하면 안 된다.
+                     *   `role="status"` 라 초점을 뺏지 않고 읽힌다.
+                     */}
+                    {raisedMin !== null && (
+                        <p
+                            aria-live="polite"
+                            className="text-xs font-semibold text-gray-700 dark:text-gray-300"
+                            data-testid="bid-min-raised"
+                            role="status"
+                        >
+                            최소 입찰가가 {formatGameMoney(raisedMin)} GM 으로
+                            올랐습니다. 금액을 확인해 주세요.
+                        </p>
+                    )}
 
                     {/*
                      * 실패는 **한 자리에서** 말한다 — 클라 검증과 서버 코드 분기가 서로 다른

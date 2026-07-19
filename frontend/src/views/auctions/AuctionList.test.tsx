@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import AuctionList from './AuctionList'
-import { okEnvelope, renderWithProviders } from '@/test/renderWithProviders'
+import {
+    okEnvelope,
+    renderWithProviders,
+    stubMatchMedia,
+} from '@/test/renderWithProviders'
 import type { AuctionSummary } from '@/lib/api/auctions'
 
 /**
@@ -502,6 +506,60 @@ describe('모바일 필터 시트', () => {
             expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
         })
         expect(trigger).toHaveFocus()
+    })
+
+    /*
+     * ══════════════════════════════════════════════════════════════════════════
+     * ★★ FC-064 리뷰 C-1 회귀 — **부모 리렌더가 시트의 초점을 뺏으면 안 된다.**
+     * ══════════════════════════════════════════════════════════════════════════
+     * `Sheet` 의 초점 effect 가 `onClose` 에 의존하던 시절, 소비처가 인라인 화살표를 넘기므로
+     * **리렌더마다 effect 가 재실행**돼 초점이 패널로 튀었다. 이 화면은 글자 하나마다
+     * `setSearchParams` 로 리렌더하므로 **첫 글자 뒤 나머지가 전부 유실**된다.
+     * (모바일 입찰 시트에서는 같은 원인으로 소프트 키보드가 매초 닫혔다.)
+     * 이 테스트는 수정 전 코드에서 `1000` 대신 `1` 만 남아 실패한다.
+     */
+    it('★★ 시트 입력에 연속으로 타이핑해도 초점과 값이 유지된다 (C-1 회귀)', async () => {
+        stubAuctions()
+        const user = userEvent.setup()
+        renderWithProviders(<AuctionList />, { route: '/auctions' })
+
+        await screen.findByText('물의 검 +9')
+        await user.click(screen.getByTestId('filter-sheet-trigger'))
+
+        const dialog = await screen.findByRole('dialog')
+        const minPrice = within(dialog).getByRole('spinbutton', {
+            name: '가격 최소',
+        })
+
+        await user.click(minPrice)
+        await user.type(minPrice, '1000')
+
+        expect(minPrice).toHaveValue(1000)
+        expect(minPrice).toHaveFocus()
+    })
+
+    /*
+     * ★ 리뷰 m-6 — 시트를 연 채 데스크톱 폭이 되면 **스스로 닫혀야** 한다.
+     *   클래스로 감추기만 하면 열림 상태가 남아 배경 스크롤 잠금과 초점 가둠이
+     *   보이지 않는 채로 계속된다("보이지 않는 다이얼로그에 갇힘").
+     */
+    it('★ 데스크톱 폭으로 넓어지면 시트가 스스로 닫힌다 (m-6 회귀)', async () => {
+        stubAuctions()
+        const user = userEvent.setup()
+        const media = stubMatchMedia()
+        renderWithProviders(<AuctionList />, { route: '/auctions' })
+
+        await screen.findByText('물의 검 +9')
+        await user.click(screen.getByTestId('filter-sheet-trigger'))
+        await screen.findByRole('dialog')
+
+        media.setMatches('(min-width: 1024px)', true)
+
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+        })
+        // 배경 스크롤 잠금도 함께 풀린다 — 잠금만 남으면 페이지가 굳는다.
+        expect(document.body.style.overflow).not.toBe('hidden')
     })
 
     it('★ 시트와 레일이 같은 폼이다 — 시트에서 고른 필터가 그대로 요청에 나간다', async () => {

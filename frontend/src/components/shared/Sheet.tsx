@@ -51,7 +51,17 @@ interface SheetProps {
     footer?: ReactNode
     /** 닫기 버튼의 접근명. 무엇을 닫는지 구분된다 */
     closeLabel?: string
-    /** 바깥 래퍼 클래스 — 반응형 노출 제어(`lg:hidden` 등)에 쓴다 */
+    /**
+     * 이 폭 이상에서는 시트를 **쓰지 않는 화면**임을 선언한다(모바일 전용 시트).
+     *
+     * ★★ **숨김 클래스와 자동 닫힘을 한 prop 으로 묶은 이유** — 예전엔 소비처가
+     *    `className="lg:hidden"` 만 넘겼고, 시트를 연 채 데스크톱 폭으로 리사이즈하면
+     *    **시트는 사라지는데 열림 상태는 남아** 스크롤 잠금과 초점 가둠이 유지됐다.
+     *    보이지 않는 다이얼로그에 갇히는 것이다(FC-064 리뷰 m-6). 둘을 갈라 두면
+     *    **한쪽만 붙이는 실수가 언제든 다시 난다** — 묶으면 구조적으로 불가능하다.
+     */
+    hiddenAbove?: 'lg'
+    /** 바깥 래퍼 클래스 */
     className?: string
     'data-testid'?: string
     children: ReactNode
@@ -66,6 +76,38 @@ const PANEL_CLASS = {
     center: 'fc-sheet-center absolute inset-x-4 top-1/2 mx-auto max-h-[85dvh] max-w-lg -translate-y-1/2 rounded-2xl sm:inset-x-6',
 } as const
 
+/**
+ * 숨김 브레이크포인트 ↔ 미디어쿼리 짝.
+ * ★ 클래스 문자열을 **리터럴로** 둔다 — Tailwind 는 소스를 정적으로 훑으므로
+ *   `lg:hidden` 을 조립해 만들면 그 클래스가 CSS 에 생성되지 않는다.
+ */
+const HIDDEN_ABOVE = {
+    lg: { className: 'lg:hidden', query: '(min-width: 1024px)' },
+} as const
+
+/**
+ * 패널 안에서 **실제로 초점을 받을 수 있는** 요소들.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **`offsetParent !== null` 을 무조건 걸면 초점 가둠이 테스트 불가가 된다** (리뷰 m-2).
+ * ══════════════════════════════════════════════════════════════════════════════
+ * jsdom 은 레이아웃을 계산하지 않아 `offsetParent` 가 **항상 null** 이다. 종전 구현은 그래서
+ * 목록이 늘 비었고 `if (focusables.length === 0) return` 으로 **조기 반환** — 가둠 로직이
+ * 한 줄도 실행되지 않았다. 일반화의 명분이 *"접근성 6항목의 단일 구현"* 인데 그중 하나가
+ * 무테스트였던 셈이다.
+ *
+ * 그래서 **레이아웃 정보가 있는 환경에서만** 그 필터를 적용한다. 판별은 패널 자신으로 한다 —
+ * 패널은 `position: absolute` 라 브라우저에서는 위치가 잡힌 조상(고정 래퍼)을 반드시 갖고,
+ * jsdom 에서는 갖지 않는다. 브라우저 동작은 종전과 **완전히 같고**, jsdom 에서는 숨김 필터만
+ * 빠져 나머지 가둠 로직이 그대로 검증된다.
+ */
+function visibleFocusables(panel: HTMLElement): HTMLElement[] {
+    const layoutKnown = panel.offsetParent !== null
+    return Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (element) => !layoutKnown || element.offsetParent !== null,
+    )
+}
+
 const Sheet = ({
     open,
     title,
@@ -74,13 +116,42 @@ const Sheet = ({
     placement = 'bottom',
     footer,
     closeLabel = '닫기',
+    hiddenAbove,
     className,
     'data-testid': testId,
     children,
 }: SheetProps) => {
     const panelRef = useRef<HTMLDivElement>(null)
     const headingId = `sheet-title-${placement}`
+    const hidden = hiddenAbove ? HIDDEN_ABOVE[hiddenAbove] : null
 
+    /*
+     * ══════════════════════════════════════════════════════════════════════════
+     * ★★ **부모의 리렌더가 초점을 건드리면 안 된다** (FC-064 리뷰 C-1).
+     * ══════════════════════════════════════════════════════════════════════════
+     * 종전 의존 배열은 `[open, onClose, triggerRef]` 였다. 소비처는 `onClose` 를 **인라인
+     * 화살표**로 넘기고 상세·라이트박스의 부모는 `useNow()` 로 **매초 리렌더**한다. 그래서
+     * 초당 한 번씩 `onClose` 의 신원이 바뀌어 effect 가 재실행됐고 —
+     * **cleanup 이 트리거로, 본문이 패널로 초점을 옮겼다.**
+     * 모바일에서는 그때마다 **소프트 키보드가 닫혀 금액을 타이핑할 수 없었다.**
+     * 목록의 필터 시트도 필터를 만질 때마다 같은 일이 났다(FC-059 에서 승계된 결함).
+     *
+     * ★ **고치는 자리는 `Sheet` 안이다.** 소비처마다 `useCallback` 을 요구하는 해법은
+     *   **네 번째 소비처에서 반드시 다시 표류한다** — 컴포넌트를 공용으로 만든 목적과 정면으로
+     *   어긋난다. 콜백을 ref 에 담아 **의존에서 빼면** 규칙이 아니라 구조로 보장된다.
+     *
+     * ★ 이 effect 는 **의존이 없다**(매 렌더 실행). 아래 초점 effect 보다 **먼저 선언**해야
+     *   열리는 렌더에서 최신 값이 이미 담겨 있다 — effect 는 선언 순서대로 실행된다.
+     */
+    const latest = useRef({ onClose, triggerRef })
+    useEffect(() => {
+        latest.current = { onClose, triggerRef }
+    })
+
+    /*
+     * ★ 의존은 **`open` 하나뿐이다.** 열림/닫힘 전이에만 반응한다 — 초점 이동은 상태 전이의
+     *   결과여야지 렌더의 결과여서는 안 된다.
+     */
     useEffect(() => {
         if (!open) return
 
@@ -90,7 +161,7 @@ const Sheet = ({
          *   그 시점의 값이라 보장이 없다(리렌더로 노드가 갈리면 사라진 요소를 가리킨다).
          *   초점을 되돌릴 대상은 "이 시트를 연 그 버튼"이므로 여는 순간의 것이 정답이다.
          */
-        const trigger = triggerRef.current
+        const trigger = latest.current.triggerRef.current
         const previous = document.body.style.overflow
         document.body.style.overflow = 'hidden'
 
@@ -100,15 +171,14 @@ const Sheet = ({
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 event.stopPropagation()
-                onClose()
+                // 최신 콜백을 **이벤트 시점에** 읽는다 — 닫힌 값을 붙잡아 두지 않는다.
+                latest.current.onClose()
                 return
             }
             if (event.key !== 'Tab' || !panel) return
 
             // ③ 초점 가둠 — 양 끝에서 반대쪽으로 감는다.
-            const focusables = Array.from(
-                panel.querySelectorAll<HTMLElement>(FOCUSABLE),
-            ).filter((element) => element.offsetParent !== null)
+            const focusables = visibleFocusables(panel)
             if (focusables.length === 0) return
 
             const first = focusables[0]
@@ -131,13 +201,38 @@ const Sheet = ({
             // ② 초점을 트리거로 되돌린다. 트리거가 사라졌으면 아무것도 하지 않는다.
             trigger?.focus()
         }
-    }, [open, onClose, triggerRef])
+    }, [open])
+
+    /*
+     * ★ 모바일 전용 시트는 **폭이 넓어지면 스스로 닫는다**(리뷰 m-6). 클래스로 감추기만 하면
+     *   열림 상태가 남아 스크롤 잠금·초점 가둠이 보이지 않는 채로 계속된다.
+     */
+    useEffect(() => {
+        if (!open || !hidden) return
+        if (typeof window.matchMedia !== 'function') return
+
+        const media = window.matchMedia(hidden.query)
+        if (media.matches) {
+            latest.current.onClose()
+            return
+        }
+
+        const onChange = (event: MediaQueryListEvent) => {
+            if (event.matches) latest.current.onClose()
+        }
+        media.addEventListener('change', onChange)
+        return () => media.removeEventListener('change', onChange)
+    }, [open, hidden])
 
     if (!open) return null
 
     return createPortal(
         <div
-            className={classNames('fixed inset-0 z-50', className)}
+            className={classNames(
+                'fixed inset-0 z-50',
+                hidden?.className,
+                className,
+            )}
             data-testid={testId}
         >
             {/*

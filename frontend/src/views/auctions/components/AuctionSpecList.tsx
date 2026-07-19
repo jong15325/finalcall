@@ -44,18 +44,31 @@ interface SpecRow {
     value: ReactNode
 }
 
-/** `스킬 #119 · 18%` — 이름이 없어도 **무엇이 얼마나** 는 전달된다. */
+/**
+ * `스킬 #119 · 18%` — 이름이 없어도 **무엇이 얼마나** 는 전달된다.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **슬롯 번호를 보존한다 — 재부여하지 않는다** (FC-064 리뷰 m-5).
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 종전엔 null 을 먼저 걸러낸 뒤 `index + 1` 로 라벨을 붙였다. 그러면 `skill1` 이 비고
+ * `skill2` 만 있는 아이템에서 **`skill2` 가 "스킬 1" 로 표기**된다 — 화면이 서버와 다른
+ * 사실을 말하는 것이다. 그리고 이건 희귀한 예외가 아니다: **마법(`subGroup=3`)은
+ * 구조적으로 `skill1` 이 없다**(계약 §3.3). 슬롯 번호를 먼저 매기고 나서 거른다.
+ */
 function skillRowsOf(auction: AuctionDetail): SpecRow[] {
     const { item } = auction
-    const codes = [item.skill1, item.skill2].filter(
-        (code): code is number => code !== null,
-    )
 
-    return codes.map((code, index) => ({
-        label: `스킬 ${index + 1}`,
-        // `skillPercent` 는 정수이며 항상 존재한다(계약 §3.3).
-        value: `스킬 #${code} · ${item.skillPercent}%`,
-    }))
+    return [item.skill1, item.skill2].flatMap((code, index) =>
+        code === null
+            ? []
+            : [
+                  {
+                      label: `스킬 ${index + 1}`,
+                      // `skillPercent` 는 정수이며 항상 존재한다(계약 §3.3).
+                      value: `스킬 #${code} · ${item.skillPercent}%`,
+                  },
+              ],
+    )
 }
 
 const AuctionSpecList = ({ auction }: AuctionSpecListProps) => {

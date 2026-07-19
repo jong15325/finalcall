@@ -203,9 +203,9 @@ const AuctionDetail = () => {
              *   `AuctionBidBox` 가 매번 새 입력 상태로 시작해 이전 시도의 에러가 남지 않는다.
              */}
             <Sheet
-                className="lg:hidden"
                 closeLabel="입찰 닫기"
                 data-testid="bid-sheet"
+                hiddenAbove="lg"
                 open={bidSheetOpen}
                 title="입찰하기"
                 triggerRef={bidTriggerRef}

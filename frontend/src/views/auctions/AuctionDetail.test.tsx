@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Route, Routes } from 'react-router'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import AuctionDetail from './AuctionDetail'
 import { ROUTES } from '@/configs/routes.config'
@@ -9,6 +9,7 @@ import {
     okEnvelope,
     renderWithProviders,
     signInForTest,
+    stubMatchMedia,
 } from '@/test/renderWithProviders'
 import type {
     AuctionDetail as AuctionDetailData,
@@ -395,6 +396,28 @@ describe('입찰 흐름', () => {
         )
     })
 
+    /*
+     * ★ 리뷰 M-1(최소가 상승 시 사용자 입력 보존)의 **규칙 자체는
+     *   `features/auction/lib/bidAmount.test.ts` 가 전수 고정**한다. 렌더 타이밍이 아니라
+     *   입력·출력만으로 확인되는 자리에 두는 편이 금전 판단에 맞다.
+     *   여기서는 그 규칙이 **화면에 배선돼 있는지**(프리필·안내 자리)만 본다.
+     */
+    it('★ 지수 표기는 요청으로 나가지 않는다 (m-3 상한 가드)', async () => {
+        const { calls } = stubAuction()
+        signInForTest()
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        renderDetail()
+
+        const input = await screen.findByTestId('bid-amount-input')
+        await user.clear(input)
+        // `Number.isInteger(1e21) === true` 라 종전 검사는 이걸 통과시켰다.
+        await user.type(input, '1e21')
+        await user.click(screen.getByTestId('bid-submit'))
+
+        expect(await screen.findByTestId('bid-error')).toBeInTheDocument()
+        expect(calls.some((call) => call.method === 'POST')).toBe(false)
+    })
+
     it('★★ 성공하면 응답의 endAt 으로 카운트다운이 재동기화되고 연장을 알린다', async () => {
         const { calls } = stubAuction({
             bidResult: { endAt: IN_25_MIN, currentHighestAmount: 12_500 },
@@ -592,5 +615,141 @@ describe('모바일 — 입찰 정보와 카드 정보가 함께 보인다', () 
         expect(
             within(lightbox).queryByTestId('auction-spec-list'),
         ).not.toBeInTheDocument()
+    })
+})
+
+/*
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ FC-064 리뷰 C-1 회귀 — **매초 리렌더가 시트의 초점을 뺏으면 안 된다.**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 이 화면은 `useNow()` 로 **초당 한 번 리렌더**한다. `Sheet` 의 초점 effect 가 `onClose`
+ * (인라인 화살표)에 의존하던 시절, 그 리렌더마다 effect 가 재실행돼
+ * cleanup 이 트리거로 → 본문이 패널로 초점을 옮겼다.
+ * **실기에서는 모바일 소프트 키보드가 매초 닫혀 최소가보다 높은 금액을 칠 수 없었다.**
+ *
+ * 종전 테스트가 못 잡은 이유는 (a) 시트 안 입력에 타이핑하지 않았고 (b) 시트를 1초 이상
+ * 열어두지 않아서다. 그래서 **시간을 실제로 흘려보낸 뒤** 초점을 확인한다.
+ */
+describe('★★ 시트 초점 안정성 (C-1 회귀)', () => {
+    it('시트를 열고 3초가 지나도 초점이 금액 입력칸에 남아 있다', async () => {
+        stubAuction()
+        signInForTest()
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        renderDetail()
+
+        await screen.findByTestId('auction-sticky-bar')
+        await user.click(screen.getByTestId('sticky-bid-trigger'))
+
+        const sheet = await screen.findByTestId('bid-sheet')
+        const input = within(sheet).getByTestId('bid-amount-input')
+        await user.click(input)
+        expect(input).toHaveFocus()
+
+        // 카운트다운이 세 번 똑딱인다 — 종전 코드라면 여기서 초점이 패널로 튄다.
+        await act(async () => {
+            vi.advanceTimersByTime(3000)
+        })
+
+        expect(input).toHaveFocus()
+    })
+
+    it('시간이 흐르는 동안 이어서 타이핑한 금액이 온전히 남는다', async () => {
+        stubAuction()
+        signInForTest()
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        renderDetail()
+
+        await screen.findByTestId('auction-sticky-bar')
+        await user.click(screen.getByTestId('sticky-bid-trigger'))
+
+        const sheet = await screen.findByTestId('bid-sheet')
+        const input = within(sheet).getByTestId('bid-amount-input')
+
+        await user.clear(input)
+        await user.type(input, '100')
+        await act(async () => {
+            vi.advanceTimersByTime(1500)
+        })
+        /*
+         * ★ **여기서 초점을 확인하는 것이 핵심이다.** 뒤이어 `user.type` 을 부르면 그 함수가
+         *   요소를 다시 focus 하므로, 마지막 값만 보면 결함이 있어도 통과한다(실기에서는
+         *   그 사이 소프트 키보드가 이미 닫혔다). 시간이 흐른 직후를 본다.
+         */
+        expect(input).toHaveFocus()
+
+        await user.type(input, '000')
+        expect(input).toHaveValue(100_000)
+    })
+
+    it('라이트박스도 같다 — 매초 리렌더에도 닫기 버튼 초점이 유지된다', async () => {
+        stubAuction()
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        renderDetail()
+
+        await user.click(await screen.findByTestId('auction-art-zoom-trigger'))
+        const lightbox = await screen.findByTestId('auction-art-lightbox')
+        const close = within(lightbox).getByRole('button', {
+            name: '아트 닫기',
+        })
+
+        await user.click(close)
+        // 닫혔다가 다시 열어도 같은 이야기를 하려면 다시 연다.
+        await user.click(screen.getByTestId('auction-art-zoom-trigger'))
+        const reopened = await screen.findByTestId('auction-art-lightbox')
+        const reopenedClose = within(reopened).getByRole('button', {
+            name: '아트 닫기',
+        })
+        reopenedClose.focus()
+
+        await act(async () => {
+            vi.advanceTimersByTime(3000)
+        })
+
+        expect(reopenedClose).toHaveFocus()
+    })
+
+    it('★ 데스크톱 폭이 되면 입찰 시트가 스스로 닫힌다 (m-6 회귀)', async () => {
+        stubAuction()
+        signInForTest()
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        const media = stubMatchMedia()
+        renderDetail()
+
+        await screen.findByTestId('auction-sticky-bar')
+        await user.click(screen.getByTestId('sticky-bid-trigger'))
+        await screen.findByTestId('bid-sheet')
+
+        media.setMatches('(min-width: 1024px)', true)
+
+        await waitFor(() => {
+            expect(screen.queryByTestId('bid-sheet')).not.toBeInTheDocument()
+        })
+        expect(document.body.style.overflow).not.toBe('hidden')
+    })
+
+    /*
+     * ★ 리뷰 m-2 — 초점 가둠이 jsdom 에서 **무조건 조기 반환**돼 무테스트였다.
+     *   `visibleFocusables` 가 레이아웃 정보가 없는 환경에서 숨김 필터를 건너뛰게 바꿔
+     *   이제 가둠 자체를 검증할 수 있다.
+     */
+    it('★ Tab 이 시트 밖으로 새지 않는다 (m-2 — 종전엔 검증 불가였다)', async () => {
+        stubAuction()
+        signInForTest()
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        renderDetail()
+
+        await screen.findByTestId('auction-sticky-bar')
+        await user.click(screen.getByTestId('sticky-bid-trigger'))
+
+        const sheet = await screen.findByTestId('bid-sheet')
+        const panel = within(sheet).getByRole('dialog')
+        const focusables = within(panel).getAllByRole('button')
+        const last = focusables[focusables.length - 1]
+
+        last.focus()
+        await user.tab()
+
+        // 마지막에서 Tab 하면 시트의 첫 요소로 감긴다 — 뒤의 페이지로 새지 않는다.
+        expect(panel.contains(document.activeElement)).toBe(true)
     })
 })

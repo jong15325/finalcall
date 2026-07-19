@@ -210,9 +210,9 @@ const AuctionList = () => {
             </div>
 
             <Sheet
-                className="lg:hidden"
                 closeLabel="필터 닫기"
                 data-testid="filter-sheet"
+                hiddenAbove="lg"
                 footer={
                     <div className="flex items-center gap-2">
                         <Button
