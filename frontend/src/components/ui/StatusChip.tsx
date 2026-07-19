@@ -21,7 +21,7 @@ const TONES: Record<StatusTone, string> = {
 export function StatusChip({ tone, children }: { tone: StatusTone; children: ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${TONES[tone]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label ${TONES[tone]}`}
     >
       {children}
     </span>

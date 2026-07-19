@@ -14,14 +14,14 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
       role="alert"
       aria-live="assertive"
     >
-      <p className="text-lg font-semibold text-danger">문제가 발생했습니다</p>
-      <p className="text-sm text-text-muted">{message}</p>
-      <p className="text-xs text-text-subtle">코드: {code}</p>
+      <p className="text-value text-danger">문제가 발생했습니다</p>
+      <p className="text-body text-text-muted">{message}</p>
+      <p className="text-micro text-text-subtle">코드: {code}</p>
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-2 rounded-md border border-border-strong px-4 py-2 text-sm text-text transition-colors duration-fast hover:bg-surface-sunken"
+          className="mt-2 rounded-md border border-border-strong px-4 py-2 text-body text-text transition-colors duration-fast hover:bg-surface-sunken"
         >
           다시 시도
         </button>

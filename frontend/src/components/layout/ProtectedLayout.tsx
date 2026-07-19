@@ -10,7 +10,7 @@ import { ROUTES } from '@/routes/paths';
  * returnUrl 은 현재 pathname+search 로 구성하되 내부 경로만 통과시킨다(sanitize).
  */
 const navClass = ({ isActive }: { isActive: boolean }): string =>
-  `text-sm transition-colors duration-fast hover:text-text ${
+  `text-body transition-colors duration-fast hover:text-text ${
     isActive ? 'text-text font-semibold' : 'text-text-muted'
   }`;
 
@@ -28,7 +28,8 @@ export function ProtectedLayout() {
     <div className="min-h-screen bg-bg text-text">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <NavLink to={ROUTES.home} className="text-lg font-bold text-text">
+          {/* 워드마크 22px 은 [3.3] 스케일 예외 1건 — 브랜드 자산이라 전 화면 동일 수치를 유지한다. */}
+          <NavLink to={ROUTES.home} className="text-wordmark text-text">
             FinalCall
           </NavLink>
           <nav className="flex items-center gap-4">

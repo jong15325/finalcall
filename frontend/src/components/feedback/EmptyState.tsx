@@ -15,8 +15,8 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-2 p-10 text-center">
-      <p className="text-lg font-semibold text-text">{title}</p>
-      {description ? <p className="text-sm text-text-muted">{description}</p> : null}
+      <p className="text-value text-text">{title}</p>
+      {description ? <p className="text-body text-text-muted">{description}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );

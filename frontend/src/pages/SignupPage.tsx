@@ -74,7 +74,8 @@ export function SignupPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-text">회원가입</h1>
+      {/* 페이지 제목은 화면당 1개다([3.2] `text-title`). ≤719px 축소는 index.css 가 중앙에서 처리한다. */}
+      <h1 className="text-title text-text">회원가입</h1>
 
       {formError ? <Alert tone="danger">{formError}</Alert> : null}
       {rateLimit.isLimited ? (
@@ -125,7 +126,7 @@ export function SignupPage() {
         </Button>
       </form>
 
-      <p className="text-sm text-text-muted">
+      <p className="text-body text-text-muted">
         이미 계정이 있나요?{' '}
         <Link to={ROUTES.login} className="text-primary underline">
           로그인

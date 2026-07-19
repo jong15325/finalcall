@@ -39,7 +39,7 @@ export function CursorLoadMore({
 
   if (!hasNext) {
     return (
-      <p className="py-8 text-center text-sm text-text-subtle" role="status">
+      <p className="py-8 text-center text-body text-text-subtle" role="status">
         {endLabel}
       </p>
     );

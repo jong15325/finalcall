@@ -15,7 +15,7 @@ export function ElementBadge({ element }: { element: number }) {
   // 미등록 코드: 색을 지어내지 않고 중립 칩으로 폴백한다(코드 노출 = 무음 실패 방지).
   if (!key) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-sm bg-surface-sunken px-2 py-0.5 text-xs font-medium text-text-muted">
+      <span className="inline-flex items-center gap-1.5 rounded-sm bg-surface-sunken px-2 py-0.5 text-label text-text-muted">
         속성 {element}
       </span>
     );
@@ -23,7 +23,7 @@ export function ElementBadge({ element }: { element: number }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs font-medium text-on-accent-fg ${ELEMENT_TINT_CLASS[key]}`}
+      className={`inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-label text-on-accent-fg ${ELEMENT_TINT_CLASS[key]}`}
     >
       <span
         className={`h-2 w-2 shrink-0 rounded-full ${ELEMENT_DOT_CLASS[key]}`}

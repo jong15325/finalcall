@@ -60,10 +60,18 @@ function formatVerbose(remainingMs: number): string {
   return `마감까지 ${parts.join(' ')} 남음`;
 }
 
-/** 표시 크기 — 목록 카드는 sm, 상세의 거래 패널은 주 정보라 lg. 규칙(색 전이·안내)은 공통이다. */
+/**
+ * 표시 크기 — 목록 카드는 sm(메타 줄에 얹히는 문장 축), 상세의 거래 패널은 주 정보라 lg(값 축).
+ * 규칙(색 전이·안내)은 공통이다.
+ *
+ * ★ [3.2]가 규정한 카운트다운의 **수치 승격**(`text-figure` 28 = 주의 구간 · `text-figure-xl` 44 =
+ * 임박 구간)은 여기서 적용하지 않는다. 승격은 phase 에 따라 **크기가 변하는 동작**이라 거래 패널의
+ * 레이아웃 설계와 함께 정해져야 하고("화면당 1개" 제약도 화면 단위다), 그건 FC-049 소관이다.
+ * 지금은 폐기 토큰을 역할 토큰으로 무손실 치환만 한다.
+ */
 const SIZE_CLASS = {
-  sm: 'text-sm',
-  lg: 'text-2xl font-semibold',
+  sm: 'text-body',
+  lg: 'text-value',
 } as const;
 
 interface CountdownProps {
@@ -110,8 +118,8 @@ export function Countdown({ endAt, label, size = 'sm' }: CountdownProps) {
       ) : (
         <>
           {/* 임박 신호는 색이 아니라 이 텍스트가 1차다(accessibility [2]). 값보다 작게 둬 숫자를 가리지 않는다. */}
-          {phase !== 'normal' ? <span className="text-sm font-medium">마감 임박</span> : null}
-          <span className="font-num tabular-nums" aria-hidden="true">
+          {phase !== 'normal' ? <span className="text-label">마감 임박</span> : null}
+          <span className="font-num" aria-hidden="true">
             {formatCompact(remaining)}
           </span>
           <span className="sr-only">{formatVerbose(remaining)}</span>

@@ -68,10 +68,15 @@ function AuctionDetailView({ auction }: { auction: AuctionDetail }) {
           <StatusChip tone={meta.tone}>{meta.label}</StatusChip>
           <ElementBadge element={item.element} />
         </div>
-        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-text sm:text-3xl">
+        {/*
+         * 페이지 제목은 화면당 1개다([3.2] `text-title`). 종전 `sm:text-3xl` 반응형 분기는 걷어냈다 —
+         * [3.3]의 축소(≤719px 34→26)는 index.css 가 중앙에서 처리하므로, 사용처마다 분기를 두면
+         * 화면별로 다른 축소 규칙이 생겨 셸이 흔들린다.
+         */}
+        <h1 ref={headingRef} tabIndex={-1} className="text-title text-text">
           {item.nameSnapshot}
         </h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-body text-text-muted">
           판매자 {auction.sellerNickname} · 등록 {formatDateTime(auction.createdAt)}
         </p>
       </header>
@@ -90,7 +95,7 @@ function AuctionDetailView({ auction }: { auction: AuctionDetail }) {
             <ItemArtSlot name={item.nameSnapshot} element={item.element} level={item.level} />
             {ended ? (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                <span className="text-xl font-bold text-white">
+                <span className="text-value font-bold text-white">
                   {isTerminalStatus(status) ? meta.label : '마감'}
                 </span>
               </div>
@@ -98,7 +103,7 @@ function AuctionDetailView({ auction }: { auction: AuctionDetail }) {
           </div>
 
           <section className="flex flex-col gap-3" aria-labelledby="item-spec-heading">
-            <h2 id="item-spec-heading" className="text-lg font-semibold text-text">
+            <h2 id="item-spec-heading" className="text-value text-text">
               아이템 정보
             </h2>
             <ItemSpecList item={item} />
@@ -111,7 +116,7 @@ function AuctionDetailView({ auction }: { auction: AuctionDetail }) {
 
 function BackToList() {
   return (
-    <Link to={ROUTES.auctions} className="w-fit text-sm text-text-muted hover:text-text">
+    <Link to={ROUTES.auctions} className="w-fit text-body text-text-muted hover:text-text">
       ← 경매 목록
     </Link>
   );
@@ -127,7 +132,7 @@ function AuctionNotFound() {
         action={
           <Link
             to={ROUTES.auctions}
-            className="inline-flex h-11 items-center rounded-md border border-border-strong px-4 text-sm text-text transition-colors duration-fast hover:bg-surface-sunken"
+            className="inline-flex h-11 items-center rounded-md border border-border-strong px-4 text-body text-text transition-colors duration-fast hover:bg-surface-sunken"
           >
             경매 목록으로
           </Link>

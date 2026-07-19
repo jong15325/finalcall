@@ -34,7 +34,7 @@ export function AuctionCard({ auction }: { auction: AuctionSummary }) {
           <ItemArtSlot name={item.nameSnapshot} element={item.element} level={item.level} />
           {ended ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-              <span className="text-lg font-bold text-white">
+              <span className="text-value font-bold text-white">
                 {isTerminalStatus(status) ? meta.label : '마감'}
               </span>
             </div>
@@ -48,13 +48,13 @@ export function AuctionCard({ auction }: { auction: AuctionSummary }) {
             <ElementBadge element={item.element} />
           </div>
 
-          <h3 className="line-clamp-2 text-base font-semibold text-text">{item.nameSnapshot}</h3>
+          <h3 className="line-clamp-2 text-value text-text">{item.nameSnapshot}</h3>
 
           <AuctionPrice auction={auction} />
 
           <div className="mt-auto flex items-center justify-between gap-2 pt-1">
             <Countdown endAt={auction.endAt} label={item.nameSnapshot} />
-            <span className="truncate text-sm text-text-muted">{auction.sellerNickname}</span>
+            <span className="truncate text-body text-text-muted">{auction.sellerNickname}</span>
           </div>
         </div>
       </Link>
@@ -74,15 +74,16 @@ function AuctionPrice({ auction }: { auction: AuctionSummary }) {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-text-muted">
+      {/* 금액 위 눈썹 라벨(라벨 축) → 금액(값 축). 두 축의 자간이 반대라 크기 차이만으로 갈리지 않는다([3.1]②). */}
+      <span className="text-label text-text-muted">
         {hasBid ? `현재가 · 입찰 ${auction.bidCount}회` : '입찰 없음 · 시작가'}
       </span>
-      <span className="font-num text-lg font-bold tabular-nums text-text">
+      <span className="font-num text-value font-bold text-text">
         {formatMoney(hasBid ? (auction.highestBidAmount as number) : auction.startPrice)}
-        <span className="ml-1 text-xs font-medium text-text-subtle">게임머니</span>
+        <span className="ml-1 text-micro text-text-subtle">게임머니</span>
       </span>
       {auction.buyNowPrice != null ? (
-        <span className="font-num text-xs tabular-nums text-text-muted">
+        <span className="font-num text-micro text-text-muted">
           즉시구매 {formatMoney(auction.buyNowPrice)}
         </span>
       ) : null}

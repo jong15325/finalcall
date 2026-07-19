@@ -39,12 +39,13 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-bold text-text">마이페이지</h1>
+      {/* 페이지 제목은 화면당 1개다([3.2] `text-title`). 아래 섹션 제목은 값 축(`text-value`)이다. */}
+      <h1 className="text-title text-text">마이페이지</h1>
 
       {/* 프로필 블록 */}
       <section className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold text-text">프로필</h2>
+          <h2 className="text-value text-text">프로필</h2>
           {me ? (
             <Button
               variant="outline"
@@ -67,24 +68,28 @@ export function ProfilePage() {
           <ErrorState error={error} onRetry={() => void refetch()} />
         ) : me ? (
           <dl className="flex flex-col gap-3">
+            {/*
+             * 라벨은 전부 라벨 축(11/700/+.12em). 값은 역할이 갈린다 — 닉네임은 이 블록의 **주 값**이라
+             * 값 축(17)이고, 회원 ID·가입일은 참조용 표 본문이라 문장 축(13)이다([3.2]).
+             */}
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-text-muted">닉네임</dt>
-              <dd className="flex items-center gap-2 text-base font-medium text-text">
+              <dt className="text-label text-text-muted">닉네임</dt>
+              <dd className="flex items-center gap-2 text-value text-text">
                 {me.nickname}
                 {me.isAdmin ? (
-                  <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
+                  <span className="rounded-full bg-primary-soft px-2 py-0.5 text-label text-primary">
                     관리자
                   </span>
                 ) : null}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-text-muted">회원 ID</dt>
-              <dd className="font-num text-sm text-text-subtle">{me.userPublicId}</dd>
+              <dt className="text-label text-text-muted">회원 ID</dt>
+              <dd className="font-num text-body text-text-subtle">{me.userPublicId}</dd>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-text-muted">가입일</dt>
-              <dd className="text-sm text-text-subtle">{formatDate(me.createdAt)}</dd>
+              <dt className="text-label text-text-muted">가입일</dt>
+              <dd className="text-body text-text-subtle">{formatDate(me.createdAt)}</dd>
             </div>
           </dl>
         ) : null}
@@ -95,11 +100,11 @@ export function ProfilePage() {
 
       {/* 계정 블록 */}
       <section className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-text">계정</h2>
+        <h2 className="text-value text-text">계정</h2>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-text">로그아웃</p>
-            <p className="text-sm text-text-subtle">현재 기기에서 로그아웃합니다.</p>
+            <p className="text-body font-medium text-text">로그아웃</p>
+            <p className="text-body text-text-subtle">현재 기기에서 로그아웃합니다.</p>
           </div>
           <Button variant="outline" onClick={onLogout} isLoading={logout.isPending}>
             로그아웃
@@ -108,8 +113,8 @@ export function ProfilePage() {
         <hr className="border-border" />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-text">회원 탈퇴</p>
-            <p className="text-sm text-text-subtle">
+            <p className="text-body font-medium text-text">회원 탈퇴</p>
+            <p className="text-body text-text-subtle">
               탈퇴 시 잔여 자산이 소멸하며 복구되지 않습니다.
             </p>
           </div>

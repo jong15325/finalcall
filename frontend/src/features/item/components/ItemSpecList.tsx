@@ -36,8 +36,9 @@ export function ItemSpecList({ item }: ItemSpecListProps) {
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-border py-2">
-      <dt className="text-sm text-text-muted">{label}</dt>
-      <dd className="font-num text-sm font-medium tabular-nums text-text">{value}</dd>
+      {/* 표 라벨은 라벨 축(11/700/+.12em), 표 본문은 문장 축(13)이다([3.2]). */}
+      <dt className="text-label text-text-muted">{label}</dt>
+      <dd className="font-num text-body font-medium text-text">{value}</dd>
     </div>
   );
 }

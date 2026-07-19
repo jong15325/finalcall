@@ -11,7 +11,7 @@ export function BalanceCard() {
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-6 shadow-sm">
-      <h2 className="text-lg font-bold text-text">잔액</h2>
+      <h2 className="text-value text-text">잔액</h2>
 
       {isLoading ? (
         <div className="grid grid-cols-2 gap-4" aria-busy="true" aria-live="polite">

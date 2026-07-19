@@ -24,7 +24,8 @@ export function AdminLayout() {
     <div className="min-h-screen bg-bg text-text">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <span className="text-lg font-bold text-text">FinalCall · 관리자</span>
+          {/* 워드마크 22px 은 [3.3] 스케일 예외 1건 — 브랜드 자산이라 전 화면 동일 수치를 유지한다. */}
+          <span className="text-wordmark text-text">FinalCall · 관리자</span>
           <ThemeToggle />
         </div>
       </header>

@@ -60,13 +60,31 @@ export const ELEMENT_DOT_CLASS: Record<ElementKey, string> = {
   wind: 'bg-element-wind',
 };
 
-/** 검정 아트 슬롯(#000) 위 element 윤곽 — 슬롯 위 대비 6.5~11:1([2.7]). */
+/** 아트 슬롯 글로우 위 element 윤곽 — 글로우 위 대비 5.0~9.8:1([2.7], v0.5 재계산). */
 export const ELEMENT_BORDER_CLASS: Record<ElementKey, string> = {
   water: 'border-element-water',
   fire: 'border-element-fire',
   earth: 'border-element-earth',
   wind: 'border-element-wind',
 };
+
+/**
+ * 아트 슬롯 딥 글로우(design-system [2.7], v0.5 — 종전 `bg-surface-slot` 단일 검정 폐기).
+ * 실제 그라데이션은 index.css 의 `.slot-glow-*` 유틸이 갖는다.
+ *
+ * ★ **확정 element 는 1(물)·2(불)뿐이라 글로우도 둘만 있다**(계약 v1.9 §3.3). 미확정 속성(3·4)과
+ * 무속성은 `SLOT_GLOW_NEUTRAL` 로 폴백한다 — 근거 없는 hue 를 지어내면 나중에 3=바람으로 밝혀질 때
+ * 슬롯 배경이 조용히 오표기된다(ELEMENT_CODES 가 3·4 를 등재하지 않는 것과 같은 이유).
+ */
+export const ELEMENT_SLOT_GLOW_CLASS: Record<ElementKey, string> = {
+  water: 'slot-glow-water',
+  fire: 'slot-glow-fire',
+  earth: 'slot-glow-neutral',
+  wind: 'slot-glow-neutral',
+};
+
+/** 미등록·무속성 슬롯 폴백. */
+export const SLOT_GLOW_NEUTRAL = 'slot-glow-neutral';
 
 /** 코드 → 키. **미등록(미확정) 코드는 null** — 소비처는 중립 표기로 폴백한다. */
 export function toElementKey(code: number): ElementKey | null {

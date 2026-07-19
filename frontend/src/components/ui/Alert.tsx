@@ -24,7 +24,7 @@ export function Alert({ tone, children }: AlertProps) {
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
       aria-live={tone === 'danger' ? 'assertive' : 'polite'}
-      className={`rounded-md px-3 py-2 text-sm ${TONES[tone]}`}
+      className={`rounded-md px-3 py-2 text-body ${TONES[tone]}`}
     >
       {children}
     </div>

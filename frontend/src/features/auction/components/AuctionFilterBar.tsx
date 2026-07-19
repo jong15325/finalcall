@@ -32,7 +32,10 @@ import type { AuctionFilters, AuctionSortValue } from '../types';
  * 가격은 타이핑마다 조회하지 않고 **제출 시점에만** 반영한다(입력 중 폴백 조회로 목록이 흔들리지 않게).
  */
 const CONTROL_CLASS =
-  'h-11 rounded-md border border-border-strong bg-surface px-3 text-base text-text transition-colors duration-fast focus:border-primary';
+  'h-11 rounded-md border border-border-strong bg-surface px-3 text-value text-text transition-colors duration-fast focus:border-primary';
+
+/** 폼 필드 라벨은 라벨 축이다([3.2]) — Field 컴포넌트의 라벨과 같은 단계를 유지한다. */
+const FIELD_LABEL_CLASS = 'text-label text-text';
 
 interface AuctionFilterBarProps {
   filters: AuctionFilters;
@@ -64,7 +67,7 @@ export function AuctionFilterBar({ filters, sort, onChange, onSortChange }: Auct
     <section aria-label="경매 검색 필터" className="flex flex-col gap-4">
       <form onSubmit={commitPrice} className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text">정렬</span>
+          <span className={FIELD_LABEL_CLASS}>정렬</span>
           <select
             className={CONTROL_CLASS}
             value={sort}
@@ -79,7 +82,7 @@ export function AuctionFilterBar({ filters, sort, onChange, onSortChange }: Auct
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text">상태</span>
+          <span className={FIELD_LABEL_CLASS}>상태</span>
           <select
             className={CONTROL_CLASS}
             value={filters.status ?? ''}
@@ -97,26 +100,26 @@ export function AuctionFilterBar({ filters, sort, onChange, onSortChange }: Auct
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text">최소 시작가</span>
+          <span className={FIELD_LABEL_CLASS}>최소 시작가</span>
           <input
             type="number"
             inputMode="numeric"
             min={0}
             placeholder="0"
-            className={`${CONTROL_CLASS} font-num w-32 tabular-nums`}
+            className={`${CONTROL_CLASS} font-num w-32`}
             value={minDraft}
             onChange={(event) => setMinDraft(event.target.value)}
           />
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text">최대 시작가</span>
+          <span className={FIELD_LABEL_CLASS}>최대 시작가</span>
           <input
             type="number"
             inputMode="numeric"
             min={0}
             placeholder="제한 없음"
-            className={`${CONTROL_CLASS} font-num w-32 tabular-nums`}
+            className={`${CONTROL_CLASS} font-num w-32`}
             value={maxDraft}
             onChange={(event) => setMaxDraft(event.target.value)}
           />
@@ -134,7 +137,7 @@ export function AuctionFilterBar({ filters, sort, onChange, onSortChange }: Auct
        */}
       <fieldset className="flex flex-wrap items-center gap-2">
         <legend className="sr-only">속성 필터</legend>
-        <span className="text-sm font-medium text-text">속성</span>
+        <span className={FIELD_LABEL_CLASS}>속성</span>
         {ELEMENT_CODES.map(({ code, key }) => {
           const selected = filters.element === code;
           return (
@@ -143,7 +146,7 @@ export function AuctionFilterBar({ filters, sort, onChange, onSortChange }: Auct
               type="button"
               aria-pressed={selected}
               onClick={() => toggleElement(code)}
-              className={`inline-flex h-11 items-center gap-2 rounded-md px-3 text-sm transition-colors duration-fast ${
+              className={`inline-flex h-11 items-center gap-2 rounded-md px-3 text-body transition-colors duration-fast ${
                 selected
                   ? `border-2 border-ink font-semibold text-on-accent-fg ${ELEMENT_TINT_CLASS[key]}`
                   : 'border border-border-strong bg-surface text-text hover:bg-surface-sunken'
@@ -190,14 +193,14 @@ function AppliedFilterChips({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm text-text-muted">적용된 필터</span>
+      <span className="text-label text-text-muted">적용된 필터</span>
       {chips.map((chip) => (
         <button
           key={chip.key}
           type="button"
           aria-label={`필터 제거: ${chip.label}`}
           onClick={() => onChange({ ...filters, [chip.key]: undefined })}
-          className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-surface-sunken px-3 text-sm text-text transition-colors duration-fast hover:border-border-strong"
+          className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-surface-sunken px-3 text-body text-text transition-colors duration-fast hover:border-border-strong"
         >
           {chip.label}
           <span aria-hidden="true" className="text-text-muted">
@@ -208,7 +211,7 @@ function AppliedFilterChips({
       <button
         type="button"
         onClick={() => onChange({})}
-        className="h-11 rounded-md px-3 text-sm text-primary underline transition-colors duration-fast hover:bg-primary-soft"
+        className="h-11 rounded-md px-3 text-body text-primary underline transition-colors duration-fast hover:bg-primary-soft"
       >
         전체 초기화
       </button>

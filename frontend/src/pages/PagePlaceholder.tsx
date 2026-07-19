@@ -10,12 +10,12 @@ export function PagePlaceholder({ title }: { title: string }) {
 
   return (
     <section className="rounded-lg border border-border bg-surface p-6">
-      <h1 className="text-2xl font-semibold text-text">{title}</h1>
-      <p className="mt-2 text-sm text-text-muted">
+      <h1 className="text-title text-text">{title}</h1>
+      <p className="mt-2 text-body text-text-muted">
         스켈레톤 placeholder — feature 단계에서 구현됩니다.
       </p>
       {paramEntries.length > 0 ? (
-        <dl className="mt-4 space-y-1 text-xs text-text-subtle">
+        <dl className="mt-4 space-y-1 text-micro text-text-subtle">
           {paramEntries.map(([key, value]) => (
             <div key={key} className="flex gap-2">
               <dt className="font-medium">{key}</dt>

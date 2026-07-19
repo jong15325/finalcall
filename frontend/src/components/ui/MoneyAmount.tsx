@@ -22,10 +22,16 @@ interface MoneyAmountProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
+/*
+ * 금액은 값 축이다([3.2] `text-value` = "금액 기본"). sm·md 가 같은 단계로 모이는 것은 중복이 아니라
+ * [3.1] 원칙 3("중간 크기를 만들지 않는다")의 결과다 — 종전 16/18 은 고유 역할이 없는 잔여값이었고,
+ * 금액에 실재하는 단계는 **기본(17)과 수치 승격(28)** 둘뿐이다. 호출부 API 는 그대로 둔다.
+ * 상세 현재가의 `text-figure-xl`(44) 최고 승격은 화면당 1개 제약이 걸려 있어 화면 티켓(FC-049) 소관이다.
+ */
 const SIZES = {
-  sm: 'text-base',
-  md: 'text-lg',
-  lg: 'text-2xl',
+  sm: 'text-value font-bold',
+  md: 'text-value font-bold',
+  lg: 'text-figure',
 } as const;
 
 export function MoneyAmount({
@@ -37,10 +43,11 @@ export function MoneyAmount({
 }: MoneyAmountProps) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-sm text-text-muted">{label}</span>
-      <span className={`font-num font-bold tabular-nums ${SIZES[size]} ${TONES[tone]}`}>
+      <span className="text-label text-text-muted">{label}</span>
+      {/* `font-num` 이 tabular-nums 를 담당한다 — 유틸을 따로 붙이지 않는다([3.4]). */}
+      <span className={`font-num ${SIZES[size]} ${TONES[tone]}`}>
         {amount.toLocaleString('ko-KR')}
-        {unit ? <span className="ml-1 text-sm font-medium text-text-subtle">{unit}</span> : null}
+        {unit ? <span className="ml-1 text-micro text-text-subtle">{unit}</span> : null}
       </span>
     </div>
   );

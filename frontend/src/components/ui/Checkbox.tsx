@@ -27,7 +27,7 @@ export function Checkbox({ checked, onChange, children, describedById, disabled 
         aria-describedby={describedById}
         className="mt-0.5 h-5 w-5 shrink-0 accent-primary"
       />
-      <label htmlFor={id} className="text-sm text-text">
+      <label htmlFor={id} className="text-body text-text">
         {children}
       </label>
     </div>

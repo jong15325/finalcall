@@ -78,7 +78,8 @@ export function Modal({ open, onClose, titleId, title, children, footer }: Modal
         aria-labelledby={titleId}
         className="w-full max-w-md rounded-xl border border-border bg-surface-raised p-6 shadow-lg"
       >
-        <h2 id={titleId} className="text-xl font-bold text-text">
+        {/* 다이얼로그 제목은 값 축이다([3.2] `text-value`) — 페이지 제목(`text-title`)을 빌려 쓰지 않는다. */}
+        <h2 id={titleId} className="text-value font-bold text-text">
           {title}
         </h2>
         <div className="mt-4 flex flex-col gap-4">{children}</div>

@@ -68,8 +68,9 @@ export function AuctionListPage() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-text">경매</h1>
-        <p className="text-sm text-text-muted">마감이 가까운 매물부터 보여줍니다.</p>
+        {/* 페이지 제목은 화면당 1개다([3.2] `text-title`). ≤719px 축소는 index.css 가 중앙에서 처리한다. */}
+        <h1 className="text-title text-text">경매</h1>
+        <p className="text-body text-text-muted">마감이 가까운 매물부터 보여줍니다.</p>
       </header>
 
       <AuctionFilterBar

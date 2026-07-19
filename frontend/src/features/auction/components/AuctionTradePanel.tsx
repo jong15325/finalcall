@@ -32,8 +32,9 @@ export function AuctionTradePanel({ auction }: { auction: AuctionDetail }) {
     >
       <div className="flex flex-wrap items-center gap-2">
         <StatusChip tone={meta.tone}>{meta.label}</StatusChip>
+        {/* resultType 은 상태 칩 옆 보조 라벨이다([5.8]) — 칩과 같은 라벨 축에 둔다. */}
         {auction.resultType ? (
-          <span className="text-xs font-medium text-text-muted">
+          <span className="text-label text-text-muted">
             {RESULT_TYPE_LABEL[auction.resultType]}
           </span>
         ) : null}
@@ -54,15 +55,16 @@ export function AuctionTradePanel({ auction }: { auction: AuctionDetail }) {
 function TimeBlock({ auction, ended }: { auction: AuctionDetail; ended: boolean }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-sm text-text-muted">{ended ? '마감' : '남은 시간'}</span>
+      <span className="text-label text-text-muted">{ended ? '마감' : '남은 시간'}</span>
       <Countdown endAt={auction.endAt} size="lg" />
-      <span className="text-xs text-text-subtle">마감 {formatDateTime(auction.endAt)}</span>
+      {/* 마감 시각·연장 이력은 값이 아니라 각주다([3.2] micro). */}
+      <span className="text-micro text-text-subtle">마감 {formatDateTime(auction.endAt)}</span>
       {auction.status === 'SCHEDULED' && auction.startAt ? (
-        <span className="text-xs text-text-subtle">시작 {formatDateTime(auction.startAt)}</span>
+        <span className="text-micro text-text-subtle">시작 {formatDateTime(auction.startAt)}</span>
       ) : null}
       {auction.extensionCount > 0 ? (
         // 소프트클로즈 연장은 사용자가 "왜 아직 안 끝났지?"를 묻게 되는 지점이라 횟수·상한을 밝힌다.
-        <span className="text-xs text-text-subtle">
+        <span className="text-micro text-text-subtle">
           소프트클로즈 {auction.extensionCount}회 연장 · 최대 {formatDateTime(auction.maxEndAt)}
         </span>
       ) : null}
@@ -134,10 +136,8 @@ function PriceBlock({
 function InfoRow({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-sm text-text-muted">{label}</dt>
-      <dd className={`font-num text-sm tabular-nums text-text ${emphasis ? 'font-semibold' : ''}`}>
-        {value}
-      </dd>
+      <dt className="text-label text-text-muted">{label}</dt>
+      <dd className={`font-num text-body text-text ${emphasis ? 'font-semibold' : ''}`}>{value}</dd>
     </div>
   );
 }
@@ -164,7 +164,8 @@ function BidCallToAction({ auction, ended }: { auction: AuctionDetail; ended: bo
       <Button variant="primary" size="lg" disabled aria-describedby={reasonId} className="w-full">
         {label}
       </Button>
-      <p id={reasonId} className="text-xs text-text-subtle">
+      {/* 비활성 사유는 각주가 아니라 읽혀야 하는 설명문이다([3.2] body · [5.1] "사유 없는 비활성 금지"). */}
+      <p id={reasonId} className="text-body text-text-subtle">
         {reason}
       </p>
     </div>

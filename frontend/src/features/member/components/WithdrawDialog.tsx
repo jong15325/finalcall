@@ -87,7 +87,7 @@ export function WithdrawDialog({ open, onClose, onWithdrawn }: WithdrawDialogPro
       {formError ? <Alert tone="danger">{formError}</Alert> : null}
 
       <div>
-        <p className="text-sm font-medium text-text-muted">탈퇴 시 소멸되는 잔여 자산</p>
+        <p className="text-label text-text-muted">탈퇴 시 소멸되는 잔여 자산</p>
         {balance.isLoading ? (
           <div className="mt-2 grid grid-cols-2 gap-4" aria-busy="true">
             <div className="h-12 animate-pulse rounded-md bg-surface-sunken" />
@@ -104,11 +104,11 @@ export function WithdrawDialog({ open, onClose, onWithdrawn }: WithdrawDialogPro
             />
           </div>
         ) : (
-          <p className="mt-2 text-sm text-text-subtle">잔액 정보를 불러오지 못했습니다.</p>
+          <p className="mt-2 text-body text-text-subtle">잔액 정보를 불러오지 못했습니다.</p>
         )}
       </div>
 
-      <p id={WARNING_ID} className="text-sm text-danger">
+      <p id={WARNING_ID} className="text-body text-danger">
         탈퇴 시 잔여 캐시·게임머니는 소멸하며 복구·환불되지 않습니다. 이 작업은 되돌릴 수 없습니다.
       </p>
 
@@ -117,7 +117,7 @@ export function WithdrawDialog({ open, onClose, onWithdrawn }: WithdrawDialogPro
       </Checkbox>
 
       {!acknowledged ? (
-        <p className="text-sm text-text-subtle">동의해야 탈퇴할 수 있습니다.</p>
+        <p className="text-body text-text-subtle">동의해야 탈퇴할 수 있습니다.</p>
       ) : null}
     </Modal>
   );
