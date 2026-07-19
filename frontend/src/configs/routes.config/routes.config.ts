@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
 import { ROUTES } from './paths'
@@ -26,7 +27,16 @@ import type { Routes } from '@/@types/routes'
 
 /** 누구나 보는 화면(비로그인·로그인 공통). 커머스의 본체다. */
 export const sharedRoutes: Routes = [
-    placeholderRoute('home', ROUTES.home, '홈'),
+    /*
+     * ★ 홈은 자리표시자를 벗었다(FC-058). `lazy` 는 템플릿 라우트 관례를 그대로 따른다 —
+     *   홈 청크가 셸 번들에 합쳐지지 않아 다른 화면 진입이 홈 코드를 끌고 오지 않는다.
+     */
+    {
+        key: 'home',
+        path: ROUTES.home,
+        component: lazy(() => import('@/views/home')),
+        authority: [],
+    },
     placeholderRoute('auctions', ROUTES.auctions, '경매 목록'),
     placeholderRoute('auctionDetail', ROUTES.auctionDetail, '경매 상세'),
     placeholderRoute('shops', ROUTES.shops, '상점 목록'),
