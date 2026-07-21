@@ -18,6 +18,7 @@ import com.finalcall.domain.currency.MoneyHoldService;
 import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
+import com.finalcall.domain.member.UserBalanceRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +47,7 @@ public class CloseService {
     private final BidRepository bidRepository;
     private final MoneyHoldService moneyHoldService;
     private final MoneyHoldRepository moneyHoldRepository;
+    private final UserBalanceRepository userBalanceRepository;
     private final ItemInstanceRepository itemInstanceRepository;
     private final InventoryService inventoryService;
     private final SettlementRecorder settlementRecorder;
@@ -119,12 +121,18 @@ public class CloseService {
         // (4) 홀드 확정 차감(HELD→CAPTURED + 실차감). ★ 이 호출 이후 영속성 컨텍스트는 비어 있다.
         moneyHoldService.capture(win.bidId(), now);
 
-        // (5) 정산 공통 꼬리(판매자 크레딧 → sale_order → 수익 원장 → 아이템 이전 → 소유 이력)를 recorder 에 위임.
+        // (5) 판매자 정산 지급(게임머니 크레딧). recorder 밖 호출 측이 담당한다(A4 잔액 락 순서 관장 — 마감은 낙찰자
+        //     1인이라 잔액 행이 winner·seller 둘뿐이고 capture(winner)→credit(seller) 고정 순서를 그대로 유지한다).
+        Preconditions.validate(
+            userBalanceRepository.increaseGameMoney(sellerId, settle) == 1,
+            SettlementErrorCode.SETTLEMENT_SELLER_CREDIT_FAILED);
+
+        // (6) 정산 공통 꼬리(잔액 외: sale_order → 수익 원장 → 아이템 이전 → 소유 이력)를 recorder 에 위임.
         settlementRecorder.record(
             SaleOrderSourceType.AUCTION, auctionId, winnerId, sellerId, itemInstanceId, price, fee, settle, version,
             now);
 
-        // (6) 경매 종료 전이(종료성 CAS). status·result_type=BID 만 세팅(highest_* 는 입찰 TX 가 세팅 — 덮지 않음).
+        // (7) 경매 종료 전이(종료성 CAS). status·result_type=BID 만 세팅(highest_* 는 입찰 TX 가 세팅 — 덮지 않음).
         Preconditions.validate(
             auctionRepository.markSoldIfClosable(auctionId, now) == 1,
             SettlementErrorCode.SETTLEMENT_TERMINAL_TRANSITION_FAILED);

@@ -1,6 +1,9 @@
 package com.finalcall.domain.settlement;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,11 +42,13 @@ import lombok.RequiredArgsConstructor;
  * ({@link AuctionPurchaseContext})으로 전부 값 복사하고, (2) 이후 전이는 {@code @Modifying} CAS·fresh INSERT 로만
  * 수행한다({@code AuctionPurchaseContext} 는 엔티티가 아닌 스칼라 프로젝션이라 애초에 detach 함정이 없다).
  *
- * <h2>실행 순서 근거(§3.5)</h2>
- * 패자 홀드 해제(5)를 구매자 차감(6)보다 <b>앞세운다</b> — 구매자가 곧 현재 최고 입찰자일 수 있기 때문이다(즉시구매는
- * 연속입찰 차단 BID_004 대상이 아니라 최고 입찰자 본인 구매를 허용, A2). 그 경우 5단계가 구매자 자신의 홀드를 먼저
- * 풀어 가용 잔액을 회복시켜야 6단계 {@code decreaseGameMoney}(available-gated)가 통과한다. 일반 경로(구매자 ≠
- * 최고 입찰자)에서도 서로 다른 잔액 행이라 무해하다.
+ * <h2>잔액 락 순서 · 실행 순서 근거(§7-A4·§3.5)</h2>
+ * 즉시구매는 서로 다른 최대 3개 {@code user_balance} 행(buyer·seller·loser)에 배타 락을 건다. 교차거래(두 사용자가
+ * 서로의 경매를 동시에 구매)에서 경매 행 락은 서로 다른 행이라 순환 대기를 못 막으므로, 잔액 갱신을
+ * <b>{@code user_id} 오름차순</b>으로 적용해 데드락을 원천 차단한다({@link #applyBalanceInUserIdOrder},
+ * MoneyHoldService §4.4 규율 재사용). §3.5 의 "패자 해제가 구매자 차감보다 앞" 제약은 <b>구매자 == 최고입찰자</b>
+ * (동일 행)일 때만 유효한데(자기 홀드를 먼저 풀어야 available-gated 차감 통과, A2 본인구매 허용), 그 경우 둘이 같은
+ * user_id 스텝에 묶여 교차-행 정렬과 충돌하지 않는다.
  */
 @Service
 @RequiredArgsConstructor
@@ -94,19 +99,16 @@ public class PurchaseService {
         long settle = price - fee;
         String version = feePolicy.version();
 
-        // 5) 패자 홀드 해제 + 입찰 강등 — 구매자 차감보다 앞(§3.5). 최고 입찰자 본인 구매면 자기 홀드를 먼저 풀어야
-        //    6단계 available-gated 차감이 통과한다. release·markOutbidIfActive 는 EPIC-BID 패스 재사용. ★ PC clear.
+        // 5) 잔액 이동을 user_id 오름차순으로 적용한다(§7-A4 데드락 방지, MoneyHoldService §4.4 규율 재사용). ★ PC clear.
+        applyBalanceInUserIdOrder(buyerId, auction.sellerId(), price, settle, loser);
+
+        // 6) 패자 입찰 강등(ACTIVE→OUTBID). bid 행이라 잔액 락 사이클과 무관해 순서 자유다. 0행 = 불변식 위반 → 롤백.
         if (loser != null) {
-            moneyHoldService.release(loser.bidId());
             Preconditions.validate(
                 bidRepository.markOutbidIfActive(loser.bidId()) == 1, CommonErrorCode.INTERNAL_ERROR);
         }
 
-        // 6) 구매자 직접 차감(available-gated, 홀드 미경유). 0행 = 가용 게임머니 부족 = 정상 실패 → BID_005. ★ PC clear.
-        Preconditions.validate(
-            userBalanceRepository.decreaseGameMoney(buyerId, price) == 1, BidErrorCode.BID_INSUFFICIENT_BALANCE);
-
-        // 7) 정산 공통 꼬리(판매자 크레딧 → sale_order → 수익 원장 → 아이템 이전 → 소유 이력)를 recorder 에 위임.
+        // 7) 정산 공통 꼬리(잔액 외: sale_order → 수익 원장 → 아이템 이전 → 소유 이력)를 recorder 에 위임.
         //    source_type=AUCTION(BID/BUYNOW 구분은 auction.result_type 이 진다 — B3 코어 미노출).
         SaleOrder order = settlementRecorder.record(
             SaleOrderSourceType.AUCTION, auction.id(), buyerId, auction.sellerId(), auction.itemInstanceId(),
@@ -119,6 +121,46 @@ public class PurchaseService {
             SettlementErrorCode.SETTLEMENT_TERMINAL_TRANSITION_FAILED);
 
         return new PurchaseResult(order.getPublicId(), price);
+    }
+
+    /**
+     * 잔액 이동(구매자 차감·판매자 크레딧·패자 홀드 해제)을 <b>{@code user_id} 오름차순</b>으로 적용한다(§7-A4).
+     * 즉시구매는 서로 다른 최대 3개 {@code user_balance} 행에 배타 락을 거는데, 서로 다른 두 경매에서 두 사용자가
+     * 교차로 상대의 경매를 구매하면 락 순서가 역전돼 순환 대기(InnoDB 데드락)가 성립한다 — 경매 행 락은 서로 다른
+     * 행이라 이를 막지 못한다. 전역 순서를 {@code user_id} 오름차순 하나로 고정하면 순환이 성립할 수 없다
+     * (MoneyHoldService §4.4·bid 경로 규율 재사용).
+     *
+     * <p><b>§3.5 제약과의 정합</b>: "패자 해제가 구매자 차감보다 앞" 제약은 <b>구매자 == 최고입찰자(동일 행)</b>일
+     * 때만 유효하다(자기 홀드를 먼저 풀어야 available-gated 차감이 통과). 그 경우 두 연산은 같은 {@code user_id}
+     * 스텝 안에서 release→debit 순으로 묶여 교차-행 정렬과 충돌하지 않는다. 구매자 ≠ 최고입찰자면 세 행이 독립이라
+     * user_id 오름차순으로 자유롭게 정렬한다(판매자는 자기 경매 입찰 불가라 loser ≠ seller, 자기구매 차단으로
+     * buyer ≠ seller — 따라서 겹치는 행은 buyer==loser 뿐이다).
+     */
+    private void applyBalanceInUserIdOrder(Long buyerId, Long sellerId, long price, long settle, BidSnapshot loser) {
+        boolean selfPurchase = loser != null && loser.bidderId().equals(buyerId);
+        List<BalanceStep> steps = new ArrayList<>(3);
+        // 구매자 스텝: 본인구매면 자기 홀드 해제(§3.5)를 차감보다 먼저(같은 행이라 사이클 무관), 이어서 직접 차감.
+        steps.add(new BalanceStep(buyerId, () -> {
+            if (selfPurchase) {
+                moneyHoldService.release(loser.bidId());
+            }
+            Preconditions.validate(
+                userBalanceRepository.decreaseGameMoney(buyerId, price) == 1, BidErrorCode.BID_INSUFFICIENT_BALANCE);
+        }));
+        // 판매자 스텝: 정산 크레딧. 0행 = 잔액 행 부재 = 불변식 위반.
+        steps.add(new BalanceStep(sellerId, () -> Preconditions.validate(
+            userBalanceRepository.increaseGameMoney(sellerId, settle) == 1,
+            SettlementErrorCode.SETTLEMENT_SELLER_CREDIT_FAILED)));
+        // 패자 스텝(구매자 ≠ 최고입찰자일 때만 별도 행): 진행 최고입찰 홀드 해제.
+        if (loser != null && !selfPurchase) {
+            steps.add(new BalanceStep(loser.bidderId(), () -> moneyHoldService.release(loser.bidId())));
+        }
+        steps.sort(Comparator.comparingLong(BalanceStep::userId));
+        steps.forEach(step -> step.action().run());
+    }
+
+    /** user_id 오름차순 정렬을 위한 잔액 갱신 스텝(§7-A4). 스텝별 user_id 는 서로 다르다(buyer==loser 는 한 스텝). */
+    private record BalanceStep(long userId, Runnable action) {
     }
 
     /**
