@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Link } from 'react-router'
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb'
 import { paths } from '@/app/paths'
@@ -16,6 +17,9 @@ import type { ItemArtInput } from '@/features/item/lib/itemArt'
  *   장식이므로 `aria-hidden`, 정수배 + `pixelated`(비정수 확대는 픽셀아트를 뭉갠다).
  * ★ **접근성**: 비활성 슬라이드는 `aria-hidden` + 링크 `tabIndex=-1`(화면 밖 초점 유출 차단).
  *   자동넘김은 `prefers-reduced-motion`·hover/focus 중 정지(WCAG 2.2.2). 도트는 `<button>`+`aria-current`.
+ * ★ **스와이프**: 포인터 이벤트만으로 터치·마우스 드래그를 처리(무의존, FC-069 유지). 세로 스크롤은
+ *   `touch-action: pan-y` 로 살리고, 가로 드래그가 임계값을 넘으면 슬라이드를 넘긴다. 드래그로 넘긴
+ *   직후의 링크 클릭은 캡처 단계에서 취소해 의도치 않은 이동을 막는다.
  * ★ **색은 브랜드 토큰**(navy/gold/orange, §2.9) — 목업의 Vuexy `bg-label-*` 블루/그레이를 복제하지
  *   않고 브랜드 그라데이션·배지로 치환한다. 구조·문구·치수는 목업을 따른다.
  */
@@ -120,12 +124,42 @@ function SlideArt({ art }: { art: ItemArtInput[] }) {
     )
 }
 
+/** 드래그로 슬라이드를 넘길 최소 가로 이동(px). 이보다 작으면 클릭으로 본다. */
+const SWIPE_THRESHOLD = 45
+
 function HomeBanner() {
     const [active, setActive] = useState(0)
     const [paused, setPaused] = useState(false)
     const count = SLIDES.length
 
     const go = (index: number) => setActive((index + count) % count)
+
+    // 포인터 드래그 상태(리렌더 없이 추적) — startX·최대 이동·"넘김 발생" 플래그.
+    const drag = useRef<{ startX: number; moved: boolean } | null>(null)
+    const swipedRef = useRef(false)
+
+    const onPointerDown = (event: ReactPointerEvent) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return
+        drag.current = { startX: event.clientX, moved: false }
+        swipedRef.current = false
+        setPaused(true)
+    }
+    const onPointerMove = (event: ReactPointerEvent) => {
+        const state = drag.current
+        if (!state) return
+        if (Math.abs(event.clientX - state.startX) > 8) state.moved = true
+    }
+    const endDrag = (event: ReactPointerEvent) => {
+        const state = drag.current
+        drag.current = null
+        setPaused(false)
+        if (!state) return
+        const dx = event.clientX - state.startX
+        if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+            swipedRef.current = true
+            go(active + (dx < 0 ? 1 : -1))
+        }
+    }
 
     useEffect(() => {
         if (paused || count <= 1 || prefersReducedMotion()) return
@@ -145,10 +179,22 @@ function HomeBanner() {
             onMouseLeave={() => setPaused(false)}
             onFocusCapture={() => setPaused(true)}
             onBlurCapture={() => setPaused(false)}
+            // 드래그로 넘긴 직후의 링크 클릭을 취소(의도치 않은 이동 방지).
+            onClickCapture={(event) => {
+                if (swipedRef.current) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    swipedRef.current = false
+                }
+            }}
         >
             <div
-                className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+                className="flex touch-pan-y transition-transform duration-500 ease-out motion-reduce:transition-none"
                 style={{ transform: `translateX(-${active * 100}%)` }}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
             >
                 {SLIDES.map((slide, index) => {
                     const isActive = index === active

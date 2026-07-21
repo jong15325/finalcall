@@ -1,7 +1,10 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { TbAlertTriangle, TbArrowRight, TbClockHour4 } from 'react-icons/tb'
 import { itemDetailPath } from '@/app/paths'
 import ItemFrame from '@/features/item/components/ItemFrame'
+import { itemArt } from '@/features/item/lib/itemArt'
+import { useItemInstance } from '@/lib/queries/items'
 import {
     expiryStateOf,
     hasImminentExpiry,
@@ -13,8 +16,9 @@ import type { TempStorageItem } from '@/lib/api/tempStorage'
  * 임시 보관함 목록 (FC-076 — 목업 `.storage-list`/`.storage-item`/`.storage-alert` · design-brief B-10).
  *
  * ★ **계약 §4.2 는 세 필드만 내린다**(`itemInstancePublicId, storedAt, expireAt?`) — 요약(typeCode·
- *   이름·레벨)이 **없다.** 따라서 카드 아트·이름을 만들 수 없어 **아트는 플레이스홀더**로 두고,
- *   인스턴스 ID 로 아이템 상세(`/items/{id}`)에 링크한다(스킬·이름은 그 페이지에서). §2.1 링크 끊김 계열.
+ *   이름·레벨)이 **없다.** 그래서 **항목별로 인스턴스 상세(`GET /items/{id}`)를 조회**해 아트를 파생한다
+ *   (임시보관 항목은 소량, FC-085 #1). 조회 전/실패 시엔 **깔끔한 플레이스홀더**로 폴백해 **깨진
+ *   이미지가 0** 이 되게 한다. 이름 정본도 상세의 `displayName` 을 쓴다(없으면 짧은 ID).
  * ★ **만료 임박은 클라 파생**(`tempStorageExpiry`). 임박·만료 항목이 하나라도 있으면 상단 경고를 보인다.
  * ★ 이동은 **자동 배정**(slotNo 미지정) — 목업 "빈 슬롯으로 이동". 결과/실패 문구는 상위(페이지)가 낸다.
  *   진행 중인 행의 버튼만 비활성(DOM `disabled`)한다.
@@ -120,14 +124,14 @@ function TempStorageItemRow({
     const badge = EXPIRY_BADGE[expiryStateOf(item.expireAt, now)]
 
     return (
-        <li className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-2xl border border-line bg-surface p-4 sm:grid-cols-[90px_minmax(0,1fr)_auto] sm:gap-5">
-            {/* 아트 — 요약 데이터 없음 → 플레이스홀더. 상세로 링크 */}
+        <li className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-2xl border border-line bg-surface p-4 sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:gap-5">
+            {/* 아트 — 인스턴스 상세로 실제 이미지 파생(없으면 플레이스홀더). 상세로 링크 */}
             <Link
                 to={detailTo}
                 aria-label={`보관 아이템 ${shortId} 상세 보기`}
-                className="justify-self-center"
+                className="block"
             >
-                <ItemFrame imageUrl={null} name={`보관 아이템 ${shortId}`} />
+                <TempStorageArt id={id} fallbackName={`보관 아이템 ${shortId}`} />
             </Link>
 
             {/* 정보 — ID·보관일·만료 배지 */}
@@ -163,6 +167,56 @@ function TempStorageItemRow({
                 {pending ? '이동 중…' : '빈 슬롯으로 이동'}
             </button>
         </li>
+    )
+}
+
+/**
+ * 보관 항목 아트 — 인스턴스 상세를 조회해 실제 이미지를 파생한다(§4.2 요약 미제공 보완).
+ * 로딩·실패·자산부재 어느 경우든 ItemFrame 플레이스홀더로 폴백 → **깨진 이미지 0**(FC-085 #1).
+ */
+function TempStorageArt({
+    id,
+    fallbackName,
+}: {
+    id: string
+    fallbackName: string
+}) {
+    const { data } = useItemInstance(id)
+    const art = data
+        ? itemArt(
+              {
+                  subGroup: data.template.subGroup,
+                  kind: data.template.kind,
+                  element: data.template.element,
+                  level: data.level,
+              },
+              'l',
+              1,
+          )
+        : null
+    const hasSkill = data ? data.skill1 !== null || data.skill2 !== null : false
+    const name = data?.template.displayName ?? fallbackName
+
+    return (
+        <span
+            className="item-sprite-stage flex h-[150px] w-full items-center justify-center rounded-xl border border-[#31445e]"
+            style={
+                art?.src
+                    ? ({ '--item-sprite': `url("${art.src}")` } as CSSProperties)
+                    : undefined
+            }
+        >
+            <ItemFrame
+                imageUrl={art?.src ?? null}
+                spriteUrl={art?.src ?? null}
+                name={name}
+                visual={
+                    data ? { goldforceExpireAt: data.goldforceExpireAt } : undefined
+                }
+                hasSkill={hasSkill}
+                size="frame"
+            />
+        </span>
     )
 }
 

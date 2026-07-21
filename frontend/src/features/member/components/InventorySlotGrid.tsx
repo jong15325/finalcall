@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { TbArchive, TbLayoutGrid, TbLock } from 'react-icons/tb'
 import { itemDetailPath, paths } from '@/app/paths'
@@ -178,7 +179,7 @@ function InventorySlotGrid({
     )
 }
 
-/** 채운 슬롯 — ItemFrame(72×134 타일) + 이름. 클릭 시 인스턴스 상세로 이동(§B-9). */
+/** 채운 슬롯 — 72×134 프레임을 **공용 스프라이트 스테이지** 박스에 담고(§4) 이름을 아래에 둔다. */
 function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
     const { art, hasSkill } = deriveItemSummaryArt(item.summary)
     const name = item.summary.displayName
@@ -189,15 +190,26 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
             aria-label={`${name} 상세 보기`}
             className="flex h-[174px] flex-col items-center justify-center gap-1.5 rounded-xl border border-line bg-surface p-2 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-navy hover:shadow-md"
         >
-            <ItemFrame
-                imageUrl={art?.src}
-                spriteUrl={art?.src}
-                name={name}
-                visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
-                hasSkill={hasSkill}
-                size="frame"
-                now={now}
-            />
+            <span
+                className="item-sprite-stage flex items-center justify-center rounded-lg px-2"
+                style={
+                    art?.src
+                        ? ({
+                              '--item-sprite': `url("${art.src}")`,
+                          } as CSSProperties)
+                        : undefined
+                }
+            >
+                <ItemFrame
+                    imageUrl={art?.src}
+                    spriteUrl={art?.src}
+                    name={name}
+                    visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
+                    hasSkill={hasSkill}
+                    size="frame"
+                    now={now}
+                />
+            </span>
             <span className="w-full truncate text-center text-[10px] font-bold text-gray-700">
                 {name}
             </span>

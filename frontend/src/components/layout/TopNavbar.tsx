@@ -31,9 +31,11 @@ import { usePageContext } from './pageContext'
 interface TopNavbarProps {
     /** 모바일 사이드바 드로어 열기 */
     onOpenMobile: () => void
+    /** 데스크톱 사이드바 접기/펼치기 — 접힌 상태에서 다시 펼치는 유일한 창구(§5.1) */
+    onToggleCollapse: () => void
 }
 
-function TopNavbar({ onOpenMobile }: TopNavbarProps) {
+function TopNavbar({ onOpenMobile, onToggleCollapse }: TopNavbarProps) {
     const { authenticated, user, signOut } = useAuth()
     const { data: balance } = useMyBalance()
     const { title, icon: PageIcon } = usePageContext()
@@ -52,6 +54,16 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                 aria-label="메뉴 열기"
                 className="flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 xl:hidden"
                 onClick={onOpenMobile}
+            >
+                <TbMenu2 aria-hidden className="size-5" />
+            </button>
+
+            {/* 데스크톱 사이드바 접기/펼치기 */}
+            <button
+                type="button"
+                aria-label="사이드바 접기/펼치기"
+                className="hidden size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 xl:flex"
+                onClick={onToggleCollapse}
             >
                 <TbMenu2 aria-hidden className="size-5" />
             </button>

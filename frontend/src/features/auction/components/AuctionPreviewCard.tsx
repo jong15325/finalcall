@@ -73,15 +73,16 @@ function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
             aria-label={`${item.nameSnapshot} 경매 상세 보기`}
             className="home-recommend-card flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
         >
-            {/* 아트 — 어두운 스테이지 + 공용 ItemFrame(72×134) */}
-            <span className="grid place-items-center bg-navy-900 py-2.5">
+            {/* 아트 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
+            <span className="relative block h-[158px]">
                 <ItemFrame
+                    fill
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
                     name={item.nameSnapshot}
                     visual={{ goldforceExpireAt: item.goldforceExpireAt }}
                     hasSkill={hasSkill}
-                    size="frame"
+                    size="stage"
                     now={now}
                     overlay={
                         <CardCompareOverlay

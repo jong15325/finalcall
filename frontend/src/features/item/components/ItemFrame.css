@@ -21,8 +21,24 @@
     display: inline-block;
 }
 
-/* ── 스테이지(이미지 영역) — item-frame.css item-sprite-stage 계약 ─────────────────── */
-.item-frame__stage {
+/* 스테이지를 부모(그리드 셀 등) 크기로 채운다 — 아트 영역 전체에 스프라이트가 깔리게(§3·§4). */
+.item-frame--fill {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+/* 두 클래스로 특이도를 높여 아래 `.item-frame--stage` 의 min-height 를 확실히 덮는다. */
+.item-frame--fill.item-frame--stage .item-frame__stage {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+}
+
+/* ── 스테이지(이미지 영역) — 목업 item-frame.css `.item-sprite-stage` 계약 그대로(§6.4·§8) ──
+ * `.item-sprite-stage` 는 공용 클래스로 노출한다 — 슬롯(인벤토리·판매·임시보관)이 컨테이너에
+ * 직접 걸어 아이템 영역 전체에 스프라이트 에코를 깐다(§3·§4). `--item-sprite` 는 style 로 주입. */
+.item-frame__stage,
+.item-sprite-stage {
     position: relative;
     isolation: isolate;
     display: flex;
@@ -35,10 +51,17 @@
         box-shadow 0.24s ease;
 }
 
-/* 카드용 스테이지 — 부모 폭을 채우고 72×134 프레임을 가운데 둔다. */
+/* 스프라이트 스테이지 직계 자식(프레임·라벨·오버레이)은 암전 레이어 위로(z-index 1). */
+.item-sprite-stage > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* 카드용 스테이지 — 부모 폭을 채우고 72×134 프레임을 가운데 둔다. 정수배 확대 시 클리핑을
+ * 피하도록 최소 높이도 --art-scale 을 따른다(스테이지가 확대 프레임보다 항상 크게). */
 .item-frame--stage .item-frame__stage {
     width: 100%;
-    min-height: 168px;
+    min-height: calc(168px * var(--art-scale, 1));
     padding: 12px 0;
 }
 
@@ -49,7 +72,8 @@
 }
 
 /* 원본 아트를 저채도·저명도·블러로 재사용한 배경 에코(§6.4). --item-sprite 는 prop 주입. */
-.item-frame__stage::before {
+.item-frame__stage::before,
+.item-sprite-stage::before {
     position: absolute;
     z-index: -1;
     inset: -18px;
@@ -78,7 +102,8 @@
         transform 0.24s ease;
 }
 
-.item-frame__stage::after {
+.item-frame__stage::after,
+.item-sprite-stage::after {
     position: absolute;
     z-index: 0;
     inset: 0;
@@ -104,6 +129,9 @@
     padding: 0;
     border: 0;
     background: transparent;
+    /* 정수배 확대(§6.1) — 레이아웃 박스(72×134)는 유지, 시각만 중심 기준 확대(픽셀아트 crisp). */
+    transform: scale(var(--art-scale, 1));
+    transform-origin: center;
     transition:
         transform 0.24s ease,
         filter 0.24s ease;
@@ -303,6 +331,7 @@
 
 /* ── hover — 개별 카드에만(부모 그리드로 전파 금지, §3.1) ────────────────────────────── */
 .item-frame__stage:hover,
+.item-sprite-stage:hover,
 .item-card:hover .item-frame__stage {
     background: linear-gradient(145deg, #34465d 0%, #182536 100%);
     box-shadow:
@@ -311,6 +340,7 @@
 }
 
 .item-frame__stage:hover::before,
+.item-sprite-stage:hover::before,
 .item-card:hover .item-frame__stage::before {
     filter: saturate(0.62) brightness(0.68) contrast(1.12) blur(2px);
     opacity: 0.64;
@@ -319,6 +349,6 @@
 
 .item-frame__stage:hover .card-art,
 .item-card:hover .item-frame__stage .card-art {
-    transform: translateY(-3px) scale(1.035);
+    transform: scale(var(--art-scale, 1)) translateY(-3px);
     filter: drop-shadow(0 8px 9px rgba(3, 9, 19, 0.48));
 }

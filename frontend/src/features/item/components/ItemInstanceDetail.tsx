@@ -102,6 +102,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                         hasSkill={hasSkill}
                         now={resolvedNow}
                         size="stage"
+                        scale={2}
                         className="w-full"
                     />
                 </section>

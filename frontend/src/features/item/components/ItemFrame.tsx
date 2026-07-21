@@ -39,6 +39,10 @@ interface ItemFrameProps {
     hasSkill?: boolean
     /** 스테이지 크기: stage=카드 이미지영역 / frame=인벤토리 타일(72×134). 프레임은 불변 */
     size?: 'stage' | 'frame'
+    /** 스테이지를 부모 크기로 채운다(그리드 셀 아트 영역 전체에 스프라이트, §3·§4) */
+    fill?: boolean
+    /** 프레임 정수배 확대(1·2·3…). 비율·좌표 불변(§6.1). 큰 스테이지(상세·히어로)에서 2 */
+    scale?: number
     /** 블러 배경 에코용 원본 아트 URL. 기본은 imageUrl 재사용(§6.4) */
     spriteUrl?: string | null
     /** 골드포스 파생 기준 시각(테스트 주입). 기본 Date.now() */
@@ -54,6 +58,8 @@ function ItemFrame({
     visual,
     hasSkill = false,
     size = 'stage',
+    fill = false,
+    scale,
     spriteUrl,
     now,
     overlay,
@@ -67,13 +73,17 @@ function ItemFrame({
     const dayLabel = days !== null ? formatGoldforceDays(days) : null
 
     const sprite = spriteUrl ?? imageUrl ?? null
-    const stageStyle = (
-        sprite ? { '--item-sprite': `url("${sprite}")` } : undefined
-    ) as CSSProperties | undefined
+    const rootStyle = {
+        ...(sprite ? { '--item-sprite': `url("${sprite}")` } : {}),
+        ...(scale && scale !== 1 ? { '--art-scale': String(scale) } : {}),
+    } as CSSProperties
 
     return (
-        <div className={`item-frame item-frame--${size} ${className}`.trim()}>
-            <div className="item-frame__stage" style={stageStyle}>
+        <div
+            className={`item-frame item-frame--${size} ${fill ? 'item-frame--fill' : ''} ${className}`.trim()}
+            style={rootStyle}
+        >
+            <div className="item-frame__stage">
                 <span
                     className={`card-art ${isGoldforce ? 'is-goldforce' : 'is-standard'}`}
                 >

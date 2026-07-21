@@ -76,24 +76,23 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
             aria-label={`${item.nameSnapshot} 경매 상세 보기`}
             className="grid min-h-[218px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
         >
-            {/* 아트 열 — 어두운 스테이지 + 공용 ItemFrame(72×134) */}
-            <span className="grid place-items-center bg-navy-900">
-                <ItemFrame
-                    imageUrl={art?.src}
-                    spriteUrl={art?.src}
-                    name={item.nameSnapshot}
-                    visual={{ goldforceExpireAt: item.goldforceExpireAt }}
-                    hasSkill={hasSkill}
-                    size="frame"
-                    now={now}
-                    overlay={
-                        <CardCompareOverlay
-                            listingId={auction.auctionPublicId}
-                            name={item.nameSnapshot}
-                        />
-                    }
-                />
-            </span>
+            {/* 아트 열 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
+            <ItemFrame
+                fill
+                imageUrl={art?.src}
+                spriteUrl={art?.src}
+                name={item.nameSnapshot}
+                visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+                hasSkill={hasSkill}
+                size="stage"
+                now={now}
+                overlay={
+                    <CardCompareOverlay
+                        listingId={auction.auctionPublicId}
+                        name={item.nameSnapshot}
+                    />
+                }
+            />
 
             {/* copy 열 */}
             <span className="flex min-w-0 flex-col px-3 py-3.5 xs:p-[17px]">

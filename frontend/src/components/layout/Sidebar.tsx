@@ -225,37 +225,34 @@ function Sidebar({
                     collapsed ? 'xl:w-[70px]' : 'xl:w-[260px]',
                 ].join(' ')}
             >
-                {/* 브랜드 + 토글 */}
-                <div className="flex h-16 items-center gap-2 px-4">
+                {/* 브랜드 — 가운데 정렬(목업 §5.1). 토글은 오른쪽 가장자리에 겹쳐 띄운다. */}
+                <div className="relative flex h-16 items-center justify-center px-3">
                     <NavLink
                         to="/"
                         aria-label="장터 홈"
-                        className="flex min-w-0 items-center"
+                        className="flex min-w-0 items-center justify-center"
                         onClick={onNavigate}
                     >
                         <BrandLogo collapsed={collapsed} />
                     </NavLink>
 
-                    {/* 데스크톱 접기 토글 */}
-                    <button
-                        type="button"
-                        aria-label={collapsed ? '메뉴 펼치기' : '메뉴 접기'}
-                        className="ml-auto hidden size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 xl:flex"
-                        onClick={onToggleCollapse}
-                    >
-                        <TbChevronsLeft
-                            aria-hidden
-                            className={`size-5 transition-transform ${
-                                collapsed ? 'rotate-180' : ''
-                            }`}
-                        />
-                    </button>
+                    {/* 데스크톱 접기 토글 — 접힘 상태에선 숨긴다(§5.1, 펼치기는 상단 바 토글). */}
+                    {!collapsed && (
+                        <button
+                            type="button"
+                            aria-label="메뉴 접기"
+                            className="absolute right-2 hidden size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 xl:flex"
+                            onClick={onToggleCollapse}
+                        >
+                            <TbChevronsLeft aria-hidden className="size-5" />
+                        </button>
+                    )}
 
                     {/* 모바일 닫기 */}
                     <button
                         type="button"
                         aria-label="메뉴 닫기"
-                        className="ml-auto flex size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 xl:hidden"
+                        className="absolute right-2 flex size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 xl:hidden"
                         onClick={onCloseMobile}
                     >
                         <TbX aria-hidden className="size-5" />

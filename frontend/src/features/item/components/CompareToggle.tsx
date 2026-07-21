@@ -6,7 +6,10 @@
  * ★ 선택/비활성은 **DOM 속성**으로 표현한다 — `aria-pressed`·`disabled`. opacity 만으로 상태를
  *   표시하지 않는다(보조기술에 활성으로 새는 WCAG 4.1.2 회귀 방지). 선택은 테두리·배경·체크로 알린다.
  * ★ 카드 위 오버레이로 얹히되 이미지 크기를 바꾸지 않는다(ItemFrame `overlay` 층에 렌더).
+ * ★ **아이콘 전용 소형 배지**(목업 `.compare-toggle` 축소형: 30px 정사각·다크 반투명·backdrop blur).
+ *   아이템 이미지를 가리지 않도록 모서리에 작게 얹는다(FC-085 #2). 의미는 `aria-label` 로 전달.
  */
+import { TbColumns3 } from 'react-icons/tb'
 
 interface CompareToggleProps {
     /** 현재 선택 여부(controlled) */
@@ -26,9 +29,10 @@ function CompareToggle({
     disabled = false,
     className = '',
 }: CompareToggleProps) {
+    // 목업 `.compare-toggle`: 선택/hover 는 브랜드 오렌지, 기본은 다크 반투명 유리(§2.9).
     const stateClass = pressed
-        ? 'border-orange bg-orange-subtle text-orange-deep'
-        : 'border-line bg-surface/90 text-gray-600 hover:border-orange hover:text-orange-deep'
+        ? 'border-orange bg-orange text-white'
+        : 'border-white/60 bg-navy-900/75 text-white hover:border-orange hover:bg-orange'
 
     return (
         <button
@@ -36,10 +40,10 @@ function CompareToggle({
             aria-pressed={pressed}
             aria-label={label}
             disabled={disabled}
-            className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-bold shadow-sm backdrop-blur-sm transition-colors disabled:cursor-not-allowed disabled:border-line disabled:bg-gray-100 disabled:text-gray-400 xs:text-xs ${stateClass} ${className}`.trim()}
+            className={`inline-grid size-[30px] place-items-center rounded-[9px] border shadow-[0_4px_12px_rgba(13,22,38,0.16)] backdrop-blur-sm transition-colors disabled:cursor-not-allowed disabled:border-line disabled:bg-gray-100 disabled:text-gray-400 ${stateClass} ${className}`.trim()}
             onClick={() => onToggle(!pressed)}
         >
-            <span aria-hidden="true">{pressed ? '✓ 비교' : '비교'}</span>
+            <TbColumns3 aria-hidden="true" className="size-[15px]" />
         </button>
     )
 }

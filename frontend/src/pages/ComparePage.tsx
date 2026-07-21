@@ -341,14 +341,15 @@ function CompareProduct({
     return (
         <div className="relative min-w-0 border-b border-r border-line p-4 text-center">
             {removeButton}
-            <div className="grid place-items-center rounded-xl bg-navy-900 py-2.5">
+            <div className="relative block h-[158px] overflow-hidden rounded-xl">
                 <ItemFrame
+                    fill
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
                     name={item.nameSnapshot}
                     visual={{ goldforceExpireAt: item.goldforceExpireAt }}
                     hasSkill={hasSkill}
-                    size="frame"
+                    size="stage"
                     now={now}
                 />
             </div>

@@ -1,18 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { fireEvent, screen } from '@testing-library/react'
+import { renderWithProviders } from '@/test/renderWithProviders'
 import TempStorageList from './TempStorageList'
 import { EXPIRY_IMMINENT_MS } from '@/features/member/lib/tempStorageExpiry'
 import type { TempStorageItem } from '@/lib/api/tempStorage'
 
 /**
- * 임시 보관함 목록 (FC-076).
+ * 임시 보관함 목록 (FC-076 · FC-085 #1).
  *
  * 고정하는 것:
  *  1. 이동 버튼 클릭 → onRelocate(id).
  *  2. pendingId 인 행만 비활성 + "이동 중…"(DOM 속성).
  *  3. 만료 임박(24h 내) 항목이 있으면 상단 경고 노출 + 행 배지.
- *  4. 요약 데이터 없음 → 아트 플레이스홀더 + 인스턴스 상세 링크(§2.1 링크 끊김).
+ *  4. 아트는 인스턴스 상세 조회로 파생하되, 데이터 전/실패 시 **깨진 img 없이** 폴백(#1).
+ *     (테스트 환경엔 상세 응답이 없어 항상 폴백 경로를 탄다.)
+ *
+ * ★ `TempStorageArt` 가 `useItemInstance`(react-query)를 쓰므로 QueryClient 프로바이더가 필요하다.
  */
 
 const NOW = Date.parse('2026-07-21T00:00:00Z')
@@ -30,19 +33,17 @@ function renderList(
     props: Partial<React.ComponentProps<typeof TempStorageList>> = {},
 ) {
     const onRelocate = props.onRelocate ?? vi.fn()
-    render(
-        <MemoryRouter>
-            <TempStorageList
-                items={[
-                    tempItem('ITEM-AAAAAA', at(EXPIRY_IMMINENT_MS / 2)),
-                    tempItem('ITEM-BBBBBB', null),
-                ]}
-                pendingId={null}
-                now={NOW}
-                onRelocate={onRelocate}
-                {...props}
-            />
-        </MemoryRouter>,
+    renderWithProviders(
+        <TempStorageList
+            items={[
+                tempItem('ITEM-AAAAAA', at(EXPIRY_IMMINENT_MS / 2)),
+                tempItem('ITEM-BBBBBB', null),
+            ]}
+            pendingId={null}
+            now={NOW}
+            onRelocate={onRelocate}
+            {...props}
+        />,
     )
     return { onRelocate }
 }
@@ -67,13 +68,13 @@ describe('<TempStorageList>', () => {
         ).toBeNull()
     })
 
-    it('아트는 플레이스홀더(실 이미지 없음) + 상세 링크', () => {
+    it('아트는 상세 링크를 걸고, 상세 응답 전엔 깨진 img 없이 폴백한다(#1)', () => {
         renderList()
         const link = screen.getByRole('link', {
             name: '보관 아이템 #AAAAAA 상세 보기',
         })
         expect(link).toHaveAttribute('href', '/items/ITEM-AAAAAA')
-        // 요약이 없어 실제 img 아트가 아니라 플레이스홀더(role=img, aria-label)
+        // 상세 데이터 도착 전/실패 시 실제 img 아트가 아니라 플레이스홀더(깨진 이미지 0)
         expect(link.querySelector('img')).toBeNull()
     })
 

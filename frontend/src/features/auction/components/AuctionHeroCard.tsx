@@ -59,9 +59,10 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
 
     return (
         <section className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
-            {/* 아트 열 — 어두운 스테이지 + 공용 ItemFrame */}
-            <div className="grid min-h-[220px] place-items-center bg-navy-900 lg:min-h-[390px]">
+            {/* 아트 열 — 스프라이트 스테이지가 열 전체를 채우고 프레임을 가운데. lg 에서 2배 확대(§3·§5). */}
+            <div className="relative min-h-[220px] lg:min-h-[390px]">
                 <ItemFrame
+                    fill
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
                     name={item.nameSnapshot}
@@ -69,6 +70,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     hasSkill={hasSkill}
                     size="stage"
                     now={now}
+                    className="lg:[--art-scale:2]"
                 />
             </div>
 

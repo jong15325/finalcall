@@ -39,7 +39,10 @@ function AppShell() {
             />
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <TopNavbar onOpenMobile={() => setMobileOpen(true)} />
+                <TopNavbar
+                    onOpenMobile={() => setMobileOpen(true)}
+                    onToggleCollapse={() => setCollapsed((v) => !v)}
+                />
 
                 <main id="view" className="min-w-0 flex-1 pb-16 xl:pb-0">
                     <div className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-6">

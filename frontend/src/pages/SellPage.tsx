@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbAlertTriangle, TbArchiveOff, TbTag } from 'react-icons/tb'
 import { auctionDetailPath, paths } from '@/app/paths'
@@ -397,14 +398,25 @@ function InventoryPickerItem({
                 checked={checked}
                 onChange={() => onSelect(item.itemInstancePublicId)}
             />
-            <ItemFrame
-                imageUrl={art?.src}
-                spriteUrl={art?.src}
-                name={item.summary.displayName}
-                visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
-                hasSkill={hasSkill}
-                size="frame"
-            />
+            <span
+                className="item-sprite-stage flex items-center justify-center rounded-lg px-2"
+                style={
+                    art?.src
+                        ? ({
+                              '--item-sprite': `url("${art.src}")`,
+                          } as CSSProperties)
+                        : undefined
+                }
+            >
+                <ItemFrame
+                    imageUrl={art?.src}
+                    spriteUrl={art?.src}
+                    name={item.summary.displayName}
+                    visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
+                    hasSkill={hasSkill}
+                    size="frame"
+                />
+            </span>
             <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-gray-700">
                 {item.summary.displayName}
             </span>

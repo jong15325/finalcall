@@ -88,9 +88,18 @@ describe('<ItemFrame>', () => {
 
     it('spriteUrl 미지정이면 imageUrl 을 --item-sprite 배경으로 재사용한다(§6.4)', () => {
         const { container } = render(<ItemFrame imageUrl={ART} name="검" />)
-        const stage = container.querySelector('.item-frame__stage')
-        expect(stage?.getAttribute('style')).toContain(
+        // --item-sprite 는 루트(.item-frame)에 주입되어 스테이지 ::before 로 상속된다.
+        const root = container.querySelector('.item-frame')
+        expect(root?.getAttribute('style')).toContain(
             `--item-sprite: url("${ART}")`,
         )
+    })
+
+    it('scale 을 주면 --art-scale 을 루트에 주입한다(정수배 확대, §6.1)', () => {
+        const { container } = render(
+            <ItemFrame imageUrl={ART} name="검" scale={2} />,
+        )
+        const root = container.querySelector('.item-frame')
+        expect(root?.getAttribute('style')).toContain('--art-scale: 2')
     })
 })
