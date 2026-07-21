@@ -1983,3 +1983,26 @@ EPIC-SEARCH(동결 해제 후) · 2026-07-21
 구현 (backend-impl, 순차 단일 패스 — CloseService 파일 공유로 병렬 불가)
 
 - V14 스키마 → 마감 워커(CloseWorker·CloseService) → SOLD 정산 → UNSOLD. 패키지 `domain/settlement/*`. concurrency-review 검수.
+
+## D-104. EPIC-PURCHASE 즉시구매 + 거래내역 게이트2 확정 (2026-07-22) [ACCEPTED]
+
+맥락
+
+- EPIC-CLOSING 완료 후 사용자가 다음 작업 = **즉시구매 + 거래내역** 선택(게이트1). EPIC-CLOSING 정산 자산 재사용으로 규모 작음.
+  프론트 "준비 중" 자리 2개(즉시구매 버튼·거래내역)를 실기능으로 켠다. architect(FC-088) 계약 확정 → 게이트2 상신.
+
+결정 (게이트2, 사용자 2026-07-22 — architect 추천 전체 채택, 스키마 무변경)
+
+- **즉시구매** `POST /auctions/{id}/purchase`: buyNowPrice 즉시 SOLD·result_type=BUYNOW. 구매자 잔액 **직접 차감**(홀드 없음),
+  진행 최고입찰 **RELEASE+OUTBID**, 최고입찰자 **본인구매 허용**. auction 행 FOR UPDATE + **live 종료성 CAS**
+  (`status IN(SCHEDULED,ACTIVE) AND end_at>now` — 마감 워커 expired와 시간축 배타로 이중정산 불가). user_id 오름차순 락.
+- **정산 재사용**: 공통 꼬리(판매자 크레딧·sale_order·수익원장·아이템 이전·이력, I-B·C·E·H)를 **SettlementRecorder로 추출**,
+  머리(락·재검증·패자해제·차감·CAS)는 PurchaseService(즉시구매)·CloseService(마감) 경로별 분리.
+- **거래내역** `GET /me/orders`·`/orders/{id}`: 본인(구매/판매)만(IDOR). **fee/settle = 판매자 전용**(구매자는 finalPrice만).
+  역할 인지 DTO(myRole). BUYNOW/BID 코어 미노출.
+- **스키마 무변경**: BUYNOW·source_type 이미 존재, V14 재사용.
+
+산출물
+
+- `docs/spec/purchase-spec.md` v1.0 · `erd.md` v1.4(semantic) · `api-contract.md` v1.13.
+- 구현: FC-089 backend(PurchaseService·orders API·SettlementRecorder) · FC-090 frontend(즉시구매 버튼·거래내역) · FC-091 검수(동시성·IDOR).

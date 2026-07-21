@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.12 — G3 확정(2026-07-14) + 6절 계약 변경 12건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.13 — G3 확정(2026-07-14) + 6절 계약 변경 13건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**, **EPIC-PURCHASE 즉시구매 동작·orders 역할별 노출/FC-088**). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -22,6 +22,7 @@
 
 | v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
+| v1.13 | 2026-07-22 | 6절 계약 변경 — 게이트2(EPIC-PURCHASE, FC-088) 승인 반영: **§3.1 즉시구매 동작 정밀화**(금전=구매자 잔액 직접 차감·홀드 미경유, 진행 최고입찰 홀드 RELEASED+bid OUTBID, 최고입찰자 본인구매 허용, live 종료성 CAS `end_at>now`·result_type=BUYNOW, 요청 본문 없음). **§4.3 SaleOrderResponse 스키마 신설**(BidSummary v1.8 선례) — OrderSummary/OrderDetail 필드 확정 + **역할별 노출 정밀화**(`feeAmount`·`settleAmount` = 판매자 전용, 구매자엔 필드 부재·`finalPrice`만) + IDOR 스코프(`/me/orders`=buyer OR seller, `/orders/{id}`=당사자만) + `myRole`·`counterpartyMasked`(§3.3 마스킹 규약). **§5 AUCTION_006 라벨 확대**("이미 종료" → "처리 불가 상태(종료/즉시구매 시 미개시 포함)", 신규 코드 미추가 — enum↔계약 1:1 유지). **엔드포인트·필드 집합·에러코드 무변경**(즉시구매·orders 엔드포인트 기등재, 신규 필드는 응답 스키마 명세뿐·서버 기존 sale_order 재사용). 스키마 무변경. 사유: 즉시구매+거래내역 확정. 구현 = FC-089(backend)·FC-090(frontend). 정본 `purchase-spec.md` v1.0 |
 | v1.12 | 2026-07-21 | 6절 계약 변경 — 게이트2(EPIC-CLOSING 코어, FC-081) 승인 반영: **§3.3 마감·정산 semantic 명확화 주 추가**. 마감(내부 워커) 후 `AuctionDetail.resultType`=`BID`(SOLD)·`status`=영속 SOLD/UNSOLD·`BidSummary.status`=`WON`이 **실제로 채워지기 시작**함을 명시(값의 의미 명확화). 마감은 외부 API 없음 — 클라 마감 후 서버 status 수렴에 워커 tick 지연(짧은 전이 구간). 거래내역 조회(`GET /me/orders`·`/orders/{id}`)는 코어 범위 밖(후속)임을 명기. **엔드포인트·필드 집합·에러코드 무변경**(신규 필드 없이 기존 필드 semantic만 명확화). 사유: 마감·낙찰 정산 코어 확정. 구현 = EPIC-CLOSING FC-082(워커)·083(SOLD)·084(UNSOLD). 정본 closing-domain-spec v1.0 |
 | v1.11 | 2026-07-20 | 6절 계약 변경 — 게이트2(EPIC-CLOSING) 승인 반영: **§4.3 주문 상세**에 수수료 근거 주 추가 — 응답 `feeAmount`·`settleAmount`의 계산 근거·구간·최소/상한 정본이 신규 **`fee-policy-spec.md`**(판매자 단독 부담, 게이트2 2026-07-20)임을 각주로 연결하고 `settleAmount = finalPrice − feeAmount` 관계식을 명시. **엔드포인트·필드 집합·에러코드 무변경**(신규 필드 없이 기존 fee/settle의 의미만 명확화). 사유: 수수료 정책 확정의 계약 반영. 구현 소유 = EPIC-CLOSING(백엔드 동결 해제 후) |
 | v1.10 | 2026-07-19 | 6절 계약 변경 — 게이트2(FC-044) 승인 반영: **§3.1 아이템 코드 사전 신설**(4축 전 코드값 정본화). 종전 v1.9가 `element`·`kind`·`subGroup`·`mainCategory` 전 축의 코드값을 "미확정"으로 남겨 프론트가 표시명 스냅샷에만 의존했다. 원게임 `new_sp.gameshop` `itm_type` 전수 조회로 4축이 확정됐다 — **(D4)** `element` 1=물·2=불·**3=흙·4=바람**(4경로 교차확증), **(D3)** `kind`는 **`subGroup`에 의존**(WEAPONE/ARM 각 4값, MAGIC **2값뿐**)이라 대분류별 표를 분리하고 `kind` 단독 필터에 다의성 경고를 명기, **(D1·D2)** 원본 코드 체계를 전면 채택하고 `type_code` **자리 의미를 교정**(`mainCategory`=상품군·`subGroup`=무기/방어구/마법). 동반 필수 조항으로 **`item_template` 스코프 = 상품군 1(아이템 카드)**을 명시했다. 사유: 게이트2 승인(2026-07-19), 제안서 `spec/proposals/item-code-dictionary.md` v2. **엔드포인트·필드 집합·에러코드 무변경**(값 사전·서술 보강). ⚠ **V9 시드는 교정 전 코드라 계약과 불일치** — 시드 재작성은 백엔드 동결 해제 후 별도 티켓(제안서 §3.3 대조표가 작업지시서) |
@@ -184,6 +185,12 @@ POST /api/v1/auctions/{auctionPublicId}/purchase — 즉시구매(buyNow)
 - 규칙(SEC-003): 판매자 본인 구매 금지(입찰 BID_003 대칭, wash trade 방지).
 - 응답 201: `{ orderPublicId, finalPrice }`
 - 에러: `AUCTION_005` 즉시구매 미설정(422), `AUCTION_006` 이미 종료(409), `AUCTION_009` 판매자 자기구매(403), `BID_005` 잔액 부족(422)
+
+> **EPIC-PURCHASE 게이트2 승인 반영 (v1.13, 2026-07-22).** 정본 = `purchase-spec.md` v1.0. 위 즉시구매 엔드포인트·에러는 이미 등재돼 있고, 아래는 그 **동작 정밀화**다(신규 엔드포인트·필드 없음).
+> - **금전 모델(A1)**: 구매자는 `buyNowPrice`를 **잔액 직접 차감**(available-gated, 홀드 미경유)한다. 요청 본문 없음(금액은 서버가 `buy_now_price`로 확정, 클라 금액 신뢰 없음). 진행 중 최고 입찰자가 있으면 그 홀드를 즉시 **해제(RELEASED)**하고 입찰을 **OUTBID**로 강등한다(낙찰 실패). 최고 입찰자 본인의 즉시구매도 허용(A2).
+> - **동시성(A4)**: 입찰·마감과 **동일 auction 행 배타 락**으로 직렬화. 종료성 CAS는 `status IN(SCHEDULED,ACTIVE) AND end_at > now`(**live** — 마감 워커의 `end_at<=now`와 시간축 배타 분할)로 SOLD·`result_type=BUYNOW` 단일 승자 전이.
+> - **미개시 처리(A5)**: SCHEDULED이고 startAt 미도래인 경매의 즉시구매는 구매 불가다. `AUCTION_006` 라벨을 "이미 종료" → **"구매 불가(미개시·종료)"**로 확대 적용한다(신규 코드 미추가, §5 반영).
+> - `finalPrice = buyNowPrice`. `AUCTION_009`는 판매자 자기구매(SEC-003, 입찰 BID_003 대칭), `BID_005`는 가용 게임머니 부족.
 
 POST /api/v1/auctions/{auctionPublicId}/cancel — 판매자 취소
 - 인증: 필요(판매자 본인). 관리자 강제 취소는 별도 관리자 API(4절).
@@ -412,6 +419,18 @@ GET /api/v1/orders/{orderPublicId} — 주문 상세
 - 주(수수료 근거): 응답의 **수수료(feeAmount)·정산액(settleAmount)** 계산 근거·구간표·최소/상한 정본은 **`fee-policy-spec.md`**다(플랫폼 중계 수수료, **판매자 단독 부담**, 게이트2 확정 2026-07-20). 관계식 `settleAmount = finalPrice − feeAmount`. 필드 집합 무변경 — 신규 필드 없이 기존 fee/settle의 계산 의미만 계약에 명확화한다. 구현 소유 = EPIC-CLOSING(정산). erd `sale_order`(final_price/fee_amount/settle_amount)와 정합.
 - 에러: `ORDER_001` 없음(404), `ORDER_002` 당사자 아님(403)
 
+> **EPIC-PURCHASE 게이트2 승인 반영 (v1.13, 2026-07-22).** 정본 = `purchase-spec.md` v1.0 §5. 위 §4.3 엔드포인트는 등재돼 있으나 응답 스키마·역할별 노출 범위가 미규정이었다(BidSummary v1.8 신설 선례). 아래로 확정한다. **스키마(sale_order) 무변경 — 읽기 전용.**
+> - **인가(IDOR, B1)**: `GET /me/orders`는 `buyer_id = me OR seller_id = me`로 스코프(제3자 미노출), `role`·`sourceType` 필터는 그 안에서 좁힘. `GET /orders/{id}`는 당사자만(`ORDER_002` 403, 미존재 `ORDER_001` 404 — public_id ULID라 열거 무해).
+> - **역할별 노출 범위(B2, 정밀화)**: `feeAmount`·`settleAmount`은 **판매자 전용**이다(판매자 측 회계). 구매자 응답에는 두 필드를 **싣지 않는다**(필드 자체 부재) — 구매자는 자기가 지불한 `finalPrice`만 본다. 현행 위 문구(양 당사자 모두 fee/settle 노출로 읽힘)를 이렇게 정밀화한다.
+> - **SaleOrderResponse 스키마(확정)**:
+>   ```
+>   OrderSummary (GET /me/orders content):
+>     { orderPublicId, myRole, sourceType, counterpartyMasked, item, finalPrice, status, createdAt,
+>       feeAmount?, settleAmount? }   // feeAmount·settleAmount 는 myRole==SELLER 일 때만 존재
+>   OrderDetail (GET /orders/{id}): OrderSummary + { settledAt, itemInstancePublicId }
+>   ```
+>   `myRole`=`BUYER|SELLER`(요청자 대비 파생), `sourceType`=`AUCTION`(코어. BID/BUYNOW 구분은 미노출 — B3), `counterpartyMasked`=상대 nickname 마스킹(§3.3 규약, userPublicId·loginId 미노출), `item`=§3.3 item 블록 요약.
+
 ### 4.4 화폐(잔액·충전·교환)
 
 GET /api/v1/me/balance — 내 잔액
@@ -469,7 +488,7 @@ POST /api/v1/admin/auctions/{auctionPublicId}/force-cancel — 관리자 강제 
 | AUCTION_003 | buyNowPrice ≤ startPrice | 422 |
 | AUCTION_004 | 경매 없음 | 404 |
 | AUCTION_005 | 즉시구매 미설정 | 422 |
-| AUCTION_006 | 이미 종료 | 409 |
+| AUCTION_006 | 처리 불가 상태(이미 종료 / 즉시구매 시 미개시 포함) | 409 |
 | AUCTION_007 | 입찰 존재로 취소 불가 | 409 |
 | AUCTION_008 | 경매 시간 파라미터 위반(SEC-009) | 422 |
 | AUCTION_009 | 판매자 자기구매(즉시구매, SEC-003) | 403 |

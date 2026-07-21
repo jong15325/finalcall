@@ -27,8 +27,12 @@ FC-090 frontend   즉시구매 버튼 실연동(경매상세) + 거래내역 화
 FC-091 reviewer   concurrency-review(즉시구매 동시성·정산 정합) + 도메인 인가(orders IDOR·마스킹)
 ```
 
-## 게이트2 상신 예정 (architect FC-088)
-- 즉시구매 동시성 모델(auction 행 락·진행 입찰 홀드 해제·정산 재사용 vs 신규)·buyNow 금전 흐름(직접 차감 vs 홀드+capture)·orders API 계약(필드·마스킹·IDOR 범위).
+## 게이트2 — 승인됨 (2026-07-22, 사용자) — architect 추천 전체 채택
+- **금전**: 구매자 잔액 직접 차감. 진행 최고입찰 홀드 RELEASE+OUTBID, 최고입찰자 본인구매 허용.
+- **정산 재사용**: SettlementRecorder 추출(총량보존 임계) + PurchaseService 신규(머리 분리).
+- **동시성**: auction 행 FOR UPDATE + 종료성 CAS `end_at > now`(live, 마감워커 expired와 시간축 배타). user_id 오름차순 락.
+- **거래내역 노출 = 판매자 전용**(fee/settle 판매자만, 구매자는 finalPrice). IDOR 당사자만. api-contract §4.3 정밀화.
+- **스키마 무변경**(BUYNOW·source_type 이미 존재). architect가 purchase-spec v1.0 + 계약 확정 중.
 
 ## 범위 밖
 - 마켓(고정가)·커뮤니티·알림·충전 = 별도.

@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v1.3 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044)·**게이트2 EPIC-CLOSING 정산 스키마**(FC-081 — sale_order NOT NULL·fee_policy_version·source UK·platform_revenue_ledger) 반영. [6] 채번은 백엔드 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v1.3 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044)·**게이트2 EPIC-CLOSING 정산 스키마**(FC-081 — sale_order NOT NULL·fee_policy_version·source UK·platform_revenue_ledger)·**게이트2 EPIC-PURCHASE**(FC-088 — 즉시구매+거래내역, **스키마 무변경**·semantic만) 반영. [6] 채번은 백엔드 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.4 | 2026-07-22 | 게이트2(EPIC-PURCHASE, FC-088) 승인 반영 — 즉시구매(BUYNOW)+거래내역 조회. **스키마 무변경**(신규 테이블·컬럼·마이그레이션·UK 없음). [4.2] `sale_order` 표 아래 승인 반영 주 추가 — semantic 델타만: `auction.result_type=BUYNOW`(종전 정의됨·미사용)가 즉시구매 SOLD 전이에서 **실사용 시작**(마감 SOLD=`BID`), `sale_order (buyer_id)`·`(seller_id)` 인덱스가 거래내역 role 스코프 조회에서 **실사용 시작**. `source_type=AUCTION`·`buy_now_price` 재사용, V14 그대로. 정본 = `purchase-spec.md` v1.0 |
 | v1.3 | 2026-07-21 | 게이트2(EPIC-CLOSING, FC-081) 승인 반영 — 마감·낙찰 정산 코어 스키마 확정. **[4.2] `sale_order`**: `fee_amount` **널→NOT NULL**(SOLD에서만 생성), **`fee_policy_version VARCHAR(10) NOT NULL` 신설**(정책 버전 스냅샷·환불 재현), `(source_type,source_id)` **UK 승격**(이중 SOLD 차단). **`platform_revenue_ledger` 테이블 신설**(게이트2 #4=④-C — 수수료 전용 수익 원장, 정산 1:1 sale_order_id UK, 게임머니 총량 보존 I-H). [2] 엔티티 개요·[5] 인덱스·[6] Flyway(V14) 동기화. `sale_order`는 이 V14에서 최초 생성(종전 group4 이연분). 마감 워커 스캔은 기존 `auction (status, end_at)` 커버 — 신규 인덱스 불요. 근거: 게이트2 승인(2026-07-21), closing-domain-spec v1.0 |
 | v1.2 | 2026-07-20 | 게이트2(EPIC-CLOSING) 승인 반영 — [4.2] `sale_order.fee_amount` 설명을 **"정책 ON-HOLD 자리만" → 정책 확정**으로 갱신(판매자 단독 부담, 산식·구간·최소/cap 정본 = 신규 `fee-policy-spec.md`, 값 범위 [100 G, 300,000 G]). 문서 머리 확정 줄의 ON-HOLD 목록에서 "플랫폼 수수료"를 해소 표기. **스키마 무변경**(fee_amount/settle_amount 컬럼·타입·널 그대로). 근거: 게이트2 승인(2026-07-20), fee-policy-spec v1.0 |
 | v1.1 | 2026-07-19 | 게이트2(FC-044) 승인 반영 — [4.3] `item_template` **코드 축 배정 교정**: `main_category`=상품군(아이템 카드 `1` 고정)·`sub_group`=대분류(무기/방어구/마법). 종전 서술은 두 선두 자리 의미가 뒤바뀐 오배정이라 시드 `2111`이 원게임 SILVER 대역을 침범했다. 교정 후 `type_code`가 원게임 `itm_type`과 **1:1 동일**해진다. 아울러 `kind` 설명의 **평면 나열("검·도·활·방·펜…")을 폐기** — `kind`는 의미가 `sub_group`에 의존하고 마법은 2값뿐(3·4 부재)인데 종전 서술이 이를 감췄다. `type_code` 산식·스코프(상품군 1 한정)·시드 정합 부채를 표 아래 주로 명기. **스키마 무변경**(컬럼·타입·UK·인덱스 전부 그대로) — 교정 대상은 서술과 시드 데이터뿐이다. 근거: 게이트2 승인(2026-07-19), 제안서 `spec/proposals/item-code-dictionary.md` v2. 코드값 열거 정본은 api-contract §3.3.1 |
@@ -295,6 +296,8 @@ table `sale_order` — 판매 성립 거래(경매 낙찰 + shop 구매 공통, 
 | settled_at | DATETIME(6) | N | | 정산 완료 시각 |
 
 주: `source_type + source_id` 폴리모픽 참조(플래그 논의 채택 a). 물리 FK 제약이 약해지는 대신 채널 확장에 유연.
+
+**EPIC-PURCHASE 게이트2 승인 반영(v1.4, 2026-07-22)**: 즉시구매(BUYNOW) + 거래내역 조회는 **스키마 변경이 없다** — `sale_order`의 `source_type=AUCTION`·`auction.result_type=BUYNOW`(정의됨·미사용)·`auction.buy_now_price`가 이미 존재하고 V14를 그대로 재사용한다. 델타는 **semantic뿐**: (1) `result_type` 값 `BUYNOW`가 즉시구매 SOLD 전이에서 **실사용 시작**(마감 SOLD는 `BID`, 즉시구매 SOLD는 `BUYNOW`), (2) `sale_order (buyer_id)`·`(seller_id)` 인덱스가 거래내역 조회(`GET /me/orders` role 스코프)에서 **실사용 시작**. 신규 테이블·컬럼·마이그레이션·UK **없음**. 정본 = `purchase-spec.md` v1.0 §1.1·§7.
 
 **EPIC-CLOSING 게이트2 승인 반영(v1.3, 2026-07-21)**: `sale_order`는 현재 DB 미생성(§6 group4 "후속 에픽 V12+" 이연분)이며 EPIC-CLOSING 코어가 **`V14__sale_order_and_settlement.sql`**로 생성한다. 위 표에 반영된 델타 — `fee_amount` **NOT NULL**(SOLD에서만 생성되므로 항상 값 존재), `fee_policy_version VARCHAR(10) NOT NULL` **신규**(적용 정책 버전, 감사·환불 비례 크레딧 재현), `(source_type, source_id)` **UK 승격**(동일 경매 이중 SOLD 차단 = 이중 정산 방지, closing-domain-spec §6 I-C). 정본 = `closing-domain-spec.md` v1.0.
 
