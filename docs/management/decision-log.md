@@ -1897,3 +1897,61 @@ escalated-from `ux/outbox/MEMBER/001` · `backend/outbox/MEMBER/002` · `fronten
 집행: `management/outbox/MEMBER/002`(전 역할 통지) · D-097 상태줄 확장 주 · `_broadcast/004` [1] 표는
 **발신분이라 안 고친다**(`[5.18]`) — 통지가 갱신처다. **반영 확인 방법** = 호스트 Grep `D-100` on
 `docs/frontend/rules.md`(프론트가 자기 지침에 반영했는지) + member ⑤ 완료 보고 수신 여부.
+
+---
+
+## D-101. 플랫폼 중계 수수료 정책 확정 (2026-07-20) [ACCEPTED]
+
+상태: ACCEPTED · 소유: 총괄 · 관련: 게이트2 사용자 승인(2026-07-20) · resolves ON-HOLD "플랫폼 수수료"
+(decision-log:1394 목록) · relates-to erd `sale_order`(fee_amount·settle_amount, D-053) · 정본
+`docs/spec/fee-policy-spec.md` v1.0 · 구현 에픽 EPIC-CLOSING · 2026-07-20
+
+맥락
+
+- 사용자 제기: 유저 간 거래를 **중계**하므로 각 거래 시 수수료를 차감하고, **경매 중계 수수료는 사업자가
+  귀속**한다. "레퍼런스 꼭 찾아서 검토" 지시.
+- 실측: `sale_order`에 `fee_amount`·`settle_amount(=final−fee)` 컬럼이 이미 예약돼 있었고 **정책만 ON-HOLD**
+  였다(erd §5·§25). 정산=EPIC-CLOSING(미구현, 백엔드 동결). 즉 자리는 있고 숫자·규칙만 미결이었다.
+- 레퍼런스(출처 확인): 국내 게임아이템 거래소(아이템매니아·아이템베이 동일 운영사) **판매자 5%·구매자 0·
+  최소50/상한53,000원·상품유형 균일**. 경매하우스 구간제(서울옥션 구매18%+판매10%). eBay 취소 크레딧·
+  cap $750. 부가세 오픈마켓 exclusive 관행.
+
+결정
+
+- **판매자 단독 부담**(구매자 0). 경매·고정가 공통. 경매 구매수수료(buyer's premium) 미도입(후속 여지).
+- 기준 = **최종 확정가**(낙찰가/즉시구매가). **구간별 누진(marginal)** — 게임머니(G):
+  ~100,000 **6%** / 100,001~1,000,000 **5%** / 1,000,001~3,000,000 **4%** / 3,000,001~ **3%**.
+- **최소 100 G · 상한(cap) 300,000 G.** 적용 순서 = 누진합계 → 원단위 사사오입 → cap → 최소.
+- **부가세 과세 생략**(내부 화폐, 스켈레톤 범위 밖). `fee_amount` **사업자 귀속**, `settle_amount = final − fee`.
+- 취소·유찰 = 수수료 **0**(SOLD 성립 시에만 확정). 정산 후 환불은 **비례 크레딧**, 플랫폼 개입 분쟁 종결은 예외.
+- **백엔드 동결이라 문서만**: `fee-policy-spec.md` v1.0 신설, `erd` v1.2·`api-contract` v1.11 갱신. 스키마 무변경
+  (fee_amount/settle_amount 기존 컬럼 재사용). **구현은 EPIC-CLOSING 동결 해제 후.**
+
+---
+
+## D-102. 등급·검색 설계 초안 + 포인트=경험치형 확정 (2026-07-21) [ACCEPTED]
+
+상태: ACCEPTED · 소유: 총괄 · 관련: 사용자 게이트1 shaping(2026-07-21) · relates-to D-101(수수료) ·
+정본 `docs/spec/grade-tier-spec.md` v0.1 · `docs/spec/search-spec.md` v0.1 · 구현 에픽 EPIC-GRADE ·
+EPIC-SEARCH(동결 해제 후) · 2026-07-21
+
+맥락
+
+- 사용자가 거래 기반 **등급 제도**와 대량 **검색(ES) 도입**을 제기. 레퍼런스 리서치 2건(등급·검색) 수행
+  후 architect가 설계 초안 2종을 작성. **백엔드 동결이라 문서만**, 구현·게이트2는 이연.
+
+결정
+
+- **등급(EPIC-GRADE)**: 판매·구매 양쪽 거래액 비례 적립(**판매 1.0/구매 0.5 비대칭**) → **5단계 지수 등급** →
+  혜택 **조합**(수수료 할인·배지·우선노출). **★ 포인트 = 경험치형(소진 없음·비현금성) 확정**(사용자 2026-07-21).
+  수수료 할인은 fee-policy 베이스 6/5/4/3%에 **등급 계수 평행 인하**. 회수 = 롤백 + Soft Landing 강등 +
+  평생누적/상위 12개월 이중 트랙.
+- **검색(EPIC-SEARCH)**: 단계적 표준안 — **MySQL FULLTEXT `q` MVP → ES/OpenSearch 승격**. MySQL=SoT,
+  ES=파생 read-model, Outbox/CDC + 멱등 upsert, dual-write 금지. 우선노출 = function_score 등급 부스트.
+- **전부 설계-only**: 스키마·계약·인프라 변경은 **게이트2로 분리, 동결 해제 시 상신**. 에픽 파일 정식 신설·
+  게이트1 분해는 착수 시점.
+
+미결 (게이트2, 동결 해제 시)
+
+- **GRADE**: 적립 배수·등급 경계·수수료 계수·스키마(`user`+`point_ledger`)·계약 필드 등 8항목(grade-tier-spec §11.1).
+- **SEARCH**: 계약축 C1~C3(`q`·relevance) · 인프라축 A1~A5(ES·엔진·동기·부스트·재색인)(search-spec §9).

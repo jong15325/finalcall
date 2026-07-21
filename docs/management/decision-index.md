@@ -240,6 +240,8 @@
 | D-098 | 모노레포 전환 — `finalcall/{backend/{src,gateway}, frontend, docs, config}` | ACCEPTED (supersedes D-007·D-030·D-039·D-096) | 총괄 |
 | D-099 | D-093 동결선은 재정리 국면 한정 — 계약 변경 4건을 `api-contract v1.5` 한 번으로 (`[6]` 발동) | ACCEPTED (D-093 동결선 사정거리 확정) | 총괄 |
 | D-100 | D-097에 프론트 자리 신설 — 디자인 세부 완성 뒤, QA 앞 (⑤). 단계 추가이지 대체 아님 | ACCEPTED (D-097 순서 항 확장. 디자인이 공백 격상) | 총괄 |
+| D-101 | 플랫폼 중계 수수료 정책 확정 — 판매자 단독·판매가 구간별 누진(6/5/4/3%)·최소100/cap300k G·과세생략 | ACCEPTED (게이트2 2026-07-20. ON-HOLD 해소. 정본 fee-policy-spec, 구현 EPIC-CLOSING) | 총괄 |
+| D-102 | 등급·검색 설계 초안 + 포인트=경험치형 확정 — grade-tier-spec·search-spec 신설, 게이트2 이연 | ACCEPTED (게이트1 방향 2026-07-21. 구현 EPIC-GRADE/SEARCH 동결 후) | 총괄 |
 | Q-004 | 검증 기준 = 확정 스펙 3종 (Q-001 기준 열거 보정) | ACCEPTED | QA |
 | S-003 | 부재·수량 근거 시 교차검증 의무 (D-086 보안 파트 적용) | ACCEPTED | 보안 |
 
