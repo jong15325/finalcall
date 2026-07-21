@@ -26,3 +26,11 @@ backend spotless/checkstyle/test 그린(279, Testcontainers 실 MySQL, 동시성
 ## 후속
 - FC-089 doing 복귀·review_status=changes-requested. A4 수정(user_id 정렬 + 회귀 테스트) 지시함.
 - FC-090 review_status=passed(전 축 통과). 재검은 FC-089 수정 후 A4 델타만.
+
+## A4 재검 (커밋 b44aea0) — **PASSED** (critical/major 0)
+- user_id 오름차순 락(applyBalanceInUserIdOrder·BalanceStep 정렬)·§3.5 buyer==loser 단일스텝 무충돌 확인.
+- PurchaseDeadlockRegressionIntegrationTest(교차구매·purchase×bid) 실경합·락 실패 0(BidDeadlock 동등 강도).
+- SettlementRecorder 판매자 크레딧 분리(잔액 무접촉)·MANDATORY TX로 P-H 총량보존 원자성 유지. CloseService 크레딧 회수·마감 무회귀(SOLD/UNSOLD·CloseWorker 그린).
+- backend 281 --rerun-tasks BUILD SUCCESSFUL. 프론트 델타 무변경(490 유효).
+- **비차단 관찰(하드닝 백로그)**: purchase×close 교차 = 기존 bid×close와 동일 클래스(CloseService fixed 순서). money 안전(P-H)·close 워커 재시도 자가치유. EPIC-SHOP 등 동기 정산 추가 시 close user_id 정렬 재검토.
+- **FC-089 review_status=passed.**
