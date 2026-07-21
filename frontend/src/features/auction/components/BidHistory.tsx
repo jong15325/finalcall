@@ -1,13 +1,17 @@
 import CodeAmount from '@/components/common/CodeAmount'
+import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useAuctionBids } from '@/lib/queries/auctions'
 import type { BidStatus } from '@/lib/api/auctions'
 
 /**
- * 입찰 이력 (FC-072 — 목업 `.bid-history` · design-brief B-3).
+ * 입찰 이력 (FC-072 → FC-087 — 목업 `.bid-history` · design-brief B-3).
  *
  * `GET /auctions/{id}/bids` — **offset 페이징**(`?page=&size=`, `amount desc` 고정, size≤100).
  * 표: 입찰자(마스킹)·금액·상태·시각. 자금(홀드·잔액) 정보는 계약이 싣지 않는다(타인 자금 비노출).
  *
+ * ★ **스크롤 무한 누적**(FC-087 · 목업 §17). offset 페이지를 목록 끝 감시점(sentinel)으로 이어
+ *   로드해 누적 표시한다 — "더 보기" 버튼을 두지 않고, **목록 끝 문구도 표시하지 않는다.**
+ *   중복 요청은 `useInfiniteScroll` 이 진행 중 발화를 무시해 막는다(인벤토리만 §17 예외).
  * ★ 상태 라벨은 서버 enum 파생 — 미등록 상태는 코드 그대로(무음 실패 방지).
  * ★ "내 입찰" 은 표시할 방법이 없다(bidderMasked 뿐, userPublicId 미제공) — 만들지 않는다.
  */
@@ -56,6 +60,12 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
 
     const bids = data?.pages.flatMap((page) => page.content) ?? []
 
+    const sentinelRef = useInfiniteScroll({
+        hasNext: Boolean(hasNextPage),
+        isFetching: isFetchingNextPage,
+        onLoadMore: () => void fetchNextPage(),
+    })
+
     return (
         <section className="rounded-2xl border border-line bg-surface">
             <div className="border-b border-line px-5 py-4">
@@ -80,71 +90,72 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                     아직 입찰이 없습니다. 첫 입찰의 주인공이 되어 보세요.
                 </p>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-line text-left text-xs text-gray-500">
-                                <th className="px-5 py-2.5 font-medium">
-                                    입찰자
-                                </th>
-                                <th className="px-5 py-2.5 font-medium">
-                                    금액
-                                </th>
-                                <th className="px-5 py-2.5 font-medium">
-                                    상태
-                                </th>
-                                <th className="px-5 py-2.5 text-right font-medium">
-                                    입찰 시각
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {bids.map((bid) => (
-                                <tr
-                                    key={bid.bidPublicId}
-                                    className="border-b border-line last:border-0"
-                                >
-                                    <td className="px-5 py-3 text-gray-700">
-                                        {bid.bidderMasked}
-                                    </td>
-                                    <td className="px-5 py-3">
-                                        <CodeAmount
-                                            value={bid.amount}
-                                            mode="full"
-                                            className="font-semibold text-gray-900"
-                                        />
-                                    </td>
-                                    <td className="px-5 py-3">
-                                        <span
-                                            className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                                                STATUS_CLASS[bid.status] ??
-                                                'bg-gray-100 text-gray-500'
-                                            }`}
-                                        >
-                                            {bidStatusLabel(bid.status)}
-                                        </span>
-                                    </td>
-                                    <td className="px-5 py-3 text-right text-gray-500">
-                                        {formatBidTime(bid.createdAt)}
-                                    </td>
+                <>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-line text-left text-xs text-gray-500">
+                                    <th className="px-5 py-2.5 font-medium">
+                                        입찰자
+                                    </th>
+                                    <th className="px-5 py-2.5 font-medium">
+                                        금액
+                                    </th>
+                                    <th className="px-5 py-2.5 font-medium">
+                                        상태
+                                    </th>
+                                    <th className="px-5 py-2.5 text-right font-medium">
+                                        입찰 시각
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {bids.map((bid) => (
+                                    <tr
+                                        key={bid.bidPublicId}
+                                        className="border-b border-line last:border-0"
+                                    >
+                                        <td className="px-5 py-3 text-gray-700">
+                                            {bid.bidderMasked}
+                                        </td>
+                                        <td className="px-5 py-3">
+                                            <CodeAmount
+                                                value={bid.amount}
+                                                mode="full"
+                                                className="font-semibold text-gray-900"
+                                            />
+                                        </td>
+                                        <td className="px-5 py-3">
+                                            <span
+                                                className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                                    STATUS_CLASS[bid.status] ??
+                                                    'bg-gray-100 text-gray-500'
+                                                }`}
+                                            >
+                                                {bidStatusLabel(bid.status)}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-3 text-right text-gray-500">
+                                            {formatBidTime(bid.createdAt)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
-                    {hasNextPage && (
-                        <div className="p-4 text-center">
-                            <button
-                                type="button"
-                                disabled={isFetchingNextPage}
-                                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-60"
-                                onClick={() => void fetchNextPage()}
-                            >
-                                {isFetchingNextPage ? '불러오는 중…' : '더 보기'}
-                            </button>
-                        </div>
+                    {/* 무한스크롤 감시점 — 목록 끝 문구는 두지 않는다(목업 §17) */}
+                    <div ref={sentinelRef} aria-hidden className="h-px" />
+
+                    {isFetchingNextPage && (
+                        <p
+                            role="status"
+                            className="py-3 text-center text-xs text-gray-400"
+                        >
+                            더 불러오는 중…
+                        </p>
                     )}
-                </div>
+                </>
             )}
         </section>
     )

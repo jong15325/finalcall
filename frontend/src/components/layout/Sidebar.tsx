@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router'
-import {
-    TbChevronDown,
-    TbChevronsLeft,
-    TbChevronsRight,
-    TbHeadset,
-    TbX,
-} from 'react-icons/tb'
+import { TbChevronDown, TbHeadset, TbX } from 'react-icons/tb'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { sidebarNav } from './navItems'
 import type { NavEntry, NavGroup, NavLeaf } from './navItems'
@@ -46,6 +40,49 @@ const rowBase =
     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors'
 const rowIdle = 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
 const rowActive = 'bg-orange-subtle text-orange-deep'
+
+/**
+ * 접기/펼치기 토글 아이콘 — Vuexy `menu-toggle-icon` 원형 라디오(§5.1).
+ *
+ * 목업(core.css)의 `mask-image` SVG 두 상태를 그대로 흡수한다(색만 브랜드 = `currentColor`):
+ *  - 고정 펼침(`pinned`): 바깥 원 + 가운데 점(채운 라디오) → "눌러서 접기".
+ *  - 접힘(flyout 로 잠시 펼침): 바깥 원만(빈 라디오) → "눌러서 고정 펼치기".
+ */
+function MenuToggleIcon({ pinned }: { pinned: boolean }) {
+    return (
+        <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="size-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0" />
+            {pinned && <path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0" />}
+        </svg>
+    )
+}
+
+/**
+ * 키보드 이동으로 들어온 포커스인지 판정(`:focus-visible`).
+ *
+ * ★ 마우스 **클릭**도 요소에 포커스를 주므로, 포커스만으로 flyout 을 열어 두면 마우스가 패널을
+ *   벗어나도 닫히지 않는 **stuck 버그**가 된다(FC-086 회귀). 브라우저는 마우스 클릭엔
+ *   `:focus-visible` 을 매치하지 않으므로 이걸로 키보드 이동만 골라 flyout 을 고정한다.
+ * ★ `:focus-visible` 미지원 환경(일부 jsdom)에서 `matches` 가 던지면 접근성 우선으로 여는 쪽을
+ *   택한다 — 실제 브라우저에선 정상 판정된다.
+ */
+function isKeyboardFocus(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) return false
+    try {
+        return target.matches(':focus-visible')
+    } catch {
+        return true
+    }
+}
 
 /** 준비 중(비활성) 행 */
 function DisabledRow({
@@ -235,7 +272,10 @@ function Sidebar({
             {/* 데스크톱 접힘 레일 자리(70px) — flyout 은 이 위로 겹쳐 뜨고 본문을 밀지 않는다.
                 펼침 상태에선 aside 가 인-플로우(260px)라 이 spacer 를 두지 않는다. */}
             {collapsed && (
-                <div aria-hidden className="hidden shrink-0 xl:block xl:w-[70px]" />
+                <div
+                    aria-hidden
+                    className="hidden shrink-0 xl:block xl:w-[70px]"
+                />
             )}
 
             <aside
@@ -254,7 +294,11 @@ function Sidebar({
                 ].join(' ')}
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
-                onFocus={() => setFocused(true)}
+                onFocus={(event) => {
+                    // 마우스 클릭 포커스로는 flyout 을 고정하지 않는다(stuck 방지).
+                    // 키보드 이동(:focus-visible)일 때만 열어 둔다 — 탭 접근성은 유지.
+                    if (isKeyboardFocus(event.target)) setFocused(true)
+                }}
                 onBlur={(event) => {
                     if (!event.currentTarget.contains(event.relatedTarget)) {
                         setFocused(false)
@@ -277,18 +321,16 @@ function Sidebar({
                         (상단바 토글 제거, FC-086 #3). */}
                     <button
                         type="button"
-                        aria-label={collapsed ? '메뉴 고정 펼치기' : '메뉴 접기'}
+                        aria-label={
+                            collapsed ? '메뉴 고정 펼치기' : '메뉴 접기'
+                        }
                         aria-expanded={!collapsed}
                         className={`absolute right-2 hidden size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 ${
                             railCollapsed ? '' : 'xl:flex'
                         }`}
                         onClick={onToggleCollapse}
                     >
-                        {collapsed ? (
-                            <TbChevronsRight aria-hidden className="size-5" />
-                        ) : (
-                            <TbChevronsLeft aria-hidden className="size-5" />
-                        )}
+                        <MenuToggleIcon pinned={!collapsed} />
                     </button>
 
                     {/* 모바일 닫기 */}

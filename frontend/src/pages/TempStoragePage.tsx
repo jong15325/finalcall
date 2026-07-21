@@ -4,6 +4,7 @@ import { TbBackpack } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import TempStorageList from '@/features/member/components/TempStorageList'
 import { relocateErrorMessage } from '@/features/member/lib/relocateErrors'
+import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useMyTempStorage, useRelocateItem } from '@/lib/queries/tempStorage'
 
@@ -25,6 +26,13 @@ export default function TempStoragePage() {
     const [activeId, setActiveId] = useState<string | null>(null)
 
     const items = tempQuery.data?.pages.flatMap((page) => page.content) ?? []
+
+    // 스크롤 무한 누적(FC-087 · 목업 §17) — cursor 페이지를 감시점으로 이어 로드.
+    const sentinelRef = useInfiniteScroll({
+        hasNext: Boolean(tempQuery.hasNextPage),
+        isFetching: tempQuery.isFetchingNextPage,
+        onLoadMore: () => void tempQuery.fetchNextPage(),
+    })
 
     const inventory = inventoryQuery.data
     const isFull =
@@ -113,17 +121,17 @@ export default function TempStoragePage() {
                         pendingId={pendingId}
                         onRelocate={handleRelocate}
                     />
-                    {tempQuery.hasNextPage && (
-                        <button
-                            type="button"
-                            disabled={tempQuery.isFetchingNextPage}
-                            className="mx-auto rounded-lg border border-line bg-surface px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100 disabled:opacity-60"
-                            onClick={() => void tempQuery.fetchNextPage()}
+
+                    {/* 무한스크롤 감시점 — 목록 끝 문구는 두지 않는다(목업 §17) */}
+                    <div ref={sentinelRef} aria-hidden className="h-px" />
+
+                    {tempQuery.isFetchingNextPage && (
+                        <p
+                            role="status"
+                            className="py-2 text-center text-xs text-gray-400"
                         >
-                            {tempQuery.isFetchingNextPage
-                                ? '불러오는 중…'
-                                : '더 보기'}
-                        </button>
+                            더 불러오는 중…
+                        </p>
                     )}
                 </>
             )}
