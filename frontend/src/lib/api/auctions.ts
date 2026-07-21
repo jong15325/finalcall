@@ -199,6 +199,26 @@ export function placeBid(
     )
 }
 
+/** `POST /auctions/{id}/cancel` 200 (계약 §3.1). `status` 는 취소 결과("CANCELLED"). */
+export interface AuctionCancelResponse {
+    status: string
+}
+
+/**
+ * `POST /auctions/{id}/cancel` — **판매자 본인 인증 필요**(계약 §3.1).
+ *
+ * ★ 서버가 **입찰 0건 & (SCHEDULED|ACTIVE)** 일 때만 취소한다(v1.7 정밀화). 그 밖은 거절이다 —
+ *   `AUCTION_007`(입찰 존재, 409) · `AUCTION_006`(이미 종료, 409) · `AUCTION_001`(미소유, 403).
+ *   화면은 표시 제어로 버튼을 가리되(판매자·입찰0), **최종 판정은 이 응답으로** 처리한다.
+ */
+export function cancelAuction(
+    auctionPublicId: string,
+): Promise<AuctionCancelResponse> {
+    return apiClient.post<AuctionCancelResponse>(
+        `/auctions/${auctionPublicId}/cancel`,
+    )
+}
+
 /*
  * ══════════════════════════════════════════════════════════════════════════════
  * ★★ **`POST /auctions/{id}/purchase`(즉시구매)를 여기에 만들지 마라.**

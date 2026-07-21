@@ -5,6 +5,7 @@ import {
     useQueryClient,
 } from '@tanstack/react-query'
 import {
+    cancelAuction,
     getAuction,
     getAuctionBids,
     getAuctions,
@@ -12,6 +13,7 @@ import {
 } from '@/lib/api/auctions'
 import { balanceKeys } from './balance'
 import type {
+    AuctionCancelResponse,
     AuctionDetail,
     AuctionListQuery,
     AuctionSummary,
@@ -197,6 +199,30 @@ export function usePlaceBid(auctionPublicId: string) {
                 queryKey: auctionKeys.browses(),
             })
             void queryClient.invalidateQueries({ queryKey: balanceKeys.me() })
+        },
+    })
+}
+
+/**
+ * 판매자 취소 (계약 §3.1 `POST /auctions/{id}/cancel`) — FC-072.
+ *
+ * ★ 성공하면 서버가 상태를 `CANCELLED` 로 바꾼다(종료 상태). 상세·목록을 무효화해 재조회하면
+ *   `auctionPhaseOf` 가 `TERMINAL_STATUSES` 로 마감을 판정한다 — 화면이 스스로 "마감"으로 전이한다.
+ * ★ **잔액은 건드리지 않는다** — 취소는 입찰 0건일 때만 성공하므로 홀드가 없다(§3.1).
+ * ★ 실패(`AUCTION_007`·`AUCTION_006`·`AUCTION_001`)는 호출부가 `error` 로 받아 문구를 낸다.
+ */
+export function useCancelAuction(auctionPublicId: string) {
+    const queryClient = useQueryClient()
+
+    return useMutation<AuctionCancelResponse, Error, void>({
+        mutationFn: () => cancelAuction(auctionPublicId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: auctionKeys.detail(auctionPublicId),
+            })
+            void queryClient.invalidateQueries({
+                queryKey: auctionKeys.browses(),
+            })
         },
     })
 }
