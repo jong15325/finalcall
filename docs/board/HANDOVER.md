@@ -1,7 +1,7 @@
 # 총괄(메인 세션) 핸드오버
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-07-21** (세션 마감 — 사용자 지시로 작성)
+갱신: **2026-07-21** (EPIC-FE-REBUILD 완료·푸시 반영 — 사용자 지시)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
 
@@ -9,119 +9,90 @@
 
 ## 지금 어디인가 — 한 문단
 
-이번 세션에서 **역할 분담이 재정의**됐다: **디자인 HTML 목업은 사용자가 다른 곳에서** 진행하고,
-**이 세션(총괄)은 그 확정 디자인 + 브랜드로 백엔드·프론트를 구현**한다. **서비스명 "장터" 확정**
-(로고·팔레트 `docs/game_ui/common`). **백엔드는 여전히 동결**이나, 이번에 **미래 백엔드 에픽 3종의
-정책·설계가 대거 확정/초안화**됐다 — 수수료 정산(**EPIC-CLOSING**, 정책 확정 D-101), 등급 제도
-(**EPIC-GRADE**, 초안 D-102, 포인트=경험치형 확정), 검색(**EPIC-SEARCH**, 초안). 전부 **문서만**,
-구현·게이트2는 동결 해제 후. **EPIC-FE-REBUILD는 여전히 blocked** — 해제 조건이 바뀌었다:
-"사용자가 다른 곳에서 **디자인 확정 후 핸드오프**".
+**EPIC-FE-REBUILD(KAN-73) 완료·푸시됨.** 사용자 목업(장터, Vuexy Bootstrap5)을 **정본으로 1:1 재구축**하고
+**색만 장터 브랜드**(navy `#16213a`/gold/orange)로 치환했다. Ecme 템플릿 513파일 폐기, 계약 인코딩 lib 49
+승계. **실연동 12화면 + 준비중 자리 4** 완성(FC-066~080, 15티켓 전건 done·review passed·보안 0건).
+**test 451/55 files·build 216 modules.** **백엔드는 여전히 동결** — 미래 백엔드 에픽 3종(EPIC-CLOSING
+수수료·EPIC-GRADE 등급·EPIC-SEARCH 검색)은 정책/spec만 확정된 채 구현 대기다.
 
 ---
 
 ## 이어받는 법 (새 세션)
 1. `CLAUDE.md` 섹션 8~13(오케스트레이션·게이트·티켓·Jira·커밋 + 보안 층) 숙지.
-2. 이 파일 + `git log --oneline -20` + `git status`.
-3. 메모리 `brand-identity`(장터) 확인.
-4. **새 spec 3종** 훑기: `docs/spec/fee-policy-spec.md`(확정) · `grade-tier-spec.md`(초안) · `search-spec.md`(초안).
-5. 프론트 재구축 입력 = `docs/ux/design-brief.md`(페이지 인벤토리·계약정합·404·승계발견).
-6. 아래 "다음 수"로 진행.
+2. 이 파일 + `git log --oneline -25` + `git status`.
+3. 메모리 `brand-identity`(장터) · `mockup-fidelity-only-fix`(목업 그대로·색만 브랜드) 확인.
+4. 프론트 계약 성경 = `docs/ux/rebuild-contract-map.md`(§2.9 색·팔레트 원칙 포함) · `docs/ux/design-brief.md`.
+5. 아래 "다음 수"로 진행.
 
 ---
 
-## ★ 역할 분담 (이번 세션 확정)
+## ★ 완료된 것 — EPIC-FE-REBUILD (2026-07-21)
 
-| | 담당 |
-|---|---|
-| **디자인 HTML 목업** | **사용자** (다른 곳에서). 이 세션은 `D:\web_template\...\game-market` 목업을 **더 건드리지 않는다** |
-| **백엔드 · 프론트엔드 구현** | **이 세션** (총괄 + 에이전트), 레포 `finalcall/` |
+- **정본**: 사용자 목업 `D:\web_template\vuexy-admin-v10.7.0 - test\...\game-market\`(레포 밖, 읽기 전용).
+  핸드오프 = `HANDOVER_FULLSTACK.md`. 프론트 계약 매핑 = `docs/ux/rebuild-contract-map.md`(FC-066).
+- **실연동 12화면**: 홈·경매목록·경매상세+입찰·판매·로그인·회원가입·마이·지갑·인벤토리·임시보관·아이템상세·비교.
+- **준비중 자리 4**(백엔드 미구현·미호출·정직한 "준비 중"): 고정가 마켓·커뮤니티·충전·알림.
+- **핵심 방어**: FC-064 함정 6건(모달 초점·금액 덮어쓰기·마감 클라판정 등)·교환 Idempotency-Key·returnUrl
+  sanitize·탈퇴 명시동의·마스킹 격리(`isOwnAuction` 1지점).
+- **검수**: 경매 축(070~073)·마이/인증/비교/자리 축(074~080) reviewer 전부 PASSED(결함 0). 리뷰 기록
+  `docs/board/reviews/FC-067-068·FC-070-073·FC-074-080-review.md`.
+- **색·팔레트 원칙(§2.9)**: 구조=목업 1:1, 색=장터 브랜드. 목업의 Vuexy 기본색(#3867df 등)은 브랜드 아님 → 치환.
 
-즉 디자인이 확정되면 그걸 정본 삼아 여기서 실제 React 프론트(EPIC-FE-REBUILD)와 백엔드를 구현한다.
+### 원격 CI 결과 (push 후)
+- master push Security 워크플로 = **success**(단, `npm-audit`이 `continue-on-error` 리포트 전용).
+- **npm audit 5건**(1 critical vitest-UI·1 high vite dev서버·3 moderate esbuild) — **전부 dev/test 툴체인,
+  프로덕션 빌드 무관.** 수정은 major 파괴 변경(vitest 4·vite 8) 필요 → dependabot PR #9(vite 8)·#10(react-dom) 실패(파괴적).
+- LLM `claude-security-review` CI 잡은 **PR 전용 + `CLAUDE_API_KEY` 시크릿 필요** → master 직접 커밋인 이번 push엔 미실행.
+  (로컬 `/security-review`로 에픽 diff 이미 커버 — 0건.)
 
 ---
 
-## ★ 브랜드 — 장터 (확정)
-
-- **서비스명 = 장터**(코드베이스명 `finalcall`과 별개). 목업의 "르아크 거래소"·"FinalCall" 표기 대체.
-- **로고**: `docs/game_ui/common/` — `logo.png`(마크: 오렌지 경매봉+SP 앤빌·앱마크), `logo2.png`(라이트용
-  네이비 워드마크 락업), `logo_full.png`(다크용 골드 워드마크 배너).
-- **팔레트**: 네이비 `#16213a` · 골드/탄 · **오렌지 `#ef8a2c`**(경매봉·SP). SP=원게임 Survival Project.
-- 이 게임 원본 기반 정체성이 **비-AI 차별화 앵커**다. 프론트 재구축 시 정본. 종전 퍼플 팔레트
-  (`PRODUCT.md`·`DESIGN.md` 잔재) **무효**. 메모리 `brand-identity`.
+## ★ 브랜드 — 장터 (확정, 프론트에 적용됨)
+- 서비스명 **장터**. 로고 `docs/game_ui/common/`(logo2=워드마크·logo=심볼). 팔레트 네이비 `#16213a`·골드·오렌지 `#ef8a2c`.
+- **아이템 프레임/골드포스**: 목업 투명 PNG 오버레이 방식 채택(`docs/game_ui/item_info/frames/` 5장 tracked). 종전 CSS 재구성 폐기.
 
 ---
 
-## ★ 미래 백엔드 에픽 3종 (전부 동결 · 구현 이연 · 게이트2 대기)
+## ★ 미래 백엔드 에픽 3종 (전부 동결 · 구현 대기 · 게이트2 대기)
 
-### EPIC-CLOSING — 수수료/정산 (**정책 확정**, D-101)
-- 정본 `docs/spec/fee-policy-spec.md` v1.0. **판매자 단독 · 판매가 구간별 누진 6/5/4/3% · 최소 100/cap
-  300,000 G · 과세 생략 · `settle = final − fee`(사업자 귀속) · 취소·유찰 0(SOLD 시만) · 원단위 사사오입**.
-- `erd` v1.2 · `api-contract` v1.11 반영(기존 `fee_amount`/`settle_amount` 컬럼 재사용, 스키마 무변경).
-- **목업에도 실계산 반영됨**(판매등록·경매상세·지갑). 검산 일치(P=2,480,000 → fee 110,200 · settle 2,369,800).
-- 구현 유의: 누진 계산은 SOLD 정산 TX 내부 1회, 순서 = 누진→반올림→cap→최소, money_hold CAPTURED와 분개.
+### EPIC-CLOSING — 수수료/정산 (**정책 확정**, D-101) ← 가장 준비됨
+- 정본 `docs/spec/fee-policy-spec.md` v1.0. 판매자 단독·구간별 누진 6/5/4/3%·최소 100/cap 300,000·`settle=final−fee`.
+- **프론트 판매화면(FC-073)에 예상 계산 이미 반영**(검산 일치). 스키마 컬럼(`fee_amount`/`settle_amount`) 존재.
+- 구현 유의: 누진 계산 SOLD 정산 TX 1회, 순서=누진→반올림→cap→최소, money_hold CAPTURED 분개.
 
 ### EPIC-GRADE — 등급 제도 (**초안**, D-102)
-- 정본 `docs/spec/grade-tier-spec.md` v0.1. **거래 기반 포인트 → 등급 → 혜택 조합**.
-- 확정: **포인트 = 경험치형(소진 없음)** · 판매 1.0/구매 0.5 **비대칭** 적립 · **5단계 지수 등급** · 혜택 =
-  수수료 할인(fee 베이스에 등급 계수 −0.25~−1.0%p 평행 인하)+배지+우선노출 · 회수=롤백+Soft Landing.
-- 게이트2 8항목(적립배수·등급경계·수수료계수·시점·부스트폭·강등파라미터·**스키마 `user`+`point_ledger`**·계약필드).
+- 정본 `docs/spec/grade-tier-spec.md` v0.1. 포인트=경험치형·판매1.0/구매0.5·5단계·수수료 할인 혜택.
+- 게이트2 8항목(적립배수·등급경계·수수료계수·시점·부스트·강등·스키마 `user`+`point_ledger`·계약필드).
 
 ### EPIC-SEARCH — 검색 (**초안**)
-- 정본 `docs/spec/search-spec.md` v0.1. **단계적 표준안: MySQL FULLTEXT `q` MVP → ES/OpenSearch 승격**.
-- 아키텍처: **MySQL=SoT · ES=파생 read-model · Outbox/CDC + 멱등 upsert · dual-write 금지 · alias 무중단
-  재색인** · 한글 **nori+ngram** · **function_score 등급 부스트** · 패싯.
-- 게이트2: 계약축 **C1~C3**(`q` 파라미터·relevance 정렬) / 인프라축 **A1~A5**(ES·엔진·동기·부스트·재색인).
-
-**상호 연결**: GRADE 우선노출 → SEARCH의 `sellerGrade` function_score 부스트로 구현 · GRADE 적립·수수료
-할인 → CLOSING SOLD 정산 동일 TX. 셋 다 백엔드 동결 해제 시 게이트1 분해 + 게이트2 상신.
-
----
-
-## 프론트 (EPIC-FE-REBUILD) — 여전히 blocked
-
-- **해제 조건 = 사용자가 디자인 확정 후 핸드오프**(종전 "목업 도착"에서 재정의). 그때 → 기존 프론트 폐기
-  (318 폐기 / 45 보존 목록은 `docs/board/epics/EPIC-FE-REBUILD.md`에 유효) → 티켓 분해 → **게이트1 상신**
-  → frontend-impl 빌드(**장터 브랜드·팔레트 적용**).
-- `docs/ux/design-brief.md`(이번 세션 신설) = 페이지 인벤토리·계약정합·**404 목록**·승계 발견 — 빌드 입력.
-- 목업(`game-market`)은 이번 세션에 계약버그 수정 + 수수료 반영을 넣었으나, **이제 사용자 소유**라 참조만.
+- 정본 `docs/spec/search-spec.md` v0.1. MySQL FULLTEXT MVP → ES 승격, Outbox/CDC·alias 무중단 재색인.
+- 게이트2: 계약축 C1~C3 / 인프라축 A1~A5.
 
 ---
 
 ## 백엔드 — 동결 유지
 **235 테스트 / 실패 0.** 구현 컨트롤러: Auction·Auth·Bid·Exchange·Inventory·ItemInstance·ItemTemplate·Member·Notice.
-**미구현(화면 호출 시 404)**: `/shops`·`/market-prices`·`/me/orders`·`/charges`·`/admin/*`·`/auctions/{id}/purchase`.
-정산·마감·주문·즉시구매 = EPIC-CLOSING 소유(미구현).
+**미구현(프론트에서 준비중 자리로 처리)**: `/shops`(고정가 마켓)·`/charges`(충전)·커뮤니티 CRUD·`/notifications`(알림)·
+`/auctions/{id}/purchase`(즉시구매)·OAuth·이메일 인증·슬롯 확장.
 
 ---
 
-## 승계된 발견 (FC-064) — 프론트 재구축이 다시 만날 함정
-전문 `docs/board/reviews/FC-064-review.md`. 요지: ①모달 초점 강탈(매초 리렌더+인라인 콜백→ref+`[open]`)
-②금액 입력 하향 덮어쓰기 금지(미만일 때만 상향) ③비활성은 DOM 속성(`disabled`/`aria-disabled`) ④마감은
-**클라 `now>=endAt` 판정**(서버 status 못 믿음, `resultType` 항상 null) ⑤배럴에 무거운 형제 금지 ⑥`<form
-noValidate>` ⑦모바일 우선(`min-w-0`·`grid-cols-1` 시작).
-
----
-
-## 계약 핵심 사실 (design-brief 참조)
-- item 블록 **12필드에 등급/희귀도 없음**(레전드/유니크는 데이터 출처 없음 — 목업 표시용일 뿐, D-073 등급축 제거).
-- `minNextBidAmount` 서버 파생(증분표 클라 복제 금지) · element=물불흙바람 · sort에 bidCount 없음(인기순 불가) ·
-  q 없음(자유문 검색=EPIC-SEARCH) · 스킬 이름은 아이템 상세에만(경매 상세는 `스킬 #{code}`).
-- **마스킹 게이트2 미결**: 계약 §3.3 "판매자 마스킹" vs 구현 `sellerNickname` 원문 노출.
+## 이월 미결 (문서로 추적 · 백엔드 동결 해제/게이트2 시 수렴)
+- **마스킹 게이트2**: 계약 §3.3 판매자 마스킹 vs 구현 `sellerNickname` 원문. 프론트는 `isOwnAuction` 1지점 격리(교체 용이).
+- **토큰 저장소**: localStorage → httpOnly 쿠키+CSRF(미결4). 현행 백엔드가 토큰을 응답 바디로 줘 무변경 불가 → 백엔드 변경 선행.
+- **location enum 문구 정정**: `design-brief §B-11`의 `AUCTION`→실측 `LISTED`(architect, 백엔드 무변경).
+- **dev 툴체인 취약점**: vitest/vite dev 서버(critical/high, prod 무관). vitest4·vite8 파괴적 업그레이드 필요(dependabot PR 대기).
+- **LLM 보안 CI 미가동**: PR 워크플로 도입 + `CLAUDE_API_KEY` 시크릿 추가해야 원격 LLM 리뷰 발동(현재 master 직접 커밋).
+- **운영 DB 시드 오염**(데모 계정·경매 20건 부팅 유입 — 프로파일별 시드 분리).
 
 ---
 
 ## 다음 수
-1. **사용자 "출근" 후 지시 대기** — 둘 중 하나:
-   - **(a) 디자인 확정 핸드오프 → 프론트 착수**: 폐기 → 티켓 분해 → 게이트1 → frontend-impl(장터 브랜드).
-   - **(b) 백엔드 착수**: 동결 해제 결정 + 게이트1 분해 + 게이트2 상신. 후보 = EPIC-CLOSING(정책 확정돼 가장 준비됨) → GRADE → SEARCH.
-2. 백엔드 착수 시 EPIC-CLOSING부터가 자연스럽다(수수료 정책 확정 + 스키마 컬럼 존재).
-
----
-
-## 미결 (동결 해제 시 게이트2)
-- EPIC-CLOSING 구현(누진 계산·cap·money_hold 순서) · EPIC-GRADE 8항목 · EPIC-SEARCH 계약/인프라 ·
-  마스킹 게이트2 · 빌드 툴체인 지위 · **운영 DB 시드 오염**(데모 계정 BCrypt·게임머니·경매 20건이 부팅과
-  동시 운영 유입 — 프로파일별 시드 분리) · 토큰 저장소(localStorage→httpOnly 쿠키+CSRF).
+1. **사용자 "출근" 후 지시 대기** — 후보:
+   - **(a) 백엔드 동결 해제 → EPIC-CLOSING**: 정책 확정·스키마·프론트 예상계산 존재로 가장 준비됨. 게이트1 분해 + 게이트2 상신.
+   - **(b) 이월 미결 정리**: 마스킹 게이트2 결정 · dev deps 위생(vitest4/vite8) · PR 워크플로+CLAUDE_API_KEY로 LLM CI 가동.
+   - **(c) EPIC-GRADE / EPIC-SEARCH** 게이트2 항목 확정.
+2. 백엔드 착수 시 EPIC-CLOSING부터가 자연스럽다.
 
 ---
 
@@ -129,28 +100,20 @@ noValidate>` ⑦모바일 우선(`min-w-0`·`grid-cols-1` 시작).
 ```bash
 docker start finalcall-mysql finalcall-redis     # 재부팅 시 내려감(볼륨 보존)
 # 백엔드: IntelliJ FinalcallApplication (local, JDK 21 C:\Users\howee\.jdks\ms-21.0.11), Flyway V1~V13 자동
+# 프론트: cd frontend && npm run dev  (predev=sync-assets 크로마키+브랜드 복사, localhost:5173, /api→8080 프록시+X-Gateway-Token)
 ```
 - **함정 A — 시드 시각 되돌리기**: V13 주석 [B]의 재적용 SQL 4문장(안 하면 카운트다운 전부 "마감").
-- **함정 B — 아트 크로마키**: 아이템 PNG는 알파 없음(colorType 2)·네 귀퉁이 `#0000FF`. `predev`/`prebuild`가
-  복사본만 RGBA 변환. **새 프론트도 이 처리 필요.**
-- **⚠ Flyway 체크섬**: `V11` 커밋 후 편집 이력 — 적용된 DB는 `flyway repair` 없이 부팅 실패 가능(FC-035 m9).
-
----
-
-## 이번 세션 산출물 (git 미커밋 — 사용자 커밋/푸시)
-- 신규: `docs/spec/fee-policy-spec.md` · `docs/spec/grade-tier-spec.md` · `docs/spec/search-spec.md` · `docs/ux/design-brief.md`
-- 수정: `docs/spec/erd.md`(v1.2) · `docs/spec/api-contract.md`(v1.11) · `docs/management/decision-log.md`(D-101·D-102) · `decision-index.md` · **이 HANDOVER**
-- 목업(레포 밖, 사용자 소유): `game-market` 계약버그 수정 + 수수료 실계산 반영
-- 메모리: `brand-identity` 신설
+- **함정 B — 아트 크로마키**: 아이템·프레임 PNG는 알파 없음(colorType 2)·네 귀퉁이 `#0000FF`. `predev`/`prebuild`가
+  복사본만 RGBA 변환. **프론트도 이 처리 필요(sync-assets).**
+- **⚠ Flyway 체크섬**: `V11` 커밋 후 편집 이력 — `flyway repair` 없이 부팅 실패 가능(FC-035 m9).
 
 ---
 
 ## 교훈 (이번 세션 추가)
-1. **레퍼런스 먼저, 수치는 그 위에.** 수수료·등급·검색 전부 실제 서비스(아이템매니아 5%·StockX 레벨·배민 ES
-   9.4x 등) 근거로 설계했다. 사용자가 반복해 "레퍼런스 꼭 찾아서"를 요구했다 — 근거 없는 수치를 만들지 말 것.
-2. **자리는 있고 정책만 없던 것**: 수수료는 `sale_order.fee_amount`가 이미 예약(ON-HOLD)돼 있었다. 새 기능
-   제기 시 **먼저 레포를 grep**해 이미 심어진 씨앗을 찾을 것(등급도 CLAUDE "보유 포인트"에 씨앗).
-3. **동결 중에도 설계는 진행된다.** 백엔드 동결이라 구현은 못 해도 정책·spec·게이트2 항목 분리는 미리 확정해
-   두면 동결 해제 시 바로 게이트1로 간다.
-4. **역할 경계 존중**: 사용자가 디자인을 가져가면 그 파일을 더 건드리지 않는다. 동시 편집 파일은 덮어쓰기 금지·
-   정확일치 Edit만(이번에 목업 편집 시 준수).
+1. **목업이 정본, 색만 브랜드.** 사용자가 "목업 그대로·오류만 수정" 지시 → 구조는 1:1 이식, 색은 장터 브랜드로 치환(§2.9).
+   에이전트가 카드 종류·필터를 임의 변경/추가한 이탈은 총괄이 market.css 실측으로 잡아 되돌렸다.
+2. **화면마다 목업 카드 레이아웃이 다르다.** 공용은 ItemFrame(이미지 영역), 카드 래퍼는 화면별(마켓=세로·경매=가로).
+   "카드=ItemCard" 식 과잉 제약이 이탈을 유발했다 — 화면 티켓엔 "해당 목업 뷰 그대로"로 지시.
+3. **에이전트가 목업 접근 실패 시 재구성하지 말고 총괄에 경로 요청.** FC-070이 접근 실패→재구성했다가 총괄이 실제 #home 인라인 전달로 재정렬.
+4. **미구현은 정직한 자리.** 가짜 데이터로 채우지 않는다(홈 공지 스켈레톤 폴리시). 미구현 엔드포인트 호출 0(FC-048).
+5. **밀스톤 단위 리뷰**가 효율적이다(티켓마다 reviewer 팬아웃은 과함). 토대·경매·마이 축으로 묶어 검수.
