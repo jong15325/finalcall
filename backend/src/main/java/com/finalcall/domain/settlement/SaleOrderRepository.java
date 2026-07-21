@@ -12,7 +12,7 @@ import com.finalcall.common.exception.ErrorCode;
  * clear 한 뒤 실행되므로(bid-domain-spec §4.2) 연관을 {@code getReferenceById} 프록시로 채운다. {@code saveAndFlush}
  * 로 {@code (source_type, source_id)} UK 위반(이중 SOLD)을 이 시점에 표면화한다(I-C, ExchangeWriter 선례).
  */
-public interface SaleOrderRepository extends JpaRepository<SaleOrder, Long> {
+public interface SaleOrderRepository extends JpaRepository<SaleOrder, Long>, SaleOrderRepositoryCustom {
 
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default SaleOrder findByIdOrThrow(Long id, ErrorCode errorCode) {

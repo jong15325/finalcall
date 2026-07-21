@@ -188,6 +188,45 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
         + "AND a.endAt <= :now")
     int markUnsoldIfClosable(@Param("id") Long id, @Param("now") Instant now);
 
+    /**
+     * ★ 즉시구매 직렬화의 진입점(purchase-spec §3.2 1단계) — 경매 행에 배타 락을 걸고 판정에 필요한 값만 읽는다.
+     * {@code SELECT ... FROM auction WHERE public_id = ? FOR UPDATE} 로 나가며, 이 락은 <b>입찰·마감과 동일 행</b>을
+     * 잡으므로(bid-domain-spec §4.1 · closing-domain-spec §3.2) 세 경로가 한 행에서 직렬화된다 — 진행 중 입찰 뒤에서
+     * 대기하고, 락을 얻으면 그 입찰이 반영된 최신 {@code highest_bidder_id}·{@code end_at} 를 본다.
+     *
+     * <p>엔티티가 아닌 스칼라 프로젝션을 반환하는 이유는 {@link AuctionPurchaseContext} 참조. 연관을
+     * {@code a.seller.id} 등으로 읽어 조인이 생기지 않으므로 {@code FOR UPDATE} 가 단일 테이블 잠금으로 유지된다.
+     *
+     * @return 락을 획득한 경매의 값 스냅샷. 없으면 비어 있다(→ AUCTION_004)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT new com.finalcall.domain.auction.AuctionPurchaseContext("
+        + "a.id, a.seller.id, a.status, a.startAt, a.endAt, a.buyNowPrice, a.itemInstance.id, "
+        + "a.highestBidder.id, a.highestBidAmount) "
+        + "FROM Auction a WHERE a.publicId = :publicId")
+    Optional<AuctionPurchaseContext> findPurchaseContextForUpdate(@Param("publicId") String publicId);
+
+    /**
+     * 즉시구매 종료성 CAS(purchase-spec §3.2 8단계 · §3.3) — SCHEDULED|ACTIVE 이고 <b>아직 마감 전</b>일 때만 SOLD 로
+     * 단일 승자 전이하며 {@code result_type='BUYNOW'} 를 세팅한다. 시간 조건이 {@code end_at > now}(live)라 마감 워커의
+     * {@code markSoldIfClosable}({@code end_at <= now}, expired)과 <b>시간축을 배타 분할</b>한다: 오배선·경합으로 두
+     * 경로가 같은 경매를 노려도 시간 조건 자체가 한쪽만 성립시킨다(status 가드 위에 방어 한 겹 추가).
+     *
+     * <p>즉시구매는 최고입찰자를 낙찰시키지 않으므로 {@code highest_bidder}·{@code highest_bid_amount} 는 세팅하지
+     * 않는다(진행 최고입찰은 별도로 홀드 해제·OUTBID 강등된다). 영향행 0 = "이미 종결됨"(다른 구매자·마감이 선점) →
+     * 재검증이 앞서므로 정상 경로에서 이 CAS 는 항상 1행이며, 0행이면 호출 측이 불변식 위반으로 롤백한다.
+     *
+     * @return 영향 행 수(1=전이 성공, 0=이미 종결·경합 패배)
+     */
+    @Modifying
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.SOLD, "
+        + "a.resultType = com.finalcall.domain.auction.AuctionResultType.BUYNOW "
+        + "WHERE a.id = :id "
+        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.endAt > :now")
+    int markSoldBuyNowIfLive(@Param("id") Long id, @Param("now") Instant now);
+
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default Auction findByIdOrThrow(Long id, ErrorCode errorCode) {
         return findById(id).orElseThrow(() -> new BusinessException(errorCode));

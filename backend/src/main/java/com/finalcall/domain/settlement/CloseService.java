@@ -18,11 +18,6 @@ import com.finalcall.domain.currency.MoneyHoldService;
 import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
-import com.finalcall.domain.item.ItemOwnershipHistory;
-import com.finalcall.domain.item.ItemOwnershipHistoryRepository;
-import com.finalcall.domain.item.TransferType;
-import com.finalcall.domain.member.UserBalanceRepository;
-import com.finalcall.domain.member.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,13 +46,9 @@ public class CloseService {
     private final BidRepository bidRepository;
     private final MoneyHoldService moneyHoldService;
     private final MoneyHoldRepository moneyHoldRepository;
-    private final UserBalanceRepository userBalanceRepository;
-    private final UserRepository userRepository;
     private final ItemInstanceRepository itemInstanceRepository;
-    private final ItemOwnershipHistoryRepository itemOwnershipHistoryRepository;
     private final InventoryService inventoryService;
-    private final SaleOrderRepository saleOrderRepository;
-    private final PlatformRevenueLedgerRepository platformRevenueLedgerRepository;
+    private final SettlementRecorder settlementRecorder;
     private final FeeCalculator feeCalculator;
     private final FeePolicyProperties feePolicy;
 
@@ -96,9 +87,10 @@ public class CloseService {
     }
 
     /**
-     * 낙찰(SOLD) 정산(§4.1) — 낙찰 bid WON · 홀드 CAPTURED · 판매자 크레딧 · sale_order · 수익 원장 · 아이템 이전.
-     * 실행 순서는 PC clear 함정과 FK 의존을 함께 만족한다: 잔액 갱신(PC clear) 뒤 fresh INSERT/CAS 만 수행하고,
-     * sale_order INSERT 를 수익 원장·소유 이력보다 앞세워 그 id 를 참조하게 한다.
+     * 낙찰(SOLD) 정산(§4.1) — 마감 고유 <b>머리</b>(낙찰 bid WON · 홀드 CAPTURED)만 여기서 처리하고, 판매자
+     * 크레딧부터의 공통 꼬리는 {@link SettlementRecorder} 에 위임한다(purchase-spec §6-A). 실행 순서는 PC clear
+     * 함정과 FK 의존을 함께 만족한다: 홀드 capture(PC clear) 뒤 recorder 가 fresh INSERT/CAS 만 수행하고, 마감 고유
+     * 종료성 CAS(result_type=BID)로 닫는다.
      */
     private void settleSold(AuctionCloseContext auction, Instant now) {
         // 판정 근거는 잔액 호출 전에 전부 지역 변수(long/Long)로 복사한다 — PC clear 의 사정권 밖.
@@ -127,47 +119,12 @@ public class CloseService {
         // (4) 홀드 확정 차감(HELD→CAPTURED + 실차감). ★ 이 호출 이후 영속성 컨텍스트는 비어 있다.
         moneyHoldService.capture(win.bidId(), now);
 
-        // (5) 판매자 정산 지급(게임머니 크레딧). 0행 = 잔액 행 부재 = 불변식 위반.
-        Preconditions.validate(
-            userBalanceRepository.increaseGameMoney(sellerId, settle) == 1,
-            SettlementErrorCode.SETTLEMENT_SELLER_CREDIT_FAILED);
+        // (5) 정산 공통 꼬리(판매자 크레딧 → sale_order → 수익 원장 → 아이템 이전 → 소유 이력)를 recorder 에 위임.
+        settlementRecorder.record(
+            SaleOrderSourceType.AUCTION, auctionId, winnerId, sellerId, itemInstanceId, price, fee, settle, version,
+            now);
 
-        // (6) 거래 레코드. (source_type, source_id) UK 가 동일 경매 이중 SOLD 를 여기서 차단한다(I-C). id 획득.
-        SaleOrder order = saleOrderRepository.saveAndFlush(SaleOrder.builder()
-            .sourceType(SaleOrderSourceType.AUCTION)
-            .sourceId(auctionId)
-            .buyer(userRepository.getReferenceById(winnerId))
-            .seller(userRepository.getReferenceById(sellerId))
-            .itemInstance(itemInstanceRepository.getReferenceById(itemInstanceId))
-            .finalPrice(price)
-            .feeAmount(fee)
-            .settleAmount(settle)
-            .feePolicyVersion(version)
-            .settledAt(now)
-            .build());
-        Long orderId = order.getId();
-
-        // (7) 사업자 수익 적립(④-C). sale_order_id UK 가 수수료 이중 적립을 차단한다(I-H 정합). fee 는 재계산 없음.
-        platformRevenueLedgerRepository.saveAndFlush(PlatformRevenueLedger.builder()
-            .saleOrder(saleOrderRepository.getReferenceById(orderId))
-            .amount(fee)
-            .feePolicyVersion(version)
-            .build());
-
-        // (8) 아이템 소유 이전(owner→winner, LISTED→INVENTORY/만실 TEMP). 별도 빈 경유(self-invocation 아님).
-        inventoryService.transferListedToBuyer(itemInstanceId, winnerId);
-
-        // (9) 소유 이력 append(TRADE, sale_order_id). TransferType.TRADE 첫 사용(§4.4).
-        itemOwnershipHistoryRepository.saveAndFlush(ItemOwnershipHistory.builder()
-            .instanceId(itemInstanceId)
-            .fromOwnerId(sellerId)
-            .toOwnerId(winnerId)
-            .transferType(TransferType.TRADE)
-            .saleOrderId(orderId)
-            .transferredAt(now)
-            .build());
-
-        // (10) 경매 종료 전이(종료성 CAS). status·result_type 만 세팅(highest_* 는 입찰 TX 가 세팅 — 덮지 않음).
+        // (6) 경매 종료 전이(종료성 CAS). status·result_type=BID 만 세팅(highest_* 는 입찰 TX 가 세팅 — 덮지 않음).
         Preconditions.validate(
             auctionRepository.markSoldIfClosable(auctionId, now) == 1,
             SettlementErrorCode.SETTLEMENT_TERMINAL_TRANSITION_FAILED);
