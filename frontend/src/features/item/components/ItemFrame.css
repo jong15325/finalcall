@@ -1,0 +1,257 @@
+/*
+ * ItemFrame 외형 (FC-068 — item-frame.css 계약 흡수).
+ *
+ * ★ 정본 좌표·색은 목업 `item-frame.css` 에서 실측 채취했다(카드 외형 정본, rebuild-contract-map §6.1).
+ *   흡수 범위는 **계약 데이터가 뒷받침하는 것**뿐이다 — item-sprite-stage 배경·정수배 픽셀 아트·
+ *   골드포스/일반(STANDARD) 프레임·잔여일 슬롯·스킬 마크·광택(reduced-motion 정지).
+ * ★ **보류(§6.2 사용자 결정 대기)**: 투명 PNG 프레임 오버레이(`gold-Photoroom.png`)·숫자 스프라이트
+ *   글리프·PNG 마스크 광택. 이들은 프레임 자산의 크로마키 파이프라인 확장을 요구하므로 이 티켓에서
+ *   흡수하지 않고, 계약이 뒷받침하는 CSS 프레임(§5.12 실측색)으로 렌더한다.
+ *
+ * ※ 화폐/텍스트 토큰 등 유틸리티는 Tailwind 로 두고, 프레임 고유 좌표만 이 파일에 둔다.
+ * ※ vitest 는 `css:false` 로 이 파일을 무시한다(클래스 문자열만 검증).
+ */
+
+/* 공용 프레임 캔버스 = 72×134px. 페이지별 변경 금지(§6.1). */
+.item-frame {
+    --item-frame-width: 72px;
+    --item-frame-height: 134px;
+    position: relative;
+    display: inline-block;
+}
+
+/* 스테이지(이미지 영역) — size 로 외부 크기만 바뀌고 내부 프레임 비율은 불변(§6.1). */
+.item-frame__stage {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(145deg, #263343 0%, #131c29 100%);
+    transition:
+        background 0.24s ease,
+        box-shadow 0.24s ease;
+}
+
+/* 카드용 스테이지 — 부모 폭을 채우고 72×134 프레임을 가운데 둔다. */
+.item-frame--stage .item-frame__stage {
+    width: 100%;
+    min-height: 168px;
+    padding: 12px 0;
+}
+
+/* 인벤토리 타일 — 스테이지가 곧 프레임 크기(72×134). */
+.item-frame--frame .item-frame__stage {
+    width: var(--item-frame-width);
+    height: var(--item-frame-height);
+}
+
+/* 원본 아트를 저채도·저명도·블러로 재사용한 배경 에코(§6.4). --item-sprite 는 prop 주입. */
+.item-frame__stage::before {
+    position: absolute;
+    z-index: -1;
+    inset: -18px;
+    content: '';
+    pointer-events: none;
+    background-image:
+        radial-gradient(
+            circle at 50% 42%,
+            rgba(122, 152, 193, 0.18),
+            transparent 52%
+        ),
+        linear-gradient(145deg, rgba(10, 18, 30, 0.18), rgba(3, 8, 15, 0.58)),
+        var(--item-sprite, none);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size:
+        auto,
+        auto,
+        156px auto;
+    filter: saturate(0.42) brightness(0.48) contrast(1.08) blur(3px);
+    opacity: 0.48;
+    transform: scale(1.14);
+    transition:
+        opacity 0.24s ease,
+        filter 0.24s ease,
+        transform 0.24s ease;
+}
+
+.item-frame__stage::after {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at 50% 40%,
+        transparent 20%,
+        rgba(2, 8, 16, 0.54) 100%
+    );
+}
+
+/* 72×134 프레임 박스 — 페이지 불변(§6.1). */
+.item-frame__art {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--item-frame-width);
+    height: var(--item-frame-height);
+    padding: 2px;
+    transition:
+        transform 0.24s ease,
+        filter 0.24s ease;
+}
+
+/* 정수배 픽셀 아트 — 비정수 확대 금지(§6.2). */
+.item-frame__art-img {
+    display: block;
+    image-rendering: pixelated;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+/* 자산 부재(범위 밖 레벨·미등록 조합)는 플레이스홀더로 폴백(404 이미지 금지, §6.2). */
+.item-frame__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    color: rgba(180, 200, 224, 0.55);
+}
+
+/* ── 프레임 종류 (계약 데이터 = 골드포스 / 그 외 STANDARD) ───────────────────────── */
+
+/* 일반/블랙 — 중립 2겹 프레임(item-frame.css .is-standard 실측색). */
+.item-frame__art.is-standard {
+    border: 1px solid #171918;
+    background: #77736b;
+}
+
+/* 골드포스 — gold.png 아웃라인에서 채취한 4변 색 + 대각 골드 그라디언트(§5.12/§6.3). */
+.item-frame__art.is-goldforce {
+    border-top: 1px solid #987309;
+    border-right: 1px solid #cfaa2e;
+    border-bottom: 1px solid #9d7c10;
+    border-left: 1px solid #faf172;
+    background: linear-gradient(
+        135deg,
+        #764100 0%,
+        #b9a837 34%,
+        #fffc7f 58%,
+        #beaf3c 78%,
+        #bc8b14 100%
+    );
+}
+
+/* 광택 — 1.5~2.4초 대각 반사선. reduced-motion 에서 정지(§6.3 접근성). */
+.item-frame__art.is-goldforce::before {
+    position: absolute;
+    z-index: 6;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background: linear-gradient(
+        135deg,
+        transparent 46%,
+        rgba(255, 255, 255, 0.5) 50%,
+        transparent 54%
+    );
+    background-size: 250% 250%;
+    background-position: -120% -120%;
+    animation: itemframe-goldshine 2.4s linear infinite;
+}
+
+@keyframes itemframe-goldshine {
+    0% {
+        background-position: -120% -120%;
+    }
+    100% {
+        background-position: 120% 120%;
+    }
+}
+
+/* 블랙(STANDARD)에는 광택 미적용(HANDOVER_ITEM_CARD 규칙). */
+@media (prefers-reduced-motion: reduce) {
+    .item-frame__art.is-goldforce::before {
+        animation: none;
+    }
+}
+
+/* ── 오버레이 · 잔여일 · 스킬 마크 ──────────────────────────────────────────────── */
+
+/*
+ * 잔여일 슬롯 — 좌상단, 배경 #592400, 3자리(§6.3). 아트 위(z-index)에 뜨되
+ * 이미지 자체를 리사이즈하지 않는다(§3.1).
+ */
+.item-frame__days {
+    position: absolute;
+    top: 3px;
+    left: 2px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 15px;
+    padding: 0 3px;
+    background: #592400;
+    color: #f6d97a;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 스킬 마크(S) — 우상단. 계약은 존재 여부만 → S 마크만(SS 렌더 금지, §6.3). */
+.item-frame__skill {
+    position: absolute;
+    top: 3px;
+    right: 2px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 18px;
+    background: #171918;
+    color: #dfc447;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* 외부 액션(비교·구매) 오버레이 — 이미지 DOM **밖**의 별도 층(§3.1-4). */
+.item-frame__overlay {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 20;
+}
+
+/* ── hover — 개별 카드에만(부모 그리드로 전파 금지, §3.1) ────────────────────────── */
+.item-frame__stage:hover,
+.item-card:hover .item-frame__stage {
+    background: linear-gradient(145deg, #34465d 0%, #182536 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(180, 209, 244, 0.2),
+        inset 0 0 28px rgba(96, 143, 204, 0.14);
+}
+
+.item-frame__stage:hover::before,
+.item-card:hover .item-frame__stage::before {
+    filter: saturate(0.62) brightness(0.68) contrast(1.12) blur(2px);
+    opacity: 0.64;
+    transform: scale(1.19);
+}
+
+.item-frame__stage:hover .item-frame__art,
+.item-card:hover .item-frame__stage .item-frame__art {
+    transform: translateY(-3px) scale(1.035);
+    filter: drop-shadow(0 8px 9px rgba(3, 9, 19, 0.48));
+}
