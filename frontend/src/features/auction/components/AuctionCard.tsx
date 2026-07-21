@@ -9,6 +9,7 @@ import {
     type AuctionPhase,
 } from '@/features/auction/lib/auctionPhase'
 import { auctionPriceOf } from '@/features/auction/lib/auctionPrice'
+import CardCompareOverlay from './CardCompareOverlay'
 import Countdown from './Countdown'
 import type { AuctionSummary } from '@/lib/api/auctions'
 
@@ -85,6 +86,12 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                     hasSkill={hasSkill}
                     size="frame"
                     now={now}
+                    overlay={
+                        <CardCompareOverlay
+                            listingId={auction.auctionPublicId}
+                            name={item.nameSnapshot}
+                        />
+                    }
                 />
             </span>
 

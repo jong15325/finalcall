@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
+import CompareBar from '@/features/item/components/CompareBar'
 import Sidebar from './Sidebar'
 import TopNavbar from './TopNavbar'
 import MobileBottomNav from './MobileBottomNav'
@@ -50,6 +51,8 @@ function AppShell() {
                     © 2026 장터 · 안전한 게임 아이템 거래
                 </footer>
             </div>
+
+            <CompareBar />
 
             <MobileBottomNav />
         </div>

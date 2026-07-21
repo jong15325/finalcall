@@ -1,6 +1,7 @@
 import {
     useInfiniteQuery,
     useMutation,
+    useQueries,
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query'
@@ -129,6 +130,27 @@ export function useAuctionDetail(auctionPublicId: string) {
         queryKey: auctionKeys.detail(auctionPublicId),
         queryFn: ({ signal }) => getAuction(auctionPublicId, signal),
         refetchOnWindowFocus: true,
+    })
+}
+
+/**
+ * 비교 대상 경매 상세 묶음 (FC-079 — 클라 비교표).
+ *
+ * ★ 비교 스토어는 **참조(listingId)만** 갖는다. 표시 데이터는 여기서 `GET /auctions/{id}` 로
+ *   되받아 온다 — **상세 캐시(`auctionKeys.detail`)를 재사용**하므로 상세 화면을 거쳤거나 이미
+ *   비교 페이지를 연 적이 있으면 캐시 히트다. 스냅샷을 세션에 굳히지 않는 이유가 이 신선도다
+ *   (경매 가격·마감은 실시간이라 오래된 값을 비교하면 오도한다).
+ * ★ **가변 개수(0~3)라 `useQueries`** 를 쓴다 — 훅을 `.map` 으로 돌리면 규칙 위반이다.
+ * ★ **폴링하지 않는다**(`refetchOnWindowFocus:false`). 비교는 스냅샷 대조이지 실시간 추적이 아니다.
+ */
+export function useCompareAuctions(ids: string[]) {
+    return useQueries({
+        queries: ids.map((id) => ({
+            queryKey: auctionKeys.detail(id),
+            queryFn: ({ signal }: { signal: AbortSignal }) =>
+                getAuction(id, signal),
+            refetchOnWindowFocus: false,
+        })),
     })
 }
 
