@@ -3,7 +3,7 @@ id: EPIC-CLOSING
 type: epic
 jira_key: KAN-89
 title: 경매 마감·낙찰 정산 (수수료 에스크로)
-state: doing
+state: done
 children: [FC-081, FC-082, FC-083]
 gate: null
 ---
