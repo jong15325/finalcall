@@ -6,18 +6,22 @@ import {
 } from '@tanstack/react-query'
 import {
     cancelAuction,
+    createAuction,
     getAuction,
     getAuctionBids,
     getAuctions,
     placeBid,
 } from '@/lib/api/auctions'
 import { balanceKeys } from './balance'
+import { inventoryKeys } from './inventory'
 import type {
     AuctionCancelResponse,
     AuctionDetail,
     AuctionListQuery,
     AuctionSummary,
     BidSummary,
+    CreateAuctionRequest,
+    CreateAuctionResponse,
     PlaceBidResponse,
 } from '@/lib/api/auctions'
 import type { CursorPage, OffsetPage } from '@/types/api'
@@ -219,6 +223,32 @@ export function useCancelAuction(auctionPublicId: string) {
         onSuccess: () => {
             void queryClient.invalidateQueries({
                 queryKey: auctionKeys.detail(auctionPublicId),
+            })
+            void queryClient.invalidateQueries({
+                queryKey: auctionKeys.browses(),
+            })
+        },
+    })
+}
+
+/**
+ * 경매 등록 (계약 §3.1 `POST /auctions`) — FC-073.
+ *
+ * ★ 성공하면 아이템이 **인벤토리→출품 에스크로(LISTED)로 CAS 이동**한다(§3.1). 그래서
+ *   무효화 반경 = **인벤토리**(방금 출품한 아이템이 목록에서 빠져야 재선택 착시가 없다) +
+ *   **목록(`browses`)**(새 경매가 목록에 등장). 잔액은 건드리지 않는다 — 등록은 홀드가 없다.
+ * ★ **`previews`(홈)는 무효화하지 않는다** — 홈은 다른 화면·다른 수명이다(FC-059 가 키를 가른 이유).
+ * ★ 실패(`AUCTION_001~003`·`AUCTION_008`)는 호출부가 `error` 로 받아 문구를 낸다(`sellErrors.ts`).
+ *   성공 후 상세로의 이동은 호출부(SellPage)가 응답 `auctionPublicId` 로 처리한다.
+ */
+export function useCreateAuction() {
+    const queryClient = useQueryClient()
+
+    return useMutation<CreateAuctionResponse, Error, CreateAuctionRequest>({
+        mutationFn: (body) => createAuction(body),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: inventoryKeys.me(),
             })
             void queryClient.invalidateQueries({
                 queryKey: auctionKeys.browses(),

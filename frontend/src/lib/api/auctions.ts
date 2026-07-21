@@ -219,6 +219,53 @@ export function cancelAuction(
     )
 }
 
+/**
+ * `POST /auctions` 요청 (계약 §3.1) — FC-073.
+ *
+ * ★ **금액은 정수(long)**, 시각은 **ISO-8601 UTC(Instant)** 문자열이다. 화면의
+ *   `datetime-local` 로컬 문자열을 그대로 보내지 마라 — `features/auction/lib/sellForm.ts`
+ *   가 UTC ISO 로 변환한 값을 넣는다(계약 §1 시간 타입).
+ * ★ `startAt`·`buyNowPrice`·소프트클로즈 두 값은 **선택**이다. 미설정이면 키 자체를 빼서
+ *   보낸다(빈 문자열·0 을 보내면 서버 검증이 오작동할 수 있다).
+ */
+export interface CreateAuctionRequest {
+    itemInstancePublicId: string
+    startPrice: number
+    /** 즉시구매 참고가. 있으면 `> startPrice`(아니면 `AUCTION_003`) */
+    buyNowPrice?: number
+    /** 예약 시작 시각(ISO). 있으면 `≤ endAt` */
+    startAt?: string
+    /** 마감 시각(ISO). 필수, `> now` */
+    endAt: string
+    /** 마감 임박 연장 판단 창(초). 양수·상한 이내 */
+    softCloseWindowSec?: number
+    /** 1회 연장 시간(초). 양수·상한 이내 */
+    softCloseExtendSec?: number
+    /** 연장 상한 시각(ISO). 필수, `≥ endAt` */
+    maxEndAt: string
+}
+
+/** `POST /auctions` 201 (계약 §3.1). */
+export interface CreateAuctionResponse {
+    auctionPublicId: string
+    status: AuctionStatus
+    /** 생성된 마감 시각(요청 `endAt` 을 서버가 확정·반향) */
+    endAt: string
+}
+
+/**
+ * `POST /auctions` — **인증 필요**(등록자 = 판매자).
+ *
+ * ★ 실패는 `AUCTION_001`(미소유·미보유·미존재 403 단일) · `AUCTION_002`(이미 출품중 409) ·
+ *   `AUCTION_003`(buyNowPrice ≤ startPrice 422) · `AUCTION_008`(시간 파라미터 위반 422).
+ *   문구 매핑은 `features/auction/lib/sellErrors.ts`.
+ */
+export function createAuction(
+    body: CreateAuctionRequest,
+): Promise<CreateAuctionResponse> {
+    return apiClient.post<CreateAuctionResponse>('/auctions', body)
+}
+
 /*
  * ══════════════════════════════════════════════════════════════════════════════
  * ★★ **`POST /auctions/{id}/purchase`(즉시구매)를 여기에 만들지 마라.**
