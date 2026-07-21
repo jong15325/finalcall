@@ -35,3 +35,10 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+
+# FC-084: 로컬 데모 시드 러너(LocalDemoSeeder) on/off. local 전용 개발 유틸이라 기본 on.
+#   ★ 통합 테스트(@SpringBootTest)도 default 프로파일이 local 이라 이 러너가 뜨므로, 테스트 base 는
+#     demo.seed.enabled=false 로 내려 시드가 테스트 데이터에 개입하지 못하게 한다(운영은 프로파일 게이트로 차단).
+demo:
+  seed:
+    enabled: ${DEMO_SEED_ENABLED:true}

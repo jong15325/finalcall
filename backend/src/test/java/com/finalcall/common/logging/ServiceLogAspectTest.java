@@ -11,6 +11,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 
 import com.finalcall.support.TestcontainersConfiguration;
 
@@ -19,8 +20,10 @@ import com.finalcall.support.TestcontainersConfiguration;
  *
  * <p>@ServiceLog 부착 메서드가 AOP 프록시로 가로채져, slowMs 초과 시 WARN 으로 로깅되는지 확인한다.
  */
+// FC-084: 로컬 데모 시드 러너(LocalDemoSeeder)는 default 프로파일(local)에서 뜨므로 이 전체-컨텍스트 테스트에서 끈다.
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
+@TestPropertySource(properties = "demo.seed.enabled=false")
 @ExtendWith(OutputCaptureExtension.class)
 class ServiceLogAspectTest {
 

@@ -25,7 +25,10 @@ import org.springframework.test.web.servlet.MockMvc;
 //   차단 자체의 검증은 별도 GatewayAccessIntegrationTest 가 enforced=true 로 오버라이드해 수행한다.
 // EPIC-CLOSING: 마감 워커 배경 tick 을 끈다(closing.worker.enabled=false) — 배경 tick 이 테스트 데이터를
 //   비결정적으로 마감하지 못하게 하고, 마감 검증은 CloseWorker.sweepOnce()/CloseService.closeOne() 직접 호출로 한다.
-@TestPropertySource(properties = {"gateway.internal.enforced=false", "closing.worker.enabled=false"})
+// FC-084: 로컬 데모 시드 러너(LocalDemoSeeder)는 default 프로파일(local) 통합 테스트에서도 뜨므로 끈다 —
+//   시드가 테스트 데이터에 개입하면 픽스처·불변식 단언이 비결정적으로 깨진다.
+@TestPropertySource(properties = {
+    "gateway.internal.enforced=false", "closing.worker.enabled=false", "demo.seed.enabled=false"})
 public abstract class IntegrationTest {
 
     @Autowired
