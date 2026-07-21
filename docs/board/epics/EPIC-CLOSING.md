@@ -45,5 +45,9 @@ FC-083 reviewer   concurrency-review(마감·정산 동시성·불변식 I-A~I-H
 - **★ business fee 귀속 = ④-C 전용 수익 원장**(사용자 결정) — 게임머니 총량 보존 + 회계/감사 추적. architect 추천(④-A 소멸) 대신 채택.
 - architect가 FC-081에서 ④-C 반영해 spec v1.0 + erd/api-contract 확정 버전 상향 중.
 
+## 하드닝 백로그 (FC-083 검수 minor, 비차단)
+- **M1**: SOLD 잔액 락 순서 user_id 오름차순화(현 winner→seller 고정, 크로스 트레이드 이론적 데드락 표면 폐쇄). spec §3.4가 재시도 수용이라 정확성 결함 아님.
+- **M2**: `settle<0`(P<fee<100) 클램프 또는 리스팅 최소 시작가 하한 실확인(초소액 매물 stuck 방지).
+
 ## 범위 밖 (후속 에픽)
 - 즉구매(purchase, buyNowPrice·result_type=BUYNOW) · 거래내역(/me/orders) · 프론트 즉구매 버튼/거래내역 화면 활성화.

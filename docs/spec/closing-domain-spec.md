@@ -79,7 +79,7 @@ FC-081 지시는 "`settlement` 신규 테이블 vs `auction` 컬럼 확장"의 �
 | fee_policy_version | VARCHAR(10) | N | | **신규 제안** — 적용 수수료 정책 버전(예: `v1.0`). 정산 후 환불 비례 크레딧(fee-policy-spec §5)이 "당시 정책"을 알아야 함. 감사·재현성 |
 | status | VARCHAR(20) ENUM | N | | SETTLED(내부 DB 단일 TX) |
 | settled_at | DATETIME(6) | N | | 정산 완료 시각 |
-| created_at | DATETIME(6) | N | | BaseTimeEntity |
+| created_at | DATETIME(6) | N | | `BaseCreatedEntity`(불변 원장 — SETTLED 1회 기록, updated_at 없음. item_ownership_history 선례. FC-083 M3 정정) |
 
 인덱스(erd §5 정의 준수): `(source_type, source_id)` · `(buyer_id)` · `(seller_id)`.
 유니크(중복 성립 방지 보강): `(source_type, source_id)` 를 **UK로 승격 제안** — 동일 경매가 두 번 SOLD 핸드오프되는 것을 DB에서 차단(idempotency 최종 방어선, §6 I-C). erd §5는 이를 일반 인덱스로 두었으나 코어의 이중 정산 방지를 위해 UK 승격을 상신한다.
