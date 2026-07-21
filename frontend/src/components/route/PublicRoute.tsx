@@ -1,30 +1,24 @@
 import { Navigate, Outlet, useSearchParams } from 'react-router'
-import { useAuth } from '@/auth'
-import { REDIRECT_URL_KEY } from '@/constants/app.constant'
+import useAuth from '@/auth/useAuth'
 import { sanitizeReturnUrl } from '@/lib/returnUrl'
+import { REDIRECT_URL_KEY } from '@/constants/app.constant'
 
 /**
- * 비로그인 전용 라우트(인증 폼).
+ * 비로그인 전용 라우트 가드 (로그인·회원가입) — FC-067.
  *
- * ★ FC-057 — **`redirectUrl` 을 존중한다.** 종전에는 `authenticatedEntryPath`(홈)로만 보내서
- *   `ProtectedRoute` 가 애써 붙여둔 복귀 대상이 **버려졌다**. 판매 등록을 누르고 로그인한
- *   손님이 홈으로 떨어지면 자기가 뭘 하려던 참이었는지를 다시 찾아가야 한다.
- *
- * ★ 값은 반드시 `sanitizeReturnUrl` 을 통과시킨다 — 오픈 리다이렉트 방지(P-011).
- *   파라미터가 없으면 그 함수가 홈(`DEFAULT_RETURN_URL`)을 돌려주므로 종전 동작과 같다.
+ * ★ 이미 세션이 있으면 인증 화면을 보여줄 이유가 없다 → 복귀 URL(있으면)이나 홈으로 되돌린다.
+ *   복귀 URL 은 사용자가 고를 수 있는 값이라 **반드시 정화**한다(오픈 리다이렉트 방지).
  */
-const PublicRoute = () => {
+function PublicRoute() {
     const { authenticated } = useAuth()
     const [searchParams] = useSearchParams()
 
-    if (!authenticated) return <Outlet />
+    if (authenticated) {
+        const target = sanitizeReturnUrl(searchParams.get(REDIRECT_URL_KEY))
+        return <Navigate replace to={target} />
+    }
 
-    return (
-        <Navigate
-            replace
-            to={sanitizeReturnUrl(searchParams.get(REDIRECT_URL_KEY))}
-        />
-    )
+    return <Outlet />
 }
 
 export default PublicRoute

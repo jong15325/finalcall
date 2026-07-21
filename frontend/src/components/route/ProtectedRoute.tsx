@@ -1,29 +1,22 @@
-import appConfig from '@/configs/app.config'
 import { Navigate, Outlet, useLocation } from 'react-router'
-import { useAuth } from '@/auth'
+import useAuth from '@/auth/useAuth'
 import { buildReturnUrlQuery } from '@/lib/returnUrl'
-
-const { unAuthenticatedEntryPath } = appConfig
+import { paths } from '@/app/paths'
 
 /**
- * 로그인 필수 라우트.
+ * 로그인 필요 라우트 가드 (FC-067 — 구 가드 로직 승계, 셸 재구축에 맞춰 축약).
  *
- * ★ FC-057 — 복귀 대상을 `useLocation()` 에서 읽고 **query·hash 까지 싣는다.** 종전에는
- *   전역 `location.pathname` 만 읽어 (1) 라우터 상태가 아닌 브라우저 전역을 봤고
- *   (2) `?status=OPEN` 같은 필터가 복귀 시 사라졌으며 (3) 인코딩이 없었다.
- *   실제 복귀 처리는 `PublicRoute` 가 한다.
+ * ★ 세션이 없으면 로그인으로 보내되 **보던 곳을 복귀 파라미터로 싣는다**(`buildReturnUrl`).
+ *   오픈 리다이렉트 방지는 로그인 성공 처리 쪽(`sanitizeReturnUrl`)이 맡는다.
+ * ★ `authenticated` 는 표시·라우팅 가드용일 뿐 **인가가 아니다**(계약 §1.2 — 인가는 서버 권위).
  */
-const ProtectedRoute = () => {
+function ProtectedRoute() {
     const { authenticated } = useAuth()
     const location = useLocation()
 
     if (!authenticated) {
-        return (
-            <Navigate
-                replace
-                to={`${unAuthenticatedEntryPath}${buildReturnUrlQuery(location)}`}
-            />
-        )
+        const query = buildReturnUrlQuery(location)
+        return <Navigate replace to={`${paths.login}${query}`} />
     }
 
     return <Outlet />
