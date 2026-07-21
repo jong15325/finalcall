@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-73
 title: 프론트 재구축 — 사용자 목업 기반 (템플릿 폐기)
 state: doing
-children: [FC-066, FC-067, FC-068, FC-069, FC-070, FC-071, FC-072, FC-073, FC-074, FC-075, FC-076, FC-077, FC-078, FC-079]
+children: [FC-066, FC-067, FC-068, FC-069, FC-070, FC-071, FC-072, FC-073, FC-074, FC-075, FC-076, FC-077, FC-078, FC-079, FC-080]
 gate: null
 ---
 ## 목표
