@@ -90,6 +90,7 @@ function ItemFrame({
                         <span className="card-number-slot">
                             <span
                                 className="card-number"
+                                role="img"
                                 aria-label={`골드포스 잔여 ${days}일`}
                             >
                                 {[...dayLabel].map((digit, index) => (
@@ -110,6 +111,7 @@ function ItemFrame({
                     {hasSkill && (
                         <span
                             className="card-rank"
+                            role="img"
                             aria-label="아이템 스킬 적용"
                         />
                     )}
