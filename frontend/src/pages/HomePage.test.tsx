@@ -13,6 +13,7 @@ import type { CursorPage } from '@/types/api'
  *     안 보이고, 살아있는 경매만 카드로 뜬다.
  *  2. 배너 캐러셀이 렌더된다(프로모션 배너 region).
  *  3. **목업 섹션 헤드 유지** + **추천 마켓·공지는 자리보류**(호출 없이 404 방지).
+ *  4. **공지는 skeleton 자리**(FC-080) — 가짜 제목·날짜를 렌더하지 않는다(리뷰 M-1).
  */
 
 function makeAuction(overrides: Partial<AuctionSummary>): AuctionSummary {
@@ -74,11 +75,16 @@ describe('<HomePage>', () => {
         expect(
             screen.getByText('고정가 마켓은 준비 중이에요.'),
         ).toBeInTheDocument()
-        expect(screen.getByText('공지 연동은 준비 중이에요.')).toBeInTheDocument()
-        // 공지 정적 5제목은 자리 텍스트로만 존재(실 호출 없음).
         expect(
-            screen.getByText('안전 거래 정책 및 판매 수수료 변경 사전 안내'),
+            screen.getByText('공지 연동은 준비 중이에요.'),
         ).toBeInTheDocument()
+        // ★ 공지는 skeleton 자리 — 가짜 제목·날짜를 렌더하지 않는다(리뷰 M-1 · FC-080).
+        expect(
+            screen.getByRole('list', { name: '공지 연동 준비 중' }),
+        ).toBeInTheDocument()
+        expect(
+            screen.queryByText('안전 거래 정책 및 판매 수수료 변경 사전 안내'),
+        ).not.toBeInTheDocument()
 
         await waitFor(() =>
             expect(
@@ -112,7 +118,9 @@ describe('<HomePage>', () => {
 
         await waitFor(() =>
             expect(
-                screen.getByRole('link', { name: '살아있는 검 경매 상세 보기' }),
+                screen.getByRole('link', {
+                    name: '살아있는 검 경매 상세 보기',
+                }),
             ).toBeInTheDocument(),
         )
         expect(

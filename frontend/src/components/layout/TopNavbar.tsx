@@ -24,7 +24,8 @@ import { usePageContext } from './pageContext'
  *   모바일: 문맥 아이콘 · 축약 보유 코드 · 알림 · 프로필(+햄버거).
  * ★ 보유 코드는 **로그인 시에만** — 잔액 쿼리는 `enabled: isAuthed` 라 손님 호출로 401 을
  *   깨우지 않는다(잔액 훅 주석). 값은 정수, 표기는 축약(`CodeAmount compact`).
- * ★ 알림은 [준비 중] — 배지 없이 빈 드롭다운("알림 없음")(§5).
+ * ★ 알림은 [준비 중] — `/notifications` 컨트롤러 없음. 배지 없이 "준비 중" 자리 드롭다운으로,
+ *   가짜 알림을 렌더하지 않는다(정직성·FC-048, rebuild-contract-map §5).
  */
 
 interface TopNavbarProps {
@@ -129,13 +130,16 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                     trigger={<TbBell aria-hidden className="size-5" />}
                     panelClassName="w-72"
                 >
-                    <div className="border-b border-line px-4 py-3">
+                    <div className="flex items-center gap-2 border-b border-line px-4 py-3">
                         <h6 className="text-sm font-bold text-gray-900">
                             알림
                         </h6>
+                        <span className="rounded-full bg-gold-subtle px-2 py-0.5 text-[10px] font-bold text-gold-deep">
+                            준비 중
+                        </span>
                     </div>
                     <p className="px-4 py-8 text-center text-sm text-gray-400">
-                        알림이 없습니다
+                        알림 기능은 준비 중이에요
                     </p>
                 </Dropdown>
 

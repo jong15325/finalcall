@@ -28,8 +28,8 @@ import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
  *   `status: ACTIVE` 로 내려오므로(rebuild-contract-map 주의 3), 정렬 상위에 낀 **이미 끝난 경매를
  *   클라가 걸러**(`auctionPhaseOf`) 진짜 임박한 것만 6장 보인다. 그래서 6장보다 넉넉히 받는다.
  * ★ **추천 마켓·공지는 자리보류.** 고정가 마켓(`/shops`)·공지(`/notices`)는 홈에서 **호출하지 않는다**
- *   (FC-048 사고 방지, §5). 헤드·캡션은 목업대로 유지하고 데이터만 비활성 자리로 둔다 —
- *   임의 데이터 하드코딩 금지(공지 5제목은 목업의 정적 예시를 "연동 예정" 자리 텍스트로만 표기).
+ *   (FC-048 사고 방지, §5). 헤드·캡션은 목업대로 유지하고 데이터만 **비활성 skeleton 자리**로 둔다 —
+ *   가짜 제목·날짜를 실제처럼 렌더하지 않는다(정직성, FC-070-073 리뷰 M-1 · FC-080 통일).
  */
 
 /** 마감 임박 프리뷰 — endAt 오름차, 클라 필터 여유분 포함(6장 표시) */
@@ -37,18 +37,8 @@ const PREVIEW_QUERY: AuctionListQuery = { sort: 'endAt,asc', size: 12 }
 const PREVIEW_COUNT = 6
 /** 추천 마켓 자리보류 골격 칸 수(목업 6) */
 const MARKET_PLACEHOLDER_COUNT = 6
-
-/**
- * 공지 자리보류 텍스트 — 목업 `home()` 의 정적 5제목. **연동 예정**(실 호출 없음, §5).
- * 계약 편입 전까지 자리 텍스트로만 쓴다.
- */
-const NOTICE_PLACEHOLDERS = [
-    '[점검] 7월 20일 거래소 시스템 점검 안내',
-    '안전 거래 정책 및 판매 수수료 변경 사전 안내',
-    '이상 거래 탐지 시스템 업데이트 안내',
-    '신규 이용자를 위한 안전 거래 가이드',
-    '7월 불법 거래 계정 이용 제한 안내',
-]
+/** 공지 자리보류 골격 줄 수(목업 목록 높이) */
+const NOTICE_PLACEHOLDER_COUNT = 5
 
 export default function HomePage() {
     const now = useNow()
@@ -186,8 +176,9 @@ function RecommendMarketSection() {
  *
  * ★ 공지(`NoticeController`)는 스켈레톤 참조구현이라 **product 계약(`/api/v1`) 밖 `/notices`** 에
  *   있고, dev 프록시(`/api`)·클라이언트 base(`/api/v1`)·`api-contract` 어디에도 실려 있지 않다.
- *   억지로 붙이면 전송로가 둘로 갈리므로(FC-056 위배) **연동을 보류**한다. 목업 헤드·정적 5제목은
- *   자리 텍스트로 두되 **실 호출 없음**(aria-disabled) — 임의 데이터 하드코딩이 아니라 자리 표기다.
+ *   억지로 붙이면 전송로가 둘로 갈리므로(FC-056 위배) **연동을 보류**한다.
+ * ★ FC-070-073 리뷰 M-1: 과거 정적 5제목·날짜를 실제처럼 렌더해 마켓 자리(빈 skeleton)와 어긋났다.
+ *   → 추천 마켓과 **같은 방식의 비활성 skeleton**으로 통일한다(가짜 제목·날짜 제거, 실 호출 없음).
  */
 function NoticeSection() {
     return (
@@ -198,32 +189,22 @@ function NoticeSection() {
             seeAllLabel="더 보기"
         >
             <ul
-                aria-label="공지사항 (연동 예정)"
-                className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface"
+                aria-label="공지 연동 준비 중"
+                className="divide-y divide-line overflow-hidden rounded-xl border border-dashed border-line bg-surface"
             >
-                {NOTICE_PLACEHOLDERS.map((title, index) => (
-                    <li
-                        key={index}
-                        aria-disabled="true"
-                        className="flex items-center gap-3 px-4 py-3"
-                    >
-                        <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                index === 0
-                                    ? 'bg-navy/10 text-navy-700'
-                                    : 'bg-gray-100 text-gray-500'
-                            }`}
+                {Array.from({ length: NOTICE_PLACEHOLDER_COUNT }).map(
+                    (_, index) => (
+                        <li
+                            key={index}
+                            aria-disabled="true"
+                            className="flex items-center gap-3 px-4 py-3"
                         >
-                            {index === 0 ? '공지' : '안내'}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm text-gray-500">
-                            {title}
-                        </span>
-                        <time className="shrink-0 text-xs text-gray-400">
-                            07.{20 - index}
-                        </time>
-                    </li>
-                ))}
+                            <span className="h-4 w-10 shrink-0 rounded-full bg-gray-100" />
+                            <span className="h-3 min-w-0 flex-1 rounded bg-gray-100" />
+                            <span className="h-3 w-10 shrink-0 rounded bg-gray-100" />
+                        </li>
+                    ),
+                )}
             </ul>
             <p className="mt-2 text-center text-xs text-gray-400">
                 공지 연동은 준비 중이에요.
