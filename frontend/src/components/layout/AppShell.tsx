@@ -14,7 +14,10 @@ import MobileBottomNav from './MobileBottomNav'
  *   `min-w-0`, `html`에 `scrollbar-gutter: stable`(index.css)로 페이지별 세로 스크롤 유무에 따른
  *   가로 흔들림을 없앤다. 외부 가로 오버플로는 body `overflow-x:hidden`으로 차단.
  * ★ 모바일 하단 네비 높이만큼 본문 하단 여백(`pb-16 xl:pb-0`) — 콘텐츠·모달·비교바 겹침 방지(§5.3).
- * ★ 접힘 상태는 localStorage 에 보존한다(세션 간 유지). 기본은 펼침.
+ * ★ 접힘 상태는 localStorage 에 보존한다(세션 간 유지). 기본은 펼침. 접힘 상태의 hover/focus 확장
+ *   (flyout)·펼치기 토글은 `Sidebar` 가 담당한다(FC-086 #3). 데스크톱 접힘 시 사이드바가 콘텐츠
+ *   위로 겹치도록 루트를 `relative` 로 둔다.
+ * ★ 모바일 드로어는 햄버거(상단바)로 열고 백드롭·Escape 로 닫는다.
  */
 
 const COLLAPSE_KEY = 'jangteo.sidebar.collapsed'
@@ -29,8 +32,18 @@ function AppShell() {
         localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0')
     }, [collapsed])
 
+    // 모바일 드로어 열림 중 Escape 로 닫는다(접근성).
+    useEffect(() => {
+        if (!mobileOpen) return
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setMobileOpen(false)
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [mobileOpen])
+
     return (
-        <div className="flex min-h-screen bg-surface-sunken">
+        <div className="relative flex min-h-screen bg-surface-sunken">
             <Sidebar
                 collapsed={collapsed}
                 mobileOpen={mobileOpen}
@@ -39,10 +52,7 @@ function AppShell() {
             />
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <TopNavbar
-                    onOpenMobile={() => setMobileOpen(true)}
-                    onToggleCollapse={() => setCollapsed((v) => !v)}
-                />
+                <TopNavbar onOpenMobile={() => setMobileOpen(true)} />
 
                 <main id="view" className="min-w-0 flex-1 pb-16 xl:pb-0">
                     <div className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-6">

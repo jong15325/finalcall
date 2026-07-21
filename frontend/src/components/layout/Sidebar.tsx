@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router'
-import { TbChevronDown, TbChevronsLeft, TbHeadset, TbX } from 'react-icons/tb'
+import {
+    TbChevronDown,
+    TbChevronsLeft,
+    TbChevronsRight,
+    TbHeadset,
+    TbX,
+} from 'react-icons/tb'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { sidebarNav } from './navItems'
 import type { NavEntry, NavGroup, NavLeaf } from './navItems'
@@ -9,10 +15,14 @@ import type { NavEntry, NavGroup, NavLeaf } from './navItems'
  * 좌측 사이드바 (FC-067 — HANDOVER §5.1).
  *
  * ★ 반응형 두 모드(모바일 우선):
- *   - < xl: **드로어 오버레이**. 상단 햄버거로 열고 백드롭·닫기 버튼으로 닫는다. 항상 펼침 메뉴.
- *   - ≥ xl: **인-플로우 레일**. `collapsed` 로 260px↔70px 전환(펼침 260·접힘 70·심볼 44, §5.1).
- * ★ `collapsed` 는 xl 이상에서만 유효하다(드로어는 항상 펼침). 라벨은 `collapsed && xl` 에서만
- *   숨긴다 → 유틸리티 `xl:` 접두사로 표현한다.
+ *   - < xl: **드로어 오버레이**. 상단 햄버거로 열고 백드롭·닫기 버튼·Escape 로 닫는다. 항상 펼침 메뉴.
+ *   - ≥ xl 펼침: **인-플로우 레일** 260px.
+ *   - ≥ xl 접힘: **아이콘 레일 70px + hover/focus 시 확장 flyout**(Vuexy `layout-menu-hover`, FC-086 #3).
+ *     레일은 70px 자리(spacer)를 그대로 두고, 확장 패널이 **콘텐츠 위로 겹쳐**(absolute) 떠서
+ *     본문을 밀지 않는다. 고정 펼침은 헤더 토글로만(상단바 토글 제거).
+ * ★ `collapsed` 는 xl 이상에서만 유효하다(드로어는 항상 펼침). 라벨·아이콘 숨김 기준은 **레일 상태**
+ *   (`railCollapsed = collapsed && !flyout`) → 유틸리티 `xl:` 접두사로 표현한다.
+ * ★ 키보드 접근성: hover 없이 **focus-within** 으로도 flyout 이 열려 탭 이동으로 전 메뉴에 닿는다.
  * ★ 준비 중(ready=false) 메뉴는 링크가 아니라 **`disabled` 버튼**으로 낸다 — opacity 만으로
  *   비활성 시늉하면 보조기술엔 활성으로 남는다(WCAG 4.1.2, FC-065 교훈).
  * ★ 접힘 시 안전거래센터는 아이콘만 — **세로 글자 금지**(§5.1).
@@ -203,6 +213,14 @@ function Sidebar({
     // 드로어 링크 클릭 시 자동 닫힘(모바일). 데스크톱은 no-op 이어도 무해.
     const onNavigate = () => onCloseMobile()
 
+    // 데스크톱 접힘 상태의 hover/focus 확장(flyout). 마우스·키보드를 각각 추적해
+    // 마우스가 떠나도 포커스가 안에 있으면 닫히지 않는다(키보드 접근성).
+    const [hover, setHover] = useState(false)
+    const [focused, setFocused] = useState(false)
+    const flyout = collapsed && (hover || focused)
+    // 레일(70px)·라벨 숨김 기준 — 펼침이거나 flyout 이 열리면 풀뷰.
+    const railCollapsed = collapsed && !flyout
+
     return (
         <>
             {/* 모바일 드로어 백드롭 */}
@@ -214,16 +232,34 @@ function Sidebar({
                 />
             )}
 
+            {/* 데스크톱 접힘 레일 자리(70px) — flyout 은 이 위로 겹쳐 뜨고 본문을 밀지 않는다.
+                펼침 상태에선 aside 가 인-플로우(260px)라 이 spacer 를 두지 않는다. */}
+            {collapsed && (
+                <div aria-hidden className="hidden shrink-0 xl:block xl:w-[70px]" />
+            )}
+
             <aside
                 aria-label="주 메뉴"
                 className={[
                     'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-line bg-surface',
                     'w-[260px] transition-[transform,width] duration-200',
                     mobileOpen ? 'translate-x-0' : '-translate-x-full',
-                    // 데스크톱: 인-플로우 레일, 접힘 폭 반영
-                    'xl:static xl:z-auto xl:translate-x-0',
-                    collapsed ? 'xl:w-[70px]' : 'xl:w-[260px]',
+                    'xl:translate-x-0',
+                    // 접힘: 콘텐츠 위 오버레이(레일 위치). 펼침: 인-플로우 레일.
+                    collapsed
+                        ? 'xl:absolute xl:inset-y-0 xl:left-0 xl:z-40'
+                        : 'xl:static xl:z-auto',
+                    railCollapsed ? 'xl:w-[70px]' : 'xl:w-[260px]',
+                    flyout ? 'xl:shadow-2xl' : '',
                 ].join(' ')}
+                onMouseEnter={() => setHover(true)}
+                onMouseLeave={() => setHover(false)}
+                onFocus={() => setFocused(true)}
+                onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setFocused(false)
+                    }
+                }}
             >
                 {/* 브랜드 — 가운데 정렬(목업 §5.1). 토글은 오른쪽 가장자리에 겹쳐 띄운다. */}
                 <div className="relative flex h-16 items-center justify-center px-3">
@@ -233,20 +269,27 @@ function Sidebar({
                         className="flex min-w-0 items-center justify-center"
                         onClick={onNavigate}
                     >
-                        <BrandLogo collapsed={collapsed} />
+                        <BrandLogo collapsed={railCollapsed} />
                     </NavLink>
 
-                    {/* 데스크톱 접기 토글 — 접힘 상태에선 숨긴다(§5.1, 펼치기는 상단 바 토글). */}
-                    {!collapsed && (
-                        <button
-                            type="button"
-                            aria-label="메뉴 접기"
-                            className="absolute right-2 hidden size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 xl:flex"
-                            onClick={onToggleCollapse}
-                        >
+                    {/* 데스크톱 접기/펼치기 토글 — 아이콘 레일(70px)엔 자리가 없어 감추고,
+                        flyout(hover/focus) 또는 고정 펼침일 때만 노출한다. 고정 펼침의 유일 창구다
+                        (상단바 토글 제거, FC-086 #3). */}
+                    <button
+                        type="button"
+                        aria-label={collapsed ? '메뉴 고정 펼치기' : '메뉴 접기'}
+                        aria-expanded={!collapsed}
+                        className={`absolute right-2 hidden size-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 ${
+                            railCollapsed ? '' : 'xl:flex'
+                        }`}
+                        onClick={onToggleCollapse}
+                    >
+                        {collapsed ? (
+                            <TbChevronsRight aria-hidden className="size-5" />
+                        ) : (
                             <TbChevronsLeft aria-hidden className="size-5" />
-                        </button>
-                    )}
+                        )}
+                    </button>
 
                     {/* 모바일 닫기 */}
                     <button
@@ -265,7 +308,7 @@ function Sidebar({
                         {sidebarNav.map((entry) =>
                             renderEntry(
                                 entry,
-                                collapsed,
+                                railCollapsed,
                                 onNavigate,
                                 liveAuctionCount,
                             ),
@@ -285,7 +328,7 @@ function Sidebar({
                             aria-hidden
                             className="size-6 shrink-0 text-gold-bright"
                         />
-                        <div className={collapsed ? 'xl:hidden' : ''}>
+                        <div className={railCollapsed ? 'xl:hidden' : ''}>
                             <p className="text-sm font-bold leading-tight">
                                 안전 거래 센터
                             </p>

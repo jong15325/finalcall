@@ -17,11 +17,11 @@ import type { InventoryItem } from '@/lib/api/inventory'
  * ★ 목업 카테고리 탭(정령카드/아바타)은 계약 데이터가 없어 **드롭** — 중립 "전체 아이템" 자리만 남긴다.
  * ★ 슬롯 번호는 **1-based** 로 배치한다(목업 표시 규약과 일치). 채운 슬롯은 `slotNo` 로 자리를 잡고,
  *   빈 슬롯은 번호만 표시한다. used===0 이면 빈 상태 안내 + 임시보관 링크를 함께 보인다.
- * ★ 그리드는 6열 고정 + 모바일 가로 스크롤(목업 `.mycard-page{overflow-x:auto}`) — 열을 접지 않는다.
+ * ★ 그리드는 **반응형 리플로우**(모바일 2 · 태블릿 3 · PC 6열, FC-086 #1) — 가로 스크롤 없이
+ *   폭에 맞춰 열을 접는다(`xs`=576px 목업 모바일 브레이크포인트 정합). 슬롯 수는 그대로.
  */
 
 const PAGE_SIZE = 24
-const COLS = 6
 
 interface InventorySlotGridProps {
     capacity: number
@@ -96,13 +96,10 @@ function InventorySlotGrid({
                 )}
             </div>
 
-            {/* 슬롯 그리드 — 6열 고정 + 모바일 가로 스크롤(목업 .mycard-page) */}
-            <div className="overflow-x-auto p-4">
+            {/* 슬롯 그리드 — 반응형 리플로우(모바일 2·태블릿 3·PC 6열, FC-086 #1) */}
+            <div className="p-4">
                 <ul
-                    className="grid min-w-[540px] gap-2.5"
-                    style={{
-                        gridTemplateColumns: `repeat(${COLS}, minmax(84px, 1fr))`,
-                    }}
+                    className="grid grid-cols-2 gap-2.5 xs:grid-cols-3 xl:grid-cols-6"
                     aria-label={`인벤토리 슬롯 ${firstSlot}–${lastSlot}`}
                 >
                     {slotNumbers.map((slotNo) => {
