@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-97
 title: 즉시구매(buyNow) + 거래내역(orders)
 state: doing
-children: [FC-088]
+children: [FC-088, FC-089, FC-090, FC-091]
 gate: null
 ---
 ## 목표
