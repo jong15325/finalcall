@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v1.1 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044) 반영. [6] 채번은 백엔드 V4 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v1.3 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044)·**게이트2 EPIC-CLOSING 정산 스키마**(FC-081 — sale_order NOT NULL·fee_policy_version·source UK·platform_revenue_ledger) 반영. [6] 채번은 백엔드 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.3 | 2026-07-21 | 게이트2(EPIC-CLOSING, FC-081) 승인 반영 — 마감·낙찰 정산 코어 스키마 확정. **[4.2] `sale_order`**: `fee_amount` **널→NOT NULL**(SOLD에서만 생성), **`fee_policy_version VARCHAR(10) NOT NULL` 신설**(정책 버전 스냅샷·환불 재현), `(source_type,source_id)` **UK 승격**(이중 SOLD 차단). **`platform_revenue_ledger` 테이블 신설**(게이트2 #4=④-C — 수수료 전용 수익 원장, 정산 1:1 sale_order_id UK, 게임머니 총량 보존 I-H). [2] 엔티티 개요·[5] 인덱스·[6] Flyway(V14) 동기화. `sale_order`는 이 V14에서 최초 생성(종전 group4 이연분). 마감 워커 스캔은 기존 `auction (status, end_at)` 커버 — 신규 인덱스 불요. 근거: 게이트2 승인(2026-07-21), closing-domain-spec v1.0 |
 | v1.2 | 2026-07-20 | 게이트2(EPIC-CLOSING) 승인 반영 — [4.2] `sale_order.fee_amount` 설명을 **"정책 ON-HOLD 자리만" → 정책 확정**으로 갱신(판매자 단독 부담, 산식·구간·최소/cap 정본 = 신규 `fee-policy-spec.md`, 값 범위 [100 G, 300,000 G]). 문서 머리 확정 줄의 ON-HOLD 목록에서 "플랫폼 수수료"를 해소 표기. **스키마 무변경**(fee_amount/settle_amount 컬럼·타입·널 그대로). 근거: 게이트2 승인(2026-07-20), fee-policy-spec v1.0 |
 | v1.1 | 2026-07-19 | 게이트2(FC-044) 승인 반영 — [4.3] `item_template` **코드 축 배정 교정**: `main_category`=상품군(아이템 카드 `1` 고정)·`sub_group`=대분류(무기/방어구/마법). 종전 서술은 두 선두 자리 의미가 뒤바뀐 오배정이라 시드 `2111`이 원게임 SILVER 대역을 침범했다. 교정 후 `type_code`가 원게임 `itm_type`과 **1:1 동일**해진다. 아울러 `kind` 설명의 **평면 나열("검·도·활·방·펜…")을 폐기** — `kind`는 의미가 `sub_group`에 의존하고 마법은 2값뿐(3·4 부재)인데 종전 서술이 이를 감췄다. `type_code` 산식·스코프(상품군 1 한정)·시드 정합 부채를 표 아래 주로 명기. **스키마 무변경**(컬럼·타입·UK·인덱스 전부 그대로) — 교정 대상은 서술과 시드 데이터뿐이다. 근거: 게이트2 승인(2026-07-19), 제안서 `spec/proposals/item-code-dictionary.md` v2. 코드값 열거 정본은 api-contract §3.3.1 |
 
@@ -78,6 +79,7 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 - `bid` — 경매 입찰. money_hold 연계.
 - `shop` — 고정가 판매(domain-spec 용어 FixedSale/고정가 ↔ 테이블 shop). item_instance 1건 보유(에스크로).
 - `sale_order` — 판매 성립(SOLD) 시 생성되는 거래(결제·정산·소유 이전). 경매·고정가 공통 핸드오프.
+- `platform_revenue_ledger` — 사업자 수익 원장(EPIC-CLOSING, v1.3). SOLD 정산 1건당 수수료 1행 적립(append-only). 게임머니 총량 보존의 회계 축.
 
 아이템 (D-044~047·D-062·D-066)
 - `item_template` — 아이템 정의 마스터. 타입코드 정규화(상품군·대분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073). 코드값 정본은 api-contract §3.3.1.
@@ -286,12 +288,25 @@ table `sale_order` — 판매 성립 거래(경매 낙찰 + shop 구매 공통, 
 | seller_id | BIGINT | N | FK→user | 판매자 |
 | item_instance_id | BIGINT | N | FK→item_instance | 이전 대상 |
 | final_price | BIGINT | N | | 최종 낙찰가/구매가 |
-| fee_amount | BIGINT | Y | | 플랫폼 중계 수수료(**판매자 단독 부담**). 산식·구간표·최소/상한 정본 = **fee-policy-spec.md**(게이트2 확정 2026-07-20). 값 범위 [100 G, 300,000 G](최소 100·cap 300,000). SOLD 성립분만 확정(취소·유찰은 sale_order 미생성 → 수수료 없음). 널 허용은 스키마 자리 잔존(백엔드 동결, 무변경) |
+| fee_amount | BIGINT | N | | 플랫폼 중계 수수료(**판매자 단독 부담**). 산식·구간표·최소/상한 정본 = **fee-policy-spec.md**(게이트2 확정 2026-07-20). 값 범위 [100 G, 300,000 G](최소 100·cap 300,000). **SOLD 성립분에만 생성되므로 NOT NULL**(v1.3 — 취소·유찰은 sale_order 미생성 → 수수료 없음. 종전 널 허용은 백엔드 동결 시 자리 잔존이었고, 실기록은 항상 값 존재라 EPIC-CLOSING에서 NOT NULL 확정) |
 | settle_amount | BIGINT | N | | 판매자 정산액(= final_price − fee) |
+| fee_policy_version | VARCHAR(10) | N | | 적용 수수료 정책 버전 스냅샷(예: `v1.0`, v1.3 신설). 정산 후 환불 비례 크레딧(fee-policy-spec §5)이 "당시 정책"을 재현. `platform_revenue_ledger`와 동일 값 |
 | status | ENUM | N | | SETTLED (내부 DB 단일 TX) |
 | settled_at | DATETIME(6) | N | | 정산 완료 시각 |
 
 주: `source_type + source_id` 폴리모픽 참조(플래그 논의 채택 a). 물리 FK 제약이 약해지는 대신 채널 확장에 유연.
+
+**EPIC-CLOSING 게이트2 승인 반영(v1.3, 2026-07-21)**: `sale_order`는 현재 DB 미생성(§6 group4 "후속 에픽 V12+" 이연분)이며 EPIC-CLOSING 코어가 **`V14__sale_order_and_settlement.sql`**로 생성한다. 위 표에 반영된 델타 — `fee_amount` **NOT NULL**(SOLD에서만 생성되므로 항상 값 존재), `fee_policy_version VARCHAR(10) NOT NULL` **신규**(적용 정책 버전, 감사·환불 비례 크레딧 재현), `(source_type, source_id)` **UK 승격**(동일 경매 이중 SOLD 차단 = 이중 정산 방지, closing-domain-spec §6 I-C). 정본 = `closing-domain-spec.md` v1.0.
+
+table `platform_revenue_ledger` — 사업자 수익 원장(EPIC-CLOSING, 게이트2 #4 = ④-C 확정). SOLD 정산 1건당 수수료(`fee_amount`)를 1행 적립하는 append-only 원장. "사업자 게임머니 총수익 = `SUM(amount)`"의 정본이며 게임머니 총량 보존(closing-domain-spec §6 I-H)의 회계 한 축이다. 플랫폼을 user로 두지 않아(거래 주체 오염 회피) 전용 원장으로 분리한다.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| sale_order_id | BIGINT | N | UK, FK→sale_order | 정산 1:1. **UK가 수수료 이중 적립을 DB 차단**(I-C·I-H 연동) |
+| amount | BIGINT | N | | 적립 수익 = 그 정산의 `sale_order.fee_amount`(계산기 1회 산출값) |
+| fee_policy_version | VARCHAR(10) | N | | 적용 정책 버전 스냅샷(sale_order와 동일 값) |
+
+주: `public_id` 없음(내부 회계 원장, 외부 노출 리소스 아님 — money_hold·money_exchange 선례). 불변 원장이라 `updated_at` 없음(`BaseCreatedEntity`, item_ownership_history 선례). 공통 컬럼 `id`·`created_at`(적립 시각)은 생략 규칙대로 표에서 뺐다.
 
 ### 4.3 아이템 (D-044~047·D-062·D-066)
 
@@ -421,8 +436,9 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | shop | (status, end_at) | 고정가 만료(EXPIRED) 트리거 스캔(D-057) |
 | shop | (seller_id, status) | 판매자 고정가 목록 |
 | shop | (item_instance_id) | 출품 아이템 역참조(에스크로 상태 확인, auction 대칭 — G2 관찰 #3) |
-| sale_order | (source_type, source_id) | 출처 리스팅 역참조(중복 성립 방지 보조) |
+| sale_order | (source_type, source_id) **UK** | 출처 리스팅 역참조 + **동일 경매 이중 SOLD 핸드오프 DB 차단**(v1.3 UK 승격 — 이중 정산 방지, closing-domain-spec §6 I-C) |
 | sale_order | (buyer_id), (seller_id) | 구매/판매 거래 내역 |
+| platform_revenue_ledger | (sale_order_id) **UK** | 정산 1:1 + 수수료 이중 적립 DB 차단(v1.3, I-H). 조회·정합 겸용이라 별도 보조 인덱스 불요(기간 집계는 후속 대시보드 시 `(created_at)` 검토) |
 | charge | (user_id, status) | 사용자 충전 내역·진행 상태 |
 | money_hold | (user_id, status) | 사용자 홀드 합계·해제 대상 조회 |
 | item_ownership_history | (instance_id, transferred_at) | 인스턴스 소유 체인 조회(최초=첫 행) |
@@ -448,7 +464,8 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 3. 아이템 — item_template, skill_definition, item_instance(+slot_key UK), item_ownership_history, temp_storage + 인덱스 (EPIC-ITEM: 백엔드 V6~V8 채번, FC-020/021/022)
 4. 판매·거래 — auction, bid, shop, sale_order + 인덱스·FK
    - 4-a. `auction` = 백엔드 `V10__auction.sql`(EPIC-AUCTION, FC-026).
-   - 4-b. `bid` + `money_hold` = 백엔드 **`V11__bid_and_money_hold.sql`** 단일 채번(EPIC-BID, FC-031). `money_hold.bid_id`가 NOT NULL FK+UK라 `bid` → `money_hold` 순서. 동 파일에 F6 인덱스(`auction (status, highest_bid_amount)`)도 포함한다. `shop`·`sale_order`는 후속 에픽(V12+).
+   - 4-b. `bid` + `money_hold` = 백엔드 **`V11__bid_and_money_hold.sql`** 단일 채번(EPIC-BID, FC-031). `money_hold.bid_id`가 NOT NULL FK+UK라 `bid` → `money_hold` 순서. 동 파일에 F6 인덱스(`auction (status, highest_bid_amount)`)도 포함한다.
+   - 4-c. `sale_order` + `platform_revenue_ledger` = 백엔드 **`V14__sale_order_and_settlement.sql`** 단일 채번(EPIC-CLOSING, v1.3). `platform_revenue_ledger.sale_order_id`가 NOT NULL FK+UK라 `sale_order` → `platform_revenue_ledger` 순서. `sale_order`는 여기서 최초 생성(종전 "V12+ 이연"분 — 실제 채번은 V14, 중간 V12·V13은 아이템 시드 재작성·데모 시드가 소비). `shop`은 후속 에픽(EPIC-SHOP).
 5. 아이템 시드 — 최소 스텁 시드(게이트2 승인, FC-019). **EPIC-ITEM 내로 앞당김**(group 4 판매·거래보다 먼저 — 인벤토리·카탈로그·경매 공급이 시드에 의존): item_template ~8건(대분류2×종류2×속성2) + skill_definition ~5건 + **시드 소유자 user·user_balance(현재 member 시드 부재 → 시드에 포함)** + item_instance ~10건(location=INVENTORY, transfer_type=SEED, ownership_history 첫 행 동반). 원게임 대량 실데이터·정밀 수치는 이연(D-067). 진입 경로 = 시드-only(관리자 지급 API 미도입, 게이트2 2026-07-18)
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

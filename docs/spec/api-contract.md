@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.11 — G3 확정(2026-07-14) + 6절 계약 변경 11건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.12 — G3 확정(2026-07-14) + 6절 계약 변경 12건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -22,6 +22,7 @@
 
 | v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
+| v1.12 | 2026-07-21 | 6절 계약 변경 — 게이트2(EPIC-CLOSING 코어, FC-081) 승인 반영: **§3.3 마감·정산 semantic 명확화 주 추가**. 마감(내부 워커) 후 `AuctionDetail.resultType`=`BID`(SOLD)·`status`=영속 SOLD/UNSOLD·`BidSummary.status`=`WON`이 **실제로 채워지기 시작**함을 명시(값의 의미 명확화). 마감은 외부 API 없음 — 클라 마감 후 서버 status 수렴에 워커 tick 지연(짧은 전이 구간). 거래내역 조회(`GET /me/orders`·`/orders/{id}`)는 코어 범위 밖(후속)임을 명기. **엔드포인트·필드 집합·에러코드 무변경**(신규 필드 없이 기존 필드 semantic만 명확화). 사유: 마감·낙찰 정산 코어 확정. 구현 = EPIC-CLOSING FC-082(워커)·083(SOLD)·084(UNSOLD). 정본 closing-domain-spec v1.0 |
 | v1.11 | 2026-07-20 | 6절 계약 변경 — 게이트2(EPIC-CLOSING) 승인 반영: **§4.3 주문 상세**에 수수료 근거 주 추가 — 응답 `feeAmount`·`settleAmount`의 계산 근거·구간·최소/상한 정본이 신규 **`fee-policy-spec.md`**(판매자 단독 부담, 게이트2 2026-07-20)임을 각주로 연결하고 `settleAmount = finalPrice − feeAmount` 관계식을 명시. **엔드포인트·필드 집합·에러코드 무변경**(신규 필드 없이 기존 fee/settle의 의미만 명확화). 사유: 수수료 정책 확정의 계약 반영. 구현 소유 = EPIC-CLOSING(백엔드 동결 해제 후) |
 | v1.10 | 2026-07-19 | 6절 계약 변경 — 게이트2(FC-044) 승인 반영: **§3.1 아이템 코드 사전 신설**(4축 전 코드값 정본화). 종전 v1.9가 `element`·`kind`·`subGroup`·`mainCategory` 전 축의 코드값을 "미확정"으로 남겨 프론트가 표시명 스냅샷에만 의존했다. 원게임 `new_sp.gameshop` `itm_type` 전수 조회로 4축이 확정됐다 — **(D4)** `element` 1=물·2=불·**3=흙·4=바람**(4경로 교차확증), **(D3)** `kind`는 **`subGroup`에 의존**(WEAPONE/ARM 각 4값, MAGIC **2값뿐**)이라 대분류별 표를 분리하고 `kind` 단독 필터에 다의성 경고를 명기, **(D1·D2)** 원본 코드 체계를 전면 채택하고 `type_code` **자리 의미를 교정**(`mainCategory`=상품군·`subGroup`=무기/방어구/마법). 동반 필수 조항으로 **`item_template` 스코프 = 상품군 1(아이템 카드)**을 명시했다. 사유: 게이트2 승인(2026-07-19), 제안서 `spec/proposals/item-code-dictionary.md` v2. **엔드포인트·필드 집합·에러코드 무변경**(값 사전·서술 보강). ⚠ **V9 시드는 교정 전 코드라 계약과 불일치** — 시드 재작성은 백엔드 동결 해제 후 별도 티켓(제안서 §3.3 대조표가 작업지시서) |
 
@@ -337,6 +338,13 @@ BidSummary (GET /auctions/{id}/bids content 항목) — v1.8, F2:
 - `status`: `ACTIVE`(현재 최고) / `OUTBID`(상위 입찰로 밀림) / `WON`(낙찰). 경매당 `ACTIVE`는 최대 1건이며 그 입찰자가 곧 `highestBidderMasked`다.
 - `bidderMasked`: 입찰자 nickname 마스킹(앞 2자 + `***`) — 상세의 `highestBidderMasked`와 **동일 규약**. 인증 불요 엔드포인트이므로 `userPublicId`·`loginId`·실 nickname을 싣지 않는다(회원 열거 방지, SEC-007).
 - 홀드(에스크로) 금액·잔액 등 자금 정보는 **싣지 않는다**(타인 자금 상태 노출 금지). 입찰액은 경매 진행 정보라 공개 대상이다.
+
+> **EPIC-CLOSING 게이트2 승인 반영 (v1.12, 2026-07-21).** 정본 = `closing-domain-spec.md` v1.0 §8. **엔드포인트·필드 집합·에러코드 무변경** — 기존 필드의 값이 마감 후 채워지기 시작할 뿐이다(semantic 명확화).
+> - `AuctionDetail.resultType`: 마감 낙찰 시 `BID`(종전 항상 null). 유찰·진행중은 null.
+> - `AuctionDetail.status`: 마감 후 **영속 SOLD/UNSOLD**가 그대로 노출(종전 lazy 파생만). `minNextBidAmount`는 종료 상태에서 null(기존 분기 자동 처리).
+> - `BidSummary.status`: 낙찰 입찰은 `WON`(계약 §3.3에 이미 정의된 값이 실제로 나타나기 시작).
+> - 마감은 **내부 워커**라 외부 API가 없다. 클라 마감(now≥endAt) 후 워커 tick만큼 지연되어 서버 status가 SOLD/UNSOLD로 수렴하는 **짧은 전이 구간**이 존재한다(프론트는 "마감 처리 중" 표기 또는 재조회).
+> - 거래내역 조회 `GET /me/orders`·`GET /orders/{id}`(§4.3)는 **EPIC-CLOSING 코어 범위 밖(후속)** — sale_order 데이터는 코어가 생성하나 읽기 엔드포인트는 미구현. 프론트는 낙찰 결과를 경매 상세로만 표시.
 
 ShopSummary (GET /shops content 항목):
 ```

@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-89
 title: 경매 마감·낙찰 정산 (수수료 에스크로)
 state: doing
-children: [FC-081]
+children: [FC-081, FC-082, FC-083]
 gate: null
 ---
 ## 목표
@@ -27,18 +27,23 @@ gate: null
 - 금전/락: `docs/spec/bid-domain-spec.md`(MoneyHold·auction 행 비관락+CAS, watchdog 없는 분산락 배제).
 - `docs/spec/erd.md` v1.2 · `docs/spec/api-contract.md` v1.11.
 
-## 분해안 (게이트1 승인)
+## 분해안 (게이트2 후 통합 — architect 팬아웃 판정 반영)
+architect 판정: FC-083·084가 `CloseService` 동일 파일 편집 → **병렬 불가·순차 단일 패스**. 정산 도메인을 1개 구현 티켓으로 통합.
 ```
-FC-081 architect  정산 도메인 spec + ERD(V14 settlement) + api-contract 델타 → 게이트2 상신
-FC-082 backend    경매 마감 워커(@Scheduled·idempotent·SOLD/UNSOLD 분기) [동시성 핵심]
-FC-083 backend    낙찰 정산(SOLD: WON·CAPTURED·아이템 이전·수수료 누진·seller settle·business fee) [money 핵심]
-FC-084 backend    유찰(UNSOLD: 아이템 반환·hold 없음)
-FC-087 reviewer   concurrency-review(마감·정산 동시성·money 불변식·에스크로 정합)
+FC-081 architect  정산 spec v1.0 + erd v1.3 + api-contract v1.12  ✅ done (게이트2 승인)
+FC-082 backend    정산 도메인 구현 — V14(sale_order+platform_revenue_ledger)·엔티티/리포·마감 워커
+                  (CloseWorker·CloseService, @Scheduled·비관락·CAS·SCHEDULED 포함)·SOLD(WON·CAPTURED·
+                  아이템 이전·수수료·seller 크레딧·수익원장)·UNSOLD(반환)·FeeCalculator. [money·concurrency 핵심]
+FC-083 reviewer   concurrency-review(마감·정산 동시성·불변식 I-A~I-H·에스크로 정합·총량 보존)
 ```
 
-## 게이트2 상신 예정 (architect FC-081)
-- settlement 스키마 형태(신규 테이블 vs auction 컬럼)·마감 워커 동시성 모델(스케줄러 idempotency + auction 행 비관락)·
-  seller 게임머니 지급 원장·수수료 계산 배치(SOLD TX 1회, 누진→반올림→cap→최소).
+## 게이트2 — 승인됨 (2026-07-21, 사용자)
+- **스키마**: 기존 `sale_order` 사용 + `V14__sale_order.sql` 생성(fee_amount NOT NULL·fee_policy_version·source UK). 신규 테이블/컬럼확장 기각.
+- **마감 워커**: `@Scheduled` 폴링 + 경매 1건 독립 TX + 행 비관락 + 종료성 CAS + **SCHEDULED 포함 스캔**. 분산락·신규 인덱스 불요.
+- **seller 지급**: 게임머니 크레딧 + sale_order 지급 기록.
+- **수수료 계산**: SOLD TX 1회(누진→반올림→cap→최소), fee_policy_version 스탬프.
+- **★ business fee 귀속 = ④-C 전용 수익 원장**(사용자 결정) — 게임머니 총량 보존 + 회계/감사 추적. architect 추천(④-A 소멸) 대신 채택.
+- architect가 FC-081에서 ④-C 반영해 spec v1.0 + erd/api-contract 확정 버전 상향 중.
 
 ## 범위 밖 (후속 에픽)
 - 즉구매(purchase, buyNowPrice·result_type=BUYNOW) · 거래내역(/me/orders) · 프론트 즉구매 버튼/거래내역 화면 활성화.

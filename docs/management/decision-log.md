@@ -1955,3 +1955,31 @@ EPIC-SEARCH(동결 해제 후) · 2026-07-21
 
 - **GRADE**: 적립 배수·등급 경계·수수료 계수·스키마(`user`+`point_ledger`)·계약 필드 등 8항목(grade-tier-spec §11.1).
 - **SEARCH**: 계약축 C1~C3(`q`·relevance) · 인프라축 A1~A5(ES·엔진·동기·부스트·재색인)(search-spec §9).
+
+## D-103. EPIC-CLOSING 착수 — 백엔드 동결 해제 + 정산 게이트2 확정 (2026-07-21) [ACCEPTED]
+
+맥락
+
+- 프론트 재구축(EPIC-FE-REBUILD) 완료 후 사용자가 **다음 에픽 = EPIC-CLOSING**(경매 마감·낙찰 정산) 착수 지시.
+  **백엔드 동결 해제 첫 에픽**. 범위=코어(마감 워커 + 낙찰 정산 SOLD + 유찰 UNSOLD), 즉구매·거래내역은 후속(게이트1).
+- architect(FC-081)가 정산 도메인 spec 확정 → 게이트2 상신. 백엔드가 미리 심어둔 enum(SOLD/UNSOLD·WON·CAPTURED)·
+  인덱스(`ix_auction_status_end`)·MoneyHold 자리를 승계.
+
+결정 (게이트2, 사용자 2026-07-21)
+
+- **스키마**: 기존 `sale_order`(erd §4.2) 사용 + `V14__sale_order_and_settlement.sql` 최초 생성(fee_amount NOT NULL·
+  fee_policy_version·`(source_type,source_id)` UK). 신규 테이블/컬럼확장 기각.
+- **마감 워커**: `@Scheduled` 폴링 + 경매 1건 독립 TX + auction 행 비관락 + 종료성 CAS + **SCHEDULED 포함 스캔**
+  (예약 경매 0입찰 고임 방지). 분산락·신규 인덱스 불요(bid-domain-spec §4·§8 정합).
+- **★ business fee 귀속 = ④-C 전용 수익 원장**(`platform_revenue_ledger` 신설, sale_order_id UK). 게임머니 **총량 보존**
+  (불변식 I-H: winner −final = seller +settle + ledger +fee, final=settle+fee) + 회계/감사 추적. architect 추천(④-A 소멸) 대신 채택.
+- **seller 지급**: 게임머니 크레딧 + sale_order 지급 기록. **수수료 계산**: SOLD TX 1회(누진→반올림→cap→최소)·fee_policy_version 스탬프.
+
+산출물
+
+- `docs/spec/closing-domain-spec.md` v1.0 · `erd.md` v1.3 · `api-contract.md` v1.12(semantic 확정, 필드 무변경).
+- 프론트 영향 없음(신규 계약 0). resultType/status/WON 값만 채워짐, 마감 전이 구간은 "마감 처리 중" 표기.
+
+구현 (backend-impl, 순차 단일 패스 — CloseService 파일 공유로 병렬 불가)
+
+- V14 스키마 → 마감 워커(CloseWorker·CloseService) → SOLD 정산 → UNSOLD. 패키지 `domain/settlement/*`. concurrency-review 검수.
