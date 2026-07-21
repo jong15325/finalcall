@@ -1,23 +1,37 @@
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
+import { useMutation } from '@tanstack/react-query'
+import useAuth from '@/auth/useAuth'
+import SignupForm from '@/features/auth/components/SignupForm'
 import { paths } from '@/app/paths'
+import type { SignupRequest } from '@/lib/api/auth'
 
-/** 회원가입 — 빈 셸(FC-069에서 폼·클라 검증 구현). */
+/**
+ * 회원가입 `/signup` (FC-078 — design-brief B-6).
+ *
+ * ★ 계약 §2 — 가입 응답에 **토큰이 없다**(자동 로그인 없음). 성공하면 로그인 화면으로 보내고,
+ *   방금 만든 아이디를 state 로 넘겨 자동 채움한다(선택 편의).
+ * ★ 실패는 `mutation.error`(ApiError)로 폼에 넘겨 `AUTH_001`(중복 아이디)·`AUTH_002`(중복 닉네임)를
+ *   `code` 로 구분해 문구를 낸다.
+ */
 export default function SignupPage() {
+    const { signUp } = useAuth()
+    const navigate = useNavigate()
+
+    const mutation = useMutation<void, Error, SignupRequest>({
+        mutationFn: signUp,
+        onSuccess: (_data, variables) => {
+            navigate(paths.login, {
+                replace: true,
+                state: { signupSuccess: true, loginId: variables.loginId },
+            })
+        },
+    })
+
     return (
-        <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-900">회원가입</h1>
-            <p className="mt-2 text-sm text-gray-500">
-                가입 폼은 FC-069에서 구현됩니다.
-            </p>
-            <p className="mt-6 text-sm text-gray-500">
-                이미 계정이 있으신가요?{' '}
-                <Link
-                    to={paths.login}
-                    className="font-semibold text-orange-deep hover:underline"
-                >
-                    로그인
-                </Link>
-            </p>
-        </div>
+        <SignupForm
+            isSubmitting={mutation.isPending}
+            submitError={mutation.error}
+            onSubmit={(credential) => mutation.mutate(credential)}
+        />
     )
 }

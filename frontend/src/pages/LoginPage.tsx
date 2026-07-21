@@ -1,23 +1,47 @@
-import { Link } from 'react-router'
-import { paths } from '@/app/paths'
+import { useLocation } from 'react-router'
+import { useMutation } from '@tanstack/react-query'
+import useAuth from '@/auth/useAuth'
+import LoginForm from '@/features/auth/components/LoginForm'
+import type { LoginRequest } from '@/lib/api/auth'
 
-/** 로그인 — 빈 셸(FC-069에서 폼·JWT 세션 구현). */
+/**
+ * 로그인 `/login` (FC-078 — design-brief B-5).
+ *
+ * ★ 성공 후 이동은 **선언적**이다 — `signIn` 이 세션을 세우면 `authenticated` 가 true 가 되고,
+ *   이 화면을 감싼 `PublicRoute` 가 `?redirectUrl`(정화됨) 또는 홈으로 되돌린다. 여기서 직접
+ *   `navigate` 하지 않는다(AuthProvider 주석 — 상태와 화면 이동을 한 곳에 엉키지 않게).
+ * ★ 실패는 `mutation.error`(ApiError)로 폼에 넘겨 `code` 로 문구를 낸다(SEC-007 단일 문구).
+ */
+interface SignupHandoffState {
+    signupSuccess?: boolean
+    loginId?: string
+}
+
 export default function LoginPage() {
+    const { signIn } = useAuth()
+    const location = useLocation()
+    const handoff = (location.state as SignupHandoffState | null) ?? {}
+
+    const mutation = useMutation<void, Error, LoginRequest>({
+        mutationFn: signIn,
+    })
+
     return (
-        <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-900">로그인</h1>
-            <p className="mt-2 text-sm text-gray-500">
-                로그인 폼은 FC-069에서 구현됩니다.
-            </p>
-            <p className="mt-6 text-sm text-gray-500">
-                계정이 없으신가요?{' '}
-                <Link
-                    to={paths.signup}
-                    className="font-semibold text-orange-deep hover:underline"
+        <div>
+            {handoff.signupSuccess && (
+                <p
+                    role="status"
+                    className="mb-4 rounded-lg border border-success/40 bg-success-subtle px-3.5 py-2.5 text-xs font-semibold text-success"
                 >
-                    회원가입
-                </Link>
-            </p>
+                    회원가입이 완료되었습니다. 로그인해 주세요.
+                </p>
+            )}
+            <LoginForm
+                isSubmitting={mutation.isPending}
+                submitError={mutation.error}
+                initialLoginId={handoff.loginId ?? ''}
+                onSubmit={(credential) => mutation.mutate(credential)}
+            />
         </div>
     )
 }
