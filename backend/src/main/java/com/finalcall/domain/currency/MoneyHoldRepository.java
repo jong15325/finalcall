@@ -50,6 +50,34 @@ public interface MoneyHoldRepository extends JpaRepository<MoneyHold, Long> {
         + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
     int releaseIfHeld(@Param("holdId") Long holdId, @Param("releasedAt") Instant releasedAt);
 
+    /**
+     * 홀드 확정 차감 조건부 CAS(closing-domain-spec §4.3). HELD 일 때만 CAPTURED 로 전이하며 확정 시각을 남긴다
+     * ({@code releaseIfHeld} 와 대칭). 낙찰 시 낙찰자 홀드를 실제 차감 확정하는 전이다.
+     *
+     * <p>영향행이 0이면 이미 해제·차감된 홀드를 다시 차감하려 한 것이므로 <b>불변식 위반</b>이다 — 호출 측은
+     * 무시하지 않고 예외로 올려 트랜잭션 전체를 롤백한다(이중 차감 = 무자본 획득 방지, I-D). 잔액 실차감
+     * ({@code UserBalanceRepository.capture})과 함께 이중 조건을 이뤄 어느 한쪽이 0행이면 정산이 커밋되지 않는다.
+     *
+     * @return 영향 행 수(1=차감 확정 성공, 0=대상이 HELD 가 아님)
+     */
+    @Modifying
+    @Query("UPDATE MoneyHold h "
+        + "SET h.status = com.finalcall.domain.currency.MoneyHoldStatus.CAPTURED, h.releasedAt = :capturedAt "
+        + "WHERE h.id = :holdId "
+        + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
+    int captureIfHeld(@Param("holdId") Long holdId, @Param("capturedAt") Instant capturedAt);
+
+    /**
+     * 경매에 걸린 유효 홀드(HELD) 건수(closing-domain-spec §5 1단계 방어 검증). 유찰 경매는 입찰 0건이므로 HELD
+     * 홀드도 0건이어야 한다(I3) — 0이 아니면 정합 위반이라 UNSOLD 절차를 진행하지 않는다.
+     *
+     * @return HELD 홀드 건수(정상=0)
+     */
+    @Query("SELECT COUNT(h) FROM MoneyHold h "
+        + "WHERE h.bid.auction.id = :auctionId "
+        + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
+    long countHeldByAuctionId(@Param("auctionId") Long auctionId);
+
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default MoneyHold findByIdOrThrow(Long id, ErrorCode errorCode) {
         return findById(id).orElseThrow(() -> new BusinessException(errorCode));

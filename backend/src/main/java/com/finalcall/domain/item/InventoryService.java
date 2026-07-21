@@ -10,11 +10,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.member.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +42,7 @@ public class InventoryService {
 
     private final ItemInstanceRepository itemInstanceRepository;
     private final TempStorageRepository tempStorageRepository;
+    private final UserRepository userRepository;
 
     @ServiceLog
     public InventoryData getMyInventory() {
@@ -119,6 +123,43 @@ public class InventoryService {
         instance.placeInInventory(targetSlot);
         try {
             itemInstanceRepository.flush(); // 커밋 전 강제 flush — 동시 복귀 이중 배정 UK 위반을 이 계층에서 매핑
+        } catch (DataIntegrityViolationException ex) {
+            throw toSlotConflict(ex);
+        }
+    }
+
+    /**
+     * 출품(LISTED) 아이템을 낙찰자에게 이전한다(SOLD 정산 경로, closing-domain-spec §4.4 — releaseFromListing 과
+     * 방향 반대: 소유자가 <b>바뀐다</b>). 낙찰자 인벤토리에 여유가 있으면 빈 슬롯으로(LISTED→INVENTORY),
+     * 만실(96칸)이면 임시보관으로(LISTED→TEMP) 옮긴다. 소유 이력({@code item_ownership_history}) append 는 호출
+     * 측(정산 TX)이 {@code sale_order_id} 와 함께 기록한다.
+     *
+     * <p>호출 측(SOLD TX)에 참여한다({@code Propagation.MANDATORY} — 별도 빈이라 프록시 경유, self-invocation 아님).
+     * SOLD TX 는 잔액 조건부 UPDATE 가 영속성 컨텍스트를 clear 한 뒤 이 메서드를 호출하므로 dirty-checking 이 아니라
+     * {@code @Modifying} CAS({@code transferListedToInventory}/{@code transferListedToTemp})로 전이한다(§4.2).
+     * 슬롯 정합성의 최종 방어선은 {@code slot_key} UK 다.
+     *
+     * @param instanceId 출품(LISTED) 아이템 PK
+     * @param winnerId   낙찰자 PK(신규 소유자)
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void transferListedToBuyer(Long instanceId, Long winnerId) {
+        long used = itemInstanceRepository.countByOwnerIdAndLocation(winnerId, ItemLocation.INVENTORY);
+        if (used >= CAPACITY) {
+            int moved = itemInstanceRepository.transferListedToTemp(
+                instanceId, userRepository.getReferenceById(winnerId));
+            Preconditions.validate(moved == 1, CommonErrorCode.INTERNAL_ERROR);
+            tempStorageRepository.save(TempStorage.builder()
+                .instance(itemInstanceRepository.getReferenceById(instanceId))
+                .ownerId(winnerId).storedAt(Instant.now()).build());
+            return;
+        }
+        int targetSlot = resolveSlot(winnerId, null); // 빈 슬롯 자동 배정
+        int moved = itemInstanceRepository.transferListedToInventory(
+            instanceId, userRepository.getReferenceById(winnerId), targetSlot);
+        Preconditions.validate(moved == 1, CommonErrorCode.INTERNAL_ERROR);
+        try {
+            itemInstanceRepository.flush(); // 커밋 전 강제 flush — 이중 배정 UK 위반을 이 계층에서 매핑
         } catch (DataIntegrityViolationException ex) {
             throw toSlotConflict(ex);
         }

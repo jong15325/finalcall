@@ -1,8 +1,10 @@
 package com.finalcall.domain.auction;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -114,6 +116,77 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
     @Query("SELECT new com.finalcall.domain.auction.AuctionCancelState(a.status, a.highestBidder.id) "
         + "FROM Auction a WHERE a.id = :id")
     Optional<AuctionCancelState> findCancelStateForUpdate(@Param("id") Long id);
+
+    /**
+     * ★ 마감 워커 후보 스캔(closing-domain-spec §3.1) — 마감 시각이 지난 미종결 경매의 id 만 뽑는다.
+     *
+     * <p>후보 스캔과 실제 전이를 분리한다: 여기서는 <b>락 없이 짧게</b> id 만 읽고, 전이는 경매 1건씩 독립 TX +
+     * 행 락으로 처리한다({@code CloseService.closeOne}). 스캔 대상은 {@code ACTIVE} 만이 아니라
+     * <b>{@code SCHEDULED} 도 포함</b>한다(§1.1) — start_at 미래로 등록된 예약 경매가 입찰 0건으로 마감 시각을
+     * 지나면 영속값이 SCHEDULED 에 고인 채 UNSOLD 로 종결돼야 하기 때문이다. 인덱스 {@code (status, end_at)}
+     * (V10)가 status 별 range 스캔으로 커버한다. 오래 밀린 것부터 처리하도록 {@code end_at} 오름차순이다.
+     *
+     * @param now      마감 판정 기준 시각
+     * @param pageable {@code LIMIT batchSize}(한 tick 처리량 상한). 못 딴 후보는 다음 tick 이 재스캔한다
+     * @return 마감 후보 경매 id 목록(end_at 오름차순)
+     */
+    @Query("SELECT a.id FROM Auction a "
+        + "WHERE a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.endAt <= :now "
+        + "ORDER BY a.endAt ASC")
+    List<Long> findClosableIds(@Param("now") Instant now, Pageable pageable);
+
+    /**
+     * ★ 마감 전이 직렬화의 진입점(closing-domain-spec §3.2 1단계) — 경매 행에 배타 락을 걸고 판정에 필요한 값만
+     * 읽는다. {@code SELECT ... FROM auction WHERE id = ? FOR UPDATE} 로 나가며, 이 락은 <b>입찰과 동일 행</b>을
+     * 잡으므로(bid-domain-spec §4.1) 진행 중인 입찰 TX 뒤에서 대기하고, 락을 얻으면 그 입찰이 반영된 최신
+     * {@code end_at}·{@code highest_bidder_id} 를 본다 → 입찰과 마감의 경합이 DB 직렬화로 자동 해소된다.
+     *
+     * <p>엔티티가 아닌 스칼라 프로젝션을 반환하는 이유는 {@link AuctionCloseContext} 참조. 연관을
+     * {@code a.seller.id} 등으로 읽어 조인이 생기지 않으므로 {@code FOR UPDATE} 가 단일 테이블 잠금으로 유지된다.
+     *
+     * @return 락을 획득한 경매의 값 스냅샷. 없으면 비어 있다(이미 삭제됨 — 정상 skip)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT new com.finalcall.domain.auction.AuctionCloseContext("
+        + "a.id, a.seller.id, a.status, a.endAt, a.highestBidder.id, a.highestBidAmount, a.itemInstance.id) "
+        + "FROM Auction a WHERE a.id = :id")
+    Optional<AuctionCloseContext> findCloseContextForUpdate(@Param("id") Long id);
+
+    /**
+     * 낙찰 종료성 CAS(closing-domain-spec §4.1 9단계) — SCHEDULED|ACTIVE 이고 마감 시각이 지났을 때만 SOLD 로
+     * 단일 승자 전이하며 {@code result_type='BID'} 를 세팅한다. {@code highest_bid_amount}·{@code highest_bidder}
+     * 는 입찰 TX 가 이미 세팅했으므로 덮어쓰지 않는다(status·result_type 만).
+     *
+     * <p>영향행 0 = "이미 종결됨"(다른 인스턴스가 처리했거나 막판 연장으로 end_at 이 밀림) → 재시도가 아니라
+     * 무부작용 판정이다(I-F·I-G, bid-domain-spec §4.6.2 CAS 0행 원인판정과 동류). 행 락 하 재검증이 앞서므로
+     * 정상 경로에서 이 CAS 는 항상 1행이며, 0행이면 호출 측이 불변식 위반으로 롤백한다.
+     *
+     * @return 영향 행 수(1=전이 성공, 0=이미 종결·연장)
+     */
+    @Modifying
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.SOLD, "
+        + "a.resultType = com.finalcall.domain.auction.AuctionResultType.BID "
+        + "WHERE a.id = :id "
+        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.endAt <= :now")
+    int markSoldIfClosable(@Param("id") Long id, @Param("now") Instant now);
+
+    /**
+     * 유찰 종료성 CAS(closing-domain-spec §5) — SCHEDULED|ACTIVE 이고 마감 시각이 지났을 때만 UNSOLD 로 전이한다.
+     * {@code result_type} 은 NULL 유지(SOLD 가 아니므로 BID/BUYNOW 어느 것도 아님, erd §4.2 정합).
+     *
+     * @return 영향 행 수(1=전이 성공, 0=이미 종결·연장)
+     */
+    @Modifying
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.UNSOLD "
+        + "WHERE a.id = :id "
+        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.endAt <= :now")
+    int markUnsoldIfClosable(@Param("id") Long id, @Param("now") Instant now);
 
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default Auction findByIdOrThrow(Long id, ErrorCode errorCode) {

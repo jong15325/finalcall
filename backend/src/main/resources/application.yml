@@ -128,6 +128,32 @@ jwt:
 exchange:
   rate: ${EXCHANGE_RATE:1000000}
 
+# FC-082(EPIC-CLOSING): 플랫폼 중계 수수료 정책(fee-policy-spec v1.0). 판매자 단독 부담 구간별 누진(marginal).
+#   ★ 컴파일 상수가 아니라 운영 정책이라 설정으로 뺐다(FeePolicyProperties @Validated 로 빈/음수 부팅 차단).
+#   계산 순서(FeeCalculator): 구간 누진 → 원단위 사사오입 → cap(300,000) → 최소(100). up-to 미지정 구간 = 상한 없음.
+#   version 은 sale_order·platform_revenue_ledger 에 스탬프되어 정산 후 환불 크레딧이 "당시 정책"을 재현한다.
+fee:
+  policy:
+    version: v1.0
+    min-fee: 100
+    cap: 300000
+    tiers:
+      - up-to: 100000
+        rate-percent: 6
+      - up-to: 1000000
+        rate-percent: 5
+      - up-to: 3000000
+        rate-percent: 4
+      - rate-percent: 3      # up-to 미지정 = 3,000,001 ~ 상한 없음(최상위 구간)
+
+# FC-082(EPIC-CLOSING): 마감 워커 폴링 파라미터(closing-domain-spec §3.1). 간격·배치는 운영 부하 트레이드오프.
+#   enabled=true 운영 상시. 통합 테스트는 false 로 배경 tick 을 끄고 워커를 직접 호출해 결정적으로 검증한다.
+closing:
+  worker:
+    enabled: ${CLOSING_WORKER_ENABLED:true}
+    fixed-delay-ms: ${CLOSING_WORKER_FIXED_DELAY_MS:2000}
+    batch-size: ${CLOSING_WORKER_BATCH_SIZE:200}
+
 # D-068: 직접접근 차단(엣지 게이트웨이 공유비밀 검증). enforced 는 실 프로파일에서 항상 켠다.
 #   secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
 #   ★ 통합테스트는 게이트웨이 미경유 MockMvc 직접 호출이라 enforced=false 로 내린다(테스트 base).

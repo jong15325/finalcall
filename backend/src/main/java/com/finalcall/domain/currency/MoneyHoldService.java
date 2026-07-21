@@ -116,6 +116,32 @@ public class MoneyHoldService {
     }
 
     /**
+     * 낙찰 홀드 확정 차감(HELD→CAPTURED + 실차감, closing-domain-spec §4.3) — 낙찰자의 홀드된 게임머니를 실제
+     * 계정에서 뺀다. 지금까지 {@code game_money_held} 에 잠겨 있던 금액이 잔액과 홀드에서 동시에 빠진다.
+     *
+     * <p>{@link #release}(잔액 복원 + 원장 RELEASED)의 낙찰측 대칭이다. 원장 스냅샷을 단일 진실원으로 삼아 차감액을
+     * 원장에서 읽고(호출 인자로 받지 않는다 — I4 드리프트 방지), 잔액 실차감({@code capture})과 원장 전이
+     * ({@code captureIfHeld})의 이중 조건을 모두 통과해야 한다. 어느 한쪽이라도 영향행 0이면 이미 성립한 정합이
+     * 깨졌다는 뜻이라 무시하지 않고 500(롤백)으로 올린다 — 조용히 넘기면 자금 드리프트가 누적된다.
+     *
+     * @param bidId       낙찰 입찰 PK(경매당 ACTIVE→WON 전이 대상)
+     * @param capturedAt  차감 확정 시각(원장 released_at 에 기록)
+     * @throws BusinessException {@code COMMON_999} 차감 대상이 HELD 가 아니거나 홀드/잔액 불일치(불변식 위반)
+     */
+    @ServiceLog
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void capture(Long bidId, Instant capturedAt) {
+        MoneyHoldSnapshot held = moneyHoldRepository.findHeldByBidId(bidId)
+            .orElseThrow(() -> new BusinessException(CommonErrorCode.INTERNAL_ERROR));
+        // 잔액 실차감(balance·held 동시 감소). 영향행 0 = 홀드/잔액 불일치 = 불변식 위반(→ 500, 롤백).
+        int balanceAffected = userBalanceRepository.capture(held.userId(), held.amount());
+        Preconditions.validate(balanceAffected == 1, CommonErrorCode.INTERNAL_ERROR);
+        // 원장 HELD→CAPTURED. 잔액 갱신이 영속성 컨텍스트를 clear 한 뒤 조건부 CAS 로 전이한다(설계 규칙 2).
+        int ledgerAffected = moneyHoldRepository.captureIfHeld(held.holdId(), capturedAt);
+        Preconditions.validate(ledgerAffected == 1, CommonErrorCode.INTERNAL_ERROR);
+    }
+
+    /**
      * 직전 최고 입찰의 유효 홀드를 읽는다. 직전 입찰이 있는데 HELD 홀드가 없으면 I3 위반이라 진행하지 않는다.
      *
      * <p>해제액을 호출 인자가 아니라 원장에서 읽는다 — 잔액에서 빼는 금액과 원장이 갈라지는 경로를 없앤다(I4).

@@ -54,6 +54,21 @@ public interface BidRepository extends JpaRepository<Bid, Long>, BidRepositoryCu
         + "AND b.status = com.finalcall.domain.bid.BidStatus.ACTIVE")
     int markOutbidIfActive(@Param("bidId") Long bidId);
 
+    /**
+     * 낙찰 확정 ACTIVE→WON 조건부 CAS(closing-domain-spec §4.1 3단계). 마감 시 경매당 ACTIVE 입찰은 1건(I1)이며
+     * 그 1건을 낙찰로 전이한다. 이미 WON·OUTBID 면 전이하지 않는다.
+     *
+     * <p>영향행이 0이면 낙찰 대상이 ACTIVE 가 아니라는 뜻이라 <b>불변식 위반</b>이다 — 호출 측(SOLD TX)은 무시하지
+     * 않고 예외로 올려 트랜잭션 전체를 롤백한다. {@code clearAutomatically} 를 붙이지 않는다(§4.2 함정 회피).
+     *
+     * @return 영향 행 수(1=낙찰 전이 성공, 0=대상이 ACTIVE 가 아님)
+     */
+    @Modifying
+    @Query("UPDATE Bid b SET b.status = com.finalcall.domain.bid.BidStatus.WON "
+        + "WHERE b.id = :bidId "
+        + "AND b.status = com.finalcall.domain.bid.BidStatus.ACTIVE")
+    int markWonIfActive(@Param("bidId") Long bidId);
+
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default Bid findByIdOrThrow(Long id, ErrorCode errorCode) {
         return findById(id).orElseThrow(() -> new BusinessException(errorCode));

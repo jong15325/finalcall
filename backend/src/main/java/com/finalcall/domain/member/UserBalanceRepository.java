@@ -57,6 +57,26 @@ public interface UserBalanceRepository extends JpaRepository<UserBalance, Long> 
     int decreaseGameMoney(@Param("userId") Long userId, @Param("amount") long amount);
 
     /**
+     * 홀드 확정 차감(낙찰, closing-domain-spec §4.3). 홀드된 금액이 <b>실제로 계정을 떠난다</b> — 잔액과 홀드를
+     * 동시에 같은 금액만큼 줄인다. 홀드는 잠금일 뿐 차감이 아니므로, 낙찰 확정 시 이 메서드가 잠긴 금액을 실제
+     * 잔액에서 빼면서 홀드도 함께 해제한다(둘을 따로 갱신하면 어긋날 수 있어 한 문장에 담는다).
+     *
+     * <p>선행조건 {@code game_money_held >= amount AND game_money_balance >= amount} 를 {@code WHERE} 에 담아 DB
+     * 행 락 아래에서 평가한다. 영향행 0 = 홀드/잔액 불일치 = 불변식 위반이라 호출 측이 예외로 롤백한다(I-D).
+     * capture 후 낙찰자 {@code game_money_balance}·{@code game_money_held} 가 각각 {@code amount} 만큼 감소하므로
+     * I4(held == SUM(HELD))·게임머니 총량 보존(I-H)이 보존된다.
+     *
+     * @return 영향행 수 — 1 성공, 0 홀드/잔액 불일치(불변식 위반)
+     */
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE UserBalance b SET b.gameMoneyBalance = b.gameMoneyBalance - :amount, "
+        + "b.gameMoneyHeld = b.gameMoneyHeld - :amount "
+        + "WHERE b.user.id = :userId "
+        + "AND b.gameMoneyHeld >= :amount AND b.gameMoneyBalance >= :amount")
+    int capture(@Param("userId") Long userId, @Param("amount") long amount);
+
+    /**
      * 게임머니 홀드(에스크로 잠금, 입찰). 가용(= 잔액 − 홀드) 이내에서만 성공한다(초과 홀드 방지).
      *
      * @return 영향행 수 — 1 성공, 0 가용 게임머니 부족
