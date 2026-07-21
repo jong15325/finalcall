@@ -266,12 +266,31 @@ export function createAuction(
     return apiClient.post<CreateAuctionResponse>('/auctions', body)
 }
 
-/*
+/** `POST /auctions/{id}/purchase` 201 (계약 §3.1). */
+export interface PurchaseAuctionResponse {
+    orderPublicId: string
+    /** 확정 낙찰가 = 서버가 정한 `buyNowPrice`(클라 금액 신뢰 없음) */
+    finalPrice: number
+}
+
+/**
+ * `POST /auctions/{id}/purchase`(즉시구매) — **인증 필요**. FC-090(EPIC-PURCHASE v1.13 승격).
+ *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★★ **`POST /auctions/{id}/purchase`(즉시구매)를 여기에 만들지 마라.**
+ * ★★ **요청 본문이 없다.** 금액은 서버가 `buy_now_price` 로 확정한다(purchase-spec §2 — 클라
+ *    금액 신뢰 없음). `apiClient.post` 에 body 를 넘기지 않으면 Content-Type 도 붙지 않는다.
  * ══════════════════════════════════════════════════════════════════════════════
- * 계약 §3.1 에 **완전히 명세돼 있으나 백엔드에 매핑이 없다** — 호출하면 404 다
- * (`AUCTION_005`/`AUCTION_009` 도 서버 enum 에 없다. EPIC-CLOSING 소유).
- * FC-048 이 계약만 보고 `/shops` 를 호출했다가 홈에 에러 배너를 띄운 것과 같은 함정이다.
- * `buyNowPrice` 는 **정보 표기로만** 쓴다.
+ *
+ * ★ 성립하면 경매가 `SOLD`(resultType=BUYNOW)로 종료되고 구매자 게임머니가 **직접 차감**되며
+ *   아이템이 구매자 인벤토리(만실 시 임시보관)로 이전된다(purchase-spec §3·§8). 무효화 반경은
+ *   `usePurchaseAuction` 참고.
+ * ★ 실패는 `AUCTION_005`(미설정 422)·`AUCTION_006`(구매 불가·미개시/종료 409)·`AUCTION_009`
+ *   (자기구매 403)·`BID_005`(잔액 부족 422)·`AUCTION_004`(없음 404). 문구는 `purchaseErrors.ts`.
  */
+export function purchaseAuction(
+    auctionPublicId: string,
+): Promise<PurchaseAuctionResponse> {
+    return apiClient.post<PurchaseAuctionResponse>(
+        `/auctions/${auctionPublicId}/purchase`,
+    )
+}

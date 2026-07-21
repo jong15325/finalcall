@@ -6,12 +6,17 @@ import AuctionHeroCard from '@/features/auction/components/AuctionHeroCard'
 import BidPanel from '@/features/auction/components/BidPanel'
 import BidDialog from '@/features/auction/components/BidDialog'
 import BidHistory from '@/features/auction/components/BidHistory'
-import { auctionPhaseOf, isOwnAuction } from '@/features/auction/lib/auctionPhase'
+import PurchaseDialog from '@/features/auction/components/PurchaseDialog'
+import {
+    auctionPhaseOf,
+    isOwnAuction,
+} from '@/features/auction/lib/auctionPhase'
 import { useNow } from '@/features/auction/lib/useNow'
 import {
     useAuctionDetail,
     useCancelAuction,
     usePlaceBid,
+    usePurchaseAuction,
 } from '@/lib/queries/auctions'
 import { useMyBalance } from '@/lib/queries/balance'
 import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
@@ -46,8 +51,10 @@ export default function AuctionDetailPage() {
 
     const bidMutation = usePlaceBid(id)
     const cancelMutation = useCancelAuction(id)
+    const purchaseMutation = usePurchaseAuction(id)
 
     const [bidOpen, setBidOpen] = useState(false)
+    const [purchaseOpen, setPurchaseOpen] = useState(false)
     const [toast, setToast] = useState<string | null>(null)
 
     // 토스트 자동 소멸(성공 안내는 오래 남겨 두지 않는다).
@@ -66,7 +73,10 @@ export default function AuctionDetailPage() {
 
     // ── 에러(없음·전송 실패) ──────────────────────────────────────────────────
     if (detailQuery.isError || !auction) {
-        const notFound = hasErrorCode(detailQuery.error, ERROR_CODES.AUCTION_004)
+        const notFound = hasErrorCode(
+            detailQuery.error,
+            ERROR_CODES.AUCTION_004,
+        )
         return (
             <StateBlock
                 icon={notFound ? TbSearchOff : TbAlertTriangle}
@@ -103,7 +113,11 @@ export default function AuctionDetailPage() {
     }
 
     const phase = auctionPhaseOf(
-        { status: auction.status, startAt: auction.startAt, endAt: auction.endAt },
+        {
+            status: auction.status,
+            startAt: auction.startAt,
+            endAt: auction.endAt,
+        },
         now,
     )
     const isOwn = isOwnAuction(auction.sellerNickname, myNickname)
@@ -114,12 +128,28 @@ export default function AuctionDetailPage() {
         setBidOpen(true)
     }
 
+    const openPurchase = () => {
+        purchaseMutation.reset()
+        setPurchaseOpen(true)
+    }
+
     const handleBidSubmit = (amount: number) => {
         bidMutation.mutate(amount, {
             onSuccess: () => {
                 setBidOpen(false)
                 setToast(
                     '입찰이 접수되었습니다. 현재 최고가와 마감 시각이 갱신됩니다.',
+                )
+            },
+        })
+    }
+
+    const handlePurchase = () => {
+        purchaseMutation.mutate(undefined, {
+            onSuccess: () => {
+                setPurchaseOpen(false)
+                setToast(
+                    '즉시구매로 낙찰되었습니다. 아이템은 인벤토리에서 확인하세요.',
                 )
             },
         })
@@ -153,7 +183,11 @@ export default function AuctionDetailPage() {
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
                 {/* 모바일: bid-panel 을 먼저(입찰 즉시 진입, design-brief C-7) */}
                 <div className="order-2 lg:order-1">
-                    <AuctionHeroCard auction={auction} phase={phase} now={now} />
+                    <AuctionHeroCard
+                        auction={auction}
+                        phase={phase}
+                        now={now}
+                    />
                 </div>
                 <div className="order-1 lg:order-2">
                     <BidPanel
@@ -167,6 +201,7 @@ export default function AuctionDetailPage() {
                         cancelPending={cancelMutation.isPending}
                         cancelError={cancelMutation.error}
                         onBid={openBid}
+                        onBuyNow={openPurchase}
                         onCancel={handleCancel}
                     />
                 </div>
@@ -180,12 +215,29 @@ export default function AuctionDetailPage() {
                 currentHighestAmount={auction.highestBidAmount}
                 minNextBidAmount={auction.minNextBidAmount}
                 buyNowPrice={auction.buyNowPrice}
-                gameMoneyAvailable={balanceQuery.data?.gameMoneyAvailable ?? null}
+                gameMoneyAvailable={
+                    balanceQuery.data?.gameMoneyAvailable ?? null
+                }
                 isSubmitting={bidMutation.isPending}
                 submitError={bidMutation.error}
                 onClose={() => setBidOpen(false)}
                 onSubmit={handleBidSubmit}
             />
+
+            {auction.buyNowPrice !== null && (
+                <PurchaseDialog
+                    open={purchaseOpen}
+                    auctionName={auction.item.nameSnapshot}
+                    buyNowPrice={auction.buyNowPrice}
+                    gameMoneyAvailable={
+                        balanceQuery.data?.gameMoneyAvailable ?? null
+                    }
+                    isSubmitting={purchaseMutation.isPending}
+                    submitError={purchaseMutation.error}
+                    onClose={() => setPurchaseOpen(false)}
+                    onConfirm={handlePurchase}
+                />
+            )}
         </div>
     )
 }

@@ -25,6 +25,7 @@ export const paths = {
 
     /* 마이페이지 */
     me: '/me',
+    orders: '/me/orders',
     inventory: '/me/inventory',
     tempStorage: '/me/temp-storage',
     itemDetail: '/items/:id',

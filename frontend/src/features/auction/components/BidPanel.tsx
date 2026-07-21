@@ -2,19 +2,22 @@ import { Link } from 'react-router'
 import CodeAmount from '@/components/common/CodeAmount'
 import Countdown from './Countdown'
 import { bidErrorViewOf } from '@/features/auction/lib/bidErrors'
+import { buyNowStateOf, endedResultNoteOf } from '@/features/auction/lib/buyNow'
+import { formatGameMoney } from '@/features/auction/lib/auctionPrice'
 import { type AuctionPhase } from '@/features/auction/lib/auctionPhase'
 import type { AuctionDetail } from '@/lib/api/auctions'
 import type { BalanceResponse } from '@/lib/api/balance'
 
 /**
- * 입찰 패널 (FC-072 — 목업 `.bid-panel`(sticky) · design-brief B-3/B-4).
+ * 입찰 패널 (FC-072 · 즉시구매 실연동 FC-090 — 목업 `.bid-panel`(sticky) · design-brief B-3/B-4).
  *
  * 목업 구조: 카운트다운 + `.current-price`(현재 최고가·최고입찰자) + `.bid-meta`(다음 최소가·가용
- * 게임머니·즉시구매 참고가) + CTA + 안내문.
+ * 게임머니·즉시구매가) + CTA + 안내문.
  *
  * ★ **CTA 는 상태로 갈린다**(auctionPhase): 마감→비활성 / 비로그인→"로그인하고 입찰"(returnUrl) /
- *   판매자 본인→입찰 숨김·취소 노출 / 진행→"입찰하기". **즉시구매 버튼은 만들지 않는다**(404, §5) —
- *   `buyNowPrice` 는 참고가 **표기만**.
+ *   판매자 본인→입찰 숨김·취소 노출 / 진행→"입찰하기".
+ * ★ **즉시구매 CTA 는 실연동**(FC-090, EPIC-PURCHASE v1.13): `buyNowStateOf` 로 활성 조건을 판정한다
+ *   (설정됨 ∧ 라이브 ∧ 타인 경매). 비로그인은 로그인 유도, 활성은 확인 다이얼로그를 연다.
  * ★ **비활성은 DOM 속성**(`disabled`) — 색만 바꾸지 않는다(WCAG 4.1.2).
  * ★ 색은 브랜드 팔레트 — `.current-price` 는 브랜드 navy 블록(목업도 짙은 남색).
  */
@@ -31,6 +34,8 @@ interface BidPanelProps {
     loginHref: string
     /** 입찰하기 → 다이얼로그 열기 */
     onBid: () => void
+    /** 즉시구매 → 확인 다이얼로그 열기 */
+    onBuyNow: () => void
     /** 판매자 취소 */
     onCancel: () => void
     cancelPending: boolean
@@ -46,6 +51,7 @@ function BidPanel({
     isOwn,
     loginHref,
     onBid,
+    onBuyNow,
     onCancel,
     cancelPending,
     cancelError,
@@ -58,6 +64,13 @@ function BidPanel({
     const cancellable = !isEnded && auction.bidCount === 0
     const cancelErrorView =
         cancelError != null ? bidErrorViewOf(cancelError, null) : null
+    /** 즉시구매 활성 조건(설정됨 ∧ 라이브 ∧ 타인) — 표시 제어, 인가는 서버(AUCTION_009) */
+    const buyNowState = buyNowStateOf({
+        buyNowPrice: auction.buyNowPrice,
+        phase,
+        isOwn,
+        isAuthed,
+    })
 
     return (
         <aside className="rounded-2xl border border-line bg-surface">
@@ -77,7 +90,11 @@ function BidPanel({
                         {hasBids ? '현재 최고가' : '시작가'}
                     </span>
                     <CodeAmount
-                        value={hasBids ? auction.highestBidAmount : auction.startPrice}
+                        value={
+                            hasBids
+                                ? auction.highestBidAmount
+                                : auction.startPrice
+                        }
                         mode="full"
                         className="text-2xl font-bold"
                     />
@@ -117,7 +134,7 @@ function BidPanel({
                     {auction.buyNowPrice !== null && (
                         <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
                             <dt className="font-medium text-gray-500">
-                                즉시구매 참고가
+                                즉시구매가
                             </dt>
                             <dd className="font-semibold text-gray-900">
                                 <CodeAmount
@@ -171,6 +188,27 @@ function BidPanel({
                     </button>
                 )}
 
+                {/* 즉시구매 CTA — 입찰과 별개 경로(설정됨 ∧ 라이브 ∧ 타인일 때만) */}
+                {buyNowState === 'available' &&
+                    auction.buyNowPrice !== null && (
+                        <button
+                            type="button"
+                            className="mt-2.5 w-full rounded-lg border border-navy bg-surface px-5 py-3.5 text-sm font-bold text-navy hover:bg-navy hover:text-white"
+                            onClick={onBuyNow}
+                        >
+                            {formatGameMoney(auction.buyNowPrice)} 코드에
+                            즉시구매
+                        </button>
+                    )}
+                {buyNowState === 'login' && (
+                    <Link
+                        to={loginHref}
+                        className="mt-2.5 block w-full rounded-lg border border-navy bg-surface px-5 py-3.5 text-center text-sm font-bold text-navy hover:bg-navy hover:text-white"
+                    >
+                        로그인하고 즉시구매
+                    </Link>
+                )}
+
                 {/* 판매자 취소 실패(AUCTION_007·006·001) */}
                 {isOwn && cancelErrorView && (
                     <p
@@ -183,8 +221,11 @@ function BidPanel({
 
                 <p className="mt-3 text-center text-xs text-gray-500">
                     {isEnded
-                        ? '이 경매는 종료되었습니다.'
-                        : '즉시구매는 추후 제공 예정이며 현재는 가격 정보만 표시됩니다.'}
+                        ? endedResultNoteOf(auction.status, auction.resultType)
+                        : buyNowState === 'hidden' &&
+                            auction.buyNowPrice === null
+                          ? '이 경매는 입찰로만 거래됩니다.'
+                          : '즉시구매하면 입찰 없이 바로 낙찰됩니다.'}
                 </p>
                 <p className="mt-2 text-center text-[11px] text-gray-400">
                     구매자 수수료 없음. 판매자는 낙찰가 구간별 수수료 차감 후

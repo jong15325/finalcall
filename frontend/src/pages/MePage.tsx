@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { TbAlertTriangle } from 'react-icons/tb'
+import { Link, useNavigate } from 'react-router'
+import { TbAlertTriangle, TbChevronRight, TbReceipt } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ProfileCard from '@/features/member/components/ProfileCard'
 import VerificationCard from '@/features/member/components/VerificationCard'
@@ -93,6 +93,28 @@ export default function MePage() {
                             isError={balanceQuery.isError}
                         />
                     </div>
+
+                    {/* 거래 내역 진입점 (FC-090 실연동) */}
+                    <Link
+                        to={paths.orders}
+                        className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-5 hover:border-navy sm:p-6"
+                    >
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-navy text-gold-bright">
+                            <TbReceipt aria-hidden className="size-5" />
+                        </span>
+                        <span className="min-w-0">
+                            <span className="block text-base font-bold text-gray-900">
+                                거래 내역
+                            </span>
+                            <span className="block text-xs text-gray-500">
+                                구매·판매한 거래를 확인하세요.
+                            </span>
+                        </span>
+                        <TbChevronRight
+                            aria-hidden
+                            className="ms-auto size-5 shrink-0 text-gray-400"
+                        />
+                    </Link>
 
                     {/* 위험 구역 — 회원 탈퇴 */}
                     <section className="flex flex-col gap-3 rounded-2xl border border-danger/30 bg-danger-subtle/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">

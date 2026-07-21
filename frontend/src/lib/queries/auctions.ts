@@ -12,9 +12,12 @@ import {
     getAuctionBids,
     getAuctions,
     placeBid,
+    purchaseAuction,
 } from '@/lib/api/auctions'
 import { balanceKeys } from './balance'
 import { inventoryKeys } from './inventory'
+import { orderKeys } from './orders'
+import { tempStorageKeys } from './tempStorage'
 import type {
     AuctionCancelResponse,
     AuctionDetail,
@@ -24,6 +27,7 @@ import type {
     CreateAuctionRequest,
     CreateAuctionResponse,
     PlaceBidResponse,
+    PurchaseAuctionResponse,
 } from '@/lib/api/auctions'
 import type { CursorPage, OffsetPage } from '@/types/api'
 
@@ -225,6 +229,44 @@ export function usePlaceBid(auctionPublicId: string) {
                 queryKey: auctionKeys.browses(),
             })
             void queryClient.invalidateQueries({ queryKey: balanceKeys.me() })
+        },
+    })
+}
+
+/**
+ * 즉시구매 (계약 §3.1 `POST /auctions/{id}/purchase`) — FC-090.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **무효화 반경이 넓다 — 즉시구매는 여러 리소스를 한 번에 바꾼다.**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 성립 시 (1) 경매가 `SOLD`(resultType=BUYNOW)로 종료 → **상세·목록** 재조회로 마감 표기,
+ * (2) 구매자 게임머니 **직접 차감** → **잔액**, (3) 아이템이 구매자 인벤토리(만실 시 **임시보관**)로
+ * 이전 → **인벤토리·임시보관**, (4) 새 주문 생성 → **거래내역 목록**. 하나라도 빼면 화면이 방금
+ * 일어난 거래를 반영하지 못한다(purchase-spec §8).
+ *
+ * ★ 상세는 `setQueryData` 로 미리 맞추지 않고 무효화만 한다 — 입찰과 달리 서버가 status·resultType·
+ *   최종 소유까지 한 TX 로 굳히므로, 클라가 부분 낙관 갱신을 흉내낼 이유가 없다(재조회가 정본).
+ * ★ **`previews`(홈)는 건드리지 않는다** — 홈은 다른 화면·다른 수명이다(FC-059 가 키를 가른 이유).
+ * ★ 실패(AUCTION_005/006/009·BID_005·AUCTION_004)는 호출부가 `error` 로 받아 `purchaseErrors` 로 문구.
+ */
+export function usePurchaseAuction(auctionPublicId: string) {
+    const queryClient = useQueryClient()
+
+    return useMutation<PurchaseAuctionResponse, Error, void>({
+        mutationFn: () => purchaseAuction(auctionPublicId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: auctionKeys.detail(auctionPublicId),
+            })
+            void queryClient.invalidateQueries({
+                queryKey: auctionKeys.browses(),
+            })
+            void queryClient.invalidateQueries({ queryKey: balanceKeys.me() })
+            void queryClient.invalidateQueries({ queryKey: inventoryKeys.me() })
+            void queryClient.invalidateQueries({
+                queryKey: tempStorageKeys.me(),
+            })
+            void queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
         },
     })
 }

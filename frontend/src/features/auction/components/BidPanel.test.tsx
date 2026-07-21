@@ -9,7 +9,7 @@ import type { AuctionDetail } from '@/lib/api/auctions'
  *
  * 고정하는 것:
  *  1. 상태별 CTA(마감 비활성 / 비로그인 로그인유도 / 판매자 취소 / 진행 입찰).
- *  2. **즉시구매 버튼을 만들지 않는다**(404, §5) — buyNowPrice 는 참고가 표기만.
+ *  2. **즉시구매 CTA 는 실연동**(FC-090) — 설정됨 ∧ 라이브 ∧ 타인일 때만 활성, 자기 경매면 미노출.
  *  3. 판매자 취소는 입찰 0건일 때만 활성(DOM disabled 속성).
  */
 
@@ -62,6 +62,7 @@ function renderPanel(overrides: Partial<Parameters<typeof BidPanel>[0]> = {}) {
             cancelPending={false}
             cancelError={null}
             onBid={noop}
+            onBuyNow={noop}
             onCancel={noop}
             {...overrides}
         />,
@@ -119,9 +120,34 @@ describe('<BidPanel>', () => {
         ).toBeInTheDocument()
     })
 
-    it('★ 즉시구매 버튼을 만들지 않는다(404) — 참고가만 표기', () => {
-        renderPanel()
-        expect(screen.getByText('즉시구매 참고가')).toBeInTheDocument()
+    it('★ 즉시구매 CTA 는 라이브 + 타인 + 로그인일 때 활성(FC-090)', () => {
+        const onBuyNow = vi.fn()
+        renderPanel({ onBuyNow })
+        expect(screen.getByText('즉시구매가')).toBeInTheDocument()
+        const button = screen.getByRole('button', { name: /즉시구매/ })
+        button.click()
+        expect(onBuyNow).toHaveBeenCalledOnce()
+    })
+
+    it('★ 자기 경매면 즉시구매 CTA 를 숨긴다(AUCTION_009 대칭)', () => {
+        renderPanel({ isOwn: true, auction: { ...baseAuction, bidCount: 0 } })
+        expect(
+            screen.queryByRole('button', { name: /즉시구매/ }),
+        ).not.toBeInTheDocument()
+    })
+
+    it('비로그인이면 즉시구매도 로그인으로 유도한다', () => {
+        renderPanel({ isAuthed: false })
+        expect(
+            screen.getByRole('link', { name: '로그인하고 즉시구매' }),
+        ).toHaveAttribute(
+            'href',
+            '/login?redirectUrl=%2Fauctions%2F01J3AUCTION0001',
+        )
+    })
+
+    it('즉시구매가 없는 경매는 CTA 를 그리지 않는다', () => {
+        renderPanel({ auction: { ...baseAuction, buyNowPrice: null } })
         expect(
             screen.queryByRole('button', { name: /즉시구매/ }),
         ).not.toBeInTheDocument()
