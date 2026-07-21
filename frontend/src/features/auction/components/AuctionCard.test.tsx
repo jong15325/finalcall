@@ -59,13 +59,13 @@ describe('<AuctionCard>', () => {
         expect(screen.queryByText('진행 중')).not.toBeInTheDocument()
     })
 
-    it('입찰이 있으면 "현재가" 라벨 + 최고가', () => {
+    it('입찰이 있으면 "현재가" 라벨 + 입찰 N회', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
         expect(screen.getByText('현재가')).toBeInTheDocument()
-        expect(screen.getByText('입찰 3건')).toBeInTheDocument()
+        expect(screen.getByText('3회')).toBeInTheDocument()
     })
 
-    it('입찰이 없으면 "시작가" 라벨 + 입찰 없음', () => {
+    it('입찰이 없으면 "시작가" 라벨 + 0회', () => {
         const noBids: AuctionSummary = {
             ...baseAuction,
             highestBidAmount: null,
@@ -73,7 +73,13 @@ describe('<AuctionCard>', () => {
         }
         renderWithProviders(<AuctionCard auction={noBids} now={NOW} />)
         expect(screen.getByText('시작가')).toBeInTheDocument()
-        expect(screen.getByText('입찰 없음')).toBeInTheDocument()
+        expect(screen.getByText('0회')).toBeInTheDocument()
+    })
+
+    it('속성 라벨(가로 카드 element-dot)을 표시한다', () => {
+        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+        // element 2 = 불
+        expect(screen.getByText('불')).toBeInTheDocument()
     })
 
     it('카드 전체가 auctionPublicId 상세 링크다', () => {

@@ -1,26 +1,27 @@
-import { useState } from 'react'
-import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb'
+import { TbX } from 'react-icons/tb'
+import { elementLabelOf } from '@/features/item/lib/element'
 import {
     AUCTION_SORT_OPTIONS,
+    AUCTION_STATUS_OPTIONS,
     activeFilterChipsOf,
-    countActiveFilters,
     type AuctionFilterState,
 } from '@/features/auction/lib/auctionFilters'
-import { subGroupOptions } from '@/features/auction/lib/filterOptions'
+import {
+    elementOptions,
+    subGroupOptions,
+} from '@/features/auction/lib/filterOptions'
 import type { ItemTemplate } from '@/lib/api/itemTemplates'
-import AuctionFilterControls from './AuctionFilterControls'
-import FilterSheet from './FilterSheet'
 
 /**
- * 경매 필터 명령 바 (FC-071 — 목업 `.auction-command` + design-brief B-2).
+ * 경매 필터 명령 바 (FC-071 — 목업 `#auction` `.auction-command` 1:1).
  *
- * 목업 구성을 계약 필터에 맞춰 옮긴다: **대분류 pills + 정렬**은 항상 보이는 바에, 나머지 축은
- * 데스크톱에선 **인라인**(`lg:flex`), 모바일에선 **시트**(`FilterSheet`)에 담는다 —
- * "웹은 웹, 모바일은 모바일"(design-brief C-7). 적용된 필터는 **칩**으로 되짚어 개별 해제한다.
+ * 목업 구성 그대로: **대분류 pills**(전체/무기/방어구/마법) + **select 3개**(속성·상태·정렬).
+ * 목업에 없는 축(레벨·가격·골드포스·종류)·별도 시트는 두지 않는다 — 목업이 가진 필터만.
  *
- * ★ 대분류 pills 는 목업의 전체/무기/방어구/마법 그대로. `전체 = null`, 선택 시 종속 `kind` 는
- *   `normalizeFilters`(상위 `onChange`)가 정리한다.
- * ★ 선택 상태는 **DOM 속성**으로 표시한다(`aria-pressed`) — 색만 바꾸지 않는다(WCAG 4.1.2).
+ * ★ pills·select 값은 보존 `normalizeFilters`(상위 `onChange`)를 거쳐 URL 에 동기화된다.
+ * ★ **선택 상태는 DOM 속성**(`aria-pressed`)으로 — 색만 바꾸지 않는다(WCAG 4.1.2).
+ * ★ 색은 브랜드 토큰(navy) — 목업의 pill active 블루(#3867df)는 폐기 팔레트라 navy 로 맞춘다.
+ * ★ 모바일: pills 가로 스크롤 + select 풀폭(목업 `@576`). 별도 시트 없음.
  */
 
 interface AuctionFiltersProps {
@@ -31,16 +32,18 @@ interface AuctionFiltersProps {
     templates: readonly ItemTemplate[]
 }
 
+const SELECT_CLASS =
+    'w-full min-w-[125px] rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-gray-900 focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30'
+
 function AuctionFilters({
     filters,
     onChange,
     onReset,
     templates,
 }: AuctionFiltersProps) {
-    const [sheetOpen, setSheetOpen] = useState(false)
     const subGroups = subGroupOptions(templates)
+    const elements = elementOptions(templates)
     const chips = activeFilterChipsOf(filters)
-    const activeCount = countActiveFilters(filters)
 
     const pill = (code: number | null, label: string) => {
         const active = filters.subGroup === code
@@ -49,7 +52,7 @@ function AuctionFilters({
                 key={label}
                 type="button"
                 aria-pressed={active}
-                className={`min-h-[40px] rounded-lg border px-3.5 text-sm font-bold transition-colors ${
+                className={`min-h-[40px] shrink-0 rounded-lg border px-3.5 text-sm font-bold transition-colors ${
                     active
                         ? 'border-navy bg-navy text-white'
                         : 'border-line bg-surface text-gray-600 hover:border-navy'
@@ -64,8 +67,8 @@ function AuctionFilters({
     return (
         <section aria-label="경매 필터" className="flex flex-col gap-3">
             <div className="rounded-2xl border border-line bg-surface p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    {/* 대분류 pills — 항상 노출(목업 filter-primary) */}
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-5">
+                    {/* 대분류 pills — 목업 filter-primary */}
                     <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                         {pill(null, '전체')}
                         {subGroups.map((option) =>
@@ -73,13 +76,60 @@ function AuctionFilters({
                         )}
                     </div>
 
-                    <div className="flex items-end gap-2">
-                        {/* 정렬 — 항상 노출 */}
-                        <label className="flex min-w-0 flex-col gap-1 text-[11px] font-bold text-gray-500">
+                    {/* 속성·상태·정렬 — 목업 filter-secondary */}
+                    <div className="grid grid-cols-1 gap-2 xs:grid-cols-3">
+                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                            <span>속성</span>
+                            <select
+                                className={SELECT_CLASS}
+                                value={filters.element ?? ''}
+                                onChange={(event) =>
+                                    onChange({
+                                        element: event.target.value
+                                            ? Number(event.target.value)
+                                            : null,
+                                    })
+                                }
+                            >
+                                <option value="">전체 속성</option>
+                                {elements.map((option) => (
+                                    <option
+                                        key={option.code}
+                                        value={option.code}
+                                    >
+                                        {elementLabelOf(option.code)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                            <span>상태</span>
+                            <select
+                                className={SELECT_CLASS}
+                                value={filters.status ?? ''}
+                                onChange={(event) =>
+                                    onChange({
+                                        status: event.target.value || null,
+                                    })
+                                }
+                            >
+                                {AUCTION_STATUS_OPTIONS.map((option) => (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
                             <span>정렬</span>
                             <select
+                                className={SELECT_CLASS}
                                 value={filters.sort}
-                                className="min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-gray-900 focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30"
                                 onChange={(event) =>
                                     onChange({ sort: event.target.value })
                                 }
@@ -94,35 +144,8 @@ function AuctionFilters({
                                 ))}
                             </select>
                         </label>
-
-                        {/* 모바일 전용 — 상세 필터 시트 열기 */}
-                        <button
-                            type="button"
-                            className="flex items-center gap-1.5 self-end rounded-lg border border-line px-3 py-2 text-sm font-bold text-gray-700 hover:border-navy lg:hidden"
-                            onClick={() => setSheetOpen(true)}
-                        >
-                            <TbAdjustmentsHorizontal
-                                aria-hidden
-                                className="size-4"
-                            />
-                            필터
-                            {activeCount > 0 && (
-                                <span className="flex size-5 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">
-                                    {activeCount}
-                                </span>
-                            )}
-                        </button>
                     </div>
                 </div>
-
-                {/* 데스크톱 인라인 상세 필터 */}
-                <AuctionFilterControls
-                    filters={filters}
-                    templates={templates}
-                    layout="bar"
-                    className="mt-4 hidden border-t border-line pt-4 lg:flex"
-                    onChange={onChange}
-                />
             </div>
 
             {/* 적용된 필터 칩 — 개별 해제(정규화가 뒤처리) */}
@@ -132,8 +155,8 @@ function AuctionFilters({
                         <button
                             key={chip.id}
                             type="button"
-                            className="flex items-center gap-1 rounded-full bg-navy/5 py-1 pl-3 pr-2 text-xs font-medium text-navy-700 hover:bg-navy/10"
                             aria-label={`${chip.label} 필터 해제`}
+                            className="flex items-center gap-1 rounded-full bg-navy/5 py-1 pl-3 pr-2 text-xs font-medium text-navy-700 hover:bg-navy/10"
                             onClick={() => onChange(chip.patch)}
                         >
                             {chip.label}
@@ -149,15 +172,6 @@ function AuctionFilters({
                     </button>
                 </div>
             )}
-
-            <FilterSheet
-                open={sheetOpen}
-                filters={filters}
-                templates={templates}
-                onClose={() => setSheetOpen(false)}
-                onReset={onReset}
-                onChange={onChange}
-            />
         </section>
     )
 }

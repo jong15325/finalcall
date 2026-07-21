@@ -181,7 +181,7 @@ export default function AuctionListPage() {
                 <>
                     <section
                         aria-label="경매 목록"
-                        className="grid grid-cols-1 gap-4 xs:grid-cols-2 xl:grid-cols-3"
+                        className="grid grid-cols-1 gap-4 xs:grid-cols-2 min-[1200px]:grid-cols-3"
                     >
                         {auctions.map((auction) => (
                             <AuctionCard
@@ -214,18 +214,19 @@ function AuctionGridSkeleton() {
     return (
         <div
             aria-hidden
-            className="grid grid-cols-1 gap-4 xs:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 gap-4 xs:grid-cols-2 min-[1200px]:grid-cols-3"
         >
             {Array.from({ length: 8 }).map((_, index) => (
                 <div
                     key={index}
-                    className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface"
+                    className="grid min-h-[218px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface xs:grid-cols-[112px_minmax(0,1fr)]"
                 >
-                    <div className="aspect-[72/134] w-full animate-pulse bg-gray-100" />
-                    <div className="flex flex-col gap-2 p-3">
+                    <div className="animate-pulse bg-gray-100" />
+                    <div className="flex flex-col gap-2 p-[17px]">
                         <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
                         <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-gray-100" />
+                        <div className="mt-3 h-8 w-full animate-pulse rounded bg-gray-100" />
+                        <div className="mt-auto h-3 w-2/3 animate-pulse rounded bg-gray-100" />
                     </div>
                 </div>
             ))}
