@@ -77,8 +77,6 @@ function ItemCard({
         >
             <ItemFrame
                 imageUrl={art?.src}
-                artWidth={art?.width}
-                artHeight={art?.height}
                 spriteUrl={art?.src}
                 name={item.nameSnapshot}
                 visual={{ goldforceExpireAt: item.goldforceExpireAt }}

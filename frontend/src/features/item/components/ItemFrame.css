@@ -1,15 +1,16 @@
 /*
- * ItemFrame 외형 (FC-068 — item-frame.css 계약 흡수).
+ * ItemFrame 외형 (FC-068 재작업 — 목업 item-frame.css 그대로 이식).
  *
- * ★ 정본 좌표·색은 목업 `item-frame.css` 에서 실측 채취했다(카드 외형 정본, rebuild-contract-map §6.1).
- *   흡수 범위는 **계약 데이터가 뒷받침하는 것**뿐이다 — item-sprite-stage 배경·정수배 픽셀 아트·
- *   골드포스/일반(STANDARD) 프레임·잔여일 슬롯·스킬 마크·광택(reduced-motion 정지).
- * ★ **보류(§6.2 사용자 결정 대기)**: 투명 PNG 프레임 오버레이(`gold-Photoroom.png`)·숫자 스프라이트
- *   글리프·PNG 마스크 광택. 이들은 프레임 자산의 크로마키 파이프라인 확장을 요구하므로 이 티켓에서
- *   흡수하지 않고, 계약이 뒷받침하는 CSS 프레임(§5.12 실측색)으로 렌더한다.
+ * ★ 정본 = 목업 `game-market/item-frame.css` 의 **최종 오버레이 층**(카드 외형 정본, §6.1). 골드포스·
+ *   일반(블랙)·스킬 마크·잔여일 스프라이트는 **투명 PNG 자산 오버레이**로 렌더한다(임의 CSS 재구성
+ *   금지). 자산은 RGBA 투명(총괄 실측 colorType 6)이라 크로마키 불요 — `sync-game-art.mjs` 가
+ *   `docs/game_ui/item_info/frames` → `public/art/frames` 로 단순 복사한다.
+ * ★ **골드포스·STANDARD(블랙)·스킬 마크만** 실제 렌더 경로다. 실버포스·펫·아바타·이벤트는 계약
+ *   데이터가 없어(§2.2) 렌더러를 만들지 않는다(도달 불가 = 죽은 코드 금지). frameType 은 폴백만.
+ * ★ DOM·클래스·좌표는 목업 `market.js itemFrame()` + `item-frame.css` 를 그대로 따른다.
+ * ★ 광택 애니메이션은 목업 그대로 두되 `prefers-reduced-motion` 에서 정지한다(§6.3 접근성 이슈 수정).
  *
- * ※ 화폐/텍스트 토큰 등 유틸리티는 Tailwind 로 두고, 프레임 고유 좌표만 이 파일에 둔다.
- * ※ vitest 는 `css:false` 로 이 파일을 무시한다(클래스 문자열만 검증).
+ * ※ vitest 는 `css:false` 로 이 파일을 무시한다(클래스 문자열·자산 경로만 검증).
  */
 
 /* 공용 프레임 캔버스 = 72×134px. 페이지별 변경 금지(§6.1). */
@@ -20,7 +21,7 @@
     display: inline-block;
 }
 
-/* 스테이지(이미지 영역) — size 로 외부 크기만 바뀌고 내부 프레임 비율은 불변(§6.1). */
+/* ── 스테이지(이미지 영역) — item-frame.css item-sprite-stage 계약 ─────────────────── */
 .item-frame__stage {
     position: relative;
     isolation: isolate;
@@ -90,25 +91,47 @@
     );
 }
 
-/* 72×134 프레임 박스 — 페이지 불변(§6.1). */
-.item-frame__art {
+/* ── 카드 프레임 박스(.card-art) — market.css 기저 + item-frame.css 최종 오버레이 ────── */
+.item-frame .card-art {
     position: relative;
     z-index: 1;
     box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     width: var(--item-frame-width);
     height: var(--item-frame-height);
-    padding: 2px;
+    overflow: hidden;
+    /* 골드포스·STANDARD 는 프레임을 PNG 로 얹으므로 박스 자체는 투명·무테. */
+    padding: 0;
+    border: 0;
+    background: transparent;
     transition:
         transform 0.24s ease,
         filter 0.24s ease;
 }
 
-/* 정수배 픽셀 아트 — 비정수 확대 금지(§6.2). */
-.item-frame__art-img {
+/* 아이템 본체 아트를 담는 베벨. */
+.item-frame .card-bevel {
+    position: relative;
+    z-index: 2;
+    box-sizing: border-box;
     display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 0;
+}
+
+/*
+ * 본체 아트 — 50×93 원본을 72×134 로 채운다(object-fit:fill, 동일 1.44배라 왜곡 없음) +
+ * image-rendering:pixelated(목업 방식). 프레임 PNG 가 테두리를 얹는다.
+ */
+.item-frame .card-art .item-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: fill;
     image-rendering: pixelated;
     -webkit-user-drag: none;
     user-select: none;
@@ -119,114 +142,150 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 100%;
+    height: 100%;
     color: rgba(180, 200, 224, 0.55);
+    background: linear-gradient(145deg, #1f2a3a 0%, #0f1723 100%);
 }
 
-/* ── 프레임 종류 (계약 데이터 = 골드포스 / 그 외 STANDARD) ───────────────────────── */
-
-/* 일반/블랙 — 중립 2겹 프레임(item-frame.css .is-standard 실측색). */
-.item-frame__art.is-standard {
-    border: 1px solid #171918;
-    background: #77736b;
-}
-
-/* 골드포스 — gold.png 아웃라인에서 채취한 4변 색 + 대각 골드 그라디언트(§5.12/§6.3). */
-.item-frame__art.is-goldforce {
-    border-top: 1px solid #987309;
-    border-right: 1px solid #cfaa2e;
-    border-bottom: 1px solid #9d7c10;
-    border-left: 1px solid #faf172;
-    background: linear-gradient(
-        135deg,
-        #764100 0%,
-        #b9a837 34%,
-        #fffc7f 58%,
-        #beaf3c 78%,
-        #bc8b14 100%
-    );
-}
-
-/* 광택 — 1.5~2.4초 대각 반사선. reduced-motion 에서 정지(§6.3 접근성). */
-.item-frame__art.is-goldforce::before {
+/* ── 골드포스 프레임 — gold-Photoroom.png 오버레이 + 광택 + 숫자 스프라이트 ─────────── */
+.item-frame .card-art.is-goldforce > .card-gold-frame {
     position: absolute;
-    z-index: 6;
+    z-index: 3;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    object-fit: fill;
+    image-rendering: pixelated;
+}
+
+/* 골드 아웃라인 광택(반사선) — 투명 PNG 를 흰색으로 반전, clip-path 로 흘린다. */
+.item-frame .card-art.is-goldforce::before {
+    position: absolute;
+    z-index: 5;
     inset: 0;
     content: '';
     pointer-events: none;
-    background: linear-gradient(
-        135deg,
-        transparent 46%,
-        rgba(255, 255, 255, 0.5) 50%,
-        transparent 54%
-    );
-    background-size: 250% 250%;
-    background-position: -120% -120%;
-    animation: itemframe-goldshine 2.4s linear infinite;
+    background: url('/art/frames/gold-Photoroom.png') 0 0 / 100% 100% no-repeat;
+    filter: brightness(0) invert(1);
+    mix-blend-mode: screen;
+    clip-path: polygon(-4% 0, 0% 0, -92% 100%, -96% 100%);
+    animation: goldforce-outline-streak 1.5s linear infinite;
 }
 
-@keyframes itemframe-goldshine {
+@keyframes goldforce-outline-streak {
     0% {
-        background-position: -120% -120%;
+        clip-path: polygon(-4% 0, 0% 0, -92% 100%, -96% 100%);
     }
+    30%,
     100% {
-        background-position: 120% 120%;
+        clip-path: polygon(234% 0, 238% 0, 146% 100%, 142% 100%);
     }
 }
-
-/* 블랙(STANDARD)에는 광택 미적용(HANDOVER_ITEM_CARD 규칙). */
-@media (prefers-reduced-motion: reduce) {
-    .item-frame__art.is-goldforce::before {
-        animation: none;
-    }
-}
-
-/* ── 오버레이 · 잔여일 · 스킬 마크 ──────────────────────────────────────────────── */
 
 /*
- * 잔여일 슬롯 — 좌상단, 배경 #592400, 3자리(§6.3). 아트 위(z-index)에 뜨되
- * 이미지 자체를 리사이즈하지 않는다(§3.1).
+ * 잔여일 슬롯 — 좌상단 갈색 인셋(#592400), gold-number-transparent.png 스프라이트 글리프(§6.3).
+ * 프레임 인셋 좌표는 목업 item-frame.css 실측(50×93 → 72×134 스케일 기준).
  */
-.item-frame__days {
+.item-frame .card-number-slot {
     position: absolute;
-    top: 3px;
-    left: 2px;
     z-index: 10;
+    top: 2px;
+    left: 1px;
+    box-sizing: border-box;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24px;
-    height: 15px;
-    padding: 0 3px;
+    width: 38px;
+    height: 23px;
+    padding: 1px 0 0 1px;
+    overflow: hidden;
     background: #592400;
-    color: #f6d97a;
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: 0.5px;
-    font-variant-numeric: tabular-nums;
+    background-clip: content-box;
 }
 
-/* 스킬 마크(S) — 우상단. 계약은 존재 여부만 → S 마크만(SS 렌더 금지, §6.3). */
-.item-frame__skill {
-    position: absolute;
-    top: 3px;
-    right: 2px;
-    z-index: 10;
+.item-frame .card-number {
+    position: relative;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 14px;
-    height: 18px;
-    background: #171918;
-    color: #dfc447;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1;
+    width: 100%;
+    height: 100%;
 }
 
-/* 외부 액션(비교·구매) 오버레이 — 이미지 DOM **밖**의 별도 층(§3.1-4). */
+/* 각 자리 숫자 = 9×15 스프라이트 글리프(90×15 시트, --offset 로 자리 이동). */
+.item-frame .card-number i {
+    display: block;
+    flex: 0 0 9px;
+    width: 9px;
+    height: 15px;
+    background-image: url('/art/frames/gold-number-transparent.png');
+    background-repeat: no-repeat;
+    background-size: 90px 15px;
+    background-position: var(--offset) 0;
+    image-rendering: pixelated;
+}
+
+/* 인셋 광택 — 아웃라인과 같은 1.5s 타임라인으로 하나의 유리 반사처럼 읽히게 한다. */
+.item-frame .card-number-slot::after {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background: #fff;
+    opacity: 0.86;
+    mix-blend-mode: screen;
+    clip-path: polygon(-17% 0, -6% 0, -48% 100%, -58% 100%);
+    animation: goldforce-inset-streak 1.5s linear infinite;
+}
+
+@keyframes goldforce-inset-streak {
+    0% {
+        clip-path: polygon(-17% 0, -6% 0, -48% 100%, -58% 100%);
+    }
+    30%,
+    100% {
+        clip-path: polygon(610% 0, 620% 0, 579% 100%, 568% 100%);
+    }
+}
+
+/* ── STANDARD(블랙) 프레임 — black-frame-transparent.png 오버레이 ──────────────────── */
+.item-frame .card-art.is-standard > .card-bevel::after {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background: url('/art/frames/black-frame-transparent.png') 0 0 / 100% 100%
+        no-repeat;
+}
+
+/* ── 스킬 마크(우상단 S) — 계약은 존재 여부만 → 일반 S 마크만(특수 SS 는 데이터 없음, 렌더 금지) ── */
+.item-frame .card-rank {
+    position: absolute;
+    z-index: 10;
+    top: 2px;
+    right: 2px;
+    box-sizing: border-box;
+    display: block;
+    width: 17px;
+    height: 23px;
+    overflow: hidden;
+    color: transparent;
+    background: url('/art/frames/skill-gold-transparent.png') center / 17px 23px
+        no-repeat;
+    image-rendering: pixelated;
+    transform: translate(-0.7px, 0.7px);
+}
+
+/* 블랙 카드는 블랙 톤 S 배지. */
+.item-frame .card-art.is-standard > .card-rank {
+    background-image: url('/art/frames/skill-black.png');
+}
+
+/* ── 외부 액션 오버레이 — 이미지 DOM(.card-art) 밖 별도 층(§3.1-4) ─────────────────── */
 .item-frame__overlay {
     position: absolute;
     top: 6px;
@@ -234,7 +293,15 @@
     z-index: 20;
 }
 
-/* ── hover — 개별 카드에만(부모 그리드로 전파 금지, §3.1) ────────────────────────── */
+/* ── 광택 정지 — 접근성(§6.3) ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .item-frame .card-art.is-goldforce::before,
+    .item-frame .card-number-slot::after {
+        animation: none;
+    }
+}
+
+/* ── hover — 개별 카드에만(부모 그리드로 전파 금지, §3.1) ────────────────────────────── */
 .item-frame__stage:hover,
 .item-card:hover .item-frame__stage {
     background: linear-gradient(145deg, #34465d 0%, #182536 100%);
@@ -250,8 +317,8 @@
     transform: scale(1.19);
 }
 
-.item-frame__stage:hover .item-frame__art,
-.item-card:hover .item-frame__stage .item-frame__art {
+.item-frame__stage:hover .card-art,
+.item-card:hover .item-frame__stage .card-art {
     transform: translateY(-3px) scale(1.035);
     filter: drop-shadow(0 8px 9px rgba(3, 9, 19, 0.48));
 }

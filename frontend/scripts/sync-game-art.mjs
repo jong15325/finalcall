@@ -24,7 +24,14 @@
  *
  * 실행: `npm run dev` / `npm run build` 의 pre 스크립트가 자동 호출한다.
  */
-import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import {
+    access,
+    copyFile,
+    mkdir,
+    readdir,
+    readFile,
+    writeFile,
+} from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { removeChromaKey } from './pngChromaKey.mjs'
@@ -37,6 +44,16 @@ const SOURCE = resolve(
 )
 /** 복사 대상. `features/item/lib/itemArt.ts` 의 `ART_BASE` 와 짝을 맞춘다. */
 const TARGET = resolve(here, '../public/art/items')
+
+/*
+ * ★ **프레임 오버레이 자산은 크로마키 대상이 아니다**(FC-068). 목업(item-frame.css)이 채택한
+ * `gold-Photoroom.png`·`black-frame-transparent.png`·숫자/스킬 스프라이트는 이미 **RGBA(alpha)
+ * 투명**이라(총괄 실측 colorType 6) 본체 도트 아트와 달리 `#0000FF` 크로마키 처리가 없다.
+ * 그래서 **단순 복사**한다 — 본체 아트(위 SOURCE)의 크로마키 파이프라인과 분리 관리한다(§6.2).
+ * 정본은 `docs/game_ui/item_info/frames`(목업에서 복사), 사본은 `public/art/frames`(미추적).
+ */
+const FRAMES_SOURCE = resolve(here, '../../docs/game_ui/item_info/frames')
+const FRAMES_TARGET = resolve(here, '../public/art/frames')
 
 async function collectPngs(dir, acc = []) {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -90,6 +107,30 @@ async function main() {
             `[game-art] ${converted}장 변환 · 투명 처리 ${keyedTotal}px` +
             (failed > 0 ? ` · 실패 ${failed}장(원본 복사)` : ''),
     )
+
+    await syncFrames()
+}
+
+/** 프레임 오버레이(RGBA 투명) 단순 복사 — 크로마키 없음(위 FRAMES_SOURCE 주석). */
+async function syncFrames() {
+    try {
+        await access(FRAMES_SOURCE)
+    } catch {
+        // 프레임 자산이 없어도 빌드를 세우지 않는다 — ItemFrame 이 CSS 폴백으로 흡수한다.
+        console.warn(
+            `[game-art] 프레임 원본을 찾지 못해 건너뜁니다: ${FRAMES_SOURCE}`,
+        )
+        return
+    }
+
+    const files = (await readdir(FRAMES_SOURCE)).filter((name) =>
+        name.endsWith('.png'),
+    )
+    await mkdir(FRAMES_TARGET, { recursive: true })
+    for (const name of files) {
+        await copyFile(join(FRAMES_SOURCE, name), join(FRAMES_TARGET, name))
+    }
+    console.log(`[game-art] 프레임 ${files.length}장 복사 → ${FRAMES_TARGET}`)
 }
 
 await main()
