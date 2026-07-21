@@ -4,30 +4,32 @@ import { renderWithProviders } from '@/test/renderWithProviders'
 import HomeBanner from './HomeBanner'
 
 /**
- * 홈 배너 캐러셀 (FC-070).
+ * 홈 배너 캐러셀 (FC-070 — 목업 `#home` home-carousel 3슬라이드).
  *
  * 고정하는 것:
- *  1. 슬라이드 링크는 **실연동 라우트**로만 간다(404 방지, §5).
- *  2. 도트 클릭으로 활성 슬라이드가 바뀐다(`aria-current`).
+ *  1. 목업 3슬라이드 문구·CTA·대상(`/market`·`/auctions`) 1:1.
+ *  2. 도트/다음 버튼으로 활성 슬라이드가 바뀐다(`aria-current`).
  *  3. **비활성 슬라이드는 초점에서 제외**(링크 `tabIndex=-1`) — 화면 밖 초점 유출 방지.
  */
 
 describe('<HomeBanner>', () => {
-    it('첫 슬라이드는 경매 목록 링크(실연동)이고 초점 대상이다', () => {
+    it('슬라이드1(WEEKLY BENEFIT)은 마켓 링크이고 초점 대상이다', () => {
         renderWithProviders(<HomeBanner />)
-        const first = screen.getByRole('link', { name: /경매 보러 가기/ })
-        expect(first).toHaveAttribute('href', '/auctions')
+        expect(screen.getByText('WEEKLY BENEFIT')).toBeInTheDocument()
+        const first = screen.getByRole('link', { name: /할인 아이템 보기/ })
+        expect(first).toHaveAttribute('href', '/market')
         expect(first).toHaveAttribute('tabindex', '0')
     })
 
     it('비활성 슬라이드 링크는 tabIndex=-1(초점 제외)', () => {
         renderWithProviders(<HomeBanner />)
         // 초기 비활성 슬라이드는 aria-hidden 이라 a11y 트리 밖 — hidden 포함 조회.
-        const join = screen.getByRole('link', {
-            name: /가입하고 시작하기/,
+        const auction = screen.getByRole('link', {
+            name: /경매 참여하기/,
             hidden: true,
         })
-        expect(join).toHaveAttribute('tabindex', '-1')
+        expect(auction).toHaveAttribute('href', '/auctions')
+        expect(auction).toHaveAttribute('tabindex', '-1')
     })
 
     it('도트를 누르면 해당 슬라이드가 활성(aria-current)이 된다', () => {
@@ -35,9 +37,17 @@ describe('<HomeBanner>', () => {
         const dot3 = screen.getByRole('button', { name: '3번 배너로 이동' })
         fireEvent.click(dot3)
         expect(dot3).toHaveAttribute('aria-current', 'true')
-        // 3번 슬라이드(가입 CTA)가 초점 대상이 된다
-        const join = screen.getByRole('link', { name: /가입하고 시작하기/ })
-        expect(join).toHaveAttribute('tabindex', '0')
+        // 3번 슬라이드(AI 시세, 준비 중)가 초점 대상이 된다
+        const insight = screen.getByRole('link', { name: /시세 확인하기/ })
+        expect(insight).toHaveAttribute('href', '/market')
+        expect(insight).toHaveAttribute('tabindex', '0')
+    })
+
+    it('슬라이드3에는 "준비 중" 보조 배지가 있다(AI 시세 미구현)', () => {
+        renderWithProviders(<HomeBanner />)
+        fireEvent.click(screen.getByRole('button', { name: '3번 배너로 이동' }))
+        expect(screen.getByText('PRICE INSIGHT')).toBeInTheDocument()
+        expect(screen.getByText('준비 중')).toBeInTheDocument()
     })
 
     it('다음 버튼으로 활성 슬라이드가 넘어간다', () => {

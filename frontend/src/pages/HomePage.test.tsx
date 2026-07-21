@@ -12,7 +12,7 @@ import type { CursorPage } from '@/types/api'
  *  1. **마감 임박 = 실연동 프리뷰** + **클라 마감 제외** — endAt 지난(서버는 여전히 ACTIVE) 경매는
  *     안 보이고, 살아있는 경매만 카드로 뜬다.
  *  2. 배너 캐러셀이 렌더된다(프로모션 배너 region).
- *  3. **추천 마켓·공지는 자리보류** — "준비 중"/"연동 예정" 비활성 표기(호출 없이 404 방지).
+ *  3. **목업 섹션 헤드 유지** + **추천 마켓·공지는 자리보류**(호출 없이 404 방지).
  */
 
 function makeAuction(overrides: Partial<AuctionSummary>): AuctionSummary {
@@ -57,16 +57,28 @@ function stubAuctions(content: AuctionSummary[]) {
 }
 
 describe('<HomePage>', () => {
-    it('배너·추천 마켓·공지 자리보류가 항상 렌더된다', async () => {
+    it('배너·목업 섹션 헤드·자리보류가 항상 렌더된다', async () => {
         stubAuctions([])
         renderWithProviders(<HomePage />)
 
         expect(
             screen.getByRole('region', { name: '프로모션 배너' }),
         ).toBeInTheDocument()
-        // 추천 마켓·공지는 API 호출 없이 비활성 자리로만 존재한다.
-        expect(screen.getByText('준비 중')).toBeInTheDocument()
-        expect(screen.getByText('연동 예정')).toBeInTheDocument()
+
+        // 목업 #home 섹션 헤드(문구 그대로) 유지.
+        expect(screen.getByText('오늘의 경매 마감 임박')).toBeInTheDocument()
+        expect(screen.getByText('오늘의 추천 마켓 아이템')).toBeInTheDocument()
+        expect(screen.getByText('공지사항')).toBeInTheDocument()
+
+        // 추천 마켓·공지는 API 호출 없이 자리보류(본문 안내).
+        expect(
+            screen.getByText('고정가 마켓은 준비 중이에요.'),
+        ).toBeInTheDocument()
+        expect(screen.getByText('공지 연동은 준비 중이에요.')).toBeInTheDocument()
+        // 공지 정적 5제목은 자리 텍스트로만 존재(실 호출 없음).
+        expect(
+            screen.getByText('안전 거래 정책 및 판매 수수료 변경 사전 안내'),
+        ).toBeInTheDocument()
 
         await waitFor(() =>
             expect(

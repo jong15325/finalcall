@@ -2,57 +2,82 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb'
 import { paths } from '@/app/paths'
+import { itemArt } from '@/features/item/lib/itemArt'
+import type { ItemArtInput } from '@/features/item/lib/itemArt'
 
 /**
- * 홈 배너 캐러셀 — 목업 `#home` 구조 이식(Swiper 등 **의존성 없이** 최소 React/CSS).
+ * 홈 배너 캐러셀 — 목업 `#home` `home-carousel`(3슬라이드) 이식. Swiper 등 **의존성 없이**
+ * 최소 React/CSS(`translateX` 트랙 + `setInterval`)로 자동넘김·인디케이터·prev/next 를 구현한다.
  *
- * ★ **deps 추가 금지**(FC-069 정리) — `translateX` 트랙 + `setInterval` 만으로 자동넘김·
- *   페이지네이션을 구현한다. 슬라이드 전환은 CSS transform, 상태는 활성 인덱스 하나뿐이다.
- * ★ **접근성**: 비활성 슬라이드는 `aria-hidden` + 링크 `tabIndex=-1`(화면 밖으로 초점 유출 차단).
- *   자동넘김은 `prefers-reduced-motion` 이면 멈추고(WCAG 2.2.2), hover/focus 중에도 멈춘다.
- *   도트는 실제 `<button>`(키보드 조작) + `aria-current`.
- * ★ 색은 브랜드 토큰(navy/gold/orange, §2.9) — 목업 이미지 자산이 없어 그라데이션 슬라이드로
- *   구조를 재현한다(임의 이미지 하드코딩 금지). CTA 는 실연동 라우트로만 건다(404 방지, §5).
+ * ★ **슬라이드 내용은 목업 `market.js home()` 1:1**: WEEKLY BENEFIT / REALTIME AUCTION /
+ *   PRICE INSIGHT(준비 중). CTA 대상도 목업대로(`#market`·`#auction`) — 라우트로 매핑한다.
+ *   `/market` 은 고정가 마켓 준비 중 안내 셸이라 404 가 아니다(데드링크 아님, §5).
+ * ★ **slide-art = 공용 art**(`itemArt`) — 목업처럼 슬라이드마다 아이템 아트 2개를 장식으로 띄운다.
+ *   장식이므로 `aria-hidden`, 정수배 + `pixelated`(비정수 확대는 픽셀아트를 뭉갠다).
+ * ★ **접근성**: 비활성 슬라이드는 `aria-hidden` + 링크 `tabIndex=-1`(화면 밖 초점 유출 차단).
+ *   자동넘김은 `prefers-reduced-motion`·hover/focus 중 정지(WCAG 2.2.2). 도트는 `<button>`+`aria-current`.
+ * ★ **색은 브랜드 토큰**(navy/gold/orange, §2.9) — 목업의 Vuexy `bg-label-*` 블루/그레이를 복제하지
+ *   않고 브랜드 그라데이션·배지로 치환한다. 구조·문구·치수는 목업을 따른다.
  */
 
 interface BannerSlide {
     id: string
-    eyebrow: string
+    /** 목업 배지(예: WEEKLY BENEFIT) */
+    tag: string
+    /** 목업 보조 배지(준비 중 등) — 없으면 미표시 */
+    subTag?: string
     title: string
     description: string
     cta: string
     href: string
-    /** 브랜드 그라데이션(배경) */
+    /** 브랜드 그라데이션(배경) — Vuexy 블루 복제 금지(§2.9) */
     surface: string
+    /** 장식용 아이템 아트 2개(공용 art 축) */
+    art: ItemArtInput[]
 }
 
+/** 장식 아트 축(레전드 장비 톤 — level 9). 데이터가 아니라 배너 장식이다. */
 const SLIDES: BannerSlide[] = [
     {
-        id: 'closing',
-        eyebrow: '지금 이 순간',
-        title: '마감 임박 경매',
-        description: '초 단위로 바뀌는 최고가. 마감 전에 마지막 한 수를 두세요.',
-        cta: '경매 보러 가기',
-        href: paths.auctions,
-        surface: 'from-navy-900 via-navy-800 to-navy-600',
+        id: 'benefit',
+        tag: 'WEEKLY BENEFIT',
+        title: '거래 수수료 30% 할인',
+        description:
+            '이번 주말, 레전드 장비 거래 수수료를 더 가볍게 만나보세요.',
+        cta: '할인 아이템 보기',
+        href: paths.market,
+        surface: 'from-navy-900 via-navy-800 to-gold-deep',
+        art: [
+            { subGroup: 1, kind: 3, element: 2, level: 9 },
+            { subGroup: 1, kind: 1, element: 3, level: 9 },
+        ],
     },
     {
-        id: 'trust',
-        eyebrow: '안전한 거래',
-        title: '에스크로로 지키는 거래, 장터',
-        description: '낙찰부터 정산까지 게임머니를 안전하게 묶어 둡니다.',
-        cta: '경매 둘러보기',
+        id: 'auction',
+        tag: 'REALTIME AUCTION',
+        title: '마감 임박 경매를 확인하세요',
+        description: '단 20분 남은 레전드 장비. 지금 입찰에 참여할 수 있습니다.',
+        cta: '경매 참여하기',
         href: paths.auctions,
-        surface: 'from-navy-800 via-navy-700 to-orange-deep',
+        surface: 'from-navy-900 via-navy-700 to-orange-deep',
+        art: [
+            { subGroup: 1, kind: 4, element: 4, level: 9 },
+            { subGroup: 1, kind: 2, element: 1, level: 9 },
+        ],
     },
     {
-        id: 'join',
-        eyebrow: '처음이신가요',
-        title: '내 아이템을 경매로 내놓기',
-        description: '가입하고 인벤토리의 아이템을 바로 출품해 보세요.',
-        cta: '가입하고 시작하기',
-        href: paths.signup,
-        surface: 'from-gold-deep via-orange-deep to-orange',
+        id: 'insight',
+        tag: 'PRICE INSIGHT',
+        subTag: '준비 중',
+        title: 'AI 시세 분석, 더 똑똑한 거래',
+        description: '최근 체결가와 수요를 분석해 적정 거래 가격을 제안합니다.',
+        cta: '시세 확인하기',
+        href: paths.market,
+        surface: 'from-navy-800 via-navy-600 to-navy-500',
+        art: [
+            { subGroup: 2, kind: 3, element: 2, level: 9 },
+            { subGroup: 2, kind: 1, element: 1, level: 9 },
+        ],
     },
 ]
 
@@ -63,6 +88,35 @@ function prefersReducedMotion(): boolean {
         typeof window !== 'undefined' &&
         typeof window.matchMedia === 'function' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+}
+
+/** 슬라이드 장식 아트 — 장식이므로 a11y 트리에서 제외(`aria-hidden`). */
+function SlideArt({ art }: { art: ItemArtInput[] }) {
+    return (
+        <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-4 hidden items-center gap-1 sm:right-8 md:flex"
+        >
+            {art.map((input, index) => {
+                const resolved = itemArt(input, 'l', 2)
+                if (!resolved) return null
+                return (
+                    <img
+                        key={index}
+                        src={resolved.src}
+                        alt=""
+                        width={resolved.width}
+                        height={resolved.height}
+                        className={`drop-shadow-[0_10px_24px_rgba(0,0,0,0.45)] [image-rendering:pixelated] ${
+                            index === 0
+                                ? 'translate-y-1'
+                                : '-translate-y-2 opacity-90'
+                        }`}
+                    />
+                )
+            })}
+        </span>
     )
 }
 
@@ -109,22 +163,35 @@ function HomeBanner() {
                         >
                             <Link
                                 to={slide.href}
+                                aria-label={`${slide.title}, ${slide.cta}`}
                                 tabIndex={isActive ? 0 : -1}
-                                className={`flex min-h-[188px] flex-col justify-center gap-2.5 bg-gradient-to-br px-6 py-8 text-white sm:min-h-[224px] sm:px-10 ${slide.surface}`}
+                                className={`relative flex min-h-[200px] flex-col justify-center gap-2.5 overflow-hidden bg-gradient-to-br px-6 py-8 text-white sm:min-h-[248px] sm:px-10 ${slide.surface}`}
                             >
-                                <span className="text-xs font-bold uppercase tracking-wide text-white/70">
-                                    {slide.eyebrow}
+                                <span className="flex items-center gap-2">
+                                    <span className="rounded-full bg-gold-bright px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-navy-900">
+                                        {slide.tag}
+                                    </span>
+                                    {slide.subTag && (
+                                        <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold text-white">
+                                            {slide.subTag}
+                                        </span>
+                                    )}
                                 </span>
-                                <span className="max-w-xl text-2xl font-extrabold leading-tight sm:text-[32px]">
+                                <span className="max-w-md text-2xl font-extrabold leading-tight sm:text-[32px]">
                                     {slide.title}
                                 </span>
-                                <span className="max-w-lg text-sm text-white/80">
+                                <span className="max-w-md text-sm text-white/80">
                                     {slide.description}
                                 </span>
                                 <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-lg bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur-sm">
                                     {slide.cta}
-                                    <TbChevronRight aria-hidden className="size-4" />
+                                    <TbChevronRight
+                                        aria-hidden
+                                        className="size-4"
+                                    />
                                 </span>
+
+                                <SlideArt art={slide.art} />
                             </Link>
                         </div>
                     )
@@ -149,7 +216,7 @@ function HomeBanner() {
                 <TbChevronRight aria-hidden className="size-5" />
             </button>
 
-            {/* 페이지네이션 도트 */}
+            {/* 페이지네이션 인디케이터 */}
             <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
                 {SLIDES.map((slide, index) => {
                     const isActive = index === active

@@ -17,8 +17,9 @@ import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
 /**
  * 홈 `/` (FC-070 — design-brief B-1 · 목업 `#home`).
  *
- * 섹션(목업 `#home` DOM 순서): 배너 캐러셀 → 공지(연동 예정) → 오늘의 경매 마감 임박 →
- * 오늘의 추천 마켓(준비 중).
+ * 섹션(목업 `#home` DOM 순서, `market.js home()` + `market-brief.js` 오버라이드):
+ * 배너 캐러셀(3슬라이드) → 오늘의 경매 마감 임박(실연동) → 오늘의 추천 마켓 아이템(준비 중) →
+ * 공지사항(연동 예정).
  *
  * ★★ **홈 프리뷰는 `preview` 캐시 키를 쓴다**(`useAuctionList`, FC-059). 경매 목록 화면의 `browse`
  *    무효화 반경 밖이라 필터를 만질 때마다 홈이 깜빡이지 않는다(design-brief B-1 함정).
@@ -27,15 +28,27 @@ import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
  *   `status: ACTIVE` 로 내려오므로(rebuild-contract-map 주의 3), 정렬 상위에 낀 **이미 끝난 경매를
  *   클라가 걸러**(`auctionPhaseOf`) 진짜 임박한 것만 6장 보인다. 그래서 6장보다 넉넉히 받는다.
  * ★ **추천 마켓·공지는 자리보류.** 고정가 마켓(`/shops`)·공지(`/notices`)는 홈에서 **호출하지 않는다**
- *   (FC-048 사고 방지, §5). 미구현/비직관 연동은 비활성 자리로만 둔다 — 임의 데이터 하드코딩 금지.
+ *   (FC-048 사고 방지, §5). 헤드·캡션은 목업대로 유지하고 데이터만 비활성 자리로 둔다 —
+ *   임의 데이터 하드코딩 금지(공지 5제목은 목업의 정적 예시를 "연동 예정" 자리 텍스트로만 표기).
  */
 
 /** 마감 임박 프리뷰 — endAt 오름차, 클라 필터 여유분 포함(6장 표시) */
 const PREVIEW_QUERY: AuctionListQuery = { sort: 'endAt,asc', size: 12 }
 const PREVIEW_COUNT = 6
-/** 추천 마켓/공지 자리보류 골격 칸 수(목업 6·5) */
+/** 추천 마켓 자리보류 골격 칸 수(목업 6) */
 const MARKET_PLACEHOLDER_COUNT = 6
-const NOTICE_PLACEHOLDER_COUNT = 5
+
+/**
+ * 공지 자리보류 텍스트 — 목업 `home()` 의 정적 5제목. **연동 예정**(실 호출 없음, §5).
+ * 계약 편입 전까지 자리 텍스트로만 쓴다.
+ */
+const NOTICE_PLACEHOLDERS = [
+    '[점검] 7월 20일 거래소 시스템 점검 안내',
+    '안전 거래 정책 및 판매 수수료 변경 사전 안내',
+    '이상 거래 탐지 시스템 업데이트 안내',
+    '신규 이용자를 위한 안전 거래 가이드',
+    '7월 불법 거래 계정 이용 제한 안내',
+]
 
 export default function HomePage() {
     const now = useNow()
@@ -44,14 +57,14 @@ export default function HomePage() {
         <div className="flex flex-col gap-8">
             <HomeBanner />
 
-            <NoticeSection />
             <ClosingSoonSection now={now} />
             <RecommendMarketSection />
+            <NoticeSection />
         </div>
     )
 }
 
-/* ── 오늘의 경매 · 마감 임박 (실연동) ─────────────────────────────────────── */
+/* ── 오늘의 경매 마감 임박 (실연동) ────────────────────────────────────────── */
 
 function ClosingSoonSection({ now }: { now: number }) {
     const { data, isPending, isError, refetch } = useAuctionList(PREVIEW_QUERY)
@@ -78,8 +91,8 @@ function ClosingSoonSection({ now }: { now: number }) {
     return (
         <HomeSection
             icon={TbFlame}
-            title="오늘의 경매 · 마감 임박"
-            description="곧 마감돼요. 마지막 입찰의 기회를 놓치지 마세요."
+            title="오늘의 경매 마감 임박"
+            description="현재 참여할 수 있는 경매 아이템입니다."
             seeAllHref={paths.auctions}
         >
             {isPending && <PreviewGridSkeleton count={PREVIEW_COUNT} />}
@@ -124,18 +137,18 @@ function ClosingSoonSection({ now }: { now: number }) {
     )
 }
 
-/* ── 오늘의 추천 마켓 (준비 중 자리보류) ────────────────────────────────────
+/* ── 오늘의 추천 마켓 아이템 (준비 중 자리보류) ─────────────────────────────
  *
  * ★ 고정가 마켓은 백엔드 미구현(`ShopController` 없음, §5). **엔드포인트를 호출하지 않는다**
- *   (FC-048 사고). 목업의 6칸 골격만 비활성으로 남기고 "준비 중" 을 알린다.
+ *   (FC-048 사고). 목업 헤드·캡션은 그대로 두고 `home-recommend-card` 6칸 골격만 비활성으로 남긴다.
  */
 function RecommendMarketSection() {
     return (
         <HomeSection
             icon={TbBuildingStore}
-            title="오늘의 추천 마켓"
-            description="고정가로 바로 사는 아이템 마켓이 곧 열립니다."
-            seeAllNote="준비 중"
+            title="오늘의 추천 마켓 아이템"
+            description="아이템마켓에서 거래 중인 추천 아이템입니다."
+            seeAllHref={paths.market}
         >
             <ul
                 aria-label="추천 마켓 준비 중"
@@ -146,7 +159,7 @@ function RecommendMarketSection() {
                         <li
                             key={index}
                             aria-disabled="true"
-                            className="flex flex-col overflow-hidden rounded-xl border border-dashed border-line bg-surface"
+                            className="home-recommend-card flex flex-col overflow-hidden rounded-xl border border-dashed border-line bg-surface"
                         >
                             <div className="grid aspect-square place-items-center bg-gray-50 text-gray-300">
                                 <TbBuildingStore
@@ -169,38 +182,48 @@ function RecommendMarketSection() {
     )
 }
 
-/* ── 최근 공지 (연동 예정 자리보류) ─────────────────────────────────────────
+/* ── 공지사항 (연동 예정 자리보류) ──────────────────────────────────────────
  *
  * ★ 공지(`NoticeController`)는 스켈레톤 참조구현이라 **product 계약(`/api/v1`) 밖 `/notices`** 에
  *   있고, dev 프록시(`/api`)·클라이언트 base(`/api/v1`)·`api-contract` 어디에도 실려 있지 않다.
- *   억지로 붙이면 전송로가 둘로 갈리므로(FC-056 위배) **연동을 보류**하고 골격만 남긴다 —
- *   임의 데이터 하드코딩 금지(§5). 계약 편입 후 실연동한다.
+ *   억지로 붙이면 전송로가 둘로 갈리므로(FC-056 위배) **연동을 보류**한다. 목업 헤드·정적 5제목은
+ *   자리 텍스트로 두되 **실 호출 없음**(aria-disabled) — 임의 데이터 하드코딩이 아니라 자리 표기다.
  */
 function NoticeSection() {
     return (
         <HomeSection
             icon={TbSpeakerphone}
-            title="최근 공지"
-            description="거래 정책·점검·이벤트 소식을 여기서 확인하세요."
-            seeAllNote="연동 예정"
+            title="공지사항"
+            seeAllHref={paths.community}
+            seeAllLabel="더 보기"
         >
             <ul
-                aria-label="공지 연동 예정"
+                aria-label="공지사항 (연동 예정)"
                 className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface"
             >
-                {Array.from({ length: NOTICE_PLACEHOLDER_COUNT }).map(
-                    (_, index) => (
-                        <li
-                            key={index}
-                            aria-disabled="true"
-                            className="flex items-center gap-3 px-4 py-3"
+                {NOTICE_PLACEHOLDERS.map((title, index) => (
+                    <li
+                        key={index}
+                        aria-disabled="true"
+                        className="flex items-center gap-3 px-4 py-3"
+                    >
+                        <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                index === 0
+                                    ? 'bg-navy/10 text-navy-700'
+                                    : 'bg-gray-100 text-gray-500'
+                            }`}
                         >
-                            <span className="size-1.5 shrink-0 rounded-full bg-gray-200" />
-                            <span className="h-3 flex-1 rounded bg-gray-100" />
-                            <span className="h-3 w-14 shrink-0 rounded bg-gray-50" />
-                        </li>
-                    ),
-                )}
+                            {index === 0 ? '공지' : '안내'}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm text-gray-500">
+                            {title}
+                        </span>
+                        <time className="shrink-0 text-xs text-gray-400">
+                            07.{20 - index}
+                        </time>
+                    </li>
+                ))}
             </ul>
             <p className="mt-2 text-center text-xs text-gray-400">
                 공지 연동은 준비 중이에요.
