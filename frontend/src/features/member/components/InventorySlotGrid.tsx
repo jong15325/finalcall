@@ -6,6 +6,7 @@ import { itemDetailPath, paths } from '@/app/paths'
 import ItemFrame from '@/features/item/components/ItemFrame'
 import { deriveItemSummaryArt } from '@/features/item/lib/itemSummary'
 import type { InventoryItem } from '@/lib/api/inventory'
+import './InventorySlotGrid.css'
 
 /**
  * 인벤토리 슬롯 그리드 (FC-076 — 목업 `.mycard-window`/`.mycard-grid`/`.mycard-tabs` · design-brief B-9).
@@ -192,7 +193,7 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
         <Link
             to={itemDetailPath(item.itemInstancePublicId)}
             aria-label={`${name} 상세 보기`}
-            className="item-sprite-stage flex h-[134px] items-center justify-center overflow-hidden rounded-xl border border-line transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-navy hover:shadow-md"
+            className="inv-slot item-sprite-stage flex h-[134px] items-center justify-center overflow-hidden rounded-xl border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md"
             style={
                 art?.src
                     ? ({

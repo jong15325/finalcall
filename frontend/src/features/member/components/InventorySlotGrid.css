@@ -1,0 +1,21 @@
+/**
+ * 인벤토리 슬롯 hover — 이미지 확대(zoom) (FC-102).
+ *
+ * ★ 공용 카드(ItemFrame/ItemCard)의 hover 는 이미지 상단 이동(translateY)이다(item-frame.css
+ *   `.item-frame__stage:hover .card-art`). 인벤토리에서는 이를 **확대(scale)** 로 바꾼다 —
+ *   공용 파일을 건드리지 않고 `.inv-slot` 스코프에서만 override 한다(경매·마켓 카드 hover 불변).
+ * ★ 확대는 transform: scale 로만 — 프레임 아트 내부 비율·크로마키·item-frame DOM 규칙 불변.
+ *   확대분은 슬롯의 `overflow-hidden` 박스 안에서 클립되어 아웃라인 안에서 zoom 된다.
+ * ★ hover 는 개별 슬롯에만 반응한다(부모 그리드/목록 전파 없음, 목업 §3.1 #6).
+ *   card-art 자체 transition(item-frame.css)이 부드럽게 되돌린다.
+ */
+
+/* 셀 다크 여백 위 hover(프레임 스테이지 밖) — 상단 이동 없이 확대 */
+.inv-slot:hover .card-art {
+    transform: scale(1.12);
+}
+
+/* 프레임 스테이지 위 hover — 공용 translateY(-3px) 을 스코프 특이도(0,4,0)로 눌러 확대만 남긴다 */
+.inv-slot .item-frame__stage:hover .card-art {
+    transform: scale(1.12);
+}
