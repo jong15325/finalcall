@@ -3,7 +3,7 @@ id: EPIC-PURCHASE
 type: epic
 jira_key: KAN-97
 title: 즉시구매(buyNow) + 거래내역(orders)
-state: doing
+state: done
 children: [FC-088, FC-089, FC-090, FC-091]
 gate: null
 ---
