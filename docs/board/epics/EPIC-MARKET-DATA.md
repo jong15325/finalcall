@@ -37,5 +37,12 @@ FC-100 reviewer   검수(스킬명 정합·시드 정합·대량 성능·계약 
 - **정정**: 실제 스킬 244개(435는 코드 상한). 스키마 무변경(name 필드 2개 additive·nullable). skillPercent 기존 존재.
 - **파급**: skill1Name/skill2Name는 공통 블록이라 경매 카드에도 대칭 추가(additive) — EPIC-AUCTION 무접촉·되돌림 없음.
 
+## 온디맨드 보안 리뷰 (2026-07-22, 에픽 완료 직전) — 취약점 0건
+- market-data 델타(5db6184·d9b380e)에 스코프. **HIGH/MEDIUM 0건**. 확인: SQL injection 없음(V16 리터럴·bulk INSERT 파라미터 바인딩)·데이터 노출 없음(skill name=비민감 게임 마스터, fee/settle 누출 없음)·인가/인증 변경 없음(뷰 필드·시드뿐)·XSS 없음(표준 JSX 보간)·시드 @Profile(local) 격리.
+
+## 후속
+- **FC-101**: 마켓 목록 성능(reviewer minor-1) — ShopCard memo·per-second now 격리 or 가상화. done 미차단.
+- spec §1.4 요약 off-by-one(140=50 오기 → §5의 140=45가 정본, V16은 정확) — 문서 정정 권고(reviewer 확인).
+
 ## 범위 밖
 - 스킬 등급(S/A/B, §7 미확인)·스킬 필터 부활(검색 에픽)·마법 속성 분기 검증 UI · 관리자 콘솔.
