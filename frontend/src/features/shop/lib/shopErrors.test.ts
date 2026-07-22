@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createShopErrorViewOf, shopPurchaseErrorViewOf } from './shopErrors'
+import {
+    createShopErrorViewOf,
+    shopCancelErrorViewOf,
+    shopPurchaseErrorViewOf,
+} from './shopErrors'
 import { ApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
 
@@ -79,5 +83,42 @@ describe('createShopErrorViewOf', () => {
         const view = createShopErrorViewOf(apiError('WEIRD_999', 500, '서버 원문'))
         expect(view.title).toBe('상품을 등록하지 못했습니다')
         expect(view.description).toBe('서버 원문')
+    })
+})
+
+describe('shopCancelErrorViewOf', () => {
+    it('SHOP_004(이미 판매/종료) — 내릴 수 없음 안내(새로고침 유도)', () => {
+        const view = shopCancelErrorViewOf(apiError(ERROR_CODES.SHOP_004))
+        expect(view.title).toContain('내릴 수 없는')
+        expect(view.description).toContain('새로고침')
+    })
+
+    it('SHOP_003(없음) — 미존재 안내', () => {
+        const view = shopCancelErrorViewOf(apiError(ERROR_CODES.SHOP_003, 404))
+        expect(view.title).toContain('찾을 수 없습니다')
+    })
+
+    it('SHOP_001(미소유·403) — 본인 상품만 안내', () => {
+        const view = shopCancelErrorViewOf(apiError(ERROR_CODES.SHOP_001, 403))
+        expect(view.title).toContain('내릴 수 없는')
+        expect(view.description).toContain('본인이 등록한')
+    })
+
+    it('세션 만료(COMMON_005)는 재로그인 안내', () => {
+        expect(
+            shopCancelErrorViewOf(apiError(ERROR_CODES.COMMON_005, 401)).title,
+        ).toContain('로그인이 만료')
+    })
+
+    it('모르는 코드는 서버 message 로 폴백', () => {
+        const view = shopCancelErrorViewOf(apiError('WEIRD_999', 500, '서버 원문'))
+        expect(view.title).toBe('상품을 내리지 못했습니다')
+        expect(view.description).toBe('서버 원문')
+    })
+
+    it('ApiError 가 아니면 일반 폴백', () => {
+        const view = shopCancelErrorViewOf(new Error('boom'))
+        expect(view.title).toBe('상품을 내리지 못했습니다')
+        expect(view.description).toContain('잠시 후')
     })
 })

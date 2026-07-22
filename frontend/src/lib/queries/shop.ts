@@ -6,7 +6,9 @@ import {
     useQueryClient,
 } from '@tanstack/react-query'
 import {
+    cancelShop,
     createShop,
+    getMyShops,
     getShop,
     getShops,
     purchaseShop,
@@ -15,9 +17,13 @@ import { balanceKeys } from './balance'
 import { inventoryKeys } from './inventory'
 import { orderKeys } from './orders'
 import { tempStorageKeys } from './tempStorage'
+import { useIsAuthenticated } from '@/store/authStore'
 import type {
+    CancelShopResponse,
     CreateShopRequest,
     CreateShopResponse,
+    MyShopSummary,
+    MyShopsQuery,
     PurchaseShopResponse,
     ShopDetail,
     ShopListQuery,
@@ -41,6 +47,9 @@ export const shopKeys = {
     details: () => [...shopKeys.all, 'detail'] as const,
     detail: (shopPublicId: string) =>
         [...shopKeys.details(), shopPublicId] as const,
+    /** 내 판매 목록(마이페이지 '내 판매' — 공개 `browse` 와 형제로 분리) */
+    mines: () => [...shopKeys.all, 'mine'] as const,
+    mine: (query: MyShopsQuery) => [...shopKeys.mines(), query] as const,
 }
 
 /**
@@ -150,6 +159,68 @@ export function useCreateShop() {
         onSuccess: () => {
             void queryClient.invalidateQueries({
                 queryKey: inventoryKeys.me(),
+            })
+            void queryClient.invalidateQueries({
+                queryKey: shopKeys.browses(),
+            })
+        },
+    })
+}
+
+/**
+ * 내 판매 목록 커서 무한스크롤 (계약 §3.2 `GET /me/shops`) — FC-096.
+ *
+ * ★★ **필터(status)가 바뀌면 커서가 초기화된다 — 코드 한 줄 없이**(`useShopBrowse` 와 동일 구조).
+ *   `query` 가 키에 통째로 실리므로 다른 필터는 다른 쿼리가 되고 새 키는 커서 없이 시작한다.
+ * ★ `enabled: isAuthed` — 마이페이지는 보호 라우트지만, 세션 만료 직후 401 이 refresh 회전을
+ *   불필요하게 깨우지 않도록 가드를 둔다(`useMyInventory` 와 같은 태도).
+ * ★ `hasNext`·`nextCursor` 를 **둘 다** 본다 — 서버가 hasNext=true 인데 커서를 null 로 주면 첫
+ *   페이지 무한 재요청 루프가 되므로 여기서 끊는다(공개 목록과 동일).
+ */
+export function useMyShops(query: MyShopsQuery) {
+    const isAuthed = useIsAuthenticated()
+
+    return useInfiniteQuery<CursorPage<MyShopSummary>>({
+        queryKey: shopKeys.mine(query),
+        queryFn: ({ pageParam, signal }) =>
+            getMyShops(
+                { ...query, cursor: (pageParam as string | null) ?? undefined },
+                signal,
+            ),
+        initialPageParam: null,
+        getNextPageParam: (lastPage) =>
+            lastPage.hasNext && lastPage.nextCursor
+                ? lastPage.nextCursor
+                : null,
+        enabled: isAuthed,
+        refetchOnWindowFocus: false,
+    })
+}
+
+/**
+ * 판매 내리기(취소) (계약 §3.2 `POST /shops/{id}/cancel`) — FC-096.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **무효화 반경 = 내 리스팅 · 인벤토리 · 임시보관 · 공개 마켓 목록.** 취소가 성립하면
+ *    (1) 리스팅이 CANCELLED 로 내 판매에서 빠지고, (2) 아이템이 인벤토리(만실 시 임시보관)로
+ *    회수되며, (3) 공개 마켓에서도 사라진다(shop-spec §4.3). 하나라도 빼면 화면이 방금 내린
+ *    상품을 그대로 보여준다. 잔액은 건드리지 않는다 — 취소는 금전 이동이 없다.
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * ★ `mutate(shopPublicId)` — 리스트의 여러 카드가 한 훅을 공유하고 대상은 변이 변수로 넘긴다.
+ */
+export function useCancelShop() {
+    const queryClient = useQueryClient()
+
+    return useMutation<CancelShopResponse, Error, string>({
+        mutationFn: (shopPublicId) => cancelShop(shopPublicId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: shopKeys.mines() })
+            void queryClient.invalidateQueries({
+                queryKey: inventoryKeys.me(),
+            })
+            void queryClient.invalidateQueries({
+                queryKey: tempStorageKeys.me(),
             })
             void queryClient.invalidateQueries({
                 queryKey: shopKeys.browses(),

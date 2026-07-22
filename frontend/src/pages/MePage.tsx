@@ -6,6 +6,7 @@ import ProfileCard from '@/features/member/components/ProfileCard'
 import VerificationCard from '@/features/member/components/VerificationCard'
 import WalletSummaryCard from '@/features/member/components/WalletSummaryCard'
 import WithdrawDialog from '@/features/member/components/WithdrawDialog'
+import MyShopsSection from '@/features/shop/components/MyShopsSection'
 import { useMe, useUpdateNickname, useWithdraw } from '@/lib/queries/me'
 import { useMyBalance } from '@/lib/queries/balance'
 import { useAuthStore } from '@/store/authStore'
@@ -93,6 +94,9 @@ export default function MePage() {
                             isError={balanceQuery.isError}
                         />
                     </div>
+
+                    {/* 내 판매 — 진행 중 고정가 리스팅 + 내리기 (FC-096) */}
+                    <MyShopsSection />
 
                     {/* 거래 내역 진입점 (FC-090 실연동) */}
                     <Link

@@ -106,3 +106,47 @@ export function createShopErrorViewOf(error: unknown): ShopErrorView {
             }
     }
 }
+
+/**
+ * 판매 내리기(취소) 실패 → 화면 문구(계약 §3.2 cancel 에러) — FC-096.
+ *
+ * ★ `SHOP_004`(이미 판매/종료)는 취소 불가 상태다 — 이미 팔렸거나 기한이 지나 내려간 매물이라
+ *   판매자가 더 내릴 것이 없다("판매됨"으로 못 박지 않고 목록 새로고침으로 안내). `SHOP_003`(없음)
+ *   과 `SHOP_001`(미소유·403 IDOR)은 방어적으로 둔다 — 내 목록에서 왔어도 다른 탭에서 상태가
+ *   바뀌었을 수 있고, 표시 제어는 인가가 아니다.
+ */
+export function shopCancelErrorViewOf(error: unknown): ShopErrorView {
+    const code = isApiError(error) ? error.code : null
+
+    switch (code) {
+        case ERROR_CODES.SHOP_004:
+            return {
+                title: '내릴 수 없는 상품입니다',
+                description:
+                    '이미 판매되었거나 기한이 지나 내려간 상품입니다. 목록을 새로고침해 주세요.',
+            }
+        case ERROR_CODES.SHOP_003:
+            return {
+                title: '상품을 찾을 수 없습니다',
+                description: '이미 내려갔거나 목록이 오래되었습니다. 새로고침해 주세요.',
+            }
+        case ERROR_CODES.SHOP_001:
+            return {
+                title: '내릴 수 없는 상품입니다',
+                description: '본인이 등록한 상품만 내릴 수 있습니다.',
+            }
+        case ERROR_CODES.COMMON_005:
+        case ERROR_CODES.AUTH_004:
+            return {
+                title: '로그인이 만료되었습니다',
+                description: '다시 로그인한 뒤 시도해 주세요.',
+            }
+        default:
+            return {
+                title: '상품을 내리지 못했습니다',
+                description: isApiError(error)
+                    ? error.message
+                    : '잠시 후 다시 시도해 주세요.',
+            }
+    }
+}

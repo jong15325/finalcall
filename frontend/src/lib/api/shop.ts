@@ -158,3 +158,88 @@ export function purchaseShop(
 ): Promise<PurchaseShopResponse> {
     return apiClient.post<PurchaseShopResponse>(`/shops/${shopPublicId}/purchase`)
 }
+
+/**
+ * MyShopSummary (계약 §3.2 `GET /me/shops` content · shop-spec §10.3) — FC-096.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **판매자 전용 DTO다 — 공개 `ShopSummary` 를 오염시키지 않는다.** `estimatedFee`·
+ *    `estimatedSettle` 는 `/me/shops`(인증 주체=판매자 본인)에서만 내려오며 공개 `GET /shops`
+ *    응답에는 존재하지 않는다(별도 DTO 격리, shop-spec §10.3).
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * ★ **예상치(estimate)다 — 실현값이 아니다.** ACTIVE 리스팅은 아직 `sale_order` 가 없어 서버가
+ *   등록가 기준 `FeeCalculator.compute(price)`·`price − fee` 로 계산한다. 판매 시점 수수료 정책
+ *   버전에 따라 실현값과 드리프트할 수 있으므로(S-B) 화면은 반드시 "예상"으로 표기한다. 실현
+ *   fee/settle 은 판매 후 `GET /me/orders?sourceType=SHOP`(판매자 전용)에 노출된다.
+ */
+export interface MyShopSummary extends ShopSummary {
+    /** 예상 수수료 = `FeeCalculator.compute(price)`(현재 정책·서버 파생). 실현값 아님 */
+    estimatedFee: number
+    /** 예상 정산액 = `price − estimatedFee`(서버 파생). 실현값 아님 */
+    estimatedSettle: number
+}
+
+/**
+ * `GET /me/shops` 상태 필터 — 계약 §3.2·shop-spec §10.2.
+ *
+ * ★ `ALL` 은 **API 레벨 센티널**("상태 predicate 없음")이며 DB enum 값이 아니다. 생략 시 서버가
+ *   ACTIVE 로 기본 처리한다(진행 중 리스팅 조회가 1차 용도).
+ */
+export type MyShopStatusFilter =
+    | 'ACTIVE'
+    | 'SOLD'
+    | 'EXPIRED'
+    | 'CANCELLED'
+    | 'ALL'
+
+/**
+ * `GET /me/shops` 쿼리 — 판매자 스코프는 서버가 SecurityContext 주체로 도출한다(요청에 seller
+ * 없음, IDOR 원천 차단, shop-spec §10.1). 정렬 화이트리스트는 `createdAt|price|endAt`(기본
+ * `createdAt desc`) — 공개 목록과 동일한 `ShopCursor` 재사용.
+ */
+export interface MyShopsQuery {
+    status?: MyShopStatusFilter
+    /** `<field>,<asc|desc>` — field 화이트리스트는 `createdAt·price·endAt` */
+    sort?: string
+    size?: number
+    cursor?: string
+}
+
+/**
+ * `GET /me/shops` — **인증 필요**(판매자=주체). 내 판매 리스팅을 커서 페이지로 조회한다.
+ *
+ * ★ `status` 생략 = 서버 기본 ACTIVE. 필터·정렬이 바뀌면 호출부(useMyShops) 키가 갈려 커서가
+ *   초기화된다 — `cursor` 는 페이지 파라미터라 이 쿼리에 함께 싣지 않는 것이 원칙이나, 무한스크롤
+ *   훅이 다음 커서를 여기로 주입한다(공개 `getShops` 와 동형).
+ */
+export function getMyShops(
+    query: MyShopsQuery = {},
+    signal?: AbortSignal,
+): Promise<CursorPage<MyShopSummary>> {
+    return apiClient.get<CursorPage<MyShopSummary>>('/me/shops', {
+        query: { ...query },
+        signal,
+    })
+}
+
+/** `POST /shops/{id}/cancel` 200 (계약 §3.2). */
+export interface CancelShopResponse {
+    status: ShopStatus
+}
+
+/**
+ * `POST /shops/{id}/cancel`(판매자 취소) — **인증 필요**(판매자 본인). FC-096.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **요청 본문이 없다.** ACTIVE(미판매)일 때만 CANCELLED 로 전이된다(shop-spec §4.3).
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * ★ 성립하면 아이템이 판매자 인벤토리(만실 시 임시보관함)로 회수된다(소유자 불변). 무효화 반경은
+ *   `useCancelShop`.
+ * ★ 실패는 `SHOP_004`(이미 판매/종료 409)·`SHOP_003`(없음 404)·`SHOP_001`(미소유 403).
+ *   문구는 `shopCancelErrorViewOf`(`shopErrors.ts`).
+ */
+export function cancelShop(shopPublicId: string): Promise<CancelShopResponse> {
+    return apiClient.post<CancelShopResponse>(`/shops/${shopPublicId}/cancel`)
+}
