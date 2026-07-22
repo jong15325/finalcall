@@ -100,7 +100,7 @@ function InventorySlotGrid({
             {/* 슬롯 그리드 — 반응형 리플로우(모바일 2·태블릿 3·PC 6열, FC-086 #1) */}
             <div className="p-4">
                 <ul
-                    className="grid grid-cols-2 gap-2.5 xs:grid-cols-3 xl:grid-cols-6"
+                    className="grid auto-rows-[134px] grid-cols-2 gap-2.5 xs:grid-cols-3 xl:grid-cols-6"
                     aria-label={`인벤토리 슬롯 ${firstSlot}–${lastSlot}`}
                 >
                     {slotNumbers.map((slotNo) => {
@@ -184,6 +184,8 @@ function InventorySlotGrid({
  *   여백(패딩·갭) 없이 셀에 꽉 채운다. 프레임(72×134)은 셀보다 좁으므로 중앙에 두고 다크
  *   아웃라인이 셀 폭을 메운다 — 프레임 아트 비율(72×134·크로마키)은 불변(외부 셀 크기로만 정합).
  *   이름은 링크 `aria-label` 로만 접근성 노출한다.
+ * ★ 셀 높이는 그리드 `auto-rows-[134px]` 가 정본(모든 페이지 동일) — 슬롯은 `h-full` 로 채운다.
+ *   hover 확대(zoom)·슬롯 밖 팝은 `.inv-slot` 스코프 CSS(InventorySlotGrid.css)가 담당한다.
  */
 function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
     const { art, hasSkill } = deriveItemSummaryArt(item.summary)
@@ -193,7 +195,7 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
         <Link
             to={itemDetailPath(item.itemInstancePublicId)}
             aria-label={`${name} 상세 보기`}
-            className="inv-slot item-sprite-stage flex h-[134px] items-center justify-center overflow-hidden rounded-xl border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md"
+            className="inv-slot item-sprite-stage flex h-full w-full items-center justify-center rounded-xl border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md"
             style={
                 art?.src
                     ? ({
@@ -215,12 +217,12 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
     )
 }
 
-/** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. 채운 슬롯과 셀 높이 정합(134px). */
+/** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. 셀 높이는 그리드 auto-rows(h-full) 정합. */
 function EmptySlot({ slotNo }: { slotNo: number }) {
     return (
         <div
             aria-label={`빈 슬롯 ${slotNo}`}
-            className="relative flex h-[134px] items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
+            className="relative flex h-full w-full items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
         >
             <span
                 aria-hidden
