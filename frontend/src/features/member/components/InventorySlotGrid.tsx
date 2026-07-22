@@ -20,9 +20,11 @@ import './InventorySlotGrid.css'
  *   빈 슬롯은 번호만 표시한다. used===0 이면 빈 상태 안내 + 임시보관 링크를 함께 보인다.
  * ★ 그리드는 **반응형 리플로우**(모바일 2 `<sm` · 태블릿 3 `sm`~`<lg` · PC 6열 `≥lg`, FC-086 #1·FC-102).
  *   6열 임계를 `xl`(1280)→`lg`(1024)로 낮춰 넓은 화면이 3열로 낭비되지 않게 한다. 셀 폭은
- *   `minmax(0,1fr)`(grid-cols-N) × 고정 컨테이너(`max-w-[820px]` + html `scrollbar-gutter:stable`)라
- *   **뷰포트만의 함수** — 페이지/탭·채운·빈 슬롯 구성과 무관하게 같은 뷰포트에서 셀 크기 동일.
- *   행 높이도 그리드 `auto-rows-[134px]` 로 고정(페이지 불변, FC-102).
+ *   `minmax(0,1fr)`(grid-cols-N) × **`w-full` 로 부모 폭을 채운** 컨테이너(`max-w-[820px]` +
+ *   html `scrollbar-gutter:stable`)라 **뷰포트만의 함수** — 페이지/탭·채운·빈 슬롯 구성과 무관하게
+ *   같은 뷰포트에서 셀 크기 동일. `w-full` 이 없으면 `flex flex-col` 부모(InventoryPage) 안에서
+ *   `mx-auto` 섹션이 내용 폭으로 수축해(빈 슬롯 페이지 336px 붕괴) 슬롯이 작아진다 — `w-full`
+ *   이 이를 막는다(근본 픽스). 행 높이도 그리드 `auto-rows-[134px]` 로 고정(페이지 불변, FC-102).
  */
 
 const PAGE_SIZE = 24
@@ -56,7 +58,7 @@ function InventorySlotGrid({
         slotNumbers.push(slot)
 
     return (
-        <section className="mx-auto max-w-[820px] overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+        <section className="mx-auto w-full max-w-[820px] overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
             {/* 타이틀 바 — 아이콘 + 이름 + 임시보관 링크(목업 .mycard-title) */}
             <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
                 <div className="flex items-center gap-3">
@@ -171,7 +173,7 @@ function InventorySlotGrid({
                                         className="absolute inset-x-4 top-0 h-0.5 rounded-b bg-orange"
                                     />
                                 )}
-                                {index === 0 ? '기본 슬롯' : `${start}–${end}`}
+                                {index === 0 ? '기본 슬롯' : `추가 슬롯${index}`}
                             </button>
                         )
                     })}
