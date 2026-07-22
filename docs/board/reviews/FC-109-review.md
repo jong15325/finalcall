@@ -26,5 +26,10 @@
 ## 합격 항목
 - 주입 차단(match/multi_match·term/range만·query_string 부재) · q 규약(2~64·400·빈결과 200) · C2 이중 방어(백엔드 400 + 프론트 조합 미생성) · search_after 커서 무중복/누락 · 비색인 민감필드(자금·홀드 없음) · 엔드포인트 공개 목록 additive · ES 순서보존 DB 하이드레이션 · 프론트 계약/접근성.
 
-## 재검 필요
-- MAJOR-1 보정(검색이 런북에서 실제 결과) 후 재검. FC-108(frontend)은 합격 항목 — 재작업 대상은 FC-107.
+## 재검 (2차, 2026-07-22 · 커밋 edd9807) — MAJOR-1 해소 (PASS)
+- **판정: passed** — critical/major 0. 1차 changes-requested 사유 해소.
+- (a) sink SMT 정합: rename(snake→camel)+listingType 주입(TopicNameMatches, route 이전 실행)·`_id`=public_id. shop `start_price` rename은 no-op(이미 price)·양쪽 price 수렴.
+- (b) ListingBootReindexer(ApplicationReadyEvent→reindexAll) 게이팅 정합: base off·local on·test off·ES 미가용 스킵.
+- (c) upsert 병합 비클로버: enrichment join 필드는 CDC에 필드명 부재라 보존. (d) populator 테스트가 실경로(bulkUpsert) q매칭+코드축 대리검증. 런북 스모크 통과 가능.
+- dual-write 없음 재확인. MINOR-1(마스킹)·MINOR-3(catch 축소) 정합. **잔존 = 비차단 minor(histogram·TransportException 500화·highestBidAmount 스테일)만, 전부 후속**.
+- **운영 유의(후속)**: local만 부팅 재색인·correct-on-drift on. 운영은 초기 색인 전략 별도 결정 필요(현 운영 트리거 없음, 의도된 후속).
