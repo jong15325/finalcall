@@ -29,8 +29,11 @@ FC-109 reviewer   검수(정합성·동기 불일치·화해·주입·성능·�
 ```
 (backend는 인프라/동기 vs 검색API로 분할 가능 — architect 판단.)
 
-## 게이트2 — 예정 (architect가 FC-106에서 상신)
-- A1 검색엔진 인프라 도입 · A2 엔진(OpenSearch vs Elasticsearch) · A3 동기(Outbox vs Debezium CDC) · A5 재색인/화해 · C1 q 파라미터(마켓+경매) · C2 relevance 정렬 · C3 q 규약. **로컬 기동성**(Kafka 필요 여부 등) 명시.
+## 게이트2 — 승인됨 (2026-07-22, 사용자) — FC-106
+- **A2 엔진 = Elasticsearch**(+nori 플러그인·userdict). **A3 동기 = Debezium CDC**(MySQL binlog→Kafka KRaft→Kafka Connect Debezium source + ES sink, at-least-once·멱등 upsert `_id`=public_id·snapshot 백필). **A1 인프라 = 신규 컨테이너 3개**(elasticsearch·kafka·kafka-connect) + MySQL binlog 설정. **A5** alias 재색인 + `@Scheduled` count/histogram 화해.
+- **C1** q(nameSnapshot 매칭·마켓+경매 공유)·**C2** relevance 정렬(무q relevance=400·search_after)·**C3** 2~64자·match/multi_match(인젝션 불요)·빈결과 200.
+- **결정 성격**: architect 추천(OpenSearch+Outbox 경량)과 다르게 **포트폴리오 사실성 우선**으로 ES+CDC 선택 — 로컬 부담 큼(사용자 수용). sellerGrade 부스트 제외(GRADE 의존).
+- 정합성: ES 정본 아님·MySQL 진실원·dual-write 금지·주기 화해(domain-spec §8).
 
 ## 범위 밖
 - 등급 부스트(EPIC-GRADE 선행) · 오타허용/동의어 고도화(엔진 도입 후 튜닝) · item-templates 검색 · 패싯 UI(엔진은 지원하나 UI는 후속) · 운영 클러스터(로컬 데모 우선).

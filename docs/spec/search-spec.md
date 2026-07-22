@@ -1,7 +1,8 @@
 # FinalCall Search Design Spec (검색 엔진 도입 설계문서 · 초안)
 
-상태: v0.1 초안(2026-07-21, architect) — **백엔드 동결 중이라 설계문서만**이다. 코드·스키마·계약(api-contract) 무변경.
-구현은 소유 에픽 **EPIC-SEARCH**(동결 해제 후)에 이연한다. 계약 변경이 필요한 항목은 §9(게이트2)로 분리 표기한다.
+상태: **v0.3**(2026-07-22, architect) — **게이트2 사용자 승인 반영**. 인프라/아키텍처 A1·A2·A3·A5 **확정**: **엔진 = Elasticsearch**, **동기 = Debezium CDC**(사용자가 architect 추천 OpenSearch+Outbox와 다르게 **포트폴리오 사실성 우선**으로 결정 — 로컬 부담이 큰 구성임을 인지하고 선택). §12가 이 확정을 반영한 구현 결정 정본이다.
+계약 **C1~C3(`q`·`relevance`)는 여전히 PROPOSAL**(별건 게이트2 미확정) — api-contract는 PROPOSAL 블록 유지, 정본 반영은 승인 후 §9.3 절차. §1~§11은 v0.1 원문(설계 근거·목표 아키텍처)을 유지하고, §12가 구현 결정 정본이다.
+구현은 소유 에픽 **EPIC-SEARCH**(FC-107 backend·FC-108 frontend)에 귀속한다. 코드·인프라·계약 파일은 architect가 무변경 — 인프라·커넥터·색인은 backend-impl이 구현한다.
 소유: architect (spec). 본 문서는 **의사결정 근거·목표 아키텍처·승격 경로**의 단일 참조점이며, 정본(api-contract·erd·domain-spec)을 대체하지 않는다.
 근거: api-contract v1.11 §3(공통 목록 필터·§3.3 스키마·§3.3.1 코드 사전)·§4.1, domain-spec v0.6 §8(정합성은 DB·락은 정확성 수단 아님), item-domain-spec v0.4 §2.1(item_template)·§5(응답), bid-domain-spec v0.3, fee-policy-spec(EPIC-CLOSING). 리서치 결론(MySQL FULLTEXT vs ES/OpenSearch·nori·CDC/Outbox·function_score·alias 재색인) 요지 인용.
 범위: 초안이다. 아래 어떤 항목도 **구현 착수 근거가 아니다**(동결 해제 + 게이트 통과가 선행). 스키마·계약 변경이 필요한 항목은 §9로 상신 대상 표시한다.
@@ -9,6 +10,8 @@
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v0.1 | 2026-07-21 | EPIC-SEARCH 설계 초안 착수 — 현 검색 한계 진단, 3안 옵션 비교, 단계적 표준안, 목표 아키텍처(ES=파생 read-model·CDC 싱크), 인덱스 골격, 랭킹(function_score·등급 부스트), 한글(nori+ngram), 엔진 선택 기준, 게이트2 분리(§9). 백엔드 동결이라 설계만 |
+| v0.2 | 2026-07-22 | ②단계 구현 결정(§12 신설, 게이트1 승인 후) — architect 추천안: 엔진=OpenSearch·동기=Outbox 릴레이(Kafka 불요). 게이트2 상신용. **v0.3에서 사용자 결정으로 대체됨(아래)** |
+| **v0.3** | 2026-07-22 | **게이트2 사용자 승인** — architect 추천과 다르게 결정: **엔진 = Elasticsearch**(nori 플러그인 설치), **동기 = Debezium CDC**(MySQL binlog→Kafka(KRaft)→Kafka Connect: Debezium source + ES sink, 멱등 upsert·Debezium 초기 스냅샷 백필). **포트폴리오 사실성 우선**(로컬 부담 큰 구성 인지 선택). 인덱스(단일 통합 `listings`·nori+ngram·코드축 keyword)·재색인(alias)·랭킹(BM25 relevance)·sellerGrade 제외 = v0.2 유지. 로컬 docker = mysql(binlog on)+redis+**elasticsearch(nori)·kafka(KRaft)·kafka-connect(debezium+es-sink)**(+선택 kibana). 계약 C1~C3는 PROPOSAL 유지 |
 
 ---
 
@@ -228,4 +231,130 @@ function_score {
 - `sellerGrade` 정의·수치화 = EPIC-GRADE 선행(§10).
 - 시간제 필드(`goldforceActive`) 색인 스테일 처리 방식 = 구현 시 확정(§5).
 - 엔진(OpenSearch/ES)·동기(Outbox/CDC) 최종 선택 = ②단계 게이트2(§9.2).
-- `q` 무입력 시 `relevance` 정렬 처리 규칙(400 vs 무시) = 계약 게이트2(§9.1 C2)에서 확정.
+- `q` 무입력 시 `relevance` 정렬 처리 규칙(400 vs 무시) = 계약 게이트2(§9.1 C2)에서 확정. **→ §12.7 C2에서 추천안 확정(게이트2 상신).**
+
+---
+
+## 12. v0.3 구현 결정 (EPIC-SEARCH ②단계 — 게이트2 확정)
+
+**전제(게이트1 승인 2026-07-22 사용자)**: 방식 **B(전용 검색엔진)** — MySQL FULLTEXT(①단계) 배제, 포트폴리오 임팩트(검색 인프라·동기·재색인 역량) 우선. 범위 = **마켓(`/shops`) + 경매(`/auctions`)**, item-templates 제외. **등급 부스트(`sellerGrade`) 범위 밖**(EPIC-GRADE 의존, §6.1·A4) — 관련도(BM25)+한글까지.
+**게이트2 확정(2026-07-22 사용자)**: **엔진 = Elasticsearch**, **동기 = Debezium CDC**. architect 추천(OpenSearch+Outbox, 로컬 경량)과 다르게 사용자가 **포트폴리오 사실성 우선**으로 선택 — 실무 표준 스택(ES + binlog CDC + Kafka Connect)을 그대로 시연한다. **★ 이 구성은 로컬 부담이 크다**(신규 컨테이너 3개 + MySQL binlog 설정 변경): 사용자가 이 부담을 인지하고 포트폴리오 가치를 위해 채택했다. §12.1에 로컬 구성·기동 절차 골격을 명시한다.
+
+### 12.1 A1 로컬 docker 구성 (★ 부담 큰 구성 — 사용자 선택)
+
+현 로컬(`backend/docker-compose.local.yml`) = **MySQL 8 + Redis 7**(2개). Debezium CDC + Elasticsearch 채택으로 **신규 컨테이너 3개**(+선택 Kibana 1개) 및 MySQL binlog 설정 변경이 추가된다. **backend-impl(FC-107)이 구현**하며 아래는 골격이다:
+
+| 컨테이너 | 이미지(예) | 역할 | 헬스체크 |
+|---|---|---|---|
+| `mysql`(변경) | `mysql:8.0` + **binlog 옵션** | SoT + binlog 소스 | 기존 mysqladmin ping |
+| `elasticsearch`(신규) | `elasticsearch:8.x` + **analysis-nori** | 검색 read-model | `GET /_cluster/health` |
+| `kafka`(신규) | `bitnami/kafka` 또는 `confluentinc/cp-kafka` **KRaft 모드**(Zookeeper 없음) | CDC 이벤트 버스 | 브로커 API 준비 |
+| `kafka-connect`(신규) | `debezium/connect` 또는 Connect + **Debezium MySQL source · ES sink 플러그인** | 커넥터 런타임 | `GET /connectors` (REST 8083) |
+| `kibana`(선택) | `kibana:8.x` | 데모 시각화 | 미기동해도 검색 동작 |
+
+- **MySQL binlog 활성화(필수)**: `command`(또는 `my.cnf` 마운트)에 `--log-bin=mysql-bin`·`--binlog-format=ROW`·`--binlog-row-image=full`·`--server-id=1`·`--gtid-mode=ON`·`--enforce-gtid-consistency=ON`(GTID는 스냅샷·재개 견고성용, 선택). Debezium 캡처용 계정 권한(`REPLICATION SLAVE`, `REPLICATION CLIENT`, `SELECT`) 부여.
+- **Elasticsearch(nori)**: 로컬은 단일 노드·보안 off(`discovery.type=single-node`, `xpack.security.enabled=false`), heap 512m~1g. **nori는 기본 미동봉** → `elasticsearch-plugin install analysis-nori`를 **베이스 이미지에 구운 커스텀 Dockerfile**로 고정(런타임 설치 취약성 회피). userdict 파일도 이미지에 동봉(§12.6).
+- **기동 순서·의존**: mysql→kafka→kafka-connect(커넥터 등록)→elasticsearch(먼저 떠 있어도 무방). compose `depends_on` + healthcheck `condition: service_healthy`로 배선. Connect 기동 후 **커넥터를 REST(POST `/connectors`)로 등록**(Debezium source 1개 + ES sink 1개) — backend가 등록 스크립트(curl/init 컨테이너)를 제공.
+- **커넥터 등록 골격(REST)**:
+  - Debezium MySQL source: `database.hostname/port/user/password`, `topic.prefix`, `table.include.list`(auction·shop·bid 관련 테이블), `snapshot.mode=initial`(초기 백필).
+  - ES sink(`camel`/`kafka-connect-elasticsearch`): `connection.url`(elasticsearch:9200), `topics`, `key.ignore=false`(도큐먼트 `_id`=리스팅 public_id), `behavior.on.null.values=delete`(삭제 전파), `write.method=upsert`(멱등).
+- 시크릿 없음(로컬 전용 일회성 값). 배포(AWS, Stage G 힌트) = 관리형/매니지드 CDC로 매핑 가능(로컬≠운영 배선 주의).
+- **로컬 부담 명시**: 컨테이너 5~6개 + MySQL binlog·JVM heap 다수 → 이 PC 메모리·기동시간 부담이 크다. 데모 기동이 무거우면 Kibana를 빼고(선택), ES/Kafka heap을 낮춰 운용한다. 부담은 사용자가 포트폴리오 사실성 대가로 수용한 결정이다.
+
+### 12.2 A2 엔진 = Elasticsearch (게이트2 확정)
+
+- **확정 = Elasticsearch**(사용자 게이트2). 실무 최다 채택·**이름 인지도**가 높아 포트폴리오 사실성이 크다는 판단(architect 추천 OpenSearch의 라이선스 자유·AWS 정합보다 사용자가 사실성을 우선).
+- **한글 nori = 플러그인 설치 필요**: ES는 `analysis-nori`가 **기본 미동봉**이다 → **커스텀 ES 이미지**(`FROM elasticsearch:8.x` + `RUN elasticsearch-plugin install --batch analysis-nori`)로 굽거나, init 단계 `elasticsearch-plugin install`. userdict를 함께 동봉(§12.6). 버전 = 8.x 안정(로컬 single-node·보안 off).
+- **라이선스 주의(각주)**: Elasticsearch는 2021년 Apache 2.0 → SSPL/Elastic License 2.0, 2024-08 **AGPLv3 옵션 추가**로 라이선스가 변동돼 왔다. 포트폴리오·비상업 데모 범위에선 문제 없으나, 상업 배포 시 라이선스 조건(특히 매니지드 서비스 재판매 제약·AGPL copyleft)을 검토해야 한다. (OpenSearch는 Apache 2.0으로 이 부담이 없다 — 선택되지 않았으나 트레이드오프로 기록.)
+- A2는 A1 확정에 종속(색인 인프라 = ES 클러스터).
+
+### 12.3 A3 동기 = Debezium CDC (게이트2 확정)
+
+**확정 = Debezium CDC**(사용자 게이트2, architect 추천 Outbox 아님). MySQL binlog를 단일 원천으로 캡처해 Kafka→ES로 흘린다. 앱 코드 무침습(도메인 쓰기 경로에 outbox emit 불요)이 장점이며, **표준 CDC 스택을 실물로 시연**하는 포트폴리오 가치가 채택 이유다.
+
+파이프라인:
+
+```
+[MySQL 8 = SoT] --binlog(ROW)--> [Debezium MySQL source] --> [Kafka(KRaft) 토픽]
+                                                                    |
+                                          [ES sink connector] --멱등 upsert(_id=public_id)--> [Elasticsearch(alias)]
+                                                                    |
+        [앱 @Scheduled 화해(count/histogram)] <----- 주기 대조 ----- MySQL ↔ ES
+```
+
+- **MySQL binlog 캡처**: `binlog_format=ROW`·`binlog_row_image=full`(§12.1). Debezium이 `auction`·`shop`·`bid` 관련 테이블 변경을 토픽으로 발행.
+- **Kafka = KRaft 모드**(Zookeeper 없이 단일 컨테이너) — 로컬 부품 수 최소화. Kafka Connect가 Debezium source + ES sink 커넥터를 호스팅.
+- **at-least-once → 멱등 sink 필수**: Debezium·Kafka는 **at-least-once** 전달이라 중복·재전송 이벤트가 발생한다. ES sink는 문서 **`_id = 리스팅 public_id`**(auctionPublicId·shopPublicId, ULID 상호 무충돌) 기준 **upsert**로 멱등 반영(중복 무해, 마지막 값 수렴). 삭제(취소/만료)는 tombstone→sink delete로 전파.
+- **초기 백필 = Debezium 스냅샷**: `snapshot.mode=initial`로 커넥터 최초 등록 시 대상 테이블 전수를 스냅샷해 ES에 적재(별도 백필 배치 불요). 이후 binlog 스트리밍으로 증분 반영.
+- **dual-write 금지 준수(§4)**: 앱은 MySQL만 쓴다. ES의 **유일한 writer = ES sink 커넥터**. 도메인 코드에 ES 쓰기·outbox emit이 없다(Debezium이 binlog에서 캡처하므로 앱 무침습).
+- **백스톱 = 주기 화해 유지**: CDC 유실·순서역전·커넥터 정지 대비로 앱 내부 `@Scheduled`가 MySQL↔ES **count(상태·listingType별)+price histogram** 대조 → 드리프트 리스팅 재색인. domain-spec §8·§10 정합(§12.5).
+- **트레이드오프(명시)**: (1) 로컬 컨테이너 3개+binlog 설정으로 **기동·운영 부담 큼**(§12.1). (2) 파이프라인 단계가 많아(binlog→Debezium→Kafka→sink→ES) 장애 지점·모니터링 대상이 늘어난다(Connect·토픽·lag). (3) 반영은 근실시간이나 커넥터 lag만큼 지연(ES는 표시용 read-model이라 허용 — 정확값은 DB).
+
+### 12.4 인덱스 매핑 = 단일 통합 `listings` (§5 구체화)
+
+**통합 vs 분리**: `/shops`·`/auctions`가 **동일한 공통 목록 필터(§3)+item 블록**을 쓰고 `q`가 공유 필터라, **단일 통합 인덱스 `listings` + `listingType` 판별 keyword**를 추천(대안=인덱스 2개 분리).
+
+- 통합 추천 근거: 인덱스·alias·재색인 파이프라인·**ES sink 타깃**이 **1벌**(운영 단순, 로컬 부담↓), 향후 통합 검색 확장 용이. 두 엔드포인트는 `listingType` term 필터만 추가한다. **CDC 소스 테이블이 여러 개(auction·shop·bid)여도 sink가 동일 `listings` 인덱스로 라우팅**(sink 매핑에서 토픽→인덱스 통합).
+- 분리 트레이드오프: 매핑이 더 깔끔(auction 전용 `highestBidAmount`·`endsAt` semantic 발산 제거)·독립 재색인 가능하나, 파이프라인 2벌이라 로컬·운영 부담↑. **데모 규모엔 통합이 유리** → 통합 추천(발산 필드는 nullable).
+
+문서 스키마(파생 read-model — **정본은 항상 MySQL**, sellerGrade 제외):
+
+```
+listings (단일 인덱스, _id = 리스팅 public_id)
+  listingType   : keyword                 // AUCTION | SHOP (판별·엔드포인트 필터)
+  nameSnapshot  : text (analyzer=nori_kr) // 한글 본체
+    └ .ngram    : text (analyzer=ngram_kr)// 부분일치·재현율 폴백 서브필드
+    └ .keyword  : keyword                 // 정확·정렬용(선택)
+  specSnapshot  : text (analyzer=nori_kr) // 선택 색인
+  mainCategory  : keyword                 // 코드 축 — integer→keyword 색인(정확매칭)
+  subGroup      : keyword
+  element       : keyword
+  kind          : keyword
+  skill1?,skill2?: keyword
+  level         : integer                 // 범위 필터·정렬
+  price         : long                    // startPrice/현재가/고정가 — 범위·정렬
+  highestBidAmount? : long                // AUCTION 전용(SHOP=null)
+  gfExpireAt?   : date                    // 골드포스 만료 — 질의시점 gfExpireAt>now 로 active 파생(스테일 회피, §5 주 해소)
+  status        : keyword                 // ACTIVE/SCHEDULED/SOLD/... 필터
+  sellerNickname: keyword                 // 표시용(선택)
+  endsAt?       : date                    // auction endAt / shop endAt(자동계산)
+  createdAt     : date
+  // sellerGrade : (제외) — EPIC-GRADE 신설 후 rank_feature/keyword 색인. 자리만 문서화(A4·§6.1)
+```
+
+- **정수 코드 축은 keyword 색인**(§5·배민 사례: categoryId integer→keyword 980ms→104ms). 범위 아님·정확매칭/필터 대상. `level`·`price`·`highestBidAmount`만 numeric.
+- **`goldforceActive` 스테일 해소(§5·§11 미해결 확정)**: 색인 시점 boolean 대신 **`gfExpireAt`(date)를 색인**하고 질의에서 `range gfExpireAt > now`로 활성 판정 → 시간경과 스테일 제거. `goldforceActive` 필터는 이 range로 매핑.
+- **비색인 정책(SEC-007)**: 자금(홀드·잔액)·소유자 실명 등 민감·비검색 필드는 색인하지 않는다(계약 §3.3 마스킹 연장). 소유자는 `sellerNickname`(마스킹 표시)만.
+- **정확값 경로는 ES 미신뢰**: `price`·`highestBidAmount`·`status`는 입찰/마감으로 변하는 파생 사본이다. 입찰 검증·정산·낙찰 판정은 **MySQL(SoT)을 읽는다**(§4·§10, domain-spec §8).
+
+### 12.5 A5 재색인/화해 (게이트2 확정 — CDC 파이프라인 정합)
+
+- **무중단 재색인 = alias 스위치**: 앱은 **읽기 alias `listings_search`로만 질의**. 매핑/분석기(userdict 포함) 변경 시 → 신규 `listings_v{n}` 생성 → 백필 → count/샘플 검증 → `_aliases` **원자 스위치** → 구 인덱스 폐기. **CDC 스택에서의 백필 = ES sink 커넥터의 target 인덱스를 신 인덱스로 재지정 + Debezium `snapshot.mode`(예 `schema_only_recovery`/재스냅샷)로 리플레이**하거나, Kafka 토픽을 신 인덱스로 재소비(sink 오프셋 리셋)해 채운다. 스위치 후 sink는 신 인덱스로 이어쓴다.
+- **백스톱 = 주기적 화해**: 앱 내부 `@Scheduled`가 MySQL↔**Elasticsearch** **count(상태·listingType별) + price histogram** 주기 대조로 드리프트 탐지 → 불일치 리스팅 보정(대상 행 재색인 트리거: 예 no-op 업데이트로 binlog 이벤트 유발하거나 직접 bulk upsert). **CDC 유실·순서역전·커넥터 정지 대비.** bid의 "정합성은 DB" 백스톱과 동형(domain-spec §8·§10).
+- 로컬 부담: 화해 잡은 **앱 내부 스케줄러**(신규 컨테이너 0)이나, 재색인은 **Kafka Connect 커넥터 재구성**(REST)을 수반한다(CDC 스택 특성). A5 = 게이트2 확정.
+
+### 12.6 한글(§7)·랭킹(§6) 구체화
+
+- **한글 = nori + ngram 멀티필드**(§7·§12.4): `nori_kr` 분석기 = `nori_tokenizer`(decompound_mode=mixed) + userdict + 품사필터(조사·어미 제거) + lowercase. `ngram_kr` = ngram(min 2, max 3)로 부분일치·재현율 보완. 질의는 `multi_match`로 `nameSnapshot^3`(nori 정밀 우선) + `nameSnapshot.ngram^1`(재현 폴백) 가중.
+- **userdict 운영**: 게임 고유어(아이템·스킬명)를 사용자 사전 파일로 등록, **커스텀 이미지에 동봉**(§12.1). 사전 변경 = 분석기 변경 → **재색인 파이프라인(§12.5) 경유**(alias 스위치). 초기엔 시드 사전 소량 + 운영 중 추가.
+- **랭킹 = BM25 relevance(등급 부스트 제외)**: 텍스트 매칭은 기본 BM25. `relevance` 정렬 = `_score desc`. **등급 부스트(function_score field_value_factor)는 이번 범위 밖**(§6.1·A4, EPIC-GRADE 의존) — 매핑·랭킹에 `sellerGrade` **자리만 문서화**하고 색인·질의에 넣지 않는다. 즉 이번 랭킹은 `multi_match`(nori+ngram) 순수 관련도.
+- **패싯(aggs)은 이번 범위 밖**(게이트1: 관련도+한글까지). §6.2는 향후.
+
+### 12.7 계약 C1~C3 (api-contract 델타 — PROPOSAL, 게이트2 상신)
+
+`q`·`relevance`는 **공통 목록 필터(§3)** 확장이라 **`GET /auctions`·`GET /shops` 두 엔드포인트에 파급**한다(item-templates는 이번 범위 밖 — §4.1 `q` 미추가). 계약 파일은 승인 전 PROPOSAL 블록으로만 표기(§9.3).
+
+| # | 변경 | 계약 위치 | 추천 규약 |
+|---|---|---|---|
+| **C1** | **`q` 자유문 파라미터 신설** | §3 공통 목록 필터 + §3.1 `GET /auctions` + §3.2 `GET /shops` | `q`(string, optional). 매칭 대상 = `nameSnapshot`(주) + `specSnapshot`(선택). 코드 축 필터와 **AND 결합**(q=query context, 코드축=filter context). 결과 = **cursor 페이지**(§1.3, 검색도 실시간 목록). item-templates 제외 |
+| **C2** | **정렬 화이트리스트에 `relevance` 추가** | §3 정렬 화이트리스트(현: `price·endAt·createdAt·highestBidAmount`) | `relevance`는 **`q` 있을 때만 유효**. 정렬 기본: **q 있고 sort 생략 → `relevance`**, **q 없고 sort 생략 → 기존 기본(`createdAt desc`)**. **q 없이 `sort=relevance` → 400(COMMON 검증)** 추천(무의미 요청 명시 거부; 대안=무시하고 기본정렬 폴백 — 게이트2 택일). cursor+relevance = `search_after(_score desc, publicId asc)` 안정 타이브레이커(keyset) |
+| **C3** | `q` 매칭 범위·최소길이·이스케이프·빈결과 규약 | §1.3 필터 규약(C1 동반) | **최소 길이 2**(ngram min_gram=2 정합), 미만 → 400(COMMON 검증; 대안=무시). **최대 길이 64**(비용 상한, 초과 400). **이스케이프 불요 — `match`/`multi_match`(분석 쿼리)만 사용, `query_string` DSL 미사용**이라 사용자 입력이 질의 문법으로 해석되지 않음(DSL 인젝션 원천 차단). **빈 결과 = 200 빈 페이지**(에러 아님) |
+
+- **파급 관리(§9.3)**: 위는 확정 계약이 아니라 델타 초안이다. 게이트2 승인 후 architect가 **영향 티켓(프론트 검색 UI·백엔드 목록 쿼리)** 을 제시 → 사용자 확인 후 api-contract 정본 반영(버전 v+1).
+
+### 12.8 정합성 서사 준수 확인 (§10 연결)
+
+- **ES는 정본이 아니다**: Elasticsearch = 검색·랭킹 전용 파생 read-model. 정확성(거래·잔액·소유·낙찰)의 최종 보증은 **MySQL(SoT)**. ES 유실은 재색인으로 복구(정본 손실 아님).
+- **domain-spec §8 정합**: "정합성은 DB, 처리량은 락"의 검색판 = "정본은 DB, 검색속도는 ES". dual-write 금지(앱은 MySQL만 write) + **멱등 CDC sink upsert** + 주기 화해가 이 원칙의 구현.
+- **EPIC-CLOSING/BID 정합**: `price`·`status`·`highestBidAmount`는 파생 사본. 종료성 CAS·단일 승자·정산은 검색 계층과 무관하게 DB에서 성립. 검색은 이들을 지연 반영할 뿐 신뢰 원천이 아니다.
+- **EPIC-GRADE 의존 격리**: `sellerGrade` 부스트(A4)는 자리만 문서화, 이번 색인·랭킹·계약에 미포함.

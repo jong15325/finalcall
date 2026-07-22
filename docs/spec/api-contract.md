@@ -142,6 +142,13 @@
 
 공통 목록 필터(경매·고정가·아이템 검색 공유, ERD 인덱스·§7.7 정합): `mainCategory, subGroup, element, kind, minLevel/maxLevel, skill1/skill2(스킬 코드), goldforceActive(bool), minPrice/maxPrice, status`. (등급 필터 없음 — D-073) **4개 코드 축의 값·의미는 §3.3.1**이며, `kind`는 `subGroup`에 의존해 단독 사용 시 다의적이다(§4.1 경고 동일 적용). 정렬 화이트리스트: `price, endAt, createdAt, highestBidAmount`(경매), `price, endAt, createdAt`(고정가). 목록은 cursor 기본.
 
+> **⚠ PROPOSAL — EPIC-SEARCH(FC-106), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `search-spec.md` v0.3 §12. 방식 B(전용 검색엔진 Elasticsearch, 게이트2 승인 2026-07-22) ②단계. 아래는 공통 목록 필터에 자유문 검색 `q` + `relevance` 정렬을 **추가**하는 델타다(**`GET /auctions`·`GET /shops` 두 엔드포인트 파급**, item-templates 제외). 스키마·에러코드·기존 필드 무변경(additive).
+> - **C1 — `q` 자유문 파라미터 신설**: `q`(string, optional). 매칭 대상 = item `nameSnapshot`(주) + `specSnapshot`(선택). 코드 축 필터와 **AND 결합**(q=텍스트 매칭, 코드축=정확 필터). 결과는 기존대로 **cursor 페이지**(§1.3). 공유 필터라 두 목록 엔드포인트에 일괄 적용되나 **item-templates(§4.1)에는 이번 범위 밖으로 미추가**.
+> - **C2 — 정렬 화이트리스트에 `relevance` 추가**(경매·고정가 공통): `relevance`는 **`q`가 있을 때만 유효**하다. 기본 정렬 = (q 있고 sort 생략 → **`relevance`**), (q 없고 sort 생략 → 기존 **`createdAt desc`**). **q 없이 `sort=relevance` → 400(COMMON 검증)** 추천(대안=무시·기본정렬 폴백, 게이트2 택일). relevance cursor는 `search_after(_score desc, publicId asc)` 안정 타이브레이커.
+> - **C3 — `q` 규약(§1.3 필터 규약 동반)**: 최소 길이 **2**(미만 400 COMMON 추천), 최대 **64**(초과 400). **이스케이프 불요** — 서버는 `match`/`multi_match`(분석 쿼리)만 쓰고 `query_string` DSL을 쓰지 않아 사용자 입력이 질의 문법으로 해석되지 않는다(인젝션 원천 차단). **빈 결과 = 200 빈 페이지**(에러 아님).
+> - **정합성**: Elasticsearch = 파생 read-model(정본 아님), 정확성은 MySQL(SoT)·domain-spec §8. `price·status·highestBidAmount`는 지연 반영 파생 사본이며 입찰검증·정산·낙찰 판정은 DB를 읽는다(search-spec §12.8). **등급 부스트(sellerGrade)는 범위 밖**(EPIC-GRADE 의존).
+> - 승인 시 반영: 버전 로그 "게이트2(EPIC-SEARCH) 승인 — §3 공통 목록 필터에 `q`(자유문)·정렬 `relevance` 추가(GET /auctions·/shops, item-templates 제외), q 규약(최소2·최대64·match만·빈결과 200). 스키마·에러코드 무변경. 정본 search-spec v0.2. 구현 FC-107(backend)·FC-108(frontend)." + q없는 relevance·q 길이위반의 400 vs 무시 최종 택.
+
 ### 3.1 경매 (auction)
 
 POST /api/v1/auctions — 경매 등록
