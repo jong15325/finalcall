@@ -200,7 +200,7 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
         <Link
             to={itemDetailPath(item.itemInstancePublicId)}
             aria-label={`${name} 상세 보기`}
-            className="inv-slot item-sprite-stage flex h-full w-full items-center justify-center rounded-xl border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md"
+            className="inv-slot item-sprite-stage flex h-full w-full items-center justify-center border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md"
             style={
                 art?.src
                     ? ({
@@ -227,11 +227,11 @@ function EmptySlot({ slotNo }: { slotNo: number }) {
     return (
         <div
             aria-label={`빈 슬롯 ${slotNo}`}
-            className="relative flex h-full w-full items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
+            className="relative flex h-full w-full items-center justify-center border border-dashed border-line bg-surface-sunken"
         >
             <span
                 aria-hidden
-                className="flex size-10 items-center justify-center rounded-xl bg-gray-100 text-2xl font-light text-gray-300"
+                className="flex size-10 items-center justify-center bg-gray-100 text-2xl font-light text-gray-300"
             >
                 +
             </span>
