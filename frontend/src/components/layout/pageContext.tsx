@@ -48,6 +48,10 @@ const table: Array<{ pattern: string; ctx: Ctx }> = [
     { pattern: paths.itemDetail, ctx: { title: '아이템 상세', icon: TbBox } },
     { pattern: paths.me, ctx: { title: '마이페이지', icon: TbUserCircle } },
     {
+        pattern: paths.marketDetail,
+        ctx: { title: '마켓 상세', icon: TbBuildingStore },
+    },
+    {
         pattern: paths.market,
         ctx: { title: '아이템 마켓', icon: TbBuildingStore },
     },

@@ -17,6 +17,7 @@ import TempStoragePage from '@/pages/TempStoragePage'
 import ItemDetailPage from '@/pages/ItemDetailPage'
 import WalletPage from '@/pages/WalletPage'
 import MarketPage from '@/pages/MarketPage'
+import MarketDetailPage from '@/pages/MarketDetailPage'
 import CommunityPage from '@/pages/CommunityPage'
 import WalletChargePage from '@/pages/WalletChargePage'
 import LoginPage from '@/pages/LoginPage'
@@ -54,8 +55,14 @@ function AppRoutes() {
                 />
                 <Route path={paths.compare} element={<ComparePage />} />
 
-                {/* 준비 중 자리(404 방지) */}
+                {/* 고정가 마켓 — 목록·상세(공개, FC-094) */}
                 <Route path={paths.market} element={<MarketPage />} />
+                <Route
+                    path={paths.marketDetail}
+                    element={<MarketDetailPage />}
+                />
+
+                {/* 준비 중 자리(404 방지) */}
                 <Route path={paths.community} element={<CommunityPage />} />
                 <Route
                     path={paths.walletCharge}

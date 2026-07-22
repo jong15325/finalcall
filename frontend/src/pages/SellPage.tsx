@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbAlertTriangle, TbArchiveOff, TbTag } from 'react-icons/tb'
-import { auctionDetailPath, paths } from '@/app/paths'
+import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
 import ItemFrame from '@/features/item/components/ItemFrame'
 import SellFeeEstimate from '@/features/auction/components/SellFeeEstimate'
 import SellConfirmDialog from '@/features/auction/components/SellConfirmDialog'
@@ -178,10 +178,10 @@ export default function SellPage() {
         createShopMutation.mutate(
             { itemInstancePublicId: selectedId, price: pendingShopPrice },
             {
-                onSuccess: () => {
+                onSuccess: (response) => {
                     setShopConfirmOpen(false)
-                    // 마켓엔 별도 상세 화면이 없다(목업 §9) — 목록으로 보낸다.
-                    navigate(paths.market)
+                    // 등록한 상품 상세로 이동(경매 등록 → 경매 상세와 대칭).
+                    navigate(marketDetailPath(response.shopPublicId))
                 },
             },
         )

@@ -13,6 +13,7 @@ export const paths = {
 
     /* 마켓 */
     market: '/market', // 고정가 마켓 (FC-094 — /shops 실기능)
+    marketDetail: '/market/:id', // 고정가 상세 (FC-094 게이트 — 카드→상세→구매)
     auctions: '/auctions',
     auctionDetail: '/auctions/:id',
     sell: '/sell',
@@ -41,6 +42,9 @@ export const paths = {
 
 /** 경매 상세 경로 조립 */
 export const auctionDetailPath = (id: string) => `/auctions/${id}`
+
+/** 고정가 마켓 상세 경로 조립 */
+export const marketDetailPath = (id: string) => `/market/${id}`
 
 /** 보유 아이템 인스턴스 상세 경로 조립 */
 export const itemDetailPath = (id: string) => `/items/${id}`

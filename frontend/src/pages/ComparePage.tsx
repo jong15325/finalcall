@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router'
 import { TbAlertTriangle, TbColumns3, TbX } from 'react-icons/tb'
-import { auctionDetailPath, paths } from '@/app/paths'
+import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
 import Countdown from '@/features/auction/components/Countdown'
 import {
@@ -20,10 +20,10 @@ import { itemTypeLabel } from '@/features/item/lib/itemCode'
 import { goldforceRemainingDays } from '@/features/item/components/frame'
 import { useCompareAuctions } from '@/lib/queries/auctions'
 import { useCompareShops } from '@/lib/queries/shop'
+import { shopStatusLabelOf } from '@/features/shop/lib/shopStatus'
 import { MAX_COMPARE_ITEMS } from '@/store/compareSession'
 import { useCompareStore } from '@/store/compareStore'
 import type { AuctionItemBlock } from '@/lib/api/auctions'
-import type { ShopStatus } from '@/lib/api/shop'
 import type { CompareReference } from '@/store/compareSession'
 
 /**
@@ -45,22 +45,6 @@ import type { CompareReference } from '@/store/compareSession'
 /** 라벨 열 폭·데이터 열 최소폭(px) — min-width 로 모바일 내부 가로 스크롤을 만든다. */
 const LABEL_COL_PX = 140
 const DATA_COL_PX = 200
-
-/** 고정가 상태 → 표시 라벨. 미등록 상태는 코드 노출(무음 실패 방지). */
-function shopStatusLabelOf(status: ShopStatus): string {
-    switch (status) {
-        case 'ACTIVE':
-            return '판매 중'
-        case 'SOLD':
-            return '판매 완료'
-        case 'EXPIRED':
-            return '기한 만료'
-        case 'CANCELLED':
-            return '판매 취소'
-        default:
-            return String(status)
-    }
-}
 
 /**
  * 정규화된 비교 컬럼 — 두 출처를 한 형태로 담는다. `state` 는 조회 진행/실패/완료.
@@ -181,9 +165,8 @@ export default function ComparePage() {
             price: { amount: shop.price, meaning: '고정가' },
             statusLabel: shopStatusLabelOf(shop.status),
             countdownEndAt: null,
-            // 마켓엔 별도 상세가 없다(목업 §9) — 목록으로 보낸다.
-            tradeHref: paths.market,
-            tradeLabel: '마켓에서 보기',
+            tradeHref: marketDetailPath(shop.shopPublicId),
+            tradeLabel: '상품 보기',
         }
     })
 

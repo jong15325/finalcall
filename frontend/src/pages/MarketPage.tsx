@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
     TbAlertTriangle,
@@ -10,7 +10,6 @@ import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
 import ShopCard from '@/features/shop/components/ShopCard'
 import ShopFilters from '@/features/shop/components/ShopFilters'
-import ShopPurchaseDialog from '@/features/shop/components/ShopPurchaseDialog'
 import {
     normalizeShopFilters,
     parseShopFilters,
@@ -19,12 +18,10 @@ import {
 } from '@/features/shop/lib/shopFilters'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useNow } from '@/features/auction/lib/useNow'
-import { useShopBrowse, usePurchaseShop } from '@/lib/queries/shop'
+import { useShopBrowse } from '@/lib/queries/shop'
 import { useItemTemplates } from '@/lib/queries/itemTemplates'
 import { useMyBalance } from '@/lib/queries/balance'
-import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
 import type { ShopFilterState } from '@/features/shop/lib/shopFilters'
-import type { ShopSummary } from '@/lib/api/shop'
 
 /**
  * 고정가 아이템 마켓 `/market` (FC-094 — 목업 `market()` · 계약 §3.2 `/shops`).
@@ -34,8 +31,8 @@ import type { ShopSummary } from '@/lib/api/shop'
  * ══════════════════════════════════════════════════════════════════════════════
  *  - **구조는 경매 목록(`AuctionListPage`)과 동형** — 필터는 URL search params 정본, 커서
  *    무한스크롤, 로딩/빈/에러 상태 블록. 데모 데이터를 렌더하지 않는다(정직성·FC-048).
- *  - **카드는 세로형 공통 카드(`ShopCard`)** — 목업 §9 2/3/6 그리드. 카드별 구매 버튼 + 비교 토글.
- *  - **구매는 다이얼로그**(목업 §9 카드→다이얼로그. 마켓엔 별도 상세 화면이 없다). §18 로딩 정책.
+ *  - **카드는 세로형 공통 카드(`ShopCard`)** — 목업 §9 2/3/6 그리드. 카드→상세 링크 + 비교 토글.
+ *  - **구매는 상세에서**(게이트 결정 2026-07-22 — 카드→상세→구매, 경매와 동일 UX).
  *  - **골드포스는 단일 타이머**(`useNow` 1회) 값을 전 카드에 내려보낸다.
  * ★ 색은 브랜드 토큰(navy/gold/gray) — 목업 Vuexy 팔레트는 재구축에서 폐기(경매 화면 대칭).
  */
@@ -73,12 +70,6 @@ export default function MarketPage() {
     const templates = templatesQuery.data?.content ?? []
 
     const balanceQuery = useMyBalance()
-    const isAuthed = useIsAuthenticated()
-    const myNickname = useAuthStore((state) => state.user?.nickname ?? null)
-
-    // 구매 다이얼로그 대상 — 선택된 리스팅 하나(마켓엔 상세 화면이 없어 카드에서 바로 연다).
-    const [selectedShop, setSelectedShop] = useState<ShopSummary | null>(null)
-    const purchaseMutation = usePurchaseShop(selectedShop?.shopPublicId ?? '')
 
     const shops = useMemo(
         () => data?.pages.flatMap((page) => page.content) ?? [],
@@ -98,17 +89,6 @@ export default function MarketPage() {
         isFetching,
         onLoadMore: () => void fetchNextPage(),
     })
-
-    const openPurchase = (shop: ShopSummary) => {
-        purchaseMutation.reset()
-        setSelectedShop(shop)
-    }
-
-    const handlePurchase = () => {
-        purchaseMutation.mutate(undefined, {
-            onSuccess: () => setSelectedShop(null),
-        })
-    }
 
     return (
         <div className="flex flex-col gap-5">
@@ -221,8 +201,6 @@ export default function MarketPage() {
                                 key={shop.shopPublicId}
                                 shop={shop}
                                 now={now}
-                                myNickname={myNickname}
-                                onBuy={openPurchase}
                             />
                         ))}
                     </section>
@@ -239,23 +217,6 @@ export default function MarketPage() {
                         </p>
                     )}
                 </>
-            )}
-
-            {selectedShop && (
-                <ShopPurchaseDialog
-                    open
-                    itemName={selectedShop.item.nameSnapshot}
-                    price={selectedShop.price}
-                    gameMoneyAvailable={
-                        isAuthed
-                            ? (balanceQuery.data?.gameMoneyAvailable ?? null)
-                            : null
-                    }
-                    isSubmitting={purchaseMutation.isPending}
-                    submitError={purchaseMutation.error}
-                    onClose={() => setSelectedShop(null)}
-                    onConfirm={handlePurchase}
-                />
             )}
         </div>
     )
