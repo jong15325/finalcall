@@ -2,11 +2,14 @@
 id: EPIC-SEARCH
 type: epic
 jira_key: KAN-119
-title: 마켓·경매 검색 — 전용 검색엔진(ES/OpenSearch) 도입 (②단계)
-state: doing
+title: 마켓·경매 검색 — 전용 검색엔진(Elasticsearch) 도입 (②단계)
+state: done
 children: [FC-106, FC-107, FC-108, FC-109]
 gate: null
 ---
+## 게이트3 — Done (2026-07-23, 사용자)
+- reviewer 2차 PASS + 보안 0건 + **총괄 라이브 실측**(ES 8.18.8+Debezium CDC 스택·/market?q=신발 24건 관련도순·nori) 후 마무리. FC-106~109 done. **push는 사용자**(미푸시 다수).
+- **정합성은 후속 분리(FC-110)**: 사용자 결정 — 검색 기능은 완성, CDC 라이브 동기·화해 histogram·운영 초기색인은 추후 과제.
 ## 목표
 자유문(`q`) 검색·한글 형태소·관련도 랭킹을 마켓(5천 고정가)·경매 목록에 제공한다. search-spec v0.1 **②단계(전용 검색엔진 도입)**를 구현. MySQL=SoT·검색엔진=파생 read-model, dual-write 금지·멱등 싱크·주기 화해.
 
@@ -43,5 +46,6 @@ FC-109 reviewer   검수(정합성·동기 불일치·화해·주입·성능·�
 - **라이브 검증**: ES 8.18.8+nori + Kafka(KRaft) + Connect(Debezium+Aiven sink) 스택 기동·부팅 재색인 5040건·`GET /shops·/auctions?q=신발`→실결과(nori 매칭·스킬명·코드축)·C2/C3 규약(400/200)·ES health UP. **총괄 브라우저**: /market?q=신발 → "신발" 24건 관련도순. **포트폴리오급 실동작 확인.**
 - **교훈(포트폴리오 가치)**: 폐쇄망 CDN 우회·라이브러리 버전 정합·인덱스 매핑 함정(동적매핑 vs 템플릿)·정렬 fielddata — 실무 검색 인프라 운영 트러블슈팅 사례. reviewer 코드리뷰(정적)가 못 잡은 매핑 버그를 라이브 실측이 잡음.
 
-## 범위 밖
+## 범위 밖 / 후속
+- **FC-110(KAN-124)**: 검색 정합성 하드닝(CDC 라이브 동기·화해 histogram·운영 초기색인). 사용자 후속 분리(2026-07-23).
 - 등급 부스트(EPIC-GRADE 선행) · 오타허용/동의어 고도화(엔진 도입 후 튜닝) · item-templates 검색 · 패싯 UI(엔진은 지원하나 UI는 후속) · 운영 클러스터(로컬 데모 우선).
