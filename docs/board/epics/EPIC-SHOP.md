@@ -3,10 +3,14 @@ id: EPIC-SHOP
 type: epic
 jira_key: KAN-102
 title: 고정가 마켓(shop) — 아이템 즉시 판매·구매
-state: doing
+state: done
 children: [FC-092, FC-093, FC-094, FC-095]
 gate: null
 ---
+## 게이트3 — Done 승인 (2026-07-22, 사용자)
+- reviewer PASS(critical/major 0) + 온디맨드 보안 0건 후 사용자 Done 승인. FC-092~095 전건 done. **push는 사용자 직접**(미푸시 커밋 7건).
+- 후속: FC-096(취소 UI)·EPIC-MARKET-DATA(스킬 마스터·마켓 대량 시드) 별도 진행.
+
 ## 목표
 경매(입찰·마감) 옆에 **고정가 마켓**을 연다. 판매자가 아이템을 정가로 즉시 판매 등록 → 구매자가 마켓에서 둘러보고 바로 구매. 프론트 `/market` "준비 중" 자리를 실기능으로 켠다.
 - **등록**: 판매자가 인벤토리 아이템을 고정가로 출품(에스크로 INVENTORY→LISTED CAS 재사용).
