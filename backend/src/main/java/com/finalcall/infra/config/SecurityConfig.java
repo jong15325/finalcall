@@ -57,7 +57,10 @@ public class SecurityConfig {
                 //   단일 세그먼트라 2세그먼트인 .../bids 에 걸리지 않아 별도 등재가 필요하다.
                 //   ★ GET 만 연다 — POST(입찰)는 아래 anyRequest().authenticated() 로 인증을 유지한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/auctions/*/bids").permitAll()
-                // 그 외(예: /api/v1/auth/logout, /api/v1/me/**, POST /api/v1/auctions)는 인증 필요.
+                // 고정가 목록·상세는 공개(계약 §3.2 인증 불요). 등록(POST)·구매(POST .../purchase)·취소(POST
+                //   .../cancel)는 아래 인증 강제. GET "/api/v1/shops/*" 는 단일 세그먼트라 2세그먼트 POST 경로와 겹치지 않는다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/shops", "/api/v1/shops/*").permitAll()
+                // 그 외(예: /api/v1/auth/logout, /api/v1/me/**, POST /api/v1/auctions, POST /api/v1/shops)는 인증 필요.
                 .anyRequest().authenticated())
             .exceptionHandling(eh -> eh
                 .authenticationEntryPoint(authenticationEntryPoint) // 401

@@ -154,6 +154,20 @@ closing:
     fixed-delay-ms: ${CLOSING_WORKER_FIXED_DELAY_MS:2000}
     batch-size: ${CLOSING_WORKER_BATCH_SIZE:200}
 
+# FC-093(EPIC-SHOP): 고정가 마켓 설정.
+#   listing.default-duration-days — 등록 시 서버가 end_at = now + 이 값(일)로 자동 계산(판매자 미선택, 게이트2 C5).
+#     하드코딩 금지·향후 DB 이관 여지. 기본 7일.
+#   expiry.worker — 기한 만료 자동 회수 워커(shop-spec §4.4). 만료는 경매 마감보다 시급성이 낮아 긴 주기(기본 60초).
+#     enabled=true 운영 상시. 통합 테스트는 false 로 배경 tick 을 끄고 워커를 직접 호출해 결정적으로 검증한다.
+shop:
+  listing:
+    default-duration-days: ${SHOP_LISTING_DEFAULT_DURATION_DAYS:7}
+  expiry:
+    worker:
+      enabled: ${SHOP_EXPIRY_WORKER_ENABLED:true}
+      fixed-delay-ms: ${SHOP_EXPIRY_WORKER_FIXED_DELAY_MS:60000}
+      batch-size: ${SHOP_EXPIRY_WORKER_BATCH_SIZE:200}
+
 # D-068: 직접접근 차단(엣지 게이트웨이 공유비밀 검증). enforced 는 실 프로파일에서 항상 켠다.
 #   secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
 #   ★ 통합테스트는 게이트웨이 미경유 MockMvc 직접 호출이라 enforced=false 로 내린다(테스트 base).

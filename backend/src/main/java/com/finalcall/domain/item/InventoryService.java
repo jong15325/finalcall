@@ -165,6 +165,27 @@ public class InventoryService {
         }
     }
 
+    /**
+     * 만료된 출품(LISTED) 아이템을 임시보관으로 <b>무조건</b> 회수한다(shop 만료 경로, shop-spec §4.4 — 소유자 불변).
+     * {@link #releaseFromListing}(인벤토리 복귀 우선, 만실 시 TEMP)의 만실 분기를 무조건화한 형태다: 워커 자동
+     * 처리라 판매자가 슬롯을 관리하지 않고, 한 tick 에 다수 리스팅이 만료될 때 슬롯 해석·{@code slot_key} UK flush
+     * 경합을 원천 없애기 위해 TEMP(슬롯 없음)로 직행한다. 판매자는 다음 방문 시 기존 {@code relocate}(TEMP→INVENTORY)로
+     * 되돌린다. 소유자는 바뀌지 않는다({@code moveToTemp} — LISTED→TEMP, owner 불변).
+     *
+     * <p>호출 측(만료 TX)에 참여한다(propagation REQUIRED — 별도 빈이라 프록시 경유, self-invocation 아님). 따라서
+     * 실패 시 만료 CAS 까지 함께 롤백된다. 만료 절차는 잔액 이동이 없어 PC clear 가 없으므로 dirty-checking
+     * ({@code moveToTemp})을 그대로 쓴다({@code settleUnsold} 의 {@code releaseFromListing} 선례와 동형).
+     *
+     * @param instance LISTED 상태의 managed 인스턴스(소유자=출품 판매자). 상태 선검사는 호출 측 책임이다.
+     */
+    @Transactional
+    public void recoverExpiredToTemp(ItemInstance instance) {
+        Long ownerId = instance.getOwner().getId();
+        instance.moveToTemp(); // LISTED→TEMP, slot_no 해제, 소유자 불변. temp_storage 는 상한 없음(spec §2.5)이라 슬롯 경합 없음.
+        tempStorageRepository.save(TempStorage.builder()
+            .instance(instance).ownerId(ownerId).storedAt(Instant.now()).build());
+    }
+
     /** 명시 슬롯이면 점유 선검사, 미지정이면 최소 빈 슬롯을 자동 배정한다. */
     private int resolveSlot(Long userId, Integer requestedSlotNo) {
         if (requestedSlotNo != null) {

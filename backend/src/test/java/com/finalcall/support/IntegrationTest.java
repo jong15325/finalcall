@@ -27,8 +27,11 @@ import org.springframework.test.web.servlet.MockMvc;
 //   비결정적으로 마감하지 못하게 하고, 마감 검증은 CloseWorker.sweepOnce()/CloseService.closeOne() 직접 호출로 한다.
 // FC-084: 로컬 데모 시드 러너(LocalDemoSeeder)는 default 프로파일(local) 통합 테스트에서도 뜨므로 끈다 —
 //   시드가 테스트 데이터에 개입하면 픽스처·불변식 단언이 비결정적으로 깨진다.
+// EPIC-SHOP: 고정가 만료 워커 배경 tick 도 끈다(shop.expiry.worker.enabled=false) — 배경 tick 이 테스트 데이터를
+//   비결정적으로 만료하지 못하게 하고, 만료 검증은 ShopExpiryWorker.sweepOnce()/ShopExpiryService.expireOne() 직접 호출로 한다.
 @TestPropertySource(properties = {
-    "gateway.internal.enforced=false", "closing.worker.enabled=false", "demo.seed.enabled=false"})
+    "gateway.internal.enforced=false", "closing.worker.enabled=false", "shop.expiry.worker.enabled=false",
+    "demo.seed.enabled=false"})
 public abstract class IntegrationTest {
 
     @Autowired
