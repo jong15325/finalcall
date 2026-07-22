@@ -31,8 +31,11 @@ FC-099 frontend   카드/목록/상세 스킬명 표시(skillLabelOf 배선, 스
 FC-100 reviewer   검수(스킬명 정합·시드 정합·대량 성능·계약 이탈)
 ```
 
-## 게이트2 — 예정 (architect가 FC-097에서 상신)
-- 스킬명 노출 방식(item 뷰에 skill1Name/skill2Name+skillPercent 필드 추가 vs GET /skills 딕셔너리)·skill_definition 435 시드 데이터 규칙(name=효과 서술·미사용 코드 처리)·5천 시드 프로파일 격리(로컬 데모 vs 마이그레이션, 운영 오염 회피).
+## 게이트2 — 승인됨 (2026-07-22, 사용자) — FC-097
+- **제품 결정**: 스킬명=§5 효과 서술 그대로 · 5천 매물 **다양한 가격 분포**(정렬·필터·무한스크롤 체감).
+- **기술 결정(architect 추천 채택)**: G1 노출=뷰에 skill1Name/skill2Name 필드 추가(쿼리 이미 fetch join·N+1 없음) · G2 미사용 코드 시드 제외 · G3 5천=LocalDemoSeeder 확장(로컬 전용, 운영 오염 없음) · G4 마스터=Flyway V16(UPDATE 5+INSERT 239, DELETE 금지).
+- **정정**: 실제 스킬 244개(435는 코드 상한). 스키마 무변경(name 필드 2개 additive·nullable). skillPercent 기존 존재.
+- **파급**: skill1Name/skill2Name는 공통 블록이라 경매 카드에도 대칭 추가(additive) — EPIC-AUCTION 무접촉·되돌림 없음.
 
 ## 범위 밖
 - 스킬 등급(S/A/B, §7 미확인)·스킬 필터 부활(검색 에픽)·마법 속성 분기 검증 UI · 관리자 콘솔.

@@ -270,6 +270,13 @@ item: { typeCode, mainCategory, subGroup, element, kind, level,
 - **4개 코드 축의 값 정본은 §3.3.1(아이템 코드 사전)이다.** v1.9까지 전 축이 "미확정"이었으나 v1.10에서 원게임 실데이터 전수 조회로 확정됐다.
 - **폴백 의무는 유지된다.** 현재 미확정 코드는 없지만, 클라이언트는 여전히 **사전에 없는 코드를 중립 표기(예: "속성 N")로 폴백**해야 하며 코드 집합 크기를 가정한 하드코딩(배열 인덱싱·exhaustive switch)을 두지 않는다. 축이 장차 확장될 수 있고(§3.3.1 스코프 주), 서버·클라이언트 배포 시차 동안 신규 코드가 먼저 내려올 수 있다.
 
+> **⚠ PROPOSAL — EPIC-MARKET-DATA(FC-097), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `skill-exposure-spec.md` v1.0. 아래는 공통 item 블록에 스킬명 2개를 **추가**하는 델타다(스키마·엔드포인트·에러코드 무변경, 기존 필드 무변경).
+> - **item 블록(공통) 추가 필드**: `skill1Name?`(string, nullable) · `skill2Name?`(string, nullable). 출처 `skill_definition.name`(§5 효과 서술 그대로). `skill1`/`skill2`(코드)가 null이면 각각 null이다(마법 카드는 skill1 부재라 skill1Name=null — game-item-skill-format §6).
+> - **목적**: 카드/목록/상세의 스킬 중립표기("스킬 #{code}")를 실제 스킬명으로 대체한다. 이름은 코드에 **부가**되지 코드를 대체하지 않는다 — 필터·아트 매핑은 `skill1`/`skill2` 코드를 그대로 쓴다. `skillPercent`는 이미 노출돼 있어 무변경(표시 형식의 `%`는 클라 조립).
+> - **성능**: 경매·고정가 목록/상세 쿼리가 `skill_definition`(skill1·skill2)을 **이미 fetch join**하므로 이름 추가에 N+1·추가 조인이 없다(순비용 = 응답 문자열 2개).
+> - **적용 범위**: 공통 item 블록이라 `AuctionSummary/Detail`·`ShopSummary/Detail` 양쪽에 대칭 적용된다. EPIC-AUCTION(done)에는 **비파괴 additive**(nullable 필드 추가, 상태머신·쿼리 무변경)라 티켓을 되돌리지 않는다. 거래내역(§4.3) item 블록 확장은 FC-097 범위 밖(선택·후속).
+> - 승인 시 반영: 버전 로그 `v1.14 — 게이트2(EPIC-MARKET-DATA) 승인: §3.3 공통 item 블록에 skill1Name·skill2Name(string, nullable, 출처 skill_definition.name) 추가. 스킬 코드·skillPercent 무변경. 정본 skill-exposure-spec v1.0. 구현 FC-098.`
+
 #### 3.3.1 아이템 코드 사전 (v1.10 신설 — 게이트2 FC-044 승인)
 
 `typeCode`는 4자리 자리값 합성이며 **원게임 `gameshop.itm_type`과 1:1로 동일**하다(코드 변환 계층 없음).
