@@ -29,6 +29,11 @@ export interface ItemCardData {
     level: number
     skill1: number | null
     skill2: number | null
+    /** 스킬명(계약 §3.3 델타). 없으면 중립 표기 폴백 — `AuctionItemBlock` 이 그대로 만족한다 */
+    skill1Name?: string | null
+    skill2Name?: string | null
+    /** 스킬2 줄 발동확률(%). 0·부재면 요약에서 생략 */
+    skillPercent?: number | null
     goldforceExpireAt?: string | null
     /** 등록 시점 스냅샷(D-045) — 표시 정본 */
     nameSnapshot: string
@@ -110,6 +115,9 @@ function ItemCard({
                 <ItemSkillSummary
                     skill1={item.skill1}
                     skill2={item.skill2}
+                    skill1Name={item.skill1Name}
+                    skill2Name={item.skill2Name}
+                    skillPercent={item.skillPercent}
                     className="pt-0.5"
                 />
             </div>

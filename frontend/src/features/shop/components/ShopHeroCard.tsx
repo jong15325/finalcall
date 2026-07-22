@@ -19,8 +19,9 @@ import type { ShopDetail } from '@/lib/api/shop'
  * 경매와 다른 점은 **상단 배지가 phase 가 아니라 고정가 상태**(판매 중/완료/만료/취소)라는 것뿐.
  * 입찰·카운트다운·최고가 요소는 이 카드에 없다(우측 `ShopBuyPanel` 도 마찬가지).
  *
- * ★ **스킬은 코드만**(item 블록엔 이름 없음, §2.5) → `스킬 #{code}` 중립 표기. 슬롯은
- *   `resolveSkillSlots` 가 매겨 마법(subGroup 3, skill1 부재) 오표기를 막는다.
+ * ★ **스킬명은 item 블록의 skill1Name/skill2Name 으로 표시**(계약 §3.3 델타 — EPIC-MARKET-DATA).
+ *   이름이 없으면 `스킬 #{code}` 중립 표기로 폴백. 슬롯은 `resolveSkillSlots` 가 매겨 마법(subGroup 3,
+ *   skill1 부재) 오표기를 막는다. 발동확률은 전용 "발동 확률" 행으로 낸다(승인 목업 레이아웃 유지).
  * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만). 색은 브랜드 팔레트(navy/gold).
  */
 
@@ -49,7 +50,10 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
         'l',
         3,
     )
-    const skills = resolveSkillSlots(item.skill1, item.skill2)
+    const skills = resolveSkillSlots(item.skill1, item.skill2, {
+        skill1Name: item.skill1Name,
+        skill2Name: item.skill2Name,
+    })
     const hasSkill = skills.length > 0
     const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
     const badgeClass =

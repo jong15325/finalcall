@@ -3,9 +3,9 @@
  *
  * ★ **비교표의 미묘한 두 곳만** 순수 함수로 가둔다 — 가격 "의미" 라벨과 스킬 중립 표기.
  *   나머지(속성·종류·상태)는 기존 lib(`element`·`itemCode`·`auctionPhase`)를 그대로 쓴다.
- * ★ **스킬 = 코드만이다.** 경매·고정가 item 블록엔 스킬 이름이 없다(§2.5, 링크 끊김). 비교표에서도
- *   `스킬 #{code}` **중립 표기**가 계약 준수다 — 이름을 지어내면 거짓이 된다. 두 출처가 같은 공통
- *   item 블록을 쓰므로 `compareSkillLabel` 은 고정가 비교에도 그대로 쓰인다(FC-094).
+ * ★ **스킬명은 item 블록의 skill1Name/skill2Name 으로 표시**(계약 §3.3 델타 — EPIC-MARKET-DATA).
+ *   이름이 없으면(미등록·배포 시차) `스킬 #{code}` 중립 표기로 폴백한다 — 없는 이름을 지어내지
+ *   않는다. 두 출처가 같은 공통 item 블록을 쓰므로 `compareSkillLabel` 은 고정가 비교에도 쓰인다.
  * ★ `comparePriceOf` 는 **경매 전용**이다(입찰 유무로 의미가 갈린다). 고정가는 "고정가" 의미로
  *   `ComparePage` 가 직접 파생한다 — 여기 두면 `AuctionSummary` 를 요구해 결합이 늘어난다.
  */
@@ -39,12 +39,16 @@ export function comparePriceOf(auction: AuctionSummary): ComparePriceView {
 }
 
 /**
- * 비교표 스킬 셀 라벨. **슬롯 고정**(skill1→슬롯1, skill2→슬롯2) 후 코드 중립 표기.
- * 빈 슬롯은 "없음"(마법은 구조적으로 skill1 부재 — 슬롯을 재번호하지 않는다, §2.5).
+ * 비교표 스킬 셀 라벨. **슬롯 고정**(skill1→슬롯1, skill2→슬롯2) 후 스킬명 표기.
+ * 빈 슬롯은 "없음"(마법은 구조적으로 skill1 부재 — 슬롯을 재번호하지 않는다).
+ * 이름(계약 §3.3 skill1Name/skill2Name)이 있으면 이름, 없으면 `스킬 #{code}` 중립 폴백.
  */
-export function compareSkillLabel(code: number | null | undefined): string {
+export function compareSkillLabel(
+    code: number | null | undefined,
+    name?: string | null,
+): string {
     if (code === null || code === undefined || !Number.isFinite(code)) {
         return '없음'
     }
-    return `스킬 #${code}`
+    return name ?? `스킬 #${code}`
 }

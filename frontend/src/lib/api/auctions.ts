@@ -38,6 +38,13 @@ export interface AuctionItemBlock {
     /** 슬롯이 비면 null. 마법(subGroup 3)은 **구조적으로** skill1 이 없다 */
     skill1: number | null
     skill2: number | null
+    /**
+     * ★ 슬롯 스킬명(계약 §3.3 델타·skill-exposure-spec — EPIC-MARKET-DATA). 출처
+     *   `skill_definition.name`(§5 효과 서술 그대로). skill1/skill2(코드)가 null 이면 각각 null
+     *   (마법 카드는 skill1 부재 → skill1Name=null). 이름은 코드에 **부가**될 뿐 코드를 대체하지
+     *   않는다(필터·아트 매핑은 코드 유지). 서버·클라 배포 시차로 부재할 수 있어 optional 이다. */
+    skill1Name?: string | null
+    skill2Name?: string | null
     skillPercent: number
     /** 골드포스 만료 시각(ISO-8601 UTC). 미적용이면 null. 활성 여부는 클라 파생 */
     goldforceExpireAt: string | null

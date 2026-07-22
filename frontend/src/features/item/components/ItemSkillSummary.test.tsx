@@ -69,4 +69,77 @@ describe('<ItemSkillSummary>', () => {
         render(<ItemSkillSummary skill1={null} skill2={null} />)
         expect(screen.getByText('스킬 없음')).toBeInTheDocument()
     })
+
+    it('스킬명을 두 줄로 낸다(스킬1 줄 / 스킬2 줄)', () => {
+        render(
+            <ItemSkillSummary
+                skill1={131}
+                skill2={202}
+                skill1Name="공격시간 3 감소"
+                skill2Name="트리플샷"
+            />,
+        )
+        expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
+        expect(screen.getByText('트리플샷')).toBeInTheDocument()
+        expect(screen.getAllByRole('listitem')).toHaveLength(2)
+    })
+
+    it('발동확률(%)은 스킬2 줄에만 붙는다', () => {
+        render(
+            <ItemSkillSummary
+                skill1={131}
+                skill2={202}
+                skill1Name="공격시간 3 감소"
+                skill2Name="트리플샷"
+                skillPercent={33}
+            />,
+        )
+        // 스킬2 줄(트리플샷)이 %를 포함, 스킬1 줄은 아님
+        const items = screen.getAllByRole('listitem')
+        expect(items[0]).toHaveTextContent('공격시간 3 감소')
+        expect(items[0]).not.toHaveTextContent('%')
+        expect(items[1]).toHaveTextContent('트리플샷')
+        expect(items[1]).toHaveTextContent('33%')
+    })
+
+    it('마법(스킬2만·스킬1 부재)은 스킬2 줄에 % — 슬롯2 유지', () => {
+        render(
+            <ItemSkillSummary
+                skill1={null}
+                skill2={202}
+                skill2Name="트리플샷"
+                skillPercent={33}
+            />,
+        )
+        const items = screen.getAllByRole('listitem')
+        expect(items).toHaveLength(1)
+        expect(items[0]).toHaveTextContent('트리플샷')
+        expect(items[0]).toHaveTextContent('33%')
+    })
+
+    it('발동확률 0·부재면 요약에 %를 싣지 않는다', () => {
+        render(
+            <ItemSkillSummary
+                skill1={131}
+                skill2={202}
+                skill1Name="공격시간 3 감소"
+                skill2Name="트리플샷"
+                skillPercent={0}
+            />,
+        )
+        expect(screen.queryByText('0%')).not.toBeInTheDocument()
+    })
+
+    it('이름이 null 이면 중립 코드로 폴백(미등록·마법 스킬1 부재)', () => {
+        render(
+            <ItemSkillSummary
+                skill1={950}
+                skill2={202}
+                skill1Name={null}
+                skill2Name="트리플샷"
+            />,
+        )
+        expect(screen.getByText('스킬 #950')).toBeInTheDocument()
+        expect(screen.getByText('트리플샷')).toBeInTheDocument()
+    })
 })

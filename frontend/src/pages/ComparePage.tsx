@@ -250,7 +250,7 @@ export default function ComparePage() {
                             }
                         />
 
-                        {/* ② 스킬 1 — 코드 중립 표기 */}
+                        {/* ② 스킬 1 — 스킬명(없으면 코드 폴백) */}
                         <CompareRow
                             priority
                             label="스킬 1"
@@ -258,12 +258,15 @@ export default function ComparePage() {
                             columns={columns}
                             render={(column) =>
                                 column.item ? (
-                                    <SkillCell code={column.item.skill1} />
+                                    <SkillCell
+                                        code={column.item.skill1}
+                                        name={column.item.skill1Name}
+                                    />
                                 ) : null
                             }
                         />
 
-                        {/* ③ 스킬 2 — 코드 중립 표기 */}
+                        {/* ③ 스킬 2 — 스킬명(없으면 코드 폴백) */}
                         <CompareRow
                             priority
                             label="스킬 2"
@@ -271,7 +274,10 @@ export default function ComparePage() {
                             columns={columns}
                             render={(column) =>
                                 column.item ? (
-                                    <SkillCell code={column.item.skill2} />
+                                    <SkillCell
+                                        code={column.item.skill2}
+                                        name={column.item.skill2Name}
+                                    />
                                 ) : null
                             }
                         />
@@ -337,7 +343,9 @@ export default function ComparePage() {
                                 column.item ? (
                                     <>
                                         <strong className="text-[13px] text-gray-900">
-                                            {elementLabelOf(column.item.element)}
+                                            {elementLabelOf(
+                                                column.item.element,
+                                            )}
                                         </strong>
                                         <small className="text-[10px] text-gray-500">
                                             {itemTypeLabel(
@@ -507,9 +515,15 @@ function CompareRow({
     )
 }
 
-/** 스킬 셀 — 코드 중립 표기(`스킬 #{code}`) 또는 "없음"(§2.5). */
-function SkillCell({ code }: { code: number | null }) {
-    const label = compareSkillLabel(code)
+/** 스킬 셀 — 스킬명(없으면 `스킬 #{code}` 폴백) 또는 "없음"(빈 슬롯). */
+function SkillCell({
+    code,
+    name,
+}: {
+    code: number | null
+    name?: string | null
+}) {
+    const label = compareSkillLabel(code, name)
     const empty = label === '없음'
     return (
         <strong

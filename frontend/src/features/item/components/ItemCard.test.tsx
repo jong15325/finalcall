@@ -48,9 +48,28 @@ describe('<ItemCard>', () => {
         expect(screen.getByText('공격력이 높은 한손 도끼')).toBeInTheDocument()
     })
 
-    it('스킬요약을 합성한다(경매 맥락 중립 표기)', () => {
+    it('스킬명 미제공 시 코드 중립 표기로 폴백', () => {
         render(<ItemCard item={baseItem} price={1000} />)
         expect(screen.getByText('스킬 #11')).toBeInTheDocument()
+    })
+
+    it('스킬명·발동확률을 두 줄로 표시(퍼센트는 스킬2 줄)', () => {
+        render(
+            <ItemCard
+                item={{
+                    ...baseItem,
+                    skill1: 131,
+                    skill2: 202,
+                    skill1Name: '공격시간 3 감소',
+                    skill2Name: '트리플샷',
+                    skillPercent: 33,
+                }}
+                price={1000}
+            />,
+        )
+        expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
+        const skill2Line = screen.getByText('트리플샷').closest('li')
+        expect(skill2Line).toHaveTextContent('33%')
     })
 
     it('priceLabel·footer·overlay 슬롯을 렌더한다', () => {

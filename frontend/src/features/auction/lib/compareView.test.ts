@@ -35,14 +35,20 @@ const baseAuction: AuctionSummary = {
 }
 
 describe('compareSkillLabel', () => {
-    it('코드는 이름 없이 `스킬 #{code}` 중립 표기', () => {
-        expect(compareSkillLabel(104)).toBe('스킬 #104')
+    it('이름이 있으면 스킬명을 낸다(계약 §3.3 델타)', () => {
+        expect(compareSkillLabel(202, '트리플샷')).toBe('트리플샷')
     })
 
-    it('빈 슬롯(null/undefined/비유한)은 "없음"', () => {
+    it('이름이 없으면 `스킬 #{code}` 중립 폴백', () => {
+        expect(compareSkillLabel(104)).toBe('스킬 #104')
+        expect(compareSkillLabel(104, null)).toBe('스킬 #104')
+    })
+
+    it('빈 슬롯(null/undefined/비유한)은 이름 유무와 무관하게 "없음"', () => {
         expect(compareSkillLabel(null)).toBe('없음')
         expect(compareSkillLabel(undefined)).toBe('없음')
         expect(compareSkillLabel(Number.NaN)).toBe('없음')
+        expect(compareSkillLabel(null, '트리플샷')).toBe('없음')
     })
 })
 

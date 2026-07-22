@@ -1,7 +1,5 @@
 import ItemFrame from '@/features/item/components/ItemFrame'
-import {
-    goldforceRemainingDays,
-} from '@/features/item/components/frame'
+import { goldforceRemainingDays } from '@/features/item/components/frame'
 import {
     resolveSkillSlots,
     skillLabelOf,
@@ -21,9 +19,10 @@ import type { AuctionDetail } from '@/lib/api/auctions'
  * 목업 구조: `245px 아트 | 1fr copy` 그리드(모바일 118px). 좌측 어두운 스테이지 + 공용 `ItemFrame`,
  * 우측 copy(상태배지·골드포스배지·이름·타입줄·`.spec-box`·`.skill-list`).
  *
- * ★ **스킬은 코드만**(경매 item 블록엔 이름 없음, §2.5) → `스킬 #{code}` 중립 표기. 슬롯 번호는
- *   `resolveSkillSlots` 가 먼저 매기고 걸러 마법(subGroup 3, skill1 부재)이 "스킬 1" 로 오표기되지
- *   않는다(FC-064 함정 4).
+ * ★ **스킬명은 item 블록의 skill1Name/skill2Name 으로 표시**(계약 §3.3 델타 — EPIC-MARKET-DATA).
+ *   이름이 없으면 `스킬 #{code}` 중립 표기로 폴백한다. 슬롯 번호는 `resolveSkillSlots` 가 먼저
+ *   매기고 걸러 마법(subGroup 3, skill1 부재)이 "스킬 1" 로 오표기되지 않는다(FC-064 함정 4).
+ *   발동확률은 상세 dl 의 **전용 "발동 확률" 행**으로 낸다(승인된 목업 1:1 레이아웃 유지).
  * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만) — 활성일 때만 배지. 색은 브랜드 골드 토큰.
  * ★ 색은 브랜드 팔레트(navy/gold) — 목업 Vuexy 잔재색은 쓰지 않는다(§2.9).
  */
@@ -53,7 +52,10 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
         'l',
         3,
     )
-    const skills = resolveSkillSlots(item.skill1, item.skill2)
+    const skills = resolveSkillSlots(item.skill1, item.skill2, {
+        skill1Name: item.skill1Name,
+        skill2Name: item.skill2Name,
+    })
     const hasSkill = skills.length > 0
     const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
 
