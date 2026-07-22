@@ -1,10 +1,12 @@
 {
   "name": "finalcall-elasticsearch-sink",
   "config": {
-    "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+    "//connector": "Aiven elasticsearch-connector-for-apache-kafka(Apache 2.0). Confluent Hub CDN DNS 차단으로 Confluent 커넥터에서 재지정. 클래스·키가 Confluent 와 다르다.",
+    "connector.class": "io.aiven.connect.elasticsearch.ElasticsearchSinkConnector",
     "tasks.max": "1",
 
     "connection.url": "http://elasticsearch:9200",
+    "type.name": "_doc",
 
     "//routing": "다중 소스 토픽(auction·shop)을 단일 인덱스 listings 로 라우팅한다(search-spec §12.4 통합 인덱스).",
     "topics.regex": "finalcall\\.finalcall\\.(auction|shop)",
@@ -31,12 +33,10 @@
     "transforms.route.regex": "finalcall\\.finalcall\\.(auction|shop)",
     "transforms.route.replacement": "listings",
 
-    "//idempotency": "at-least-once 전달 → 멱등 upsert 필수(§12.3). _id = 메시지 key = public_id(source SMT 승격). write.method=upsert 는 부분 갱신이라 CDC 는 스냅샷 필드만 갱신하고 앱 enrichment 가 채운 코드축을 덮어쓰지 않는다.",
+    "//idempotency": "at-least-once 전달 → 멱등 upsert 필수(§12.3). _id = 메시지 key = public_id(source SMT 승격). Aiven 커넥터는 _id 기준 index(create-or-replace)라 중복 이벤트가 무해하게 수렴한다(멱등). ★ Confluent 의 write.method=upsert(부분 병합)는 미지원이라 CDC 이벤트는 문서를 전체 교체한다 — 불변 코드축은 주기 화해/부팅 재색인(ListingIndexer)이 재적용한다(README 트레이드오프 참조).",
     "key.ignore": "false",
     "schema.ignore": "true",
-    "write.method": "upsert",
     "behavior.on.null.values": "delete",
-    "behavior.on.malformed.documents": "warn",
 
     "batch.size": "200",
     "read.timeout.ms": "10000",

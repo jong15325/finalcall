@@ -14,7 +14,7 @@ Elasticsearch(nori) + Kafka(KRaft) + Kafka Connect(Debezium MySQL source → ES 
 | finalcall-mysql | mysql:8.0 (+binlog) | SoT + binlog 소스 | 3306 |
 | finalcall-elasticsearch | 커스텀(elasticsearch:8.15.3 + analysis-nori) | 검색 read-model | 9200 |
 | finalcall-kafka | apache/kafka:3.8.0 (KRaft) | CDC 이벤트 버스 | 9092(내부)/29092(호스트) |
-| finalcall-kafka-connect | 커스텀(debezium/connect:2.7 + ES sink) | 커넥터 런타임 | 8083 |
+| finalcall-kafka-connect | 커스텀(debezium/connect:2.7 + Aiven ES sink) | 커넥터 런타임 | 8083 |
 
 - 앱 도메인 쓰기(등록·입찰·구매)는 MySQL 만 write 한다(dual-write 금지, §12.3). ES 에는 두 writer 가 있다:
   1. **CDC sink 커넥터** — auction/shop 행의 **스냅샷 필드**(nameSnapshot·price·status·listingType)를 근실시간 반영.
@@ -102,8 +102,18 @@ curl -s localhost:9200/listings_search/_doc/<public_id> | jq ._source
 - **앱 enrichment 가 채우는 것(join 필드)**: 코드축(`mainCategory`/`subGroup`/`element`/`kind`)·`level`·`skill1/2`·
   `gfExpireAt`·`endsAt` 은 `item_instance`/`item_template` 소재라 **단일 테이블 CDC 로는 못 채운다**. `ListingIndexer`
   가 MySQL 조인을 읽어 코드축 포함 전체 문서를 bulk upsert 한다. **부팅 재색인(local 기본 on)** + 주기 화해
-  (`SearchReconciliationWorker`, 드리프트 시 재색인)로 실행된다. `write.method=upsert` 라 CDC 부분 갱신이
-  enrichment 코드축을 덮어쓰지 않는다.
+  (`SearchReconciliationWorker`, 드리프트 시 재색인)로 실행된다.
+- **★ 커넥터 트레이드오프(Aiven ES sink)**: Confluent Hub CDN DNS 차단으로 ES sink 를 Aiven
+  `elasticsearch-connector-for-apache-kafka`(GitHub releases · Apache 2.0)로 재지정했다. Aiven 커넥터는
+  `_id`(=public_id) 기준 문서를 **전체 교체**한다(멱등 upsert-by-id — §12.3 충족). Confluent 의 `write.method=upsert`
+  (부분 병합)는 미지원이라 **CDC 이벤트는 문서를 통째로 교체**해 그 순간 코드축(불변 join 필드)이 사라진다 →
+  **주기 화해/부팅 재색인이 코드축을 재적용**한다(코드축은 리스팅 동안 불변이라 재적용으로 수렴). 텍스트/상태/가격
+  검색은 CDC 문서만으로 항상 동작한다. 부분 병합이 필요하면 Confluent 커넥터(현 네트워크 미도달) 또는 ES 8 지원
+  Aiven 릴리스가 필요하다 — **환경 제약이지 설계 결함 아님**.
+  - 버전 정합 주의: Aiven v7.0.0 은 ES 7.17 클라이언트를 동봉한다. 본 스택 ES 서버는 8.15 라 sink 는 typeless
+    bulk(`_id` index/delete)로 동작한다(우리 사용 범위에서 호환). 런타임에 8.x 가 요청을 거부하면 (a) ES 를 7.17 로
+    맞추거나 (b) ES 호환 모드를 쓴다. **커넥터 플러그인 로드·빌드는 검증됨**(`GET /connector-plugins` 에
+    `io.aiven.connect.elasticsearch.ElasticsearchSinkConnector` 노출), 엔드투엔드 CDC 반영은 런북 스모크로 확인한다.
 - **후속 티켓 후보**: 코드축까지 CDC 만으로 채우려면 리스팅 행에 코드축을 비정규화(스키마 변경=게이트2)하거나
   Kafka Streams/ksqlDB join enrichment 를 도입한다. 현재는 앱 enrichment 로 정합(계약 이탈 아님 — 매핑·검색 API 는
   전체 필드 지원). 화해는 현재 count 대조까지이며 price histogram 은 후속.
