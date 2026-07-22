@@ -18,13 +18,12 @@ import './InventorySlotGrid.css'
  * ★ 목업 카테고리 탭(정령카드/아바타)은 계약 데이터가 없어 **드롭** — 중립 "전체 아이템" 자리만 남긴다.
  * ★ 슬롯 번호는 **1-based** 로 배치한다(목업 표시 규약과 일치). 채운 슬롯은 `slotNo` 로 자리를 잡고,
  *   빈 슬롯은 번호만 표시한다. used===0 이면 빈 상태 안내 + 임시보관 링크를 함께 보인다.
- * ★ 그리드는 **반응형 리플로우**(모바일 2 `<sm` · 태블릿 3 `sm`~`<lg` · PC 6열 `≥lg`, FC-086 #1·FC-102).
- *   6열 임계를 `xl`(1280)→`lg`(1024)로 낮춰 넓은 화면이 3열로 낭비되지 않게 한다. 셀 폭은
- *   `minmax(0,1fr)`(grid-cols-N) × **`w-full` 로 부모 폭을 채운** 컨테이너(`max-w-[820px]` +
- *   html `scrollbar-gutter:stable`)라 **뷰포트만의 함수** — 페이지/탭·채운·빈 슬롯 구성과 무관하게
- *   같은 뷰포트에서 셀 크기 동일. `w-full` 이 없으면 `flex flex-col` 부모(InventoryPage) 안에서
- *   `mx-auto` 섹션이 내용 폭으로 수축해(빈 슬롯 페이지 336px 붕괴) 슬롯이 작아진다 — `w-full`
- *   이 이를 막는다(근본 픽스). 행 높이도 그리드 `auto-rows-[134px]` 로 고정(페이지 불변, FC-102).
+ * ★ 그리드는 **반응형 열 수**(모바일 2 `<sm` · 태블릿 3 `sm`~`<lg` · PC 6 `≥lg`, FC-086 #1·FC-102).
+ *   셀 폭은 **카드 프레임 실폭 72px 로 고정**(`grid-template-columns: repeat(N,72px)`)하고
+ *   `justify-center` 로 섹션(≤820px) 중앙 정렬한다 — 늘어나는 `1fr` 을 쓰면 셀이 ~122px 로 벌어져
+ *   72px 프레임 주위에 다크 여백이 생기므로, 셀을 프레임에 맞춰(반대 방향) 카드가 셀을 꽉 채우게 한다.
+ *   고정폭이라 셀 크기가 **뷰포트/페이지·채운·빈 슬롯 구성과 무관하게 결정적**(빈 슬롯 페이지 섹션
+ *   수축 붕괴도 원천 차단). 행 높이는 `auto-rows-[134px]` 고정. 섹션 `w-full` 은 유지(무해).
  */
 
 const PAGE_SIZE = 24
@@ -102,11 +101,11 @@ function InventorySlotGrid({
                 )}
             </div>
 
-            {/* 슬롯 그리드 — 반응형 2/3/6열(모바일<sm·태블릿 sm~<lg·PC≥lg). 셀 폭·행 높이 모두
-                뷰포트 함수(minmax(0,1fr)×고정 컨테이너 + auto-rows) → 페이지 불변, FC-086 #1·FC-102 */}
+            {/* 슬롯 그리드 — 반응형 2/3/6열(모바일<sm·태블릿 sm~<lg·PC≥lg). 셀 폭=프레임 실폭 72px
+                고정 + justify-center 중앙 정렬 → 카드 꽉참(다크 여백 제거)·페이지 불변, FC-086 #1·FC-102 */}
             <div className="p-4">
                 <ul
-                    className="grid auto-rows-[134px] grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6"
+                    className="grid auto-rows-[134px] justify-center gap-2.5 [grid-template-columns:repeat(2,72px)] sm:[grid-template-columns:repeat(3,72px)] lg:[grid-template-columns:repeat(6,72px)]"
                     aria-label={`인벤토리 슬롯 ${firstSlot}–${lastSlot}`}
                 >
                     {slotNumbers.map((slotNo) => {
