@@ -1,0 +1,36 @@
+---
+id: EPIC-SEARCH
+type: epic
+jira_key: KAN-119
+title: 마켓·경매 검색 — 전용 검색엔진(ES/OpenSearch) 도입 (②단계)
+state: doing
+children: [FC-106, FC-107, FC-108, FC-109]
+gate: null
+---
+## 목표
+자유문(`q`) 검색·한글 형태소·관련도 랭킹을 마켓(5천 고정가)·경매 목록에 제공한다. search-spec v0.1 **②단계(전용 검색엔진 도입)**를 구현. MySQL=SoT·검색엔진=파생 read-model, dual-write 금지·멱등 싱크·주기 화해.
+
+## 게이트1 승인 (2026-07-22, 사용자)
+- 다음 작업으로 마켓 검색 선택. 방식 = **B(전용 검색엔진 ES/OpenSearch)** — 포트폴리오 임팩트 우선(검색 인프라·동기·재색인 역량 시연). MySQL FULLTEXT(①단계)는 배제.
+- **범위 = 마켓 + 경매**(item-templates 제외). q 자유문 필터는 공유 구조(C1).
+- **등급 부스트(sellerGrade) 범위 밖** — EPIC-GRADE 의존(§6.1·A4). 관련도(BM25) + 한글까지.
+- **★ 로컬 실행성 우선**: 포트폴리오 데모가 로컬(Windows/docker)에서 기동돼야 함. architect가 로컬 기동 가능 구성 우선 설계.
+
+## 정본 (설계 근거)
+- **`docs/spec/search-spec.md` v0.1** — §4 목표 아키텍처(CDC/Outbox·alias 재색인)·§5 인덱스 골격·§6 랭킹(function_score, 등급은 GRADE 의존)·§7 한글(nori+ngram)·§8 엔진 선택·§9 게이트2(A1~A5·C1~C3)·§10 도메인 정합(ES 정본 아님·정확성은 DB).
+- api-contract §3(공통 목록 필터)·§4.1 · 기존 `ShopRepository`/`AuctionRepository` 목록·`nameSnapshot`.
+
+## 분해안 (게이트1 승인, architect 델타로 조정 가능)
+```
+FC-106 architect  ②단계 구현 spec 확정(엔진·동기·인덱스 매핑·재색인·한글·로컬 기동성) + q/relevance 계약(C1~C3) → 게이트2(A1~A3 아키텍처·C1~C3 계약)
+FC-107 backend    검색엔진 인프라(docker) + 동기(Outbox/CDC) + 색인/재색인 + q 검색 API(마켓+경매·relevance 정렬)
+FC-108 frontend   검색바·검색 결과 UI(마켓+경매·q·relevance·빈결과)
+FC-109 reviewer   검수(정합성·동기 불일치·화해·주입·성능·계약·ES 정본 아님 준수)
+```
+(backend는 인프라/동기 vs 검색API로 분할 가능 — architect 판단.)
+
+## 게이트2 — 예정 (architect가 FC-106에서 상신)
+- A1 검색엔진 인프라 도입 · A2 엔진(OpenSearch vs Elasticsearch) · A3 동기(Outbox vs Debezium CDC) · A5 재색인/화해 · C1 q 파라미터(마켓+경매) · C2 relevance 정렬 · C3 q 규약. **로컬 기동성**(Kafka 필요 여부 등) 명시.
+
+## 범위 밖
+- 등급 부스트(EPIC-GRADE 선행) · 오타허용/동의어 고도화(엔진 도입 후 튜닝) · item-templates 검색 · 패싯 UI(엔진은 지원하나 UI는 후속) · 운영 클러스터(로컬 데모 우선).
