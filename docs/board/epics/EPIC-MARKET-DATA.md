@@ -3,10 +3,13 @@ id: EPIC-MARKET-DATA
 type: epic
 jira_key: KAN-108
 title: 마켓 실데이터화 — 스킬 마스터 확충·스킬명 노출·대량 시드
-state: doing
+state: done
 children: [FC-097, FC-098, FC-099, FC-100]
 gate: null
 ---
+## 게이트3 — Done 승인 (2026-07-22, 사용자)
+- reviewer PASS(critical/major 0) + 온디맨드 보안 0건 + 총괄 브라우저 실측(5천 마켓·스킬명 §5 정합·다양가) 후 사용자 Done 승인. FC-097~100 전건 done. **push 완료**(2b64401).
+- 후속: FC-101(마켓 성능)·spec §1.4 문서 정정. done 비차단.
 ## 목표
 마켓을 실제처럼 보이게 한다 — (1) **스킬 마스터 확충**(§5 해독표 → `skill_definition` 435 시드), (2) **카드/목록/상세에 스킬명 노출**(현재 "스킬 #{code}" 중립표기 → 효과 서술), (3) **마켓 고정가 매물 5천 건 대량 시드**(로컬 데모). EPIC-SHOP 후속.
 
