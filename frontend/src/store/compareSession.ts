@@ -10,11 +10,11 @@
  * 최대 3)만 갖고, 어디에 저장하는지는 몰라도 된다.
  *
  * ★ **참조만 저장한다**(`{source, listingId}`) — 아이템 스냅샷을 복제하지 않는다. 표시 데이터는
- *   비교 페이지가 `GET /auctions/{id}` 로 다시 받는다(캐시 재사용). 스냅샷을 세션에 굳히면
- *   가격·마감이 오래된 값으로 남는다(경매는 실시간이다).
- * ★ **경매 아이템만 비교 대상이다**(`source: 'AUCTION'`). 목업의 마켓·경매 혼합 비교 중 마켓
- *   경로는 고정가 미구현이라 자리보류다 — 여기서 `MARKET` 참조를 만들지도 받지도 않는다
- *   (검증에서 걸러 stale 마켓 참조가 세션에 남아도 무시된다).
+ *   비교 페이지가 `GET /auctions/{id}`·`GET /shops/{id}` 로 다시 받는다(캐시 재사용). 스냅샷을
+ *   세션에 굳히면 가격·마감이 오래된 값으로 남는다(경매는 실시간이다).
+ * ★ **경매·고정가 혼합 비교**(`source: 'AUCTION' | 'MARKET'`, FC-094). 목업 §11 이 마켓·경매
+ *   혼합 비교를 허용하며, EPIC-SHOP 이 고정가를 실기능화하면서 `MARKET` 경로가 열렸다. `listingId`
+ *   는 출처별 공개 ID(경매=`auctionPublicId`·고정가=`shopPublicId`) — 둘 다 ULID 라 충돌하지 않는다.
  */
 
 /** 목업과 동일 키 — 탭 세션에 산다(서버 저장 없음). */
@@ -24,23 +24,26 @@ export const COMPARE_STORAGE_KEY = 'jangteoCompareItems'
 export const MAX_COMPARE_ITEMS = 3
 
 /**
- * 비교 대상 출처. **경매만 실데이터가 있다**(§1 라우트 6). 고정가 마켓은 백엔드 미구현이라
- * 참조를 만들 수 없다(placeholder). 유니온을 `'AUCTION'` 으로 좁혀 마켓 경로를 원천 차단한다.
+ * 비교 대상 출처(FC-094). 경매(실시간)·고정가(마켓) 둘 다 실데이터가 있다 — 목업 §11 혼합 비교.
+ * 비교 페이지가 출처별로 `GET /auctions/{id}`·`GET /shops/{id}` 를 갈라 되받는다.
  */
-export type CompareSource = 'AUCTION'
+export type CompareSource = 'AUCTION' | 'MARKET'
 
 /** 비교 참조 — 표시 데이터가 아니라 **식별자만**(위 ★). */
 export interface CompareReference {
     source: CompareSource
-    /** 경매 공개 ID(`auctionPublicId`, ULID) */
+    /** 출처별 공개 ID(경매=`auctionPublicId`·고정가=`shopPublicId`, 둘 다 ULID) */
     listingId: string
 }
 
 function isCompareReference(value: unknown): value is CompareReference {
     if (typeof value !== 'object' || value === null) return false
     const ref = value as Record<string, unknown>
-    // 경매 참조만 허용 — stale 마켓 참조는 여기서 조용히 탈락한다.
-    return ref.source === 'AUCTION' && typeof ref.listingId === 'string'
+    // 알려진 두 출처만 허용 — 오염·미래 출처 참조는 여기서 조용히 탈락한다.
+    return (
+        (ref.source === 'AUCTION' || ref.source === 'MARKET') &&
+        typeof ref.listingId === 'string'
+    )
 }
 
 /**

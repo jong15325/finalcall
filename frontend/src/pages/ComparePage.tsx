@@ -19,32 +19,70 @@ import { itemArt } from '@/features/item/lib/itemArt'
 import { itemTypeLabel } from '@/features/item/lib/itemCode'
 import { goldforceRemainingDays } from '@/features/item/components/frame'
 import { useCompareAuctions } from '@/lib/queries/auctions'
+import { useCompareShops } from '@/lib/queries/shop'
 import { MAX_COMPARE_ITEMS } from '@/store/compareSession'
 import { useCompareStore } from '@/store/compareStore'
-import type { AuctionDetail } from '@/lib/api/auctions'
+import type { AuctionItemBlock } from '@/lib/api/auctions'
+import type { ShopStatus } from '@/lib/api/shop'
+import type { CompareReference } from '@/store/compareSession'
 
 /**
- * 아이템 비교 `/compare` (FC-079 — 목업 `comparePage` 1:1, 색만 브랜드 §2.9).
+ * 아이템 비교 `/compare` (FC-079 → FC-094 에서 경매·고정가 혼합 비교, 목업 §11).
  *
- * ★ **선택 참조(스토어)만 갖고 표시 데이터는 다시 받는다** — `useCompareAuctions` 가
- *   `GET /auctions/{id}` 를 상세 캐시 재사용으로 가져온다(스냅샷 세션 저장 금지, 신선도).
- * ★ **경매 아이템만 비교 대상**(§1 라우트 6). 목업의 마켓·경매 혼합 비교 중 마켓 경로는
- *   고정가 미구현이라 자리보류 — 빈 상태에서 "아이템 마켓" 은 `disabled` 안내로만 둔다.
- * ★ **행 우선순위**(티켓): ①가격(현재 최고가 의미 표기) ②스킬1 ③스킬2 ④거래상태(+남은시간)
- *   ⑤골드포스 잔여 ⑥속성/종류. **스킬 = 코드 중립 표기**(`스킬 #{code}`, 이름 없음 §2.5).
- * ★ **가격 의미를 반드시 표기**(경매="현재 최고가", 입찰 없으면 "시작가")하고 남은시간·상태를
- *   동반해 저렴 오해를 막는다. 마감은 클라 판정(`now>=endAt`).
- * ★ **모바일 비교표 = 내부 가로 스크롤**(`overflow-x-auto` + min-width). 카운트다운은 단일 타이머.
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★ **선택 참조(스토어)만 갖고 표시 데이터는 다시 받는다 — 출처별로 갈라 되받는다.**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * `AUCTION` 은 `GET /auctions/{id}`, `MARKET` 은 `GET /shops/{id}` 로 각각 상세 캐시를 재사용해
+ * 가져온다(스냅샷 세션 저장 금지, 신선도). 컬럼은 **원래 선택 순서**를 유지한다.
+ *
+ * ★ **행 우선순위**(티켓): ①가격(의미 표기) ②스킬1 ③스킬2 ④거래상태 ⑤골드포스 ⑥속성/종류.
+ *   **스킬 = 코드 중립 표기**(`스킬 #{code}` §2.5). 스킬·골드포스·속성/종류는 두 출처 공통(item 블록).
+ * ★ **가격 의미를 반드시 표기** — 경매="현재 최고가"(입찰 없으면 "시작가"), 고정가="고정가".
+ *   저렴 오해를 막도록 경매는 남은시간·상태를 동반한다(고정가는 마감 압박이 없어 상태만).
+ * ★ **모바일 비교표 = 내부 가로 스크롤**. 카운트다운은 단일 타이머(`useNow`).
  */
 
 /** 라벨 열 폭·데이터 열 최소폭(px) — min-width 로 모바일 내부 가로 스크롤을 만든다. */
 const LABEL_COL_PX = 140
 const DATA_COL_PX = 200
 
+/** 고정가 상태 → 표시 라벨. 미등록 상태는 코드 노출(무음 실패 방지). */
+function shopStatusLabelOf(status: ShopStatus): string {
+    switch (status) {
+        case 'ACTIVE':
+            return '판매 중'
+        case 'SOLD':
+            return '판매 완료'
+        case 'EXPIRED':
+            return '기한 만료'
+        case 'CANCELLED':
+            return '판매 취소'
+        default:
+            return String(status)
+    }
+}
+
+/**
+ * 정규화된 비교 컬럼 — 두 출처를 한 형태로 담는다. `state` 는 조회 진행/실패/완료.
+ * `ready` 면 `item` 이 채워지고, 나머지 필드가 출처별로 파생된다.
+ */
 interface CompareColumn {
     listingId: string
+    source: CompareReference['source']
     state: 'loading' | 'error' | 'ready'
-    auction?: AuctionDetail
+    /** ready 일 때만 — 공통 item 블록(스킬·골드포스·속성/종류의 단일 출처) */
+    item?: AuctionItemBlock
+    /** 헤더 배지 문구 */
+    sourceLabel: string
+    /** 가격 셀 */
+    price?: { amount: number; meaning: string }
+    /** 거래 상태 라벨 */
+    statusLabel?: string
+    /** 카운트다운 대상 마감 시각 — 경매만(고정가는 마감 압박이 없어 null) */
+    countdownEndAt?: string | null
+    /** 거래하기 링크 */
+    tradeHref?: string
+    tradeLabel: string
 }
 
 export default function ComparePage() {
@@ -53,21 +91,99 @@ export default function ComparePage() {
     const remove = useCompareStore((state) => state.remove)
     const clear = useCompareStore((state) => state.clear)
 
-    const ids = items.map((item) => item.listingId)
-    const results = useCompareAuctions(ids)
+    const auctionRefs = items.filter((item) => item.source === 'AUCTION')
+    const shopRefs = items.filter((item) => item.source === 'MARKET')
 
-    const columns: CompareColumn[] = items.map((item, index) => {
-        const query = results[index]
-        if (query?.isPending) {
-            return { listingId: item.listingId, state: 'loading' }
+    const auctionResults = useCompareAuctions(
+        auctionRefs.map((ref) => ref.listingId),
+    )
+    const shopResults = useCompareShops(shopRefs.map((ref) => ref.listingId))
+
+    // listingId → 조회 결과(출처별). 스토어가 listingId 를 dedup 하므로 충돌 없음.
+    const auctionByListing = new Map(
+        auctionRefs.map((ref, index) => [ref.listingId, auctionResults[index]]),
+    )
+    const shopByListing = new Map(
+        shopRefs.map((ref, index) => [ref.listingId, shopResults[index]]),
+    )
+
+    const columns: CompareColumn[] = items.map((ref) => {
+        if (ref.source === 'AUCTION') {
+            const query = auctionByListing.get(ref.listingId)
+            if (!query || query.isPending) {
+                return {
+                    listingId: ref.listingId,
+                    source: 'AUCTION',
+                    state: 'loading',
+                    sourceLabel: '실시간 경매',
+                    tradeLabel: '경매 보기',
+                }
+            }
+            if (query.isError || !query.data) {
+                return {
+                    listingId: ref.listingId,
+                    source: 'AUCTION',
+                    state: 'error',
+                    sourceLabel: '실시간 경매',
+                    tradeLabel: '경매 보기',
+                }
+            }
+            const auction = query.data
+            const price = comparePriceOf(auction)
+            const phase = auctionPhaseOf(
+                {
+                    status: auction.status,
+                    startAt: auction.startAt,
+                    endAt: auction.endAt,
+                },
+                now,
+            )
+            return {
+                listingId: ref.listingId,
+                source: 'AUCTION',
+                state: 'ready',
+                item: auction.item,
+                sourceLabel: '실시간 경매',
+                price: { amount: price.amount, meaning: price.meaning },
+                statusLabel: auctionPhaseLabelOf(phase),
+                countdownEndAt: auction.endAt,
+                tradeHref: auctionDetailPath(auction.auctionPublicId),
+                tradeLabel: '경매 보기',
+            }
         }
-        if (!query || query.isError || !query.data) {
-            return { listingId: item.listingId, state: 'error' }
+
+        const query = shopByListing.get(ref.listingId)
+        if (!query || query.isPending) {
+            return {
+                listingId: ref.listingId,
+                source: 'MARKET',
+                state: 'loading',
+                sourceLabel: '고정가 마켓',
+                tradeLabel: '마켓에서 보기',
+            }
         }
+        if (query.isError || !query.data) {
+            return {
+                listingId: ref.listingId,
+                source: 'MARKET',
+                state: 'error',
+                sourceLabel: '고정가 마켓',
+                tradeLabel: '마켓에서 보기',
+            }
+        }
+        const shop = query.data
         return {
-            listingId: item.listingId,
+            listingId: ref.listingId,
+            source: 'MARKET',
             state: 'ready',
-            auction: query.data,
+            item: shop.item,
+            sourceLabel: '고정가 마켓',
+            price: { amount: shop.price, meaning: '고정가' },
+            statusLabel: shopStatusLabelOf(shop.status),
+            countdownEndAt: null,
+            // 마켓엔 별도 상세가 없다(목업 §9) — 목록으로 보낸다.
+            tradeHref: paths.market,
+            tradeLabel: '마켓에서 보기',
         }
     })
 
@@ -103,7 +219,7 @@ export default function ComparePage() {
             </header>
 
             <section className="overflow-hidden rounded-2xl border border-line bg-surface">
-                {/* 내부 가로 스크롤 — 모바일에서 표가 넘치면 여기서만 스크롤한다(§ 모바일) */}
+                {/* 내부 가로 스크롤 — 모바일에서 표가 넘치면 여기서만 스크롤한다 */}
                 <div className="overflow-x-auto [overscroll-behavior-inline:contain]">
                     <div style={gridStyle}>
                         {/* 상품 헤더 행 */}
@@ -129,27 +245,26 @@ export default function ComparePage() {
                             ))}
                         </div>
 
-                        {/* ① 가격 — 현재 최고가 의미 표기 */}
+                        {/* ① 가격 — 의미 표기(경매/고정가) */}
                         <CompareRow
                             priority
                             label="가격"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => {
-                                const price = comparePriceOf(auction)
-                                return (
+                            render={(column) =>
+                                column.price ? (
                                     <>
                                         <CodeAmount
-                                            value={price.amount}
+                                            value={column.price.amount}
                                             mode="full"
                                             className="text-lg font-bold text-orange-deep"
                                         />
                                         <small className="text-[10px] text-gray-500">
-                                            {price.meaning}
+                                            {column.price.meaning}
                                         </small>
                                     </>
-                                )
-                            }}
+                                ) : null
+                            }
                         />
 
                         {/* ② 스킬 1 — 코드 중립 표기 */}
@@ -158,9 +273,11 @@ export default function ComparePage() {
                             label="스킬 1"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => (
-                                <SkillCell code={auction.item.skill1} />
-                            )}
+                            render={(column) =>
+                                column.item ? (
+                                    <SkillCell code={column.item.skill1} />
+                                ) : null
+                            }
                         />
 
                         {/* ③ 스킬 2 — 코드 중립 표기 */}
@@ -169,38 +286,32 @@ export default function ComparePage() {
                             label="스킬 2"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => (
-                                <SkillCell code={auction.item.skill2} />
-                            )}
+                            render={(column) =>
+                                column.item ? (
+                                    <SkillCell code={column.item.skill2} />
+                                ) : null
+                            }
                         />
 
-                        {/* ④ 거래 상태 (+남은시간) */}
+                        {/* ④ 거래 상태 (+경매는 남은시간) */}
                         <CompareRow
                             label="거래 상태"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => {
-                                const phase = auctionPhaseOf(
-                                    {
-                                        status: auction.status,
-                                        startAt: auction.startAt,
-                                        endAt: auction.endAt,
-                                    },
-                                    now,
-                                )
-                                return (
-                                    <>
-                                        <strong className="text-[13px] text-gray-900">
-                                            {auctionPhaseLabelOf(phase)}
-                                        </strong>
+                            render={(column) => (
+                                <>
+                                    <strong className="text-[13px] text-gray-900">
+                                        {column.statusLabel ?? '-'}
+                                    </strong>
+                                    {column.countdownEndAt && (
                                         <Countdown
-                                            endAt={auction.endAt}
+                                            endAt={column.countdownEndAt}
                                             now={now}
                                             className="!text-[11px]"
                                         />
-                                    </>
-                                )
-                            }}
+                                    )}
+                                </>
+                            )}
                         />
 
                         {/* ⑤ 골드포스 잔여 */}
@@ -208,9 +319,10 @@ export default function ComparePage() {
                             label="골드포스"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => {
+                            render={(column) => {
+                                if (!column.item) return null
                                 const days = goldforceRemainingDays(
-                                    auction.item.goldforceExpireAt,
+                                    column.item.goldforceExpireAt,
                                     now,
                                 )
                                 if (days === null) {
@@ -238,45 +350,42 @@ export default function ComparePage() {
                             label="속성 · 종류"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => (
-                                <>
-                                    <strong className="text-[13px] text-gray-900">
-                                        {elementLabelOf(auction.item.element)}
-                                    </strong>
-                                    <small className="text-[10px] text-gray-500">
-                                        {itemTypeLabel(
-                                            auction.item.subGroup,
-                                            auction.item.kind,
-                                        )}
-                                    </small>
-                                </>
-                            )}
+                            render={(column) =>
+                                column.item ? (
+                                    <>
+                                        <strong className="text-[13px] text-gray-900">
+                                            {elementLabelOf(column.item.element)}
+                                        </strong>
+                                        <small className="text-[10px] text-gray-500">
+                                            {itemTypeLabel(
+                                                column.item.subGroup,
+                                                column.item.kind,
+                                            )}
+                                        </small>
+                                    </>
+                                ) : null
+                            }
                         />
 
-                        {/* 거래하기 — 경매 상세로 이동(즉시구매 버튼은 404라 만들지 않는다, §5) */}
+                        {/* 거래하기 — 경매는 상세, 고정가는 마켓 목록으로(상세 화면 없음, §9) */}
                         <CompareRow
                             label="거래하기"
                             gridStyle={gridStyle}
                             columns={columns}
-                            render={(auction) => (
-                                <Link
-                                    to={auctionDetailPath(
-                                        auction.auctionPublicId,
-                                    )}
-                                    className="w-fit rounded-lg border border-navy px-3 py-1.5 text-xs font-bold text-navy hover:bg-navy hover:text-white"
-                                >
-                                    경매 보기
-                                </Link>
-                            )}
+                            render={(column) =>
+                                column.tradeHref ? (
+                                    <Link
+                                        to={column.tradeHref}
+                                        className="w-fit rounded-lg border border-navy px-3 py-1.5 text-xs font-bold text-navy hover:bg-navy hover:text-white"
+                                    >
+                                        {column.tradeLabel}
+                                    </Link>
+                                ) : null
+                            }
                         />
                     </div>
                 </div>
             </section>
-
-            <p className="text-xs text-gray-400">
-                고정가 마켓 아이템 비교는 준비 중입니다. 지금은 실시간 경매
-                아이템만 비교할 수 있어요.
-            </p>
         </div>
     )
 }
@@ -302,7 +411,7 @@ function CompareProduct({
         </button>
     )
 
-    if (column.state !== 'ready' || !column.auction) {
+    if (column.state !== 'ready' || !column.item) {
         return (
             <div className="relative min-w-0 border-b border-r border-line p-4 text-center">
                 {removeButton}
@@ -325,7 +434,7 @@ function CompareProduct({
         )
     }
 
-    const { item } = column.auction
+    const { item } = column
     const art = itemArt(
         {
             subGroup: item.subGroup,
@@ -337,6 +446,10 @@ function CompareProduct({
         1,
     )
     const hasSkill = item.skill1 !== null || item.skill2 !== null
+    const badgeClass =
+        column.source === 'MARKET'
+            ? 'bg-navy/10 text-navy-700'
+            : 'bg-orange-subtle text-orange-deep'
 
     return (
         <div className="relative min-w-0 border-b border-r border-line p-4 text-center">
@@ -353,8 +466,10 @@ function CompareProduct({
                     now={now}
                 />
             </div>
-            <span className="mt-3 inline-block rounded-full bg-orange-subtle px-2 py-0.5 text-[10px] font-bold text-orange-deep">
-                실시간 경매
+            <span
+                className={`mt-3 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${badgeClass}`}
+            >
+                {column.sourceLabel}
             </span>
             <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-gray-900">
                 {item.nameSnapshot}
@@ -378,7 +493,7 @@ function CompareRow({
     priority?: boolean
     gridStyle: CSSProperties
     columns: CompareColumn[]
-    render: (auction: AuctionDetail) => ReactNode
+    render: (column: CompareColumn) => ReactNode
 }) {
     const priorityBg = priority ? 'bg-orange-subtle/30' : ''
     return (
@@ -392,18 +507,19 @@ function CompareRow({
             >
                 {label}
             </strong>
-            {columns.map((column) => (
-                <div
-                    key={column.listingId}
-                    className={`flex min-h-[76px] flex-col justify-center gap-0.5 border-b border-r border-line px-4 py-3 ${priorityBg}`}
-                >
-                    {column.state === 'ready' && column.auction ? (
-                        render(column.auction)
-                    ) : (
-                        <span className="text-xs text-gray-300">-</span>
-                    )}
-                </div>
-            ))}
+            {columns.map((column) => {
+                const cell = column.state === 'ready' ? render(column) : null
+                return (
+                    <div
+                        key={column.listingId}
+                        className={`flex min-h-[76px] flex-col justify-center gap-0.5 border-b border-r border-line px-4 py-3 ${priorityBg}`}
+                    >
+                        {cell ?? (
+                            <span className="text-xs text-gray-300">-</span>
+                        )}
+                    </div>
+                )
+            })}
         </div>
     )
 }
@@ -421,7 +537,7 @@ function SkillCell({ code }: { code: number | null }) {
     )
 }
 
-/** 빈 상태 — 경매로 유도, 마켓은 준비 중 안내(자리보류). */
+/** 빈 상태 — 경매·마켓 양쪽으로 유도. */
 function CompareEmpty() {
     return (
         <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
@@ -432,8 +548,8 @@ function CompareEmpty() {
                 비교할 아이템이 없습니다
             </h1>
             <p className="mt-2 max-w-md text-sm text-gray-500">
-                실시간 경매에서 카드의 &lsquo;비교&rsquo; 버튼으로 아이템을
-                담으면 여기에서 나란히 비교할 수 있어요.
+                실시간 경매나 아이템 마켓에서 카드의 &lsquo;비교&rsquo; 버튼으로
+                아이템을 담으면 여기에서 나란히 비교할 수 있어요.
             </p>
             <div className="mt-6 flex items-center gap-2">
                 <Link
@@ -442,15 +558,12 @@ function CompareEmpty() {
                 >
                     실시간 경매
                 </Link>
-                <button
-                    disabled
-                    type="button"
-                    aria-disabled="true"
-                    title="아이템 마켓 · 준비 중"
-                    className="cursor-not-allowed rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-gray-400"
+                <Link
+                    to={paths.market}
+                    className="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
                 >
-                    아이템 마켓 (준비 중)
-                </button>
+                    아이템 마켓
+                </Link>
             </div>
         </section>
     )

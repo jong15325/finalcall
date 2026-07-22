@@ -8,9 +8,10 @@ import {
 import type { CompareReference } from './compareSession'
 
 /**
- * 비교 세션 어댑터 (FC-079).
+ * 비교 세션 어댑터 (FC-079 → FC-094 에서 MARKET 출처 허용).
  *
- * 고정하는 것: 참조만 저장·복원한다 / 마켓·오염 참조는 걸러진다 / 최대 3개 / 파싱 실패는 빈 배열.
+ * 고정하는 것: 참조만 저장·복원한다 / 경매·고정가 두 출처를 유지하고 미지의 출처·오염 참조는
+ * 걸러진다 / 최대 3개 / 파싱 실패는 빈 배열.
  */
 
 const ref = (listingId: string): CompareReference => ({
@@ -34,11 +35,26 @@ describe('compareSession', () => {
         ])
     })
 
-    it('경매 아닌 출처(마켓 등)는 걸러진다 — 자리보류', () => {
+    it('경매·고정가 두 출처를 유지한다(FC-094 혼합 비교)', () => {
         sessionStorage.setItem(
             COMPARE_STORAGE_KEY,
             JSON.stringify([
                 { source: 'MARKET', listingId: 'm1' },
+                { source: 'AUCTION', listingId: 'a1' },
+            ]),
+        )
+        expect(loadCompareSelection()).toEqual([
+            { source: 'MARKET', listingId: 'm1' },
+            { source: 'AUCTION', listingId: 'a1' },
+        ])
+    })
+
+    it('미지의 출처·오염 참조는 걸러진다', () => {
+        sessionStorage.setItem(
+            COMPARE_STORAGE_KEY,
+            JSON.stringify([
+                { source: 'UNKNOWN', listingId: 'x1' },
+                { listingId: 'noSource' },
                 { source: 'AUCTION', listingId: 'a1' },
             ]),
         )

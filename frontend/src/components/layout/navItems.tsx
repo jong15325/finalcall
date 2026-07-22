@@ -57,7 +57,7 @@ export const sidebarNav: NavEntry[] = [
         label: '마켓',
         icon: TbShoppingBag,
         children: [
-            { label: '아이템 마켓', to: paths.market, ready: false },
+            { label: '아이템 마켓', to: paths.market, ready: true },
             { label: '실시간 경매', to: paths.auctions, ready: true },
             { label: '아이템 판매', to: paths.sell, ready: true },
         ],
@@ -82,7 +82,7 @@ export const mobileNav: NavLeaf[] = [
     {
         label: '아이템마켓',
         to: paths.market,
-        ready: false,
+        ready: true,
         icon: TbBuildingStore,
     },
     { label: '실시간 경매', to: paths.auctions, ready: true, icon: TbGavel },

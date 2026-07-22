@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
-import MarketPage from './MarketPage'
 import CommunityPage from './CommunityPage'
 import WalletChargePage from './WalletChargePage'
 
@@ -11,15 +10,11 @@ import WalletChargePage from './WalletChargePage'
  * 고정하는 것:
  *  1. 목업 헤더(제목·설명) + 명시적 "준비 중" 배지 + 하단 안내가 렌더된다.
  *  2. **미구현 엔드포인트 호출 0**(FC-048) — 렌더만으로 fetch 를 부르지 않는다.
+ *
+ * ★ 아이템 마켓은 FC-094 에서 `/shops` 실기능으로 승격되어 준비 중 자리에서 빠졌다.
  */
 
 const CASES = [
-    {
-        name: '아이템 마켓',
-        Page: MarketPage,
-        title: '아이템 마켓',
-        note: /고정가 마켓은 준비 중이에요/,
-    },
     {
         name: '커뮤니티',
         Page: CommunityPage,

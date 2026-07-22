@@ -12,7 +12,7 @@ export const paths = {
     home: '/',
 
     /* 마켓 */
-    market: '/market', // [준비 중] 고정가 마켓 — ShopController 없음
+    market: '/market', // 고정가 마켓 (FC-094 — /shops 실기능)
     auctions: '/auctions',
     auctionDetail: '/auctions/:id',
     sell: '/sell',

@@ -1,44 +1,309 @@
-import { TbBuildingStore } from 'react-icons/tb'
-import ComingSoonScaffold from '@/components/common/ComingSoonScaffold'
+import { useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import {
+    TbAlertTriangle,
+    TbBuildingStore,
+    TbSearchOff,
+    TbWallet,
+} from 'react-icons/tb'
+import { paths } from '@/app/paths'
+import CodeAmount from '@/components/common/CodeAmount'
+import ShopCard from '@/features/shop/components/ShopCard'
+import ShopFilters from '@/features/shop/components/ShopFilters'
+import ShopPurchaseDialog from '@/features/shop/components/ShopPurchaseDialog'
+import {
+    normalizeShopFilters,
+    parseShopFilters,
+    toShopListQuery,
+    toShopSearchParams,
+} from '@/features/shop/lib/shopFilters'
+import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
+import { useNow } from '@/features/auction/lib/useNow'
+import { useShopBrowse, usePurchaseShop } from '@/lib/queries/shop'
+import { useItemTemplates } from '@/lib/queries/itemTemplates'
+import { useMyBalance } from '@/lib/queries/balance'
+import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
+import type { ShopFilterState } from '@/features/shop/lib/shopFilters'
+import type { ShopSummary } from '@/lib/api/shop'
 
 /**
- * 고정가 아이템 마켓 `/market` — [준비 중] ShopController 미구현(rebuild-contract-map §5).
+ * 고정가 아이템 마켓 `/market` (FC-094 — 목업 `market()` · 계약 §3.2 `/shops`).
  *
- * ★ 목업 `market()` 헤더 골격(툴바 + 상품 그리드)만 비활성 skeleton 으로 남긴다.
- *   `/shops`·`/market/*` 를 호출하지 않고 가짜 상품을 렌더하지 않는다(정직성·FC-048).
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★ **`ComingSoonScaffold` 를 걷어내고 실 API 로 켠다**(shop-spec v0.2 · FC-093 backend 병렬).
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  - **구조는 경매 목록(`AuctionListPage`)과 동형** — 필터는 URL search params 정본, 커서
+ *    무한스크롤, 로딩/빈/에러 상태 블록. 데모 데이터를 렌더하지 않는다(정직성·FC-048).
+ *  - **카드는 세로형 공통 카드(`ShopCard`)** — 목업 §9 2/3/6 그리드. 카드별 구매 버튼 + 비교 토글.
+ *  - **구매는 다이얼로그**(목업 §9 카드→다이얼로그. 마켓엔 별도 상세 화면이 없다). §18 로딩 정책.
+ *  - **골드포스는 단일 타이머**(`useNow` 1회) 값을 전 카드에 내려보낸다.
+ * ★ 색은 브랜드 토큰(navy/gold/gray) — 목업 Vuexy 팔레트는 재구축에서 폐기(경매 화면 대칭).
  */
+
+const PAGE_SIZE = 24
+
 export default function MarketPage() {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const now = useNow()
+
+    const filters = useMemo(
+        () => parseShopFilters(searchParams),
+        [searchParams],
+    )
+
+    const applyPatch = (patch: Partial<ShopFilterState>) => {
+        const next = normalizeShopFilters({ ...filters, ...patch })
+        setSearchParams(toShopSearchParams(next))
+    }
+
+    const resetFilters = () => setSearchParams(new URLSearchParams())
+
+    const {
+        data,
+        isPending,
+        isError,
+        refetch,
+        fetchNextPage,
+        hasNextPage,
+        isFetching,
+        isFetchingNextPage,
+    } = useShopBrowse(toShopListQuery(filters, PAGE_SIZE))
+
+    const templatesQuery = useItemTemplates()
+    const templates = templatesQuery.data?.content ?? []
+
+    const balanceQuery = useMyBalance()
+    const isAuthed = useIsAuthenticated()
+    const myNickname = useAuthStore((state) => state.user?.nickname ?? null)
+
+    // 구매 다이얼로그 대상 — 선택된 리스팅 하나(마켓엔 상세 화면이 없어 카드에서 바로 연다).
+    const [selectedShop, setSelectedShop] = useState<ShopSummary | null>(null)
+    const purchaseMutation = usePurchaseShop(selectedShop?.shopPublicId ?? '')
+
+    const shops = useMemo(
+        () => data?.pages.flatMap((page) => page.content) ?? [],
+        [data],
+    )
+
+    const status: 'loading' | 'error' | 'empty' | 'ready' = isPending
+        ? 'loading'
+        : isError && shops.length === 0
+          ? 'error'
+          : shops.length === 0
+            ? 'empty'
+            : 'ready'
+
+    const sentinelRef = useInfiniteScroll({
+        hasNext: Boolean(hasNextPage),
+        isFetching,
+        onLoadMore: () => void fetchNextPage(),
+    })
+
+    const openPurchase = (shop: ShopSummary) => {
+        purchaseMutation.reset()
+        setSelectedShop(shop)
+    }
+
+    const handlePurchase = () => {
+        purchaseMutation.mutate(undefined, {
+            onSuccess: () => setSelectedShop(null),
+        })
+    }
+
     return (
-        <ComingSoonScaffold
-            icon={TbBuildingStore}
-            title="아이템 마켓"
-            description="고정가로 등록된 게임 아이템을 사고파는 공간이에요."
-            note="고정가 마켓은 준비 중이에요. 지금은 실시간 경매를 이용해 주세요."
-        >
-            {/* 툴바 자리(필터·정렬) */}
-            <div className="mb-4 flex flex-wrap gap-2">
-                {Array.from({ length: 4 }).map((_, index) => (
-                    <div
-                        key={index}
-                        className="h-8 w-20 rounded-full bg-gray-100"
-                    />
-                ))}
-            </div>
-            {/* 상품 그리드 자리 */}
-            <div className="grid grid-cols-2 gap-3 xs:grid-cols-3 md:grid-cols-6">
-                {Array.from({ length: 6 }).map((_, index) => (
-                    <div
-                        key={index}
-                        className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface"
+        <div className="flex flex-col gap-5">
+            <header className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                        <TbBuildingStore
+                            aria-hidden
+                            className="size-6 text-navy"
+                        />
+                        아이템 마켓
+                    </h1>
+                    <p className="mt-1 text-sm text-gray-500">
+                        검증된 판매자의 아이템을 고정가로 안전하게 구매하세요.
+                    </p>
+                </div>
+                <Link
+                    to={paths.sell}
+                    className="rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
+                >
+                    아이템 판매
+                </Link>
+            </header>
+
+            <ShopFilters
+                filters={filters}
+                templates={templates}
+                onChange={applyPatch}
+                onReset={resetFilters}
+            />
+
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-gray-500">
+                    {status === 'ready'
+                        ? `${shops.length}건 표시 중`
+                        : '검증된 판매자의 고정가 상품'}
+                </p>
+                {balanceQuery.data && (
+                    <Link
+                        to={paths.wallet}
+                        className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy"
                     >
-                        <div className="aspect-square bg-gray-100" />
-                        <div className="flex flex-col gap-1.5 p-3">
-                            <div className="h-3 w-3/4 rounded bg-gray-100" />
-                            <div className="h-3 w-1/2 rounded bg-gray-100" />
-                        </div>
-                    </div>
-                ))}
+                        <TbWallet aria-hidden className="size-4 text-navy" />
+                        사용 가능
+                        <CodeAmount
+                            value={balanceQuery.data.gameMoneyAvailable}
+                            mode="compact"
+                            className="font-bold text-gray-900"
+                        />
+                    </Link>
+                )}
             </div>
-        </ComingSoonScaffold>
+
+            {/* 부분 실패 — 이미 받은 카드는 두고 배너만 얹는다 */}
+            {status === 'ready' && isError && (
+                <p
+                    role="alert"
+                    className="rounded-lg bg-danger-subtle px-4 py-2.5 text-sm text-danger"
+                >
+                    최신 목록을 불러오지 못했습니다. 표시된 상품은 이전
+                    결과입니다.
+                </p>
+            )}
+
+            {status === 'loading' && <MarketGridSkeleton />}
+
+            {status === 'error' && (
+                <StateBlock
+                    icon={TbAlertTriangle}
+                    title="마켓을 불러오지 못했습니다"
+                    description="잠시 후 다시 시도해 주세요."
+                    action={
+                        <button
+                            type="button"
+                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            onClick={() => void refetch()}
+                        >
+                            다시 시도
+                        </button>
+                    }
+                />
+            )}
+
+            {status === 'empty' && (
+                <StateBlock
+                    icon={TbSearchOff}
+                    title="조건에 맞는 상품이 없어요"
+                    description="필터를 바꾸거나 초기화해 보세요."
+                    action={
+                        <button
+                            type="button"
+                            className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                            onClick={resetFilters}
+                        >
+                            필터 초기화
+                        </button>
+                    }
+                />
+            )}
+
+            {status === 'ready' && (
+                <>
+                    {/* 목업 §9 — PC 6열 / 태블릿 3열 / 모바일 2열 */}
+                    <section
+                        aria-label="마켓 상품 목록"
+                        className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
+                    >
+                        {shops.map((shop) => (
+                            <ShopCard
+                                key={shop.shopPublicId}
+                                shop={shop}
+                                now={now}
+                                myNickname={myNickname}
+                                onBuy={openPurchase}
+                            />
+                        ))}
+                    </section>
+
+                    {/* 무한스크롤 감시점 — 목록 끝 문구는 두지 않는다(목업 §17) */}
+                    <div ref={sentinelRef} aria-hidden className="h-px" />
+
+                    {isFetchingNextPage && (
+                        <p
+                            role="status"
+                            className="py-2 text-center text-xs text-gray-400"
+                        >
+                            더 불러오는 중…
+                        </p>
+                    )}
+                </>
+            )}
+
+            {selectedShop && (
+                <ShopPurchaseDialog
+                    open
+                    itemName={selectedShop.item.nameSnapshot}
+                    price={selectedShop.price}
+                    gameMoneyAvailable={
+                        isAuthed
+                            ? (balanceQuery.data?.gameMoneyAvailable ?? null)
+                            : null
+                    }
+                    isSubmitting={purchaseMutation.isPending}
+                    submitError={purchaseMutation.error}
+                    onClose={() => setSelectedShop(null)}
+                    onConfirm={handlePurchase}
+                />
+            )}
+        </div>
+    )
+}
+
+/** 목록 영역만 스켈레톤(전체 블러 금지, §18) — 2/3/6 그리드. */
+function MarketGridSkeleton() {
+    return (
+        <div
+            aria-hidden
+            className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
+        >
+            {Array.from({ length: 12 }).map((_, index) => (
+                <div
+                    key={index}
+                    className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface"
+                >
+                    <div className="aspect-[72/134] animate-pulse bg-gray-100" />
+                    <div className="flex flex-col gap-1.5 p-3">
+                        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                        <div className="mt-2 h-7 w-full animate-pulse rounded bg-gray-100" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+function StateBlock({
+    icon: Icon,
+    title,
+    description,
+    action,
+}: {
+    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+    title: string
+    description: string
+    action?: React.ReactNode
+}) {
+    return (
+        <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+                <Icon aria-hidden className="size-7" />
+            </span>
+            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
+            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            {action && <div className="mt-5">{action}</div>}
+        </section>
     )
 }

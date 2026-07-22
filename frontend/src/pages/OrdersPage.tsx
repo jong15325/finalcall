@@ -3,18 +3,22 @@ import { TbAlertTriangle, TbReceipt, TbReceiptOff } from 'react-icons/tb'
 import OrderCard from '@/features/order/components/OrderCard'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyOrders } from '@/lib/queries/orders'
-import type { OrderListQuery, OrderRole } from '@/lib/api/orders'
+import type {
+    OrderListQuery,
+    OrderRole,
+    OrderSourceType,
+} from '@/lib/api/orders'
 
 /**
- * 거래내역 `/me/orders` (FC-090 — 계약 §4.3 · rebuild-contract-map §9·§13 준비중 자리 승격).
+ * 거래내역 `/me/orders` (FC-090 → FC-094 에서 출처 필터 노출 · 계약 §4.3).
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★ **역할 필터(전체/구매/판매)만 노출**한다. `sourceType`(AUCTION|SHOP) 필터는 두지 않는다 —
- *   고정가(SHOP)가 미구현이라 현재 출처는 `AUCTION` 하나뿐이고, **선택지가 하나인 필터는 아무것도
- *   거르지 않으면서 자리만 차지**하기 때문이다(경매 목록이 `mainCategory` 를 뺀 것과 같은 판단,
- *   `auctionFilters` 주). SHOP 이 붙으면 그때 출처 필터를 추가한다(API 는 이미 받는다).
+ * ★ **역할(전체/구매/판매) + 출처(전체/경매/고정가) 두 축을 노출**한다. 종전엔 고정가(SHOP)가
+ *   미구현이라 출처가 `AUCTION` 하나뿐이어서 출처 필터를 숨겼으나(선택지 하나짜리 필터 회피),
+ *   EPIC-SHOP 실기능화로 `SHOP` 주문이 실재하므로 출처 축이 의미를 갖는다. `orderView` 는 이미
+ *   SHOP 케이스를 처리한다(코드 변경 0 — `orderSourceLabelOf('SHOP')='고정가'`).
  * ══════════════════════════════════════════════════════════════════════════════
- * ★ **역할이 바뀌면 커서가 초기화**된다 — 쿼리 키가 바뀌어(`useMyOrders`) 코드 없이 리셋된다.
+ * ★ **필터가 바뀌면 커서가 초기화**된다 — 쿼리 키가 바뀌어(`useMyOrders`) 코드 없이 리셋된다.
  * ★ 무한스크롤은 공용 `useInfiniteScroll`(카운트다운 리렌더에 흔들리지 않는 관찰자, FC-071).
  * ★ 실 API + 로딩/빈/에러를 우아하게. 데모 데이터 하드코딩 없음.
  */
@@ -25,13 +29,22 @@ const ROLE_TABS: { value: OrderRole | 'ALL'; label: string }[] = [
     { value: 'SELLER', label: '판매' },
 ]
 
+const SOURCE_TABS: { value: OrderSourceType | 'ALL'; label: string }[] = [
+    { value: 'ALL', label: '전체' },
+    { value: 'AUCTION', label: '경매' },
+    { value: 'SHOP', label: '고정가' },
+]
+
 export default function OrdersPage() {
     const [role, setRole] = useState<OrderRole | 'ALL'>('ALL')
+    const [source, setSource] = useState<OrderSourceType | 'ALL'>('ALL')
 
-    const query: OrderListQuery = useMemo(
-        () => (role === 'ALL' ? {} : { role }),
-        [role],
-    )
+    const query: OrderListQuery = useMemo(() => {
+        const next: OrderListQuery = {}
+        if (role !== 'ALL') next.role = role
+        if (source !== 'ALL') next.sourceType = source
+        return next
+    }, [role, source])
 
     const {
         data,
@@ -67,31 +80,69 @@ export default function OrdersPage() {
                 </p>
             </header>
 
-            {/* 역할 필터 — 세그먼트 컨트롤 */}
-            <div
-                role="tablist"
-                aria-label="거래 역할 필터"
-                className="inline-flex w-fit gap-1 rounded-lg border border-line bg-surface p-1"
-            >
-                {ROLE_TABS.map((tab) => {
-                    const active = role === tab.value
-                    return (
-                        <button
-                            key={tab.value}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
-                                active
-                                    ? 'bg-navy text-white'
-                                    : 'text-gray-500 hover:text-navy'
-                            }`}
-                            onClick={() => setRole(tab.value)}
-                        >
-                            {tab.label}
-                        </button>
-                    )
-                })}
+            {/* 역할·출처 필터 — 세그먼트 컨트롤 2축 */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-400">
+                        역할
+                    </span>
+                    <div
+                        role="tablist"
+                        aria-label="거래 역할 필터"
+                        className="inline-flex w-fit gap-1 rounded-lg border border-line bg-surface p-1"
+                    >
+                        {ROLE_TABS.map((tab) => {
+                            const active = role === tab.value
+                            return (
+                                <button
+                                    key={tab.value}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
+                                        active
+                                            ? 'bg-navy text-white'
+                                            : 'text-gray-500 hover:text-navy'
+                                    }`}
+                                    onClick={() => setRole(tab.value)}
+                                >
+                                    {tab.label}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-400">
+                        출처
+                    </span>
+                    <div
+                        role="tablist"
+                        aria-label="거래 출처 필터"
+                        className="inline-flex w-fit gap-1 rounded-lg border border-line bg-surface p-1"
+                    >
+                        {SOURCE_TABS.map((tab) => {
+                            const active = source === tab.value
+                            return (
+                                <button
+                                    key={tab.value}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
+                                        active
+                                            ? 'bg-navy text-white'
+                                            : 'text-gray-500 hover:text-navy'
+                                    }`}
+                                    onClick={() => setSource(tab.value)}
+                                >
+                                    {tab.label}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
             </div>
 
             {/* 부분 실패 — 이미 받은 카드는 두고 배너만 얹는다 */}
