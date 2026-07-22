@@ -57,11 +57,15 @@ export interface ShopDetail extends ShopSummary {
  * 목록 쿼리 — 계약 §3 공통 목록 필터(경매·고정가 공유).
  *
  * ★★ **경매 목록과 같은 축을 뺐다**(`auctionFilters` 주와 동일 판단): `mainCategory`(값 1뿐) ·
- *   `skill1`/`skill2`(코드→이름 매핑 API 없음) · `q`/keyword(자유문 검색 없음)는 타입에 두지 않는다.
+ *   `skill1`/`skill2`(코드→이름 매핑 API 없음)는 타입에 두지 않는다.
+ * ★ `q`(자유문 검색)는 계약 §3 C1(EPIC-SEARCH)로 신설됐다 — 경매와 공유되는 공통 목록 필터.
+ *   2~64자·`relevance` 정렬은 화면 정규화(`shopFilters.ts`)가 강제한다(계약 C2·C3).
  * ★ `kind` 는 **`subGroup` 종속**이라 단독 전송 금지(§4.1) — 화면 정규화(`shopFilters`)가 막는다.
  * ★ 정렬 화이트리스트는 경매와 다르다 — `price·endAt·createdAt`(고정가엔 `highestBidAmount` 없음, §3).
  */
 export interface ShopListQuery {
+    /** 자유문 검색(계약 §3 C1). 없으면 생략. 2~64자·`relevance` 정렬과 짝(§C2·C3) */
+    q?: string
     subGroup?: number
     kind?: number
     element?: number
@@ -71,7 +75,10 @@ export interface ShopListQuery {
     minPrice?: number
     maxPrice?: number
     status?: ShopStatus
-    /** `<field>,<asc|desc>` — field 화이트리스트는 `price·endAt·createdAt` */
+    /**
+     * `<field>,<asc|desc>` — field 화이트리스트는 `price·endAt·createdAt`.
+     * `relevance`(관련도순, 방향 없음)는 **`q` 있을 때만** 유효하다(계약 C2).
+     */
     sort?: string
     size?: number
     cursor?: string
@@ -156,7 +163,9 @@ export interface PurchaseShopResponse {
 export function purchaseShop(
     shopPublicId: string,
 ): Promise<PurchaseShopResponse> {
-    return apiClient.post<PurchaseShopResponse>(`/shops/${shopPublicId}/purchase`)
+    return apiClient.post<PurchaseShopResponse>(
+        `/shops/${shopPublicId}/purchase`,
+    )
 }
 
 /**
@@ -187,11 +196,7 @@ export interface MyShopSummary extends ShopSummary {
  *   ACTIVE 로 기본 처리한다(진행 중 리스팅 조회가 1차 용도).
  */
 export type MyShopStatusFilter =
-    | 'ACTIVE'
-    | 'SOLD'
-    | 'EXPIRED'
-    | 'CANCELLED'
-    | 'ALL'
+    'ACTIVE' | 'SOLD' | 'EXPIRED' | 'CANCELLED' | 'ALL'
 
 /**
  * `GET /me/shops` 쿼리 — 판매자 스코프는 서버가 SecurityContext 주체로 도출한다(요청에 seller

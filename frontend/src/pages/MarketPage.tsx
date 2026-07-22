@@ -54,6 +54,8 @@ export default function MarketPage() {
     }
 
     const resetFilters = () => setSearchParams(new URLSearchParams())
+    // 검색만 지운다(필터·정렬은 유지) — 빈 결과 화면의 "검색 지우기" 동선.
+    const clearSearch = () => applyPatch({ q: null })
 
     const {
         data,
@@ -121,9 +123,12 @@ export default function MarketPage() {
             />
 
             <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-gray-500">
+                {/* ★ 검색·필터 결과 수는 aria-live 로 알린다(스크린리더 결과 안내) */}
+                <p aria-live="polite" className="text-xs text-gray-500">
                     {status === 'ready'
-                        ? `${shops.length}건 표시 중`
+                        ? filters.q
+                            ? `'${filters.q}' 검색 결과 ${shops.length}건`
+                            : `${shops.length}건 표시 중`
                         : '검증된 판매자의 고정가 상품'}
                 </p>
                 {balanceQuery.data && (
@@ -175,16 +180,34 @@ export default function MarketPage() {
             {status === 'empty' && (
                 <StateBlock
                     icon={TbSearchOff}
-                    title="조건에 맞는 상품이 없어요"
-                    description="필터를 바꾸거나 초기화해 보세요."
+                    title={
+                        filters.q
+                            ? `'${filters.q}' 검색 결과가 없어요`
+                            : '조건에 맞는 상품이 없어요'
+                    }
+                    description={
+                        filters.q
+                            ? '다른 검색어를 입력하거나 검색을 지워 보세요.'
+                            : '필터를 바꾸거나 초기화해 보세요.'
+                    }
                     action={
-                        <button
-                            type="button"
-                            className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
-                            onClick={resetFilters}
-                        >
-                            필터 초기화
-                        </button>
+                        filters.q ? (
+                            <button
+                                type="button"
+                                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                                onClick={clearSearch}
+                            >
+                                검색 지우기
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                                onClick={resetFilters}
+                            >
+                                필터 초기화
+                            </button>
+                        )
                     }
                 />
             )}

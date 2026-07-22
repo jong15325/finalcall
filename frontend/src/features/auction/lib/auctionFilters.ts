@@ -32,8 +32,13 @@ import type { AuctionListQuery } from '@/lib/api/auctions'
  *   공유된 URL 이 무엇을 거르는지 주소창만 봐도 읽힌다.
  */
 
-/** 화면이 다루는 필터 축 전체. **계약에 없는 축(`q`·keyword)은 여기에 없다.** */
+/** 화면이 다루는 필터 축 전체. */
 export interface AuctionFilterState {
+    /**
+     * 자유문 검색어(계약 §3 C1 · EPIC-SEARCH). 없으면 null. 트림 후 2~64자만 유효하고
+     * (계약 C3) 그 밖은 정규화가 null 로 만든다. `q` 는 코드 축 필터와 AND 결합된다.
+     */
+    q: string | null
     /** 대분류(§3.3.1). `kind` 의 의미를 결정한다 */
     subGroup: number | null
     /** 종류. **`subGroup` 종속** — 단독으로는 null 로 정규화된다 */
@@ -46,7 +51,10 @@ export interface AuctionFilterState {
     maxPrice: number | null
     /** 미지정이면 서버 `statusScope()` 가 SCHEDULED·ACTIVE 만 노출한다(계약 §3.1) */
     status: string | null
-    /** `<field>,<asc|desc>` — 화이트리스트 밖이면 기본값으로 되돌린다 */
+    /**
+     * `<field>,<asc|desc>` 또는 `relevance`(관련도순). 화이트리스트 밖이면 기본값으로 되돌린다.
+     * `relevance` 는 **`q` 가 있을 때만 유효**하다(계약 C2) — q 가 없으면 기본 정렬로 강등된다.
+     */
     sort: string
 }
 
@@ -79,6 +87,18 @@ export const AUCTION_SORT_OPTIONS: readonly {
 export const DEFAULT_SORT = 'endAt,asc'
 
 /*
+ * 관련도순(계약 C2 · EPIC-SEARCH) — **`q` 가 있을 때만** 선택지에 노출된다(무 q 시 서버 400).
+ * 방향(asc/desc)이 없는 단일 토큰이다(서버는 `_score desc` 로 처리). `AUCTION_SORT_FIELDS`
+ * 화이트리스트에는 넣지 않고 `normalizeFilters` 가 별도로 다룬다(q 종속이라 조건이 다르다).
+ */
+export const RELEVANCE_SORT = 'relevance'
+
+export const RELEVANCE_SORT_OPTION = {
+    value: RELEVANCE_SORT,
+    label: '관련도순',
+} as const
+
+/*
  * 상태 — 계약 §3.1 `AuctionStatus`.
  *
  * ★★ **빈 값이 "전체"가 아니다.** 서버 `statusScope()` 는 status 미지정 시 SCHEDULED·ACTIVE
@@ -100,6 +120,7 @@ export const AUCTION_STATUS_OPTIONS: readonly {
 ]
 
 export const EMPTY_FILTERS: AuctionFilterState = {
+    q: null,
     subGroup: null,
     kind: null,
     element: null,
@@ -110,6 +131,14 @@ export const EMPTY_FILTERS: AuctionFilterState = {
     maxPrice: null,
     status: null,
     sort: DEFAULT_SORT,
+}
+
+/** 검색어 위생 — 트림 후 2~64자만 통과(계약 C3). 그 밖은 null(검색 안 함). */
+function normalizeQ(raw: string | null | undefined): string | null {
+    if (raw === null || raw === undefined) return null
+    const trimmed = String(raw).trim()
+    if (trimmed.length < 2 || trimmed.length > 64) return null
+    return trimmed
 }
 
 /** 0 이상 정수만 통과. `"abc"`·`-1`·`1.5` 는 전부 null(서버에 쓰레기를 보내지 않는다). */
@@ -177,12 +206,11 @@ export function normalizeFilters(
 
     const status = raw.status ? String(raw.status) : null
 
-    const sortField = raw.sort ? String(raw.sort).split(',')[0] : ''
-    const sort = AUCTION_SORT_FIELDS.includes(sortField)
-        ? String(raw.sort)
-        : DEFAULT_SORT
+    const q = normalizeQ(raw.q)
+    const sort = normalizeSort(raw.sort, q !== null)
 
     return {
+        q,
         subGroup,
         kind,
         element,
@@ -196,11 +224,24 @@ export function normalizeFilters(
     }
 }
 
+/**
+ * 정렬 정규화 — 계약 C2 의 `relevance`·`q` 종속을 한곳에서 강제한다.
+ *  - `relevance` 는 **q 있을 때만** 유효(없으면 기본 정렬로 강등 → 무 q + relevance 400 원천 차단).
+ *  - 화이트리스트(field) 밖·미지정이면 기본값. 단 **q 있고 미지정이면 관련도순이 기본**이다.
+ */
+function normalizeSort(raw: string | undefined | null, hasQ: boolean): string {
+    const field = raw ? String(raw).split(',')[0] : ''
+    if (field === RELEVANCE_SORT) return hasQ ? RELEVANCE_SORT : DEFAULT_SORT
+    if (AUCTION_SORT_FIELDS.includes(field)) return String(raw)
+    return hasQ ? RELEVANCE_SORT : DEFAULT_SORT
+}
+
 /** URL → 상태. 정규화를 거치므로 **손으로 고친 주소도 안전하다**(위 ★★ ③). */
 export function parseAuctionFilters(
     params: URLSearchParams,
 ): AuctionFilterState {
     return normalizeFilters({
+        q: params.get('q'),
         subGroup: params.get('subGroup'),
         kind: params.get('kind'),
         element: params.get('element'),
@@ -224,6 +265,7 @@ export function toSearchParams(state: AuctionFilterState): URLSearchParams {
         if (value !== null && value !== '') params.set(key, String(value))
     }
 
+    put('q', state.q)
     put('subGroup', state.subGroup)
     put('kind', state.kind)
     put('element', state.element)
@@ -233,7 +275,9 @@ export function toSearchParams(state: AuctionFilterState): URLSearchParams {
     put('minPrice', state.minPrice)
     put('maxPrice', state.maxPrice)
     put('status', state.status)
-    if (state.sort !== DEFAULT_SORT) params.set('sort', state.sort)
+    // ★ 기본 정렬은 q 여부에 따라 다르다(계약 C2) — q 있으면 relevance 가 기본이라 URL 에서 생략.
+    const defaultSort = state.q !== null ? RELEVANCE_SORT : DEFAULT_SORT
+    if (state.sort !== defaultSort) params.set('sort', state.sort)
 
     return params
 }
@@ -252,6 +296,7 @@ export function toListQuery(
     size: number,
 ): AuctionListQuery {
     return {
+        q: state.q ?? undefined,
         subGroup: state.subGroup ?? undefined,
         kind: state.kind ?? undefined,
         element: state.element ?? undefined,
@@ -264,6 +309,23 @@ export function toListQuery(
         sort: state.sort,
         size,
     }
+}
+
+/**
+ * 검색어 입력 → 필터 patch (계약 C2 기본 정렬).
+ *
+ * ★ 검색어를 **새로 넣을 때** 정렬이 기본값이면 관련도순으로 승격한다 — 명시 정렬(가격·마감 등)은
+ *   보존한다. 지울 때(빈 문자열)는 `q=null` 만 넘기고, relevance→기본 강등은 `normalizeFilters`
+ *   가 처리한다. URL 직접 진입(`?q=...` sort 생략)도 정규화가 같은 결과(관련도순)를 만든다.
+ */
+export function searchPatch(
+    state: AuctionFilterState,
+    q: string,
+): Partial<AuctionFilterState> {
+    const next = q.trim().length >= 2 ? q.trim() : null
+    const promote =
+        next !== null && state.q === null && state.sort === DEFAULT_SORT
+    return promote ? { q: next, sort: RELEVANCE_SORT } : { q: next }
 }
 
 /** 적용된 필터 칩 하나. `patch` 를 적용하면 그 축만 풀린다(정규화가 뒤처리를 한다). */

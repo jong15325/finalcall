@@ -1,18 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import {
+    EMPTY_SHOP_FILTERS,
     SHOP_DEFAULT_SORT,
+    SHOP_RELEVANCE_SORT,
     activeShopFilterChipsOf,
     normalizeShopFilters,
     parseShopFilters,
+    shopSearchPatch,
     toShopListQuery,
     toShopSearchParams,
 } from './shopFilters'
 
 /**
- * 고정가 마켓 필터 정규화 (계약 §3 · §4.1 · §3.3.1) — FC-094.
+ * 고정가 마켓 필터 정규화 (계약 §3 · §4.1 · §3.3.1) — FC-094 · 검색 FC-108.
  *
  * 고정하는 것: `kind` 는 `subGroup` 종속 / 범위 뒤집힘은 맞바꾼다 / 정렬 화이트리스트 /
- * URL 왕복 / 고정가 정렬엔 `highestBidAmount` 가 없다.
+ * URL 왕복 / 고정가 정렬엔 `highestBidAmount` 가 없다 / 자유문 `q`·`relevance`(EPIC-SEARCH).
  */
 
 describe('normalizeShopFilters', () => {
@@ -40,10 +43,12 @@ describe('normalizeShopFilters', () => {
     })
 
     it('화이트리스트 밖 정렬은 기본값으로 되돌린다', () => {
-        expect(normalizeShopFilters({ sort: 'highestBidAmount,desc' }).sort).toBe(
-            SHOP_DEFAULT_SORT,
+        expect(
+            normalizeShopFilters({ sort: 'highestBidAmount,desc' }).sort,
+        ).toBe(SHOP_DEFAULT_SORT)
+        expect(normalizeShopFilters({ sort: 'price,asc' }).sort).toBe(
+            'price,asc',
         )
-        expect(normalizeShopFilters({ sort: 'price,asc' }).sort).toBe('price,asc')
     })
 })
 
@@ -74,6 +79,46 @@ describe('URL 왕복', () => {
     it('기본 정렬은 URL 에 적지 않는다', () => {
         const params = toShopSearchParams(normalizeShopFilters({}))
         expect(params.has('sort')).toBe(false)
+    })
+})
+
+describe('자유문 검색 q · 관련도순 relevance — 계약 C1~C3 (EPIC-SEARCH)', () => {
+    it('q 가 없으면 쿼리·URL 에서 빠진다', () => {
+        expect(toShopListQuery(EMPTY_SHOP_FILTERS, 24).q).toBeUndefined()
+        expect(toShopSearchParams(EMPTY_SHOP_FILTERS).has('q')).toBe(false)
+    })
+
+    it('2~64자만 통과하고 트림된다(1자·65자는 버림 — C3)', () => {
+        expect(normalizeShopFilters({ q: '  물의 검 ' }).q).toBe('물의 검')
+        expect(normalizeShopFilters({ q: '불' }).q).toBeNull()
+        expect(normalizeShopFilters({ q: 'a'.repeat(65) }).q).toBeNull()
+    })
+
+    it('★ q 없이 relevance 정렬은 기본 정렬로 강등된다(무 q relevance 는 서버 400 — C2)', () => {
+        expect(normalizeShopFilters({ sort: SHOP_RELEVANCE_SORT }).sort).toBe(
+            SHOP_DEFAULT_SORT,
+        )
+    })
+
+    it('q 있고 정렬 미지정이면 관련도순이 기본이고 URL 에서 생략된다', () => {
+        const state = normalizeShopFilters({ q: '불꽃검' })
+        expect(state.sort).toBe(SHOP_RELEVANCE_SORT)
+        expect(toShopSearchParams(state).has('sort')).toBe(false)
+        expect(toShopSearchParams(state).get('q')).toBe('불꽃검')
+    })
+
+    it('★ shopSearchPatch — 최초 입력 시 기본 정렬이면 관련도순 승격, 명시 정렬은 보존', () => {
+        expect(shopSearchPatch(EMPTY_SHOP_FILTERS, '불꽃검')).toEqual({
+            q: '불꽃검',
+            sort: SHOP_RELEVANCE_SORT,
+        })
+        const explicit = normalizeShopFilters({ sort: 'price,asc' })
+        expect(shopSearchPatch(explicit, '불꽃검')).toEqual({ q: '불꽃검' })
+    })
+
+    it('URL 에 q 를 실어 왕복해도 보존된다', () => {
+        const state = normalizeShopFilters({ q: '불꽃검', sort: 'price,desc' })
+        expect(parseShopFilters(toShopSearchParams(state))).toEqual(state)
     })
 })
 

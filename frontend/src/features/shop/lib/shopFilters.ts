@@ -25,8 +25,13 @@ import type { ShopListQuery } from '@/lib/api/shop'
  * ★ **URL 파라미터명 = 계약 쿼리명**이다 — 링크가 곧 API 요청이라 번역 표가 필요 없다.
  */
 
-/** 화면이 다루는 필터 축 전체. **계약에 없는 축(`q`·keyword)은 여기에 없다.** */
+/** 화면이 다루는 필터 축 전체. */
 export interface ShopFilterState {
+    /**
+     * 자유문 검색어(계약 §3 C1 · EPIC-SEARCH). 없으면 null. 트림 후 2~64자만 유효하고
+     * (계약 C3) 그 밖은 정규화가 null 로 만든다. `q` 는 코드 축 필터와 AND 결합된다.
+     */
+    q: string | null
     /** 대분류(§3.3.1). `kind` 의 의미를 결정한다 */
     subGroup: number | null
     /** 종류. **`subGroup` 종속** — 단독으로는 null 로 정규화된다 */
@@ -37,12 +42,19 @@ export interface ShopFilterState {
     goldforceActive: boolean
     minPrice: number | null
     maxPrice: number | null
-    /** `<field>,<asc|desc>` — 화이트리스트 밖이면 기본값으로 되돌린다 */
+    /**
+     * `<field>,<asc|desc>` 또는 `relevance`(관련도순). 화이트리스트 밖이면 기본값으로 되돌린다.
+     * `relevance` 는 **`q` 가 있을 때만 유효**하다(계약 C2) — q 가 없으면 기본 정렬로 강등된다.
+     */
     sort: string
 }
 
 /** 정렬 — 계약 §3 고정가 화이트리스트(`price·endAt·createdAt`). **입찰가 정렬 없음.** */
-export const SHOP_SORT_FIELDS: readonly string[] = ['price', 'endAt', 'createdAt']
+export const SHOP_SORT_FIELDS: readonly string[] = [
+    'price',
+    'endAt',
+    'createdAt',
+]
 
 export const SHOP_SORT_OPTIONS: readonly { value: string; label: string }[] = [
     { value: 'createdAt,desc', label: '최근 등록순' },
@@ -53,7 +65,20 @@ export const SHOP_SORT_OPTIONS: readonly { value: string; label: string }[] = [
 
 export const SHOP_DEFAULT_SORT = 'createdAt,desc'
 
+/*
+ * 관련도순(계약 C2 · EPIC-SEARCH) — **`q` 가 있을 때만** 선택지에 노출된다(무 q 시 서버 400).
+ * 방향이 없는 단일 토큰이다(서버는 `_score desc` 로 처리). 화이트리스트에는 넣지 않고
+ * `normalizeShopFilters` 가 별도로 다룬다(q 종속이라 조건이 다르다).
+ */
+export const SHOP_RELEVANCE_SORT = 'relevance'
+
+export const SHOP_RELEVANCE_SORT_OPTION = {
+    value: SHOP_RELEVANCE_SORT,
+    label: '관련도순',
+} as const
+
 export const EMPTY_SHOP_FILTERS: ShopFilterState = {
+    q: null,
     subGroup: null,
     kind: null,
     element: null,
@@ -63,6 +88,14 @@ export const EMPTY_SHOP_FILTERS: ShopFilterState = {
     minPrice: null,
     maxPrice: null,
     sort: SHOP_DEFAULT_SORT,
+}
+
+/** 검색어 위생 — 트림 후 2~64자만 통과(계약 C3). 그 밖은 null(검색 안 함). */
+function normalizeQ(raw: string | null | undefined): string | null {
+    if (raw === null || raw === undefined) return null
+    const trimmed = String(raw).trim()
+    if (trimmed.length < 2 || trimmed.length > 64) return null
+    return trimmed
 }
 
 /** 0 이상 정수만 통과. `"abc"`·`-1`·`1.5` 는 전부 null(서버에 쓰레기를 보내지 않는다). */
@@ -124,12 +157,11 @@ export function normalizeShopFilters(
         ;[minPrice, maxPrice] = [maxPrice, minPrice]
     }
 
-    const sortField = raw.sort ? String(raw.sort).split(',')[0] : ''
-    const sort = SHOP_SORT_FIELDS.includes(sortField)
-        ? String(raw.sort)
-        : SHOP_DEFAULT_SORT
+    const q = normalizeQ(raw.q)
+    const sort = normalizeSort(raw.sort, q !== null)
 
     return {
+        q,
         subGroup,
         kind,
         element,
@@ -142,9 +174,23 @@ export function normalizeShopFilters(
     }
 }
 
+/**
+ * 정렬 정규화 — 계약 C2 의 `relevance`·`q` 종속을 한곳에서 강제한다.
+ *  - `relevance` 는 **q 있을 때만** 유효(없으면 기본 정렬로 강등 → 무 q + relevance 400 원천 차단).
+ *  - 화이트리스트 밖·미지정이면 기본값. 단 **q 있고 미지정이면 관련도순이 기본**이다.
+ */
+function normalizeSort(raw: string | undefined | null, hasQ: boolean): string {
+    const field = raw ? String(raw).split(',')[0] : ''
+    if (field === SHOP_RELEVANCE_SORT)
+        return hasQ ? SHOP_RELEVANCE_SORT : SHOP_DEFAULT_SORT
+    if (SHOP_SORT_FIELDS.includes(field)) return String(raw)
+    return hasQ ? SHOP_RELEVANCE_SORT : SHOP_DEFAULT_SORT
+}
+
 /** URL → 상태. 정규화를 거치므로 **손으로 고친 주소도 안전하다**. */
 export function parseShopFilters(params: URLSearchParams): ShopFilterState {
     return normalizeShopFilters({
+        q: params.get('q'),
         subGroup: params.get('subGroup'),
         kind: params.get('kind'),
         element: params.get('element'),
@@ -164,6 +210,7 @@ export function toShopSearchParams(state: ShopFilterState): URLSearchParams {
         if (value !== null && value !== '') params.set(key, String(value))
     }
 
+    put('q', state.q)
     put('subGroup', state.subGroup)
     put('kind', state.kind)
     put('element', state.element)
@@ -172,7 +219,10 @@ export function toShopSearchParams(state: ShopFilterState): URLSearchParams {
     if (state.goldforceActive) params.set('goldforceActive', 'true')
     put('minPrice', state.minPrice)
     put('maxPrice', state.maxPrice)
-    if (state.sort !== SHOP_DEFAULT_SORT) params.set('sort', state.sort)
+    // ★ 기본 정렬은 q 여부에 따라 다르다(계약 C2) — q 있으면 relevance 가 기본이라 URL 에서 생략.
+    const defaultSort =
+        state.q !== null ? SHOP_RELEVANCE_SORT : SHOP_DEFAULT_SORT
+    if (state.sort !== defaultSort) params.set('sort', state.sort)
 
     return params
 }
@@ -188,6 +238,7 @@ export function toShopListQuery(
     size: number,
 ): ShopListQuery {
     return {
+        q: state.q ?? undefined,
         subGroup: state.subGroup ?? undefined,
         kind: state.kind ?? undefined,
         element: state.element ?? undefined,
@@ -199,6 +250,23 @@ export function toShopListQuery(
         sort: state.sort,
         size,
     }
+}
+
+/**
+ * 검색어 입력 → 필터 patch (계약 C2 기본 정렬).
+ *
+ * ★ 검색어를 **새로 넣을 때** 정렬이 기본값이면 관련도순으로 승격한다 — 명시 정렬은 보존한다.
+ *   지울 때(빈 문자열)는 `q=null` 만 넘기고, relevance→기본 강등은 `normalizeShopFilters` 가
+ *   처리한다(경매 `searchPatch` 와 동형).
+ */
+export function shopSearchPatch(
+    state: ShopFilterState,
+    q: string,
+): Partial<ShopFilterState> {
+    const next = q.trim().length >= 2 ? q.trim() : null
+    const promote =
+        next !== null && state.q === null && state.sort === SHOP_DEFAULT_SORT
+    return promote ? { q: next, sort: SHOP_RELEVANCE_SORT } : { q: next }
 }
 
 /** 적용된 필터 칩 하나. `patch` 를 적용하면 그 축만 풀린다(정규화가 뒤처리를 한다). */

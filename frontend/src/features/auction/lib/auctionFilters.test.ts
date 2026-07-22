@@ -5,23 +5,26 @@ import {
     AUCTION_STATUS_OPTIONS,
     DEFAULT_SORT,
     EMPTY_FILTERS,
+    RELEVANCE_SORT,
     activeFilterChipsOf,
     countActiveFilters,
     normalizeFilters,
     parseAuctionFilters,
+    searchPatch,
     toListQuery,
     toSearchParams,
 } from './auctionFilters'
 
 /**
- * 경매 목록 필터 정규화 (FC-059).
+ * 경매 목록 필터 정규화 (FC-059 · 검색 FC-108).
  *
  * 이 파일이 고정하는 것:
  *  1. **★★ `kind` 는 `subGroup` 없이 서버로 나가지 않는다** — 계약 §4.1 이 "서버는 400 으로
  *     막지 않는다, 다의성 해소는 클라이언트 책임"이라 못 박았으므로 **이 테스트가 유일한 방어**다.
  *  2. **정렬 화이트리스트** — `bidCount` 는 계약에 없다.
- *  3. **계약에 없는 축을 만들지 않았다** — `q`·`mainCategory`·`skill1`·`skill2`.
- *  4. URL ↔ 상태 왕복 무손실.
+ *  3. **자유문 검색(`q`) 규약** — 2~64자·`relevance` q 종속(계약 C1~C3, EPIC-SEARCH).
+ *  4. **계약에 없는 축은 여전히 안 만든다** — `mainCategory`·`skill1`·`skill2`.
+ *  5. URL ↔ 상태 왕복 무손실.
  */
 
 describe('★★ kind 종속 — 다의성 해소는 클라이언트 책임 (계약 §4.1)', () => {
@@ -105,14 +108,7 @@ describe('정렬 — 계약 §3 화이트리스트', () => {
     })
 })
 
-describe('★ 계약에 없는 축은 만들지 않았다', () => {
-    it('자유문 검색(q·keyword)이 쿼리에 없다 — 계약에 없어 동작하지 않는 컨트롤이 된다', () => {
-        const query = toListQuery(EMPTY_FILTERS, 24) as Record<string, unknown>
-        expect(query).not.toHaveProperty('q')
-        expect(query).not.toHaveProperty('keyword')
-        expect(query).not.toHaveProperty('search')
-    })
-
+describe('★ 계약에 없는 축은 여전히 안 만든다', () => {
     it('mainCategory 는 값이 1뿐이라 축이 되지 않는다 — 쿼리에 없다', () => {
         const query = toListQuery(EMPTY_FILTERS, 24) as Record<string, unknown>
         expect(query).not.toHaveProperty('mainCategory')
@@ -123,10 +119,82 @@ describe('★ 계약에 없는 축은 만들지 않았다', () => {
         expect(query).not.toHaveProperty('skill1')
         expect(query).not.toHaveProperty('skill2')
     })
+})
 
-    it('URL 에 q 가 실려 들어와도 무시된다', () => {
-        const state = parseAuctionFilters(new URLSearchParams('q=물의검'))
-        expect(state).toEqual(EMPTY_FILTERS)
+describe('자유문 검색 q — 계약 C1·C3 (EPIC-SEARCH)', () => {
+    it('q 가 없으면 쿼리에서 빠진다(undefined → apiClient 가 제외)', () => {
+        expect(toListQuery(EMPTY_FILTERS, 24).q).toBeUndefined()
+        expect(toSearchParams(EMPTY_FILTERS).has('q')).toBe(false)
+    })
+
+    it('2~64자 검색어는 트림돼 살아남는다', () => {
+        const state = normalizeFilters({ q: '  물의 검  ' })
+        expect(state.q).toBe('물의 검')
+        expect(toListQuery(state, 24).q).toBe('물의 검')
+    })
+
+    it('★ 1자 검색어는 버린다 — 최소 2자(C3), 서버 400 조합을 만들지 않는다', () => {
+        expect(normalizeFilters({ q: '불' }).q).toBeNull()
+        expect(parseAuctionFilters(new URLSearchParams('q=불')).q).toBeNull()
+    })
+
+    it('★ 64자 초과는 버린다 — 비용 상한(C3)', () => {
+        expect(normalizeFilters({ q: 'a'.repeat(65) }).q).toBeNull()
+        expect(normalizeFilters({ q: 'a'.repeat(64) }).q).toBe('a'.repeat(64))
+    })
+
+    it('URL 의 q 가 상태로 읽히고 되쓰기까지 왕복한다', () => {
+        const state = parseAuctionFilters(new URLSearchParams('q=불꽃검'))
+        expect(state.q).toBe('불꽃검')
+        expect(toSearchParams(state).get('q')).toBe('불꽃검')
+    })
+})
+
+describe('관련도순 relevance — q 종속 (계약 C2)', () => {
+    it('★ q 없이 relevance 정렬은 기본 정렬로 강등된다 — 무 q relevance 는 서버 400', () => {
+        expect(normalizeFilters({ sort: RELEVANCE_SORT }).sort).toBe(
+            DEFAULT_SORT,
+        )
+        expect(
+            parseAuctionFilters(new URLSearchParams('sort=relevance')).sort,
+        ).toBe(DEFAULT_SORT)
+    })
+
+    it('q 있고 정렬 미지정이면 관련도순이 기본이다', () => {
+        expect(normalizeFilters({ q: '불꽃검' }).sort).toBe(RELEVANCE_SORT)
+        expect(parseAuctionFilters(new URLSearchParams('q=불꽃검')).sort).toBe(
+            RELEVANCE_SORT,
+        )
+    })
+
+    it('q 있으면 relevance 정렬이 유효하고 URL 기본이라 생략된다', () => {
+        const state = normalizeFilters({ q: '불꽃검', sort: RELEVANCE_SORT })
+        expect(state.sort).toBe(RELEVANCE_SORT)
+        expect(toSearchParams(state).has('sort')).toBe(false)
+    })
+
+    it('q 있어도 명시 정렬(가격 등)은 보존된다', () => {
+        const state = normalizeFilters({ q: '불꽃검', sort: 'price,asc' })
+        expect(state.sort).toBe('price,asc')
+        expect(toSearchParams(state).get('sort')).toBe('price,asc')
+    })
+
+    it('★ searchPatch — 검색어 최초 입력 시 기본 정렬이면 관련도순으로 승격한다', () => {
+        const patch = searchPatch(EMPTY_FILTERS, '불꽃검')
+        expect(patch).toEqual({ q: '불꽃검', sort: RELEVANCE_SORT })
+    })
+
+    it('searchPatch — 명시 정렬 중이면 승격하지 않는다', () => {
+        const state = normalizeFilters({ sort: 'price,desc' })
+        expect(searchPatch(state, '불꽃검')).toEqual({ q: '불꽃검' })
+    })
+
+    it('searchPatch — 빈 문자열은 q=null(검색 해제)만 넘긴다', () => {
+        const state = normalizeFilters({ q: '불꽃검', sort: RELEVANCE_SORT })
+        const next = normalizeFilters({ ...state, ...searchPatch(state, '') })
+        expect(next.q).toBeNull()
+        // relevance → 기본 정렬로 강등(q 사라짐)
+        expect(next.sort).toBe(DEFAULT_SORT)
     })
 })
 
