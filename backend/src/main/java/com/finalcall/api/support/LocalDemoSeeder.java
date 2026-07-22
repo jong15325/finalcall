@@ -2,10 +2,13 @@ package com.finalcall.api.support;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -14,12 +17,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import com.finalcall.api.support.LocalDemoDataService.ListedSeed;
 import com.finalcall.domain.auction.AuctionRegisterCommand;
 import com.finalcall.domain.auction.AuctionRegisterResult;
 import com.finalcall.domain.auction.AuctionService;
 import com.finalcall.domain.auth.AuthService;
 import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.bid.BidService;
+import com.finalcall.domain.item.ItemTemplate;
+import com.finalcall.domain.item.ItemTemplateRepository;
 import com.finalcall.domain.member.User;
 import com.finalcall.domain.member.UserRepository;
 
@@ -59,12 +65,22 @@ public class LocalDemoSeeder implements ApplicationRunner {
     /** 멱등 마커 계정 — 존재하면 이미 시드된 것으로 보고 건너뛴다. */
     private static final String MARKER_LOGIN_ID = "demo1";
     private static final long SOFT_CLOSE_BUFFER_SEC = 600L;
+    /** 대량 마켓 시드의 결정성 난수 시드(재부팅 시 동일 분포 재현). */
+    private static final long MARKET_RANDOM_SEED = 980_425L;
+    /** 대량 마켓 시드 판매자 핸들(다수 판매자 분산 — sellerNickname·마스킹 다양성). */
+    private static final List<String> MARKET_SELLERS = List.of("demo1", "demo2", "demo3", "demo4", "demo5", "demo6",
+        "demo7", "demo8", "demo9", "demo10");
 
     private final UserRepository userRepository;
     private final AuthService authService;
     private final AuctionService auctionService;
     private final BidService bidService;
     private final LocalDemoDataService data;
+    private final ItemTemplateRepository itemTemplateRepository;
+
+    /** 대량 마켓 리스팅 건수(기본 5000, 테스트는 소량으로 내려 부팅을 빠르게 한다). */
+    @Value("${demo.seed.market-count:5000}")
+    private int marketCount;
 
     /** handle(demo1..demo10) → 내부 PK. */
     private final Map<String, Long> userIds = new HashMap<>();
@@ -82,7 +98,9 @@ public class LocalDemoSeeder implements ApplicationRunner {
             seedMembers();
             seedInventoryAndTemp();
             seedAuctions();
-            log.info("[LocalDemoSeeder] 완료 — 회원 {}명, 곧-마감 경매는 마감 워커가 실시간 정산", userIds.size());
+            int listed = seedMarket();
+            log.info("[LocalDemoSeeder] 완료 — 회원 {}명, 고정가 마켓 {}건, 곧-마감 경매는 마감 워커가 실시간 정산",
+                userIds.size(), listed);
         } catch (RuntimeException ex) {
             log.error("[LocalDemoSeeder] 시드 실패(부분 주입 가능) — 스키마·데이터 확인 필요", ex);
         } finally {
@@ -201,6 +219,96 @@ public class LocalDemoSeeder implements ApplicationRunner {
             authenticateAs(userIds.get(bid.handle()));
             bidService.place(new BidPlaceCommand(result.auctionPublicId(), bid.amount()));
         }
+    }
+
+    // ---------------- 4) 대량 고정가 마켓(FC-098) ----------------
+
+    /**
+     * 고정가 마켓을 실데이터 규모(기본 5000건)로 채운다(skill-exposure-spec §3). LISTED-direct + shop 직접 INSERT
+     * 배치로 발행하며(정식 register 회피), item_template 40종 × skill_definition 244 다양성·다수 판매자 분산·넓은
+     * 가격 분포·동적 end_at 으로 정렬·필터·무한스크롤이 실감나게 한다. 결정성 난수라 재부팅 시 동일 분포를
+     * 재현하고, idempotency 는 demo1 마커(run 진입 가드)가 보증한다.
+     *
+     * @return 발행된 리스팅 수
+     */
+    private int seedMarket() {
+        if (marketCount <= 0) {
+            return 0;
+        }
+        List<ItemTemplate> templates = itemTemplateRepository.findAll();
+        if (templates.isEmpty()) {
+            log.warn("[LocalDemoSeeder] 템플릿이 비어 마켓 시드를 건너뜀");
+            return 0;
+        }
+        Random rnd = new Random(MARKET_RANDOM_SEED);
+        List<ListedSeed> seeds = new ArrayList<>(marketCount);
+        Instant now = Instant.now();
+        for (int i = 0; i < marketCount; i++) {
+            ItemTemplate template = templates.get(rnd.nextInt(templates.size()));
+            boolean magic = template.getSubGroup() == 3; // 마법: 스킬1 구조적 부재(§6)
+            int level = 1 + rnd.nextInt(9); // 1~9
+
+            Integer skill1 = magic ? null : maybeSkill1(rnd);
+            Integer skill2 = maybeSkill2(rnd);
+            int skillPercent = (skill1 == null && skill2 == null) ? 0 : 1 + rnd.nextInt(levelMaxPercent(level));
+            Instant gfExpireAt = rnd.nextInt(10) < 3 // ~30% 골드포스 활성
+                ? now.plus(5 + rnd.nextInt(86), ChronoUnit.DAYS)
+                : null;
+            long price = randomPrice(rnd);
+            Instant endAt = now.plusSeconds((1 + rnd.nextInt(30)) * 86_400L + rnd.nextInt(86_400));
+            Long sellerId = userIds.get(MARKET_SELLERS.get(rnd.nextInt(MARKET_SELLERS.size())));
+
+            seeds.add(new ListedSeed(sellerId, template.getTypeCode(), level, skill1, skill2, skillPercent,
+                gfExpireAt, price, endAt));
+        }
+        return data.bulkCreateListedShopItems(seeds, 1);
+    }
+
+    /** 스킬1 슬롯(100~197). ~15% 부재(null). */
+    private Integer maybeSkill1(Random rnd) {
+        return rnd.nextInt(100) < 15 ? null : 100 + rnd.nextInt(98);
+    }
+
+    /** 스킬2 슬롯(200~209 + 300~435). ~35% 부재(null). 210~299 는 미시드 코드라 제외한다. */
+    private Integer maybeSkill2(Random rnd) {
+        if (rnd.nextInt(100) < 35) {
+            return null;
+        }
+        int pick = rnd.nextInt(146); // 10(200~209) + 136(300~435)
+        return pick < 10 ? 200 + pick : 300 + (pick - 10);
+    }
+
+    /** §2 레벨별 퍼센트 상한(표시 레벨 1~9). 데모라 근사 상한만 쓴다(초과 무해). */
+    private int levelMaxPercent(int level) {
+        return switch (level) {
+            case 1 -> 9;
+            case 2 -> 15;
+            case 3 -> 19;
+            case 4 -> 23;
+            case 5 -> 25;
+            case 6 -> 27;
+            case 7 -> 31;
+            case 8 -> 33;
+            default -> 36;
+        };
+    }
+
+    /** 넓은 가격 분포(수만~수억) — 정렬·필터·무한스크롤 체감용. 저가일수록 흔하게 가중한다. */
+    private long randomPrice(Random rnd) {
+        double roll = rnd.nextDouble();
+        if (roll < 0.35) {
+            return 10_000L + rnd.nextInt(90_000);
+        }
+        if (roll < 0.65) {
+            return 100_000L + rnd.nextInt(900_000);
+        }
+        if (roll < 0.85) {
+            return 1_000_000L + rnd.nextInt(9_000_000);
+        }
+        if (roll < 0.97) {
+            return 10_000_000L + rnd.nextInt(90_000_000);
+        }
+        return 100_000_000L + rnd.nextInt(400_000_000);
     }
 
     // ---------------- 헬퍼 ----------------
