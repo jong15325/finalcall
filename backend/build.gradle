@@ -77,6 +77,13 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// EPIC-SEARCH(FC-107): ES Java 클라이언트/서버 버전 정합. Spring Boot 3.5.16 이 관리하는 co.elastic.clients:
+//   elasticsearch-java 는 8.18.8 이고 spring-data-elasticsearch 가 그 API(예: ApiClient.close())에 의존한다.
+//   클라이언트를 8.15.3 으로 낮추면 spring-data-elasticsearch 가 NoSuchMethodError 로 부팅 실패한다 →
+//   ★ 클라이언트 다운핀은 불가. 대신 ES 서버를 클라이언트 버전(8.18.8)에 맞춘다(Dockerfile/compose/test = 8.18.8).
+//   신버전 클라 ↔ 구버전 서버 조합은 HealthResponse.unassignedPrimaryShards 등 required 필드 부재로 역직렬화가
+//   깨진다(검색 503·health DOWN) — 서버를 올려 정합시킨다.
+
 tasks.named('test') {
 	useJUnitPlatform()
 }

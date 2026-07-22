@@ -49,7 +49,7 @@ class ListingSearchIntegrationTest {
 
     @Container
     static final ElasticsearchContainer ES = new ElasticsearchContainer(
-        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.15.3"))
+        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.18.8"))
         .withEnv("xpack.security.enabled", "false")
         .withEnv("discovery.type", "single-node")
         .withReuse(true);

@@ -83,7 +83,7 @@ services:
   elasticsearch:
     build:
       context: ./docker/search/elasticsearch
-    image: finalcall-elasticsearch-nori:8.15.3
+    image: finalcall-elasticsearch-nori:8.18.8
     container_name: finalcall-elasticsearch
     ports:
       - "9200:9200"

@@ -12,7 +12,7 @@ Elasticsearch(nori) + Kafka(KRaft) + Kafka Connect(Debezium MySQL source → ES 
 | 컨테이너 | 이미지 | 역할 | 포트 |
 |---|---|---|---|
 | finalcall-mysql | mysql:8.0 (+binlog) | SoT + binlog 소스 | 3306 |
-| finalcall-elasticsearch | 커스텀(elasticsearch:8.15.3 + analysis-nori) | 검색 read-model | 9200 |
+| finalcall-elasticsearch | 커스텀(elasticsearch:8.18.8 + analysis-nori) | 검색 read-model | 9200 |
 | finalcall-kafka | apache/kafka:3.8.0 (KRaft) | CDC 이벤트 버스 | 9092(내부)/29092(호스트) |
 | finalcall-kafka-connect | 커스텀(debezium/connect:2.7 + Aiven ES sink) | 커넥터 런타임 | 8083 |
 
@@ -36,7 +36,9 @@ docker compose -f docker-compose.local.yml up -d --build
 # 2) Debezium 캡처 계정 생성(기존 MySQL 볼륨 보존 → initdb 자동 실행 안 되므로 수동 1회)
 docker exec -i finalcall-mysql mysql -uroot -proot < docker/search/mysql/debezium-user.sql
 
-# 3) listings 인덱스 + alias 생성(nori/ngram 매핑) — ★ 앱 부팅 재색인 전에 인덱스가 있어야 한다
+# 3) 인덱스 템플릿(listings*) 등록 + listings_v1 + alias 생성 — ★ 앱 부팅 재색인/커넥터 전에 실행
+#    템플릿이 매핑(publicId 등 keyword)을 고정한다. 템플릿 없이 문서가 먼저 써지면 인덱스가 동적 매핑(text)으로
+#    자동 생성돼 앱의 publicId 정렬이 실패(검색 503)한다 — 템플릿이 이 함정을 원천 차단한다.
 bash docker/search/create-index.sh
 
 # 4) 커넥터 등록(Debezium source + ES sink) — snapshot.mode=initial 로 기존 행을 스냅샷 백필(CDC 스냅샷 필드)
@@ -110,7 +112,7 @@ curl -s localhost:9200/listings_search/_doc/<public_id> | jq ._source
   **주기 화해/부팅 재색인이 코드축을 재적용**한다(코드축은 리스팅 동안 불변이라 재적용으로 수렴). 텍스트/상태/가격
   검색은 CDC 문서만으로 항상 동작한다. 부분 병합이 필요하면 Confluent 커넥터(현 네트워크 미도달) 또는 ES 8 지원
   Aiven 릴리스가 필요하다 — **환경 제약이지 설계 결함 아님**.
-  - 버전 정합 주의: Aiven v7.0.0 은 ES 7.17 클라이언트를 동봉한다. 본 스택 ES 서버는 8.15 라 sink 는 typeless
+  - 버전 정합 주의: Aiven v7.0.0 은 ES 7.17 클라이언트를 동봉한다. 본 스택 ES 서버는 8.18 라 sink 는 typeless
     bulk(`_id` index/delete)로 동작한다(우리 사용 범위에서 호환). 런타임에 8.x 가 요청을 거부하면 (a) ES 를 7.17 로
     맞추거나 (b) ES 호환 모드를 쓴다. **커넥터 플러그인 로드·빌드는 검증됨**(`GET /connector-plugins` 에
     `io.aiven.connect.elasticsearch.ElasticsearchSinkConnector` 노출), 엔드투엔드 CDC 반영은 런북 스모크로 확인한다.

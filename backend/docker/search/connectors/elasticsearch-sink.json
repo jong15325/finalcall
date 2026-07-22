@@ -29,9 +29,10 @@
     "transforms.injectShopType.static.field": "listingType",
     "transforms.injectShopType.static.value": "SHOP",
     "transforms.injectShopType.predicate": "isShopTopic",
+    "//route-target": "앱이 질의하는 읽기 alias(listings_search → listings_v1)로 라우팅해야 CDC 문서와 앱 enrichment 가 같은 인덱스에 모인다(§12.4). 인덱스 템플릿(listings*)이 alias 쓰기 시에도 올바른 매핑을 보장한다.",
     "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
     "transforms.route.regex": "finalcall\\.finalcall\\.(auction|shop)",
-    "transforms.route.replacement": "listings",
+    "transforms.route.replacement": "listings_search",
 
     "//idempotency": "at-least-once 전달 → 멱등 upsert 필수(§12.3). _id = 메시지 key = public_id(source SMT 승격). Aiven 커넥터는 _id 기준 index(create-or-replace)라 중복 이벤트가 무해하게 수렴한다(멱등). ★ Confluent 의 write.method=upsert(부분 병합)는 미지원이라 CDC 이벤트는 문서를 전체 교체한다 — 불변 코드축은 주기 화해/부팅 재색인(ListingIndexer)이 재적용한다(README 트레이드오프 참조).",
     "key.ignore": "false",
