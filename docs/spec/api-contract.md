@@ -229,6 +229,15 @@ POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
 - 동작: ACTIVE(미판매)일 때 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
 - 응답 200: `{ status }` / 에러 `SHOP_004` 이미 종료(409)
 
+> **⚠ PROPOSAL — EPIC-SHOP(FC-092), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `shop-spec.md` v1.0. 위 §3.2 엔드포인트·§5 SHOP_001~006은 이미 등재돼 있고, 아래는 그 **동작 정밀화**다(신규 엔드포인트·필드·스키마 없음).
+> - **등록(`POST /shops`)**: body `{ itemInstancePublicId, price }` — **기한 입력 필드 없음.** `price > 0`. 서버가 등록 시점에 `end_at = now + 설정 일수`로 **자동 계산**한다(판매자는 기한을 고르지 않는다, 게이트2 정정 2026-07-22). 설정 일수 = 단일 관리자 값 `@ConfigurationProperties` `shop.listing.default-duration-days`(기본 7일, 하드코딩 금지·향후 DB 이관 여지). **기한 범위·판매자 지정·최대값 없음.** 응답에는 계산된 `endAt`을 노출한다(ShopSummary/ShopDetail §3.3). 무기한(end_at NULL)은 스키마만 nullable로 남겨둔 향후 "무기한 노출 캐시아이템"용이며 이 에픽 등록 경로로는 만들지 않는다(shop-spec §3.1).
+> - **`SHOP_001` = 403 단일**(현행 "403/409" 정밀화): 미소유·미보유(TEMP)·미존재를 403으로 통일(AUCTION_001 v1.7 선례, SEC-007 열거 방지). "이미 출품중"(LISTED 충돌)만 `SHOP_002` 409.
+> - **구매(`POST /shops/{id}/purchase`)**: **요청 본문 없음**(금액은 서버가 `shop.price`로 확정 — 클라 금액 신뢰 없음). `finalPrice = shop.price`. 구매자 잔액 직접 차감(홀드 미경유, 입찰·홀드 개념 부재). shop 행 배타 락 + 종료성 CAS(`status='ACTIVE' AND (end_at IS NULL OR end_at > now)`, live)로 단일 승자 — 만료 워커(`end_at<=now`)와 시간축 배타 분할. `AUCTION_009` 대칭으로 `SHOP_006` 자기구매 403.
+> - **`SHOP_004` 라벨 확대**: "이미 판매/종료" = SOLD·**EXPIRED**·CANCELLED(구매·취소 공통). 기한 만료분 포함.
+> - **만료(내부 워커)**: end_at 지난 ACTIVE 리스팅을 워커가 EXPIRED로 전이하고 아이템을 판매자 **임시보관함(TEMP)으로 자동 회수**(소유자 불변, shop-spec §4.4). 외부 API 없음.
+> - **거래내역(§4.3) 무변경**: 고정가 SOLD는 기존 `sale_order`로 핸드오프되어 `GET /me/orders`(`sourceType=SHOP` 필터)·`GET /orders/{id}`에 **자동 유입**한다(서버 `source_type` 제네릭). 역할별 노출(feeAmount·settleAmount 판매자 전용)·IDOR 스코프·SaleOrderResponse 스키마 그대로(purchase-spec §5). 신규 필드 없음.
+> - 승인 시 반영: 버전 로그 v1.14 "게이트2(EPIC-SHOP) 승인 — §3.2 동작 정밀화, §5 SHOP_001 403 단일·SHOP_004 EXPIRED. 엔드포인트·필드·스키마 무변경. 정본 shop-spec v1.0."
+
 ### 3.3 응답 스키마 — 목록/상세 (6절, D-073)
 
 목록/상세 응답의 구체 필드(프론트·QA·디자인 단일 진실). erd 필드·표시 스냅샷 기준. 등급 없음(D-073). 소유자·최고입찰자는 마스킹, 골드포스는 만료시각(활성/잔여는 클라 파생).

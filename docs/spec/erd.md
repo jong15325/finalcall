@@ -27,6 +27,13 @@
 
 확정: 플래그 A(order명 `sale_order`)·B(위치 디스크리미네이터) 모두 확정(1절·2절). G2 통과(2026-07-13). **플랫폼 수수료 정책 = 해소**(종전 ON-HOLD → 게이트2 확정 2026-07-20, 정본 `fee-policy-spec.md`, `sale_order.fee_amount`/`settle_amount`). 남은 미확정 — 캐시↔게임머니 교환비율(ON-HOLD), 아이템 시드 멤버·명칭·수치(원게임 데이터, 시드 단계, D-067).
 
+> **⚠ PROPOSAL — EPIC-SHOP(FC-092), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `shop-spec.md` v1.0.
+> **스키마 컬럼·인덱스 무변경** — `shop` 테이블은 §4.2에, 인덱스는 §5에 **이미 정의**돼 있다. 델타는 채번·semantic뿐:
+> - Flyway §6 group4에 **`V15__shop.sql`** 실물 채번(현재 최신 V14) — `shop` 테이블 최초 생성(§4.2 정의 준수) + 인덱스 `(status,end_at)`·`(seller_id,status)`·`(item_instance_id)`. `price>0`은 앱 검증(auction 선례, DB 체크 제약 미도입).
+> - `end_at` **nullable 유지(컬럼 변경 없음)**. 등록 시 서버가 `end_at = now + shop.listing.default-duration-days`(관리자 설정, 기본 7일)로 **자동 계산**해 채운다(판매자 미선택 — 게이트2 정정 2026-07-22). NULL(무기한, 만료 워커 `end_at IS NOT NULL` 스캔 제외)은 **향후 "무기한 노출 캐시아이템"** 전용이며 이 에픽 범위 밖이다. 유한 기한은 만료 시 EXPIRED + 아이템 TEMP 직행 회수(shop-spec §4.4).
+> - semantic: `sale_order.source_type=SHOP` · `uk_sale_order_source(source_type,source_id)`가 고정가 SOLD 핸드오프에서 **실사용 시작**(종전 정의됨·AUCTION만 기록). 복합 UK라 SHOP/AUCTION의 source_id 수치가 같아도 충돌 없음. `(buyer_id)`·`(seller_id)` 인덱스가 SHOP 거래내역 조회에서 실사용.
+> - 승인 시 반영: 버전 로그 v1.5 "게이트2(EPIC-SHOP) 승인 — shop 테이블 V15 최초 생성, SHOP source_type 실사용. 스키마 컬럼·인덱스 무변경."
+
 ---
 
 ## 1. 네이밍 규칙 선언부 (B-001~004)
