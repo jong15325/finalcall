@@ -38,8 +38,10 @@ FC-109 reviewer   검수(정합성·동기 불일치·화해·주입·성능·�
 ## 온디맨드 보안 리뷰 (2026-07-23, 에픽 완료 직전) — 취약점 0건
 - search 델타(cb91c64·edd9807·fcf7e03) 스코프. **HIGH/MEDIUM 0건**. DSL 인젝션 없음(multi_match·term/range만·query_string/script 미사용·q는 값 슬롯)·커서 디코드 400 안전·IDOR 신규 보안면 없음(공개 목록 additive)·데이터 노출 없음(민감필드 미색인·nickname 마스킹·_source 미반환·DB 하이드레이션)·인프라 로컬 전용·XSS 없음.
 
-## 로컬 스택 기동 이슈 (2026-07-23)
-- kafka-connect 이미지 빌드가 **Confluent Hub CDN(d1i4a15mxbxib1.cloudfront.net) DNS 차단**으로 ES sink 플러그인 다운로드 실패. 이 네트워크 한정 환경 이슈(코드/설계 무관). 대체 소스 도달 확인: packages.confluent.io·Maven Central·GitHub 200 → Dockerfile 소스 재지정으로 해소(FC-107 소형 인프라 수정).
+## 로컬 스택 기동·라이브 실측 (2026-07-23) — 검색 실동작 확인
+- **트러블슈팅 3건(총괄 실측+backend 수정)**: ① kafka-connect 빌드가 Confluent Hub CDN DNS 차단으로 실패 → **Aiven ES sink(GitHub)** 재지정. ② ES 클라(8.18.8)↔서버(8.15.3) 불일치로 검색 503 → **ES 서버 8.18.8 상향 정합**. ③ create-index `//` 주석 결함으로 동적 text 매핑 자동생성→정렬 fielddata 오류 → **인덱스 템플릿 도입**(keyword 고정). 커밋 2301feb·79c4cff.
+- **라이브 검증**: ES 8.18.8+nori + Kafka(KRaft) + Connect(Debezium+Aiven sink) 스택 기동·부팅 재색인 5040건·`GET /shops·/auctions?q=신발`→실결과(nori 매칭·스킬명·코드축)·C2/C3 규약(400/200)·ES health UP. **총괄 브라우저**: /market?q=신발 → "신발" 24건 관련도순. **포트폴리오급 실동작 확인.**
+- **교훈(포트폴리오 가치)**: 폐쇄망 CDN 우회·라이브러리 버전 정합·인덱스 매핑 함정(동적매핑 vs 템플릿)·정렬 fielddata — 실무 검색 인프라 운영 트러블슈팅 사례. reviewer 코드리뷰(정적)가 못 잡은 매핑 버그를 라이브 실측이 잡음.
 
 ## 범위 밖
 - 등급 부스트(EPIC-GRADE 선행) · 오타허용/동의어 고도화(엔진 도입 후 튜닝) · item-templates 검색 · 패싯 UI(엔진은 지원하나 UI는 후속) · 운영 클러스터(로컬 데모 우선).
