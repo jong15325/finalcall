@@ -9,7 +9,7 @@ import type { InventoryItem } from '@/lib/api/inventory'
  *
  * 고정하는 것:
  *  1. capacity·used 는 서버값 그대로(파생 금지).
- *  2. 채운 슬롯 = 상세 링크 + 이름 / 빈 슬롯 = 번호.
+ *  2. 채운 슬롯 = 상세 링크(이름은 aria-label 로만, 하단 이름 라벨 없음) / 빈 슬롯 = 번호.
  *  3. 슬롯 확장·카테고리 = 미구현/무데이터 자리(확장 버튼 disabled DOM 속성, 정령카드/아바타 드롭).
  *  4. 24칸/페이지 페이지네이션 — 탭 전환 시 다음 24칸 노출.
  */
@@ -46,10 +46,12 @@ describe('<InventorySlotGrid>', () => {
         expect(screen.getByText('2 / 96 사용')).toBeInTheDocument()
     })
 
-    it('채운 슬롯은 인스턴스 상세로 링크하고 이름을 보인다', () => {
+    it('채운 슬롯은 인스턴스 상세로 링크한다(이름은 aria-label 로만, 하단 라벨 제거)', () => {
         renderGrid({ used: 1, items: [item(1, 'INST-1', '불의 검')] })
         const link = screen.getByRole('link', { name: '불의 검 상세 보기' })
         expect(link).toHaveAttribute('href', '/items/INST-1')
+        // 이미지 중심(FC-102) — 이름을 별도 텍스트 라벨로 렌더하지 않는다(aria-label 접근성만).
+        expect(screen.queryByText('불의 검')).toBeNull()
     })
 
     it('빈 슬롯은 번호 라벨을 가진다', () => {

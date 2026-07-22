@@ -176,7 +176,14 @@ function InventorySlotGrid({
     )
 }
 
-/** 채운 슬롯 — 72×134 프레임을 **공용 스프라이트 스테이지** 박스에 담고(§4) 이름을 아래에 둔다. */
+/**
+ * 채운 슬롯 — 72×134 프레임을 **공용 스프라이트 스테이지**(다크 아웃라인) 박스에 담는다(§4).
+ *
+ * ★ **이미지 중심**(FC-102): 하단 이름 라벨을 제거하고, 스테이지 박스를 곧 슬롯 셀로 삼아
+ *   여백(패딩·갭) 없이 셀에 꽉 채운다. 프레임(72×134)은 셀보다 좁으므로 중앙에 두고 다크
+ *   아웃라인이 셀 폭을 메운다 — 프레임 아트 비율(72×134·크로마키)은 불변(외부 셀 크기로만 정합).
+ *   이름은 링크 `aria-label` 로만 접근성 노출한다.
+ */
 function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
     const { art, hasSkill } = deriveItemSummaryArt(item.summary)
     const name = item.summary.displayName
@@ -185,41 +192,34 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
         <Link
             to={itemDetailPath(item.itemInstancePublicId)}
             aria-label={`${name} 상세 보기`}
-            className="flex h-[174px] flex-col items-center justify-center gap-1.5 rounded-xl border border-line bg-surface p-2 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-navy hover:shadow-md"
+            className="item-sprite-stage flex h-[134px] items-center justify-center overflow-hidden rounded-xl border border-line transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-navy hover:shadow-md"
+            style={
+                art?.src
+                    ? ({
+                          '--item-sprite': `url("${art.src}")`,
+                      } as CSSProperties)
+                    : undefined
+            }
         >
-            <span
-                className="item-sprite-stage flex items-center justify-center rounded-lg px-2"
-                style={
-                    art?.src
-                        ? ({
-                              '--item-sprite': `url("${art.src}")`,
-                          } as CSSProperties)
-                        : undefined
-                }
-            >
-                <ItemFrame
-                    imageUrl={art?.src}
-                    spriteUrl={art?.src}
-                    name={name}
-                    visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
-                    hasSkill={hasSkill}
-                    size="frame"
-                    now={now}
-                />
-            </span>
-            <span className="w-full truncate text-center text-[10px] font-bold text-gray-700">
-                {name}
-            </span>
+            <ItemFrame
+                imageUrl={art?.src}
+                spriteUrl={art?.src}
+                name={name}
+                visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
+                hasSkill={hasSkill}
+                size="frame"
+                now={now}
+            />
         </Link>
     )
 }
 
-/** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. */
+/** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. 채운 슬롯과 셀 높이 정합(134px). */
 function EmptySlot({ slotNo }: { slotNo: number }) {
     return (
         <div
             aria-label={`빈 슬롯 ${slotNo}`}
-            className="relative flex h-[174px] items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
+            className="relative flex h-[134px] items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
         >
             <span
                 aria-hidden
