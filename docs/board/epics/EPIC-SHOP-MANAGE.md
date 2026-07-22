@@ -26,8 +26,11 @@ FC-096 frontend   마이페이지 '내 판매' 섹션(마켓 카드 그리드 �
 FC-105 reviewer   인가(내 것만 조회·취소 IDOR)·취소 동시성·정합
 ```
 
-## 게이트2 — 예정 (architect가 FC-103에서 상신)
-- 조회 엔드포인트 형태(GET /me/shops vs /shops?mine) · 역할별 노출(본인 리스팅이라 fee/settle 노출 가능 여부) · 페이징(커서 재사용) · 상태 필터(ACTIVE만 vs 전체).
+## 게이트2 — 승인됨 (2026-07-22, 사용자) — FC-103
+- **M1 엔드포인트 = `GET /me/shops`**(판매자=SecurityContext·IDOR 안전, /me/orders·/me/inventory 동형).
+- **M2 상태 필터 = 기본 ACTIVE**(판매 중), `ALL`/각 상태로 팔림·만료·취소 이력.
+- **M3(사용자 정정) = 등록가 + 예상 정산액**: `MyShopSummary`(신규, /me/shops 전용) = ShopSummary + `estimatedFee`·`estimatedSettle`(FeeCalculator 파생, 판매자 전용·추정치). **공개 ShopSummary 무오염**. 실현값은 판매 후 /me/orders.
+- **스키마 무변경**(서버 파생·인덱스 `ix_shop_seller_status` 재사용). 취소·FeeCalculator·커서 재사용. 파급 없음(additive read).
 
 ## 범위 밖
 - 리스팅 수정(가격 변경)·재출품 · 대량 취소 · 판매 통계.

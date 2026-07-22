@@ -15,6 +15,8 @@
 |---|---|---|
 | v0.1 | 2026-07-22 | FC-092 착수 — shop 애그리거트 상태 머신·등록/구매/취소/만료 flow·동시성(shop 행 FOR UPDATE + 종료성 CAS)·금전 모델(buyer/seller 2행 직접 이동)·불변식 S-A~S-H·기한 옵션(`@ConfigurationProperties`)·만료 워커(TEMP 회수)·erd/api-contract 델타(PROPOSAL)·게이트2 상신 항목(§8) 정리 |
 | v0.2 | 2026-07-22 | **게이트2 기한 모델 정정 반영** — 판매자 endAt 입력 제거(등록 body `{itemInstancePublicId, price}`), 서버가 `end_at = now + shop.listing.default-duration-days`(기본 7일) 자동 계산. 최대값·판매자 지정·기한 범위 폐기(C5 정정). `end_at` nullable = 향후 무기한 캐시아이템용. §3.1에 기한 연장 seam 1줄(per-listing end_at). §3 등록 flow·C5·§6·§7 PROPOSAL 갱신. cancel POST(C6) 채택 확정 |
+| v0.3 | 2026-07-22 | **FC-103 — 판매 관리 조회 계약(PROPOSAL)** §10 신설: `GET /me/shops`(판매자=주체·status 필터 ACTIVE 기본/`ALL`·ShopCursor 재사용). 신규=조회 1개, 취소 재사용. 스키마·에러코드·기존 엔드포인트 무변경(additive read). 게이트2 상신 M1~M3. 구현 FC-104 |
+| v0.4 | 2026-07-22 | **게이트2 M3 정정 반영(사용자)** — '내 판매' 카드에 등록가 + **예상 정산액** 함께 표시. §10.3 응답 DTO = `MyShopSummary`(ShopSummary + 판매자 전용 `estimatedFee`·`estimatedSettle` 예상치, FeeCalculator 재사용). 공개 `ShopSummary` 무오염(별도 DTO 격리). 추정치=예상 표기, 실현값은 /me/orders 유지. §10.5 M3·M3표 갱신. 스키마 무변경(서버 파생값) |
 
 ---
 
@@ -300,3 +302,58 @@ COMMIT
 - **계약 정밀화(§6·§7)는 신규 코드 없이 semantic**: SHOP_001 403 단일화·SHOP_004 라벨은 아직 미구현 코드(SHOP 도메인 신규)라 기존 구현과 충돌 없음. orders API는 이미 제네릭이라 SHOP 유입에 코드 변경 불요.
 - **frontend 영향**: 마켓 목록·구매 버튼·판매 등록 화면은 EPIC-SHOP 신규 화면(디자인 게이트 대상). 거래내역 화면은 기존 `/me/orders`에 `sourceType=SHOP` 필터만 추가(purchase-spec 거래내역 UI 재사용).
 - **backend-impl 신규 자산(구현 티켓 인계)**: `domain/shop/*`(`Shop`·`ShopRepository`·`ShopService`(등록·목록·상세·취소)·`ShopPurchaseService`(구매)·`ShopExpiryWorker`·`ShopExpiryService`·`ShopPurchaseContext`·`ShopExpireContext` 프로젝션·`ShopErrorCode`·`ShopStatus`·상태 CAS(`markShopSoldIfPurchasable`·`markShopCancelledIfActive`·`markShopExpiredIfExpirable`·`findExpirableIds`·`findPurchaseContextForUpdate`)·`ShopListingProperties`·`ShopExpiryWorkerProperties`) + `InventoryService.recoverExpiredToTemp`(소유자 불변 LISTED→TEMP) + `api/shop/*`(컨트롤러·요청/응답 record) + `V15__shop.sql`. **정산·수수료·거래내역·수익원장은 재사용(신규 0).**
+
+---
+
+## 10. 판매 관리 조회 — `GET /me/shops` (EPIC-SHOP-MANAGE / FC-103, PROPOSAL)
+
+> **⚠ PROPOSAL — 게이트2 미승인(2026-07-22).** 판매자가 마이페이지 '내 판매'에서 자기 고정가 리스팅을 조회·관리한다. **신규 = 조회 엔드포인트 1개**뿐이며, 취소는 기존 `POST /shops/{id}/cancel`(§4.3, FC-093 완료)을 재사용한다. **스키마·에러코드·기존 엔드포인트 무변경(additive read).** 아래는 게이트2 승인 전제의 계약 정밀화다.
+
+### 10.1 엔드포인트 형태 — `GET /me/shops` (대안 `GET /shops?mine=true` 배제)
+
+- **`me` 접두 = 인증 주체 리소스 규약**(api-contract §4 서두 "`me` 접두는 인증 주체(SecurityContext) 기준 리소스")에 정합한다. 기존 `/me/orders`·`/me/inventory`·`/me/temp-storage`·`/me/balance`와 동형이라 프론트·서버 라우팅이 일관된다.
+- **판매자 = SecurityContext 주체.** 요청 파라미터로 `seller` 를 받지 않는다 → 타인 판매목록 조회(IDOR) 원천 차단(B-009, `/me/orders` 스코프 규율 재사용). 컨트롤러가 아니라 서비스가 주체를 도출한다.
+- **`?mine=true` 배제 근거**: 공개 브라우즈 `GET /shops`(인증 불요)에 `mine` 을 얹으면 한 엔드포인트에서 인증이 **조건부**가 되고 응답 스코프가 파라미터로 갈린다 — 캐싱·보안 모델이 이원화된다. 인증 스코프를 엔드포인트 단위로 분리하는 편이 단순하고 안전하다.
+
+### 10.2 판매자 스코프·상태 필터·페이징
+
+```
+GET /me/shops?status={ACTIVE|SOLD|EXPIRED|CANCELLED|ALL}&cursor=...&size=...&sort=createdAt,desc
+  → seller_id = me 로 좁힘  →  status 필터  →  keyset cursor 페이지
+```
+
+- **판매자 스코프**: `seller_id = me`. 인덱스 `ix_shop_seller_status (seller_id, status)`(V15 실재 — 확인 완료) 커버. 신규 인덱스 불요.
+- **상태 필터**: `status` 생략 = **ACTIVE 기본**(진행 중 리스팅 조회가 1차 용도, 게이트1 배경). 명시 시 해당 영속 상태만(SOLD·EXPIRED·CANCELLED 이력). **`ALL` = 전 상태**(판매 이력 전체 탭) — API 레벨 센티널이며 컨트롤러가 "상태 predicate 없음"으로 매핑한다(`ShopStatus` enum 은 DB 4값 그대로 유지). 공개 `GET /shops`의 status 규약(null→ACTIVE, `statusScope`)과 semantic 정합하며, `ALL` 만 my-shops 전용 확장이다.
+- **페이징·정렬 = 기존 `ShopCursor`/`ShopSort` 재사용.** 정렬 화이트리스트 `createdAt|price|endAt`, **기본 = `createdAt desc`**(최근 등록 우선, `/me/orders` created_at desc 대칭). keyset(정렬필드+id tiebreaker)·hasNext(size+1) 규율 그대로.
+- **구현 노트(backend-impl)**: `findByCursor` 의 `statusScope` 를 (a) sellerId AND (b) status(ALL 이면 무필터)로 확장하는 **additive** 변경. 기존 public 목록 경로(sellerId 미지정)는 무영향. 신규 소형 자산 = `ShopService` 조회 메서드 1개(주체 스코프) + 컨트롤러 핸들러 1개 + 응답 재사용. 정본 형태는 backend-impl(FC-104) 소유.
+
+### 10.3 역할별 노출 — 예상 정산액 판매자 전용 노출(게이트2 M3 정정 2026-07-22 사용자)
+
+- **응답 DTO = `MyShopSummary`(신규, /me/shops 전용)** = `ShopSummary`(§3.3 `{ shopPublicId, status, item, price, endAt?, sellerNickname }`) + **판매자 전용 예상 정산 2필드** `estimatedFee`·`estimatedSettle`:
+
+```
+MyShopSummary (GET /me/shops content):
+  { shopPublicId, status, item, price, endAt?, sellerNickname,
+    estimatedFee, estimatedSettle }
+  // estimatedFee    = FeeCalculator.compute(price)   (현재 수수료 정책)
+  // estimatedSettle = price − estimatedFee
+```
+
+- **공개 브라우즈 오염 금지.** 공개 `GET /shops`가 쓰는 `ShopSummary`는 **무변경** — fee/settle 은 `/me/shops` 전용 `MyShopSummary`로만 나간다. 공개 목록 응답에 판매자 회계값이 절대 유입되지 않는다(별도 DTO 격리). `/me/shops`는 인증 주체(판매자 본인)라 노출이 안전하다.
+- **예상치(estimate)임을 명시.** ACTIVE 리스팅은 아직 `sale_order` 가 없어 이 2값은 **실현값이 아니라 예상치**다. 서버가 등록가 기준으로 `FeeCalculator.compute(price)`·`price − fee`를 계산한다. **SOLD 시점 `feePolicy.version()` 기준 실현값과 드리프트할 수 있으므로**(S-B) 필드명·계약 설명에 "예상/estimate"를 명시하고, UX 는 "예상 정산액"으로 표기한다. **실현 fee/settle 은 판매 후 `GET /me/orders?sourceType=SHOP`(판매자 전용, purchase-spec §5.2)에 그대로 노출**된다(이 경로는 무변경).
+- **backend-impl 재사용 지점**: `settlement/FeeCalculator.compute(long)`(백엔드 실측 §서두 — 정산 꼬리에서 이미 쓰는 계산기, 코드 변경 0). 조회 응답 조립 시 리스팅별 `price`로 1회 호출. `estimatedSettle = price − estimatedFee`.
+
+### 10.4 파급·스키마 확인
+
+- **파급 = 없음(additive read).** 기존 `GET /shops` 공개 브라우즈·`POST /shops`·`/purchase`·`/cancel`·EPIC-SHOP(done)에 소급 변경 없음. `findByCursor` sellerId 스코프는 additive(기존 시그니처·public 경로 무영향).
+- **스키마 무변경.** 신규 컬럼·테이블·인덱스·에러코드 0. `ix_shop_seller_status (seller_id, status)` V15 실재 확인.
+
+### 10.5 게이트2 상신 항목 (read 엔드포인트 — 소량)
+
+| # | 결정 | 추천안 | 근거(한 줄) | 제품 영향(평이한 언어) |
+|---|---|---|---|---|
+| **M1** | 엔드포인트 형태 | **`GET /me/shops`**(대안 `GET /shops?mine=true` 배제) | `/me/*` 인증 주체 리소스 규약 정합 + 요청에 seller 없음 = 타인 판매목록 조회 원천 불가 | '내 판매' 화면이 '내 주문·내 인벤토리'와 똑같은 방식으로 붙는다. 남의 판매목록을 훔쳐볼 URL이 아예 없다 |
+| **M2** | 상태 필터 기본값 | **생략=ACTIVE(판매 중), 명시=해당 상태, `ALL`=전체 이력** | 진행 중 조회가 1차 용도(게이트1). 이력 탭은 `ALL`/개별 상태로 | 기본은 지금 팔고 있는 물건만 보인다. 팔린·만료·취소된 과거 내역은 '전체' 또는 각 탭으로 볼 수 있다 |
+| **M3** | 예상 정산액 노출 (게이트2 정정 확정) | **등록가 + 예상 정산액(`estimatedFee`·`estimatedSettle`) 함께 노출**. `/me/shops` 전용 `MyShopSummary`로 격리 — 공개 `ShopSummary` 무오염 | 판매자 본인 화면이라 회계값 노출 안전. 추정치라 "예상"으로 표기(S-B). FeeCalculator 재사용(코드 변경 0) | '내 판매' 카드에 등록가와 함께 "이만큼 팔리면 예상 정산액 N"을 보여준다. 실제 정산액은 팔린 뒤 '내 주문'에서 확정 확인. 남이 보는 공개 목록엔 이 값이 안 나간다 |
+
+**스키마 영향 = 0.** M1~M3은 계약 형태·필터·노출 범위 결정이며 테이블·인덱스·에러코드 신규·변경이 없다(예상 정산액도 서버 파생값 — 컬럼 추가 없음).

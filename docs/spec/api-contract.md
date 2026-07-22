@@ -238,6 +238,27 @@ POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
 > - **거래내역(§4.3) 무변경**: 고정가 SOLD는 기존 `sale_order`로 핸드오프되어 `GET /me/orders`(`sourceType=SHOP` 필터)·`GET /orders/{id}`에 **자동 유입**한다(서버 `source_type` 제네릭). 역할별 노출(feeAmount·settleAmount 판매자 전용)·IDOR 스코프·SaleOrderResponse 스키마 그대로(purchase-spec §5). 신규 필드 없음.
 > - 승인 시 반영: 버전 로그 v1.14 "게이트2(EPIC-SHOP) 승인 — §3.2 동작 정밀화, §5 SHOP_001 403 단일·SHOP_004 EXPIRED. 엔드포인트·필드·스키마 무변경. 정본 shop-spec v1.0."
 
+GET /api/v1/me/shops — 내 판매 목록 (PROPOSAL, EPIC-SHOP-MANAGE / FC-103)
+- 인증: 필요(판매자=SecurityContext 주체)
+- 쿼리: `status`(ACTIVE|SOLD|EXPIRED|CANCELLED|ALL, 생략=ACTIVE), 페이징(cursor)/정렬(`createdAt|price|endAt`)
+- 응답 200: cursor 페이지(content = MyShopSummary — ShopSummary + 판매자 전용 `estimatedFee`·`estimatedSettle`)
+
+> **⚠ PROPOSAL — EPIC-SHOP-MANAGE(FC-103), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `shop-spec.md` §10. **신규 = 조회 엔드포인트 `GET /me/shops` 1개**(취소는 기존 `POST /shops/{id}/cancel` 재사용, FC-093 완료). 스키마·에러코드·기존 엔드포인트 무변경(additive read).
+> - **엔드포인트 형태 = `GET /me/shops`**(대안 `GET /shops?mine=true` 배제). `me` 접두 = 인증 주체 리소스 규약(§4 서두)에 정합 — `/me/orders`·`/me/inventory`·`/me/temp-storage`·`/me/balance`와 동형. 판매자는 **SecurityContext 주체**로 도출하며 요청 파라미터로 seller 를 받지 않는다(IDOR 원천 차단, B-009). 공개 브라우즈 `GET /shops`(인증 불요)와 인증 스코프를 엔드포인트 단위로 분리해 캐싱·보안 모델을 단순화한다.
+> - **판매자 스코프**: `seller_id = me` 로 좁힌 뒤 상태 필터를 적용. 인덱스 `ix_shop_seller_status (seller_id, status)`(V15 실재) 커버.
+> - **상태 필터**: `status` 생략 = **ACTIVE 기본**(진행 중 리스팅 조회가 1차 용도). 명시 시 해당 영속 상태만(SOLD·EXPIRED·CANCELLED 이력 조회 허용). **`ALL` = 전 상태**(판매 이력 전체 탭) — API 레벨 센티널이며 컨트롤러가 "상태 predicate 없음"으로 매핑한다(enum ShopStatus 는 DB 4값 그대로 유지, 오염 없음). 공개 `GET /shops`의 status 규약(null→ACTIVE)과 semantic 정합, `ALL` 만 my-shops 전용 확장.
+> - **페이징·정렬 = 기존 ShopCursor/ShopSort 재사용**. 정렬 화이트리스트 `createdAt|price|endAt`, 기본 = `createdAt desc`(최근 등록 우선, `/me/orders` created_at desc 대칭). keyset cursor(정렬필드+id tiebreaker) 그대로.
+> - **응답 DTO = MyShopSummary(신규, /me/shops 전용)** = ShopSummary(§3.3 `{ shopPublicId, status, item, price, endAt?, sellerNickname }`) + **판매자 전용 예상 정산 2필드**:
+>   ```
+>   MyShopSummary (GET /me/shops content):
+>     { shopPublicId, status, item, price, endAt?, sellerNickname,
+>       estimatedFee, estimatedSettle }   // 판매자 전용 예상치. estimatedFee = FeeCalculator.compute(price), estimatedSettle = price − estimatedFee
+>   ```
+>   본인 리스팅이라 `sellerNickname`=자기값(무해). **공개 `GET /shops`의 ShopSummary 는 무변경**(fee/settle 필드 미유입 — 별도 DTO 로 격리, 공개 브라우즈 오염 없음).
+> - **예상 정산액 = 판매자 전용·추정치(게이트2 M3 정정 2026-07-22 사용자).** `/me/shops`는 인증 주체(판매자 본인)라 노출 가능. `estimatedFee`·`estimatedSettle`은 **실현값이 아니라 예상치**(ACTIVE 는 sale_order 부재) — 현재 수수료 정책으로 서버가 `FeeCalculator.compute(price)`·`price − fee` 계산. **SOLD 시점 `feePolicy.version()` 기준 실현값과 드리프트할 수 있으므로**(S-B) 필드명·설명에 "예상/estimate"를 명시하고, 실현 fee/settle 은 판매 후 `GET /me/orders?sourceType=SHOP`(판매자 전용, §4.3·purchase-spec §5.2)에 그대로 노출된다.
+> - **파급 = 없음(additive read)**: 기존 `GET /shops` 공개 브라우즈·`POST /shops`·`/purchase`·`/cancel`·EPIC-SHOP(done) 무변경. backend-impl 은 `findByCursor` 에 sellerId 스코프를 additive 하게 얹을 뿐(기존 시그니처·public 목록 경로 무영향). 스키마·인덱스·에러코드 신규·변경 0.
+> - 승인 시 반영: 버전 로그 "게이트2(EPIC-SHOP-MANAGE) 승인 — §3.2 `GET /me/shops`(내 판매 목록) 추가. 판매자=주체·status 필터(ACTIVE 기본/ALL)·ShopCursor 재사용·MyShopSummary(ShopSummary + 판매자 전용 estimatedFee·estimatedSettle 예상치). 공개 ShopSummary·스키마·에러코드 무변경. 정본 shop-spec §10. 구현 FC-104."
+
 ### 3.3 응답 스키마 — 목록/상세 (6절, D-073)
 
 목록/상세 응답의 구체 필드(프론트·QA·디자인 단일 진실). erd 필드·표시 스냅샷 기준. 등급 없음(D-073). 소유자·최고입찰자는 마스킹, 골드포스는 만료시각(활성/잔여는 클라 파생).
