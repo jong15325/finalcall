@@ -42,6 +42,9 @@ FC-095 reviewer   concurrency(구매 동시성·이중판매 차단·정산 정�
 - **기술 결정(architect 추천 채택)**: C1 구매 shop 행 FOR UPDATE+종료성 CAS(`status=ACTIVE AND (end_at IS NULL OR end_at>now)`)·C2 잔액 user_id 오름차순(buyer/seller 2행)·C3 sale_order (source_type,source_id) UK 이중판매 차단(신규 0)·C4 만료 워커 60초·배치 200·TEMP 직행·C6 cancel POST(경매 대칭).
 - **스키마 영향 = 신규 테이블 1개(shop, V15)뿐, 컬럼/인덱스/UK 변경 0**. 정산·수수료·거래내역·수익원장·인벤토리 CAS 전부 코드 변경 0 재사용. 기존 티켓 파급 없음.
 
+## 온디맨드 보안 리뷰 (2026-07-22, 에픽 완료 직전) — 취약점 0건
+- `/security-review` 1회(섹션 9 보안층 ③). **HIGH/MEDIUM 0건**. 확인 통제: SecurityContext 주체(X-User-Id 미신뢰)·cancel 소유권 IDOR 검증·자기구매 SHOP_006·서버 권위 가격(구매 본문 없음)·QueryDSL enum 화이트리스트(주입면 폐쇄)·fee/settle 노출 없음(shop DTO는 공개 데이터만)·XSS 없음(dangerouslySetInnerHTML 부재)·V15 FK/CHECK 안전. reviewer 확인소 판정과 정합.
+
 ## 범위 밖 (별도 티켓/에픽)
 - **고정가 판매 관리·취소(내리기) UI = FC-096**(후속, 게이트 결정 2026-07-22). 백엔드 cancel API는 FC-093에서 구현됨, UI 소비처만 후속. EPIC-SHOP done을 막지 않음.
 - 마켓 상세 페이지(/market/:id) = FC-094에 편입(사용자 게이트 결정 "신설").
