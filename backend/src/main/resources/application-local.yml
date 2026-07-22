@@ -42,3 +42,11 @@ spring:
 demo:
   seed:
     enabled: ${DEMO_SEED_ENABLED:true}
+
+# EPIC-SEARCH(FC-107, MAJOR-1): 로컬 데모는 부팅 시 전체 enrichment 재색인을 켠다 — CDC(스냅샷 필드)에 더해
+#   앱이 코드축·join 필드까지 채운 문서를 보장해 런북 스모크(GET /api/v1/auctions?q=...)가 실제 결과를 낸다.
+#   드리프트 자동 보정도 켜 CDC 유실 시 주기 화해가 재색인하게 한다(데모 안정성).
+search:
+  reindex-on-startup: ${SEARCH_REINDEX_ON_STARTUP:true}
+  reconciliation:
+    correct-on-drift: ${SEARCH_RECONCILIATION_CORRECT_ON_DRIFT:true}

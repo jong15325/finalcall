@@ -12,6 +12,7 @@ import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -72,7 +73,9 @@ public class ListingSearchService {
             }, Void.class);
 
             return toResult(response.hits().hits(), size);
-        } catch (IOException | RuntimeException ex) {
+        } catch (IOException | ElasticsearchException ex) {
+            // ES 계층 오류(미가용·타임아웃·질의 오류)만 503 으로 흡수한다 — 로직 버그(NPE 등)는 전역 핸들러로
+            //   전파돼 500 으로 드러나게 좁힌다(MINOR-3). ES 는 파생 read-model 이라 일시 실패를 목록 실패로 알린다.
             throw new BusinessException(SearchErrorCode.SEARCH_ENGINE_UNAVAILABLE);
         }
     }

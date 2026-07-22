@@ -184,6 +184,9 @@ search:
   index-alias: ${SEARCH_INDEX_ALIAS:listings_search}
   min-query-length: 2
   max-query-length: 64
+  # 부팅 시 전체 enrichment 재색인(코드축·join 필드 채움, MAJOR-1). 공통 기본 off(운영은 대량이라 명시 활성),
+  #   로컬 데모는 application-local.yml 에서 on. 통합 테스트는 base 에서 off(ES 미기동).
+  reindex-on-startup: ${SEARCH_REINDEX_ON_STARTUP:false}
   reconciliation:
     enabled: ${SEARCH_RECONCILIATION_ENABLED:true}
     fixed-delay-ms: ${SEARCH_RECONCILIATION_FIXED_DELAY_MS:300000}

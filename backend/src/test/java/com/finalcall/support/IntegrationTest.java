@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(properties = {
     "gateway.internal.enforced=false", "closing.worker.enabled=false", "shop.expiry.worker.enabled=false",
     "demo.seed.enabled=false", "search.reconciliation.enabled=false",
-    "management.health.elasticsearch.enabled=false"})
+    "search.reindex-on-startup=false", "management.health.elasticsearch.enabled=false"})
 public abstract class IntegrationTest {
 
     @Autowired

@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finalcall.common.util.NicknameMasker;
 import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.auction.AuctionRepository;
 import com.finalcall.domain.item.ItemInstance;
@@ -105,7 +106,7 @@ public class ListingIndexer {
             .highestBidAmount(auction.getHighestBidAmount())
             .gfExpireAt(toIso(item.getGfExpireAt()))
             .status(auction.getStatus().name())
-            .sellerNickname(auction.getSeller().getNickname())
+            .sellerNickname(NicknameMasker.mask(auction.getSeller().getNickname()))
             .endsAt(toIso(auction.getEndAt()))
             .createdAt(toIso(auction.getCreatedAt()))
             .build();
@@ -130,7 +131,7 @@ public class ListingIndexer {
             .highestBidAmount(null)
             .gfExpireAt(toIso(item.getGfExpireAt()))
             .status(shop.getStatus().name())
-            .sellerNickname(shop.getSeller().getNickname())
+            .sellerNickname(NicknameMasker.mask(shop.getSeller().getNickname()))
             .endsAt(toIso(shop.getEndAt()))
             .createdAt(toIso(shop.getCreatedAt()))
             .build();

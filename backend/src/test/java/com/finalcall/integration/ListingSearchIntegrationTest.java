@@ -19,6 +19,7 @@ import org.testcontainers.utility.DockerImageName;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.domain.search.ListingDocument;
+import com.finalcall.domain.search.ListingIndexer;
 import com.finalcall.domain.search.ListingSearchCondition;
 import com.finalcall.domain.search.ListingSearchProperties;
 import com.finalcall.domain.search.ListingSearchResult;
@@ -56,15 +57,18 @@ class ListingSearchIntegrationTest {
     private static final String INDEX = "listings_v1";
     private static final String ALIAS = "listings_search";
 
+    private static ElasticsearchClient client;
+    private static ListingSearchProperties properties;
     private static ListingSearchService service;
 
     @BeforeAll
     static void setUp() throws IOException {
         RestClient restClient = RestClient.builder(HttpHost.create(ES.getHttpHostAddress())).build();
         ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
-        ElasticsearchClient client = new ElasticsearchClient(transport);
+        client = new ElasticsearchClient(transport);
 
-        service = new ListingSearchService(client, new ListingSearchProperties(ALIAS, 2, 64));
+        properties = new ListingSearchProperties(ALIAS, 2, 64, false);
+        service = new ListingSearchService(client, properties);
 
         createIndex(client);
         indexFixtures(client);
@@ -145,6 +149,33 @@ class ListingSearchIntegrationTest {
         assertThat(result.publicIds()).isEmpty();
         assertThat(result.hasNext()).isFalse();
         assertThat(result.nextCursor()).isNull();
+    }
+
+    // ---------------- enrichment populator 경로(MAJOR-1) ----------------
+
+    @Test
+    void enrichment_populator_bulkUpsert_로_색인한_문서가_q_매칭된다() throws IOException {
+        // ★ 부팅 재색인·화해가 실제로 쓰는 write 경로({@link ListingIndexer#bulkUpsert})로 색인해, camelCase 필드 +
+        //   listingType 주입 문서가 q 매칭·코드축 필터에 걸리는지 검증한다(리뷰 MAJOR-1: CDC/enrichment 문서가
+        //   실제로 검색되는지). ListingDocument 는 ListingIndexer.toDocument 가 생산하는 것과 동일 타입·필드다.
+        ListingIndexer indexer = new ListingIndexer(client, null, null, properties);
+        indexer.bulkUpsert(List.of(ListingDocument.builder()
+            .listingType(ListingType.AUCTION.name())
+            .publicId("E1")
+            .nameSnapshot("신규 인챈트 대검")
+            .specSnapshot("Lv.99")
+            .mainCategory("5")
+            .status("ACTIVE")
+            .createdAt("2026-07-22T00:00:00Z")
+            .build()));
+        client.indices().refresh(refresh -> refresh.index(ALIAS));
+
+        ListingSearchResult matched = service.search(auctionCondition("인챈트", null, null), null, 20);
+        assertThat(matched.publicIds()).contains("E1");
+
+        // 코드축 필터(mainCategory=5)도 enrichment 문서에 걸린다(join 필드가 실제로 채워짐).
+        ListingSearchResult filtered = service.search(auctionCondition("인챈트", 5, null), null, 20);
+        assertThat(filtered.publicIds()).containsExactly("E1");
     }
 
     // ---------------- fixtures ----------------
