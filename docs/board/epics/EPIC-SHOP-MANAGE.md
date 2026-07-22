@@ -32,5 +32,11 @@ FC-105 reviewer   인가(내 것만 조회·취소 IDOR)·취소 동시성·정�
 - **M3(사용자 정정) = 등록가 + 예상 정산액**: `MyShopSummary`(신규, /me/shops 전용) = ShopSummary + `estimatedFee`·`estimatedSettle`(FeeCalculator 파생, 판매자 전용·추정치). **공개 ShopSummary 무오염**. 실현값은 판매 후 /me/orders.
 - **스키마 무변경**(서버 파생·인덱스 `ix_shop_seller_status` 재사용). 취소·FeeCalculator·커서 재사용. 파급 없음(additive read).
 
+## 온디맨드 보안 리뷰 (2026-07-22, 에픽 완료 직전) — 취약점 0건
+- shop-manage 델타(3e3eac3·35c4dd8) 스코프. **HIGH/MEDIUM 0건**. IDOR 안전(seller=SecurityContext·Repo seller.id.eq 강제)·인증 강제(401)·DTO 격리(estimatedFee/settle 공개 미유입)·SQLi 없음(QueryDSL·ShopSort 화이트리스트·커서 파싱)·XSS 없음.
+
+## 총괄 브라우저 실측 (2026-07-22)
+- 마이페이지 '내 판매' 섹션: demo1(파랑기사) 리스팅 표시·**등록가+예상 정산액**(28.5만→27만 등 수수료 반영)·스킬명·내리기 버튼·마켓 카드 재사용 확인.
+
 ## 범위 밖
 - 리스팅 수정(가격 변경)·재출품 · 대량 취소 · 판매 통계.
