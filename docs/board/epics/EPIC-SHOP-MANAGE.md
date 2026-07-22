@@ -3,10 +3,13 @@ id: EPIC-SHOP-MANAGE
 type: epic
 jira_key: KAN-115
 title: 판매 관리 — 내 고정가 리스팅 조회·취소(내리기)
-state: doing
+state: done
 children: [FC-103, FC-104, FC-096, FC-105]
 gate: null
 ---
+## 게이트3 — Done 승인 (2026-07-22, 사용자)
+- reviewer PASS(critical/major 0) + 보안 0건 + 총괄 브라우저 실측('내 판매' 등록가+예상 정산액·내리기) 후 사용자 Done 승인. FC-103~105·FC-096 전건 done. **push는 사용자**.
+- 후속(비차단): PROPOSAL→확정 버전로그·이력 탭(ALL) 확장 시 종료분 /me/orders 연동.
 ## 목표
 판매자가 자신의 진행 중 고정가 리스팅을 **조회**하고 **내릴(취소)** 수 있게 한다. 취소 백엔드(`POST /shops/{id}/cancel`)는 FC-093에서 구현됨. 신규 = **내 판매목록 조회 엔드포인트** + **마이페이지 '내 판매' 화면**.
 
