@@ -1,0 +1,66 @@
+{
+  "//": "EPIC-SEARCH(FC-107) listings 색인 정의(search-spec §12.4·§12.6). 물리 인덱스 listings_v1 + 읽기 alias listings_search. 앱은 alias 로만 질의하고, 매핑/분석기(userdict) 변경 시 listings_v2 를 만들어 재색인 후 alias 를 원자 스위치한다(§12.5).",
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "tokenizer": {
+        "nori_user_tokenizer": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed",
+          "user_dictionary": "userdict_ko.txt"
+        },
+        "ngram_tokenizer": {
+          "type": "ngram",
+          "min_gram": 2,
+          "max_gram": 3,
+          "token_chars": ["letter", "digit"]
+        }
+      },
+      "analyzer": {
+        "nori_kr": {
+          "type": "custom",
+          "tokenizer": "nori_user_tokenizer",
+          "filter": ["nori_part_of_speech", "lowercase"]
+        },
+        "ngram_kr": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": ["lowercase"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "listingType": { "type": "keyword" },
+      "publicId": { "type": "keyword" },
+      "nameSnapshot": {
+        "type": "text",
+        "analyzer": "nori_kr",
+        "fields": {
+          "ngram": { "type": "text", "analyzer": "ngram_kr" },
+          "keyword": { "type": "keyword", "ignore_above": 256 }
+        }
+      },
+      "specSnapshot": { "type": "text", "analyzer": "nori_kr" },
+      "mainCategory": { "type": "keyword" },
+      "subGroup": { "type": "keyword" },
+      "element": { "type": "keyword" },
+      "kind": { "type": "keyword" },
+      "skill1": { "type": "keyword" },
+      "skill2": { "type": "keyword" },
+      "level": { "type": "integer" },
+      "price": { "type": "long" },
+      "highestBidAmount": { "type": "long" },
+      "gfExpireAt": { "type": "date" },
+      "status": { "type": "keyword" },
+      "sellerNickname": { "type": "keyword" },
+      "endsAt": { "type": "date" },
+      "createdAt": { "type": "date" }
+    }
+  },
+  "aliases": {
+    "listings_search": {}
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "finalcall-mysql-source",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "tasks.max": "1",
+
+    "database.hostname": "mysql",
+    "database.port": "3306",
+    "database.user": "debezium",
+    "database.password": "dbz",
+    "database.server.id": "184054",
+
+    "topic.prefix": "finalcall",
+    "database.include.list": "finalcall",
+    "//": "검색 대상 소스 테이블(search-spec §12.3). 리스팅 행에 name/spec 스냅샷·price·status 가 이미 비정규화돼 있어 텍스트/가격/상태는 단일 테이블 CDC 로 흐른다. bid 는 auction.highest_bid_amount 로 반영되므로 별도 소스 불요.",
+    "table.include.list": "finalcall.auction,finalcall.shop",
+
+    "snapshot.mode": "initial",
+
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+    "schema.history.internal.kafka.topic": "schema-history.finalcall",
+    "include.schema.changes": "false",
+
+    "//smt": "value 를 flatten(unwrap)하고 문서 _id 로 쓸 public_id 를 메시지 key 로 승격한다(멱등 upsert 키, §12.3). auction/shop 은 hard delete 가 없어(soft-status 전이만) tombstone 처리는 방어적이다.",
+    "transforms": "unwrap,valueToKey,extractKey",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "false",
+    "transforms.valueToKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.valueToKey.fields": "public_id",
+    "transforms.extractKey.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+    "transforms.extractKey.field": "public_id",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false"
+  }
+}

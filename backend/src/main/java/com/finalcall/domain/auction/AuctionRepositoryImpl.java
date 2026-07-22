@@ -90,6 +90,36 @@ public class AuctionRepositoryImpl implements AuctionRepositoryCustom {
             .toList();
     }
 
+    @Override
+    public List<AuctionWithBidCount> findSummariesByPublicIds(List<String> publicIds) {
+        if (publicIds.isEmpty()) {
+            return List.of();
+        }
+        Expression<Long> bidCount = bidCountSubQuery();
+        return queryFactory.select(auction, bidCount)
+            .from(auction)
+            .join(auction.itemInstance, ITEM).fetchJoin()
+            .join(ITEM.template, TEMPLATE).fetchJoin()
+            .leftJoin(ITEM.skill1, SKILL1).fetchJoin()
+            .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
+            .join(auction.seller, SELLER).fetchJoin()
+            .where(auction.publicId.in(publicIds))
+            .fetch().stream()
+            .map(row -> toRow(row, bidCount))
+            .toList();
+    }
+
+    @Override
+    public List<Auction> findAllForIndexing() {
+        return queryFactory.selectFrom(auction)
+            .join(auction.itemInstance, ITEM).fetchJoin()
+            .join(ITEM.template, TEMPLATE).fetchJoin()
+            .leftJoin(ITEM.skill1, SKILL1).fetchJoin()
+            .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
+            .join(auction.seller, SELLER).fetchJoin()
+            .fetch();
+    }
+
     /**
      * 입찰 수 상관 서브쿼리 {@code (SELECT COUNT(*) FROM bid WHERE auction_id = a.id)}(spec §7.3 확정).
      *

@@ -1,0 +1,31 @@
+{
+  "name": "finalcall-elasticsearch-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+    "tasks.max": "1",
+
+    "connection.url": "http://elasticsearch:9200",
+
+    "//routing": "다중 소스 토픽(auction·shop)을 단일 인덱스 listings 로 라우팅한다(search-spec §12.4 통합 인덱스). RegexRouter 로 토픽명을 인덱스명 listings 로 치환한다.",
+    "topics.regex": "finalcall\\.finalcall\\.(auction|shop)",
+    "transforms": "routeToListings",
+    "transforms.routeToListings.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.routeToListings.regex": "finalcall\\.finalcall\\.(auction|shop)",
+    "transforms.routeToListings.replacement": "listings",
+
+    "//idempotency": "at-least-once 전달 → 멱등 upsert 필수(§12.3). _id = 메시지 key = public_id(source SMT 가 승격). null value 는 삭제 전파(hard delete 거의 없음).",
+    "key.ignore": "false",
+    "schema.ignore": "true",
+    "write.method": "upsert",
+    "behavior.on.null.values": "delete",
+    "behavior.on.malformed.documents": "warn",
+
+    "batch.size": "200",
+    "read.timeout.ms": "10000",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false"
+  }
+}

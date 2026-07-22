@@ -25,4 +25,17 @@ public interface AuctionRepositoryCustom {
      */
     List<AuctionWithBidCount> findByCursor(
         AuctionSearchCondition condition, AuctionCursor cursor, int size, Instant now);
+
+    /**
+     * 검색 하이드레이션(EPIC-SEARCH) — ES 가 관련도 순으로 준 public_id 목록의 표시 데이터를 MySQL(정본)에서 읽는다
+     * (search-spec §12.8 "정확값은 DB"). 목록/상세와 동일한 fetch join(item·template·skill·seller) + 입찰 수 집계다.
+     * <b>정렬은 보장하지 않는다</b> — 호출 측(서비스)이 ES 순서대로 재배열한다(IN 절은 순서를 보존하지 않음).
+     */
+    List<AuctionWithBidCount> findSummariesByPublicIds(List<String> publicIds);
+
+    /**
+     * 재색인 대상 전건(EPIC-SEARCH, {@code ListingIndexer}) — 코드축 enrichment 를 위해 item·template·skill·seller 를
+     * fetch join 해 읽는다. 화해 보정·수동 백필 경로가 쓴다(§12.5). 데모 규모 전제(대량이면 keyset 배치로 분할).
+     */
+    List<Auction> findAllForIndexing();
 }

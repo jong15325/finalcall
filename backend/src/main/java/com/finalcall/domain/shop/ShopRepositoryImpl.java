@@ -90,6 +90,32 @@ public class ShopRepositoryImpl implements ShopRepositoryCustom {
             .fetch();
     }
 
+    @Override
+    public List<Shop> findByPublicIds(List<String> publicIds) {
+        if (publicIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory.selectFrom(shop)
+            .join(shop.itemInstance, ITEM).fetchJoin()
+            .join(ITEM.template, TEMPLATE).fetchJoin()
+            .leftJoin(ITEM.skill1, SKILL1).fetchJoin()
+            .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
+            .join(shop.seller, SELLER).fetchJoin()
+            .where(shop.publicId.in(publicIds))
+            .fetch();
+    }
+
+    @Override
+    public List<Shop> findAllForIndexing() {
+        return queryFactory.selectFrom(shop)
+            .join(shop.itemInstance, ITEM).fetchJoin()
+            .join(ITEM.template, TEMPLATE).fetchJoin()
+            .leftJoin(ITEM.skill1, SKILL1).fetchJoin()
+            .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
+            .join(shop.seller, SELLER).fetchJoin()
+            .fetch();
+    }
+
     /** status 미지정이면 판매 중(ACTIVE) 기본 노출, 지정이면 해당 영속 상태만(종료분 조회 허용). */
     private BooleanExpression statusScope(ShopSearchCondition condition) {
         if (condition.status() == null) {

@@ -24,6 +24,13 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  # EPIC-SEARCH(FC-107): Elasticsearch(검색 read-model) 접속. Java API client autoconfig(co.elastic.clients).
+  #   ES 는 파생 read-model 이라 부팅 시 연결하지 않고(빈만 생성), 질의 시 연결한다 — ES 미기동에도 앱은 뜬다.
+  #   uris 는 로컬 기본값(${ENV:기본값}), 배포는 매니지드 ES 엔드포인트를 환경변수로 주입한다.
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    connection-timeout: 2s
+    socket-timeout: 5s
 
 # Stage 4~5: Actuator 노출 + Prometheus 메트릭 + 분산추적(Micrometer Tracing).
 management:
@@ -167,6 +174,20 @@ shop:
       enabled: ${SHOP_EXPIRY_WORKER_ENABLED:true}
       fixed-delay-ms: ${SHOP_EXPIRY_WORKER_FIXED_DELAY_MS:60000}
       batch-size: ${SHOP_EXPIRY_WORKER_BATCH_SIZE:200}
+
+# FC-107(EPIC-SEARCH): 검색 질의·화해 설정(search-spec §12.4·§12.5·§12.7).
+#   index-alias — 앱이 질의하는 읽기 alias(재색인은 이 alias 원자 스위치, 물리 인덱스명 미참조).
+#   min/max-query-length — q 규약(계약 C3): 최소 2(ngram min_gram 정합)·최대 64(비용 상한). 위반 400(COMMON).
+#   reconciliation — MySQL↔ES count 드리프트 화해 워커(CDC 백스톱). enabled=true 운영 상시, 통합 테스트는 false.
+#     correct-on-drift=true 면 드리프트 시 bulk 재색인 보정(기본 false=탐지·경고만, 부하 큰 보정은 명시 활성).
+search:
+  index-alias: ${SEARCH_INDEX_ALIAS:listings_search}
+  min-query-length: 2
+  max-query-length: 64
+  reconciliation:
+    enabled: ${SEARCH_RECONCILIATION_ENABLED:true}
+    fixed-delay-ms: ${SEARCH_RECONCILIATION_FIXED_DELAY_MS:300000}
+    correct-on-drift: ${SEARCH_RECONCILIATION_CORRECT_ON_DRIFT:false}
 
 # D-068: 직접접근 차단(엣지 게이트웨이 공유비밀 검증). enforced 는 실 프로파일에서 항상 켠다.
 #   secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.

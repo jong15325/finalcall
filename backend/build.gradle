@@ -49,6 +49,9 @@ dependencies {
 	// 분산락 전용. starter 대신 코어 라이브러리를 쓴다: redisson-spring-boot-starter 는 커넥션 팩토리를
 	// Redisson 으로 교체해 Lettuce 를 밀어내므로("캐시=Lettuce" 규칙 위배), 코어만 넣고 RedissonClient 만 직접 등록.
 	implementation 'org.redisson:redisson:3.50.0'
+	// EPIC-SEARCH(FC-107): Elasticsearch 검색 read-model. Java API client(co.elastic.clients) autoconfig.
+	//   ES = 파생 read-model(정본은 MySQL, search-spec §12.8) — dual-write 금지, 접속은 spring.elasticsearch.uris.
+	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 	// Stage E2: 회복탄력성(CircuitBreaker + Retry). Rate limiter 는 앱 레벨 미도입(게이트웨이 담당).
 	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.3.0'
 	implementation 'io.github.resilience4j:resilience4j-micrometer:2.3.0'      // 메트릭을 Stage 5 Prometheus 로 노출
@@ -66,6 +69,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:mysql'
+	// EPIC-SEARCH(FC-107): ES Testcontainer 로 색인/검색 쿼리 테스트(CDC 스택은 런북 수동 검증). 버전은 BOM 관리.
+	testImplementation 'org.testcontainers:elasticsearch'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

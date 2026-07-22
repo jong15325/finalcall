@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.shop.ShopPurchaseService;
 import com.finalcall.domain.shop.ShopSearchCondition;
@@ -47,7 +49,11 @@ public class ShopController {
         return ApiResponse.success(ShopRegisterResponse.from(shopService.register(request.toCommand())));
     }
 
-    /** 고정가 목록 — 인증 불요. 공통 필터 + cursor 페이지 + 정렬 화이트리스트(createdAt·price·endAt). */
+    /**
+     * 고정가 목록 — 인증 불요. 공통 필터 + cursor 페이지 + 정렬 화이트리스트(createdAt·price·endAt). {@code q}(자유문,
+     * 계약 C1~C3)가 있으면 ES 검색 경로(relevance 랭킹), 없으면 기존 MySQL 목록 경로다. {@code q} 없이
+     * {@code sort=relevance} 는 무의미 요청이라 400({@code COMMON_001})으로 거부한다(계약 C2).
+     */
     @GetMapping
     public ApiResponse<ShopCursorResponse> list(
         @RequestParam(required = false) Integer mainCategory,
@@ -59,13 +65,25 @@ public class ShopController {
         @RequestParam(required = false) Long minPrice,
         @RequestParam(required = false) Long maxPrice,
         @RequestParam(required = false) ShopStatus status,
+        @RequestParam(name = "q", required = false) String query,
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(required = false) String sort) {
         ShopSearchCondition condition = new ShopSearchCondition(
             mainCategory, subGroup, element, kind, minLevel, maxLevel, minPrice, maxPrice,
             status, parseSort(sort), parseAscending(sort));
+        if (query != null && !query.isBlank()) {
+            return ApiResponse.success(ShopCursorResponse.from(shopService.search(condition, query, cursor, size)));
+        }
+        if (isRelevance(sort)) {
+            throw new BusinessException(CommonErrorCode.INVALID_INPUT);
+        }
         return ApiResponse.success(ShopCursorResponse.from(shopService.getList(condition, cursor, size)));
+    }
+
+    /** {@code sort} field 가 relevance 인지(계약 C2 — {@code q} 없이 요청되면 400). */
+    private boolean isRelevance(String sort) {
+        return sort != null && !sort.isBlank() && "relevance".equalsIgnoreCase(sort.split(",")[0].trim());
     }
 
     /** 고정가 상세 — 인증 불요. 없음 404(SHOP_003). */

@@ -3,6 +3,10 @@ package com.finalcall.domain.auction;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +21,10 @@ import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
 import com.finalcall.domain.item.ItemLocation;
+import com.finalcall.domain.search.ListingSearchCondition;
+import com.finalcall.domain.search.ListingSearchResult;
+import com.finalcall.domain.search.ListingSearchService;
+import com.finalcall.domain.search.ListingType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +57,8 @@ public class AuctionService {
     private final InventoryService inventoryService;
     /** 최소 증분 정책의 단일 진실원(bid 도메인 소유). 상세 응답 파생값 산출에만 쓴다 — 정책을 복제하지 않는다. */
     private final BidIncrementProperties incrementProperties;
+    /** 자유문 검색(EPIC-SEARCH) — {@code q} 매칭·랭킹·커서는 ES 가, 표시 데이터 하이드레이션은 MySQL(정본)이 담당. */
+    private final ListingSearchService listingSearchService;
 
     /**
      * 경매를 등록한다(계약 §3.1 POST /auctions, 단일 TX). 소유·시간·가격 검증 후 item 을 INVENTORY→LISTED 로
@@ -111,6 +121,42 @@ public class AuctionService {
         List<AuctionWithBidCount> content = hasNext ? fetched.subList(0, size) : fetched;
         String nextCursor = content.isEmpty() ? null : encodeNext(content, condition.sort());
         return new AuctionSlice(content, nextCursor, hasNext);
+    }
+
+    /**
+     * 자유문 검색 목록(계약 C1~C3, EPIC-SEARCH). {@code q} 로 ES({@code listings} alias)를 질의해 관련도 순 public_id 를
+     * 얻고, 표시 데이터는 MySQL(정본)에서 하이드레이션해 <b>MySQL 목록과 동일한 응답 형태</b>를 만든다(§12.8 "정확값은
+     * DB"). 코드축 필터는 {@code q} 와 AND 결합된다(계약 C1). 정렬은 relevance(_score desc, publicId asc) 고정이다.
+     *
+     * <p>ES 가 준 순서를 보존하도록 하이드레이션 결과를 public_id 기준으로 재배열한다(IN 절은 순서를 보존하지 않는다).
+     * ES 가 스테일해 DB 에 없는 public_id 는 조용히 제외한다(정본이 없으면 표시하지 않는다 — 유령 행 방지).
+     */
+    @ServiceLog
+    public AuctionSlice search(AuctionSearchCondition condition, String query, String cursor, int size) {
+        ListingSearchCondition searchCondition = new ListingSearchCondition(
+            ListingType.AUCTION, query,
+            condition.mainCategory(), condition.subGroup(), condition.element(), condition.kind(),
+            condition.minLevel(), condition.maxLevel(), condition.skill1(), condition.skill2(),
+            condition.goldforceActive(), condition.minPrice(), condition.maxPrice(),
+            auctionStatuses(condition.status()));
+        ListingSearchResult result = listingSearchService.search(searchCondition, cursor, size);
+
+        Map<String, AuctionWithBidCount> byPublicId = auctionRepository
+            .findSummariesByPublicIds(result.publicIds()).stream()
+            .collect(Collectors.toMap(row -> row.auction().getPublicId(), Function.identity(), (a, b) -> a));
+        List<AuctionWithBidCount> ordered = result.publicIds().stream()
+            .map(byPublicId::get)
+            .filter(Objects::nonNull)
+            .toList();
+        return new AuctionSlice(ordered, result.nextCursor(), result.hasNext());
+    }
+
+    /** 검색 노출 상태 화이트리스트 — MySQL 목록과 동일 규약(null=진행 가능 SCHEDULED·ACTIVE, 지정=해당 상태만). */
+    private List<String> auctionStatuses(AuctionStatus status) {
+        if (status == null) {
+            return List.of(AuctionStatus.SCHEDULED.name(), AuctionStatus.ACTIVE.name());
+        }
+        return List.of(status.name());
     }
 
     /**

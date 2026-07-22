@@ -3,6 +3,10 @@ package com.finalcall.domain.shop;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +20,10 @@ import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
 import com.finalcall.domain.item.ItemLocation;
+import com.finalcall.domain.search.ListingSearchCondition;
+import com.finalcall.domain.search.ListingSearchResult;
+import com.finalcall.domain.search.ListingSearchService;
+import com.finalcall.domain.search.ListingType;
 import com.finalcall.domain.settlement.FeeCalculator;
 
 import lombok.RequiredArgsConstructor;
@@ -45,6 +53,8 @@ public class ShopService {
     private final InventoryService inventoryService;
     private final ShopListingProperties listingProperties;
     private final FeeCalculator feeCalculator;
+    /** 자유문 검색(EPIC-SEARCH) — {@code q} 매칭·랭킹·커서는 ES 가, 표시 데이터 하이드레이션은 MySQL(정본)이 담당. */
+    private final ListingSearchService listingSearchService;
 
     /**
      * 고정가를 등록한다(계약 §3.2 POST /shops, 단일 TX). 소유 검증 후 기한을 서버 설정 일수로 자동 계산하고, item 을
@@ -103,6 +113,39 @@ public class ShopService {
         List<Shop> content = hasNext ? fetched.subList(0, size) : fetched;
         String nextCursor = content.isEmpty() ? null : encodeNext(content, condition.sort());
         return new ShopSlice(content, nextCursor, hasNext);
+    }
+
+    /**
+     * 자유문 검색 목록(계약 C1~C3, EPIC-SEARCH). {@code q} 로 ES({@code listings} alias)를 질의해 관련도 순 public_id 를
+     * 얻고, 표시 데이터는 MySQL(정본)에서 하이드레이션해 공개 목록({@code GET /shops})과 동일한 응답 형태를 만든다
+     * (§12.8). 코드축 필터는 {@code q} 와 AND 결합, 정렬은 relevance 고정이다. 고정가는 스킬·골드포스 필터가 없다
+     * (공통 필터 중 shop 노출분만 — ShopSearchCondition 정합). ES 순서를 보존하도록 public_id 기준 재배열하고,
+     * ES 가 스테일해 DB 에 없는 public_id 는 제외한다(유령 행 방지).
+     */
+    @ServiceLog
+    public ShopSlice search(ShopSearchCondition condition, String query, String cursor, int size) {
+        ListingSearchCondition searchCondition = new ListingSearchCondition(
+            ListingType.SHOP, query,
+            condition.mainCategory(), condition.subGroup(), condition.element(), condition.kind(),
+            condition.minLevel(), condition.maxLevel(), null, null, null,
+            condition.minPrice(), condition.maxPrice(), shopStatuses(condition.status()));
+        ListingSearchResult result = listingSearchService.search(searchCondition, cursor, size);
+
+        Map<String, Shop> byPublicId = shopRepository.findByPublicIds(result.publicIds()).stream()
+            .collect(Collectors.toMap(Shop::getPublicId, Function.identity(), (a, b) -> a));
+        List<Shop> ordered = result.publicIds().stream()
+            .map(byPublicId::get)
+            .filter(Objects::nonNull)
+            .toList();
+        return new ShopSlice(ordered, result.nextCursor(), result.hasNext());
+    }
+
+    /** 검색 노출 상태 화이트리스트 — 공개 목록과 동일 규약(null=판매 중 ACTIVE, 지정=해당 상태만). */
+    private List<String> shopStatuses(ShopStatus status) {
+        if (status == null) {
+            return List.of(ShopStatus.ACTIVE.name());
+        }
+        return List.of(status.name());
     }
 
     /**
