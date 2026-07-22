@@ -16,6 +16,7 @@ import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
 import com.finalcall.domain.item.ItemLocation;
+import com.finalcall.domain.settlement.FeeCalculator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +44,7 @@ public class ShopService {
     private final ItemInstanceRepository itemInstanceRepository;
     private final InventoryService inventoryService;
     private final ShopListingProperties listingProperties;
+    private final FeeCalculator feeCalculator;
 
     /**
      * 고정가를 등록한다(계약 §3.2 POST /shops, 단일 TX). 소유 검증 후 기한을 서버 설정 일수로 자동 계산하고, item 을
@@ -101,6 +103,39 @@ public class ShopService {
         List<Shop> content = hasNext ? fetched.subList(0, size) : fetched;
         String nextCursor = content.isEmpty() ? null : encodeNext(content, condition.sort());
         return new ShopSlice(content, nextCursor, hasNext);
+    }
+
+    /**
+     * 내 판매 목록(계약 §3.2 GET /me/shops) — 판매자 <b>본인 스코프</b> keyset cursor. 판매자는 컨트롤러가 아니라
+     * 여기서 SecurityContext 주체로 도출한다(B-009, IDOR 원천 차단 — 요청에 seller 파라미터 없음). 각 리스팅에
+     * 판매자 전용 예상 정산({@code estimatedFee}·{@code estimatedSettle})을 결합한다.
+     *
+     * <p><b>status 규약:</b> {@code null} = ALL(무필터). 기본값(ACTIVE) 해석은 컨트롤러가 이미 마쳤으므로 여기 도달한
+     * null 은 전 상태 조회 의도다(계약 §3.2 ALL 센티널). <b>예상 정산은 추정치다</b>(shop-spec §10.3): ACTIVE 는
+     * sale_order 부재라 현재 정책 {@code FeeCalculator} 로 파생하며 SOLD 시점 실현값과 드리프트할 수 있다(S-B).
+     * 공개 {@code GET /shops} 의 {@code ShopSummary} 는 이 값을 절대 받지 않는다(별도 DTO 격리).
+     *
+     * @param status    상태 필터(null=ALL 무필터, 지정=해당 영속 상태만)
+     * @param sort      정렬 필드(화이트리스트)
+     * @param ascending 오름차순 여부(false=내림차순, 기본 createdAt desc)
+     */
+    @ServiceLog
+    public MyShopSlice getMyShops(ShopStatus status, ShopSort sort, boolean ascending, String cursor, int size) {
+        Long sellerId = currentUserId();
+        ShopCursor decoded = ShopCursor.decode(cursor);
+        List<Shop> fetched = shopRepository.findBySellerCursor(sellerId, status, sort, ascending, decoded, size);
+
+        boolean hasNext = fetched.size() > size;
+        List<Shop> content = hasNext ? fetched.subList(0, size) : fetched;
+        String nextCursor = content.isEmpty() ? null : encodeNext(content, sort);
+        List<MyShopListing> listings = content.stream().map(this::toListing).toList();
+        return new MyShopSlice(listings, nextCursor, hasNext);
+    }
+
+    /** 리스팅에 예상 정산을 결합한다. {@code estimatedFee = FeeCalculator.compute(price)}, settle = price − fee. */
+    private MyShopListing toListing(Shop shop) {
+        long estimatedFee = feeCalculator.compute(shop.getPrice());
+        return new MyShopListing(shop, estimatedFee, shop.getPrice() - estimatedFee);
     }
 
     /** 고정가 상세(계약 §3.2 GET /shops/{id}). itemInstance·template·skill·seller 를 fetch join 한다. 없으면 SHOP_003. */

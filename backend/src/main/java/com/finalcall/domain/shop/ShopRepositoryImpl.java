@@ -72,12 +72,38 @@ public class ShopRepositoryImpl implements ShopRepositoryCustom {
             .fetch();
     }
 
+    @Override
+    public List<Shop> findBySellerCursor(
+        Long sellerId, ShopStatus status, ShopSort sort, boolean ascending, ShopCursor cursor, int size) {
+        return queryFactory.selectFrom(shop)
+            .join(shop.itemInstance, ITEM).fetchJoin()
+            .join(ITEM.template, TEMPLATE).fetchJoin()
+            .leftJoin(ITEM.skill1, SKILL1).fetchJoin()
+            .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
+            .join(shop.seller, SELLER).fetchJoin()
+            .where(
+                shop.seller.id.eq(sellerId), // 인증 주체 스코프(IDOR) — 인덱스 (seller_id, status) 선두
+                sellerStatusEq(status),
+                keyset(sort, ascending, cursor))
+            .orderBy(orderBy(sort, ascending))
+            .limit((long)size + 1) // hasNext 판단을 위해 한 건 더
+            .fetch();
+    }
+
     /** status 미지정이면 판매 중(ACTIVE) 기본 노출, 지정이면 해당 영속 상태만(종료분 조회 허용). */
     private BooleanExpression statusScope(ShopSearchCondition condition) {
         if (condition.status() == null) {
             return shop.status.eq(ShopStatus.ACTIVE);
         }
         return shop.status.eq(condition.status());
+    }
+
+    /**
+     * '내 판매' status predicate. 공개 {@link #statusScope} 와 달리 {@code null} 은 <b>ALL(무필터)</b>이다 — 기본값
+     * (ACTIVE) 해석은 컨트롤러가 이미 마쳤으므로 여기 null 은 전 상태 조회 의도다(계약 §3.2 ALL 센티널).
+     */
+    private BooleanExpression sellerStatusEq(ShopStatus status) {
+        return status == null ? null : shop.status.eq(status);
     }
 
     private BooleanExpression mainCategoryEq(Integer value) {
