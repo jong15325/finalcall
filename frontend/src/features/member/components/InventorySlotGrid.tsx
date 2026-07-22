@@ -18,8 +18,11 @@ import './InventorySlotGrid.css'
  * ★ 목업 카테고리 탭(정령카드/아바타)은 계약 데이터가 없어 **드롭** — 중립 "전체 아이템" 자리만 남긴다.
  * ★ 슬롯 번호는 **1-based** 로 배치한다(목업 표시 규약과 일치). 채운 슬롯은 `slotNo` 로 자리를 잡고,
  *   빈 슬롯은 번호만 표시한다. used===0 이면 빈 상태 안내 + 임시보관 링크를 함께 보인다.
- * ★ 그리드는 **반응형 리플로우**(모바일 2 · 태블릿 3 · PC 6열, FC-086 #1) — 가로 스크롤 없이
- *   폭에 맞춰 열을 접는다(`xs`=576px 목업 모바일 브레이크포인트 정합). 슬롯 수는 그대로.
+ * ★ 그리드는 **반응형 리플로우**(모바일 2 `<sm` · 태블릿 3 `sm`~`<lg` · PC 6열 `≥lg`, FC-086 #1·FC-102).
+ *   6열 임계를 `xl`(1280)→`lg`(1024)로 낮춰 넓은 화면이 3열로 낭비되지 않게 한다. 셀 폭은
+ *   `minmax(0,1fr)`(grid-cols-N) × 고정 컨테이너(`max-w-[820px]` + html `scrollbar-gutter:stable`)라
+ *   **뷰포트만의 함수** — 페이지/탭·채운·빈 슬롯 구성과 무관하게 같은 뷰포트에서 셀 크기 동일.
+ *   행 높이도 그리드 `auto-rows-[134px]` 로 고정(페이지 불변, FC-102).
  */
 
 const PAGE_SIZE = 24
@@ -97,10 +100,11 @@ function InventorySlotGrid({
                 )}
             </div>
 
-            {/* 슬롯 그리드 — 반응형 리플로우(모바일 2·태블릿 3·PC 6열, FC-086 #1) */}
+            {/* 슬롯 그리드 — 반응형 2/3/6열(모바일<sm·태블릿 sm~<lg·PC≥lg). 셀 폭·행 높이 모두
+                뷰포트 함수(minmax(0,1fr)×고정 컨테이너 + auto-rows) → 페이지 불변, FC-086 #1·FC-102 */}
             <div className="p-4">
                 <ul
-                    className="grid auto-rows-[134px] grid-cols-2 gap-2.5 xs:grid-cols-3 xl:grid-cols-6"
+                    className="grid auto-rows-[134px] grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6"
                     aria-label={`인벤토리 슬롯 ${firstSlot}–${lastSlot}`}
                 >
                     {slotNumbers.map((slotNo) => {
