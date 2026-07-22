@@ -35,5 +35,11 @@ FC-109 reviewer   검수(정합성·동기 불일치·화해·주입·성능·�
 - **결정 성격**: architect 추천(OpenSearch+Outbox 경량)과 다르게 **포트폴리오 사실성 우선**으로 ES+CDC 선택 — 로컬 부담 큼(사용자 수용). sellerGrade 부스트 제외(GRADE 의존).
 - 정합성: ES 정본 아님·MySQL 진실원·dual-write 금지·주기 화해(domain-spec §8).
 
+## 온디맨드 보안 리뷰 (2026-07-23, 에픽 완료 직전) — 취약점 0건
+- search 델타(cb91c64·edd9807·fcf7e03) 스코프. **HIGH/MEDIUM 0건**. DSL 인젝션 없음(multi_match·term/range만·query_string/script 미사용·q는 값 슬롯)·커서 디코드 400 안전·IDOR 신규 보안면 없음(공개 목록 additive)·데이터 노출 없음(민감필드 미색인·nickname 마스킹·_source 미반환·DB 하이드레이션)·인프라 로컬 전용·XSS 없음.
+
+## 로컬 스택 기동 이슈 (2026-07-23)
+- kafka-connect 이미지 빌드가 **Confluent Hub CDN(d1i4a15mxbxib1.cloudfront.net) DNS 차단**으로 ES sink 플러그인 다운로드 실패. 이 네트워크 한정 환경 이슈(코드/설계 무관). 대체 소스 도달 확인: packages.confluent.io·Maven Central·GitHub 200 → Dockerfile 소스 재지정으로 해소(FC-107 소형 인프라 수정).
+
 ## 범위 밖
 - 등급 부스트(EPIC-GRADE 선행) · 오타허용/동의어 고도화(엔진 도입 후 튜닝) · item-templates 검색 · 패싯 UI(엔진은 지원하나 UI는 후속) · 운영 클러스터(로컬 데모 우선).
