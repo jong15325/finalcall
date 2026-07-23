@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import ItemCard from './ItemCard'
 import type { ItemCardData } from './ItemCard'
 
@@ -87,6 +87,86 @@ describe('<ItemCard>', () => {
         expect(screen.getByRole('button', { name: '구매' })).toBeInTheDocument()
     })
 
+    it('skillFlip 이면 이미지 영역에 스킬 뒷면과 터치 토글을 렌더한다', () => {
+        const { container } = render(
+            <ItemCard
+                skillFlip
+                item={baseItem}
+                price={1000}
+                sellerNickname="신뢰상점"
+                overlay={<button type="button">비교</button>}
+            />,
+        )
+        const trigger = screen.getByRole('button', {
+            name: '불의 전투도끼 스킬 보기',
+        })
+        const front = container.querySelector('.item-card__skill-flip-front')
+        const back = container.querySelector('.item-card__skill-flip-back')
+        expect(screen.getAllByText('블랙 - 무기')).toHaveLength(2)
+        expect(screen.getAllByText('도끼 · Lv.3')).toHaveLength(2)
+        expect(screen.getByText('불')).toBeInTheDocument()
+        expect(screen.getByText('판매자')).toHaveTextContent('신뢰상점')
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        expect(front).toHaveAttribute('aria-hidden', 'false')
+        expect(front).not.toHaveAttribute('inert')
+        expect(back).toHaveAttribute('aria-hidden', 'true')
+        expect(back).toHaveAttribute('inert')
+        expect(
+            screen
+                .getByRole('button', { name: '비교' })
+                .closest('.item-card__skill-flip-face'),
+        ).toBeNull()
+
+        fireEvent.click(trigger)
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        expect(trigger).toHaveAccessibleName('불의 전투도끼 스킬 닫기')
+        expect(
+            container.querySelector('.item-card__skill-flip'),
+        ).toHaveAttribute('data-flipped', 'true')
+        expect(front).toHaveAttribute('aria-hidden', 'true')
+        expect(front).toHaveAttribute('inert')
+        expect(back).toHaveAttribute('aria-hidden', 'false')
+        expect(back).not.toHaveAttribute('inert')
+
+        fireEvent.keyDown(window, { key: 'Escape' })
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        expect(front).toHaveAttribute('aria-hidden', 'false')
+        expect(front).not.toHaveAttribute('inert')
+        expect(back).toHaveAttribute('aria-hidden', 'true')
+        expect(back).toHaveAttribute('inert')
+        expect(
+            screen
+                .getByRole('button', { name: '비교' })
+                .closest('.item-card__skill-flip-face'),
+        ).toBeNull()
+    })
+
+    it('활성 골드포스는 카드 타입 제목을 골드로 파생한다', () => {
+        render(
+            <ItemCard
+                skillFlip
+                item={{
+                    ...baseItem,
+                    goldforceExpireAt: '2026-08-02T00:00:00Z',
+                }}
+                now={Date.parse('2026-08-01T00:00:00Z')}
+                price={1000}
+            />,
+        )
+        expect(screen.getAllByText('골드 - 무기')).toHaveLength(2)
+        expect(screen.queryByText(/골드포스 잔여/)).not.toBeInTheDocument()
+        expect(screen.getByLabelText(/골드포스 잔여/)).toBeInTheDocument()
+    })
+    it('스킬이 없으면 skillFlip 이어도 이미지 토글을 만들지 않는다', () => {
+        render(
+            <ItemCard
+                skillFlip
+                item={{ ...baseItem, skill1: null, skill2: null }}
+                price={1000}
+            />,
+        )
+        expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    })
     it('미등록 조합은 아트를 폴백(플레이스홀더)한다 — 깨진 이미지 금지', () => {
         // element 9 는 사전에 없음 → itemArt null → 플레이스홀더
         render(<ItemCard item={{ ...baseItem, element: 9 }} price={1000} />)

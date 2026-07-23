@@ -21,6 +21,8 @@ interface ItemSkillSummaryProps {
     skill2Name?: string | null
     /** 스킬2 줄에 붙는 발동확률(%). 0 이하·부재면 생략(사용자 확정 형식) */
     skillPercent?: number | null
+    /** 슬롯 번호를 "스킬 1/2"로 앞에 표시한다. */
+    showSlotLabels?: boolean
     /** 스킬이 하나도 없을 때 표기(행 높이 통일용). 기본 "스킬 없음" */
     emptyLabel?: string
     className?: string
@@ -32,6 +34,7 @@ function ItemSkillSummary({
     skill1Name,
     skill2Name,
     skillPercent,
+    showSlotLabels = false,
     emptyLabel = '스킬 없음',
     className = '',
 }: ItemSkillSummaryProps) {
@@ -65,6 +68,11 @@ function ItemSkillSummary({
                         key={skill.slot}
                         className="truncate text-[11px] font-medium text-navy-700 xs:text-xs"
                     >
+                        {showSlotLabels && (
+                            <span className="item-skill-summary__slot">
+                                스킬 {skill.slot}
+                            </span>
+                        )}
                         {skillLabelOf(skill)}
                         {showPercent && (
                             <span className="ml-1 font-bold text-orange-deep">

@@ -47,6 +47,8 @@ interface ItemFrameProps {
     spriteUrl?: string | null
     /** 골드포스 파생 기준 시각(테스트 주입). 기본 Date.now() */
     now?: number
+    /** 골드포스 프레임은 유지하고 잔여일 숫자 슬롯만 숨길 수 있다. */
+    showGoldforceDays?: boolean
     /** 외부 액션 오버레이(CompareToggle 등) — 이미지 DOM 밖 층에 렌더 */
     overlay?: ReactNode
     className?: string
@@ -62,6 +64,7 @@ function ItemFrame({
     scale,
     spriteUrl,
     now,
+    showGoldforceDays = true,
     overlay,
     className = '',
 }: ItemFrameProps) {
@@ -85,7 +88,7 @@ function ItemFrame({
         >
             <div className="item-frame__stage">
                 <span
-                    className={`card-art ${isGoldforce ? 'is-goldforce' : 'is-standard'}`}
+                    className={`card-art ${isGoldforce ? 'is-goldforce' : 'is-standard'} ${!showGoldforceDays ? 'hide-goldforce-days' : ''}`.trim()}
                 >
                     {isGoldforce && (
                         <img
@@ -96,7 +99,7 @@ function ItemFrame({
                         />
                     )}
 
-                    {dayLabel !== null && (
+                    {showGoldforceDays && dayLabel !== null && (
                         <span className="card-number-slot">
                             <span
                                 className="card-number"

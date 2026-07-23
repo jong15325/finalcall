@@ -352,3 +352,299 @@
     transform: scale(var(--art-scale, 1)) translateY(-3px);
     filter: drop-shadow(0 8px 9px rgba(3, 9, 19, 0.48));
 }
+/* ── 마켓 카드 스킬 플립 — 이미지 스테이지만 뒤집고 상품명·가격은 유지 ───────────── */
+.item-card__skill-flip {
+    position: relative;
+    perspective: 900px;
+}
+
+.item-card__skill-flip-inner {
+    display: grid;
+    transform-style: preserve-3d;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.item-card__skill-flip-face {
+    grid-area: 1 / 1;
+    min-width: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.item-card__skill-flip-front > .item-frame {
+    display: block;
+    width: 100%;
+}
+
+.item-card__skill-flip-back {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 168px;
+    flex-direction: column;
+    padding: 16px;
+    color: white;
+    background: linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    transform: rotateY(180deg);
+}
+
+.item-card__skill-mark {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--gold-bright) 42%, transparent);
+    border-radius: 10px;
+    color: var(--gold-bright);
+    background: color-mix(in srgb, var(--gold-bright) 10%, transparent);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.item-card__skill-flip-back > strong {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.item-card__skill-name {
+    margin-top: 1px;
+    overflow: hidden;
+    color: var(--gray-300);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-card__skill-list {
+    margin-top: 12px;
+    gap: 7px;
+}
+
+.item-card__skill-list li {
+    padding: 8px;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 13%);
+    border-radius: 9px;
+    color: white;
+    background: rgb(255 255 255 / 6%);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-card__skill-list li span {
+    color: var(--gold-bright);
+}
+
+.item-card__skill-flip-back > small {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgb(255 255 255 / 12%);
+    color: var(--gray-300);
+    font-size: 9px;
+}
+
+.item-card__skill-flip-trigger {
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+}
+
+.item-card__skill-flip.is-enabled:hover .item-card__skill-flip-inner,
+.shop-card:hover .item-card__skill-flip.is-enabled .item-card__skill-flip-inner,
+.item-card__skill-flip.is-enabled[data-flipped='true']
+    .item-card__skill-flip-inner {
+    transform: rotateY(180deg);
+}
+
+/* 터치 기기에서는 이미지 영역 전체가 명시적인 토글이다. */
+@media (hover: none) {
+    .item-card__skill-flip.is-enabled .item-card__skill-flip-trigger {
+        pointer-events: auto;
+        touch-action: manipulation;
+    }
+
+    .item-card__skill-flip.is-enabled:hover .item-card__skill-flip-inner {
+        transform: none;
+    }
+
+    .shop-card:hover
+        .item-card__skill-flip.is-enabled
+        .item-card__skill-flip-inner {
+        transform: none;
+    }
+
+    .item-card__skill-flip.is-enabled[data-flipped='true']
+        .item-card__skill-flip-inner {
+        transform: rotateY(180deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .item-card__skill-flip-inner {
+        transition: none;
+    }
+}
+
+/* ── 마켓 카드 정보 A안 — skillFlip 전용, 다른 ItemCard 소비자 무변경 ─────────────── */
+.item-card__skill-flip.is-market .item-frame__stage,
+.item-card__skill-flip.is-enabled .item-card__skill-flip-back {
+    min-height: 252px;
+}
+
+.item-card__skill-flip.is-market .item-frame__stage {
+    padding-block: 28px;
+}
+
+.item-card__skill-flip.is-enabled .item-card__skill-flip-back {
+    padding: 18px;
+}
+
+.item-card__skill-flip.is-enabled .item-card__skill-flip-back > strong {
+    margin-top: 0;
+    color: white;
+    font-size: 14px;
+}
+
+.item-card__skill-flip.is-enabled .item-card__skill-name {
+    margin-top: 2px;
+    font-size: 11px;
+}
+
+.item-card__skill-flip.is-enabled .item-card__skill-list {
+    margin-top: 18px;
+    gap: 9px;
+}
+
+.item-card__skill-flip.is-enabled .item-card__skill-list li {
+    padding: 10px;
+    font-size: 12px;
+}
+
+.item-card__skill-flip.is-enabled
+    .item-card__skill-list
+    li
+    span:not(.item-skill-summary__slot) {
+    font-size: 13px;
+}
+
+.item-card__skill-flip.is-enabled .item-card__skill-flip-back > small b {
+    color: white;
+}
+
+.item-skill-summary__slot {
+    display: block;
+    margin-bottom: 2px;
+    color: inherit;
+    font-size: 9px;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.item-card__market-info {
+    gap: 0;
+}
+
+.item-card__market-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.item-card__market-heading h3 {
+    margin: 0;
+    color: var(--gray-900);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.item-card__market-info > p {
+    margin: 2px 0 0;
+    color: var(--gray-500);
+    font-size: 11px;
+}
+
+.item-card__element-badge {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    color: var(--gray-900);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.item-card__element-badge::before {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    content: '';
+}
+
+.item-card__element-badge.element-1 {
+    background: rgb(25 178 255 / 14%);
+}
+.item-card__element-badge.element-1::before {
+    background: #19b2ff;
+}
+.item-card__element-badge.element-2 {
+    background: rgb(255 85 0 / 13%);
+}
+.item-card__element-badge.element-2::before {
+    background: #ff5500;
+}
+.item-card__element-badge.element-3 {
+    background: rgb(149 178 89 / 18%);
+}
+.item-card__element-badge.element-3::before {
+    background: #95b259;
+}
+.item-card__element-badge.element-4 {
+    background: rgb(102 204 204 / 18%);
+}
+.item-card__element-badge.element-4::before {
+    background: #66cccc;
+}
+
+.item-card__market-skills {
+    margin-top: 12px;
+    min-height: 98px;
+    gap: 7px;
+}
+
+.item-card__market-skills li {
+    padding: 7px 8px;
+    overflow: hidden;
+    border-radius: 8px;
+    color: var(--navy-700);
+    background: var(--gray-100);
+    font-size: 12px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-card__market-skills li > span:not(.item-skill-summary__slot) {
+    color: var(--orange-deep);
+    font-size: 13px;
+}
+
+.item-card__market-price {
+    margin-top: auto;
+    padding-top: 12px;
+    color: var(--gray-900);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.item-card__skill-flip-trigger:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: -4px;
+}

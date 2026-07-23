@@ -51,6 +51,25 @@ describe('<ItemFrame>', () => {
         expect(container.querySelector('.card-art.is-goldforce')).not.toBeNull()
     })
 
+    it('잔여일 슬롯을 숨겨도 골드 프레임 효과는 유지한다', () => {
+        const { container } = render(
+            <ItemFrame
+                imageUrl={ART}
+                name="검"
+                visual={{ goldforceExpireAt: at(42 * DAY) }}
+                now={NOW}
+                showGoldforceDays={false}
+            />,
+        )
+        expect(container.querySelector('.card-gold-frame')).not.toBeNull()
+        expect(container.querySelector('.card-number-slot')).toBeNull()
+        expect(container.querySelector('.card-art.is-goldforce')).toHaveClass(
+            'hide-goldforce-days',
+        )
+        expect(
+            screen.queryByLabelText('골드포스 잔여 42일'),
+        ).not.toBeInTheDocument()
+    })
     it('골드포스 만료/미적용은 STANDARD — gold 프레임·잔여일 없음', () => {
         const { container } = render(
             <ItemFrame

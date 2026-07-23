@@ -12,9 +12,13 @@
  * ★ 구매/비교는 **오버레이(`overlay`)나 카드 외부 액션(`footer`)** 으로 받는다 — 이미지 크기 불변.
  * ★ 가격은 **줄바꿈 금지**(CodeAmount + whitespace-nowrap). 값 없음(입찰 0건)은 CodeAmount 가 "-".
  */
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import CodeAmount from '@/components/common/CodeAmount'
 import { itemArt } from '@/features/item/lib/itemArt'
+import { elementLabelOf } from '@/features/item/lib/element'
+import { kindLabelOf, subGroupLabelOf } from '@/features/item/lib/itemCode'
+import { resolveFrameType } from './frame'
 import ItemFrame from './ItemFrame'
 import ItemSkillSummary from './ItemSkillSummary'
 
@@ -50,8 +54,12 @@ interface ItemCardProps {
     now?: number
     /** 프레임 위 오버레이(CompareToggle 등) — 이미지 크기 불변 */
     overlay?: ReactNode
+    /** 마켓 카드 뒷면 판매자(skillFlip 전용). */
+    sellerNickname?: string
     /** 카드 외부 액션 행(구매 버튼 등) */
     footer?: ReactNode
+    /** 마켓 카드에서 이미지 스테이지 뒤에 스킬을 표시한다. */
+    skillFlip?: boolean
     className?: string
 }
 
@@ -61,7 +69,9 @@ function ItemCard({
     priceLabel,
     now,
     overlay,
+    sellerNickname,
     footer,
+    skillFlip = false,
     className = '',
 }: ItemCardProps) {
     const art = itemArt(
@@ -75,52 +85,160 @@ function ItemCard({
         1,
     )
     const hasSkill = item.skill1 !== null || item.skill2 !== null
+    const flipEnabled = skillFlip && hasSkill
+    const referenceNow = now ?? Date.now()
+    const frameLabel =
+        resolveFrameType(
+            { goldforceExpireAt: item.goldforceExpireAt },
+            referenceNow,
+        ) === 'GOLDFORCE'
+            ? '골드'
+            : '블랙'
+    const groupLabel = subGroupLabelOf(item.subGroup)
+    const kindLabel = kindLabelOf(item.subGroup, item.kind)
+    const marketTitle = `${frameLabel} - ${groupLabel}`
+    const [flipped, setFlipped] = useState(false)
+
+    useEffect(() => {
+        if (!flipped) return
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setFlipped(false)
+        }
+        window.addEventListener('keydown', closeOnEscape)
+        return () => window.removeEventListener('keydown', closeOnEscape)
+    }, [flipped])
 
     return (
         <article
             className={`item-card flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:shadow-md ${className}`.trim()}
         >
-            <ItemFrame
-                imageUrl={art?.src}
-                spriteUrl={art?.src}
-                name={item.nameSnapshot}
-                visual={{ goldforceExpireAt: item.goldforceExpireAt }}
-                hasSkill={hasSkill}
-                now={now}
-                overlay={overlay}
-            />
+            <div
+                className={`item-card__skill-flip ${skillFlip ? 'is-market' : ''} ${flipEnabled ? 'is-enabled' : ''}`.trim()}
+                data-flipped={flipped}
+            >
+                <div className="item-card__skill-flip-inner">
+                    <div
+                        aria-hidden={flipped}
+                        className="item-card__skill-flip-face item-card__skill-flip-front"
+                        inert={flipped}
+                    >
+                        <ItemFrame
+                            showGoldforceDays
+                            imageUrl={art?.src}
+                            spriteUrl={art?.src}
+                            name={item.nameSnapshot}
+                            visual={{
+                                goldforceExpireAt: item.goldforceExpireAt,
+                            }}
+                            hasSkill={hasSkill}
+                            now={now}
+                            overlay={flipEnabled ? undefined : overlay}
+                        />
+                    </div>
 
-            <div className="flex flex-1 flex-col gap-1.5 p-3">
-                <h3 className="line-clamp-2 min-h-[2.6em] text-[13px] font-bold leading-tight text-gray-900 xs:text-sm">
-                    {item.nameSnapshot}
-                </h3>
-
-                <p className="truncate text-[11px] text-gray-500 xs:text-xs">
-                    {item.specSnapshot || ' '}
-                </p>
-
-                <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
-                    {priceLabel && (
-                        <span className="text-[11px] text-gray-400 xs:text-xs">
-                            {priceLabel}
-                        </span>
+                    {flipEnabled && (
+                        <div
+                            aria-hidden={!flipped}
+                            className="item-card__skill-flip-face item-card__skill-flip-back"
+                            inert={!flipped}
+                        >
+                            <strong>{marketTitle}</strong>
+                            <span className="item-card__skill-name">
+                                {kindLabel} · Lv.{item.level}
+                            </span>
+                            <ItemSkillSummary
+                                showSlotLabels
+                                skill1={item.skill1}
+                                skill2={item.skill2}
+                                skill1Name={item.skill1Name}
+                                skill2Name={item.skill2Name}
+                                skillPercent={item.skillPercent}
+                                className="item-card__skill-list"
+                            />
+                            {sellerNickname && (
+                                <small>
+                                    판매자 <b>{sellerNickname}</b>
+                                </small>
+                            )}
+                        </div>
                     )}
-                    <CodeAmount
-                        value={price}
-                        mode="compact"
-                        className="text-[13px] font-bold text-gray-900 xs:text-sm"
-                    />
                 </div>
 
-                <ItemSkillSummary
-                    skill1={item.skill1}
-                    skill2={item.skill2}
-                    skill1Name={item.skill1Name}
-                    skill2Name={item.skill2Name}
-                    skillPercent={item.skillPercent}
-                    className="pt-0.5"
-                />
+                {flipEnabled && overlay && (
+                    <div className="item-frame__overlay">{overlay}</div>
+                )}
+
+                {flipEnabled && (
+                    <button
+                        type="button"
+                        className="item-card__skill-flip-trigger"
+                        aria-label={`${item.nameSnapshot} 스킬 ${flipped ? '닫기' : '보기'}`}
+                        aria-expanded={flipped}
+                        onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            setFlipped((value) => !value)
+                        }}
+                    />
+                )}
             </div>
+
+            {skillFlip ? (
+                <div className="item-card__market-info flex flex-1 flex-col p-3">
+                    <div className="item-card__market-heading">
+                        <h3>{marketTitle}</h3>
+                        <span
+                            className={`item-card__element-badge element-${item.element}`}
+                        >
+                            {elementLabelOf(item.element)}
+                        </span>
+                    </div>
+                    <p>
+                        {kindLabel} · Lv.{item.level}
+                    </p>
+                    <ItemSkillSummary
+                        showSlotLabels
+                        skill1={item.skill1}
+                        skill2={item.skill2}
+                        skill1Name={item.skill1Name}
+                        skill2Name={item.skill2Name}
+                        skillPercent={item.skillPercent}
+                        className="item-card__market-skills"
+                    />
+                    <div className="item-card__market-price">
+                        <CodeAmount value={price} mode="compact" />
+                    </div>
+                </div>
+            ) : (
+                <div className="flex flex-1 flex-col gap-1.5 p-3">
+                    <h3 className="line-clamp-2 min-h-[2.6em] text-[13px] font-bold leading-tight text-gray-900 xs:text-sm">
+                        {item.nameSnapshot}
+                    </h3>
+                    <p className="truncate text-[11px] text-gray-500 xs:text-xs">
+                        {item.specSnapshot || ' '}
+                    </p>
+                    <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
+                        {priceLabel && (
+                            <span className="text-[11px] text-gray-400 xs:text-xs">
+                                {priceLabel}
+                            </span>
+                        )}
+                        <CodeAmount
+                            value={price}
+                            mode="compact"
+                            className="text-[13px] font-bold text-gray-900 xs:text-sm"
+                        />
+                    </div>
+                    <ItemSkillSummary
+                        skill1={item.skill1}
+                        skill2={item.skill2}
+                        skill1Name={item.skill1Name}
+                        skill2Name={item.skill2Name}
+                        skillPercent={item.skillPercent}
+                        className="pt-0.5"
+                    />
+                </div>
+            )}
 
             {footer ? (
                 <div className="border-t border-line p-2">{footer}</div>

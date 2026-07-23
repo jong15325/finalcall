@@ -27,24 +27,27 @@ interface ShopCardProps {
 
 function ShopCard({ shop, now }: ShopCardProps) {
     return (
-        <Link
-            to={marketDetailPath(shop.shopPublicId)}
-            aria-label={`${shop.item.nameSnapshot} 상세 보기`}
-            className="block rounded-xl transition-transform hover:-translate-y-[3px] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-        >
+        <div className="shop-card group relative rounded-xl transition-transform hover:-translate-y-[3px]">
             <ItemCard
+                skillFlip
                 item={shop.item}
                 price={shop.price}
                 now={now}
-                overlay={
-                    <CardCompareOverlay
-                        source="MARKET"
-                        listingId={shop.shopPublicId}
-                        name={shop.item.nameSnapshot}
-                    />
-                }
+                sellerNickname={shop.sellerNickname}
             />
-        </Link>
+            <Link
+                to={marketDetailPath(shop.shopPublicId)}
+                aria-label={`${shop.item.nameSnapshot} 상세 보기`}
+                className="absolute inset-x-0 bottom-0 top-[252px] z-[5] rounded-b-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+            />
+            <div className="absolute right-1.5 top-1.5 z-20">
+                <CardCompareOverlay
+                    source="MARKET"
+                    listingId={shop.shopPublicId}
+                    name={shop.item.nameSnapshot}
+                />
+            </div>
+        </div>
     )
 }
 
