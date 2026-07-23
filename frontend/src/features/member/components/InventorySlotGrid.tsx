@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { TbArchive, TbLayoutGrid, TbLock } from 'react-icons/tb'
-import { itemDetailPath, paths } from '@/app/paths'
+import { paths } from '@/app/paths'
 import ItemFrame from '@/features/item/components/ItemFrame'
+import ItemSkillSummary from '@/features/item/components/ItemSkillSummary'
 import { deriveItemSummaryArt } from '@/features/item/lib/itemSummary'
 import type { InventoryItem } from '@/lib/api/inventory'
 import './InventorySlotGrid.css'
@@ -19,11 +20,11 @@ import './InventorySlotGrid.css'
  * ★ 슬롯 번호는 **1-based** 로 배치한다(목업 표시 규약과 일치). 채운 슬롯은 `slotNo` 로 자리를 잡고,
  *   빈 슬롯은 번호만 표시한다. used===0 이면 빈 상태 안내 + 임시보관 링크를 함께 보인다.
  * ★ 그리드는 **반응형 열 수**(모바일 2 `<sm` · 태블릿 3 `sm`~`<lg` · PC 6 `≥lg`, FC-086 #1·FC-102).
- *   셀 폭은 **카드 프레임 실폭 72px 로 고정**(`grid-template-columns: repeat(N,72px)`)하고
+ *   셀 폭은 **확대 슬롯 폭 96px 로 고정**(`grid-template-columns: repeat(N,96px)`)하고
  *   `justify-center` 로 섹션(≤820px) 중앙 정렬한다 — 늘어나는 `1fr` 을 쓰면 셀이 ~122px 로 벌어져
- *   72px 프레임 주위에 다크 여백이 생기므로, 셀을 프레임에 맞춰(반대 방향) 카드가 셀을 꽉 채우게 한다.
+ *   72×134 아트는 원본 비율을 유지해 슬롯 중앙에 두고, 확대된 여백은 플립 정보 가독성에 사용한다.
  *   고정폭이라 셀 크기가 **뷰포트/페이지·채운·빈 슬롯 구성과 무관하게 결정적**(빈 슬롯 페이지 섹션
- *   수축 붕괴도 원천 차단). 행 높이는 `auto-rows-[134px]` 고정. 섹션 `w-full` 은 유지(무해).
+ *   수축 붕괴도 원천 차단). 행 높이는 `auto-rows-[178px]` 고정. 섹션 `w-full` 은 유지(무해).
  */
 
 const PAGE_SIZE = 24
@@ -101,11 +102,11 @@ function InventorySlotGrid({
                 )}
             </div>
 
-            {/* 슬롯 그리드 — 반응형 2/3/6열(모바일<sm·태블릿 sm~<lg·PC≥lg). 셀 폭=프레임 실폭 72px
-                고정 + justify-center 중앙 정렬 → 카드 꽉참(다크 여백 제거)·페이지 불변, FC-086 #1·FC-102 */}
+            {/* 슬롯 그리드 — 반응형 2/3/6열(모바일<sm·태블릿 sm~<lg·PC≥lg). 셀 폭=확대 슬롯 96px
+                고정 + justify-center 중앙 정렬 → 원본 아트 중앙 정렬·페이지 불변, FC-086 #1·FC-102 */}
             <div className="p-4">
                 <ul
-                    className="grid auto-rows-[134px] justify-center gap-2.5 [grid-template-columns:repeat(2,72px)] sm:[grid-template-columns:repeat(3,72px)] lg:[grid-template-columns:repeat(6,72px)]"
+                    className="grid auto-rows-[178px] justify-center gap-2.5 [grid-template-columns:repeat(2,96px)] sm:[grid-template-columns:repeat(3,96px)] lg:[grid-template-columns:repeat(6,96px)]"
                     aria-label={`인벤토리 슬롯 ${firstSlot}–${lastSlot}`}
                 >
                     {slotNumbers.map((slotNo) => {
@@ -172,7 +173,9 @@ function InventorySlotGrid({
                                         className="absolute inset-x-4 top-0 h-0.5 rounded-b bg-orange"
                                     />
                                 )}
-                                {index === 0 ? '기본 슬롯' : `추가 슬롯${index}`}
+                                {index === 0
+                                    ? '기본 슬롯'
+                                    : `추가 슬롯${index}`}
                             </button>
                         )
                     })}
@@ -189,18 +192,21 @@ function InventorySlotGrid({
  *   여백(패딩·갭) 없이 셀에 꽉 채운다. 프레임(72×134)은 셀보다 좁으므로 중앙에 두고 다크
  *   아웃라인이 셀 폭을 메운다 — 프레임 아트 비율(72×134·크로마키)은 불변(외부 셀 크기로만 정합).
  *   이름은 링크 `aria-label` 로만 접근성 노출한다.
- * ★ 셀 높이는 그리드 `auto-rows-[134px]` 가 정본(모든 페이지 동일) — 슬롯은 `h-full` 로 채운다.
+ * ★ 셀 높이는 그리드 `auto-rows-[178px]` 가 정본(모든 페이지 동일) — 슬롯은 `h-full` 로 채운다.
  *   hover 확대(zoom)·슬롯 밖 팝은 `.inv-slot` 스코프 CSS(InventorySlotGrid.css)가 담당한다.
  */
 function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
     const { art, hasSkill } = deriveItemSummaryArt(item.summary)
     const name = item.summary.displayName
+    const [flipped, setFlipped] = useState(false)
 
     return (
-        <Link
-            to={itemDetailPath(item.itemInstancePublicId)}
-            aria-label={`${name} 상세 보기`}
-            className="inv-slot item-sprite-stage flex h-full w-full items-center justify-center border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md"
+        <button
+            type="button"
+            aria-label={`${name} 스킬 ${flipped ? '닫기' : '보기'}`}
+            aria-expanded={flipped}
+            className={`inv-slot inv-slot-flip item-sprite-stage h-full w-full border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md ${hasSkill ? 'is-enabled' : ''}`.trim()}
+            data-flipped={flipped}
             style={
                 art?.src
                     ? ({
@@ -208,20 +214,39 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
                       } as CSSProperties)
                     : undefined
             }
+            onClick={() => {
+                if (hasSkill) setFlipped((value) => !value)
+            }}
         >
-            <ItemFrame
-                imageUrl={art?.src}
-                spriteUrl={art?.src}
-                name={name}
-                visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
-                hasSkill={hasSkill}
-                size="frame"
-                now={now}
-            />
-        </Link>
+            <span className="inv-slot-flip__inner">
+                <span className="inv-slot-flip__face inv-slot-flip__front">
+                    <ItemFrame
+                        imageUrl={art?.src}
+                        spriteUrl={art?.src}
+                        name={name}
+                        visual={{
+                            goldforceExpireAt: item.summary.goldforceExpireAt,
+                        }}
+                        hasSkill={hasSkill}
+                        size="frame"
+                        now={now}
+                    />
+                </span>
+                {hasSkill && (
+                    <span className="inv-slot-flip__face inv-slot-flip__back">
+                        <ItemSkillSummary
+                            showSlotLabels
+                            skill1={item.summary.skill1Code}
+                            skill2={item.summary.skill2Code}
+                            skillPercent={item.summary.skillPercent}
+                            className="inv-slot-flip__skills"
+                        />
+                    </span>
+                )}
+            </span>
+        </button>
     )
 }
-
 /** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. 셀 높이는 그리드 auto-rows(h-full) 정합. */
 function EmptySlot({ slotNo }: { slotNo: number }) {
     return (

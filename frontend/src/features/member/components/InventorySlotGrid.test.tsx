@@ -41,6 +41,13 @@ function renderGrid(
 }
 
 describe('<InventorySlotGrid>', () => {
+    it('슬롯을 96×178 크기로 렌더한다', () => {
+        renderGrid({ capacity: 24 })
+        const grid = screen.getByRole('list', { name: /인벤토리 슬롯/ })
+        expect(grid).toHaveClass('auto-rows-[178px]')
+        expect(grid.className).toContain('repeat(2,96px)')
+        expect(grid.className).toContain('repeat(6,96px)')
+    })
     it('capacity 배지는 서버값(used/capacity)을 그대로 보인다', () => {
         renderGrid({ capacity: 96, used: 2, items: [item(1, 'A', '불의 검')] })
         expect(screen.getByText('2 / 96 사용')).toBeInTheDocument()
@@ -48,12 +55,28 @@ describe('<InventorySlotGrid>', () => {
 
     it('채운 슬롯은 인스턴스 상세로 링크한다(이름은 aria-label 로만, 하단 라벨 제거)', () => {
         renderGrid({ used: 1, items: [item(1, 'INST-1', '불의 검')] })
-        const link = screen.getByRole('link', { name: '불의 검 상세 보기' })
-        expect(link).toHaveAttribute('href', '/items/INST-1')
+        const slot = screen.getByRole('button', { name: '불의 검 스킬 보기' })
+        expect(slot).toHaveAttribute('aria-expanded', 'false')
+        expect(slot).not.toHaveAttribute('href')
         // 이미지 중심(FC-102) — 이름을 별도 텍스트 라벨로 렌더하지 않는다(aria-label 접근성만).
         expect(screen.queryByText('불의 검')).toBeNull()
     })
 
+    it('스킬이 있는 슬롯은 클릭으로 앞뒤를 전환한다', () => {
+        const { container } = renderGrid({
+            used: 1,
+            items: [item(1, 'INST-1', '불의 검')],
+        })
+        const slot = screen.getByRole('button', { name: '불의 검 스킬 보기' })
+        expect(container.querySelector('.inv-slot-flip__back')).not.toBeNull()
+        expect(slot).toHaveAttribute('data-flipped', 'false')
+
+        fireEvent.click(slot)
+
+        expect(slot).toHaveAttribute('data-flipped', 'true')
+        expect(slot).toHaveAttribute('aria-expanded', 'true')
+        expect(slot).toHaveAccessibleName('불의 검 스킬 닫기')
+    })
     it('빈 슬롯은 번호 라벨을 가진다', () => {
         renderGrid({ used: 1, items: [item(1, 'INST-1', '불의 검')] })
         // slot 1 은 채워졌고 slot 2 는 비었다
@@ -89,7 +112,7 @@ describe('<InventorySlotGrid>', () => {
         })
         expect(screen.queryByLabelText('빈 슬롯 25')).toBeNull()
         expect(
-            screen.queryByRole('link', { name: '2페이지 아이템 상세 보기' }),
+            screen.queryByRole('button', { name: '2페이지 아이템 스킬 보기' }),
         ).toBeNull()
     })
 
@@ -102,7 +125,7 @@ describe('<InventorySlotGrid>', () => {
             screen.getByRole('button', { name: '슬롯 25번부터 48번' }),
         )
         expect(
-            screen.getByRole('link', { name: '2페이지 아이템 상세 보기' }),
-        ).toHaveAttribute('href', '/items/INST-25')
+            screen.getByRole('button', { name: '2페이지 아이템 스킬 보기' }),
+        ).toHaveAttribute('aria-expanded', 'false')
     })
 })
