@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>장터 · 마켓 카드 정보 4안</title>
+<style>
+:root{
+  --navy:#16213a;--navy-900:#101a2e;--navy-800:#1b2a47;
+  --gold-bright:#dfc447;--orange:#ef8a2c;--orange-deep:#d9741a;--orange-subtle:#fdefe0;
+  --surface:#fff;--surface-sunken:#f4f5f8;--line:#e4e7ee;--line-strong:#cfd4de;
+  --gray-100:#f1f3f7;--gray-300:#cfd4de;--gray-400:#9aa3b2;--gray-500:#6b7484;
+  --gray-600:#4d5461;--gray-700:#3a3f4a;--gray-900:#171a20;
+  --purple:#6e2a9f;--purple-soft:#f1eaf5;--ink:#18181b;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--surface-sunken);color:var(--gray-700);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5}
+button{font:inherit}button:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+.shell{min-height:100vh;display:grid;grid-template-columns:70px minmax(0,1fr)}
+.rail{position:sticky;top:0;height:100vh;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 10px;gap:14px}
+.brand{width:42px;height:42px;border-radius:12px;background:var(--navy);display:grid;place-items:center;color:var(--gold-bright);font-weight:900}
+.rail i{display:block;width:38px;height:38px;border-radius:10px;background:var(--gray-100)}.rail i.active{background:var(--orange-subtle);box-shadow:inset 3px 0 var(--orange)}
+.page{min-width:0}.topbar{height:64px;position:sticky;top:0;z-index:20;background:rgb(255 255 255/.96);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:12px}
+.context{width:36px;height:36px;border-radius:10px;background:var(--navy);display:grid;place-items:center;color:var(--gold-bright);font-weight:900}
+.topbar strong{color:var(--gray-900)}.topbar small{display:block;color:var(--gray-400);font-size:10px;letter-spacing:.08em}.balance{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px}.balance b{color:var(--gray-900)}
+.content{max-width:1240px;margin:0 auto;padding:28px 24px 64px}.page-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+h1{margin:0;color:var(--gray-900);font-size:24px;letter-spacing:-.025em}.lead{margin:5px 0 0;color:var(--gray-500)}
+.badge{display:inline-flex;align-items:center;border-radius:999px;background:var(--purple-soft);color:var(--purple);font-size:11px;font-weight:800;padding:5px 9px}
+.source{margin:20px 0 28px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:12px;color:var(--gray-600)}
+.source b{color:var(--gray-900)}.source code{color:var(--purple)}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.option{min-width:0;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
+.option-head{min-height:108px;padding:18px 20px;border-bottom:1px solid var(--line)}.option-kicker{color:var(--orange-deep);font-size:11px;font-weight:900}.option h2{margin:3px 0 4px;color:var(--gray-900);font-size:17px}.option p{margin:0;color:var(--gray-500);font-size:12px;max-width:54ch}
+.demo{min-height:456px;padding:28px;display:grid;place-items:center;background:linear-gradient(135deg,#fafbfc,#f4f5f8)}
+.market-card{width:216px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 4px 14px rgb(15 23 42/.08)}
+.art-stage{height:214px;position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,#263343,#131c29)}
+.art-stage::before{position:absolute;z-index:-1;inset:-18px;content:"";background-image:radial-gradient(circle at 50% 42%,rgb(122 152 193/.18),transparent 52%),linear-gradient(145deg,rgb(10 18 30/.18),rgb(3 8 15/.58)),var(--sprite);background-position:center;background-repeat:no-repeat;background-size:auto,auto,156px auto;filter:saturate(.42) brightness(.48) contrast(1.08) blur(3px);opacity:.48;transform:scale(1.14)}
+.art-stage::after{position:absolute;z-index:0;inset:0;content:"";background:radial-gradient(ellipse at 50% 40%,transparent 20%,rgb(2 8 16/.54))}
+.item-frame{position:relative;z-index:2;width:72px;height:134px;transform:scale(1.3)}.item-frame .item{display:block;width:100%;height:100%;object-fit:fill;image-rendering:pixelated}.frame{position:absolute;z-index:3;inset:0;width:100%;height:100%;image-rendering:pixelated}.rank{position:absolute;z-index:4;right:1px;top:1px;width:17px;height:23px;background:url("../../game_ui/item_info/frames/skill-gold-transparent.png") center/100% 100% no-repeat}
+.compare{position:absolute;z-index:5;right:8px;top:8px;width:30px;height:30px;border:1px solid rgb(255 255 255/.6);border-radius:8px;background:rgb(16 26 46/.82);color:#fff;font-size:15px}
+.copy{padding:12px}.copy h3{margin:0;color:var(--gray-900);font-size:14px;line-height:1.35}.meta{margin:4px 0 0;color:var(--gray-500);font-size:11px}.price{margin-top:10px;color:var(--gray-900);font-weight:900;font-variant-numeric:tabular-nums}.coin{display:inline-block;width:10px;height:10px;margin-right:5px;border-radius:2px;background:var(--orange);transform:rotate(45deg)}
+.info-panel{color:#fff;background:linear-gradient(160deg,var(--navy-800),var(--navy-900))}.info-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.info-top strong{font-size:13px}.info-top small{display:block;color:var(--gray-300);font-size:10px}.level{flex:0 0 auto;border:1px solid rgb(223 196 71/.4);border-radius:7px;padding:3px 6px;color:var(--gold-bright);font-size:10px;font-weight:900}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:13px;overflow:hidden;border:1px solid rgb(255 255 255/.12);border-radius:8px;background:rgb(255 255 255/.12)}.fact{min-width:0;padding:7px 8px;background:rgb(255 255 255/.05)}.fact span{display:block;color:var(--gray-300);font-size:9px}.fact b{display:block;overflow:hidden;color:#fff;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.skills{display:grid;gap:7px;margin-top:10px}.skill{padding:8px;border:1px solid rgb(255 255 255/.12);border-radius:8px;background:rgb(255 255 255/.06);font-size:10px}.skill b{display:block;color:#fff;font-size:11px}.skill em{color:var(--gold-bright);font-style:normal;font-weight:900}
+.option-a .info-panel{padding:14px}.option-a .market-card{position:relative;width:236px}.option-a .item-frame{transform:scale(1.45)}.option-a .art-stage{height:252px}.option-a .copy{border-top:1px solid var(--line)}
+.option-a .art-flip{height:252px;position:relative;transform-style:preserve-3d;transition:transform 240ms var(--ease)}
+.option-a .art-side{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.option-a .art-side.back{display:flex;flex-direction:column;padding:14px;transform:rotateY(180deg)}
+.option-a .market-card:hover .art-flip,.option-a .market-card[data-open="true"] .art-flip{transform:rotateY(180deg)}
+.option-a .peek{gap:7px}.option-a .peek span{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px}.option-a .peek b{font-size:12px}.option-a .peek strong{color:var(--purple);font-size:13px;font-variant-numeric:tabular-nums}
+.back-skills{display:grid;gap:7px;margin-top:10px}.back-skill{padding:8px;border:1px solid rgb(255 255 255/.13);border-radius:8px;background:rgb(255 255 255/.06)}.back-skill span{display:block;color:var(--gray-300);font-size:9px}.back-skill b{display:block;color:#fff;font-size:11px}.back-skill strong{color:var(--gold-bright);font-size:12px}
+.back-meta{margin-top:auto;padding-top:8px;border-top:1px solid rgb(255 255 255/.13);display:grid;gap:2px;color:var(--gray-300);font-size:9px}.back-meta b{color:#fff}.back-meta .seller{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flip-hint{position:absolute;z-index:6;right:8px;top:216px;border:0;border-radius:7px;background:rgb(16 26 46/.82);padding:4px 7px;color:#fff;font-size:9px;font-weight:800}
+.quick-facts{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}.quick-facts span{border-radius:999px;background:var(--gray-100);padding:3px 6px;color:var(--gray-600);font-size:9px;font-weight:700}.quick-facts span.element{background:#fff0ea;color:#8d310d}
+.peek{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);display:grid;gap:3px;color:var(--gray-600);font-size:10px}.peek b{color:var(--gray-900)}
+.option-b .market-card{width:248px}.option-b .info-panel{padding:16px}.option-b .stat{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgb(255 255 255/.12)}.option-b .stat:last-child{border-bottom:0}.slot{display:grid;width:32px;height:32px;place-items:center;border:1px solid rgb(223 196 71/.35);border-radius:9px;color:var(--gold-bright);font-size:10px;font-weight:900}.stat span{color:var(--gray-300);font-size:10px}.stat b{display:block;color:#fff;font-size:11px}.value{color:var(--gold-bright);font-size:12px;font-weight:900;font-variant-numeric:tabular-nums}
+.option-c .market-card{width:268px}.option-c .info-panel{padding:0}.tabs{display:flex;border-bottom:1px solid rgb(255 255 255/.13)}.tabs button{flex:1;padding:9px 4px;border:0;border-bottom:2px solid transparent;color:var(--gray-300);background:transparent;font-size:10px;font-weight:800}.tabs button[aria-selected="true"]{border-bottom-color:var(--gold-bright);color:#fff;background:rgb(255 255 255/.06)}.tab-content{min-height:175px;padding:14px}.tab-pane[hidden]{display:none}.description{margin-top:11px;color:var(--gray-300);font-size:10px;line-height:1.55}
+.option-d .market-card{width:330px;display:grid;grid-template-columns:124px 1fr}.option-d .art-stage{height:auto;min-height:230px}.option-d .item-frame{transform:scale(1.15)}.option-d .copy{display:flex;flex-direction:column;padding:14px}.option-d .meta-line{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;margin-top:11px;font-size:10px}.option-d .meta-line dt{color:var(--gray-400)}.option-d .meta-line dd{margin:0;color:var(--gray-700);font-weight:700}.option-d .skill-light{margin-top:10px;padding:8px;border-radius:8px;background:var(--gray-100);font-size:10px}.option-d .skill-light b{display:block;color:var(--gray-900)}.option-d .price{margin-top:auto;padding-top:12px}
+.recommend{margin-top:22px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;gap:14px;align-items:flex-start}.recommend strong{color:var(--gray-900)}.recommend span{flex:0 0 auto;border-radius:999px;background:var(--ink);color:#fff;padding:5px 9px;font-size:10px;font-weight:800}.recommend p{margin:2px 0 0;color:var(--gray-500);font-size:12px}
+@media(prefers-reduced-motion:reduce){.option-a .art-flip{transition:none}}
+@media(max-width:900px){.options{grid-template-columns:1fr}}
+@media(max-width:640px){.shell{display:block}.rail{display:none}.topbar{padding:0 14px}.topbar small{display:none}.content{padding:20px 14px 60px}.page-head{display:block}.badge{margin-top:10px}.demo{min-height:420px;padding:20px}.option-d .market-card{width:min(330px,100%)}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail" aria-hidden="true"><span class="brand">장</span><i></i><i class="active"></i><i></i><i></i></aside>
+  <div class="page">
+    <header class="topbar"><span class="context">M</span><span><small>JANGTEO MARKETPLACE</small><strong>아이템 마켓 · 카드 정보 비교</strong></span><span class="balance">보유 코드 <b>572만</b></span></header>
+    <main class="content">
+      <div class="page-head"><div><h1>카드 정보 노출 4안</h1><p class="lead">원게임 카드 정보의 내용 구조만 참고하고, 현재 장터의 커머스 카드 언어로 다시 구성했습니다.</p></div><span class="badge">비교 목업 · 프론트 코드 미변경</span></div>
+      <div class="source"><b>표시 데이터 정본:</b> <code>CardInfoManager.java</code>의 유형·세부 이름·채널 제한·속성·남은 기간·스킬1·스킬2. 합성 비용처럼 코드에 없는 값은 만들지 않았습니다.</div>
+      <section class="options" aria-label="카드 정보 디자인 네 가지">
+        <article class="option option-a">
+          <header class="option-head"><span class="option-kicker">A · SELECTED / REVISED</span><h2>분류 + 특수스킬 요약 카드</h2><p>개별 아이템명 대신 카드 등급과 분류를 제목으로 사용하고, 최대 2개의 특수스킬을 구매 판단의 핵심 정보로 노출합니다.</p></header>
+          <div class="demo">
+            <div class="market-card" data-open="false">
+              <div class="art-flip">
+                <div class="art-side front art-stage" style="--sprite:url('../../game_ui/item_info/card_image/gold_black/level7/l/fire/armor.png')"><span class="item-frame"><img class="item" src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/armor.png" alt="불 속성 갑옷"><img class="frame" src="../../game_ui/item_info/frames/gold-Photoroom.png" alt=""><i class="rank"></i></span></div>
+                <div class="art-side back info-panel"><div class="info-top"><span><strong>블랙 - 방어구</strong><small>갑옷</small></span><span class="level">Lv.7</span></div><div class="back-skills"><div class="back-skill"><span>특수스킬 1</span><b>트리플샷 <strong>33%</strong></b></div><div class="back-skill"><span>특수스킬 2</span><b>프로텍트 <strong>18%</strong></b></div></div><div class="back-meta"><span><b>채널</b> 고수채널 이상</span><span class="seller"><b>판매자</b> 신뢰상점 · 거래 128회</span></div></div>
+              </div>
+              <div class="copy"><h3>블랙 - 방어구</h3><p class="meta">갑옷 · Lv.7</p><div class="quick-facts"><span class="element">● 불</span></div><div class="peek" aria-label="특수스킬"><span><b>트리플샷</b><strong>33%</strong></span><span><b>프로텍트</b><strong>18%</strong></span></div><div class="price" aria-label="2,480,000 코드"><i class="coin"></i>248만</div></div>
+            </div>
+          </div>
+        </article>
+        <article class="option option-b">
+          <header class="option-head"><span class="option-kicker">B · SKILL FIRST</span><h2>스킬 수치 우선형</h2><p>이미지 뒷면에서 효과명과 수치를 분리합니다. 여러 매물을 스킬 값으로 고르는 사용자에게 가장 빠릅니다.</p></header>
+          <div class="demo">
+            <div class="market-card info-panel">
+              <div class="info-top"><span><strong>불의 수호 갑옷</strong><small>방어구 · 갑옷 · 불</small></span><span class="level">Lv.7</span></div>
+              <div class="stat"><i class="slot">01</i><span><b>최대속도 증가</b>기본 스킬</span><strong class="value">22.5%</strong></div>
+              <div class="stat"><i class="slot">02</i><span><b>가속도 증가</b>기본 스킬</span><strong class="value">35%</strong></div>
+              <div class="stat"><i class="slot">S</i><span><b>트리플샷</b>특수 스킬</span><strong class="value">33%</strong></div>
+              <div class="facts"><div class="fact"><span>채널 제한</span><b>고수채널 이상</b></div><div class="fact"><span>남은 기간</span><b>010일</b></div></div>
+            </div>
+          </div>
+        </article>
+        <article class="option option-c">
+          <header class="option-head"><span class="option-kicker">C · TABBED INSPECTOR</span><h2>탭형 카드 검사판</h2><p>작은 영역에 모든 필드를 담되 기본·스킬을 나눕니다. 정보는 풍부하지만 목록에서 한 번 더 눌러야 합니다.</p></header>
+          <div class="demo">
+            <div class="market-card info-panel">
+              <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="basic">기본정보</button><button role="tab" aria-selected="false" data-tab="skills">스킬</button></div>
+              <div class="tab-content">
+                <div class="tab-pane" data-pane="basic"><div class="info-top"><span><strong>불의 수호 갑옷</strong><small>CardInfoManager 기준</small></span><span class="level">Lv.7</span></div><div class="facts"><div class="fact"><span>유형</span><b>방어구</b></div><div class="fact"><span>세부 이름</span><b>갑옷</b></div><div class="fact"><span>속성</span><b>불</b></div><div class="fact"><span>남은 기간</span><b>010일</b></div><div class="fact" style="grid-column:1/-1"><span>채널 제한</span><b>고수채널 이상</b></div></div><p class="description">기본정보 탭은 구매 가능 조건과 아이템 정체성을 먼저 확인하는 구성입니다.</p></div>
+                <div class="tab-pane" data-pane="skills" hidden><div class="skills"><div class="skill"><b>최대속도 22.5% 증가</b>스킬 1</div><div class="skill"><b>가속도 35% 증가</b>스킬 1</div><div class="skill"><b>트리플샷 <em>33%</em></b>스킬 2</div></div><p class="description">스킬 2의 괄호 값은 코드에서 파생되는 발동률입니다.</p></div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="option option-d">
+          <header class="option-head"><span class="option-kicker">D · COMPACT SCAN</span><h2>가로형 빠른 탐색</h2><p>이미지와 판단 정보를 좌우로 배치해 세로 길이를 줄입니다. 모바일에서는 폭이 좁아져 정보 밀도가 높습니다.</p></header>
+          <div class="demo">
+            <div class="market-card">
+              <div class="art-stage" style="--sprite:url('../../game_ui/item_info/card_image/gold_black/level7/l/fire/armor.png')"><span class="item-frame"><img class="item" src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/armor.png" alt="불 속성 갑옷"><img class="frame" src="../../game_ui/item_info/frames/gold-Photoroom.png" alt=""><i class="rank"></i></span></div>
+              <div class="copy"><h3>불의 수호 갑옷</h3><p class="meta">Lv.7 · 방어구 · 갑옷</p><dl class="meta-line"><dt>속성</dt><dd>불</dd><dt>제한</dt><dd>고수채널 이상</dd><dt>기간</dt><dd>010일</dd></dl><div class="skill-light"><b>최대속도 22.5% 증가</b>트리플샷 33%</div><div class="price" aria-label="2,480,000 코드"><i class="coin"></i>248만</div></div>
+            </div>
+          </div>
+        </article>
+      </section>
+      <div class="recommend"><span>선택안</span><div><strong>A안 · 앞면 탐색 + 뒷면 카드 정보</strong><p>앞면은 확대된 카드 이미지와 정보 영역의 속성 태그·특수스킬·가격에 집중합니다. 뒷면은 카드 타입과 세부 분류 아래 특수스킬 2개를 크게 표시하고, 하단에는 채널 제한과 판매자 정보를 둡니다.</p></div></div>
+    </main>
+  </div>
+</div>
+<script>
+document.querySelectorAll(".option-a .flip-hint").forEach(button=>button.addEventListener("click",()=>{const card=button.closest(".market-card");const open=card.dataset.open!=="true";card.dataset.open=String(open);button.setAttribute("aria-expanded",String(open));button.textContent=open?"앞면 보기":"정보 보기";}));
+document.querySelectorAll(".tabs").forEach(tabs=>{
+  tabs.addEventListener("click",event=>{
+    const button=event.target.closest("[data-tab]");if(!button)return;
+    const card=tabs.closest(".market-card");
+    tabs.querySelectorAll("[data-tab]").forEach(item=>item.setAttribute("aria-selected",String(item===button)));
+    card.querySelectorAll("[data-pane]").forEach(pane=>pane.hidden=pane.dataset.pane!==button.dataset.tab);
+  });
+});
+</script>
+</body>
+</html>

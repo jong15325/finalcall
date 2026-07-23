@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>장터 · 마켓 카드 스킬 플립 3안</title>
+<style>
+:root{
+  --navy:#16213a;--navy-900:#101a2e;--navy-800:#1b2a47;--navy-700:#223458;
+  --gold:#c8a028;--gold-bright:#dfc447;--gold-deep:#8b6100;--gold-subtle:#f6edcd;
+  --orange:#ef8a2c;--orange-deep:#d9741a;--orange-subtle:#fdefe0;
+  --surface:#fff;--surface-sunken:#f4f5f8;--line:#e4e7ee;
+  --gray-100:#f1f3f7;--gray-300:#cfd4de;--gray-400:#9aa3b2;--gray-500:#6b7484;
+  --gray-600:#4d5461;--gray-700:#3a3f4a;--gray-900:#171a20;
+  --ease-out-quint:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scrollbar-gutter:stable}
+body{margin:0;background:var(--surface-sunken);color:var(--gray-700);font-family:"Pretendard","Pretendard Variable","Noto Sans KR",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5}
+button{font:inherit}
+button:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+.shell{min-height:100vh;display:grid;grid-template-columns:70px minmax(0,1fr)}
+.rail{position:sticky;top:0;height:100vh;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 10px;gap:14px}
+.brand{width:42px;height:42px;border-radius:12px;background:var(--navy);display:grid;place-items:center;color:var(--gold-bright);font-weight:900}
+.rail i{width:38px;height:38px;border-radius:10px;background:var(--gray-100);display:block}.rail i.active{background:var(--orange-subtle);box-shadow:inset 3px 0 var(--orange)}
+.page{min-width:0}
+.topbar{height:64px;position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:12px}
+.context{width:36px;height:36px;border-radius:10px;background:var(--navy);display:grid;place-items:center;color:var(--gold-bright);font-weight:900}
+.topbar strong{color:var(--gray-900)}.topbar small{display:block;color:var(--gray-400);font-size:10px;letter-spacing:.08em}
+.balance{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:var(--gray-600);font-size:12px}.balance b{color:var(--gray-900)}
+.content{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
+.page-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+h1{margin:0;color:var(--gray-900);font-size:24px;letter-spacing:-.025em}.lead{margin:5px 0 0;color:var(--gray-500)}
+.badge{display:inline-flex;align-items:center;border-radius:999px;background:var(--gold-subtle);color:var(--gold-deep);font-size:11px;font-weight:800;padding:5px 9px}
+.note{margin:20px 0 24px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--gray-600);font-size:12px}
+.options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.option{min-width:0}.option-head{min-height:90px;margin-bottom:12px}.option-kicker{color:var(--orange-deep);font-size:11px;font-weight:900}.option h2{margin:3px 0 4px;color:var(--gray-900);font-size:17px}.option p{margin:0;color:var(--gray-500);font-size:12px;max-width:38ch}
+.demo-stage{border:1px dashed var(--gray-300);border-radius:16px;background:rgba(255,255,255,.55);padding:24px;display:grid;place-items:center;min-height:480px}
+.market-card{width:188px;position:relative;border-radius:12px;color:inherit;text-decoration:none;perspective:1100px}
+.flip-control{position:absolute;z-index:12;right:8px;top:8px;width:30px;height:30px;border:1px solid rgba(255,255,255,.6);border-radius:9px;background:rgba(16,26,46,.8);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 12px rgba(13,22,38,.16)}
+.flip-control:hover{background:var(--orange)}.flip-control::before{content:"S";font-weight:900;font-size:12px}
+.hint{margin-top:12px;text-align:center;color:var(--gray-500);font-size:11px}.hint b{color:var(--navy)}
+.card-surface{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.art-stage{height:252px;position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,#263343,#131c29)}
+.art-stage::before{position:absolute;z-index:-1;inset:-18px;content:"";background-image:radial-gradient(circle at 50% 42%,rgba(122,152,193,.18),transparent 52%),linear-gradient(145deg,rgba(10,18,30,.18),rgba(3,8,15,.58)),var(--sprite);background-position:center;background-repeat:no-repeat;background-size:auto,auto,156px auto;filter:saturate(.42) brightness(.48) contrast(1.08) blur(3px);opacity:.48;transform:scale(1.14)}
+.art-stage::after{position:absolute;z-index:0;inset:0;content:"";background:radial-gradient(ellipse at 50% 40%,transparent 20%,rgba(2,8,16,.54))}
+.item-frame{position:relative;z-index:2;width:72px;height:134px;transform:scale(1.45);transform-origin:center}
+.item-frame>img.item{width:100%;height:100%;display:block;image-rendering:pixelated;object-fit:fill}
+.frame{position:absolute;z-index:3;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
+.rank{position:absolute;z-index:4;right:1px;bottom:1px;width:24px;height:22px;background:url("../../game_ui/item_info/frames/skill-gold-transparent.png") center/100% 100% no-repeat}
+.copy{padding:12px}.copy h3{height:39px;margin:0;color:var(--gray-900);font-size:13px;line-height:1.45}.meta{margin:4px 0;color:var(--gray-500);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.price{margin-top:10px;color:var(--gray-900);font-size:13px;font-weight:900}.coin{display:inline-block;width:10px;height:10px;margin-right:5px;transform:rotate(45deg);border-radius:2px;background:var(--orange)}
+.skill-back{background:linear-gradient(160deg,var(--navy-800),var(--navy-900));color:#fff;display:flex;flex-direction:column}
+.skill-mark{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(223,196,71,.42);border-radius:12px;background:rgba(223,196,71,.1);color:var(--gold-bright);font-weight:900}
+.skill-back h3{margin:12px 0 2px;font-size:14px}.skill-back .type{color:var(--gray-300);font-size:11px}
+.skills{display:grid;gap:9px;margin-top:18px}.skill{padding:10px;border:1px solid rgba(255,255,255,.13);border-radius:10px;background:rgba(255,255,255,.06)}.skill b{display:block;color:#fff;font-size:12px}.skill span{display:block;margin-top:2px;color:var(--gray-300);font-size:10px}.skill em{color:var(--gold-bright);font-style:normal;font-weight:900}
+.back-foot{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.12);color:var(--gray-300);font-size:10px}
+
+/* A — 카드 전체가 돌아간다. */
+.option-a .flipper{height:405px;position:relative;transform-style:preserve-3d;transition:transform 360ms var(--ease-out-quint)}
+.option-a .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.option-a .face.back{transform:rotateY(180deg);padding:18px}
+.option-a .market-card:is(:hover,:focus-within)[data-dismissed="false"] .flipper,.option-a .market-card[data-open="true"] .flipper{transform:rotateY(180deg)}
+
+/* B — 상품 정보는 고정하고 이미지 영역만 돌아간다. */
+.option-b .art-flipper{height:252px;position:relative;transform-style:preserve-3d;transition:transform 240ms var(--ease-out-quint)}
+.option-b .art-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.option-b .art-face.back{transform:rotateY(180deg);padding:18px}
+.option-b .market-card:is(:hover,:focus-within)[data-dismissed="false"] .art-flipper,.option-b .market-card[data-open="true"] .art-flipper{transform:rotateY(180deg)}
+.option-b .skill-back h3{margin-top:8px}.option-b .skills{margin-top:12px;gap:7px}.option-b .skill{padding:8px}.option-b .back-foot{padding-top:9px}
+
+/* C — 세로로 젖혀지는 장비 검사판. */
+.option-c .inspection{height:405px;position:relative;transform-style:preserve-3d;transition:transform 300ms var(--ease-out-quint)}
+.option-c .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.option-c .face.back{transform:rotateX(180deg);padding:18px;background:linear-gradient(180deg,var(--navy),var(--navy-900))}
+.option-c .market-card:is(:hover,:focus-within)[data-dismissed="false"] .inspection,.option-c .market-card[data-open="true"] .inspection{transform:rotateX(180deg)}
+.option-c .skill-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:18px}.option-c .skill{position:relative;padding-left:42px}.option-c .slot-no{position:absolute;left:10px;top:10px;width:22px;height:22px;display:grid;place-items:center;border-radius:7px;background:var(--orange);color:#fff;font-size:10px;font-weight:900}
+.option-c .mini-price{margin-top:auto;border-radius:10px;background:#fff;color:var(--gray-900);padding:10px;font-weight:900;text-align:center}
+
+@media(max-width:900px){.options{grid-template-columns:1fr}.option{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,1fr);gap:18px;align-items:center}.option-head{margin:0}.demo-stage{min-height:460px}}
+@media(max-width:640px){.shell{display:block}.rail{display:none}.topbar{padding:0 14px}.topbar small{display:none}.content{padding:20px 14px 80px}.page-head{display:block}.badge{margin-top:10px}.option{display:block}.option-head{min-height:0;margin:0 0 12px}.demo-stage{min-height:450px;padding:18px}.market-card{width:180px}}
+@media(hover:none){.market-card:hover .flipper,.market-card:hover .art-flipper,.market-card:hover .inspection{transform:none!important}.market-card[data-open="true"] .flipper{transform:rotateY(180deg)!important}.market-card[data-open="true"] .art-flipper{transform:rotateY(180deg)!important}.market-card[data-open="true"] .inspection{transform:rotateX(180deg)!important}}
+@media(prefers-reduced-motion:reduce){
+  .flipper,.art-flipper,.inspection{transition:none!important;transform:none!important}
+  .market-card[data-open="true"] .face.front,.market-card[data-open="true"] .art-face.front,.market-card:is(:hover,:focus-within)[data-dismissed="false"] .face.front,.market-card:is(:hover,:focus-within)[data-dismissed="false"] .art-face.front{visibility:hidden}
+  .market-card[data-open="true"] .face.back,.market-card[data-open="true"] .art-face.back,.market-card:is(:hover,:focus-within)[data-dismissed="false"] .face.back,.market-card:is(:hover,:focus-within)[data-dismissed="false"] .art-face.back{visibility:visible;transform:none!important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail" aria-hidden="true"><span class="brand">장</span><i></i><i class="active"></i><i></i><i></i></aside>
+  <div class="page">
+    <header class="topbar"><span class="context">M</span><span><small>JANGTEO MARKETPLACE</small><strong>아이템 마켓 · 플립 비교</strong></span><span class="balance">보유 코드 <b>572만</b></span></header>
+    <main class="content">
+      <div class="page-head"><div><h1>스킬 카드 플립 3안</h1><p class="lead">현재 마켓 카드의 크기·색·아트·가격 구조는 유지하고 스킬 공개 동작만 비교합니다.</p></div><span class="badge">별도 디자인 실험 · 기존 코드 무변경</span></div>
+      <p class="note"><b>사용법:</b> 마우스를 카드에 올리거나 S 버튼에 키보드 포커스를 두세요. 터치에서는 S 버튼을 누릅니다. <kbd>Esc</kbd>로 열린 카드를 닫을 수 있습니다.</p>
+      <section class="options" aria-label="카드 플립 디자인 비교">
+        <article class="option option-a">
+          <header class="option-head"><span class="option-kicker">A · FULL CARD</span><h2>클래식 전체 플립</h2><p>카드 전체가 뒤집혀 장비 감정 카드처럼 보입니다. 효과는 가장 강하지만 가격이 잠시 가려집니다.</p></header>
+          <div class="demo-stage">
+            <div class="market-card" data-open="false" data-dismissed="false">
+              <button class="flip-control" type="button" aria-label="홍염의 심판자 스킬 보기" aria-expanded="false"></button>
+              <div class="flipper">
+                <div class="face front card-surface">
+                  <div class="art-stage" style="--sprite:url('../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png')"><span class="item-frame"><img class="item" src="../../game_ui/item_info/card_image/gold_black/level7/l/fire/sword.png" alt="홍염의 심판자"><img class="frame" src="../../game_ui/item_info/frames/gold-Photoroom.png" alt=""><i class="rank"></i></span></div>
+                  <div class="copy"><h3>홍염의 심판자</h3><p class="meta">7레벨 · 불 속성 · 검</p><div class="price" aria-label="2,480,000 코드"><i class="coin"></i>248만</div></div>
+                </div>
+                <div class="face back card-surface skill-back">
+                  <span class="skill-mark">S</span><h3>홍염의 심판자</h3><span class="type">스킬 구성 · 골드포스</span>
+                  <div class="skills"><div class="skill"><b>화염 베기</b><span>공격 적중 시 화염 피해 증가</span></div><div class="skill"><b>불굴의 의지 <em>24%</em></b><span>체력 저하 시 방어 효과 발동</span></div></div>
+                  <div class="back-foot">마우스를 벗어나면 상품 정보로 돌아갑니다.</div>
+                </div>
+              </div>
+            </div>
+            <p class="hint"><b>인상:</b> 수집 카드 · 강한 게임성</p>
+          </div>
+        </article>
+
+        <article class="option option-b">
+          <header class="option-head"><span class="option-kicker">B · ART WINDOW</span><h2>이미지 영역 플립</h2><p>아트 슬롯만 뒤집혀 스킬을 보여줍니다. 이름·가격은 계속 보여 거래 탐색 흐름을 유지합니다.</p></header>
+          <div class="demo-stage">
+            <div class="market-card" data-open="false" data-dismissed="false">
+              <button class="flip-control" type="button" aria-label="빙결 추적자 스킬 보기" aria-expanded="false"></button>
+              <div class="card-surface">
+                <div class="art-flipper">
+                  <div class="art-face front art-stage" style="--sprite:url('../../game_ui/item_info/card_image/gold_black/level5/l/water/bow.png')"><span class="item-frame"><img class="item" src="../../game_ui/item_info/card_image/gold_black/level5/l/water/bow.png" alt="빙결 추적자"><img class="frame" src="../../game_ui/item_info/frames/gold-Photoroom.png" alt=""><i class="rank"></i></span></div>
+                  <div class="art-face back skill-back"><span class="skill-mark">S</span><h3>스킬 미리보기</h3><span class="type">빙결 추적자</span><div class="skills"><div class="skill"><b>서리 화살</b><span>명중 대상 이동 속도 감소</span></div><div class="skill"><b>집중 사격 <em>18%</em></b><span>일정 확률로 추가 피해</span></div></div><div class="back-foot">상세에서 전체 효과 확인</div></div>
+                </div>
+                <div class="copy"><h3>빙결 추적자</h3><p class="meta">5레벨 · 물 속성 · 활</p><div class="price" aria-label="1,120,000 코드"><i class="coin"></i>112만</div></div>
+              </div>
+            </div>
+            <p class="hint"><b>인상:</b> 거래 정보 보존 · 가장 안정적</p>
+          </div>
+        </article>
+
+        <article class="option option-c">
+          <header class="option-head"><span class="option-kicker">C · INSPECTION</span><h2>세로 장비 검사 플립</h2><p>카드가 위아래로 젖혀지며 슬롯 번호와 발동률을 강조합니다. 정보성이 가장 높습니다.</p></header>
+          <div class="demo-stage">
+            <div class="market-card" data-open="false" data-dismissed="false">
+              <button class="flip-control" type="button" aria-label="질풍 현자의 완드 스킬 보기" aria-expanded="false"></button>
+              <div class="inspection">
+                <div class="face front card-surface">
+                  <div class="art-stage" style="--sprite:url('../../game_ui/item_info/card_image/gold_black/level3/l/wind/wand.png')"><span class="item-frame"><img class="item" src="../../game_ui/item_info/card_image/gold_black/level3/l/wind/wand.png" alt="질풍 현자의 완드"><img class="frame" src="../../game_ui/item_info/frames/gold-Photoroom.png" alt=""><i class="rank"></i></span></div>
+                  <div class="copy"><h3>질풍 현자의 완드</h3><p class="meta">3레벨 · 바람 속성 · 완드</p><div class="price" aria-label="680,000 코드"><i class="coin"></i>68만</div></div>
+                </div>
+                <div class="face back card-surface skill-back">
+                  <span class="skill-mark">S</span><h3>장비 스킬 검사</h3><span class="type">질풍 현자의 완드</span>
+                  <div class="skill-grid"><div class="skill"><i class="slot-no">1</i><b>질풍 가속</b><span>시전 속도와 이동 속도 증가</span></div><div class="skill"><i class="slot-no">2</i><b>회오리 장막 <em>31%</em></b><span>피격 시 장막 생성 확률</span></div></div>
+                  <div class="mini-price" aria-label="680,000 코드"><i class="coin"></i>68만</div>
+                </div>
+              </div>
+            </div>
+            <p class="hint"><b>인상:</b> 장비 감정 · 높은 정보 밀도</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</div>
+<script>
+const cards=[...document.querySelectorAll(".market-card")];
+function setOpen(card,open){card.dataset.open=String(open);card.dataset.dismissed=String(!open);const button=card.querySelector(".flip-control");button.setAttribute("aria-expanded",String(open));button.setAttribute("aria-label",button.getAttribute("aria-label").replace(open?" 보기":" 닫기",open?" 닫기":" 보기"))}
+cards.forEach(card=>card.querySelector(".flip-control").addEventListener("click",event=>{event.preventDefault();setOpen(card,card.dataset.open!=="true")}));
+document.addEventListener("keydown",event=>{if(event.key==="Escape")cards.forEach(card=>setOpen(card,false))});
+cards.forEach(card=>card.addEventListener("mouseleave",()=>{if(card.dataset.open!=="true")card.dataset.dismissed="false"}));
+</script>
+</body>
+</html>
