@@ -1,6 +1,6 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.14 — G3 확정(2026-07-14) + 6절 계약 변경 13건(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**, **EPIC-PURCHASE 즉시구매 동작·orders 역할별 노출/FC-088**). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: v1.15 — G3 확정(2026-07-14) + 6절 계약 변경 다수(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**, **EPIC-PURCHASE 즉시구매 동작·orders 역할별 노출/FC-088**, **EPIC-EMAIL-VERIFY 이메일 인증/§2 signup email 선택·set-email·verification 2건·§2.5 GET /me emailVerified·§5 EMAIL_***). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
@@ -22,6 +22,7 @@
 
 | v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
+| v1.15 | 2026-07-25 | 6절 계약 변경 — 게이트2(EPIC-EMAIL-VERIFY, 8항목) 승인 반영(2026-07-24): **회원가입 이메일 인증 도입.** **§2 signup 요청에 `email` 선택 필드 추가**(`{ loginId, password, nickname, email? }`, `@Email`·≤255, 미제공 시 이메일 없는 계정 생성 — 응답 201 무변경). **§2 이메일 엔드포인트 3종 신설**(모두 인증 필요·주체=SecurityContext·`/me` 접두): `PUT /api/v1/me/email`(이메일 설정/변경, verified 재초기화·pending 코드 폐기)·`POST /api/v1/me/email/verification-request`(6자리 코드 발송, 202)·`POST /api/v1/me/email/verify`(코드 확인, 200). **§2.5 GET·PATCH `/me` 응답에 `emailVerified`(bool)·`emailMasked`(string, nullable) 추가**(3상태 미설정/미인증/인증완료 구분, 이메일 원문 미노출). **§5 `EMAIL_001`~`EMAIL_007` 등재**(코드 불일치·만료·시도초과·쿨다운·이미인증·미설정·이미사용중). 이메일 유니크 = 활성 회원 기준(`email_active` 생성컬럼 UK, NULL 제외 — Flyway V17). 코드 저장 = Redis TTL+SHA-256(정책 만료10분·쿨다운60초·시도5회·6자리). 발송 = 네이버 SMTP 465 SSL(로컬 스킵+로그·운영 fail-fast). 정본 `email-verify-spec.md` v0.1. 구현 = EPIC-EMAIL-VERIFY 하위(backend/frontend). |
 | v1.14 | 2026-07-24 | 6절 계약 변경 — 게이트2(FC-110 DoD#3) 승인 반영(2026-07-24): **§4.5 관리자 검색 재색인 엔드포인트 2건 신설** — `POST /api/v1/admin/search/reindex`(비동기 202+jobId, `mode` IN_PLACE\|REBUILD)·`GET /api/v1/admin/search/reindex/{jobId}`(job 상태). 운영 초기색인 수단 부재(부팅 트리거 없음) 해소 + 무중단 blue-green alias 스위치. 인가 = 기존 `ROLE_ADMIN`(신규 모델 없음, `/api/v1/admin/**` 보호 배선). **§5 SEARCH 코드 등재** — `SEARCH_001`(엔진 일시불가 503, 기존 enum 정본화)·`SEARCH_002`(재색인 진행 중 409)·`SEARCH_003`(재색인 job 없음 404). 정본 `search-spec.md` v0.4 §12.5. 구현 = FC-110 하위 backend-impl. **q·relevance(C1~C3)는 무관·PROPOSAL 유지** |
 | v1.13 | 2026-07-22 | 6절 계약 변경 — 게이트2(EPIC-PURCHASE, FC-088) 승인 반영: **§3.1 즉시구매 동작 정밀화**(금전=구매자 잔액 직접 차감·홀드 미경유, 진행 최고입찰 홀드 RELEASED+bid OUTBID, 최고입찰자 본인구매 허용, live 종료성 CAS `end_at>now`·result_type=BUYNOW, 요청 본문 없음). **§4.3 SaleOrderResponse 스키마 신설**(BidSummary v1.8 선례) — OrderSummary/OrderDetail 필드 확정 + **역할별 노출 정밀화**(`feeAmount`·`settleAmount` = 판매자 전용, 구매자엔 필드 부재·`finalPrice`만) + IDOR 스코프(`/me/orders`=buyer OR seller, `/orders/{id}`=당사자만) + `myRole`·`counterpartyMasked`(§3.3 마스킹 규약). **§5 AUCTION_006 라벨 확대**("이미 종료" → "처리 불가 상태(종료/즉시구매 시 미개시 포함)", 신규 코드 미추가 — enum↔계약 1:1 유지). **엔드포인트·필드 집합·에러코드 무변경**(즉시구매·orders 엔드포인트 기등재, 신규 필드는 응답 스키마 명세뿐·서버 기존 sale_order 재사용). 스키마 무변경. 사유: 즉시구매+거래내역 확정. 구현 = FC-089(backend)·FC-090(frontend). 정본 `purchase-spec.md` v1.0 |
 | v1.12 | 2026-07-21 | 6절 계약 변경 — 게이트2(EPIC-CLOSING 코어, FC-081) 승인 반영: **§3.3 마감·정산 semantic 명확화 주 추가**. 마감(내부 워커) 후 `AuctionDetail.resultType`=`BID`(SOLD)·`status`=영속 SOLD/UNSOLD·`BidSummary.status`=`WON`이 **실제로 채워지기 시작**함을 명시(값의 의미 명확화). 마감은 외부 API 없음 — 클라 마감 후 서버 status 수렴에 워커 tick 지연(짧은 전이 구간). 거래내역 조회(`GET /me/orders`·`/orders/{id}`)는 코어 범위 밖(후속)임을 명기. **엔드포인트·필드 집합·에러코드 무변경**(신규 필드 없이 기존 필드 semantic만 명확화). 사유: 마감·낙찰 정산 코어 확정. 구현 = EPIC-CLOSING FC-082(워커)·083(SOLD)·084(UNSOLD). 정본 closing-domain-spec v1.0 |
@@ -84,10 +85,33 @@
 
 ### POST /api/v1/auth/signup — 회원가입
 - 인증: 불요
-- 요청(body): `{ loginId, password, nickname }`
-- 응답 201: `{ userPublicId, nickname }`
-- 에러: `AUTH_001` 중복 loginId(409), `AUTH_002` 중복 nickname(409), 검증 400
-- 회원 열거 방지(SEC-007): loginId 존재 여부가 무차별 열거되지 않도록 가입 실패 응답은 구체 사유를 최소화하고, 게이트웨이 rate limit(D-068)로 시도를 제한한다. nickname 중복은 표시용이라 유지.
+- 요청(body): `{ loginId, password, nickname, email? }` — `email`은 **선택**(`@Email`·≤255). 미제공(null)이면 이메일 없는 계정을 생성한다. 제공 시 정규화(lowercase+trim)해 `email_verified=false`로 저장하며 **코드를 자동 발송하지 않는다**(인증은 §2 이메일 엔드포인트로 분리 — 가입이 SMTP 장애에 결합되지 않게).
+- 응답 201: `{ userPublicId, nickname }` (email·인증상태 미노출)
+- 에러: `AUTH_001` 중복 loginId(409), `AUTH_002` 중복 nickname(409), `EMAIL_007` 이메일 이미 사용 중(409, email 제공 시 유니크 위반), 검증 400
+- 회원 열거 방지(SEC-007): loginId 존재 여부가 무차별 열거되지 않도록 가입 실패 응답은 구체 사유를 최소화하고, 게이트웨이 rate limit(D-068)로 시도를 제한한다. nickname 중복은 표시용이라 유지. 이메일 유니크(활성 회원 기준, `email_active` 생성컬럼 UK·NULL 제외)는 `AUTH_002` 대비 노출면이 크지 않으며 동일 rate limit로 완화한다.
+
+### 이메일 인증 (EPIC-EMAIL-VERIFY, v1.15) — 정본 `email-verify-spec.md` v0.1
+
+이메일은 가입 시 선택이며, 아래 3종으로 설정·인증한다. **모두 인증 필요**이고 주체는 SecurityContext(userId)다 — 임의 이메일을 파라미터로 받지 않아(자기 계정 이메일만) 이메일 열거면이 열리지 않는다(SEC-007). `/me` 접두는 인증 주체 리소스 규약(§4)에 정합하며 `/api/v1/me/**`는 이미 인증 강제라 별도 배선이 없다.
+
+#### PUT /api/v1/me/email — 이메일 설정/변경
+- 인증: 필요
+- 요청(body): `{ email }`(`@Email`·≤255, 정규화)
+- 동작: `email` 저장 + **`email_verified=false` 재초기화** + pending 인증 코드·쿨다운 폐기(이메일 변경 TOCTOU 방어). **동일 이메일 재제출은 no-op**(인증 상태 유지).
+- 응답 200: `{ email, emailVerified: false }` — 호출자가 방금 제출한 정규화 값 에코(열거면 아님). GET /me의 원문 미노출과 의도적 구분.
+- 에러: `EMAIL_007` 이미 사용 중(409), 검증 400, 401
+
+#### POST /api/v1/me/email/verification-request — 인증 코드 발송
+- 인증: 필요. 요청 body 없음(계정 이메일 사용)
+- 응답: **202 Accepted**(본문 없음) — 발송 성공이 이메일 유효성을 확증하지 않음
+- 동작: 6자리 코드 생성 → Redis(SHA-256 해시·TTL 10분) 저장 → SMTP 발송 → 쿨다운(60초) 세팅
+- 에러: `EMAIL_004` 재전송 쿨다운(429), `EMAIL_005` 이미 인증됨(409), `EMAIL_006` 이메일 미설정(409), 401
+
+#### POST /api/v1/me/email/verify — 인증 코드 확인
+- 인증: 필요. 요청(body): `{ code }`(6자리 숫자 `@Pattern("\\d{6}")`)
+- 응답 200: `{ emailVerified: true }`
+- 동작: Redis 코드 대조(상수시간·시도 5회 상한) → 성공 시 `email_verified=true` 커밋 + 코드 키 삭제
+- 에러: `EMAIL_001` 코드 불일치(422), `EMAIL_002` 만료·미발송 통일(422), `EMAIL_003` 시도 초과·코드 폐기(429), `EMAIL_005` 이미 인증됨(409), 검증 400, 401
 
 ### POST /api/v1/auth/login — 로그인
 - 인증: 불요
@@ -116,15 +140,16 @@
 
 #### GET /api/v1/me — 내 프로필 조회
 - 인증: 필요
-- 응답 200: `{ userPublicId, nickname, isAdmin, createdAt }`
+- 응답 200: `{ userPublicId, nickname, isAdmin, createdAt, emailVerified, emailMasked? }`
 - 노출 범위: `loginId`·`passwordHash`는 응답에 싣지 않는다(노출 이득 없음, 열거 리스크 SEC-007). `isAdmin`은 관리자 UI 노출 제어용으로 포함하되 **인가는 서버 권위**다(§1.2 — 클라 플래그는 표시 제어일 뿐).
+- 이메일(v1.15, EPIC-EMAIL-VERIFY): `emailVerified`(bool)와 `emailMasked`(string, nullable — 예 `a***@naver.com`)로 노출한다. **이메일 원문은 싣지 않는다**(마스킹만). `emailMasked=null`이면 이메일 미설정, non-null이면 설정됨 — `emailVerified`와 조합해 프론트가 **미설정 / 설정·미인증 / 인증완료** 3상태를 구분한다. 이메일 설정·인증은 §2 이메일 엔드포인트(`PUT /me/email`·`.../verification-request`·`.../verify`).
 - 타인 프로필 조회(`/users/{publicId}`)는 **범위 밖**이다. 목록·상세의 소유자·최고입찰자 마스킹(§3.3)과 상충하고 회원 열거 노출면(SEC-007)을 넓힌다(domain-spec §6.1).
 - 에러: 401(미인증)
 
 #### PATCH /api/v1/me — 프로필 수정 (nickname 한정)
 - 인증: 필요
-- 요청(body): `{ nickname }` — 수정 가능 필드는 nickname뿐이다. 비밀번호 변경은 범위 밖(별도 안건).
-- 응답 200: `{ userPublicId, nickname, isAdmin, createdAt }` (조회와 동일 스키마)
+- 요청(body): `{ nickname }` — 수정 가능 필드는 nickname뿐이다. 비밀번호 변경은 범위 밖(별도 안건). 이메일 설정·변경은 `PUT /me/email`(§2)로 분리한다.
+- 응답 200: `{ userPublicId, nickname, isAdmin, createdAt, emailVerified, emailMasked? }` (조회와 동일 스키마)
 - 변경 빈도 제한 없음(domain-spec §6.1)
 - 에러: `MEMBER_001` 닉네임 중복(409), 검증 400, 401(미인증)
 
@@ -544,6 +569,13 @@ GET /api/v1/admin/search/reindex/{jobId} — 재색인 job 상태 조회
 | AUTH_005 | 권한 없음(관리자 등) | 403 |
 | MEMBER_001 | 닉네임 중복(프로필 수정, §2.5) | 409 |
 | MEMBER_002 | 진행 중 거래 보유로 탈퇴 불가(§2.5) | 409 |
+| EMAIL_001 | 인증 코드 불일치(§2 이메일 인증) | 422 |
+| EMAIL_002 | 코드 만료·미발송(존재 여부 비노출 통일) | 422 |
+| EMAIL_003 | 시도 횟수 초과(코드 폐기) | 429 |
+| EMAIL_004 | 재전송 쿨다운 | 429 |
+| EMAIL_005 | 이미 인증된 이메일 | 409 |
+| EMAIL_006 | 이메일 미설정(이메일 없는 상태에서 인증요청) | 409 |
+| EMAIL_007 | 이메일 이미 사용 중(유니크 위반, signup·set-email) | 409 |
 | AUCTION_001 | 아이템 미소유·미보유·미존재(출품 불가) | 403 |
 | AUCTION_002 | 이미 출품중 | 409 |
 | AUCTION_003 | buyNowPrice ≤ startPrice | 422 |
