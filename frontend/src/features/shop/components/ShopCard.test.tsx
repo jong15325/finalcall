@@ -48,6 +48,15 @@ describe('<ShopCard>', () => {
         expect(link).toHaveAttribute('href', '/market/01JMARKET0001')
         expect(link.querySelector('button')).toBeNull()
         expect(container.querySelectorAll('button')).toHaveLength(2)
+        // disclosure(m3): 스킬 플립 트리거는 뒷면 region 을 aria-controls 로 가리킨다.
+        const trigger = screen.getByRole('button', {
+            name: '불의 전투도끼 스킬 보기',
+        })
+        const controls = trigger.getAttribute('aria-controls')
+        expect(controls).toBeTruthy()
+        expect(
+            container.querySelector('.item-card__skill-flip-back'),
+        ).toHaveAttribute('id', controls)
     })
 
     it('비교 버튼 클릭은 상세 페이지로 이동시키지 않는다(확정 UX)', () => {

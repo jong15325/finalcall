@@ -12,7 +12,7 @@
  * ★ 구매/비교는 **오버레이(`overlay`)나 카드 외부 액션(`footer`)** 으로 받는다 — 이미지 크기 불변.
  * ★ 가격은 **줄바꿈 금지**(CodeAmount + whitespace-nowrap). 값 없음(입찰 0건)은 CodeAmount 가 "-".
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
 import CodeAmount from '@/components/common/CodeAmount'
 import { itemArt } from '@/features/item/lib/itemArt'
@@ -105,6 +105,7 @@ function ItemCard({
     const kindLabel = kindLabelOf(item.subGroup, item.kind)
     const marketTitle = `${frameLabel} - ${groupLabel}`
     const [flipped, setFlipped] = useState(false)
+    const skillsId = useId()
 
     useEffect(() => {
         if (!flipped) return
@@ -145,6 +146,7 @@ function ItemCard({
 
                     {flipEnabled && (
                         <div
+                            id={skillsId}
                             aria-hidden={!flipped}
                             className="item-card__skill-flip-face item-card__skill-flip-back"
                             inert={!flipped}
@@ -181,6 +183,7 @@ function ItemCard({
                         className="item-card__skill-flip-trigger"
                         aria-label={`${item.nameSnapshot} 스킬 ${flipped ? '닫기' : '보기'}`}
                         aria-expanded={flipped}
+                        aria-controls={skillsId}
                         onClick={(event) => {
                             event.preventDefault()
                             event.stopPropagation()

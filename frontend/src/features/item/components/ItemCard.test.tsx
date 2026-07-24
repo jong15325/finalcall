@@ -107,6 +107,10 @@ describe('<ItemCard>', () => {
         expect(screen.getByText('불')).toBeInTheDocument()
         expect(screen.getByText('판매자')).toHaveTextContent('신뢰상점')
         expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        // disclosure(m3): 스킬 뒷면 region 은 트리거의 aria-controls 로 이어진다.
+        const controls = trigger.getAttribute('aria-controls')
+        expect(controls).toBeTruthy()
+        expect(back).toHaveAttribute('id', controls)
         expect(front).toHaveAttribute('aria-hidden', 'false')
         expect(front).not.toHaveAttribute('inert')
         expect(back).toHaveAttribute('aria-hidden', 'true')
