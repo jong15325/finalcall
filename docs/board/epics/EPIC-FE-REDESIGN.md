@@ -3,10 +3,16 @@ id: EPIC-FE-REDESIGN
 type: epic
 jira_key: KAN-56
 title: 프론트 실코드 반영 — design-system v0.6.1 + 목업 집행
-state: doing
+state: superseded
 children: [FC-047, FC-051, FC-048, FC-052, FC-049, FC-053, FC-050, FC-054]
 gate: null
 ---
+## ★ SUPERSEDED (2026-07-24) — EPIC-FE-REBUILD가 대체
+이 에픽의 목표(redesign UI 집행)는 **EPIC-FE-REBUILD**(사용자 목업 재구축, done)가 UI를 전량 폐기·재작성해 무효화됐다.
+- **UI 하위(FC-047·048·049·050·054)** → cancelled(REBUILD FC-066~080이 대체).
+- **인프라/시드 하위(FC-051 vitest·FC-052 V12·FC-053 V13)** → done(산출물 생존, backend 마이그레이션·테스트러너는 재구축과 무관).
+- 처분 근거: `docs/board/reviews/board-cleanup-2026-07-24.md`.
+
 ## 목표
 EPIC-DESIGN-TEMPLATE이 확정한 **정본(design-system v0.6.1)과 목업 6면을 실코드에 집행**한다.
 목업은 시각 방향을 확정하는 도구였고, 이 에픽이 그 방향을 실제 화면으로 만든다.
