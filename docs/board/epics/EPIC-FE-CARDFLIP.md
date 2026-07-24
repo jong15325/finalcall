@@ -3,7 +3,7 @@ id: EPIC-FE-CARDFLIP
 type: epic
 jira_key: KAN-125
 title: 프론트 카드/인벤토리 디자인 폴리시 (코덱스 세션 회수)
-state: doing
+state: done
 children: [FC-111, FC-112]
 gate: null
 ---
