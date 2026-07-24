@@ -12,6 +12,7 @@
 | v0.1 | 2026-07-21 | EPIC-SEARCH 설계 초안 착수 — 현 검색 한계 진단, 3안 옵션 비교, 단계적 표준안, 목표 아키텍처(ES=파생 read-model·CDC 싱크), 인덱스 골격, 랭킹(function_score·등급 부스트), 한글(nori+ngram), 엔진 선택 기준, 게이트2 분리(§9). 백엔드 동결이라 설계만 |
 | v0.2 | 2026-07-22 | ②단계 구현 결정(§12 신설, 게이트1 승인 후) — architect 추천안: 엔진=OpenSearch·동기=Outbox 릴레이(Kafka 불요). 게이트2 상신용. **v0.3에서 사용자 결정으로 대체됨(아래)** |
 | **v0.3** | 2026-07-22 | **게이트2 사용자 승인** — architect 추천과 다르게 결정: **엔진 = Elasticsearch**(nori 플러그인 설치), **동기 = Debezium CDC**(MySQL binlog→Kafka(KRaft)→Kafka Connect: Debezium source + ES sink, 멱등 upsert·Debezium 초기 스냅샷 백필). **포트폴리오 사실성 우선**(로컬 부담 큰 구성 인지 선택). 인덱스(단일 통합 `listings`·nori+ngram·코드축 keyword)·재색인(alias)·랭킹(BM25 relevance)·sellerGrade 제외 = v0.2 유지. 로컬 docker = mysql(binlog on)+redis+**elasticsearch(nori)·kafka(KRaft)·kafka-connect(debezium+es-sink)**(+선택 kibana). 계약 C1~C3는 PROPOSAL 유지 |
+| **v0.4** | 2026-07-24 | **FC-110 DoD#3 게이트2 확정(2026-07-24 사용자)** — **운영 초기색인 전략 = 관리자 온디맨드 재색인 API + 무중단 blue-green alias 스위치 지금 구현**. §12.5를 운영 절차로 확정 확장(§12.5.1 관리자 재색인 API 계약·비동기 job·§12.5.2 blue-green 절차·§12.5.3 인가=기존 ROLE_ADMIN 재사용·§12.5.4 동시성/CDC 상호작용·§12.5.5 에러/관측). ★ 검증된 현 상태 반영: **ES sink가 물리 인덱스가 아니라 읽기 alias `listings_search`로 라우팅**(`elasticsearch-sink.json` `transforms.route.replacement=listings_search`)이라 alias 원자 스위치가 앱 질의·CDC 쓰기 경로를 동시 전환한다. api-contract §4.5에 엔드포인트 계약 추가(v1.14). 구현 = FC-110 하위 backend-impl. C1~C3(q·relevance) PROPOSAL은 무관·불변 |
 
 ---
 
@@ -331,7 +332,82 @@ listings (단일 인덱스, _id = 리스팅 public_id)
 
 - **무중단 재색인 = alias 스위치**: 앱은 **읽기 alias `listings_search`로만 질의**. 매핑/분석기(userdict 포함) 변경 시 → 신규 `listings_v{n}` 생성 → 백필 → count/샘플 검증 → `_aliases` **원자 스위치** → 구 인덱스 폐기. **CDC 스택에서의 백필 = ES sink 커넥터의 target 인덱스를 신 인덱스로 재지정 + Debezium `snapshot.mode`(예 `schema_only_recovery`/재스냅샷)로 리플레이**하거나, Kafka 토픽을 신 인덱스로 재소비(sink 오프셋 리셋)해 채운다. 스위치 후 sink는 신 인덱스로 이어쓴다.
 - **백스톱 = 주기적 화해**: 앱 내부 `@Scheduled`가 MySQL↔**Elasticsearch** **count(상태·listingType별) + price histogram** 주기 대조로 드리프트 탐지 → 불일치 리스팅 보정(대상 행 재색인 트리거: 예 no-op 업데이트로 binlog 이벤트 유발하거나 직접 bulk upsert). **CDC 유실·순서역전·커넥터 정지 대비.** bid의 "정합성은 DB" 백스톱과 동형(domain-spec §8·§10).
-- 로컬 부담: 화해 잡은 **앱 내부 스케줄러**(신규 컨테이너 0)이나, 재색인은 **Kafka Connect 커넥터 재구성**(REST)을 수반한다(CDC 스택 특성). A5 = 게이트2 확정.
+- 로컬 부담: 화해 잡은 **앱 내부 스케줄러**(신규 컨테이너 0)이나, 매핑/분석기 변경 재색인은 신규 인덱스 생성·백필·검증·alias 스위치를 수반한다(§12.5.2). A5 = 게이트2 확정.
+
+#### 12.5.0 검증된 현 상태 (FC-110, 근거)
+
+FC-110 DoD#3 확정(게이트2 2026-07-24)은 아래 **실측된 현 배선** 위에 얹는다. 계약 창작이 아니라 기존 자산 재사용 전제다:
+
+- **읽기 alias**: 앱(`ListingSearchService`·`ListingIndexer`·`SearchReconciliationWorker`)은 전부 `search.index-alias`(기본 `listings_search`)로만 질의·색인한다. 물리 인덱스명(`listings_v1`)을 코드가 직접 참조하지 않는다.
+- **CDC sink 라우팅 = alias**: `backend/docker/search/connectors/elasticsearch-sink.json`의 `transforms.route.replacement`가 **`listings_search`(alias)**다. 즉 **CDC 라이브 쓰기가 물리 인덱스가 아니라 alias를 통해 흐른다.** ⇒ alias를 원자 스위치하면 **앱 질의와 CDC 쓰기 경로가 한 번에 신 인덱스로 전환**된다(커넥터 재구성 불요). 이것이 blue-green을 성립시키는 핵심 전제다.
+- **인덱스 템플릿**: `listings*` 템플릿이 keyword·분석기 매핑을 고정하므로 신 인덱스 `listings_v{n+1}`는 템플릿을 상속받아 생성된다(매핑 재선언 최소화).
+- **재색인 로직(재사용)**: `ListingIndexer.reindexAll()`(auction+shop 전건 MySQL SoT 조인 읽어 bulk upsert, 반환=색인 문서수)가 이미 존재한다. 단 **현재는 alias로만 upsert**한다 — blue-green 백필은 **신 물리 인덱스를 직접 지정**해 upsert하는 변형이 필요하다(§12.5.2 구현 범위).
+- **부팅 트리거**: `ListingBootReindexer`가 `search.reindex-on-startup=true`(local만)에서 `ApplicationReadyEvent`에 1회 `reindexAll()` 실행. **운영은 이 값이 false**라 부팅 트리거가 없다(FC-110 문제의식: 운영 초기색인 수단 부재) → §12.5.1 온디맨드 API로 해소.
+- **비동기 인프라**: 현재 `@Async`/job 인프라 없음(배경 작업은 `@Scheduled`만). 재색인 job은 §12.5.1처럼 **단일 인스턴스 인메모리 단일 실행(single-flight)**로 최소 구현한다(모놀리식 단일 서비스라 충분).
+- **인가**: admin 롤 체계가 **이미 완비**돼 있다 — `User.isAdmin`(DB `is_admin`, erd §4.1) → JWT `isAdmin` 클레임(`HmacTokenProvider`) → `TokenClaims.admin` → `JwtAuthenticationFilter`가 `ROLE_ADMIN` authority 부여. 단 **현재 `/api/v1/admin/**`를 인가로 막는 규칙이 아직 없다**(`SecurityConfig`에 admin matcher 부재, 메서드 시큐리티 미사용) → §12.5.3에서 배선.
+
+#### 12.5.1 관리자 온디맨드 재색인 API (계약 — api-contract §4.5)
+
+> ★ **구현 이월(2026-07-24 사용자 결정)**: 아래 §12.5.1~12.5.5 설계·계약은 확정이나 **구현은 관리자 페이지 에픽으로 이월**한다(관리자 계정 프로비저닝·관리자 UI 분리 신설 시 함께). FC-110은 #1·#2·#4·#5로 닫고, #3(재색인 API 구현)은 [[FC-116]] 백로그로 대기. 이 절은 그때의 작업지시서다.
+
+운영에 부팅 트리거가 없으므로 **관리자 전용 온디맨드 재색인 엔드포인트**를 둔다.
+
+- **엔드포인트**: `POST /api/v1/admin/search/reindex` (트리거) · `GET /api/v1/admin/search/reindex/{jobId}` (상태 조회).
+- **동기 vs 비동기 = 비동기 권고(확정)**. 근거:
+  1. 재색인 소요는 **리스팅 수에 비례해 무한정 증가**(전건 MySQL 조인 읽기 + ES bulk). 동기 응답은 SCG·클라이언트 타임아웃과 커넥션 점유 위험.
+  2. **202 Accepted + `jobId`**로 트리거와 완료를 분리하고, 별도 상태 조회로 진행률·결과를 노출한다.
+  3. 비동기 job이 **단일 실행(single-flight) 가드**를 자연스럽게 제공(동시 재색인 중복 방지, §12.5.4).
+- **요청**: 본문 `{ "mode": "IN_PLACE" | "REBUILD" }`(선택, 기본 `IN_PLACE`).
+  - **`IN_PLACE`**: 매핑 변경 없이 현 alias 타깃에 `reindexAll()` 백필·보정(코드축 enrichment·드리프트 복구). 부팅 재색인의 온디맨드 등가물.
+  - **`REBUILD`**: 매핑/분석기/userdict 변경 시 **신 인덱스 생성→백필→검증→alias 원자 스위치→구 인덱스 보존**(무중단 blue-green, §12.5.2).
+- **응답 202**: `{ jobId }`(ULID). 접수만 의미(완료 아님).
+- **상태 조회 응답 200**(`GET .../reindex/{jobId}`):
+  ```
+  {
+    jobId, mode,                       // "IN_PLACE" | "REBUILD"
+    state,                             // PENDING | RUNNING | SUCCEEDED | FAILED
+    startedAt, finishedAt?,            // ISO-8601 UTC
+    targetIndex?,                      // REBUILD 시 신 물리 인덱스명(예 "listings_v2")
+    indexedCount,                      // 진행/최종 색인 문서수
+    aliasSwitched,                     // REBUILD alias 스위치 성공 여부(boolean)
+    error?                             // FAILED 시 사유 요약
+  }
+  ```
+- **job 상태 저장 = 인메모리 single-flight**(모놀리식 단일 인스턴스). 전용 단일 스레드 executor + `AtomicReference<ReindexJob>`. **재기동 시 job 상태 유실은 허용**(관리자 재트리거) — 재색인은 정본 손실이 아니라 파생 read-model 재구성이라 안전. (다중 인스턴스 배포는 공유 상태가 필요하나 현 토폴로지 범위 밖.)
+- **에러**: 미인증 401 · 비관리자 403(`AUTH_005`) · 재색인 이미 진행 중 409(`SEARCH_002`) · 존재하지 않는 jobId 404(`SEARCH_003`).
+
+#### 12.5.2 무중단 교체(blue-green) 절차 — `REBUILD`
+
+`listings_search` alias 한 개를 원자 스위치해 매핑/분석기 변경을 무중단 반영한다. **ES sink가 alias로 라우팅(§12.5.0)**하므로 스위치 한 번이 앱 질의·CDC 쓰기를 동시에 전환한다.
+
+1. **신 인덱스 생성**: `listings_v{n+1}` 생성(`listings*` 템플릿 상속 — 새 분석기/userdict는 여기서 적용). 현 alias는 아직 `listings_v{n}`을 가리킨 채 서비스 지속.
+2. **백필**: `ListingIndexer`가 **MySQL SoT를 읽어 신 물리 인덱스 `listings_v{n+1}`에 직접 bulk upsert**(alias 아님). MySQL이 정본이라 백필은 읽는 시점의 최신 커밋 상태를 담는다. 이 동안 CDC는 계속 alias→`v{n}`로 라이브 반영(구 인덱스 정상 서비스).
+3. **검증**: `listingType`별 `count(listings_v{n+1}) ≈ count(MySQL)` 대조(`SearchReconciliationWorker.compare` 로직 재사용) + 샘플 질의 sanity. **검증 실패 시 스위치하지 않고 job=FAILED로 종료**(구 인덱스 무손상 — 안전 실패).
+4. **alias 원자 스위치**: 단일 `_aliases` 액션 `{ remove: {alias:listings_search, index:v{n}}, add: {alias:listings_search, index:v{n+1}} }`. **한 액션이라 alias는 항상 단일 인덱스**를 가리켜(쓰기 alias 무결) 순간 전환. 이후 앱 질의·CDC sink 쓰기 모두 `v{n+1}`로 향한다.
+5. **백필 창 catch-up**: 2~4 사이(백필 행 읽기 이후 스위치 전) 커밋된 변경은 구 alias→`v{n}`에만 반영돼 `v{n+1}`에 없다 → 스위치 직후 `reindexAll()` 1회(이제 alias=`v{n+1}`) 또는 화해 sweep으로 **SoT에서 재-upsert해 창을 닫는다**. CDC도 스위치 후 `v{n+1}`로 흐르므로 대부분 행은 다음 binlog 이벤트로 자가 치유되고, catch-up이 잔여를 마감.
+6. **구 인덱스 보존→드롭**: `v{n}`을 롤백 여지로 **일정 기간 보존**(롤백 = 단일 `_aliases` 재스위치). 확신 후 드롭. 보존 기간은 설정값(예 `search.reindex.retain-old-index-minutes`).
+
+- **안전 실패**: 1~3 실패는 alias 불변 → `v{n}` 계속 서비스(무영향). 스위치(4)만이 전환 지점이라 그 전 어떤 실패도 사용자 무영향.
+- **롤백**: `v{n}` 보존 중이면 alias를 `v{n}`으로 재스위치(원자 1액션)해 즉시 복원.
+- **구현 범위(신규)**: 신 인덱스 생성·백필 타깃 지정·count 검증·`_aliases` 스위치·구 인덱스 드롭을 담는 **인덱스 스위치 유틸**(ES `indices()` API)과 `ListingIndexer`의 **물리 인덱스 타깃 지정 오버로드**가 필요하다(현재 alias 고정).
+
+#### 12.5.3 인증/인가 (되돌리기 영향 — 명시)
+
+- **admin 롤 체계 이미 존재**(§12.5.0): `ROLE_ADMIN` authority가 JWT `isAdmin` 클레임으로 이미 부여된다. **신규 인증 모델 불요.**
+- **권고(확정) = `SecurityConfig`에 `.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")` 규칙 추가**(`anyRequest().authenticated()` 앞). 프로젝트가 메서드 시큐리티(`@PreAuthorize`) 미사용·`requestMatchers` 방식으로 일관하므로 이 방식이 기존 컨벤션 정합. 비관리자는 403(`AUTH_005`). 이 규칙은 계약 §4.5에 이미 예약된 관리자 강제취소(`force-cancel`)도 소급 보호한다.
+- **공유비밀 헤더·프로파일 게이트는 불채택**: `X-Gateway-Token`은 게이트웨이 경유 관문(직접접근 차단)일 뿐 관리자 인가가 아니다. 롤 체계가 완비돼 있어 별도 비밀 헤더·프로파일 게이트는 중복·약한 보호라 배제한다.
+- **★ 확인 필요(운영 공백)**: 현재 **관리자 계정을 프로비저닝하는 경로가 없다** — `User.isAdmin` 기본 false, 관리자 승격 API·admin 회원가입 부재. 따라서 엔드포인트를 배선해도 **실제 호출하려면 admin 계정 시딩이 선행**해야 한다. 옵션: (a) Flyway 시드/마이그레이션으로 지정 계정 `is_admin=true`, (b) 데모용 수동 DB 플립. 이는 인가 모델 변경이 아니라 시딩 절차라 게이트2 되돌리기 대상은 아니나, **backend-impl 착수 전 사용자 확인 권고**(어느 계정을 admin으로 시딩할지).
+
+#### 12.5.4 동시성·안전 (중복 실행·CDC 상호작용)
+
+- **중복 실행 방지**: 재색인 job은 **single-flight**(동시 1개). 진행 중 재트리거는 즉시 409(`SEARCH_002`) — 인메모리 CAS 가드(§12.5.1). 화해 워커(`@Scheduled`)의 `correctOnDrift` 재색인과도 겹치지 않도록, job 실행 중에는 화해 보정을 스킵하거나 동일 가드를 공유한다(구현 시 확정).
+- **CDC 라이브 반영 ↔ 백필 정합**: `IN_PLACE`는 alias 타깃(=현 인덱스)에 upsert하므로 CDC와 같은 인덱스에 수렴(멱등 `_id=publicId`, 마지막 값 승리 — 무해). `REBUILD`는 §12.5.2-5의 **스위치 후 catch-up**으로 백필 창 변경의 유실을 막는다. 핵심 불변식: **정본은 항상 MySQL** — ES는 지연 반영 파생 사본이라, 순간 스테일은 허용하되(표시용) catch-up+CDC+화해가 최종 수렴을 보장한다(§12.8·domain-spec §8).
+- **sink route 관점(검증됨)**: sink가 alias로 라우팅(§12.5.0)하므로 스위치 후 **커넥터 재구성 없이** CDC가 신 인덱스로 이어 흐른다. (만약 향후 sink가 물리 인덱스 직지정으로 바뀌면 이 전제가 깨져 스위치 시 Kafka Connect REST 재구성이 필요해진다 — 배선 불변 유지가 조건.)
+
+#### 12.5.5 에러·관측
+
+- **안전 실패**: 어떤 실패도 **alias 미스위치 = 구 인덱스 유지**로 귀결(§12.5.2). job은 `FAILED` + `error` 요약으로 기록, 사용자 질의 무영향.
+- **진행률·결과**: `indexedCount`·`state`·`aliasSwitched`를 job 상태로 노출(§12.5.1) + 단계별 로깅(생성·백필 count·검증 결과·스위치·드롭). CDC lag·화해 드리프트 메트릭은 FC-110 DoD#5(관측) 소관과 연계.
 
 ### 12.6 한글(§7)·랭킹(§6) 구체화
 
@@ -358,3 +434,4 @@ listings (단일 인덱스, _id = 리스팅 public_id)
 - **domain-spec §8 정합**: "정합성은 DB, 처리량은 락"의 검색판 = "정본은 DB, 검색속도는 ES". dual-write 금지(앱은 MySQL만 write) + **멱등 CDC sink upsert** + 주기 화해가 이 원칙의 구현.
 - **EPIC-CLOSING/BID 정합**: `price`·`status`·`highestBidAmount`는 파생 사본. 종료성 CAS·단일 승자·정산은 검색 계층과 무관하게 DB에서 성립. 검색은 이들을 지연 반영할 뿐 신뢰 원천이 아니다.
 - **EPIC-GRADE 의존 격리**: `sellerGrade` 부스트(A4)는 자리만 문서화, 이번 색인·랭킹·계약에 미포함.
+- **운영 재색인(§12.5) 정합**: blue-green 스위치·백필도 이 서사 안이다 — 백필은 **MySQL SoT를 읽어** 재구성하므로 ES가 정본을 만들지 않고, 스위치 실패는 구 인덱스 유지(안전 실패)로 정본 무손상. 백필 창 스테일은 CDC 이어쓰기·catch-up·주기 화해가 최종 수렴시킨다. 즉 재색인은 "정본은 DB, 검색은 파생"의 운영 절차 구현이지 예외가 아니다.
