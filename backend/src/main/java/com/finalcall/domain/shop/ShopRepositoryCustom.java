@@ -1,6 +1,7 @@
 package com.finalcall.domain.shop;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -46,4 +47,23 @@ public interface ShopRepositoryCustom {
      * fetch join 해 읽는다. 화해 보정·수동 백필 경로가 쓴다(§12.5). 데모 규모 전제.
      */
     List<Shop> findAllForIndexing();
+
+    /**
+     * 화해 histogram 대조용 상태별 count(EPIC-SEARCH, {@code SearchReconciliationWorker} · search-spec §12.5). MySQL
+     * (정본) 고정가 전건을 {@code status} 로 그룹핑한 count 를 반환한다 — ES {@code terms} agg(status) 와 대조해 총량이
+     * 같아도 상태 분포가 어긋나는 <b>상태전이 드리프트</b>를 잡는다. 색인기가 전 상태를 색인하므로(필터 없음) 전건 집계다.
+     *
+     * @return 상태 → 행 수(해당 상태 행이 없으면 키 부재)
+     */
+    Map<ShopStatus, Long> countGroupByStatus();
+
+    /**
+     * 화해 histogram 대조용 가격 버킷별 count(EPIC-SEARCH · search-spec §12.5). 가격({@code price} — ES 색인
+     * {@code price} 와 정합)을 {@code floor(price/size)*size} 하한 키로 그룹핑한 count 를 반환한다. ES
+     * {@code histogram} agg(interval=size)의 버킷 하한 키와 정렬해 어느 가격대가 어긋났는지까지 짚는다.
+     *
+     * @param bucketSize 버킷 폭(&gt;0). {@code SearchReconciliationProperties.priceBucketSize}
+     * @return 버킷 하한 → 행 수(해당 버킷에 행이 없으면 키 부재)
+     */
+    Map<Long, Long> countGroupByPriceBucket(long bucketSize);
 }

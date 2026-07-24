@@ -4,15 +4,19 @@ import static com.finalcall.domain.shop.QShop.shop;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.finalcall.domain.item.QItemInstance;
 import com.finalcall.domain.item.QItemTemplate;
 import com.finalcall.domain.item.QSkillDefinition;
 import com.finalcall.domain.member.QUser;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -114,6 +118,36 @@ public class ShopRepositoryImpl implements ShopRepositoryCustom {
             .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
             .join(shop.seller, SELLER).fetchJoin()
             .fetch();
+    }
+
+    @Override
+    public Map<ShopStatus, Long> countGroupByStatus() {
+        NumberExpression<Long> rowCount = shop.id.count();
+        Map<ShopStatus, Long> counts = new LinkedHashMap<>();
+        for (Tuple row : queryFactory.select(shop.status, rowCount)
+            .from(shop)
+            .groupBy(shop.status)
+            .fetch()) {
+            counts.put(row.get(shop.status), row.get(rowCount));
+        }
+        return counts;
+    }
+
+    @Override
+    public Map<Long, Long> countGroupByPriceBucket(long bucketSize) {
+        // floor(price / size) = 버킷 인덱스로 그룹핑하고, 하한(index*size)은 Java 에서 곱한다. 하한 곱을 SQL 에 두면
+        //   QueryDSL 이 select 는 cast(? as signed)·group by 는 ?로 달리 렌더해 only_full_group_by 에서 깨진다.
+        //   price 는 ES 색인 price 원천이라 ES histogram(interval=size) 하한 키와 정합한다.
+        NumberExpression<Long> bucketIndex = shop.price.divide(bucketSize).floor();
+        NumberExpression<Long> rowCount = shop.id.count();
+        Map<Long, Long> counts = new LinkedHashMap<>();
+        for (Tuple row : queryFactory.select(bucketIndex, rowCount)
+            .from(shop)
+            .groupBy(bucketIndex)
+            .fetch()) {
+            counts.put(row.get(bucketIndex) * bucketSize, row.get(rowCount));
+        }
+        return counts;
     }
 
     /** status 미지정이면 판매 중(ACTIVE) 기본 노출, 지정이면 해당 영속 상태만(종료분 조회 허용). */

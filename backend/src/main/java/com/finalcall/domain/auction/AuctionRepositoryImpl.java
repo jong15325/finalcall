@@ -4,7 +4,9 @@ import static com.finalcall.domain.auction.QAuction.auction;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.finalcall.domain.bid.QBid;
@@ -16,6 +18,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -118,6 +121,36 @@ public class AuctionRepositoryImpl implements AuctionRepositoryCustom {
             .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
             .join(auction.seller, SELLER).fetchJoin()
             .fetch();
+    }
+
+    @Override
+    public Map<AuctionStatus, Long> countGroupByStatus() {
+        NumberExpression<Long> rowCount = auction.id.count();
+        Map<AuctionStatus, Long> counts = new LinkedHashMap<>();
+        for (Tuple row : queryFactory.select(auction.status, rowCount)
+            .from(auction)
+            .groupBy(auction.status)
+            .fetch()) {
+            counts.put(row.get(auction.status), row.get(rowCount));
+        }
+        return counts;
+    }
+
+    @Override
+    public Map<Long, Long> countGroupByPriceBucket(long bucketSize) {
+        // floor(startPrice / size) = 버킷 인덱스로 그룹핑하고, 하한(index*size)은 Java 에서 곱한다. 하한 곱을 SQL 에
+        //   두면 QueryDSL 이 select 는 cast(? as signed)·group by 는 ?로 달리 렌더해 only_full_group_by 에서 깨진다.
+        //   startPrice 는 ES 색인 price 원천이라 ES histogram(interval=size) 하한 키와 정합한다.
+        NumberExpression<Long> bucketIndex = auction.startPrice.divide(bucketSize).floor();
+        NumberExpression<Long> rowCount = auction.id.count();
+        Map<Long, Long> counts = new LinkedHashMap<>();
+        for (Tuple row : queryFactory.select(bucketIndex, rowCount)
+            .from(auction)
+            .groupBy(bucketIndex)
+            .fetch()) {
+            counts.put(row.get(bucketIndex) * bucketSize, row.get(rowCount));
+        }
+        return counts;
     }
 
     /**

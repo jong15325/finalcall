@@ -13,6 +13,10 @@ import jakarta.validation.constraints.Positive;
  * 결정적으로 검증한다(ShopExpiryWorker 선례). 화해는 시급성이 낮아 긴 주기(기본 5분)로 부하를 아낀다.
  * {@code correctOnDrift} 가 true 면 드리프트 탐지 시 {@link ListingIndexer#reindexAll()} 로 보정한다 — 기본 false
  * (탐지·경고만; bulk 재색인은 부하가 커 운영자가 명시 활성).
+ *
+ * <p>{@code priceBucketSize} 는 가격 히스토그램 대조의 버킷 폭이다(§12.5 price histogram) — MySQL
+ * {@code floor(price/size)*size} 집계와 ES {@code histogram interval} 을 같은 하한 키로 정렬해 어느 가격대가
+ * 어긋났는지까지 짚는다. 총량·상태 분포가 일치해도 가격대 분포가 어긋나는 드리프트를 잡는다.
  */
 @Validated
 @ConfigurationProperties(prefix = "search.reconciliation")
@@ -25,5 +29,8 @@ public record SearchReconciliationProperties(
     @Positive long fixedDelayMs,
 
     /** 드리프트 탐지 시 재색인 보정 여부(기본 false=탐지·경고만). */
-    boolean correctOnDrift) {
+    boolean correctOnDrift,
+
+    /** 가격 히스토그램 버킷 폭(§12.5). MySQL {@code floor(price/size)*size} ↔ ES {@code histogram interval} 정합. */
+    @Positive long priceBucketSize) {
 }
