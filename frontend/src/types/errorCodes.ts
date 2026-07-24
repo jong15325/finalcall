@@ -80,6 +80,11 @@ export const ERROR_CODES = {
     EXC_001: 'EXC_001', // 캐시 잔액 부족 (422)
     EXC_002: 'EXC_002', // 역방향 교환 미지원 (422)
 
+    // 검색 (search-spec, §5·§4.5)
+    SEARCH_001: 'SEARCH_001', // 검색엔진 일시 불가(ES 미가용·타임아웃) (503)
+    SEARCH_002: 'SEARCH_002', // 재색인 이미 진행 중(single-flight, §4.5) (409) — ★ 재색인 API 미구현(FC-116 이월), 정합상 등재
+    SEARCH_003: 'SEARCH_003', // 재색인 job 없음(§4.5) (404) — ★ 재색인 API 미구현(FC-116 이월), 정합상 등재
+
     // 게이트웨이 엣지 (§1.6 — 도메인 enum 미등재)
     GATEWAY_429: 'GATEWAY_429', // rate limit 초과 (429)
     GATEWAY_403: 'GATEWAY_403', // 게이트웨이 미경유 직접접근 차단 (403)
