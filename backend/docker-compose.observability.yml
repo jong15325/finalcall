@@ -7,6 +7,9 @@
 #
 # 접속: Grafana http://localhost:3000 (admin / ${GRAFANA_ADMIN_PASSWORD:-admin}),
 #       Prometheus http://localhost:9090, Loki http://localhost:3100
+#
+# ★ 프로젝트명 고정(name): `backend/` 디렉터리 기본 프로젝트명 "backend"(타 레포와 충돌)를 피해 "finalcall"로 고정.
+name: finalcall
 
 services:
   prometheus:

@@ -9,6 +9,11 @@
 #
 # ★ 아래 계정/비밀번호는 "로컬 개발 전용" 일회성 값이다.
 #    실제 dev/prod 에는 절대 사용하지 말 것(운영 시크릿은 환경변수/시크릿 매니저로 주입).
+#
+# ★ 프로젝트명 고정(name): 이 파일은 `backend/` 아래에 있어 Compose 기본 프로젝트명이 디렉터리명 "backend"가
+#   된다. 그러면 다른 레포의 `.../backend/docker-compose.yml`(예: On-Race)과 같은 "backend" 프로젝트로 뒤엉켜
+#   컨테이너·네트워크·볼륨이 섞인다. 아래 name 으로 프로젝트를 "finalcall"에 고정해 격리한다(디렉터리 무관).
+name: finalcall
 
 services:
   mysql:
