@@ -33,5 +33,14 @@
 ## 유지 (의도적 백로그 — 손대지 않음)
 - FC-101(마켓 대량 성능)·FC-110(검색 정합성 하드닝) · 신규 백로그 FC-113(메모/쪽지)·FC-114(이메일 인증).
 
+## 추가 재분류 (2026-07-24, 사용자 요청) — done → superseded
+EPIC-FE-ECME(superseded) 소속으로 done 도달했으나 산출물이 REBUILD로 폐기된 티켓을 에픽과 정합:
+| 티켓 | 근거 |
+|---|---|
+| **FC-055** (KAN-66) | Ecme 템플릿 이식 UI → REBUILD 폐기 |
+| **FC-056** (KAN-67) | API·인증 이식 — 전송/계약 로직은 REBUILD 보존 45파일로 승계, UI만 폐기 |
+| **FC-058** (KAN-69) | Ecme 기반 홈/아트 UI → REBUILD 폐기 |
+- Jira 상태: 파일상 done이었으나 **Jira엔 미미러 드리프트**였다(KAN-66·67=해야 할 일, KAN-69=검토 중). superseded 재분류와 함께 셋 다 `완료`로 전이해 드리프트 해소.
+
 ## 조사 방법
 general-purpose 에이전트가 spec 문서·`db/migration`·에픽 파일·`frontend/src` 트리를 대조. 8개 조사 티켓 전건 증거로 done/cancel 판정(KEEP 0). FC-045·046은 총괄이 본문 결과 섹션으로 직접 확인.
