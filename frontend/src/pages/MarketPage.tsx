@@ -17,7 +17,6 @@ import {
     toShopSearchParams,
 } from '@/features/shop/lib/shopFilters'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
-import { useNow } from '@/features/auction/lib/useNow'
 import { useShopBrowse } from '@/lib/queries/shop'
 import { useItemTemplates } from '@/lib/queries/itemTemplates'
 import { useMyBalance } from '@/lib/queries/balance'
@@ -33,7 +32,8 @@ import type { ShopFilterState } from '@/features/shop/lib/shopFilters'
  *    무한스크롤, 로딩/빈/에러 상태 블록. 데모 데이터를 렌더하지 않는다(정직성·FC-048).
  *  - **카드는 세로형 공통 카드(`ShopCard`)** — 목업 §9 2/3/6 그리드. 카드→상세 링크 + 비교 토글.
  *  - **구매는 상세에서**(게이트 결정 2026-07-22 — 카드→상세→구매, 경매와 동일 UX).
- *  - **골드포스는 단일 타이머**(`useNow` 1회) 값을 전 카드에 내려보낸다.
+ *  - **골드포스 잔여일은 일 단위**라 매초 시계가 불필요 — 마운트 시각 1회로 고정해 전 카드에
+ *    내려보낸다(FC-101: `useNow` 매초 구독을 걷어내 목록 전체 매초 리렌더 제거).
  * ★ 색은 브랜드 토큰(navy/gold/gray) — 목업 Vuexy 팔레트는 재구축에서 폐기(경매 화면 대칭).
  */
 
@@ -41,7 +41,9 @@ const PAGE_SIZE = 24
 
 export default function MarketPage() {
     const [searchParams, setSearchParams] = useSearchParams()
-    const now = useNow()
+    // 골드포스 잔여일은 일 단위라 매초 시계가 불필요 — 마운트 시각 1회로 고정한다.
+    // (useNow 매초 구독을 걷어내 5천 대량 목록의 매초 전체 리렌더/잰더를 없앤다, FC-101.)
+    const now = useMemo(() => Date.now(), [])
 
     const filters = useMemo(
         () => parseShopFilters(searchParams),

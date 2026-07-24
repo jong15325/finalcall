@@ -99,4 +99,31 @@ describe('<ShopCard>', () => {
             }),
         ).not.toBeInTheDocument()
     })
+
+    // FC-101: 대량 목록 매초 리렌더(잰더) 방지 — 부모 리렌더가 카드로 번지지 않도록 memo 로 격리한다.
+    it('memo 로 감싸 부모 리렌더가 카드로 번지지 않는다', () => {
+        expect((ShopCard as unknown as { $$typeof: symbol }).$$typeof).toBe(
+            Symbol.for('react.memo'),
+        )
+    })
+
+    // now 격리 후에도 골드포스 잔여일 파생은 주입된 시각으로 그대로 흐른다(일 단위 스냅샷).
+    it('주입된 now 로 골드포스 잔여일을 파생한다', () => {
+        renderWithProviders(
+            <ShopCard
+                shop={{
+                    ...baseShop,
+                    item: {
+                        ...baseShop.item,
+                        goldforceExpireAt: '2026-07-30T00:00:00Z',
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+        // NOW=07-23 → 만료 07-30 : 잔여 7일(일 단위 파생, 매초 시계 불필요).
+        expect(
+            screen.getByRole('img', { name: '골드포스 잔여 7일' }),
+        ).toBeInTheDocument()
+    })
 })

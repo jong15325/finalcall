@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router'
 import { marketDetailPath } from '@/app/paths'
 import ItemCard from '@/features/item/components/ItemCard'
@@ -23,10 +24,17 @@ import type { ShopSummary } from '@/lib/api/shop'
 
 interface ShopCardProps {
     shop: ShopSummary
-    /** 골드포스 파생 기준 시각(목록 단일 타이머 주입) */
+    /**
+     * 골드포스 파생 기준 시각(목록에서 마운트 시각 1회로 고정 주입).
+     * 마켓 카드는 카운트다운이 없고 골드포스 잔여일은 일 단위라 매초 갱신이 불필요하다 —
+     * 값이 안정적이라 아래 `memo` 가 유지된다(대량 목록 매초 리렌더 방지, FC-101).
+     */
     now: number
 }
 
+// ★ 5천 대량 목록에서 부모(MarketPage) 리렌더가 전 카드로 번지지 않게 memo 로 격리한다.
+//    props(shop=react-query 캐시 안정 참조·now=마운트 고정)가 안정적이라 얕은 비교로 충분하다.
+//    비교 하이라이트는 자식 CardCompareOverlay 가 스토어를 직접 구독하므로 memo 와 무관하게 갱신된다.
 function ShopCard({ shop, now }: ShopCardProps) {
     return (
         <div className="shop-card group relative rounded-xl transition-transform hover:-translate-y-[3px]">
@@ -55,4 +63,4 @@ function ShopCard({ shop, now }: ShopCardProps) {
     )
 }
 
-export default ShopCard
+export default memo(ShopCard)
