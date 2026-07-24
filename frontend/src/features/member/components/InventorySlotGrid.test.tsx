@@ -68,12 +68,18 @@ describe('<InventorySlotGrid>', () => {
             items: [item(1, 'INST-1', '불의 검')],
         })
         const slot = screen.getByRole('button', { name: '불의 검 스킬 보기' })
-        expect(container.querySelector('.inv-slot-flip__back')).not.toBeNull()
-        expect(slot).toHaveAttribute('data-flipped', 'false')
+        const flip = container.querySelector('.inv-slot-flip')
+        const back = container.querySelector('.inv-slot-flip__back')
+        expect(back).not.toBeNull()
+        // disclosure(M1·m3): 스킬 region 은 버튼 밖이고 aria-controls 로 이어진다.
+        const controls = slot.getAttribute('aria-controls')
+        expect(controls).toBeTruthy()
+        expect(back).toHaveAttribute('id', controls)
+        expect(flip).toHaveAttribute('data-flipped', 'false')
 
         fireEvent.click(slot)
 
-        expect(slot).toHaveAttribute('data-flipped', 'true')
+        expect(flip).toHaveAttribute('data-flipped', 'true')
         expect(slot).toHaveAttribute('aria-expanded', 'true')
         expect(slot).toHaveAccessibleName('불의 검 스킬 닫기')
     })

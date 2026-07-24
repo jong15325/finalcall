@@ -545,6 +545,7 @@
 }
 
 .item-card__market-info {
+    position: relative;
     gap: 0;
 }
 

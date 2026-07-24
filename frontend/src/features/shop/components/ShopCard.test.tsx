@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
+import { useLocation } from 'react-router'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import ShopCard from './ShopCard'
 import type { ShopSummary } from '@/lib/api/shop'
+
+/** 현재 경로를 노출해 내비게이션 유무를 단언한다. */
+function LocationProbe() {
+    const location = useLocation()
+    return <div data-testid="location">{location.pathname}</div>
+}
 
 const NOW = Date.parse('2026-07-23T00:00:00Z')
 
@@ -41,6 +48,27 @@ describe('<ShopCard>', () => {
         expect(link).toHaveAttribute('href', '/market/01JMARKET0001')
         expect(link.querySelector('button')).toBeNull()
         expect(container.querySelectorAll('button')).toHaveLength(2)
+    })
+
+    it('비교 버튼 클릭은 상세 페이지로 이동시키지 않는다(확정 UX)', () => {
+        renderWithProviders(
+            <>
+                <ShopCard shop={baseShop} now={NOW} />
+                <LocationProbe />
+            </>,
+            { route: '/market' },
+        )
+        expect(screen.getByTestId('location')).toHaveTextContent('/market')
+
+        fireEvent.click(
+            screen.getByRole('button', { name: '불의 전투도끼 비교에 담기' }),
+        )
+
+        // 담기는 상세 링크와 독립 상위 레이어 — 경로 불변, 상세 링크는 그대로 존재.
+        expect(screen.getByTestId('location')).toHaveTextContent('/market')
+        expect(
+            screen.getByRole('link', { name: '불의 전투도끼 상세 보기' }),
+        ).toHaveAttribute('href', '/market/01JMARKET0001')
     })
 
     it('스킬이 없어도 마켓 이미지 높이 클래스는 유지하고 토글만 생략한다', () => {

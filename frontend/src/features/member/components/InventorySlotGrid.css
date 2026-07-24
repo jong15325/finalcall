@@ -88,8 +88,25 @@
     white-space: nowrap;
 }
 
+/* 뒷면 스킬은 버튼 밖 region 이므로(M1), 토글을 비어 있는 오버레이 버튼으로 얹는다. */
+.inv-slot-flip__trigger {
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.inv-slot-flip__trigger:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: -3px;
+}
+
+/* 키보드 focus-visible 플립은 이제 오버레이 버튼에 걸린다(:has 로 컨테이너까지 전달). */
 .inv-slot-flip.is-enabled:hover .inv-slot-flip__inner,
-.inv-slot-flip.is-enabled:focus-visible .inv-slot-flip__inner,
+.inv-slot-flip.is-enabled:has(.inv-slot-flip__trigger:focus-visible)
+    .inv-slot-flip__inner,
 .inv-slot-flip.is-enabled[data-flipped='true'] .inv-slot-flip__inner {
     transform: rotateY(180deg);
 }

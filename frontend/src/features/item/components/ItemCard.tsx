@@ -60,6 +60,12 @@ interface ItemCardProps {
     footer?: ReactNode
     /** 마켓 카드에서 이미지 스테이지 뒤에 스킬을 표시한다. */
     skillFlip?: boolean
+    /**
+     * 정보영역(이미지 아래)을 덮는 상세 링크 오버레이(skillFlip 전용).
+     * 정보 컨테이너 안에 렌더돼 레이아웃으로 크기가 잡히므로 이미지 플립 영역을 덮지 않는다(M2).
+     * 라우팅은 호출부(ShopCard 등)가 소유한다 — ItemCard 는 링크를 만들지 않는다(§ 상단).
+     */
+    detailLink?: ReactNode
     className?: string
 }
 
@@ -72,6 +78,7 @@ function ItemCard({
     sellerNickname,
     footer,
     skillFlip = false,
+    detailLink,
     className = '',
 }: ItemCardProps) {
     const art = itemArt(
@@ -208,6 +215,7 @@ function ItemCard({
                     <div className="item-card__market-price">
                         <CodeAmount value={price} mode="compact" />
                     </div>
+                    {detailLink}
                 </div>
             ) : (
                 <div className="flex flex-1 flex-col gap-1.5 p-3">

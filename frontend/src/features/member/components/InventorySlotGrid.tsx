@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { TbArchive, TbLayoutGrid, TbLock } from 'react-icons/tb'
@@ -195,16 +195,31 @@ function InventorySlotGrid({
  * ★ 셀 높이는 그리드 `auto-rows-[178px]` 가 정본(모든 페이지 동일) — 슬롯은 `h-full` 로 채운다.
  *   hover 확대(zoom)·슬롯 밖 팝은 `.inv-slot` 스코프 CSS(InventorySlotGrid.css)가 담당한다.
  */
+/**
+ * ★ **disclosure 패턴**(M1) — 스킬 뒷면은 **토글 버튼의 자손이 아니라** 형제 region 이다.
+ *   ARIA `button` 롤은 자손을 presentational 로 지우므로, 스킬 텍스트를 버튼 안에 두면
+ *   스크린리더가 영구히 못 읽는다. 그래서 버튼은 비어 있는 오버레이 토글이고, 앞/뒷면은 별도
+ *   `region`(id)로 두어 `aria-controls`/`aria-expanded` 로 연결한다. 펼침(`flipped`) 시 뒷면만
+ *   접근성 트리에 노출(`aria-hidden`/`inert` 로 반대 면을 잠금)해 SR 이 스킬1·2 를 읽는다.
+ * ★ 시각 플립(hover/터치·키보드 `focus-visible`)·Escape 닫기·96×178 슬롯은 CSS 가 유지한다.
+ */
 function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
     const { art, hasSkill } = deriveItemSummaryArt(item.summary)
     const name = item.summary.displayName
     const [flipped, setFlipped] = useState(false)
+    const skillsId = useId()
+
+    useEffect(() => {
+        if (!flipped) return
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setFlipped(false)
+        }
+        window.addEventListener('keydown', closeOnEscape)
+        return () => window.removeEventListener('keydown', closeOnEscape)
+    }, [flipped])
 
     return (
-        <button
-            type="button"
-            aria-label={`${name} 스킬 ${flipped ? '닫기' : '보기'}`}
-            aria-expanded={flipped}
+        <div
             className={`inv-slot inv-slot-flip item-sprite-stage h-full w-full border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md ${hasSkill ? 'is-enabled' : ''}`.trim()}
             data-flipped={flipped}
             style={
@@ -214,12 +229,13 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
                       } as CSSProperties)
                     : undefined
             }
-            onClick={() => {
-                if (hasSkill) setFlipped((value) => !value)
-            }}
         >
-            <span className="inv-slot-flip__inner">
-                <span className="inv-slot-flip__face inv-slot-flip__front">
+            <div className="inv-slot-flip__inner">
+                <div
+                    className="inv-slot-flip__face inv-slot-flip__front"
+                    aria-hidden={flipped}
+                    inert={flipped}
+                >
                     <ItemFrame
                         imageUrl={art?.src}
                         spriteUrl={art?.src}
@@ -231,9 +247,14 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
                         size="frame"
                         now={now}
                     />
-                </span>
+                </div>
                 {hasSkill && (
-                    <span className="inv-slot-flip__face inv-slot-flip__back">
+                    <div
+                        id={skillsId}
+                        className="inv-slot-flip__face inv-slot-flip__back"
+                        aria-hidden={!flipped}
+                        inert={!flipped}
+                    >
                         <ItemSkillSummary
                             showSlotLabels
                             skill1={item.summary.skill1Code}
@@ -241,10 +262,20 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
                             skillPercent={item.summary.skillPercent}
                             className="inv-slot-flip__skills"
                         />
-                    </span>
+                    </div>
                 )}
-            </span>
-        </button>
+            </div>
+            {hasSkill && (
+                <button
+                    type="button"
+                    className="inv-slot-flip__trigger"
+                    aria-label={`${name} 스킬 ${flipped ? '닫기' : '보기'}`}
+                    aria-expanded={flipped}
+                    aria-controls={skillsId}
+                    onClick={() => setFlipped((value) => !value)}
+                />
+            )}
+        </div>
     )
 }
 /** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. 셀 높이는 그리드 auto-rows(h-full) 정합. */
