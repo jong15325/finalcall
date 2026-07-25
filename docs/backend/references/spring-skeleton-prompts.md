@@ -1,3 +1,5 @@
+<!-- 구조 주의: 패키지 구조는 EPIC-RESTRUCTURE(2026-07-25)로 feature-first(com.finalcall.<feature>.<layer>)로 전환됨. 이 문서는 스켈레톤 구축 당시(layer-first: api/domain/infra/common) 기록이며 그 계층 서술은 역사적 참고다. 현행 규약 = CLAUDE.md 섹션 1·3·4·5 + docs/common/proposals/layer-restructure-proposal-v0.1.md(내용 v0.2). -->
+
 # Spring Boot 대규모 트래픽 스켈레톤 — 재사용 프롬프트 세트
 
 Java 21 + Spring Boot 3.5 기반 신규 서비스 스켈레톤을 Claude Code로 단계적으로 구성하기 위한 프롬프트 모음입니다.

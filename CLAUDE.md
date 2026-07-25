@@ -8,6 +8,8 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
 **모노레포다**(D-098). `finalcall/{backend/{src,gateway}, frontend, config, docs}`.
 코드 경로는 `backend/src/**`·`backend/gateway/**`, 스타일 정본은 루트 `config/`, 문서는 루트 `docs/`.
 
+**패키지 레이아웃 = feature-first**(EPIC-RESTRUCTURE, 2026-07-25 게이트2). 최상위를 기술 계층(구 `api`/`domain`)이 아니라 **도메인(feature)** 으로 분할하고, 각 feature 내부에 `controller/service/repository/entity/dto` 계층 하위패키지를 둔다 — 패키지는 `com.finalcall.<feature>.<layer>`(예: `com.finalcall.member.service.MemberService`, `com.finalcall.member.entity.User`). 횡단 인프라·공용 커널은 feature가 아니므로 `com.finalcall.common`·`com.finalcall.infra`에 제자리로 남는다. 상세 규약·목표 레이아웃·ArchUnit 규칙 스펙 = `docs/common/proposals/layer-restructure-proposal-v0.1.md`(파일명은 v0.1이나 내용은 v0.2 DECIDED). **전환 중 안내(한시적, FC-122에서 제거)**: 재구성이 feature 단위로 순차 진행 중이라, 신규 코드는 feature-first를 따르되 아직 이전되지 않은 기존 코드는 구 배치(`api/…`·`domain/…`)일 수 있다.
+
 ---
 
 ## 섹션 1: 프로젝트 정보
@@ -66,10 +68,12 @@ BASE_PACKAGE     = com.finalcall     # 단일 서비스라 중복(com.finalcall.
                                      # Stage 0 의 packageName 도 com.finalcall 로 지정할 것.
 ```
 
-### 구조 (Stage 1)
+### 구조 (Stage 1 — feature-first 재구성 반영, EPIC-RESTRUCTURE)
 ```
-LAYERS           = api > domain > infra > common   # 의존 방향: 왼→오 단방향
-SAMPLE_FEATURE   = sample
+PACKAGING        = feature-first                   # 최상위=도메인(feature), com.finalcall.<feature>.<layer>
+FEATURE_LAYERS   = controller > service > repository > entity   # feature 내부 계층·의존방향(왼→오 단방향). dto는 controller/service가 참조, entity에만 의존
+KERNEL_PACKAGES  = common, infra                   # 횡단 커널(feature 아님·제자리). 어떤 feature도 이 둘을 역으로 의존받지 않음
+SAMPLE_FEATURE   = sample                          # 새 경로: com.finalcall.sample.{controller,service,dto,...}
 COMMON_SUBPKGS   = response, exception, logging, util
 INFRA_SUBPKGS    = config, redis, persistence
 SPRING_BOOT_VER  = 3.5.x (최신 안정)
@@ -188,8 +192,11 @@ INCLUDE_AWS_SPEC_HINT = true
 
 ## 섹션 4: 전역 설계 원칙 (모든 단계 적용)
 
-- **의존 방향 단방향**: `api → domain → infra → common`. 역방향 절대 금지.
-  `common` 은 프레임워크 최소 의존(가능한 순수 Java). JPA/Redis 등은 `domain`/`infra` 에만.
+- **의존 방향(feature-first, EPIC-RESTRUCTURE)**: 세 축을 ArchUnit(`LayerDependencyTest`)이 기계 강제한다.
+  (1) **슬라이스 내부 계층방향** — 한 feature 안에서 `controller → service → repository → entity`(+ `dto`) 단방향. entity/repository는 controller/service를 역참조 금지.
+  (2) **커널 무의존** — `common`·`infra`는 어떤 feature도 의존하지 않는다(`common`은 프레임워크 최소 의존·가능한 순수 Java, JPA/Redis 등은 feature/`infra`에만).
+  (3) **슬라이스 비순환** — feature 간 순환 참조 금지.
+  규칙 스펙 = proposal v0.2 §10. **전환 중(한시적, FC-122 제거)**: 구 최상위-레이어 규칙(`api→domain→infra→common`)과 신 규칙이 병존하며, 전 feature 이전 완료(Phase 3)에 구 규칙을 제거한다.
 - **시크릿 fail-fast**: 로컬은 `${ENV:기본값}`, 운영은 `${ENV}`(기본값 없음 → 누락 시 부팅 실패).
 - **시간 타입**: `Instant`(UTC)로 통일. 표현 계층에서 변환.
 - **AOP self-invocation 주의**: 같은 클래스 내부 호출은 프록시를 안 타므로 어노테이션 기반 기능
@@ -200,6 +207,7 @@ INCLUDE_AWS_SPEC_HINT = true
 
 ## 섹션 5: 도메인 코드 컨벤션 (Stage D 이후 모든 도메인 적용)
 
+- **물리 배치(feature-first, EPIC-RESTRUCTURE)**: 각 클래스는 `com.finalcall.<feature>.<layer>`에 둔다 — Controller→`controller`, Request/Response 등 표현 DTO→`dto`, Service·도메인 VO→`service`, Repository(+Custom/Impl)→`repository`, Entity·귀속 enum→`entity`. `ErrorCode`·`*Properties`·도메인 예외는 feature 루트. 상세 분류표·경계 사례는 proposal v0.2 §9. 아래 네이밍·설계 규칙은 배치와 무관하게 그대로 적용된다.
 - **Entity**: `BaseTimeEntity`/`BaseEntity` 상속, `@NoArgsConstructor(PROTECTED)`, 생성자에 `@Builder`,
   `@Setter` 금지 → 도메인 메서드(`update()`/`delete()`), soft delete(`isDeleted`).
 - **Repository**: `findByIdOrThrow(id, ErrorCode)` default 메서드 패턴, 커스텀 쿼리는
