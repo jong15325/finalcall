@@ -34,10 +34,10 @@ import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.service.InventoryService;
-import com.finalcall.domain.search.ListingSearchCondition;
-import com.finalcall.domain.search.ListingSearchResult;
-import com.finalcall.domain.search.ListingSearchService;
-import com.finalcall.domain.search.ListingType;
+import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.entity.ListingSearchCondition;
+import com.finalcall.domain.search.entity.ListingType;
+import com.finalcall.domain.search.service.ListingSearchService;
 
 import lombok.RequiredArgsConstructor;
 

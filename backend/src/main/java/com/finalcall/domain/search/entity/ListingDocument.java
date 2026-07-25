@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.entity;
 
 import lombok.Builder;
 
@@ -11,7 +11,8 @@ import lombok.Builder;
  * (gfExpireAt/endsAt/createdAt)는 ISO-8601 문자열로 담아 JsonpMapper 시간 모듈 의존 없이 ES {@code date} 로 파싱되게
  * 한다. {@code sellerGrade} 는 이번 범위 밖(EPIC-GRADE 의존, §6.1·A4) — 문서에 두지 않는다.
  *
- * <p>이 문서는 앱 화해/재색인 경로({@link ListingIndexer})가 MySQL 조인을 읽어 bulk upsert 할 때 쓴다. 주 동기 경로는
+ * <p>이 문서는 앱 화해/재색인 경로({@link com.finalcall.domain.search.service.ListingIndexer})가 MySQL 조인을 읽어 bulk
+ * upsert 할 때 쓴다. 주 동기 경로는
  * Debezium CDC(앱 무침습)이며, 이 문서 타입은 그 파이프라인이 못 채우는 코드축 enrichment·드리프트 보정용이다(§12.5).
  */
 @Builder

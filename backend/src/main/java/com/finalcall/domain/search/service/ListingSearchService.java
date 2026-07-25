@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.service;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -10,6 +10,11 @@ import org.springframework.stereotype.Service;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.domain.search.ListingSearchProperties;
+import com.finalcall.domain.search.SearchErrorCode;
+import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.entity.ListingSearchCondition;
+import com.finalcall.domain.search.entity.SearchCursor;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;

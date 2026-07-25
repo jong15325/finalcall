@@ -11,7 +11,8 @@ import jakarta.validation.constraints.Positive;
  *
  * <p>{@code enabled} 는 스케줄 tick 활성 여부다 — 통합 테스트는 {@code false} 로 배경 tick 을 끄고 로직을 직접 호출해
  * 결정적으로 검증한다(ShopExpiryWorker 선례). 화해는 시급성이 낮아 긴 주기(기본 5분)로 부하를 아낀다.
- * {@code correctOnDrift} 가 true 면 드리프트 탐지 시 {@link ListingIndexer#reindexAll()} 로 보정한다 — 기본 false
+ * {@code correctOnDrift} 가 true 면 드리프트 탐지 시
+ * {@link com.finalcall.domain.search.service.ListingIndexer#reindexAll()} 로 보정한다 — 기본 false
  * (탐지·경고만; bulk 재색인은 부하가 커 운영자가 명시 활성).
  *
  * <p>{@code priceBucketSize} 는 가격 히스토그램 대조의 버킷 폭이다(§12.5 price histogram) — MySQL

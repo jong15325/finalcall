@@ -28,7 +28,7 @@ public record ListingSearchProperties(
 
     /**
      * 부팅 시 전체 재색인 여부(EPIC-SEARCH, MAJOR-1). CDC 는 단일 테이블 스냅샷 필드만 채우므로 코드축·레벨·스킬·
-     * 날짜 같은 join 필드는 앱 enrichment({@link ListingIndexer})가 채워야 한다 — 이 값이 true 면
+     * 날짜 같은 join 필드는 앱 enrichment({@link com.finalcall.domain.search.service.ListingIndexer})가 채워야 한다 — 이 값이 true 면
      * {@code ApplicationReadyEvent} 에 전체 색인을 1회 수행해 검색 가능 문서를 보장한다(로컬 데모 기본 on, 운영/테스트
      * off). ES 미가용 시 부팅을 막지 않고 스킵한다.
      */

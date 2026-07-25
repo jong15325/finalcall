@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.service;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +8,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.finalcall.domain.auction.repository.AuctionRepository;
+import com.finalcall.domain.search.ListingSearchProperties;
+import com.finalcall.domain.search.SearchReconciliationProperties;
+import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.shop.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;

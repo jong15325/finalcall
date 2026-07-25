@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.dto;
 
 import java.util.List;
 

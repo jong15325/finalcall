@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.entity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

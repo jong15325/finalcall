@@ -22,12 +22,12 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.repository.AuctionRepository;
-import com.finalcall.domain.search.ListingDocument;
-import com.finalcall.domain.search.ListingIndexer;
 import com.finalcall.domain.search.ListingSearchProperties;
-import com.finalcall.domain.search.ListingType;
 import com.finalcall.domain.search.SearchReconciliationProperties;
-import com.finalcall.domain.search.SearchReconciliationWorker;
+import com.finalcall.domain.search.entity.ListingDocument;
+import com.finalcall.domain.search.entity.ListingType;
+import com.finalcall.domain.search.service.ListingIndexer;
+import com.finalcall.domain.search.service.SearchReconciliationWorker;
 import com.finalcall.domain.shop.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;

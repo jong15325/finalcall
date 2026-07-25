@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.entity;
 
 /**
  * 리스팅 종류 판별(search, EPIC-SEARCH). 단일 통합 인덱스 {@code listings} 안에서 경매/고정가를 구분하는 keyword

@@ -18,13 +18,13 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
-import com.finalcall.domain.search.ListingDocument;
-import com.finalcall.domain.search.ListingIndexer;
-import com.finalcall.domain.search.ListingSearchCondition;
 import com.finalcall.domain.search.ListingSearchProperties;
-import com.finalcall.domain.search.ListingSearchResult;
-import com.finalcall.domain.search.ListingSearchService;
-import com.finalcall.domain.search.ListingType;
+import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.entity.ListingDocument;
+import com.finalcall.domain.search.entity.ListingSearchCondition;
+import com.finalcall.domain.search.entity.ListingType;
+import com.finalcall.domain.search.service.ListingIndexer;
+import com.finalcall.domain.search.service.ListingSearchService;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;

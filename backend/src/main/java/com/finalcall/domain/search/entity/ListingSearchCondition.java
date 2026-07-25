@@ -1,4 +1,4 @@
-package com.finalcall.domain.search;
+package com.finalcall.domain.search.entity;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * (ACTIVE)이며 호출 측이 MySQL 목록 경로와 동일한 규약으로 채운다. 코드축·skill 은 keyword 색인이라 문자열로 비교한다.
  *
  * @param listingType 리스팅 종류(AUCTION|SHOP) — term 필터
- * @param q           자유문(2~64자, 계약 C3). 검증은 {@link ListingSearchService} 진입에서 수행
+ * @param q           자유문(2~64자, 계약 C3). 검증은 {@link com.finalcall.domain.search.service.ListingSearchService} 진입에서 수행
  * @param statuses    노출 상태 화이트리스트(비었으면 상태 미필터)
  */
 public record ListingSearchCondition(
