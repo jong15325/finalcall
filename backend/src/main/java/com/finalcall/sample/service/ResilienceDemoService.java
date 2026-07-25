@@ -1,6 +1,8 @@
-package com.finalcall.domain.sample;
+package com.finalcall.sample.service;
 
 import org.springframework.stereotype.Service;
+
+import com.finalcall.sample.ExternalCallException;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;

@@ -1,4 +1,4 @@
-package com.finalcall.api.sample;
+package com.finalcall.sample.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

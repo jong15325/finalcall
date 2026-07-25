@@ -1,4 +1,4 @@
-package com.finalcall.domain.sample;
+package com.finalcall.sample;
 
 /**
  * Stage E2 데모용 가짜 외부 호출 실패 예외.

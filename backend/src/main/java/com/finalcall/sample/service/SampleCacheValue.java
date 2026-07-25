@@ -1,4 +1,4 @@
-package com.finalcall.domain.sample;
+package com.finalcall.sample.service;
 
 import java.time.Instant;
 

@@ -1,4 +1,4 @@
-package com.finalcall.api.sample;
+package com.finalcall.sample.controller;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.sample.ResilienceDemoService;
-import com.finalcall.domain.sample.SampleCacheValue;
-import com.finalcall.domain.sample.SampleService;
+import com.finalcall.sample.dto.SampleEchoRequest;
+import com.finalcall.sample.dto.SampleResponse;
+import com.finalcall.sample.service.ResilienceDemoService;
+import com.finalcall.sample.service.SampleCacheValue;
+import com.finalcall.sample.service.SampleService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

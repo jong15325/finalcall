@@ -1,4 +1,4 @@
-package com.finalcall.api.sample;
+package com.finalcall.sample.dto;
 
 /**
  * 샘플 응답 DTO — api 계층 소속.
