@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.shop.Shop;
 import com.finalcall.domain.shop.ShopErrorCode;
 import com.finalcall.support.ShopTestBase;

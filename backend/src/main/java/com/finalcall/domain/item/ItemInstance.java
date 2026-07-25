@@ -5,9 +5,9 @@ import java.time.Instant;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.finalcall.common.entity.BaseTimeEntity;
 import com.finalcall.common.util.Ulid;
-import com.finalcall.domain.common.BaseTimeEntity;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

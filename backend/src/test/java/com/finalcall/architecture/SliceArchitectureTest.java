@@ -22,8 +22,9 @@ import com.tngtech.archunit.library.Architectures;
  * 하위패키지가 없으면 빈 레이어로 통과하고, feature 트리로 이동한 파일부터 즉시 강제된다.
  *
  * <p>규칙 (b) 슬라이스 비순환은 {@link LayerDependencyTest}의 {@code 레이어_순환참조_금지}
- * (동일 패턴 {@code com.finalcall.(*)..})를 그대로 재사용한다 — 구조 전환 후 첫 세그먼트가 곧
- * feature/커널 슬라이스가 되어 feature 간 순환을 자동으로 잡는다(proposal §10-b). 여기서 중복 정의하지 않는다.
+ * (현재 패턴 {@code com.finalcall.(*)..} — 최상위 슬라이스)를 그대로 재사용한다. feature 단위
+ * 슬라이스({@code com.finalcall.domain.(*)..})로의 전환은 레거시 도메인 간 실제 순환 결합 해소 이후로
+ * 미룬다(FC-121 범위 밖). 여기서 중복 정의하지 않는다.
  */
 @AnalyzeClasses(packages = "com.finalcall", importOptions = ImportOption.DoNotIncludeTests.class)
 class SliceArchitectureTest {

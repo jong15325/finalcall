@@ -23,8 +23,8 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidRepository;
-import com.finalcall.domain.member.UserBalanceRepository;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.repository.UserBalanceRepository;
+import com.finalcall.domain.member.repository.UserRepository;
 
 /**
  * {@link MoneyHoldService} 단위 테스트 — 스프링 컨텍스트 없이 협력자 모의(가장 빠른 계층).

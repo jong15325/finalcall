@@ -1,6 +1,6 @@
 package com.finalcall.api.auth;
 
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 
 import lombok.Builder;
 

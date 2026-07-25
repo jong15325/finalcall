@@ -29,7 +29,7 @@ import com.finalcall.domain.item.SkillDefinitionRepository;
 import com.finalcall.domain.item.TempStorage;
 import com.finalcall.domain.item.TempStorageRepository;
 import com.finalcall.domain.item.TransferType;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

@@ -2,8 +2,8 @@ package com.finalcall.domain.currency;
 
 import java.math.BigDecimal;
 
-import com.finalcall.domain.common.BaseTimeEntity;
-import com.finalcall.domain.member.User;
+import com.finalcall.common.entity.BaseTimeEntity;
+import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

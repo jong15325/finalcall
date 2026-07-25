@@ -12,8 +12,8 @@ import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidRepository;
-import com.finalcall.domain.member.UserBalanceRepository;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.repository.UserBalanceRepository;
+import com.finalcall.domain.member.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

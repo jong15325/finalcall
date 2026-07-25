@@ -12,7 +12,7 @@ import com.finalcall.domain.item.ItemInstanceRepository;
 import com.finalcall.domain.item.ItemOwnershipHistory;
 import com.finalcall.domain.item.ItemOwnershipHistoryRepository;
 import com.finalcall.domain.item.TransferType;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

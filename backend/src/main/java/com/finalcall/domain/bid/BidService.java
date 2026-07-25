@@ -18,7 +18,7 @@ import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.auction.AuctionRepository;
 import com.finalcall.domain.auction.AuctionStatus;
 import com.finalcall.domain.currency.MoneyHoldService;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

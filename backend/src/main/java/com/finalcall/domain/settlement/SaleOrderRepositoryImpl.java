@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.finalcall.domain.item.QItemInstance;
 import com.finalcall.domain.item.QItemTemplate;
 import com.finalcall.domain.item.QSkillDefinition;
-import com.finalcall.domain.member.QUser;
+import com.finalcall.domain.member.entity.QUser;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 

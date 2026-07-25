@@ -13,7 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.bid.BidPlaceCommand;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 import com.finalcall.support.BidConcurrencyTestBase;
 
 /**

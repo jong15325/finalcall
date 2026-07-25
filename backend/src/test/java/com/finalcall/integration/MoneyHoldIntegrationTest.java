@@ -25,9 +25,9 @@ import com.finalcall.domain.currency.MoneyHoldStatus;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemLocation;
 import com.finalcall.domain.item.ItemTemplate;
-import com.finalcall.domain.member.User;
-import com.finalcall.domain.member.UserBalance;
-import com.finalcall.domain.member.UserBalanceRepository;
+import com.finalcall.domain.member.entity.User;
+import com.finalcall.domain.member.entity.UserBalance;
+import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.support.IntegrationTest;
 
 import jakarta.persistence.EntityManager;

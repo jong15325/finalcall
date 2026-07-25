@@ -18,7 +18,7 @@ import com.finalcall.domain.currency.MoneyHoldService;
 import com.finalcall.domain.item.InventoryService;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
-import com.finalcall.domain.member.UserBalanceRepository;
+import com.finalcall.domain.member.repository.UserBalanceRepository;
 
 import lombok.RequiredArgsConstructor;
 

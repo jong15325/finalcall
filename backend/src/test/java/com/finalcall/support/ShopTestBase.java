@@ -12,8 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemLocation;
-import com.finalcall.domain.member.User;
-import com.finalcall.domain.member.UserBalance;
+import com.finalcall.domain.member.entity.User;
+import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.settlement.SaleOrder;
 import com.finalcall.domain.settlement.SaleOrderSourceType;
 import com.finalcall.domain.shop.Shop;

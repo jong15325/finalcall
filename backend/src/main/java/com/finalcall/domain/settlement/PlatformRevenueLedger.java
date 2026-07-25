@@ -1,6 +1,6 @@
 package com.finalcall.domain.settlement;
 
-import com.finalcall.domain.common.BaseCreatedEntity;
+import com.finalcall.common.entity.BaseCreatedEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

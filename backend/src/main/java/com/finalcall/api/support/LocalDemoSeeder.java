@@ -26,8 +26,8 @@ import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.bid.BidService;
 import com.finalcall.domain.item.ItemTemplate;
 import com.finalcall.domain.item.ItemTemplateRepository;
-import com.finalcall.domain.member.User;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.entity.User;
+import com.finalcall.domain.member.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

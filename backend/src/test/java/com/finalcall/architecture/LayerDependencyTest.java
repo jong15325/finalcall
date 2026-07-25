@@ -63,7 +63,15 @@ class LayerDependencyTest {
         .that().resideInAPackage("com.finalcall.domain..")
         .should().dependOnClassesThat().resideInAnyPackage("com.finalcall.api..");
 
-    /** 4. 레이어(최상위 패키지) 간 순환 참조 금지. */
+    /**
+     * 4. 레이어(최상위 패키지) 간 순환 참조 금지.
+     *
+     * <p>패턴은 {@code com.finalcall.(*)..}(최상위 슬라이스)로 유지한다. feature-first 전환의
+     * 목표 형태는 {@code com.finalcall.domain.(*)..}(feature 단위 슬라이스)이나, 현재 레거시 도메인
+     * (auction↔bid, auction↔search↔shop↔settlement)이 엔티티 상호참조 등 <b>실제 런타임 결합</b>으로
+     * 순환을 이루므로 feature 단위 순환검사는 이 결합을 먼저 끊기 전까지 red가 된다(FC-121 범위 밖·로직 변경 필요).
+     * 따라서 feature 단위 전환은 레거시 순환 해소 이후로 미룬다. {@link SliceArchitectureTest}가 규칙 (b)로 재사용한다.
+     */
     @ArchTest
     static final ArchRule 레이어_순환참조_금지 = slices()
         .matching("com.finalcall.(*)..")

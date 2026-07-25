@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 
 /**
  * 아이템 인스턴스 리포지토리(item, FC-021). 상세·인벤토리 fetch join 은 {@link ItemInstanceRepositoryCustom}(QueryDSL).

@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 import com.finalcall.support.BidConcurrencyTestBase;
 
 /**

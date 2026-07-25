@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.finalcall.domain.member.User;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.entity.User;
+import com.finalcall.domain.member.repository.UserRepository;
 import com.finalcall.support.IntegrationTest;
 
 /**

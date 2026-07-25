@@ -13,7 +13,7 @@ import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.auction.AuctionResultType;
 import com.finalcall.domain.auction.AuctionStatus;
 import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 import com.finalcall.support.PurchaseTestBase;
 
 /**

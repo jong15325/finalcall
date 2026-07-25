@@ -2,9 +2,9 @@ package com.finalcall.domain.currency;
 
 import java.time.Instant;
 
+import com.finalcall.common.entity.BaseTimeEntity;
 import com.finalcall.domain.bid.Bid;
-import com.finalcall.domain.common.BaseTimeEntity;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

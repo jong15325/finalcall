@@ -13,7 +13,7 @@ import com.finalcall.domain.bid.QBid;
 import com.finalcall.domain.item.QItemInstance;
 import com.finalcall.domain.item.QItemTemplate;
 import com.finalcall.domain.item.QSkillDefinition;
-import com.finalcall.domain.member.QUser;
+import com.finalcall.domain.member.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;

@@ -2,7 +2,7 @@ package com.finalcall.domain.item;
 
 import java.time.Instant;
 
-import com.finalcall.domain.common.BaseCreatedEntity;
+import com.finalcall.common.entity.BaseCreatedEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

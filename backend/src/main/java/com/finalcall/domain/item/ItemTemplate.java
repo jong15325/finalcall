@@ -1,6 +1,6 @@
 package com.finalcall.domain.item;
 
-import com.finalcall.domain.common.BaseTimeEntity;
+import com.finalcall.common.entity.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

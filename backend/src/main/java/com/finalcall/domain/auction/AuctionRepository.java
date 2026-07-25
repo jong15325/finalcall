@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
-import com.finalcall.domain.member.User;
+import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.LockModeType;
 

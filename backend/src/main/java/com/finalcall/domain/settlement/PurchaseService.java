@@ -22,7 +22,7 @@ import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidRepository;
 import com.finalcall.domain.bid.BidSnapshot;
 import com.finalcall.domain.currency.MoneyHoldService;
-import com.finalcall.domain.member.UserBalanceRepository;
+import com.finalcall.domain.member.repository.UserBalanceRepository;
 
 import lombok.RequiredArgsConstructor;
 

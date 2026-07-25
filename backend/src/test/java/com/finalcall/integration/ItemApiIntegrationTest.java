@@ -14,8 +14,8 @@ import com.finalcall.domain.item.ItemInstanceRepository;
 import com.finalcall.domain.item.ItemLocation;
 import com.finalcall.domain.item.ItemTemplate;
 import com.finalcall.domain.item.ItemTemplateRepository;
-import com.finalcall.domain.member.User;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.entity.User;
+import com.finalcall.domain.member.repository.UserRepository;
 import com.finalcall.support.IntegrationTest;
 
 /**

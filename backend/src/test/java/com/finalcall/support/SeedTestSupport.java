@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemInstanceRepository;
 import com.finalcall.domain.item.TempStorageRepository;
-import com.finalcall.domain.member.User;
-import com.finalcall.domain.member.UserBalance;
-import com.finalcall.domain.member.UserBalanceRepository;
-import com.finalcall.domain.member.UserRepository;
+import com.finalcall.domain.member.entity.User;
+import com.finalcall.domain.member.entity.UserBalance;
+import com.finalcall.domain.member.repository.UserBalanceRepository;
+import com.finalcall.domain.member.repository.UserRepository;
 
 /**
  * 시드(V9__item_seed.sql) 보존 테스트 정리 유틸.
