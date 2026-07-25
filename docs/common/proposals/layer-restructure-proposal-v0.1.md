@@ -285,6 +285,15 @@ A는 "지적된 문제 방치", C는 "과설계"라 탈락. B가 균형점이다
 - **`api/support`(`LocalDemoDataService`·`LocalDemoSeeder`, 2)**: 여러 feature(user·item·auction·shop)에 걸쳐 데모 데이터를 시딩하는 dev 유틸이다. 한 feature에 넣으면 슬라이스 비순환(§10-b)을 깬다 → **`com.finalcall.support` 독립 패키지**(feature 아님)로 두고, ArchUnit 슬라이스 규칙의 예외로 명시하거나 슬라이스 대상에서 제외한다(FC-120 판단). local 프로파일 전용이므로 프로덕션 경로 영향 없음.
 - **커널 제자리**: `com.finalcall.common`(exception·response·logging·util·security·lock, 17) · `com.finalcall.infra`(config·redis·security, 19) · `domain/common`(`BaseEntity`·`BaseTimeEntity`·`BaseCreatedEntity`, 3). **`domain/common` BaseEntity 3종의 최종 위치는 FC-120이 확정**(권고: `com.finalcall.common.entity` 또는 `com.finalcall.domain.common` 유지 — 어느 feature도 소유하지 않는 공용 커널이므로 common 산하가 정합적).
 
+### 9.6.1 FC-120 커널·support 배치 확정 (DECIDED, 2026-07-25)
+
+FC-120은 규칙 위주 티켓이라 **이번 단계에서 .java를 이동하지 않는다**(실제 파일 이전은 FC-121). 아래는 최종 목표 배치의 확정이며, 이동 시점만 FC-121로 넘긴다.
+
+- **`common` → 제자리** `com.finalcall.common`. 신규 규칙 (c) `common_커널_격리`가 관장(common 밖 어떤 `com.finalcall`도 의존 금지).
+- **`infra` → 제자리** `com.finalcall.infra`. 신규 규칙 (c) `infra_커널_격리`가 관장(infra·common 외 의존 금지). §9.4의 횡단 config 잔류 원칙 유지.
+- **`domain/common` BaseEntity 3종 → 최종 목표 `com.finalcall.common.entity`**(커널 흡수로 확정). 이유: feature-first 전환으로 Phase 3(FC-122)에 `domain.` 접두가 소멸하면 `com.finalcall.domain.common`은 고아 세그먼트가 된다. 어느 feature도 소유하지 않는 공용 커널이므로 `common` 산하가 정합적이고, 이 위치면 규칙 (c) `common_커널_격리`에 자동 포섭된다(§10-c). **실제 이동은 FC-121**(BaseEntity를 상속하는 전 엔티티의 import 갱신 동반이라 대량 이전과 함께 처리). Phase 0~1 동안은 구 위치(`com.finalcall.domain.common`)에 두고 구 규칙이 관장한다.
+- **`support` → `com.finalcall.support` 독립 패키지**(feature 아님, FC-121 이동). **슬라이스 비순환 규칙 (b) 예외 처리는 불필요**로 확정: support는 여러 feature(user·item·auction·shop)의 서비스를 의존하는 leaf일 뿐이고 어떤 feature도 support를 역참조하지 않아 순환을 만들지 않는다(§10-b가 잡는 것은 상호 순환뿐). 규칙 (a)도 무영향 — `com.finalcall.support`는 `..controller..`/`..service..` 등 계층 세그먼트와 겹치지 않아 미매칭이다. 따라서 `ignoreDependency`/`namingSlices` 예외를 두지 않는다. (현행 `api/support` 위치도 규칙 (a)에 미매칭이라 Phase 0에서 무영향.)
+
 ## 10. 신규 ArchUnit 규칙 스펙 (FC-120 구현)
 
 FC-120은 아래 3규칙을 **신설**하고, 기존 `LayerDependencyTest`의 구 최상위-레이어 규칙과 **병존**시킨다(구 규칙 삭제는 FC-122). 병존 요건: 신·구 규칙 모두 빈 레이어/빈 결과를 허용(`withOptionalLayers(true)`·`allowEmptyShould(true)`)해야 이전 진행 중(일부만 이동된 상태)에도 항상 초록이다.
