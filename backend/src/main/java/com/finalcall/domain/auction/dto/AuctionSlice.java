@@ -1,6 +1,8 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.dto;
 
 import java.util.List;
+
+import com.finalcall.domain.auction.entity.AuctionWithBidCount;
 
 /**
  * 경매 목록 커서 조회 결과(auction, 도메인 반환 타입). api 계층에서 커서 응답 DTO 로 변환한다.

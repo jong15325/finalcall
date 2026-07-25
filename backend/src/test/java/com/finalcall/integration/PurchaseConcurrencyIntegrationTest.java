@@ -8,10 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.auction.AuctionErrorCode;
-import com.finalcall.domain.auction.AuctionResultType;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionResultType;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.support.PurchaseTestBase;

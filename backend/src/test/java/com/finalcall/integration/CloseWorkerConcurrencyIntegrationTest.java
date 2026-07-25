@@ -10,8 +10,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.Test;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;

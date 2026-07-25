@@ -5,7 +5,7 @@ import org.hibernate.type.SqlTypes;
 
 import com.finalcall.common.entity.BaseTimeEntity;
 import com.finalcall.common.util.Ulid;
-import com.finalcall.domain.auction.Auction;
+import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.Column;

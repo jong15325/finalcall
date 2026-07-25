@@ -1,6 +1,8 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.dto;
 
 import java.time.Instant;
+
+import com.finalcall.domain.auction.entity.AuctionStatus;
 
 /**
  * 경매 등록 결과(auction, 도메인 반환 타입). 계약 §3.1 응답 {@code { auctionPublicId, status, endAt }}의 원천이다.

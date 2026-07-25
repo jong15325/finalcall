@@ -18,8 +18,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.ItemTemplate;

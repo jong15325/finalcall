@@ -13,10 +13,10 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.auction.AuctionBidContext;
 import com.finalcall.domain.auction.AuctionErrorCode;
-import com.finalcall.domain.auction.AuctionRepository;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.AuctionBidContext;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.currency.service.MoneyHoldService;
 import com.finalcall.domain.member.repository.UserRepository;
 

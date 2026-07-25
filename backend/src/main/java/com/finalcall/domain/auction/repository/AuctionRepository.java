@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.repository;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,6 +13,12 @@ import org.springframework.data.repository.query.Param;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionBidContext;
+import com.finalcall.domain.auction.entity.AuctionCancelState;
+import com.finalcall.domain.auction.entity.AuctionCloseContext;
+import com.finalcall.domain.auction.entity.AuctionPurchaseContext;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.LockModeType;
@@ -43,10 +49,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 영향 행 수(1=취소 성공, 0=취소 불가)
      */
     @Modifying
-    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.CANCELLED "
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.entity.AuctionStatus.CANCELLED "
         + "WHERE a.id = :id "
-        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
-        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.status IN (com.finalcall.domain.auction.entity.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.entity.AuctionStatus.ACTIVE) "
         + "AND a.highestBidder IS NULL")
     int cancelIfCancellable(@Param("id") Long id);
 
@@ -65,7 +71,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 락을 획득한 경매의 값 스냅샷. 없으면 비어 있다(→ AUCTION_004)
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT new com.finalcall.domain.auction.AuctionBidContext("
+    @Query("SELECT new com.finalcall.domain.auction.entity.AuctionBidContext("
         + "a.id, a.seller.id, a.status, a.startAt, a.endAt, a.maxEndAt, "
         + "a.softCloseWindowSec, a.softCloseExtendSec, a.extensionCount, "
         + "a.startPrice, a.buyNowPrice, a.highestBidAmount, a.highestBidder.id) "
@@ -113,7 +119,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 최신 상태 스냅샷(입찰 존재 여부 판정 근거)
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT new com.finalcall.domain.auction.AuctionCancelState(a.status, a.highestBidder.id) "
+    @Query("SELECT new com.finalcall.domain.auction.entity.AuctionCancelState(a.status, a.highestBidder.id) "
         + "FROM Auction a WHERE a.id = :id")
     Optional<AuctionCancelState> findCancelStateForUpdate(@Param("id") Long id);
 
@@ -131,8 +137,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 마감 후보 경매 id 목록(end_at 오름차순)
      */
     @Query("SELECT a.id FROM Auction a "
-        + "WHERE a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
-        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "WHERE a.status IN (com.finalcall.domain.auction.entity.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.entity.AuctionStatus.ACTIVE) "
         + "AND a.endAt <= :now "
         + "ORDER BY a.endAt ASC")
     List<Long> findClosableIds(@Param("now") Instant now, Pageable pageable);
@@ -149,7 +155,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 락을 획득한 경매의 값 스냅샷. 없으면 비어 있다(이미 삭제됨 — 정상 skip)
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT new com.finalcall.domain.auction.AuctionCloseContext("
+    @Query("SELECT new com.finalcall.domain.auction.entity.AuctionCloseContext("
         + "a.id, a.seller.id, a.status, a.endAt, a.highestBidder.id, a.highestBidAmount, a.itemInstance.id) "
         + "FROM Auction a WHERE a.id = :id")
     Optional<AuctionCloseContext> findCloseContextForUpdate(@Param("id") Long id);
@@ -166,11 +172,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 영향 행 수(1=전이 성공, 0=이미 종결·연장)
      */
     @Modifying
-    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.SOLD, "
-        + "a.resultType = com.finalcall.domain.auction.AuctionResultType.BID "
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.entity.AuctionStatus.SOLD, "
+        + "a.resultType = com.finalcall.domain.auction.entity.AuctionResultType.BID "
         + "WHERE a.id = :id "
-        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
-        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.status IN (com.finalcall.domain.auction.entity.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.entity.AuctionStatus.ACTIVE) "
         + "AND a.endAt <= :now")
     int markSoldIfClosable(@Param("id") Long id, @Param("now") Instant now);
 
@@ -181,10 +187,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 영향 행 수(1=전이 성공, 0=이미 종결·연장)
      */
     @Modifying
-    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.UNSOLD "
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.entity.AuctionStatus.UNSOLD "
         + "WHERE a.id = :id "
-        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
-        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.status IN (com.finalcall.domain.auction.entity.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.entity.AuctionStatus.ACTIVE) "
         + "AND a.endAt <= :now")
     int markUnsoldIfClosable(@Param("id") Long id, @Param("now") Instant now);
 
@@ -200,7 +206,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 락을 획득한 경매의 값 스냅샷. 없으면 비어 있다(→ AUCTION_004)
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT new com.finalcall.domain.auction.AuctionPurchaseContext("
+    @Query("SELECT new com.finalcall.domain.auction.entity.AuctionPurchaseContext("
         + "a.id, a.seller.id, a.status, a.startAt, a.endAt, a.buyNowPrice, a.itemInstance.id, "
         + "a.highestBidder.id, a.highestBidAmount) "
         + "FROM Auction a WHERE a.publicId = :publicId")
@@ -219,11 +225,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
      * @return 영향 행 수(1=전이 성공, 0=이미 종결·경합 패배)
      */
     @Modifying
-    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.AuctionStatus.SOLD, "
-        + "a.resultType = com.finalcall.domain.auction.AuctionResultType.BUYNOW "
+    @Query("UPDATE Auction a SET a.status = com.finalcall.domain.auction.entity.AuctionStatus.SOLD, "
+        + "a.resultType = com.finalcall.domain.auction.entity.AuctionResultType.BUYNOW "
         + "WHERE a.id = :id "
-        + "AND a.status IN (com.finalcall.domain.auction.AuctionStatus.SCHEDULED, "
-        + "com.finalcall.domain.auction.AuctionStatus.ACTIVE) "
+        + "AND a.status IN (com.finalcall.domain.auction.entity.AuctionStatus.SCHEDULED, "
+        + "com.finalcall.domain.auction.entity.AuctionStatus.ACTIVE) "
         + "AND a.endAt > :now")
     int markSoldBuyNowIfLive(@Param("id") Long id, @Param("now") Instant now);
 

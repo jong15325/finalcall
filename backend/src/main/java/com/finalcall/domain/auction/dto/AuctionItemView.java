@@ -1,8 +1,8 @@
-package com.finalcall.api.auction;
+package com.finalcall.domain.auction.dto;
 
 import java.time.Instant;
 
-import com.finalcall.domain.auction.Auction;
+import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemTemplate;
 

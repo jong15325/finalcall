@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.util.NicknameMasker;
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionRepository;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemTemplate;
 import com.finalcall.domain.item.entity.SkillDefinition;

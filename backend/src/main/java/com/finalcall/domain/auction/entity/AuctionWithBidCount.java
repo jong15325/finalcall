@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.entity;
 
 /**
  * 경매 + 입찰 수 프로젝션 캐리어(auction, bid-domain-spec §7.3).

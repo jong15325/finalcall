@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.entity;
 
 /**
  * 경매 목록 검색 조건(auction, 계약 §3 공통 목록 필터 + 정렬). 전부 optional 이며 null 이면 해당 필터를 적용하지 않는다.

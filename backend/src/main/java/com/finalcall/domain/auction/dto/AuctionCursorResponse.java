@@ -1,9 +1,7 @@
-package com.finalcall.api.auction;
+package com.finalcall.domain.auction.dto;
 
 import java.time.Instant;
 import java.util.List;
-
-import com.finalcall.domain.auction.AuctionSlice;
 
 import lombok.Builder;
 

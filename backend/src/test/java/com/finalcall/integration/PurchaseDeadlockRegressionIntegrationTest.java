@@ -11,7 +11,7 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.Auction;
+import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;

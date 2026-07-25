@@ -9,9 +9,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionResultType;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionResultType;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.bid.BidStatus;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;

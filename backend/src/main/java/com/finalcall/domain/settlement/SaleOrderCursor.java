@@ -10,7 +10,7 @@ import com.finalcall.common.exception.CommonErrorCode;
 /**
  * 거래내역 커서 코덱(settlement, 계약 §1.3 cursor 규약 · purchase-spec §5.1). 안정 정렬 키 {@code (created_at, id)}
  * 를 opaque 문자열로 인코딩한다 — id 를 최종 tiebreaker 로 둬 동일 생성 시각에서도 결정적 순서를 보장한다(keyset
- * 페이지네이션, {@link com.finalcall.domain.auction.AuctionCursor} 선례). 정렬은 {@code created_at desc} 고정.
+ * 페이지네이션, {@link com.finalcall.domain.auction.entity.AuctionCursor} 선례). 정렬은 {@code created_at desc} 고정.
  *
  * @param createdAt 커서 경계 created_at(null=첫 페이지)
  * @param id        커서 경계 sale_order.id(null=첫 페이지)

@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.entity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

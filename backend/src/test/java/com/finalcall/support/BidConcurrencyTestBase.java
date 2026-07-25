@@ -21,9 +21,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionRepository;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.bid.BidRepository;
 import com.finalcall.domain.bid.BidService;

@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,6 +14,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionCursor;
+import com.finalcall.domain.auction.entity.AuctionSearchCondition;
+import com.finalcall.domain.auction.entity.AuctionSort;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.entity.AuctionWithBidCount;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.ItemTemplate;

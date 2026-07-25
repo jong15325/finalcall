@@ -1,6 +1,6 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.repository;
 
-import static com.finalcall.domain.auction.QAuction.auction;
+import static com.finalcall.domain.auction.entity.QAuction.auction;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -9,6 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionCursor;
+import com.finalcall.domain.auction.entity.AuctionSearchCondition;
+import com.finalcall.domain.auction.entity.AuctionSort;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.entity.AuctionWithBidCount;
 import com.finalcall.domain.bid.QBid;
 import com.finalcall.domain.item.entity.QItemInstance;
 import com.finalcall.domain.item.entity.QItemTemplate;

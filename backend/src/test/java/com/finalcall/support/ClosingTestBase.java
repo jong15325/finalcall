@@ -20,9 +20,9 @@ import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionRepository;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.bid.BidRepository;
 import com.finalcall.domain.bid.BidService;
@@ -152,7 +152,7 @@ public abstract class ClosingTestBase extends IntegrationTest {
         // I-A: SOLD ⟺ result_type=BID ∧ highest_bidder NOT NULL ∧ sale_order 1건.
         assertThat(auction.getStatus()).isEqualTo(AuctionStatus.SOLD);
         assertThat(auction.getResultType())
-            .isEqualTo(com.finalcall.domain.auction.AuctionResultType.BID);
+            .isEqualTo(com.finalcall.domain.auction.entity.AuctionResultType.BID);
         assertThat(auction.getHighestBidder().getId()).isEqualTo(winner.getId());
 
         List<com.finalcall.domain.settlement.SaleOrder> orders = saleOrders(auctionId);

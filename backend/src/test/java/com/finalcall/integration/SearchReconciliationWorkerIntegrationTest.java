@@ -20,8 +20,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.finalcall.domain.auction.AuctionRepository;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.search.ListingDocument;
 import com.finalcall.domain.search.ListingIndexer;
 import com.finalcall.domain.search.ListingSearchProperties;

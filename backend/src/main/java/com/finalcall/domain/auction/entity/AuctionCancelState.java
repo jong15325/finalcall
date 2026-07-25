@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.entity;
 
 /**
  * 취소 CAS 실패(0행) 원인 판정용 <b>최신 상태 스냅샷</b>(bid-domain-spec §4.6).

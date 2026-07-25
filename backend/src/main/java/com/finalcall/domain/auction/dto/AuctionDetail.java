@@ -1,4 +1,6 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.dto;
+
+import com.finalcall.domain.auction.entity.Auction;
 
 /**
  * 경매 상세 조회 결과(auction, 계약 §3.3 {@code AuctionDetail}). 엔티티만으로는 표현할 수 없는 <b>파생값</b>을

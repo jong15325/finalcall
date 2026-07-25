@@ -21,9 +21,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.AuctionRegisterCommand;
-import com.finalcall.domain.auction.AuctionRepository;
-import com.finalcall.domain.auction.AuctionService;
+import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
+import com.finalcall.domain.auction.repository.AuctionRepository;
+import com.finalcall.domain.auction.service.AuctionService;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.ItemTemplate;

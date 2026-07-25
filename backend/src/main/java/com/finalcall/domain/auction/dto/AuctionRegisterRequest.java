@@ -1,8 +1,6 @@
-package com.finalcall.api.auction;
+package com.finalcall.domain.auction.dto;
 
 import java.time.Instant;
-
-import com.finalcall.domain.auction.AuctionRegisterCommand;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

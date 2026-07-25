@@ -1,4 +1,4 @@
-package com.finalcall.api.auction;
+package com.finalcall.domain.auction.controller;
 
 import java.time.Instant;
 
@@ -15,10 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.auction.AuctionSearchCondition;
-import com.finalcall.domain.auction.AuctionService;
-import com.finalcall.domain.auction.AuctionSort;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.dto.AuctionCancelResponse;
+import com.finalcall.domain.auction.dto.AuctionCursorResponse;
+import com.finalcall.domain.auction.dto.AuctionDetailResponse;
+import com.finalcall.domain.auction.dto.AuctionRegisterRequest;
+import com.finalcall.domain.auction.dto.AuctionRegisterResponse;
+import com.finalcall.domain.auction.entity.AuctionSearchCondition;
+import com.finalcall.domain.auction.entity.AuctionSort;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.service.AuctionService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
  * <p>목록·상세는 상대 마스킹(buyer·seller nickname)과 item 표시 블록(template·skill live join)을 노출하므로
  * to-one fetch join 으로 N+1 을 제거한다(OSIV off — 표현 계층 lazy 접근 없음). 목록은 keyset cursor 로 안정
  * 페이지네이션한다 — {@code (created_at, id)} tiebreaker 로 동일 생성 시각에서도 결정적 순서를 보장한다
- * ({@link com.finalcall.domain.auction.AuctionRepositoryImpl} 선례).
+ * ({@link com.finalcall.domain.auction.repository.AuctionRepositoryImpl} 선례).
  */
 @RequiredArgsConstructor
 public class SaleOrderRepositoryImpl implements SaleOrderRepositoryCustom {

@@ -1,4 +1,4 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.service;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,6 +16,19 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.auction.AuctionErrorCode;
+import com.finalcall.domain.auction.dto.AuctionDetail;
+import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
+import com.finalcall.domain.auction.dto.AuctionRegisterResult;
+import com.finalcall.domain.auction.dto.AuctionSlice;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionCancelState;
+import com.finalcall.domain.auction.entity.AuctionCursor;
+import com.finalcall.domain.auction.entity.AuctionSearchCondition;
+import com.finalcall.domain.auction.entity.AuctionSort;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.entity.AuctionWithBidCount;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.bid.BidIncrementProperties;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;

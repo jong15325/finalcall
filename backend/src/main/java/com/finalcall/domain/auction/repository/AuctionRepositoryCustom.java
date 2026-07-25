@@ -1,9 +1,15 @@
-package com.finalcall.domain.auction;
+package com.finalcall.domain.auction.repository;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionCursor;
+import com.finalcall.domain.auction.entity.AuctionSearchCondition;
+import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.auction.entity.AuctionWithBidCount;
 
 /**
  * 경매 커스텀 쿼리 계약(auction, QueryDSL 구현은 {@link AuctionRepositoryImpl}). 목록/상세 응답은 item 표시 블록

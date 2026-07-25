@@ -13,8 +13,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.bid.Bid;
 import com.finalcall.domain.currency.entity.MoneyHold;
 import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;

@@ -7,7 +7,7 @@ import java.util.TreeSet;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.finalcall.domain.auction.AuctionRepository;
+import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.shop.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;

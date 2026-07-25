@@ -1,12 +1,11 @@
-package com.finalcall.api.auction;
+package com.finalcall.domain.auction.dto;
 
 import java.time.Instant;
 
 import com.finalcall.common.util.NicknameMasker;
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionDetail;
-import com.finalcall.domain.auction.AuctionResultType;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionResultType;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 
 import lombok.Builder;
 

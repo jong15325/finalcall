@@ -13,8 +13,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.auction.AuctionStatus;
+import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.bid.Bid;
 import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidRepository;
