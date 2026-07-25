@@ -1,4 +1,4 @@
-package com.finalcall.api.auth;
+package com.finalcall.domain.auth.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -9,8 +9,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.auth.AuthService;
-import com.finalcall.domain.auth.TokenBundle;
+import com.finalcall.domain.auth.dto.LoginRequest;
+import com.finalcall.domain.auth.dto.LoginResponse;
+import com.finalcall.domain.auth.dto.LogoutRequest;
+import com.finalcall.domain.auth.dto.RefreshRequest;
+import com.finalcall.domain.auth.dto.RefreshResponse;
+import com.finalcall.domain.auth.dto.SignupRequest;
+import com.finalcall.domain.auth.dto.SignupResponse;
+import com.finalcall.domain.auth.dto.TokenBundle;
+import com.finalcall.domain.auth.service.AuthService;
 import com.finalcall.domain.member.entity.User;
 
 import jakarta.validation.Valid;

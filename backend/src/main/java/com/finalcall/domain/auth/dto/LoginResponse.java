@@ -1,8 +1,6 @@
-package com.finalcall.api.auth;
+package com.finalcall.domain.auth.dto;
 
 import java.time.Instant;
-
-import com.finalcall.domain.auth.TokenBundle;
 
 import lombok.Builder;
 

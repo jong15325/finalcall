@@ -1,4 +1,4 @@
-package com.finalcall.api.auth;
+package com.finalcall.domain.auth.dto;
 
 import com.finalcall.domain.member.entity.User;
 

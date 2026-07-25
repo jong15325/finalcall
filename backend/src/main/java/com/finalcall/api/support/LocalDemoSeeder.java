@@ -21,7 +21,7 @@ import com.finalcall.api.support.LocalDemoDataService.ListedSeed;
 import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
 import com.finalcall.domain.auction.dto.AuctionRegisterResult;
 import com.finalcall.domain.auction.service.AuctionService;
-import com.finalcall.domain.auth.AuthService;
+import com.finalcall.domain.auth.service.AuthService;
 import com.finalcall.domain.bid.dto.BidPlaceCommand;
 import com.finalcall.domain.bid.service.BidService;
 import com.finalcall.domain.item.entity.ItemTemplate;

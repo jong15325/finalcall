@@ -1,4 +1,4 @@
-package com.finalcall.domain.auth;
+package com.finalcall.domain.auth.service;
 
 import java.util.Locale;
 
@@ -12,6 +12,8 @@ import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.auth.AuthErrorCode;
+import com.finalcall.domain.auth.dto.TokenBundle;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.member.repository.UserBalanceRepository;

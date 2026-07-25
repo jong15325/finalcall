@@ -1,4 +1,4 @@
-package com.finalcall.domain.auth;
+package com.finalcall.domain.auth.dto;
 
 import java.time.Instant;
 
