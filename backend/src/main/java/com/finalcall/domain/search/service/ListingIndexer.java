@@ -15,8 +15,8 @@ import com.finalcall.domain.item.entity.SkillDefinition;
 import com.finalcall.domain.search.ListingSearchProperties;
 import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingType;
-import com.finalcall.domain.shop.Shop;
-import com.finalcall.domain.shop.ShopRepository;
+import com.finalcall.domain.shop.entity.Shop;
+import com.finalcall.domain.shop.repository.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.RequiredArgsConstructor;

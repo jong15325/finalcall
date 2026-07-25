@@ -26,8 +26,8 @@ import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
-import com.finalcall.domain.shop.Shop;
-import com.finalcall.domain.shop.ShopStatus;
+import com.finalcall.domain.shop.entity.Shop;
+import com.finalcall.domain.shop.entity.ShopStatus;
 import com.finalcall.support.IntegrationTest;
 
 import jakarta.persistence.EntityManager;

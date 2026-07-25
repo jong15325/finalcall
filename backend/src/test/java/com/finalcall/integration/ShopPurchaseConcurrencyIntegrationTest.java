@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;
-import com.finalcall.domain.shop.Shop;
-import com.finalcall.domain.shop.ShopStatus;
+import com.finalcall.domain.shop.entity.Shop;
+import com.finalcall.domain.shop.entity.ShopStatus;
 import com.finalcall.support.ShopTestBase;
 
 /**

@@ -16,14 +16,14 @@ import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
-import com.finalcall.domain.shop.Shop;
-import com.finalcall.domain.shop.ShopExpiryService;
-import com.finalcall.domain.shop.ShopExpiryWorker;
-import com.finalcall.domain.shop.ShopPurchaseResult;
-import com.finalcall.domain.shop.ShopPurchaseService;
-import com.finalcall.domain.shop.ShopRepository;
-import com.finalcall.domain.shop.ShopService;
-import com.finalcall.domain.shop.ShopStatus;
+import com.finalcall.domain.shop.dto.ShopPurchaseResult;
+import com.finalcall.domain.shop.entity.Shop;
+import com.finalcall.domain.shop.entity.ShopStatus;
+import com.finalcall.domain.shop.repository.ShopRepository;
+import com.finalcall.domain.shop.service.ShopExpiryService;
+import com.finalcall.domain.shop.service.ShopExpiryWorker;
+import com.finalcall.domain.shop.service.ShopPurchaseService;
+import com.finalcall.domain.shop.service.ShopService;
 
 /**
  * 고정가 통합 테스트 공통 기반(FC-093) — {@link ClosingTestBase} 픽스처/정리/총량 단언을 승계하고 고정가 전용

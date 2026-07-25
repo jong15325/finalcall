@@ -23,7 +23,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finalcall.api.shop.ShopItemView;
 import com.finalcall.api.support.LocalDemoDataService;
 import com.finalcall.api.support.LocalDemoDataService.ListedSeed;
 import com.finalcall.domain.item.entity.ItemInstance;
@@ -34,8 +33,9 @@ import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
-import com.finalcall.domain.shop.Shop;
-import com.finalcall.domain.shop.ShopRepository;
+import com.finalcall.domain.shop.dto.ShopItemView;
+import com.finalcall.domain.shop.entity.Shop;
+import com.finalcall.domain.shop.repository.ShopRepository;
 import com.finalcall.support.IntegrationTest;
 
 import jakarta.persistence.EntityManager;

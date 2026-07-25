@@ -28,7 +28,7 @@ import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingIndexer;
 import com.finalcall.domain.search.service.SearchReconciliationWorker;
-import com.finalcall.domain.shop.ShopRepository;
+import com.finalcall.domain.shop.repository.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;

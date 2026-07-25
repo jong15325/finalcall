@@ -19,9 +19,9 @@ import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.ItemTemplate;
 import com.finalcall.domain.member.entity.User;
-import com.finalcall.domain.shop.Shop;
-import com.finalcall.domain.shop.ShopRepository;
-import com.finalcall.domain.shop.ShopStatus;
+import com.finalcall.domain.shop.entity.Shop;
+import com.finalcall.domain.shop.entity.ShopStatus;
+import com.finalcall.domain.shop.repository.ShopRepository;
 import com.finalcall.infra.config.JpaConfig;
 import com.finalcall.support.TestcontainersConfiguration;
 
