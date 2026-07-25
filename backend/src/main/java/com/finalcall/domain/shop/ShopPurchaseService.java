@@ -14,12 +14,12 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
-import com.finalcall.domain.settlement.FeeCalculator;
 import com.finalcall.domain.settlement.FeePolicyProperties;
-import com.finalcall.domain.settlement.SaleOrder;
-import com.finalcall.domain.settlement.SaleOrderSourceType;
 import com.finalcall.domain.settlement.SettlementErrorCode;
-import com.finalcall.domain.settlement.SettlementRecorder;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
+import com.finalcall.domain.settlement.service.FeeCalculator;
+import com.finalcall.domain.settlement.service.SettlementRecorder;
 
 import lombok.RequiredArgsConstructor;
 

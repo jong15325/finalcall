@@ -1,7 +1,12 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.repository;
 
 import java.util.List;
 import java.util.Optional;
+
+import com.finalcall.domain.settlement.entity.OrderRole;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderCursor;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 
 /**
  * 거래내역 커스텀 쿼리 계약(settlement, QueryDSL 구현은 {@link SaleOrderRepositoryImpl}). 목록·상세 응답은 상대
@@ -28,7 +33,7 @@ public interface SaleOrderRepositoryCustom {
     /**
      * 주문 상세(계약 §4.3 {@code GET /orders/{id}}) — public_id 로 조회한다. 연관(buyer·seller·item·template·skill)을
      * fetch join 해 마스킹·item 블록·역할 노출에 필요한 값을 한 번에 싣는다. IDOR 검증(당사자만)은 호출 측이
-     * 요청자 PK 로 수행한다({@link OrderService}).
+     * 요청자 PK 로 수행한다({@link com.finalcall.domain.settlement.service.OrderService}).
      */
     Optional<SaleOrder> findDetailByPublicId(String publicId);
 }

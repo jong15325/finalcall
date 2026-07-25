@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.service;
 
 import java.util.List;
 
@@ -10,6 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.settlement.OrderErrorCode;
+import com.finalcall.domain.settlement.dto.OrderSlice;
+import com.finalcall.domain.settlement.dto.OrderView;
+import com.finalcall.domain.settlement.entity.OrderRole;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderCursor;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
+import com.finalcall.domain.settlement.repository.SaleOrderRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,8 +27,9 @@ import lombok.RequiredArgsConstructor;
  *
  * <h2>인가(IDOR — purchase-spec §5.1)</h2>
  * 주체는 SecurityContext 기준이다(B-009). 목록은 쿼리를 {@code buyer_id = me OR seller_id = me} 로 <b>스코프</b>해
- * 제3자 주문을 애초에 노출하지 않는다({@link SaleOrderRepositoryCustom#findByCursor}). 상세는 public_id 로 조회한 뒤
- * <b>요청자 ∈ {buyer, seller}</b> 를 검증한다 — 아니면 {@code ORDER_002}(403), 미존재면 {@code ORDER_001}(404).
+ * 제3자 주문을 애초에 노출하지 않는다({@link com.finalcall.domain.settlement.repository.SaleOrderRepositoryCustom#findByCursor}).
+ * 상세는 public_id 로 조회한 뒤 <b>요청자 ∈ {buyer, seller}</b> 를 검증한다 — 아니면 {@code ORDER_002}(403),
+ * 미존재면 {@code ORDER_001}(404).
  *
  * <p>클래스 레벨 {@code @Transactional(readOnly = true)}(CLAUDE.md §5) — 조회만 하므로 쓰기 오버라이드가 없다.
  */

@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.dto;
 
 /**
  * 즉시구매 성립 결과(settlement, purchase-spec §2) — 표현 계층이 201 응답 {@code { orderPublicId, finalPrice }}

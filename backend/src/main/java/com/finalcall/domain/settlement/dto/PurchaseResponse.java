@@ -1,6 +1,4 @@
-package com.finalcall.api.purchase;
-
-import com.finalcall.domain.settlement.PurchaseResult;
+package com.finalcall.domain.settlement.dto;
 
 import lombok.Builder;
 

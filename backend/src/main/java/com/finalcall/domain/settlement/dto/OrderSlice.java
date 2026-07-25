@@ -1,6 +1,8 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.dto;
 
 import java.util.List;
+
+import com.finalcall.domain.settlement.entity.SaleOrder;
 
 /**
  * 거래내역 커서 페이지 결과(settlement) — 내용 + 다음 커서 + hasNext + 요청자 PK. 요청자 관점({@code myRole})은

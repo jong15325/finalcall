@@ -24,7 +24,7 @@ import com.finalcall.domain.search.dto.ListingSearchResult;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingSearchService;
-import com.finalcall.domain.settlement.FeeCalculator;
+import com.finalcall.domain.settlement.service.FeeCalculator;
 
 import lombok.RequiredArgsConstructor;
 

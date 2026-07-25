@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,6 +7,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import com.finalcall.domain.settlement.FeePolicyProperties;
 
 /**
  * 수수료 계산기 단위 테스트(settlement, fee-policy-spec v1.0) — 순수 함수라 컨텍스트 없이 검증한다.

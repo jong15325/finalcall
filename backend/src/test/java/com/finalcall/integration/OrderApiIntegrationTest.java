@@ -20,8 +20,8 @@ import com.finalcall.domain.item.entity.ItemTemplate;
 import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
-import com.finalcall.domain.settlement.SaleOrder;
-import com.finalcall.domain.settlement.SaleOrderSourceType;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 import com.finalcall.support.IntegrationTest;
 
 import jakarta.persistence.EntityManager;

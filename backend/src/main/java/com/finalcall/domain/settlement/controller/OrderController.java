@@ -1,4 +1,4 @@
-package com.finalcall.api.order;
+package com.finalcall.domain.settlement.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -6,9 +6,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.settlement.OrderRole;
-import com.finalcall.domain.settlement.OrderService;
-import com.finalcall.domain.settlement.SaleOrderSourceType;
+import com.finalcall.domain.settlement.dto.OrderCursorResponse;
+import com.finalcall.domain.settlement.dto.OrderDetailResponse;
+import com.finalcall.domain.settlement.entity.OrderRole;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
+import com.finalcall.domain.settlement.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
 

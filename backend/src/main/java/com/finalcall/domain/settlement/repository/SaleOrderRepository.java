@@ -1,9 +1,10 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.domain.settlement.entity.SaleOrder;
 
 /**
  * 판매 성립 거래 리포지토리(settlement).

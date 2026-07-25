@@ -40,10 +40,10 @@ import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.member.repository.UserRepository;
-import com.finalcall.domain.settlement.CloseService;
-import com.finalcall.domain.settlement.CloseWorker;
-import com.finalcall.domain.settlement.PlatformRevenueLedgerRepository;
-import com.finalcall.domain.settlement.SaleOrderRepository;
+import com.finalcall.domain.settlement.repository.PlatformRevenueLedgerRepository;
+import com.finalcall.domain.settlement.repository.SaleOrderRepository;
+import com.finalcall.domain.settlement.service.CloseService;
+import com.finalcall.domain.settlement.service.CloseWorker;
 
 import jakarta.persistence.EntityManager;
 
@@ -155,9 +155,9 @@ public abstract class ClosingTestBase extends IntegrationTest {
             .isEqualTo(com.finalcall.domain.auction.entity.AuctionResultType.BID);
         assertThat(auction.getHighestBidder().getId()).isEqualTo(winner.getId());
 
-        List<com.finalcall.domain.settlement.SaleOrder> orders = saleOrders(auctionId);
+        List<com.finalcall.domain.settlement.entity.SaleOrder> orders = saleOrders(auctionId);
         assertThat(orders).hasSize(1);
-        com.finalcall.domain.settlement.SaleOrder order = orders.get(0);
+        com.finalcall.domain.settlement.entity.SaleOrder order = orders.get(0);
         // I-B: final = settle + fee, final = 낙찰가.
         assertThat(order.getFinalPrice()).isEqualTo(price);
         assertThat(order.getSettleAmount() + order.getFeeAmount()).isEqualTo(price);
@@ -318,12 +318,12 @@ public abstract class ClosingTestBase extends IntegrationTest {
 
     // ---------------- DB 상태 조회(전부 1차 캐시 우회) ----------------
 
-    protected List<com.finalcall.domain.settlement.SaleOrder> saleOrders(Long auctionId) {
+    protected List<com.finalcall.domain.settlement.entity.SaleOrder> saleOrders(Long auctionId) {
         em.clear();
         return em.createQuery(
             "SELECT o FROM SaleOrder o WHERE o.sourceType = :type AND o.sourceId = :id",
-            com.finalcall.domain.settlement.SaleOrder.class)
-            .setParameter("type", com.finalcall.domain.settlement.SaleOrderSourceType.AUCTION)
+            com.finalcall.domain.settlement.entity.SaleOrder.class)
+            .setParameter("type", com.finalcall.domain.settlement.entity.SaleOrderSourceType.AUCTION)
             .setParameter("id", auctionId)
             .getResultList();
     }

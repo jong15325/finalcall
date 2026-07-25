@@ -1,6 +1,8 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.service;
 
 import org.springframework.stereotype.Component;
+
+import com.finalcall.domain.settlement.FeePolicyProperties;
 
 import lombok.RequiredArgsConstructor;
 

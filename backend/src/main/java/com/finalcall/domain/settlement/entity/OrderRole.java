@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.entity;
 
 /**
  * 요청자의 주문 관점(settlement, purchase-spec §5.2) — 같은 sale_order 라도 요청자가 구매자냐 판매자냐에 따라

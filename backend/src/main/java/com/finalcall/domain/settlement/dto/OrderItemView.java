@@ -1,4 +1,4 @@
-package com.finalcall.api.order;
+package com.finalcall.domain.settlement.dto;
 
 import java.time.Instant;
 

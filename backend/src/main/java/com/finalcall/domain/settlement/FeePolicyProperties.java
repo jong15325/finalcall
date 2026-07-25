@@ -23,8 +23,8 @@ import jakarta.validation.constraints.PositiveOrZero;
  * <p>{@code version} 은 정산 시 {@code sale_order.fee_policy_version}·{@code platform_revenue_ledger.fee_policy_version}
  * 에 스탬프되어, 정산 후 환불 비례 크레딧(fee-policy-spec §5)이 "당시 정책" 을 재현할 근거가 된다.
  *
- * <p>계산 순서·클램프는 {@link FeeCalculator} 가 단독 책임진다(fee-policy-spec §7 — 계산기 내부에서 cap·최소 적용).
- * 이 클래스는 파라미터 보유·정렬만 담당한다.
+ * <p>계산 순서·클램프는 {@link com.finalcall.domain.settlement.service.FeeCalculator} 가 단독 책임진다
+ * (fee-policy-spec §7 — 계산기 내부에서 cap·최소 적용). 이 클래스는 파라미터 보유·정렬만 담당한다.
  */
 @Validated
 @ConfigurationProperties(prefix = "fee.policy")

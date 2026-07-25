@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

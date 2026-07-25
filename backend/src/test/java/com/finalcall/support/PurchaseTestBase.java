@@ -17,9 +17,9 @@ import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
-import com.finalcall.domain.settlement.PurchaseResult;
-import com.finalcall.domain.settlement.PurchaseService;
-import com.finalcall.domain.settlement.SaleOrder;
+import com.finalcall.domain.settlement.dto.PurchaseResult;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.service.PurchaseService;
 
 /**
  * 즉시구매 통합 테스트 공통 기반(FC-089) — {@link ClosingTestBase} 픽스처/불변식 단언을 승계하고 즉시구매 전용

@@ -1,6 +1,8 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.finalcall.domain.settlement.entity.PlatformRevenueLedger;
 
 /**
  * 사업자 수익 원장 리포지토리(settlement) — append-only.

@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.service;
 
 import java.time.Instant;
 
@@ -13,6 +13,11 @@ import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.repository.ItemOwnershipHistoryRepository;
 import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.member.repository.UserRepository;
+import com.finalcall.domain.settlement.entity.PlatformRevenueLedger;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
+import com.finalcall.domain.settlement.repository.PlatformRevenueLedgerRepository;
+import com.finalcall.domain.settlement.repository.SaleOrderRepository;
 
 import lombok.RequiredArgsConstructor;
 

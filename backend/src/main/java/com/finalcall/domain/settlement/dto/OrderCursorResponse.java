@@ -1,8 +1,6 @@
-package com.finalcall.api.order;
+package com.finalcall.domain.settlement.dto;
 
 import java.util.List;
-
-import com.finalcall.domain.settlement.OrderSlice;
 
 import lombok.Builder;
 

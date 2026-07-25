@@ -1,14 +1,13 @@
-package com.finalcall.api.order;
+package com.finalcall.domain.settlement.dto;
 
 import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.finalcall.common.util.NicknameMasker;
-import com.finalcall.domain.settlement.OrderRole;
-import com.finalcall.domain.settlement.OrderView;
-import com.finalcall.domain.settlement.SaleOrder;
-import com.finalcall.domain.settlement.SaleOrderSourceType;
-import com.finalcall.domain.settlement.SaleOrderStatus;
+import com.finalcall.domain.settlement.entity.OrderRole;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
+import com.finalcall.domain.settlement.entity.SaleOrderStatus;
 
 import lombok.Builder;
 

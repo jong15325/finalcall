@@ -1,4 +1,6 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.dto;
+
+import com.finalcall.domain.settlement.entity.SaleOrder;
 
 /**
  * 주문 상세 조회 결과(settlement) — sale_order 와 요청자 PK 를 함께 싣는다. 표현 계층이 {@code viewerId} 로
