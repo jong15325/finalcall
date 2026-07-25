@@ -10,8 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemLocation;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.settlement.SaleOrder;

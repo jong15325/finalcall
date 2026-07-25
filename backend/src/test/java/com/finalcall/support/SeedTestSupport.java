@@ -5,9 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemInstanceRepository;
-import com.finalcall.domain.item.TempStorageRepository;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.repository.TempStorageRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.member.repository.UserBalanceRepository;

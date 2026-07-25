@@ -14,10 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemLocation;
-import com.finalcall.domain.item.ItemTemplate;
-import com.finalcall.domain.item.ItemTemplateRepository;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemLocation;
+import com.finalcall.domain.item.entity.ItemTemplate;
+import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.settlement.SaleOrder;

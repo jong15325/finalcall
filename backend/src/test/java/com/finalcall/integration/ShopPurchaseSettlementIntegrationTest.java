@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.item.ItemInstance;
+import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.shop.Shop;
 import com.finalcall.domain.shop.ShopErrorCode;

@@ -24,8 +24,8 @@ import com.finalcall.domain.auction.AuctionService;
 import com.finalcall.domain.auth.AuthService;
 import com.finalcall.domain.bid.BidPlaceCommand;
 import com.finalcall.domain.bid.BidService;
-import com.finalcall.domain.item.ItemTemplate;
-import com.finalcall.domain.item.ItemTemplateRepository;
+import com.finalcall.domain.item.entity.ItemTemplate;
+import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
 

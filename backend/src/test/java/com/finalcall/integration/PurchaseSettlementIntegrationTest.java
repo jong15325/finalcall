@@ -10,7 +10,7 @@ import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidStatus;
-import com.finalcall.domain.item.ItemInstance;
+import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.support.PurchaseTestBase;
 

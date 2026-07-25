@@ -14,10 +14,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemInstanceRepository;
-import com.finalcall.domain.item.ItemLocation;
-import com.finalcall.domain.item.ItemTemplate;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemLocation;
+import com.finalcall.domain.item.entity.ItemTemplate;
+import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.infra.config.JpaConfig;
 import com.finalcall.support.TestcontainersConfiguration;

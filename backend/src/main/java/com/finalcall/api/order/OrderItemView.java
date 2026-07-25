@@ -2,8 +2,8 @@ package com.finalcall.api.order;
 
 import java.time.Instant;
 
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemTemplate;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemTemplate;
 
 import lombok.Builder;
 

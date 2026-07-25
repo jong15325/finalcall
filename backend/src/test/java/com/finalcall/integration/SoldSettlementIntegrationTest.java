@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.item.ItemInstance;
+import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.support.ClosingTestBase;
 

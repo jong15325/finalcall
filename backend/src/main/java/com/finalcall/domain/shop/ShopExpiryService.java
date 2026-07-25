@@ -8,9 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.item.InventoryService;
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemInstanceRepository;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.service.InventoryService;
 
 import lombok.RequiredArgsConstructor;
 

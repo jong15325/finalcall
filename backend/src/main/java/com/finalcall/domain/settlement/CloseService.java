@@ -15,9 +15,9 @@ import com.finalcall.domain.bid.BidRepository;
 import com.finalcall.domain.bid.BidSnapshot;
 import com.finalcall.domain.currency.repository.MoneyHoldRepository;
 import com.finalcall.domain.currency.service.MoneyHoldService;
-import com.finalcall.domain.item.InventoryService;
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemInstanceRepository;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 
 import lombok.RequiredArgsConstructor;

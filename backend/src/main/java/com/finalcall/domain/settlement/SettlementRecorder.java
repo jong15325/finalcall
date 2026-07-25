@@ -7,11 +7,11 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.logging.ServiceLog;
-import com.finalcall.domain.item.InventoryService;
-import com.finalcall.domain.item.ItemInstanceRepository;
-import com.finalcall.domain.item.ItemOwnershipHistory;
-import com.finalcall.domain.item.ItemOwnershipHistoryRepository;
-import com.finalcall.domain.item.TransferType;
+import com.finalcall.domain.item.entity.ItemOwnershipHistory;
+import com.finalcall.domain.item.entity.TransferType;
+import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.repository.ItemOwnershipHistoryRepository;
+import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.member.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;

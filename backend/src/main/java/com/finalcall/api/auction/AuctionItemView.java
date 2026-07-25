@@ -3,8 +3,8 @@ package com.finalcall.api.auction;
 import java.time.Instant;
 
 import com.finalcall.domain.auction.Auction;
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemTemplate;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemTemplate;
 
 import lombok.Builder;
 

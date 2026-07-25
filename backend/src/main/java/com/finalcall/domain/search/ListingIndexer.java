@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.util.NicknameMasker;
 import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.auction.AuctionRepository;
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemTemplate;
-import com.finalcall.domain.item.SkillDefinition;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemTemplate;
+import com.finalcall.domain.item.entity.SkillDefinition;
 import com.finalcall.domain.shop.Shop;
 import com.finalcall.domain.shop.ShopRepository;
 

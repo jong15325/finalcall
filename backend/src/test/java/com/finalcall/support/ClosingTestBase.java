@@ -29,13 +29,13 @@ import com.finalcall.domain.bid.BidService;
 import com.finalcall.domain.bid.BidStatus;
 import com.finalcall.domain.currency.entity.MoneyHoldStatus;
 import com.finalcall.domain.currency.repository.MoneyHoldRepository;
-import com.finalcall.domain.item.ItemInstance;
-import com.finalcall.domain.item.ItemInstanceRepository;
-import com.finalcall.domain.item.ItemLocation;
-import com.finalcall.domain.item.ItemOwnershipHistoryRepository;
-import com.finalcall.domain.item.ItemTemplate;
-import com.finalcall.domain.item.ItemTemplateRepository;
-import com.finalcall.domain.item.TempStorageRepository;
+import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.entity.ItemLocation;
+import com.finalcall.domain.item.entity.ItemTemplate;
+import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.repository.ItemOwnershipHistoryRepository;
+import com.finalcall.domain.item.repository.ItemTemplateRepository;
+import com.finalcall.domain.item.repository.TempStorageRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
@@ -371,7 +371,7 @@ public abstract class ClosingTestBase extends IntegrationTest {
                 + "WHERE h.instanceId = :id AND h.transferType = :type",
             Object[].class)
             .setParameter("id", instanceId)
-            .setParameter("type", com.finalcall.domain.item.TransferType.TRADE)
+            .setParameter("type", com.finalcall.domain.item.entity.TransferType.TRADE)
             .getResultList();
     }
 

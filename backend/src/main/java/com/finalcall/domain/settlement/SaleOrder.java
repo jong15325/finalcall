@@ -7,7 +7,7 @@ import org.hibernate.type.SqlTypes;
 
 import com.finalcall.common.entity.BaseCreatedEntity;
 import com.finalcall.common.util.Ulid;
-import com.finalcall.domain.item.ItemInstance;
+import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.member.entity.User;
 
 import jakarta.persistence.Column;

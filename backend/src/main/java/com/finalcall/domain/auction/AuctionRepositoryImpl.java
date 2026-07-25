@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.finalcall.domain.bid.QBid;
-import com.finalcall.domain.item.QItemInstance;
-import com.finalcall.domain.item.QItemTemplate;
-import com.finalcall.domain.item.QSkillDefinition;
+import com.finalcall.domain.item.entity.QItemInstance;
+import com.finalcall.domain.item.entity.QItemTemplate;
+import com.finalcall.domain.item.entity.QSkillDefinition;
 import com.finalcall.domain.member.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
