@@ -1,4 +1,4 @@
-package com.finalcall.api.notice;
+package com.finalcall.notice.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +13,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.notice.NoticeService;
+import com.finalcall.notice.dto.NoticeCreateRequest;
+import com.finalcall.notice.dto.NoticeCursorResponse;
+import com.finalcall.notice.dto.NoticeDetailResponse;
+import com.finalcall.notice.dto.NoticeListResponse;
+import com.finalcall.notice.dto.NoticeUpdateRequest;
+import com.finalcall.notice.service.NoticeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

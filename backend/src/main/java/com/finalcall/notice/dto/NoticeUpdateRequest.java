@@ -1,6 +1,6 @@
-package com.finalcall.api.notice;
+package com.finalcall.notice.dto;
 
-import com.finalcall.domain.notice.NoticeType;
+import com.finalcall.notice.entity.NoticeType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

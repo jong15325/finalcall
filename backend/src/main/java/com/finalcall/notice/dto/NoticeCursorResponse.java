@@ -1,8 +1,6 @@
-package com.finalcall.api.notice;
+package com.finalcall.notice.dto;
 
 import java.util.List;
-
-import com.finalcall.domain.notice.NoticeCursorSlice;
 
 import lombok.Builder;
 

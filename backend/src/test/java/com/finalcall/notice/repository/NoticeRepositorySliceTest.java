@@ -1,4 +1,4 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,6 +11,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
 import com.finalcall.infra.config.JpaConfig;
+import com.finalcall.notice.entity.Notice;
+import com.finalcall.notice.entity.NoticeType;
 import com.finalcall.support.TestcontainersConfiguration;
 
 import jakarta.persistence.EntityManager;

@@ -1,9 +1,9 @@
-package com.finalcall.api.notice;
+package com.finalcall.notice.dto;
 
 import java.time.Instant;
 
-import com.finalcall.domain.notice.Notice;
-import com.finalcall.domain.notice.NoticeType;
+import com.finalcall.notice.entity.Notice;
+import com.finalcall.notice.entity.NoticeType;
 
 import lombok.Builder;
 

@@ -1,4 +1,4 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice.service;
 
 import java.util.List;
 
@@ -9,6 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.notice.NoticeErrorCode;
+import com.finalcall.notice.dto.NoticeCursorSlice;
+import com.finalcall.notice.entity.Notice;
+import com.finalcall.notice.entity.NoticeType;
+import com.finalcall.notice.repository.NoticeRepository;
 
 import lombok.RequiredArgsConstructor;
 

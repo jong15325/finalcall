@@ -1,6 +1,6 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice.repository;
 
-import static com.finalcall.domain.notice.QNotice.notice;
+import static com.finalcall.notice.entity.QNotice.notice;
 
 import java.util.List;
 
@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.notice.entity.Notice;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 

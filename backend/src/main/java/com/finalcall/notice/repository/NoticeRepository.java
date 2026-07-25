@@ -1,9 +1,10 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.notice.entity.Notice;
 
 /**
  * 공지 리포지토리(Stage D). 커스텀 쿼리는 {@link NoticeRepositoryCustom}(QueryDSL)로 분리.

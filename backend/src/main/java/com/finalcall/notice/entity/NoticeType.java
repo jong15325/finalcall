@@ -1,4 +1,4 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

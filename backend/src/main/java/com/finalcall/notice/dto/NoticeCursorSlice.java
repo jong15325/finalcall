@@ -1,6 +1,8 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice.dto;
 
 import java.util.List;
+
+import com.finalcall.notice.entity.Notice;
 
 /**
  * 커서 조회 결과(Stage D, 도메인 반환 타입). api 계층에서 커서 응답 DTO 로 변환한다.

@@ -1,4 +1,4 @@
-package com.finalcall.domain.notice;
+package com.finalcall.notice;
 
 import org.springframework.http.HttpStatus;
 
