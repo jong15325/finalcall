@@ -1,10 +1,10 @@
 ---
 id: EPIC-EMAIL-VERIFY
 type: epic
-jira_key: null
+jira_key: KAN-134
 title: 회원가입 이메일 인증 (FC-114 실기능화)
 state: doing
-children: []
+children: [FC-117, FC-118]
 gate: null
 ---
 ## 목표
@@ -33,6 +33,9 @@ gate: null
 ## 열린 결정 (진행하며 확정)
 - **6. 미인증 제한 정책(이월)** — 어떤 기능을 미인증 시 막나(입찰·판매 등). **핵심 인증 동작 후 별도 결정**(독립 정책 층 — 코어 구현 안 막음).
 - **7. 프론트 UI** — 가입 email 입력 + 마이페이지/배너 인증 진입 + 코드 입력 화면.
+
+## ★ 보류 (2026-07-25) — EPIC-RESTRUCTURE 우선
+설계는 확정(spec v0.1·계약 v1.15)됐으나, 구현은 **EPIC-RESTRUCTURE(feature-first 전환) 완료 후 재개**한다(사용자 결정, 게이트2). 근거: 이메일이 `member/User`를 직접 확장하는데 그 파일이 이동 대상 → 재구성 먼저가 이중 작업을 막는다. FC-117·118 = blocked(depends_on FC-121). 재개 시 기능·계약 불변, **파일 경로만** 새 레이아웃 기준 갱신. 이후 이메일 엔드포인트 티켓은 FC-123부터 발번.
 
 ## 진행 방식
 각 결정을 사용자와 확정 → architect가 계약(§) 반영 → backend-impl/frontend-impl 구현 → reviewer → Done. 커밋은 매번 사용자 승인(섹션 13).
