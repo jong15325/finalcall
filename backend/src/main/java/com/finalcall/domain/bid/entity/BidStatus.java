@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

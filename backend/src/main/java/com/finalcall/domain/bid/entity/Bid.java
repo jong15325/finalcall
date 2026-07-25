@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.entity;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -31,7 +31,8 @@ import lombok.NoArgsConstructor;
  * 보존한다(D-081 패턴 불요, bid-domain-spec §2.1).
  *
  * <p><b>상태 전이에 dirty-checking 을 쓰지 않는다</b>({@code @Setter} 금지, CLAUDE.md §5). 전이는
- * {@link BidRepository#markOutbidIfActive(Long)} 의 조건부 CAS UPDATE 가 단일 진실원이다. 이유는 두 가지다:
+ * {@link com.finalcall.domain.bid.repository.BidRepository#markOutbidIfActive(Long)} 의 조건부 CAS UPDATE 가
+ * 단일 진실원이다. 이유는 두 가지다:
  * (1) 조건({@code WHERE status='ACTIVE'})을 DB 행 락 아래에서 평가해야 이중 전이가 성립하지 않는다,
  * (2) 입찰 트랜잭션은 잔액 조건부 UPDATE({@code UserBalanceRepository})를 호출하며 그것이 영속성 컨텍스트를
  * clear 하므로, dirty-checking 에 의존하면 갱신이 <b>예외 없이 조용히 유실</b>된다(bid-domain-spec §4.2).

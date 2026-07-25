@@ -1,10 +1,10 @@
-package com.finalcall.api.bid;
+package com.finalcall.domain.bid.dto;
 
 import java.time.Instant;
 
 import com.finalcall.common.util.NicknameMasker;
-import com.finalcall.domain.bid.Bid;
-import com.finalcall.domain.bid.BidStatus;
+import com.finalcall.domain.bid.entity.Bid;
+import com.finalcall.domain.bid.entity.BidStatus;
 
 import lombok.Builder;
 

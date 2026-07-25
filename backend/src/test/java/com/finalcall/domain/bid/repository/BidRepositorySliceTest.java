@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,6 +14,9 @@ import org.springframework.context.annotation.Import;
 
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.bid.entity.Bid;
+import com.finalcall.domain.bid.entity.BidSnapshot;
+import com.finalcall.domain.bid.entity.BidStatus;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.ItemTemplate;

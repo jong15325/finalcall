@@ -1,4 +1,4 @@
-package com.finalcall.api.bid;
+package com.finalcall.domain.bid.controller;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.bid.BidService;
+import com.finalcall.domain.bid.dto.BidPageResponse;
+import com.finalcall.domain.bid.dto.BidPlaceRequest;
+import com.finalcall.domain.bid.dto.BidPlaceResponse;
+import com.finalcall.domain.bid.service.BidService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

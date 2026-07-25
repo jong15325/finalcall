@@ -15,7 +15,7 @@ import com.finalcall.domain.auction.entity.AuctionSearchCondition;
 import com.finalcall.domain.auction.entity.AuctionSort;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.entity.AuctionWithBidCount;
-import com.finalcall.domain.bid.QBid;
+import com.finalcall.domain.bid.entity.QBid;
 import com.finalcall.domain.item.entity.QItemInstance;
 import com.finalcall.domain.item.entity.QItemTemplate;
 import com.finalcall.domain.item.entity.QSkillDefinition;

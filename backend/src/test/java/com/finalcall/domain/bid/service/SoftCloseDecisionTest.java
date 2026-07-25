@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

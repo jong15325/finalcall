@@ -1,6 +1,6 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.repository;
 
-import static com.finalcall.domain.bid.QBid.bid;
+import static com.finalcall.domain.bid.entity.QBid.bid;
 
 import java.util.List;
 
@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import com.finalcall.domain.bid.entity.Bid;
 import com.finalcall.domain.member.entity.QUser;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 

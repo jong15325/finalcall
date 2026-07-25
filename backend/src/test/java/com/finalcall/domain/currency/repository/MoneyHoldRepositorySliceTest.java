@@ -15,7 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionStatus;
-import com.finalcall.domain.bid.Bid;
+import com.finalcall.domain.bid.entity.Bid;
 import com.finalcall.domain.currency.entity.MoneyHold;
 import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;
 import com.finalcall.domain.currency.entity.MoneyHoldStatus;

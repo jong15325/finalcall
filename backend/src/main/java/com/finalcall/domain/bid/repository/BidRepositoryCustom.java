@@ -1,7 +1,9 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.finalcall.domain.bid.entity.Bid;
 
 /**
  * 입찰 커스텀 쿼리 계약(bid, QueryDSL 구현은 {@link BidRepositoryImpl}).

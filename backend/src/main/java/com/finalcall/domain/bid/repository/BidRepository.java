@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.repository;
 
 import java.util.Optional;
 
@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.domain.bid.entity.Bid;
+import com.finalcall.domain.bid.entity.BidSnapshot;
 
 /**
  * 입찰 리포지토리(bid).
@@ -35,9 +37,9 @@ public interface BidRepository extends JpaRepository<Bid, Long>, BidRepositoryCu
      *
      * @return 직전 최고 입찰 스냅샷. 첫 입찰이면 비어 있다
      */
-    @Query("SELECT new com.finalcall.domain.bid.BidSnapshot(b.id, b.bidder.id, b.amount) FROM Bid b "
+    @Query("SELECT new com.finalcall.domain.bid.entity.BidSnapshot(b.id, b.bidder.id, b.amount) FROM Bid b "
         + "WHERE b.auction.id = :auctionId "
-        + "AND b.status = com.finalcall.domain.bid.BidStatus.ACTIVE")
+        + "AND b.status = com.finalcall.domain.bid.entity.BidStatus.ACTIVE")
     Optional<BidSnapshot> findActiveByAuctionId(@Param("auctionId") Long auctionId);
 
     /**
@@ -49,9 +51,9 @@ public interface BidRepository extends JpaRepository<Bid, Long>, BidRepositoryCu
      * @return 영향 행 수(1=전이 성공, 0=대상이 ACTIVE 가 아님)
      */
     @Modifying
-    @Query("UPDATE Bid b SET b.status = com.finalcall.domain.bid.BidStatus.OUTBID "
+    @Query("UPDATE Bid b SET b.status = com.finalcall.domain.bid.entity.BidStatus.OUTBID "
         + "WHERE b.id = :bidId "
-        + "AND b.status = com.finalcall.domain.bid.BidStatus.ACTIVE")
+        + "AND b.status = com.finalcall.domain.bid.entity.BidStatus.ACTIVE")
     int markOutbidIfActive(@Param("bidId") Long bidId);
 
     /**
@@ -64,9 +66,9 @@ public interface BidRepository extends JpaRepository<Bid, Long>, BidRepositoryCu
      * @return 영향 행 수(1=낙찰 전이 성공, 0=대상이 ACTIVE 가 아님)
      */
     @Modifying
-    @Query("UPDATE Bid b SET b.status = com.finalcall.domain.bid.BidStatus.WON "
+    @Query("UPDATE Bid b SET b.status = com.finalcall.domain.bid.entity.BidStatus.WON "
         + "WHERE b.id = :bidId "
-        + "AND b.status = com.finalcall.domain.bid.BidStatus.ACTIVE")
+        + "AND b.status = com.finalcall.domain.bid.entity.BidStatus.ACTIVE")
     int markWonIfActive(@Param("bidId") Long bidId);
 
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */

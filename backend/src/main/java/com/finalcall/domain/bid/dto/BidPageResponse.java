@@ -1,10 +1,10 @@
-package com.finalcall.api.bid;
+package com.finalcall.domain.bid.dto;
 
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 
-import com.finalcall.domain.bid.Bid;
+import com.finalcall.domain.bid.entity.Bid;
 
 import lombok.Builder;
 

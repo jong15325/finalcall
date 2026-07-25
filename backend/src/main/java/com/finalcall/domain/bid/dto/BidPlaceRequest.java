@@ -1,6 +1,4 @@
-package com.finalcall.api.bid;
-
-import com.finalcall.domain.bid.BidPlaceCommand;
+package com.finalcall.domain.bid.dto;
 
 import jakarta.validation.constraints.Positive;
 

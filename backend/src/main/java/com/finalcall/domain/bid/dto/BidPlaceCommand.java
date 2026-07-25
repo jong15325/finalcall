@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.dto;
 
 /**
  * 입찰 요청 커맨드(계약 §3.1 POST /auctions/{id}/bids).

@@ -1,8 +1,6 @@
-package com.finalcall.api.bid;
+package com.finalcall.domain.bid.dto;
 
 import java.time.Instant;
-
-import com.finalcall.domain.bid.BidPlaceResult;
 
 import lombok.Builder;
 

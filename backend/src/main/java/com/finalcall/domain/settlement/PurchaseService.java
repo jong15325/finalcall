@@ -19,8 +19,8 @@ import com.finalcall.domain.auction.entity.AuctionPurchaseContext;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.bid.BidErrorCode;
-import com.finalcall.domain.bid.BidRepository;
-import com.finalcall.domain.bid.BidSnapshot;
+import com.finalcall.domain.bid.entity.BidSnapshot;
+import com.finalcall.domain.bid.repository.BidRepository;
 import com.finalcall.domain.currency.service.MoneyHoldService;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 

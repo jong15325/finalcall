@@ -12,7 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionResultType;
 import com.finalcall.domain.auction.entity.AuctionStatus;
-import com.finalcall.domain.bid.BidStatus;
+import com.finalcall.domain.bid.entity.BidStatus;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.member.entity.User;

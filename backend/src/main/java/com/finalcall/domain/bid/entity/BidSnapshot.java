@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.entity;
 
 /**
  * 현재 최고 입찰(= {@code status=ACTIVE}) 스칼라 스냅샷(bid).

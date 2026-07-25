@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.service;
 
 import java.time.Instant;
 
@@ -17,6 +17,13 @@ import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.auction.entity.AuctionBidContext;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.repository.AuctionRepository;
+import com.finalcall.domain.bid.BidErrorCode;
+import com.finalcall.domain.bid.BidIncrementProperties;
+import com.finalcall.domain.bid.dto.BidPlaceCommand;
+import com.finalcall.domain.bid.dto.BidPlaceResult;
+import com.finalcall.domain.bid.entity.Bid;
+import com.finalcall.domain.bid.entity.BidSnapshot;
+import com.finalcall.domain.bid.repository.BidRepository;
 import com.finalcall.domain.currency.service.MoneyHoldService;
 import com.finalcall.domain.member.repository.UserRepository;
 
