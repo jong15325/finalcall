@@ -1,4 +1,4 @@
-package com.finalcall.api.support;
+package com.finalcall.support;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

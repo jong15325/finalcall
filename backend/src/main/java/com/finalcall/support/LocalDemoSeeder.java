@@ -1,4 +1,4 @@
-package com.finalcall.api.support;
+package com.finalcall.support;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,7 +17,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.finalcall.api.support.LocalDemoDataService.ListedSeed;
 import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
 import com.finalcall.domain.auction.dto.AuctionRegisterResult;
 import com.finalcall.domain.auction.service.AuctionService;
@@ -28,6 +27,7 @@ import com.finalcall.domain.item.entity.ItemTemplate;
 import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
+import com.finalcall.support.LocalDemoDataService.ListedSeed;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
