@@ -1,4 +1,4 @@
-package com.finalcall.api.currency;
+package com.finalcall.domain.currency.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.currency.ExchangeService;
-import com.finalcall.domain.currency.MoneyExchange;
+import com.finalcall.domain.currency.dto.ExchangeRequest;
+import com.finalcall.domain.currency.dto.ExchangeResponse;
+import com.finalcall.domain.currency.entity.MoneyExchange;
+import com.finalcall.domain.currency.service.ExchangeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

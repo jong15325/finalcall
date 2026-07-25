@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.service;
 
 import java.math.BigDecimal;
 
@@ -6,9 +6,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.currency.CurrencyErrorCode;
+import com.finalcall.domain.currency.ExchangeProperties;
+import com.finalcall.domain.currency.entity.ExchangeDirection;
+import com.finalcall.domain.currency.entity.MoneyExchange;
+import com.finalcall.domain.currency.repository.MoneyExchangeRepository;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.member.repository.UserRepository;
-import com.finalcall.infra.config.ExchangeProperties;
 
 import lombok.RequiredArgsConstructor;
 

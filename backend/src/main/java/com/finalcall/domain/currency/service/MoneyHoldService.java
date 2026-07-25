@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.service;
 
 import java.time.Instant;
 
@@ -12,6 +12,9 @@ import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidRepository;
+import com.finalcall.domain.currency.entity.MoneyHold;
+import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;
+import com.finalcall.domain.currency.repository.MoneyHoldRepository;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.member.repository.UserRepository;
 

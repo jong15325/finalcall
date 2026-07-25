@@ -20,7 +20,7 @@ import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.auction.AuctionRepository;
 import com.finalcall.domain.auction.AuctionStatus;
 import com.finalcall.domain.bid.BidStatus;
-import com.finalcall.domain.currency.MoneyHoldStatus;
+import com.finalcall.domain.currency.entity.MoneyHoldStatus;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemLocation;
 import com.finalcall.domain.item.ItemTemplate;

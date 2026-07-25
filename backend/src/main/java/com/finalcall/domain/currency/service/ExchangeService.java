@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.service;
 
 import java.util.Optional;
 
@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.domain.currency.entity.ExchangeDirection;
+import com.finalcall.domain.currency.entity.MoneyExchange;
+import com.finalcall.domain.currency.repository.MoneyExchangeRepository;
 
 import lombok.RequiredArgsConstructor;
 

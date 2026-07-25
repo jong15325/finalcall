@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,6 +16,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import com.finalcall.domain.auction.Auction;
 import com.finalcall.domain.auction.AuctionStatus;
 import com.finalcall.domain.bid.Bid;
+import com.finalcall.domain.currency.entity.MoneyHold;
+import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;
+import com.finalcall.domain.currency.entity.MoneyHoldStatus;
 import com.finalcall.domain.item.ItemInstance;
 import com.finalcall.domain.item.ItemLocation;
 import com.finalcall.domain.item.ItemTemplate;

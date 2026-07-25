@@ -1,8 +1,8 @@
-package com.finalcall.api.currency;
+package com.finalcall.domain.currency.dto;
 
 import java.math.BigDecimal;
 
-import com.finalcall.domain.currency.MoneyExchange;
+import com.finalcall.domain.currency.entity.MoneyExchange;
 
 import lombok.Builder;
 

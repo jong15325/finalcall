@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,6 +23,10 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidRepository;
+import com.finalcall.domain.currency.entity.MoneyHold;
+import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;
+import com.finalcall.domain.currency.entity.MoneyHoldStatus;
+import com.finalcall.domain.currency.repository.MoneyHoldRepository;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.member.repository.UserRepository;
 

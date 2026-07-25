@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.entity;
 
 /**
  * 화폐 교환 방향(currency) — 계약 §4.4.

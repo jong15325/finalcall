@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.repository;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.domain.currency.entity.MoneyHold;
+import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;
 
 /**
  * 홀드 원장 리포지토리(currency).
@@ -30,9 +32,10 @@ public interface MoneyHoldRepository extends JpaRepository<MoneyHold, Long> {
      *
      * @return HELD 홀드 스냅샷. 없거나 이미 RELEASED/CAPTURED 면 비어 있다
      */
-    @Query("SELECT new com.finalcall.domain.currency.MoneyHoldSnapshot(h.id, h.user.id, h.amount) FROM MoneyHold h "
+    @Query("SELECT new com.finalcall.domain.currency.entity.MoneyHoldSnapshot(h.id, h.user.id, h.amount) "
+        + "FROM MoneyHold h "
         + "WHERE h.bid.id = :bidId "
-        + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
+        + "AND h.status = com.finalcall.domain.currency.entity.MoneyHoldStatus.HELD")
     Optional<MoneyHoldSnapshot> findHeldByBidId(@Param("bidId") Long bidId);
 
     /**
@@ -45,9 +48,9 @@ public interface MoneyHoldRepository extends JpaRepository<MoneyHold, Long> {
      */
     @Modifying
     @Query("UPDATE MoneyHold h "
-        + "SET h.status = com.finalcall.domain.currency.MoneyHoldStatus.RELEASED, h.releasedAt = :releasedAt "
+        + "SET h.status = com.finalcall.domain.currency.entity.MoneyHoldStatus.RELEASED, h.releasedAt = :releasedAt "
         + "WHERE h.id = :holdId "
-        + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
+        + "AND h.status = com.finalcall.domain.currency.entity.MoneyHoldStatus.HELD")
     int releaseIfHeld(@Param("holdId") Long holdId, @Param("releasedAt") Instant releasedAt);
 
     /**
@@ -62,9 +65,9 @@ public interface MoneyHoldRepository extends JpaRepository<MoneyHold, Long> {
      */
     @Modifying
     @Query("UPDATE MoneyHold h "
-        + "SET h.status = com.finalcall.domain.currency.MoneyHoldStatus.CAPTURED, h.releasedAt = :capturedAt "
+        + "SET h.status = com.finalcall.domain.currency.entity.MoneyHoldStatus.CAPTURED, h.releasedAt = :capturedAt "
         + "WHERE h.id = :holdId "
-        + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
+        + "AND h.status = com.finalcall.domain.currency.entity.MoneyHoldStatus.HELD")
     int captureIfHeld(@Param("holdId") Long holdId, @Param("capturedAt") Instant capturedAt);
 
     /**
@@ -75,7 +78,7 @@ public interface MoneyHoldRepository extends JpaRepository<MoneyHold, Long> {
      */
     @Query("SELECT COUNT(h) FROM MoneyHold h "
         + "WHERE h.bid.auction.id = :auctionId "
-        + "AND h.status = com.finalcall.domain.currency.MoneyHoldStatus.HELD")
+        + "AND h.status = com.finalcall.domain.currency.entity.MoneyHoldStatus.HELD")
     long countHeldByAuctionId(@Param("auctionId") Long auctionId);
 
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */

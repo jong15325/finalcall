@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

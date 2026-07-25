@@ -1,4 +1,4 @@
-package com.finalcall.infra.config;
+package com.finalcall.domain.currency;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;

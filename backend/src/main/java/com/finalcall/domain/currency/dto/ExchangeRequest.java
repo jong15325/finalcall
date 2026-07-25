@@ -1,6 +1,6 @@
-package com.finalcall.api.currency;
+package com.finalcall.domain.currency.dto;
 
-import com.finalcall.domain.currency.ExchangeDirection;
+import com.finalcall.domain.currency.entity.ExchangeDirection;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;

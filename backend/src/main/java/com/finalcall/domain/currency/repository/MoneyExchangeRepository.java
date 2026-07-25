@@ -1,8 +1,10 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.repository;
 
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.finalcall.domain.currency.entity.MoneyExchange;
 
 /**
  * 교환 원장 리포지토리(currency).

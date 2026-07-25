@@ -1,4 +1,4 @@
-package com.finalcall.domain.currency;
+package com.finalcall.domain.currency.entity;
 
 /**
  * 해제 대상 홀드({@code status=HELD})의 스칼라 스냅샷(currency).
