@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.shop.dto.MyShopCursorResponse;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.domain.shop.dto.MyShopSummaryResponse;
 import com.finalcall.domain.shop.entity.ShopSort;
 import com.finalcall.domain.shop.entity.ShopStatus;
@@ -47,13 +47,13 @@ public class MeShopController {
      * (createdAt·price·endAt, 기본 createdAt desc). content = {@link MyShopSummaryResponse}(예상 정산 포함).
      */
     @GetMapping("/api/v1/me/shops")
-    public ApiResponse<MyShopCursorResponse> myShops(
+    public ApiResponse<CursorResponse<MyShopSummaryResponse, String>> myShops(
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(required = false) String sort) {
-        return ApiResponse.success(MyShopCursorResponse.from(shopService.getMyShops(
-            resolveStatus(status), parseSort(sort), parseAscending(sort), cursor, normalizeSize(size))));
+        return ApiResponse.success(shopService.getMyShops(
+            resolveStatus(status), parseSort(sort), parseAscending(sort), cursor, normalizeSize(size)));
     }
 
     /**

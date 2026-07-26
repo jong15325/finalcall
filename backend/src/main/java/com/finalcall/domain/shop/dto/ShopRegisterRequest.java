@@ -13,8 +13,4 @@ import jakarta.validation.constraints.Positive;
 public record ShopRegisterRequest(
     @NotBlank String itemInstancePublicId,
     @Positive long price) {
-
-    public ShopRegisterCommand toCommand() {
-        return new ShopRegisterCommand(itemInstancePublicId, price);
-    }
 }

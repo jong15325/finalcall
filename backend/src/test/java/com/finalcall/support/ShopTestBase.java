@@ -16,7 +16,7 @@ import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
-import com.finalcall.domain.shop.dto.ShopPurchaseResult;
+import com.finalcall.domain.shop.dto.ShopPurchaseResponse;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopStatus;
 import com.finalcall.domain.shop.repository.ShopRepository;
@@ -78,7 +78,7 @@ public abstract class ShopTestBase extends ClosingTestBase {
     }
 
     /** 고정가 구매를 독립 트랜잭션으로 커밋한다(테스트가 비-트랜잭션이라 명시적 경계가 필요하다). */
-    protected ShopPurchaseResult purchaseShop(User buyer, String shopPublicId) {
+    protected ShopPurchaseResponse purchaseShop(User buyer, String shopPublicId) {
         authenticateAs(buyer.getId());
         try {
             return transactionTemplate.execute(status -> shopPurchaseService.purchase(shopPublicId));

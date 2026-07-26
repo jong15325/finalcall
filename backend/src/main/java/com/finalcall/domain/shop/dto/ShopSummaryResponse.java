@@ -19,7 +19,7 @@ import lombok.Builder;
 public record ShopSummaryResponse(
     String shopPublicId,
     ShopStatus status,
-    ShopItemView item,
+    ShopItemResponse item,
     long price,
     Instant endAt,
     String sellerNickname) {
@@ -28,7 +28,7 @@ public record ShopSummaryResponse(
         return ShopSummaryResponse.builder()
             .shopPublicId(shop.getPublicId())
             .status(shop.getStatus())
-            .item(ShopItemView.from(shop))
+            .item(ShopItemResponse.from(shop))
             .price(shop.getPrice())
             .endAt(shop.getEndAt())
             .sellerNickname(shop.getSeller().getNickname())

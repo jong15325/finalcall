@@ -8,11 +8,4 @@ import lombok.Builder;
  */
 @Builder
 public record ShopPurchaseResponse(String orderPublicId, long finalPrice) {
-
-    public static ShopPurchaseResponse from(ShopPurchaseResult result) {
-        return ShopPurchaseResponse.builder()
-            .orderPublicId(result.orderPublicId())
-            .finalPrice(result.finalPrice())
-            .build();
-    }
 }

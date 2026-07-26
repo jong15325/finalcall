@@ -21,7 +21,7 @@ import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 import com.finalcall.domain.settlement.service.FeeCalculator;
 import com.finalcall.domain.settlement.service.SettlementRecorder;
-import com.finalcall.domain.shop.dto.ShopPurchaseResult;
+import com.finalcall.domain.shop.dto.ShopPurchaseResponse;
 import com.finalcall.domain.shop.entity.ShopPurchaseContext;
 import com.finalcall.domain.shop.entity.ShopStatus;
 import com.finalcall.domain.shop.repository.ShopRepository;
@@ -73,7 +73,7 @@ public class ShopPurchaseService {
      */
     @Transactional
     @ServiceLog
-    public ShopPurchaseResult purchase(String shopPublicId) {
+    public ShopPurchaseResponse purchase(String shopPublicId) {
         Long buyerId = currentUserId();
         Instant now = Instant.now();
 
@@ -107,7 +107,10 @@ public class ShopPurchaseService {
             shopRepository.markShopSoldIfPurchasable(shop.id(), now) == 1,
             SettlementErrorCode.SETTLEMENT_TERMINAL_TRANSITION_FAILED);
 
-        return new ShopPurchaseResult(order.getPublicId(), price);
+        return ShopPurchaseResponse.builder()
+            .orderPublicId(order.getPublicId())
+            .finalPrice(price)
+            .build();
     }
 
     /**

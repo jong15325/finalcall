@@ -9,7 +9,8 @@ import com.finalcall.domain.shop.entity.Shop;
 import lombok.Builder;
 
 /**
- * 고정가 목록/상세의 item 표시 블록(shop, 계약 §3.3 공통 item 블록 — AuctionItemView 선례 동형). live join
+ * 고정가 목록/상세의 item 표시 블록(shop, 계약 §3.3 공통 item 블록 — AuctionItemResponse 선례 동형, Summary·Detail
+ * 응답의 {@code item} 필드로 직렬화되는 중첩 Response). live join
  * (template·instance)과 shop 스냅샷을 함께 싣는다: {@code nameSnapshot}/{@code specSnapshot}은 등록 시점 shop
  * 컬럼, 나머지는 현재 조인 값이다.
  *
@@ -19,7 +20,7 @@ import lombok.Builder;
  * 쿼리가 skill_definition 을 이미 fetch join 하므로 {@code getName()} 추가에 N+1·추가 조인이 없다.
  */
 @Builder
-public record ShopItemView(
+public record ShopItemResponse(
     int typeCode,
     int mainCategory,
     int subGroup,
@@ -35,10 +36,10 @@ public record ShopItemView(
     String nameSnapshot,
     String specSnapshot) {
 
-    public static ShopItemView from(Shop shop) {
+    public static ShopItemResponse from(Shop shop) {
         ItemInstance item = shop.getItemInstance();
         ItemTemplate template = item.getTemplate();
-        return ShopItemView.builder()
+        return ShopItemResponse.builder()
             .typeCode(template.getTypeCode())
             .mainCategory(template.getMainCategory())
             .subGroup(template.getSubGroup())

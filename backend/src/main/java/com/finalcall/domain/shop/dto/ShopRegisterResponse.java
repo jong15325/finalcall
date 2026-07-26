@@ -12,12 +12,4 @@ import lombok.Builder;
  */
 @Builder
 public record ShopRegisterResponse(String shopPublicId, ShopStatus status, Instant endAt) {
-
-    public static ShopRegisterResponse from(ShopRegisterResult result) {
-        return ShopRegisterResponse.builder()
-            .shopPublicId(result.shopPublicId())
-            .status(result.status())
-            .endAt(result.endAt())
-            .build();
-    }
 }

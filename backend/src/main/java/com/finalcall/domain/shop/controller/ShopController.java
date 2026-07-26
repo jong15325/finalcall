@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.domain.shop.dto.ShopCancelResponse;
-import com.finalcall.domain.shop.dto.ShopCursorResponse;
 import com.finalcall.domain.shop.dto.ShopDetailResponse;
 import com.finalcall.domain.shop.dto.ShopPurchaseResponse;
 import com.finalcall.domain.shop.dto.ShopRegisterRequest;
 import com.finalcall.domain.shop.dto.ShopRegisterResponse;
+import com.finalcall.domain.shop.dto.ShopSummaryResponse;
 import com.finalcall.domain.shop.entity.ShopSearchCondition;
 import com.finalcall.domain.shop.entity.ShopSort;
 import com.finalcall.domain.shop.entity.ShopStatus;
@@ -52,7 +53,7 @@ public class ShopController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ShopRegisterResponse> register(@Valid @RequestBody ShopRegisterRequest request) {
-        return ApiResponse.success(ShopRegisterResponse.from(shopService.register(request.toCommand())));
+        return ApiResponse.success(shopService.register(request));
     }
 
     /**
@@ -61,7 +62,7 @@ public class ShopController {
      * {@code sort=relevance} 는 무의미 요청이라 400({@code COMMON_001})으로 거부한다(계약 C2).
      */
     @GetMapping
-    public ApiResponse<ShopCursorResponse> list(
+    public ApiResponse<CursorResponse<ShopSummaryResponse, String>> list(
         @RequestParam(required = false) Integer mainCategory,
         @RequestParam(required = false) Integer subGroup,
         @RequestParam(required = false) Integer element,
@@ -79,12 +80,12 @@ public class ShopController {
             mainCategory, subGroup, element, kind, minLevel, maxLevel, minPrice, maxPrice,
             status, parseSort(sort), parseAscending(sort));
         if (query != null && !query.isBlank()) {
-            return ApiResponse.success(ShopCursorResponse.from(shopService.search(condition, query, cursor, size)));
+            return ApiResponse.success(shopService.search(condition, query, cursor, size));
         }
         if (isRelevance(sort)) {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
-        return ApiResponse.success(ShopCursorResponse.from(shopService.getList(condition, cursor, size)));
+        return ApiResponse.success(shopService.getList(condition, cursor, size));
     }
 
     /** {@code sort} field 가 relevance 인지(계약 C2 — {@code q} 없이 요청되면 400). */
@@ -102,7 +103,7 @@ public class ShopController {
     @PostMapping("/{shopPublicId}/purchase")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ShopPurchaseResponse> purchase(@PathVariable String shopPublicId) {
-        return ApiResponse.success(ShopPurchaseResponse.from(shopPurchaseService.purchase(shopPublicId)));
+        return ApiResponse.success(shopPurchaseService.purchase(shopPublicId));
     }
 
     /** 판매자 취소 — 인증 필요(본인=주체). 성공 200 {@code { status:"CANCELLED" }}. */

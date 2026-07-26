@@ -31,7 +31,7 @@ import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
-import com.finalcall.domain.shop.dto.ShopItemView;
+import com.finalcall.domain.shop.dto.ShopItemResponse;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.repository.ShopRepository;
 import com.finalcall.support.IntegrationTest;
@@ -123,7 +123,7 @@ class SkillExposureIntegrationTest extends IntegrationTest {
         flushClear();
 
         Shop shop = shopRepository.findDetailByPublicId(shopPublicId).orElseThrow();
-        ShopItemView view = ShopItemView.from(shop);
+        ShopItemResponse view = ShopItemResponse.from(shop);
 
         assertThat(view.skill1()).isNull();
         assertThat(view.skill1Name()).isNull();

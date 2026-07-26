@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ShopErrorCode;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
@@ -28,10 +29,10 @@ import com.finalcall.domain.search.service.ListingSearchService;
 import com.finalcall.domain.settlement.service.FeeCalculator;
 import com.finalcall.domain.shop.config.ShopListingProperties;
 import com.finalcall.domain.shop.dto.MyShopListing;
-import com.finalcall.domain.shop.dto.MyShopSlice;
-import com.finalcall.domain.shop.dto.ShopRegisterCommand;
-import com.finalcall.domain.shop.dto.ShopRegisterResult;
-import com.finalcall.domain.shop.dto.ShopSlice;
+import com.finalcall.domain.shop.dto.MyShopSummaryResponse;
+import com.finalcall.domain.shop.dto.ShopRegisterRequest;
+import com.finalcall.domain.shop.dto.ShopRegisterResponse;
+import com.finalcall.domain.shop.dto.ShopSummaryResponse;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopCursor;
 import com.finalcall.domain.shop.entity.ShopSearchCondition;
@@ -81,12 +82,12 @@ public class ShopService {
      */
     @Transactional
     @ServiceLog
-    public ShopRegisterResult register(ShopRegisterCommand command) {
+    public ShopRegisterResponse register(ShopRegisterRequest request) {
         Long sellerId = currentUserId();
         Instant now = Instant.now();
 
         // 미존재·미소유는 403(SHOP_001)로 통일한다(SEC-007). owner 는 detail 쿼리가 fetch join 한다.
-        ItemInstance item = itemInstanceRepository.findDetailByPublicId(command.itemInstancePublicId())
+        ItemInstance item = itemInstanceRepository.findDetailByPublicId(request.itemInstancePublicId())
             .orElseThrow(() -> new BusinessException(ShopErrorCode.SHOP_ITEM_NOT_SELLABLE));
         Preconditions.validate(item.isOwnedBy(sellerId), ShopErrorCode.SHOP_ITEM_NOT_SELLABLE);
 
@@ -107,25 +108,29 @@ public class ShopService {
         Shop shop = shopRepository.save(Shop.builder()
             .seller(item.getOwner()) // owner == seller(검증 완료), fetch join 으로 초기화됨
             .itemInstance(item)
-            .price(command.price())
+            .price(request.price())
             .status(ShopStatus.ACTIVE)
             .endAt(endAt)
             .itemNameSnapshot(item.getTemplate().getDisplayName())
             .itemSpecSnapshot(buildSpecSnapshot(item))
             .build());
-        return new ShopRegisterResult(shop.getPublicId(), ShopStatus.ACTIVE, endAt);
+        return ShopRegisterResponse.builder()
+            .shopPublicId(shop.getPublicId())
+            .status(ShopStatus.ACTIVE)
+            .endAt(endAt)
+            .build();
     }
 
     /** 고정가 목록(계약 §3.2 GET /shops) — 공통 필터 + keyset cursor. status 미지정이면 판매 중(ACTIVE) 기본 노출. */
     @ServiceLog
-    public ShopSlice getList(ShopSearchCondition condition, String cursor, int size) {
+    public CursorResponse<ShopSummaryResponse, String> getList(
+        ShopSearchCondition condition, String cursor, int size) {
         ShopCursor decoded = ShopCursor.decode(cursor);
         List<Shop> fetched = shopRepository.findByCursor(condition, decoded, size);
-
-        boolean hasNext = fetched.size() > size;
-        List<Shop> content = hasNext ? fetched.subList(0, size) : fetched;
-        String nextCursor = content.isEmpty() ? null : encodeNext(content, condition.sort());
-        return new ShopSlice(content, nextCursor, hasNext);
+        // 커서는 매핑 전 원본(Shop)의 마지막 항목에서 정렬 필드 값 + id 로 추출한다.
+        return CursorResponse.from(fetched, size,
+            ShopSummaryResponse::from,
+            shop -> encodeCursor(shop, condition.sort()));
     }
 
     /**
@@ -136,7 +141,8 @@ public class ShopService {
      * ES 가 스테일해 DB 에 없는 public_id 는 제외한다(유령 행 방지).
      */
     @ServiceLog
-    public ShopSlice search(ShopSearchCondition condition, String query, String cursor, int size) {
+    public CursorResponse<ShopSummaryResponse, String> search(
+        ShopSearchCondition condition, String query, String cursor, int size) {
         ListingSearchCondition searchCondition = new ListingSearchCondition(
             ListingType.SHOP, query,
             condition.mainCategory(), condition.subGroup(), condition.element(), condition.kind(),
@@ -146,11 +152,13 @@ public class ShopService {
 
         Map<String, Shop> byPublicId = shopRepository.findByPublicIds(hits.publicIds()).stream()
             .collect(Collectors.toMap(Shop::getPublicId, Function.identity(), (a, b) -> a));
-        List<Shop> ordered = hits.publicIds().stream()
+        List<ShopSummaryResponse> ordered = hits.publicIds().stream()
             .map(byPublicId::get)
             .filter(Objects::nonNull)
+            .map(ShopSummaryResponse::from)
             .toList();
-        return new ShopSlice(ordered, hits.nextCursor(), hits.hasNext());
+        // 커서·hasNext 는 ES 가 판정한 값을 그대로 보존한다(over-fetch 슬라이싱 아님).
+        return CursorResponse.of(ordered, hits.nextCursor(), hits.hasNext());
     }
 
     /** 검색 노출 상태 화이트리스트 — 공개 목록과 동일 규약(null=판매 중 ACTIVE, 지정=해당 상태만). */
@@ -176,16 +184,15 @@ public class ShopService {
      * @param ascending 오름차순 여부(false=내림차순, 기본 createdAt desc)
      */
     @ServiceLog
-    public MyShopSlice getMyShops(ShopStatus status, ShopSort sort, boolean ascending, String cursor, int size) {
+    public CursorResponse<MyShopSummaryResponse, String> getMyShops(
+        ShopStatus status, ShopSort sort, boolean ascending, String cursor, int size) {
         Long sellerId = currentUserId();
         ShopCursor decoded = ShopCursor.decode(cursor);
         List<Shop> fetched = shopRepository.findBySellerCursor(sellerId, status, sort, ascending, decoded, size);
-
-        boolean hasNext = fetched.size() > size;
-        List<Shop> content = hasNext ? fetched.subList(0, size) : fetched;
-        String nextCursor = content.isEmpty() ? null : encodeNext(content, sort);
-        List<MyShopListing> listings = content.stream().map(this::toListing).toList();
-        return new MyShopSlice(listings, nextCursor, hasNext);
+        // 예상 정산 파생은 매핑 클로저(toListing)에서 끝내고 봉투엔 파생완료 요약만 담는다(계약영향 노트 준수).
+        return CursorResponse.from(fetched, size,
+            shop -> MyShopSummaryResponse.from(toListing(shop)),
+            shop -> encodeCursor(shop, sort));
     }
 
     /** 리스팅에 예상 정산을 결합한다. {@code estimatedFee = FeeCalculator.compute(price)}, settle = price − fee. */
@@ -246,8 +253,7 @@ public class ShopService {
     }
 
     /** 다음 페이지 커서를 정렬 필드 값 + id 로 인코딩한다. 이 에픽 정렬 필드는 전부 NOT NULL 이라 값이 항상 존재한다. */
-    private String encodeNext(List<Shop> content, ShopSort sort) {
-        Shop last = content.get(content.size() - 1);
+    private String encodeCursor(Shop last, ShopSort sort) {
         String sortValue = switch (sort) {
             case PRICE -> String.valueOf(last.getPrice());
             case END_AT -> last.getEndAt().toString();
