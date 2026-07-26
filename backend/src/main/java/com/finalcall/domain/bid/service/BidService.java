@@ -9,15 +9,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finalcall.common.exception.AuctionErrorCode;
+import com.finalcall.common.exception.BidErrorCode;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.auction.entity.AuctionBidContext;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.repository.AuctionRepository;
-import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.BidIncrementProperties;
 import com.finalcall.domain.bid.dto.BidPlaceCommand;
 import com.finalcall.domain.bid.dto.BidPlaceResult;

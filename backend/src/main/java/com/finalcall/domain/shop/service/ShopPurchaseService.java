@@ -11,16 +11,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.SettlementErrorCode;
+import com.finalcall.common.exception.ShopErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.settlement.FeePolicyProperties;
-import com.finalcall.domain.settlement.SettlementErrorCode;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 import com.finalcall.domain.settlement.service.FeeCalculator;
 import com.finalcall.domain.settlement.service.SettlementRecorder;
-import com.finalcall.domain.shop.ShopErrorCode;
 import com.finalcall.domain.shop.dto.ShopPurchaseResult;
 import com.finalcall.domain.shop.entity.ShopPurchaseContext;
 import com.finalcall.domain.shop.entity.ShopStatus;

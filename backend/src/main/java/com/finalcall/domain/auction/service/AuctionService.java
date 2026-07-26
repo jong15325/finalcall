@@ -13,10 +13,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finalcall.common.exception.AuctionErrorCode;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.auction.dto.AuctionDetail;
 import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
 import com.finalcall.domain.auction.dto.AuctionRegisterResult;

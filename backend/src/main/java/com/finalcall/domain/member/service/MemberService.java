@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
+import com.finalcall.common.exception.MemberErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.member.MemberErrorCode;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.member.repository.UserBalanceRepository;

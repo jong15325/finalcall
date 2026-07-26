@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finalcall.common.exception.NoticeErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.notice.NoticeErrorCode;
 import com.finalcall.domain.notice.dto.NoticeCursorSlice;
 import com.finalcall.domain.notice.entity.Notice;
 import com.finalcall.domain.notice.entity.NoticeType;

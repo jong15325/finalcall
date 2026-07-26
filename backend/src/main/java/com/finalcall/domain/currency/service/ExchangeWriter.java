@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finalcall.common.exception.CurrencyErrorCode;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.currency.CurrencyErrorCode;
 import com.finalcall.domain.currency.ExchangeProperties;
 import com.finalcall.domain.currency.entity.ExchangeDirection;
 import com.finalcall.domain.currency.entity.MoneyExchange;

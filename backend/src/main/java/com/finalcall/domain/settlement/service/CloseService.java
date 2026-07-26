@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.SettlementErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.auction.entity.AuctionCloseContext;
@@ -20,7 +21,6 @@ import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.settlement.FeePolicyProperties;
-import com.finalcall.domain.settlement.SettlementErrorCode;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 
 import lombok.RequiredArgsConstructor;

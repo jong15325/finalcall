@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.ItemErrorCode;
 import com.finalcall.common.logging.ServiceLog;
-import com.finalcall.domain.item.ItemErrorCode;
 import com.finalcall.domain.item.dto.ItemInstanceView;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;

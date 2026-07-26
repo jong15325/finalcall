@@ -18,10 +18,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.finalcall.common.exception.AuthErrorCode;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
-import com.finalcall.domain.auth.AuthErrorCode;
 import com.finalcall.domain.auth.dto.TokenBundle;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;

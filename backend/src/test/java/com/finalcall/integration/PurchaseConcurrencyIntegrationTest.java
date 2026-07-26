@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import com.finalcall.common.exception.AuctionErrorCode;
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.AuctionErrorCode;
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionResultType;
 import com.finalcall.domain.auction.entity.AuctionStatus;

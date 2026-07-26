@@ -1,8 +1,6 @@
-package com.finalcall.domain.bid;
+package com.finalcall.common.exception;
 
 import org.springframework.http.HttpStatus;
-
-import com.finalcall.common.exception.ErrorCode;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

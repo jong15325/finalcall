@@ -26,8 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
+import com.finalcall.common.exception.MemberErrorCode;
 import com.finalcall.common.security.TokenProvider;
-import com.finalcall.domain.member.MemberErrorCode;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
 import com.finalcall.domain.member.service.MemberService;

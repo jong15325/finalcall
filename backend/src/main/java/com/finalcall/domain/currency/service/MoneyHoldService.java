@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finalcall.common.exception.BidErrorCode;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.repository.BidRepository;
 import com.finalcall.domain.currency.entity.MoneyHold;
 import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;

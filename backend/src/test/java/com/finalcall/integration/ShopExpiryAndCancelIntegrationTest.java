@@ -6,10 +6,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.ShopErrorCode;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.member.entity.User;
-import com.finalcall.domain.shop.ShopErrorCode;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopStatus;
 import com.finalcall.support.ShopTestBase;

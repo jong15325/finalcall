@@ -15,10 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
+import com.finalcall.common.exception.InventoryErrorCode;
+import com.finalcall.common.exception.ItemErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.item.InventoryErrorCode;
-import com.finalcall.domain.item.ItemErrorCode;
 import com.finalcall.domain.item.dto.InventoryData;
 import com.finalcall.domain.item.dto.TempStorageSlice;
 import com.finalcall.domain.item.entity.ItemInstance;

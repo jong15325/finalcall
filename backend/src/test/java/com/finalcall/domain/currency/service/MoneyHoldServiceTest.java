@@ -19,9 +19,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.finalcall.common.exception.BidErrorCode;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
-import com.finalcall.domain.bid.BidErrorCode;
 import com.finalcall.domain.bid.repository.BidRepository;
 import com.finalcall.domain.currency.entity.MoneyHold;
 import com.finalcall.domain.currency.entity.MoneyHoldSnapshot;

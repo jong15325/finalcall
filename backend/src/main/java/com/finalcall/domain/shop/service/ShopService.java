@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.ShopErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.item.entity.ItemInstance;
@@ -25,7 +26,6 @@ import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingSearchService;
 import com.finalcall.domain.settlement.service.FeeCalculator;
-import com.finalcall.domain.shop.ShopErrorCode;
 import com.finalcall.domain.shop.ShopListingProperties;
 import com.finalcall.domain.shop.dto.MyShopListing;
 import com.finalcall.domain.shop.dto.MyShopSlice;

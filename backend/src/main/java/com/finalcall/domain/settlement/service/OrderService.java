@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.OrderErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.settlement.OrderErrorCode;
 import com.finalcall.domain.settlement.dto.OrderSlice;
 import com.finalcall.domain.settlement.dto.OrderView;
 import com.finalcall.domain.settlement.entity.OrderRole;
