@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ItemErrorCode;
 import com.finalcall.common.logging.ServiceLog;
-import com.finalcall.domain.item.dto.ItemInstanceView;
+import com.finalcall.domain.item.dto.ItemInstanceDetailResponse;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
 
@@ -30,12 +30,12 @@ public class ItemInstanceService {
     private final ItemInstanceRepository itemInstanceRepository;
 
     @ServiceLog
-    public ItemInstanceView getDetail(String publicId) {
+    public ItemInstanceDetailResponse getDetail(String publicId) {
         ItemInstance instance = itemInstanceRepository.findDetailByPublicId(publicId)
             .orElseThrow(() -> new BusinessException(ItemErrorCode.ITEM_NOT_FOUND));
         Long viewerId = currentUserIdOrNull();
         boolean viewerIsOwner = viewerId != null && instance.isOwnedBy(viewerId);
-        return new ItemInstanceView(instance, viewerIsOwner);
+        return ItemInstanceDetailResponse.from(instance, viewerIsOwner);
     }
 
     /**

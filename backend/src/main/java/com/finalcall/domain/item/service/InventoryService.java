@@ -18,9 +18,10 @@ import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.exception.InventoryErrorCode;
 import com.finalcall.common.exception.ItemErrorCode;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.item.dto.InventoryData;
-import com.finalcall.domain.item.dto.TempStorageSlice;
+import com.finalcall.domain.item.dto.TempStorageItemResponse;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.TempStorage;
@@ -61,16 +62,14 @@ public class InventoryService {
     }
 
     @ServiceLog
-    public TempStorageSlice getMyTempStorage(String cursor, int size) {
+    public CursorResponse<TempStorageItemResponse, String> getMyTempStorage(String cursor, int size) {
         Long userId = currentUserId();
         TempStorageCursor decoded = TempStorageCursor.decode(cursor);
         List<TempStorage> fetched = tempStorageRepository.findByCursor(userId, decoded.storedAt(), decoded.instanceId(),
             size);
-
-        boolean hasNext = fetched.size() > size;
-        List<TempStorage> content = hasNext ? fetched.subList(0, size) : fetched;
-        String nextCursor = content.isEmpty() ? null : encodeLast(content);
-        return new TempStorageSlice(content, nextCursor, hasNext);
+        // 커서는 매핑 전 원본(TempStorage)의 마지막 항목에서 안정 정렬 키 (stored_at, instance_id)로 추출한다.
+        return CursorResponse.from(fetched, size, TempStorageItemResponse::from,
+            temp -> TempStorageCursor.encode(temp.getStoredAt(), temp.getInstance().getId()));
     }
 
     /**
@@ -225,11 +224,6 @@ public class InventoryService {
             return new BusinessException(InventoryErrorCode.SLOT_OCCUPIED);
         }
         throw ex;
-    }
-
-    private String encodeLast(List<TempStorage> content) {
-        TempStorage last = content.get(content.size() - 1);
-        return TempStorageCursor.encode(last.getStoredAt(), last.getInstance().getId());
     }
 
     /** 인증 주체(내부 PK)를 해석한다. {@code /me/**} 는 SecurityConfig 가 인증을 강제하므로 항상 존재한다(B-009). */

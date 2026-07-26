@@ -27,9 +27,12 @@ public record ItemInstanceDetailResponse(
     String ownerMasked,
     Integer slotNo) {
 
-    public static ItemInstanceDetailResponse from(ItemInstanceView view) {
-        ItemInstance instance = view.instance();
-        boolean showSlot = view.viewerIsOwner() && instance.getLocation() == ItemLocation.INVENTORY;
+    /**
+     * 상세 응답을 만든다. 소유 여부({@code viewerIsOwner})는 서비스가 SecurityContext 주체로 판정해 넘긴다
+     * (IDOR 방지 — spec §5.2). 비인증 조회는 {@code viewerIsOwner=false}로 공개 필드만 노출한다.
+     */
+    public static ItemInstanceDetailResponse from(ItemInstance instance, boolean viewerIsOwner) {
+        boolean showSlot = viewerIsOwner && instance.getLocation() == ItemLocation.INVENTORY;
         return ItemInstanceDetailResponse.builder()
             .itemInstancePublicId(instance.getPublicId())
             .template(ItemTemplateResponse.from(instance.getTemplate()))

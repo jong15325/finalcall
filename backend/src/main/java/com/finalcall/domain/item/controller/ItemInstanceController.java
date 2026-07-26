@@ -26,7 +26,6 @@ public class ItemInstanceController {
 
     @GetMapping("/{itemInstancePublicId}")
     public ApiResponse<ItemInstanceDetailResponse> get(@PathVariable String itemInstancePublicId) {
-        return ApiResponse.success(
-            ItemInstanceDetailResponse.from(itemInstanceService.getDetail(itemInstancePublicId)));
+        return ApiResponse.success(itemInstanceService.getDetail(itemInstancePublicId));
     }
 }

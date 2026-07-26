@@ -9,10 +9,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.domain.item.dto.InventoryResponse;
 import com.finalcall.domain.item.dto.RelocateRequest;
 import com.finalcall.domain.item.dto.RelocateResponse;
-import com.finalcall.domain.item.dto.TempStorageResponse;
+import com.finalcall.domain.item.dto.TempStorageItemResponse;
 import com.finalcall.domain.item.service.InventoryService;
 
 import jakarta.validation.Valid;
@@ -39,10 +40,10 @@ public class InventoryController {
 
     /** 내 임시보관(오버플로우) — cursor 페이지((stored_at desc, instance_id desc)). */
     @GetMapping("/temp-storage")
-    public ApiResponse<TempStorageResponse> getTempStorage(
+    public ApiResponse<CursorResponse<TempStorageItemResponse, String>> getTempStorage(
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(TempStorageResponse.from(inventoryService.getMyTempStorage(cursor, size)));
+        return ApiResponse.success(inventoryService.getMyTempStorage(cursor, size));
     }
 
     /**
