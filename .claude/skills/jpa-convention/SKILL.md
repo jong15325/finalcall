@@ -7,7 +7,7 @@ description: backend-impl이 엔티티·리포지토리·서비스·컨트롤러
 
 정본: CLAUDE.md 섹션 5. 본보기: `backend/src/main/java/com/finalcall/**/notice/**`.
 
-**물리 배치(feature-first, EPIC-RESTRUCTURE)**: 각 클래스는 `com.finalcall.domain.<feature>.<layer>`에 둔다 — Controller→`controller`, 표현 DTO→`dto`, Service·도메인 VO→`service`, Repository(+Custom/Impl)→`repository`, Entity·귀속 enum→`entity`, ErrorCode·`*Properties`→feature 루트. 공용 커널(`common`·`infra`)은 `domain` 그룹 밖 제자리. 분류표 = `docs/common/proposals/layer-restructure-proposal-v0.1.md`(내용 v0.3) §9. 이전이 끝나지 않은 기존 코드는 구 배치(`api/…`·`domain/…`)일 수 있다(전환 중, 한시적).
+**물리 배치(feature-first, EPIC-RESTRUCTURE)**: 각 클래스는 `com.finalcall.domain.<feature>.<layer>`에 둔다 — Controller→`controller`, 표현 DTO→`dto`, Service·도메인 VO→`service`, Repository(+Custom/Impl)→`repository`, Entity·귀속 enum→`entity`, ErrorCode·`*Properties`→feature 루트. 공용 커널(`common`·`infra`)은 `domain` 그룹 밖 제자리. 분류표 = `docs/common/proposals/layer-restructure-proposal-v0.1.md`(내용 v0.3) §9. 재구성은 전 도메인 완료됐다(`com.finalcall.api.*` 소멸).
 
 - **Entity**: BaseTimeEntity/BaseEntity 상속 · @NoArgsConstructor(PROTECTED) · 생성자 @Builder · @Setter 금지 → 도메인 메서드(update()/delete()) · soft delete(isDeleted).
 - **Repository**: `findByIdOrThrow(id, ErrorCode)` default 패턴 · 커스텀 쿼리는 `<Entity>RepositoryCustom` + `<Entity>RepositoryImpl`(QueryDSL).

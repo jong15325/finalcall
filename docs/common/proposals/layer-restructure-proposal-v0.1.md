@@ -1,6 +1,6 @@
 # 패키지 레이어 구조 개정안 (v0.3)
 
-- **상태: DECIDED (2026-07-25, 사용자·게이트2) · v0.3 규약 확정 (consultant)** — 채택 = **옵션 C(feature-first + 도메인 내부 controller/service/repository 하위패키지, On-Race 방식 복제)**. 확정 세부: (1) 업무 도메인 feature는 **`com.finalcall.domain` 그룹 아래**로 묶는다 → `com.finalcall.domain.<feature>.<layer>`, (2) 횡단 인프라·공용 커널은 현행 `common`·`infra` 유지(feature 아님·제자리·**`domain` 그룹 밖**, 총괄 기본값·변경 가능), (3) 타이밍 = 재구성 먼저·EPIC-EMAIL-VERIFY hold. 실행 = EPIC-RESTRUCTURE(FC-119~122).
+- **상태: DECIDED (2026-07-25, 사용자·게이트2) · v0.3 규약 확정 (consultant) · Phase 2·3 완료 (2026-07-26)** — 채택 = **옵션 C(feature-first + 도메인 내부 controller/service/repository 하위패키지, On-Race 방식 복제)**. 확정 세부: (1) 업무 도메인 feature는 **`com.finalcall.domain` 그룹 아래**로 묶는다 → `com.finalcall.domain.<feature>.<layer>`, (2) 횡단 인프라·공용 커널은 현행 `common`·`infra` 유지(feature 아님·제자리·**`domain` 그룹 밖**, 총괄 기본값·변경 가능), (3) 타이밍 = 재구성 먼저·EPIC-EMAIL-VERIFY hold. 실행 = EPIC-RESTRUCTURE(FC-119~122). **완료 결과**: 전 도메인이 `com.finalcall.domain.<feature>.<layer>`로 이전(`com.finalcall.api.*` 소멸), 최상위 = `common`·`domain`·`infra`·`support`. 구 최상위-레이어 ArchUnit 규칙 제거·신 규칙 3종만 잔존(§10). **아래 §0~§8은 결정 이력이며, `com.finalcall.api`·`domain/<f>` 등 구 경로 서술은 재구성 이전의 진단·계획 맥락이다(현행 아님).**
 - **v0.3 변경 사유(2026-07-25, 사용자 결정)**: v0.2의 "`domain.` 접두 생략(`com.finalcall.<feature>`)"을 **뒤집어**, 업무 도메인 feature를 `com.finalcall.domain` 그룹 아래로 묶는다(On-Race 원형과 정합). 계층 5분할·feature 루트 규칙은 불변, 각 feature 위에 `domain.` 한 겹만 추가된다. 커널(`common`·`infra`)은 domain 밖 제자리로 불변. ArchUnit 영향은 §10 참조((b) 슬라이스 매칭 패턴만 갱신, (a)(c)는 불변).
 - **v0.2 추가분(FC-119)**: §9 도메인별 목표 레이아웃 정밀표, §10 신규 ArchUnit 규칙 스펙(FC-120이 구현), §11 이전 순서 재확인. §0~§8은 결정 이력으로 보존한다(원안 근거·비교). ArchUnit 강제는 옵션 B의 **이름 기반 규칙**을 쓰되 내부 하위패키지명은 `controller/service/repository/entity/dto`(옵션 C)로 확정 — 두 옵션의 결론이 실무에서 합쳐진 형태다.
 - (이전 상태: v0.1 DECIDED · v0.1 DRAFT — 사용자 결정 대기)
@@ -371,6 +371,8 @@ static final ArchRule infra_커널_격리 = noClasses()
 
 - **Phase 0(FC-120)**: (a)(c)를 신설, (b)는 기존 재사용. 구 `레이어_의존_방향_규율`·`common_은_상위계층을_의존하지_않는다`·`infra_는_상위계층을_의존하지_않는다`·`domain_은_api를_의존하지_않는다`는 **그대로 둔다**. 아직 파일이 `api/`·`domain/`에 있으므로 구 규칙이 유효하고, 이동된 파일은 신 규칙이 강제 → 공백 없음.
 - **Phase 3(FC-122)**: 전 feature 이전 완료 후 구 4규칙 삭제. `api`/`domain` 레이어 정의가 빈 상태가 되므로 신 규칙만 남긴다.
+
+**최종 상태(FC-122 완료, 2026-07-26)**: 구 4규칙(`레이어_의존_방향_규율`·`common_은_상위계층을_의존하지_않는다`·`infra_는_상위계층을_의존하지_않는다`·`domain_은_api를_의존하지_않는다`) 제거 완료. **신 규칙 3종만 잔존** — (a) 슬라이스 내부 계층방향, (b) 슬라이스 비순환, (c) 커널 격리(common·infra). (b) 비순환은 **top-level(`com.finalcall.domain.(*)..`) 단위 유지** — feature 단위 격리(타 feature 내부 클래스 접근 금지·Spring Modulith)로의 승격은 **보류**(현 규모에서 top-level 비순환으로 충분, §3 옵션 B의 선택 항목이었음).
 
 ## 11. 이전 순서 재확인 (§5 Phase 2)
 

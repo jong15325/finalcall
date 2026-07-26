@@ -38,7 +38,7 @@
 | `email_active` | `VARCHAR(255)` (생성) | — | `IF(is_deleted, NULL, email)` STORED | 활성 회원 유니크 강제용. 원본 `email` 컬럼엔 UK를 걸지 않는다(V4 패턴 동형). |
 
 - 기존 행(가입 회원)은 `email=NULL`·`email_verified=0`으로 backfill된다(이메일 없음·미인증). `email`이 nullable이므로 backfill 충돌 없음.
-- **엔티티(User.java)**: `email`(String, nullable)·`emailVerified`(boolean) 필드 추가. 도메인 메서드(`@Setter` 금지, §5):
+- **엔티티(`com.finalcall.domain.member.entity.User`)**: `email`(String, nullable)·`emailVerified`(boolean) 필드 추가. 도메인 메서드(`@Setter` 금지, §5):
   - `assignEmail(String normalizedEmail)` — 이메일 설정/변경. `emailVerified`를 **false로 (재)초기화**.
   - `markEmailVerified()` — 인증 성공 시 `emailVerified=true`.
   - (동일 이메일 재설정은 서비스에서 no-op 판단 — 아래 §4.2.)
@@ -235,7 +235,7 @@ email:
 - **B4. 메일 인프라** — `spring-boot-starter-mail`(build.gradle) + `MailConfig` + `EmailSender`(추상화·local skip/log) + 코드 메일 템플릿. (신규 파일 → **B1·B2·B3와 병렬 가능**)
 - **B5. EmailErrorCode enum + EmailVerifyProperties + application.yml** — `spring.mail.*`·`email.verify.*` + 프로파일별 sender-enabled. (B3·B4 참조 값)
 - **B6. signup 변경** — `SignupRequest` email 선택 필드 + `AuthService.signup` email 전달·`toDuplicateException` email UK→`EMAIL_007` 분기 + `AuthController`. (B2 의존)
-- **B7. 이메일 설정·인증 엔드포인트 3종** — `MemberController`(또는 신규 `MemberEmailController`) `PUT /me/email`·`POST /me/email/verification-request`·`POST /me/email/verify` + `EmailVerificationService` + `MemberService` 이메일 설정 + `MemberProfileResponse`에 `emailVerified`·`emailMasked` 추가. (B2·B3·B4·B5 의존)
+- **B7. 이메일 설정·인증 엔드포인트 3종** — `MemberController`(또는 신규 `MemberEmailController`) `PUT /me/email`·`POST /me/email/verification-request`·`POST /me/email/verify` + `EmailVerificationService` + `MemberService` 이메일 설정 + `MemberProfileResponse`에 `emailVerified`·`emailMasked` 추가. (B2·B3·B4·B5 의존) 배치 = member feature 트리(`com.finalcall.domain.member.{controller,service,dto}`, ErrorCode·Properties는 feature 루트).
 
 **프론트엔드**
 - **F1. 가입 폼** — email 입력 필드(**선택** 표기) + `@Email` 형식 검증. (계약 §2 확정 후)
