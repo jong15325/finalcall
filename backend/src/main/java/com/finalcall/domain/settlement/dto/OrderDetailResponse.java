@@ -26,7 +26,7 @@ public record OrderDetailResponse(
     OrderRole myRole,
     SaleOrderSourceType sourceType,
     String counterpartyMasked,
-    OrderItemView item,
+    OrderItemResponse item,
     String itemInstancePublicId,
     long finalPrice,
     SaleOrderStatus status,
@@ -35,10 +35,13 @@ public record OrderDetailResponse(
     Long feeAmount,
     Long settleAmount) {
 
-    /** 요청자 관점으로 상세를 만든다. 당사자 검증({@code ORDER_002})은 서비스가 이미 통과시켰다. */
-    public static OrderDetailResponse from(OrderView view) {
-        SaleOrder order = view.order();
-        Long viewerId = view.viewerId();
+    /**
+     * 요청자 관점으로 상세를 만든다. 당사자 검증({@code ORDER_002})은 서비스가 이미 통과시켰다.
+     *
+     * @param order    조회된 sale_order(연관 fetch join 완료)
+     * @param viewerId 요청자 PK(당사자 검증 통과 — buyer 또는 seller). myRole·판매자 전용 필드 노출 기준
+     */
+    public static OrderDetailResponse from(SaleOrder order, Long viewerId) {
         boolean seller = order.getSeller().getId().equals(viewerId);
         OrderRole myRole = seller ? OrderRole.SELLER : OrderRole.BUYER;
         String counterpartyMasked = seller
@@ -49,7 +52,7 @@ public record OrderDetailResponse(
             .myRole(myRole)
             .sourceType(order.getSourceType())
             .counterpartyMasked(counterpartyMasked)
-            .item(OrderItemView.from(order.getItemInstance()))
+            .item(OrderItemResponse.from(order.getItemInstance()))
             .itemInstancePublicId(order.getItemInstance().getPublicId())
             .finalPrice(order.getFinalPrice())
             .status(order.getStatus())

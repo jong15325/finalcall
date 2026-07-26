@@ -6,8 +6,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.settlement.dto.OrderCursorResponse;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.domain.settlement.dto.OrderDetailResponse;
+import com.finalcall.domain.settlement.dto.OrderSummaryResponse;
 import com.finalcall.domain.settlement.entity.OrderRole;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 import com.finalcall.domain.settlement.service.OrderService;
@@ -37,19 +38,18 @@ public class OrderController {
 
     /** 내 거래내역 — 인증 필요. buyer OR seller 스코프 + role·sourceType 필터 + cursor 페이지(created_at desc). */
     @GetMapping("/api/v1/me/orders")
-    public ApiResponse<OrderCursorResponse> myOrders(
+    public ApiResponse<CursorResponse<OrderSummaryResponse, String>> myOrders(
         @RequestParam(required = false) OrderRole role,
         @RequestParam(required = false) SaleOrderSourceType sourceType,
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(
-            OrderCursorResponse.from(orderService.getMyOrders(role, sourceType, cursor, normalizeSize(size))));
+        return ApiResponse.success(orderService.getMyOrders(role, sourceType, cursor, normalizeSize(size)));
     }
 
     /** 주문 상세 — 인증 필요(당사자만). 없음 404(ORDER_001), 당사자 아님 403(ORDER_002). */
     @GetMapping("/api/v1/orders/{orderPublicId}")
     public ApiResponse<OrderDetailResponse> orderDetail(@PathVariable String orderPublicId) {
-        return ApiResponse.success(OrderDetailResponse.from(orderService.getOrderDetail(orderPublicId)));
+        return ApiResponse.success(orderService.getOrderDetail(orderPublicId));
     }
 
     /** size 를 1..{@value #MAX_PAGE_SIZE} 로 접는다. 0 이하는 기본값으로 되돌린다. */

@@ -31,7 +31,7 @@ public record OrderSummaryResponse(
     OrderRole myRole,
     SaleOrderSourceType sourceType,
     String counterpartyMasked,
-    OrderItemView item,
+    OrderItemResponse item,
     long finalPrice,
     SaleOrderStatus status,
     Instant createdAt,
@@ -55,7 +55,7 @@ public record OrderSummaryResponse(
             .myRole(myRole)
             .sourceType(order.getSourceType())
             .counterpartyMasked(counterpartyMasked)
-            .item(OrderItemView.from(order.getItemInstance()))
+            .item(OrderItemResponse.from(order.getItemInstance()))
             .finalPrice(order.getFinalPrice())
             .status(order.getStatus())
             .createdAt(order.getCreatedAt())

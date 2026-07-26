@@ -10,9 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.OrderErrorCode;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.settlement.dto.OrderSlice;
-import com.finalcall.domain.settlement.dto.OrderView;
+import com.finalcall.domain.settlement.dto.OrderDetailResponse;
+import com.finalcall.domain.settlement.dto.OrderSummaryResponse;
 import com.finalcall.domain.settlement.entity.OrderRole;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderCursor;
@@ -47,44 +48,40 @@ public class OrderService {
      * @param sourceType 출처 필터(null=전체)
      * @param cursorToken 커서 문자열(null=첫 페이지, 손상 시 400)
      * @param size        페이지 크기(호출 측이 경계로 정규화)
-     * @return 요청자 PK 를 포함한 커서 페이지(myRole 파생 근거)
+     * @return 역할 인지 요약으로 매핑된 커서 페이지(nextCursor 는 opaque String)
      */
     @ServiceLog
-    public OrderSlice getMyOrders(OrderRole roleFilter, SaleOrderSourceType sourceType, String cursorToken, int size) {
+    public CursorResponse<OrderSummaryResponse, String> getMyOrders(
+        OrderRole roleFilter, SaleOrderSourceType sourceType, String cursorToken, int size) {
         Long userId = currentUserId();
         SaleOrderCursor cursor = SaleOrderCursor.decode(cursorToken);
         List<SaleOrder> fetched = saleOrderRepository.findByCursor(userId, roleFilter, sourceType, cursor, size);
-
-        boolean hasNext = fetched.size() > size;
-        List<SaleOrder> content = hasNext ? fetched.subList(0, size) : fetched;
-        String nextCursor = content.isEmpty() ? null : encodeLast(content);
-        return new OrderSlice(content, nextCursor, hasNext, userId);
+        // 뷰어 컨텍스트(myRole·상대 마스킹·판매자 전용 필드)는 매퍼 클로저에서 종결한다 — 봉투엔 파생완료 요약만 담긴다.
+        // 커서는 매핑 전 원본(SaleOrder)의 마지막 항목(created_at + id)에서 추출해 형상(String opaque)을 보존한다.
+        return CursorResponse.from(fetched, size,
+            order -> OrderSummaryResponse.from(order, userId),
+            order -> SaleOrderCursor.encode(order.getCreatedAt(), order.getId()));
     }
 
     /**
      * 주문 상세(계약 §4.3) — public_id 조회 후 당사자 검증(IDOR). ULID 라 403/404 구분의 열거 리스크가 실질 0이므로
      * 계약 기확정대로 미존재는 404, 당사자 아님은 403 을 분리한다.
      *
-     * @return 요청자 PK 를 포함한 상세(역할 노출 파생 근거)
+     * @return 요청자 관점으로 파생된 상세(역할별 노출 종결)
      * @throws BusinessException {@code ORDER_001}(404 없음)·{@code ORDER_002}(403 당사자 아님)
      */
     @ServiceLog
-    public OrderView getOrderDetail(String orderPublicId) {
+    public OrderDetailResponse getOrderDetail(String orderPublicId) {
         Long userId = currentUserId();
         SaleOrder order = saleOrderRepository.findDetailByPublicId(orderPublicId)
             .orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
         Preconditions.validate(isParty(order, userId), OrderErrorCode.ORDER_NOT_PARTY);
-        return new OrderView(order, userId);
+        return OrderDetailResponse.from(order, userId);
     }
 
     /** 요청자가 주문 당사자(buyer 또는 seller)인지. fetch join 으로 초기화된 연관이라 lazy 접근이 아니다. */
     private boolean isParty(SaleOrder order, Long userId) {
         return order.getBuyer().getId().equals(userId) || order.getSeller().getId().equals(userId);
-    }
-
-    private String encodeLast(List<SaleOrder> content) {
-        SaleOrder last = content.get(content.size() - 1);
-        return SaleOrderCursor.encode(last.getCreatedAt(), last.getId());
     }
 
     /** 인증 주체(내부 PK). {@code /me/orders}·{@code /orders/**} 는 SecurityConfig 가 인증을 강제한다(B-009). */

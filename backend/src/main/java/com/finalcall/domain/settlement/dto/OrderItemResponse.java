@@ -15,7 +15,7 @@ import lombok.Builder;
  * <p>{@code skill1}/{@code skill2}는 스킬 코드(skill_definition.skill_code)이며 슬롯이 비면 null 이다.
  */
 @Builder
-public record OrderItemView(
+public record OrderItemResponse(
     int typeCode,
     int mainCategory,
     int subGroup,
@@ -29,9 +29,9 @@ public record OrderItemView(
     String displayName) {
 
     /** item·template·skill 은 fetch join 으로 초기화된 상태여야 한다(OSIV off — 리포지토리 쿼리가 보장). */
-    public static OrderItemView from(ItemInstance item) {
+    public static OrderItemResponse from(ItemInstance item) {
         ItemTemplate template = item.getTemplate();
-        return OrderItemView.builder()
+        return OrderItemResponse.builder()
             .typeCode(template.getTypeCode())
             .mainCategory(template.getMainCategory())
             .subGroup(template.getSubGroup())
