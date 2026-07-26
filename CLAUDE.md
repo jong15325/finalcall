@@ -8,7 +8,7 @@ Spring Boot 대규모 트래픽 스켈레톤 프로젝트의 Claude Code 지침�
 **모노레포다**(D-098). `finalcall/{backend/{src,gateway}, frontend, config, docs}`.
 코드 경로는 `backend/src/**`·`backend/gateway/**`, 스타일 정본은 루트 `config/`, 문서는 루트 `docs/`.
 
-**패키지 레이아웃 = feature-first**(EPIC-RESTRUCTURE, 2026-07-25 게이트2). 최상위를 기술 계층(구 `api`/`domain`)이 아니라 **도메인(feature)** 으로 분할하되, 업무 도메인 feature들은 **`com.finalcall.domain` 그룹 아래**로 묶고 각 feature 내부에 `controller/service/repository/entity/dto` 계층 하위패키지를 둔다 — 패키지는 `com.finalcall.domain.<feature>.<layer>`(예: `com.finalcall.domain.member.service.MemberService`, `com.finalcall.domain.member.entity.User`). 횡단 인프라·공용 커널은 feature가 아니므로 **`domain` 그룹 밖** `com.finalcall.common`·`com.finalcall.infra`에 제자리로 남는다(domain 밑으로 넣지 않는다). 상세 규약·목표 레이아웃·ArchUnit 규칙 스펙 = `docs/common/proposals/layer-restructure-proposal-v0.1.md`(파일명은 v0.1이나 내용은 v0.3 DECIDED). 재구성은 전 도메인 완료됐다(EPIC-RESTRUCTURE, `com.finalcall.api.*` 소멸 · 최상위 = `common`·`domain`·`infra`·`support`).
+**패키지 레이아웃 = feature-first**(EPIC-RESTRUCTURE, 2026-07-25 게이트2). 최상위를 기술 계층(구 `api`/`domain`)이 아니라 **도메인(feature)** 으로 분할하되, 업무 도메인 feature들은 **`com.finalcall.domain` 그룹 아래**로 묶고 각 feature 내부에 `controller/service/repository/entity/dto` 계층 하위패키지를 둔다 — 패키지는 `com.finalcall.domain.<feature>.<layer>`(예: `com.finalcall.domain.member.service.MemberService`, `com.finalcall.domain.member.entity.User`). 횡단 인프라·공용 커널은 feature가 아니므로 **`domain` 그룹 밖** `com.finalcall.common`·`com.finalcall.infra`에 제자리로 남는다(domain 밑으로 넣지 않는다). 상세 규약·목표 레이아웃·ArchUnit 규칙 스펙 = `docs/common/proposals/layer-restructure-proposal-v0.1.md`(파일명은 v0.1이나 내용은 v0.4 — feature 내부 어휘·구조 규약은 EPIC-CONVENTION-V2 §9.7~§9.10·§10(e)(f)(g)). 재구성은 전 도메인 완료됐다(EPIC-RESTRUCTURE, `com.finalcall.api.*` 소멸 · 최상위 = `common`·`domain`·`infra`·`support`).
 
 ---
 
@@ -207,17 +207,17 @@ INCLUDE_AWS_SPEC_HINT = true
 
 ## 섹션 5: 도메인 코드 컨벤션 (Stage D 이후 모든 도메인 적용)
 
-- **물리 배치(feature-first, EPIC-RESTRUCTURE)**: 각 클래스는 `com.finalcall.domain.<feature>.<layer>`에 둔다 — Controller→`controller`, Request/Response 등 표현 DTO→`dto`, Service·도메인 VO→`service`, Repository(+Custom/Impl)→`repository`, Entity·귀속 enum→`entity`. `ErrorCode`·`*Properties`·도메인 예외는 feature 루트. 공용 커널(`common`·`infra`)은 `domain` 그룹 밖 제자리. 상세 분류표·경계 사례는 proposal v0.3 §9. 아래 네이밍·설계 규칙은 배치와 무관하게 그대로 적용된다.
+- **물리 배치(feature-first, EPIC-RESTRUCTURE + V2 규약 EPIC-CONVENTION-V2)**: 각 클래스는 `com.finalcall.domain.<feature>.<layer>`에 둔다 — Controller→`controller`, 표현 DTO(`Request`/`Response`/`CursorResponse<T>`)→`dto`, Service·서비스 내부 계산 VO→`service`, Repository(+Custom/Impl)→`repository`, Entity·귀속 enum·영속 VO/스냅샷→`entity`. **`*ErrorCode`는 `com.finalcall.common.exception`(V2 중앙화 — feature 루트 아님)**, **feature 전용 `*Properties`는 feature `config/` 하위패키지**(cross-cutting Properties는 인프라 종속=`infra`·계층중립=`common`), **도메인 예외(`*Exception`)만 feature 루트**. 공용 커널(`common`·`infra`)은 `domain` 그룹 밖 제자리. 상세 분류표·V2 4축·경계 사례는 proposal §9(특히 §9.7~§9.10). 아래 네이밍·설계 규칙은 배치와 무관하게 그대로 적용된다.
 - **Entity**: `BaseTimeEntity`/`BaseEntity` 상속, `@NoArgsConstructor(PROTECTED)`, 생성자에 `@Builder`,
   `@Setter` 금지 → 도메인 메서드(`update()`/`delete()`), soft delete(`isDeleted`).
 - **Repository**: `findByIdOrThrow(id, ErrorCode)` default 메서드 패턴, 커스텀 쿼리는
   `<Entity>RepositoryCustom` + `<Entity>RepositoryImpl`(QueryDSL).
 - **Service**: 클래스 레벨 `@Transactional(readOnly = true)`, 쓰기만 `@Transactional` 오버라이드.
-  `@ServiceLog` 부착, 비즈니스 검증은 `Preconditions.validate(condition, ErrorCode)`.
+  `@ServiceLog` 부착, 비즈니스 검증은 `Preconditions.validate(condition, ErrorCode)`. **구조 = 오케스트레이션 `*Service` + 책임분리 협력 빈(`*Service`/`*Worker`/`*Calculator`/`*Recorder`/`*Initializer`/`*Indexer`)**. **서비스 내부 계산 VO(`*Decision`·`*Metrics` 등, 영속 아님·직렬화 아님)는 별도 record로 추출해 `service/`에 잔류**(영속 VO/스냅샷은 `entity/`, 직렬화 계약은 `dto/`). 판정·네이밍 표준 proposal §9.10.
 - **Controller**: 반환 타입 항상 `ApiResponse<T>`(예외: 상태 변경만 하고 본문이 없는 응답은 204 No Content + `void`/`@ResponseStatus` 허용 — ApiResponse 래핑 제외, B-019·D-076), 요청 검증 `@Valid`, try-catch 금지(전역 핸들러).
 - **DTO**: Java `record`, Response 는 `@Builder` + `static from(Entity)`,
-  네이밍 `<도메인><목적>Request/Response`(Dto 접미사 금지).
-- **도메인 ErrorCode**: 공통 `ErrorCode` 인터페이스를 구현한 도메인별 enum, 네이밍 `{DOMAIN}_{3자리}`.
+  네이밍 `<도메인><목적>Request/Response`(Dto 접미사 금지). **웹 DTO 허용 접미사 = `Request`·`Response`·`CursorResponse<T>`(common 제네릭)뿐 — `*View`·`*Detail`·`*Slice` 접미사 폐지**(중첩 read는 `*Response` 내부 static record, 커서 목록은 common `CursorResponse<T>`). 서비스 입출력 계약 `*Command`·`*Result`는 **bid·settlement feature에서만** 유지(그 외 feature는 서비스가 웹 DTO 직접 수령·반환), 배치는 `dto/`. **형상 보존 필수**: 어휘 정리는 타입명·패키지만 바꾸고 직렬화 JSON 형상(필드명·중첩)은 불변(형상 변경은 게이트2 별건). 상세 proposal §9.7.
+- **도메인 ErrorCode**: 공통 `ErrorCode` 인터페이스를 구현한 도메인별 enum, 네이밍 `{DOMAIN}_{3자리}`. **배치 = `com.finalcall.common.exception`(V2 중앙화, feature 루트 아님 — "ErrorCode=feature 루트" 규약 번복)**. 도메인별 enum 분리는 유지(병합 금지), 근거·상세 proposal §9.8.
 
 ---
 

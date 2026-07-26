@@ -1,5 +1,6 @@
-# 패키지 레이어 구조 개정안 (v0.3)
+# 패키지 레이어 구조 개정안 (v0.4)
 
+- **v0.4 개정 (2026-07-26, EPIC-CONVENTION-V2 / FC-123·KAN-138, consultant) — 게이트2 상신 대상(미승인)**: feature-first 배치(EPIC-RESTRUCTURE)는 완료됐고, 이제 feature *내부* 어휘·구조 규약을 확정 4축으로 정식화한다. (1) 웹 DTO 어휘를 `Request`/`Response`/`CursorResponse<T>`로 단일화하고 `*View`·`*Detail`·`*Slice` 접미사를 폐지(§9.7), (2) 도메인 `*ErrorCode`를 feature 루트 → `common/exception`로 이전하여 "ErrorCode=feature 루트" 규약을 **번복**(§9.8), (3) Properties를 소비범위로 분리(feature 전용→feature `config/`, 인프라 종속 cross-cutting→`infra`, 계층중립 cross-cutting→`common`, §9.9), (4) Service VO·헬퍼 배치·네이밍 표준화(§9.10). ArchUnit 신 규칙 (e)(f)(g) 추가(§10). **정본 = On-Race 실소스**(`BusinessErrorCode`+`InfraErrorCode` 중앙화·`domain/<feature>/config/`·Command 0개). **본 개정은 docs·규약 정식화만 다루며 코드 이전은 후속 구현 티켓 소관이다**(§9.7 형상 보존 필수).
 - **상태: DECIDED (2026-07-25, 사용자·게이트2) · v0.3 규약 확정 (consultant) · Phase 2·3 완료 (2026-07-26)** — 채택 = **옵션 C(feature-first + 도메인 내부 controller/service/repository 하위패키지, On-Race 방식 복제)**. 확정 세부: (1) 업무 도메인 feature는 **`com.finalcall.domain` 그룹 아래**로 묶는다 → `com.finalcall.domain.<feature>.<layer>`, (2) 횡단 인프라·공용 커널은 현행 `common`·`infra` 유지(feature 아님·제자리·**`domain` 그룹 밖**, 총괄 기본값·변경 가능), (3) 타이밍 = 재구성 먼저·EPIC-EMAIL-VERIFY hold. 실행 = EPIC-RESTRUCTURE(FC-119~122). **완료 결과**: 전 도메인이 `com.finalcall.domain.<feature>.<layer>`로 이전(`com.finalcall.api.*` 소멸), 최상위 = `common`·`domain`·`infra`·`support`. 구 최상위-레이어 ArchUnit 규칙 제거·신 규칙 3종만 잔존(§10). **아래 §0~§8은 결정 이력이며, `com.finalcall.api`·`domain/<f>` 등 구 경로 서술은 재구성 이전의 진단·계획 맥락이다(현행 아님).**
 - **v0.3 변경 사유(2026-07-25, 사용자 결정)**: v0.2의 "`domain.` 접두 생략(`com.finalcall.<feature>`)"을 **뒤집어**, 업무 도메인 feature를 `com.finalcall.domain` 그룹 아래로 묶는다(On-Race 원형과 정합). 계층 5분할·feature 루트 규칙은 불변, 각 feature 위에 `domain.` 한 겹만 추가된다. 커널(`common`·`infra`)은 domain 밖 제자리로 불변. ArchUnit 영향은 §10 참조((b) 슬라이스 매칭 패턴만 갱신, (a)(c)는 불변).
 - **v0.2 추가분(FC-119)**: §9 도메인별 목표 레이아웃 정밀표, §10 신규 ArchUnit 규칙 스펙(FC-120이 구현), §11 이전 순서 재확인. §0~§8은 결정 이력으로 보존한다(원안 근거·비교). ArchUnit 강제는 옵션 B의 **이름 기반 규칙**을 쓰되 내부 하위패키지명은 `controller/service/repository/entity/dto`(옵션 C)로 확정 — 두 옵션의 결론이 실무에서 합쳐진 형태다.
@@ -234,7 +235,7 @@ A는 "지적된 문제 방치", C는 "과설계"라 탈락. B가 균형점이다
 - 업무 도메인 feature는 `com.finalcall.domain` 그룹 아래로 묶는다. 패키지 = `com.finalcall.domain.<feature>.<layer>`(구 `api.`/`domain.` 최상위 계층 분할은 폐기, 대신 feature 위에 `domain.` 한 겹). 커널(`common`·`infra`)은 이 `domain` 그룹 밖 제자리(§9.6).
 - **내부 하위패키지(계층)**: `controller` · `dto` · `service` · `repository` · `entity`.
   - **빈 하위패키지 금지**: 해당 유형 파일이 1개 이상일 때만 만든다. 파일이 적은 feature는 자연히 하위패키지 수가 줄어든다(예: `sample`은 controller/dto/service만).
-  - `*ErrorCode`·`*Properties`(@ConfigurationProperties)·도메인 예외는 **feature 루트**에 둔다(계층 하위패키지 아님, feature당 소수·다계층 참조).
+  - `*ErrorCode`·`*Properties`(@ConfigurationProperties)·도메인 예외는 **feature 루트**에 둔다(계층 하위패키지 아님, feature당 소수·다계층 참조). **[V2 개정·FC-123]** 이 규칙은 V2에서 부분 번복된다 — `*ErrorCode`는 `com.finalcall.common.exception`로 이전(§9.8), feature 전용 `*Properties`는 feature `config/` 하위패키지로 이전(§9.9)한다. **도메인 예외(`*Exception`)만 feature 루트에 남는다.**
 - 파일 수가 큰 feature(`item`·`settlement`·`shop`·`auction`)는 5하위패키지 전부 채택 권장. 작은 feature는 위 "빈 패키지 금지" 규칙에 따라 자동으로 선택적 채택된다.
 
 ### 9.2 파일유형 → 하위패키지 분류표 (FC-121 이전 시 정본)
@@ -249,6 +250,7 @@ A는 "지적된 문제 방치", C는 "과설계"라 탈락. B가 균형점이다
 | `*ErrorCode`·`*Properties`·도메인 예외(`*Exception`) | **feature 루트** |
 
 - 경계 애매한 VO의 최종 배치는 FC-121이 판단하되, **하위패키지명(위 5종)과 "빈 패키지 금지"는 불변**이다.
+- **[V2 개정·FC-123]** 위 표는 EPIC-RESTRUCTURE(FC-121) 이전 기준이다. V2에서 다음이 갱신된다(상세 §9.7~§9.10): (1) 웹 DTO는 `Request`·`Response`·`CursorResponse<T>`만 — `*View`·`*Detail`·`*Slice` 접미사 **폐지**(§9.7). (2) `*Command`·`*Result`는 **bid·settlement feature 한정**으로 축소(그 외 feature는 웹 DTO를 서비스가 직접 수령·반환, §9.7). (3) `*ErrorCode`→`common/exception`(§9.8). (4) feature 전용 `*Properties`→feature `config/`(§9.9). (5) service 내부 계산 VO(`*Decision` 등)의 `service/` 잔류 기준은 §9.10.
 
 ### 9.3 컨텍스트별 이전표 (구 → 신)
 
@@ -276,7 +278,7 @@ A는 "지적된 문제 방치", C는 "과설계"라 탈락. B가 균형점이다
 
 한 "auth" 관심사가 4곳에 걸쳐 있다. **비즈니스 로직만 feature로, 요청 파이프라인·커널은 잔류**한다.
 
-- **auth feature로 이동**(`com.finalcall.domain.auth.*`): `AuthController`→controller · `LoginRequest`/`LogoutRequest`/`RefreshRequest`/`SignupRequest`/`LoginResponse`/`RefreshResponse`/`SignupResponse`→dto · `AuthService`·`TokenBundle`→service · `AuthErrorCode`→루트.
+- **auth feature로 이동**(`com.finalcall.domain.auth.*`): `AuthController`→controller · `LoginRequest`/`LogoutRequest`/`RefreshRequest`/`SignupRequest`/`LoginResponse`/`RefreshResponse`/`SignupResponse`→dto · `AuthService`→service · `TokenBundle`→**dto**(토큰 값 묶음 = 전달 DTO, 실제 배치도 `domain/auth/dto/TokenBundle`. v0.2 초안이 service로 분류한 것을 정정) · `AuthErrorCode`→루트(**V2에서 `common/exception`로 이전, §9.8**).
 - **infra/security 잔류(횡단, 이동 안 함)**: `JwtAuthenticationFilter`·`JwtAuthenticationEntryPoint`·`JwtAccessDeniedHandler`·`HmacTokenProvider`·`SecurityAuditorAware`·`GatewayAccessFilter`·`GatewayErrorCode`·`RefreshTokenStore`. 이유 = 이들은 모든 요청에 걸리는 보안 파이프라인·인프라이지 auth 도메인 로직이 아니다(D-065: 서비스 내 JWT 자체검증).
 - **common/security 잔류(커널)**: `TokenClaims`·`TokenProvider`(토큰 추상화 인터페이스·VO).
 - 판단 기준: "특정 도메인의 유스케이스인가"(→feature) vs "요청 처리 공통 관심사·프레임워크 어댑터인가"(→infra/common).
@@ -294,6 +296,46 @@ FC-120은 규칙 위주 티켓이라 **이번 단계에서 .java를 이동하지
 - **`infra` → 제자리** `com.finalcall.infra`. 신규 규칙 (c) `infra_커널_격리`가 관장(infra·common 외 의존 금지). §9.4의 횡단 config 잔류 원칙 유지.
 - **`domain/common` BaseEntity 3종 → 최종 목표 `com.finalcall.common.entity`**(커널 흡수로 확정). 이유: v0.3에서 업무 feature는 `com.finalcall.domain.<feature>` 그룹 아래로 묶이므로, 커널인 BaseEntity를 `com.finalcall.domain.common`에 두면 "common"이라는 feature처럼 보여 슬라이스 (b)(`com.finalcall.domain.(*)..`)에 오매칭된다. 어느 feature도 소유하지 않는 공용 커널이므로 `domain` 그룹 밖 `common` 산하가 정합적이고, 이 위치면 규칙 (c) `common_커널_격리`에 자동 포섭된다(§10-c). **실제 이동은 FC-121**(BaseEntity를 상속하는 전 엔티티의 import 갱신 동반이라 대량 이전과 함께 처리). Phase 0~1 동안은 구 위치(`com.finalcall.domain.common`)에 두고 구 규칙이 관장한다.
 - **`support` → `com.finalcall.support` 독립 패키지**(feature 아님·`domain` 그룹 밖, FC-121 이동). **슬라이스 비순환 규칙 (b) 예외 처리는 불필요**로 확정: v0.3에서 (b)가 `com.finalcall.domain.(*)..`로 좁혀지므로 `com.finalcall.support`(domain 그룹 밖)는 애초에 슬라이스 대상이 아니다. 설령 매칭됐더라도 support는 여러 feature(user·item·auction·shop)의 서비스를 의존하는 leaf일 뿐이고 어떤 feature도 support를 역참조하지 않아 순환을 만들지 않는다(§10-b가 잡는 것은 상호 순환뿐). 규칙 (a)도 무영향 — `com.finalcall.support`는 `..controller..`/`..service..` 등 계층 세그먼트와 겹치지 않아 미매칭이다. 따라서 `ignoreDependency`/`namingSlices` 예외를 두지 않는다. (현행 `api/support` 위치도 규칙 (a)에 미매칭이라 Phase 0에서 무영향.)
+
+## 9.7 웹/서비스 DTO 어휘 규칙 (V2 축1 — 하이브리드 C, FC-123)
+
+- **웹 표현 DTO 허용 접미사 = `Request`·`Response`·`CursorResponse<T>`(common 제네릭) 3종뿐**. 그 외 접미사로 표현 DTO를 만들지 않는다.
+- **폐지 접미사 = `*View`·`*Detail`·`*Slice`**(타입명의 마지막 단어 기준). 대체안:
+  - **중첩 read 모델**(응답 안의 부분 구조): 상위 `*Response`의 **내부 static record**로 표현하거나(예 `AuctionResponse.Item`) 독립 `*Response`로 승격. `*View`/`*Detail` 접미사는 쓰지 않는다. (주의: `*DetailResponse`·`*SummaryResponse`처럼 마지막 단어가 `Response`이면 허용 — On-Race `EventDetailResponse`와 동일. 금지 대상은 마지막 단어가 `View`/`Detail`/`Slice`인 타입.)
+  - **커서 목록**: feature별 `*CursorResponse`/`*Slice`를 **common `CursorResponse<T>`** 한 벌로 통일(제네릭 항목 타입에 feature의 `*Response`를 주입).
+- **서비스 계약 DTO(`*Command`·`*Result`) — bid·settlement 한정**: On-Race 정본은 Command 0개(서비스가 웹 DTO를 직접 수령·반환)다. finalcall은 동시성·금전 정합의 핵심인 **bid·settlement 두 feature에서만** 서비스 입출력 계약으로 `*Command`·`*Result`를 유지한다(입찰·정산은 웹 표현과 도메인 연산 입력을 분리할 실익이 크다). **그 외 feature(auction·shop·search 등)의 Command/Result는 폐지** — 서비스가 웹 DTO(Request/Response)를 직접 수령·반환한다.
+- **`*Command`·`*Result` 배치**: 해당 feature의 `dto/`에 둔다(웹 Request/Response와 동거하는 전달 DTO. 직렬화되지 않는 내부 계약도 `dto` 취급 — On-Race `EventCursorData`가 `dto/`에 사는 관례와 동일. 실제 배치도 `domain/bid/dto/BidPlaceCommand`·`domain/settlement/dto/PurchaseResult`). 계층 순수성을 위해 `service/`로 옮기는 대안은 §9.10 잔여 쟁점 참조.
+- **형상 보존 필수(축1 핵심 제약)**: 위 어휘 정리는 **Java 타입명·패키지만 바꾸고, 직렬화되어 나가는 응답 JSON의 형상(필드명·중첩 구조·배열 키)은 절대 바꾸지 않는다.** `*View`→중첩 record, feature `*CursorResponse`→`CursorResponse<T>` 전환 시 응답 바디의 필드 키·구조가 1:1 보존돼야 한다. **형상 변경은 API 계약 변경 = 게이트2 별건**이며 이 규약의 범위 밖이다(architect가 전환 시 형상 diff를 병행 검증).
+
+## 9.8 ErrorCode 중앙화 (V2 축2 — "ErrorCode=feature 루트" 번복, FC-123)
+
+- **규약 번복 명시**: v0.2 §9.1은 `*ErrorCode`를 **feature 루트**에 두게 했다. V2는 이를 **번복**하여 모든 도메인 `*ErrorCode` enum을 **`com.finalcall.common.exception`으로 이전**한다(파일 이동). **도메인별 enum 분리는 유지**한다 — 하나의 enum으로 병합하지 않는다(On-Race보다 세분).
+- **번복 근거(되돌리기 큰 결정이므로 명시)**:
+  1. **On-Race 정본 정합**: On-Race는 에러코드를 `common/exception`의 `BusinessErrorCode`+`InfraErrorCode`로 중앙 관리한다. finalcall도 이 위치로 맞추되 도메인별 파일 분리를 유지한다.
+  2. **중앙 예외 관리 + 커널 격리 정합**: 전역 예외 핸들러·에러 응답(`common`)이 참조하는 에러코드를 한 패키지에 모아 프리픽스 충돌·중복을 한눈에 관리한다. 에러코드를 각 feature 루트에 분산하면 common의 전역 핸들러가 각 feature를 역참조하게 되어 **커널 격리 규칙(§10-c: common은 common 밖을 의존하지 않음)과 방향이 어긋난다** — 중앙화가 이 모순을 해소한다.
+- **배치**: `com.finalcall.common.exception.<Feature>ErrorCode`(도메인별 enum 유지). 공통 인터페이스 `ErrorCode`·`CommonErrorCode`는 이미 이 패키지에 있다. 인프라 성격 코드(`GatewayErrorCode`, 현 `infra/security`)도 이 패키지로 모아 On-Race `InfraErrorCode` 대응군으로 둔다(선택적 — 순수 인프라 코드라 infra 잔류를 원하면 §10-f 예외로 표기, 잔여 쟁점).
+- **네이밍 규칙 불변**: `{DOMAIN}_{3자리}`, 공통 `ErrorCode` 인터페이스 구현.
+
+## 9.9 Properties 소비범위 분리 (V2 축3, FC-123)
+
+`@ConfigurationProperties` 클래스는 **소비자(consumer) 범위**로 위치를 정한다.
+- **단일 feature만 소비 → 그 feature의 `config/` 하위패키지**: `com.finalcall.domain.<feature>.config.<X>Properties`(On-Race `domain/<feature>/config/` 정합). v0.2에서 feature 루트에 두던 `BidIncrementProperties`·`FeePolicyProperties`·`ClosingWorkerProperties`·`ShopListingProperties`·`ShopExpiryWorkerProperties`·`ListingSearchProperties`·`SearchReconciliationProperties`·`ExchangeProperties`를 각 feature `config/`로 이전한다. → **§9.1·§9.4의 "feature 전용 Properties=feature 루트" 부분 번복.**
+- **다수 feature/계층이 소비 + 특정 인프라 기술에 비종속 → `common`(적절 서브패키지, 예 `common.config`)**.
+- **인프라 어댑터·프레임워크 통합에 종속(그 인프라 없이는 무의미) → `infra/config` 유지**: `JwtProperties`(JWT 보안 필터 체인)·`GatewayInternalProperties`(엣지 게이트웨이 통합)은 infra 빈만 소비하는 인프라 config이므로 **infra 잔류**. `AppProperties`는 소비자 성격으로 판정한다(인프라·액추에이터 계열이면 infra 유지, 계층 중립·다feature 소비면 common). 현행 3종은 도메인 feature가 아니라 인프라·엣지가 소비하므로 **기본 infra 유지**하고, common 이동은 계층 중립 소비 근거가 확인될 때만 한다(불필요한 이동 지양).
+- **common vs infra 경계 원칙(한 줄)**: "특정 인프라 기술/어댑터에 묶였나?" → **예 = infra, 아니오(순수 값·계층 중립) = common.** "cross-cutting이면 무조건 common"이 아니다 — **인프라 종속 cross-cutting은 infra**가 정위치다.
+
+## 9.10 Service VO·헬퍼 배치·네이밍 (V2 축4, FC-123)
+
+On-Race 정본 패턴 = 오케스트레이션 `*Service` + 책임분리 협력 빈(`*StockService`) + 계산 VO(`StockMetrics`)가 **모두 `service/`에 공존**한다(`domain/event/service/`).
+- **`service/`에 두는 것**:
+  - **서비스 빈**: 오케스트레이션 `*Service`, 책임분리 협력 빈(`*Service`; 역할 특화 시 `*Worker`·`*Calculator`·`*Recorder`·`*Initializer`·`*Indexer`).
+  - **서비스 내부 계산 VO**(영속 아님·직렬화 계약 아님, 서비스가 만들어 서비스/컨트롤러 내부로만 흐름): `SoftCloseDecision`·`SampleCacheValue`·(On-Race `StockMetrics`)류. **별도 파일(record)로 추출**하되 `service/`에 잔류한다. 도메인 명사로 명명(서비스 접미사 없음).
+- **`service/`에서 빼는 것**:
+  - **영속 도메인 VO/@Embeddable/스냅샷**(DB 매핑) → `entity/`(예 `BidSnapshot`·`SaleOrderCursor`).
+  - **직렬화되는 표현 계약**(Request/Response) → `dto/`. bid·settlement의 Command/Result도 `dto/`(§9.7).
+- **판정 기준(한 줄)**: "영속되나?" → `entity`, "직렬화되어 응답으로 나가나?" → `dto`, "서비스가 계산해 내부에서만 쓰나?" → `service` 잔류.
+- **헬퍼 네이밍 표준**: 협력 빈은 역할을 드러내는 접미사(`*Service`/`*Worker`/`*Calculator`/`*Recorder`/`*Initializer`/`*Indexer`), 계산 VO는 성격 명사(`*Metrics`·`*Decision`=service 잔류, `*Snapshot`=entity).
+- **주의(축4 해석)**: 본 규약은 "Service VO를 `service/`에서 별도 타입으로 **추출·분리**"로 해석하며(=서비스 클래스에 인라인하지 않고 독립 파일화), On-Race 정본이 계산 VO(`StockMetrics`)를 `service/`에 두는 것과 정합한다. 계산 VO를 `service/` **밖**으로 옮겨야 한다는 해석은 채택하지 않았다(잔여 쟁점, 총괄 상신 요약 참조).
 
 ## 10. 신규 ArchUnit 규칙 스펙 (FC-120 구현)
 
@@ -337,6 +379,7 @@ static final ArchRule 슬라이스_비순환 = slices()
 
 - **v0.3 변경 = 매칭 패턴을 `com.finalcall.(*)..` → `com.finalcall.domain.(*)..`로 좁힌다**. domain 그룹 도입으로 feature가 `com.finalcall.domain.<feature>` 아래로 묶였으므로, `(*)`가 잡아야 할 슬라이스 키는 `com.finalcall` 다음 세그먼트가 아니라 **`com.finalcall.domain` 다음 세그먼트(=feature명)**다. 이 패턴이면 `com.finalcall.domain.<feature>`가 곧 feature 슬라이스가 되어 **feature 간 순환**을 자동으로 잡는다(구 `com.finalcall.(*)..`를 그대로 두면 `domain`이라는 단일 슬라이스로 뭉뚱그려져 feature 간 순환을 못 잡는다).
 - 커널(`common`·`infra`)·`support`는 `domain` 그룹 밖이라 이 패턴에 애초에 매칭되지 않는다 → `namingSlices`/`ignoreDependency` 예외 불필요(§9.6.1).
+- **[정정·FC-123 — 목표 vs 구현 불일치]** 위 `com.finalcall.domain.(*)..`는 v0.3 **목표(지향) 패턴**이나, 실제 구현(`SliceArchitectureTest.슬라이스_비순환`)은 **top-level `com.finalcall.(*)..`를 유지**한다. 사유: 레거시 도메인(auction↔bid, auction↔search↔shop↔settlement)이 엔티티 상호참조 등 **실제 런타임 결합**으로 순환을 이뤄, feature 단위(`...domain.(*)..`) 순환검사는 이 결합을 끊기 전(별도 로직 티켓)까지 red가 된다. 따라서 feature 단위 승격은 레거시 순환 해소 이후로 **보류**하고, 현 규약의 강제 상태는 top-level 패턴이다. 위 목표 패턴은 최종 지향점으로 보존한다(§10 최종 상태 문단의 레이블·패턴을 이에 맞춰 정정함).
 
 ### (c) 커널 방향 — common·infra는 어떤 feature도 의존 안 함
 
@@ -372,7 +415,46 @@ static final ArchRule infra_커널_격리 = noClasses()
 - **Phase 0(FC-120)**: (a)(c)를 신설, (b)는 기존 재사용. 구 `레이어_의존_방향_규율`·`common_은_상위계층을_의존하지_않는다`·`infra_는_상위계층을_의존하지_않는다`·`domain_은_api를_의존하지_않는다`는 **그대로 둔다**. 아직 파일이 `api/`·`domain/`에 있으므로 구 규칙이 유효하고, 이동된 파일은 신 규칙이 강제 → 공백 없음.
 - **Phase 3(FC-122)**: 전 feature 이전 완료 후 구 4규칙 삭제. `api`/`domain` 레이어 정의가 빈 상태가 되므로 신 규칙만 남긴다.
 
-**최종 상태(FC-122 완료, 2026-07-26)**: 구 4규칙(`레이어_의존_방향_규율`·`common_은_상위계층을_의존하지_않는다`·`infra_는_상위계층을_의존하지_않는다`·`domain_은_api를_의존하지_않는다`) 제거 완료. **신 규칙 3종만 잔존** — (a) 슬라이스 내부 계층방향, (b) 슬라이스 비순환, (c) 커널 격리(common·infra). (b) 비순환은 **top-level(`com.finalcall.domain.(*)..`) 단위 유지** — feature 단위 격리(타 feature 내부 클래스 접근 금지·Spring Modulith)로의 승격은 **보류**(현 규모에서 top-level 비순환으로 충분, §3 옵션 B의 선택 항목이었음).
+**최종 상태(FC-122 완료, 2026-07-26)**: 구 4규칙(`레이어_의존_방향_규율`·`common_은_상위계층을_의존하지_않는다`·`infra_는_상위계층을_의존하지_않는다`·`domain_은_api를_의존하지_않는다`) 제거 완료. **신 규칙 3종만 잔존** — (a) 슬라이스 내부 계층방향, (b) 슬라이스 비순환, (c) 커널 격리(common·infra). (b) 비순환은 **top-level(`com.finalcall.(*)..`) 단위 유지**(실제 `SliceArchitectureTest` 구현과 일치) — feature 단위 패턴(`com.finalcall.domain.(*)..`)·격리(타 feature 내부 클래스 접근 금지·Spring Modulith)로의 승격은 **보류**(레거시 도메인 엔티티 상호참조로 인한 순환이 남아 feature 단위 검사는 red — §10-b 정정 주석. 현 규모에서 top-level 비순환으로 충분, §3 옵션 B의 선택 항목이었음).
+
+### (e)(f)(g) V2 신규 규칙 스펙 (FC-123 — 구현은 후속 코드 티켓)
+
+아래 3규칙은 V2 어휘·구조 규약(§9.7~§9.9)을 기계 강제하기 위한 **스펙**이다(규칙명·의사코드 수준). 코드 이전(ErrorCode·Properties·DTO 어휘 정리)이 완료된 시점에 신설하며, 이전 진행 중에는 `allowEmptyShould(true)`로 병존시킨다. 신 규칙 3종((a)(b)(c))에 이어 **(e)(f)(g)를 추가** — 최종 6규칙.
+
+- **(e) DTO 어휘 강제**(§9.7):
+  ```
+  // (e-1) 금지 접미사 — 웹 dto에 View/Detail/Slice 없음
+  noClasses().that().resideInAPackage("com.finalcall.domain..dto..")
+      .should().haveSimpleNameEndingWith("View")
+      .orShould().haveSimpleNameEndingWith("Detail")
+      .orShould().haveSimpleNameEndingWith("Slice");
+  // (e-2) Command/Result feature 제약 — bid·settlement에만
+  classes().that().haveSimpleNameEndingWith("Command").or().haveSimpleNameEndingWith("Result")
+      .should().resideInAnyPackage("com.finalcall.domain.bid..", "com.finalcall.domain.settlement..")
+      .allowEmptyShould(true);
+  ```
+  ※ `*DetailResponse`·`*CursorResponse`는 마지막 단어가 `Response`라 (e-1)에 미매칭(허용). 형상 보존은 규칙이 아니라 §9.7 원칙·architect 검증으로 보증한다(직렬화 형상은 ArchUnit 대상 밖).
+
+- **(f) ErrorCode 중앙화 강제**(§9.8):
+  ```
+  classes().that().implement(ErrorCode.class).and().areEnums()
+      .should().resideInAPackage("com.finalcall.common.exception")
+      .allowEmptyShould(true);
+  ```
+  ※ `GatewayErrorCode`를 infra에 잔류시키기로 결정하면 `.and(not(name "GatewayErrorCode"))` 예외를 추가한다(§9.8 잔여 쟁점).
+
+- **(g) Properties 위치 강제**(§9.9):
+  ```
+  // feature 전용 Properties는 feature 루트 금지 → feature config 하위로
+  noClasses().that().haveSimpleNameEndingWith("Properties")
+      .and().resideInAPackage("com.finalcall.domain..")
+      .should().resideOutsideOfPackage("com.finalcall.domain.*.config..")   // 즉 반드시 ..<feature>.config.. 안에
+      .allowEmptyShould(true);
+  // cross-cutting Properties는 common 또는 infra에만(도메인 밖)
+  ```
+  ※ common vs infra 판정은 소비자 기반(§9.9)이라 완전 기계강제는 어렵다 — (g)는 "feature 전용 Properties가 feature 루트에 흩어지지 않음"만 강제하고, common/infra 배치는 리뷰가 §9.9 원칙으로 확인한다.
+
+- **최종 규칙 집합(V2 코드 이전 완료 후)**: (a) 슬라이스 계층방향 · (b) top-level 비순환 · (c) 커널 격리(common·infra) · (e) DTO 어휘 · (f) ErrorCode 중앙화 · (g) Properties 위치. 신규 feature가 늘어도 6규칙 모두 이름·패키지 패턴 기반이라 불변이다.
 
 ## 11. 이전 순서 재확인 (§5 Phase 2)
 
