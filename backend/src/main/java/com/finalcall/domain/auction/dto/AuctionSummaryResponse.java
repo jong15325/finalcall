@@ -21,7 +21,7 @@ import lombok.Builder;
 public record AuctionSummaryResponse(
     String auctionPublicId,
     AuctionStatus status,
-    AuctionItemView item,
+    AuctionItemResponse item,
     long startPrice,
     Long buyNowPrice,
     Long highestBidAmount,
@@ -35,7 +35,7 @@ public record AuctionSummaryResponse(
         return AuctionSummaryResponse.builder()
             .auctionPublicId(auction.getPublicId())
             .status(auction.displayStatus(now))
-            .item(AuctionItemView.from(auction))
+            .item(AuctionItemResponse.from(auction))
             .startPrice(auction.getStartPrice())
             .buyNowPrice(auction.getBuyNowPrice())
             .highestBidAmount(auction.getHighestBidAmount())

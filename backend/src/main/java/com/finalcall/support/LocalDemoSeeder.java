@@ -17,8 +17,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
-import com.finalcall.domain.auction.dto.AuctionRegisterResult;
+import com.finalcall.domain.auction.dto.AuctionRegisterRequest;
+import com.finalcall.domain.auction.dto.AuctionRegisterResponse;
 import com.finalcall.domain.auction.service.AuctionService;
 import com.finalcall.domain.auth.service.AuthService;
 import com.finalcall.domain.bid.dto.BidPlaceCommand;
@@ -212,7 +212,7 @@ public class LocalDemoSeeder implements ApplicationRunner {
         Instant maxEndAt = endAt.plusSeconds(SOFT_CLOSE_BUFFER_SEC);
 
         authenticateAs(sellerId);
-        AuctionRegisterResult result = auctionService.register(new AuctionRegisterCommand(
+        AuctionRegisterResponse result = auctionService.register(new AuctionRegisterRequest(
             itemPublicId, startPrice, buyNowPrice, startAt, endAt, null, null, maxEndAt));
 
         for (Bid bid : bids) {

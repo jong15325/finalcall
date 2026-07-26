@@ -21,7 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 
 import com.finalcall.common.exception.BusinessException;
-import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
+import com.finalcall.domain.auction.dto.AuctionRegisterRequest;
 import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.auction.service.AuctionService;
 import com.finalcall.domain.item.entity.ItemInstance;
@@ -89,7 +89,7 @@ class AuctionRegisterConcurrencyIntegrationTest extends IntegrationTest {
         String publicId = item.getPublicId();
 
         Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
-        AuctionRegisterCommand command = new AuctionRegisterCommand(
+        AuctionRegisterRequest command = new AuctionRegisterRequest(
             publicId, 1000L, null, null, end, null, null, end.plus(1, ChronoUnit.HOURS));
 
         ExecutorService pool = Executors.newFixedThreadPool(THREADS);

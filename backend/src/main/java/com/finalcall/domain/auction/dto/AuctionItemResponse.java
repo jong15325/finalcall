@@ -9,7 +9,8 @@ import com.finalcall.domain.item.entity.ItemTemplate;
 import lombok.Builder;
 
 /**
- * 경매 목록/상세의 item 표시 블록(auction, 계약 §3.3 공통 item 블록). live join(template·instance)과 auction 스냅샷을
+ * 경매 목록/상세의 item 표시 블록(auction, 계약 §3.3 공통 item 블록 — Summary·Detail 응답의 {@code item} 필드로
+ * 직렬화되는 중첩 Response). live join(template·instance)과 auction 스냅샷을
  * 함께 싣는다(G8): {@code nameSnapshot}/{@code specSnapshot}은 등록 시점 auction 컬럼, 나머지는 현재 조인 값이다.
  *
  * <p>{@code skill1}/{@code skill2}는 스킬 코드(skill_definition.skill_code)이며 슬롯이 비면 null 이다.
@@ -18,7 +19,7 @@ import lombok.Builder;
  * 쿼리가 skill_definition 을 이미 fetch join 하므로 {@code getName()} 추가에 N+1·추가 조인이 없다.
  */
 @Builder
-public record AuctionItemView(
+public record AuctionItemResponse(
     int typeCode,
     int mainCategory,
     int subGroup,
@@ -34,10 +35,10 @@ public record AuctionItemView(
     String nameSnapshot,
     String specSnapshot) {
 
-    public static AuctionItemView from(Auction auction) {
+    public static AuctionItemResponse from(Auction auction) {
         ItemInstance item = auction.getItemInstance();
         ItemTemplate template = item.getTemplate();
-        return AuctionItemView.builder()
+        return AuctionItemResponse.builder()
             .typeCode(template.getTypeCode())
             .mainCategory(template.getMainCategory())
             .subGroup(template.getSubGroup())

@@ -1,7 +1,5 @@
 package com.finalcall.domain.auction.controller;
 
-import java.time.Instant;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,11 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.domain.auction.dto.AuctionCancelResponse;
-import com.finalcall.domain.auction.dto.AuctionCursorResponse;
 import com.finalcall.domain.auction.dto.AuctionDetailResponse;
 import com.finalcall.domain.auction.dto.AuctionRegisterRequest;
 import com.finalcall.domain.auction.dto.AuctionRegisterResponse;
+import com.finalcall.domain.auction.dto.AuctionSummaryResponse;
 import com.finalcall.domain.auction.entity.AuctionSearchCondition;
 import com.finalcall.domain.auction.entity.AuctionSort;
 import com.finalcall.domain.auction.entity.AuctionStatus;
@@ -46,7 +45,7 @@ public class AuctionController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<AuctionRegisterResponse> register(@Valid @RequestBody AuctionRegisterRequest request) {
-        return ApiResponse.success(AuctionRegisterResponse.from(auctionService.register(request.toCommand())));
+        return ApiResponse.success(auctionService.register(request));
     }
 
     /**
@@ -55,7 +54,7 @@ public class AuctionController {
      * 무의미 요청이라 400({@code COMMON_001})으로 거부한다(계약 C2).
      */
     @GetMapping
-    public ApiResponse<AuctionCursorResponse> list(
+    public ApiResponse<CursorResponse<AuctionSummaryResponse, String>> list(
         @RequestParam(required = false) Integer mainCategory,
         @RequestParam(required = false) Integer subGroup,
         @RequestParam(required = false) Integer element,
@@ -76,14 +75,12 @@ public class AuctionController {
             mainCategory, subGroup, element, kind, minLevel, maxLevel, skill1, skill2,
             goldforceActive, minPrice, maxPrice, status, parseSort(sort), parseAscending(sort));
         if (query != null && !query.isBlank()) {
-            return ApiResponse.success(
-                AuctionCursorResponse.from(auctionService.search(condition, query, cursor, size), Instant.now()));
+            return ApiResponse.success(auctionService.search(condition, query, cursor, size));
         }
         if (isRelevance(sort)) {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
-        return ApiResponse.success(
-            AuctionCursorResponse.from(auctionService.getList(condition, cursor, size), Instant.now()));
+        return ApiResponse.success(auctionService.getList(condition, cursor, size));
     }
 
     /** {@code sort} field 가 relevance 인지(계약 C2 — {@code q} 없이 요청되면 400). */
@@ -94,8 +91,7 @@ public class AuctionController {
     /** 경매 상세 — 인증 불요. 없음 404(AUCTION_004). status 는 lazy 활성화 파생. */
     @GetMapping("/{auctionPublicId}")
     public ApiResponse<AuctionDetailResponse> detail(@PathVariable String auctionPublicId) {
-        return ApiResponse.success(
-            AuctionDetailResponse.from(auctionService.getDetail(auctionPublicId), Instant.now()));
+        return ApiResponse.success(auctionService.getDetail(auctionPublicId));
     }
 
     /** 판매자 취소 — 인증 필요(본인=주체). 성공 200 {@code { status:"CANCELLED" }}. */

@@ -21,10 +21,4 @@ public record AuctionRegisterRequest(
     Integer softCloseWindowSec,
     Integer softCloseExtendSec,
     @NotNull Instant maxEndAt) {
-
-    public AuctionRegisterCommand toCommand() {
-        return new AuctionRegisterCommand(
-            itemInstancePublicId, startPrice, buyNowPrice, startAt, endAt,
-            softCloseWindowSec, softCloseExtendSec, maxEndAt);
-    }
 }

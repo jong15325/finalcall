@@ -14,12 +14,4 @@ public record AuctionRegisterResponse(
     String auctionPublicId,
     AuctionStatus status,
     Instant endAt) {
-
-    public static AuctionRegisterResponse from(AuctionRegisterResult result) {
-        return AuctionRegisterResponse.builder()
-            .auctionPublicId(result.auctionPublicId())
-            .status(result.status())
-            .endAt(result.endAt())
-            .build();
-    }
 }

@@ -16,11 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.finalcall.common.exception.AuctionErrorCode;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.auction.dto.AuctionDetail;
-import com.finalcall.domain.auction.dto.AuctionRegisterCommand;
-import com.finalcall.domain.auction.dto.AuctionRegisterResult;
-import com.finalcall.domain.auction.dto.AuctionSlice;
+import com.finalcall.domain.auction.dto.AuctionDetailResponse;
+import com.finalcall.domain.auction.dto.AuctionRegisterRequest;
+import com.finalcall.domain.auction.dto.AuctionRegisterResponse;
+import com.finalcall.domain.auction.dto.AuctionSummaryResponse;
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionCancelState;
 import com.finalcall.domain.auction.entity.AuctionCursor;
@@ -81,19 +82,19 @@ public class AuctionService {
      */
     @Transactional
     @ServiceLog
-    public AuctionRegisterResult register(AuctionRegisterCommand command) {
+    public AuctionRegisterResponse register(AuctionRegisterRequest request) {
         Long sellerId = currentUserId();
         Instant now = Instant.now();
 
         // 미존재·미소유는 403(AUCTION_001)로 통일한다(게이트2 f, SEC-007 열거 방지). owner 는 detail 쿼리가 fetch join.
-        ItemInstance item = itemInstanceRepository.findDetailByPublicId(command.itemInstancePublicId())
+        ItemInstance item = itemInstanceRepository.findDetailByPublicId(request.itemInstancePublicId())
             .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_ITEM_NOT_SELLABLE));
         Preconditions.validate(item.isOwnedBy(sellerId), AuctionErrorCode.AUCTION_ITEM_NOT_SELLABLE);
 
-        int windowSec = command.softCloseWindowSec() != null ? command.softCloseWindowSec() : DEFAULT_SOFT_CLOSE_SEC;
-        int extendSec = command.softCloseExtendSec() != null ? command.softCloseExtendSec() : DEFAULT_SOFT_CLOSE_SEC;
-        validatePrice(command);
-        validateTime(command, now, windowSec, extendSec);
+        int windowSec = request.softCloseWindowSec() != null ? request.softCloseWindowSec() : DEFAULT_SOFT_CLOSE_SEC;
+        int extendSec = request.softCloseExtendSec() != null ? request.softCloseExtendSec() : DEFAULT_SOFT_CLOSE_SEC;
+        validatePrice(request);
+        validateTime(request, now, windowSec, extendSec);
 
         // CAS 전 초기 위치를 포착해 실패(0행) 원인을 분기한다(RR 스냅숏 staleness 회피, spec §4.1).
         ItemLocation initialLocation = item.getLocation();
@@ -106,34 +107,39 @@ public class AuctionService {
             throw new BusinessException(AuctionErrorCode.AUCTION_ALREADY_LISTED);
         }
 
-        AuctionStatus status = resolveInitialStatus(command.startAt(), now);
+        AuctionStatus status = resolveInitialStatus(request.startAt(), now);
         Auction auction = auctionRepository.save(Auction.builder()
             .seller(item.getOwner()) // owner == seller(검증 완료), fetch join 으로 초기화됨
             .itemInstance(item)
-            .startPrice(command.startPrice())
-            .buyNowPrice(command.buyNowPrice())
+            .startPrice(request.startPrice())
+            .buyNowPrice(request.buyNowPrice())
             .status(status)
-            .startAt(command.startAt())
-            .endAt(command.endAt())
-            .maxEndAt(command.maxEndAt())
+            .startAt(request.startAt())
+            .endAt(request.endAt())
+            .maxEndAt(request.maxEndAt())
             .softCloseWindowSec(windowSec)
             .softCloseExtendSec(extendSec)
             .itemNameSnapshot(item.getTemplate().getDisplayName())
             .itemSpecSnapshot(buildSpecSnapshot(item))
             .build());
-        return new AuctionRegisterResult(auction.getPublicId(), status, auction.getEndAt());
+        return AuctionRegisterResponse.builder()
+            .auctionPublicId(auction.getPublicId())
+            .status(status)
+            .endAt(auction.getEndAt())
+            .build();
     }
 
-    /** 경매 목록(계약 §3.1 GET /auctions) — 공통 필터 + keyset cursor. status 는 표현 계층에서 lazy 파생한다. */
+    /** 경매 목록(계약 §3.1 GET /auctions) — 공통 필터 + keyset cursor. status 는 응답 매핑 시 lazy 파생한다. */
     @ServiceLog
-    public AuctionSlice getList(AuctionSearchCondition condition, String cursor, int size) {
+    public CursorResponse<AuctionSummaryResponse, String> getList(
+        AuctionSearchCondition condition, String cursor, int size) {
+        Instant now = Instant.now();
         AuctionCursor decoded = AuctionCursor.decode(cursor);
-        List<AuctionWithBidCount> fetched = auctionRepository.findByCursor(condition, decoded, size, Instant.now());
-
-        boolean hasNext = fetched.size() > size;
-        List<AuctionWithBidCount> content = hasNext ? fetched.subList(0, size) : fetched;
-        String nextCursor = content.isEmpty() ? null : encodeNext(content, condition.sort());
-        return new AuctionSlice(content, nextCursor, hasNext);
+        List<AuctionWithBidCount> fetched = auctionRepository.findByCursor(condition, decoded, size, now);
+        // 커서는 매핑 전 원본(AuctionWithBidCount)의 마지막 항목에서 정렬 필드 값 + id 로 추출한다.
+        return CursorResponse.from(fetched, size,
+            row -> AuctionSummaryResponse.from(row, now),
+            row -> encodeCursor(row, condition.sort()));
     }
 
     /**
@@ -145,7 +151,9 @@ public class AuctionService {
      * ES 가 스테일해 DB 에 없는 public_id 는 조용히 제외한다(정본이 없으면 표시하지 않는다 — 유령 행 방지).
      */
     @ServiceLog
-    public AuctionSlice search(AuctionSearchCondition condition, String query, String cursor, int size) {
+    public CursorResponse<AuctionSummaryResponse, String> search(
+        AuctionSearchCondition condition, String query, String cursor, int size) {
+        Instant now = Instant.now();
         ListingSearchCondition searchCondition = new ListingSearchCondition(
             ListingType.AUCTION, query,
             condition.mainCategory(), condition.subGroup(), condition.element(), condition.kind(),
@@ -157,11 +165,13 @@ public class AuctionService {
         Map<String, AuctionWithBidCount> byPublicId = auctionRepository
             .findSummariesByPublicIds(hits.publicIds()).stream()
             .collect(Collectors.toMap(row -> row.auction().getPublicId(), Function.identity(), (a, b) -> a));
-        List<AuctionWithBidCount> ordered = hits.publicIds().stream()
+        List<AuctionSummaryResponse> ordered = hits.publicIds().stream()
             .map(byPublicId::get)
             .filter(Objects::nonNull)
+            .map(row -> AuctionSummaryResponse.from(row, now))
             .toList();
-        return new AuctionSlice(ordered, hits.nextCursor(), hits.hasNext());
+        // 커서·hasNext 는 ES 가 판정한 값을 그대로 보존한다(over-fetch 슬라이싱 아님).
+        return CursorResponse.of(ordered, hits.nextCursor(), hits.hasNext());
     }
 
     /** 검색 노출 상태 화이트리스트 — MySQL 목록과 동일 규약(null=진행 가능 SCHEDULED·ACTIVE, 지정=해당 상태만). */
@@ -174,14 +184,15 @@ public class AuctionService {
 
     /**
      * 경매 상세(계약 §3.1 GET /auctions/{id}). itemInstance·template·skill·seller·highestBidder 를 fetch join 해
-     * 표현 계층 lazy 접근을 없앤다. status 의 lazy 활성화 파생은 api 계층에서
+     * 표현 계층 lazy 접근을 없앤다. status 의 lazy 활성화 파생은 응답 매핑 시
      * {@link Auction#displayStatus(Instant)}로 수행하고, 설정 의존 파생값({@code minNextBidAmount})은 여기서 채운다.
      */
     @ServiceLog
-    public AuctionDetail getDetail(String publicId) {
+    public AuctionDetailResponse getDetail(String publicId) {
         AuctionWithBidCount row = auctionRepository.findDetailByPublicId(publicId)
             .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_NOT_FOUND));
-        return new AuctionDetail(row.auction(), row.bidCount(), minNextBidAmount(row.auction()));
+        return AuctionDetailResponse.from(
+            row.auction(), row.bidCount(), minNextBidAmount(row.auction()), Instant.now());
     }
 
     /**
@@ -251,10 +262,10 @@ public class AuctionService {
     }
 
     /** 가격 검증(spec §5.1) — startPrice &gt; 0, buyNowPrice(있으면) &gt; startPrice. 위반 시 AUCTION_003(422). */
-    private void validatePrice(AuctionRegisterCommand command) {
-        Preconditions.validate(command.startPrice() > 0, AuctionErrorCode.AUCTION_INVALID_BUY_NOW_PRICE);
+    private void validatePrice(AuctionRegisterRequest request) {
+        Preconditions.validate(request.startPrice() > 0, AuctionErrorCode.AUCTION_INVALID_BUY_NOW_PRICE);
         Preconditions.validate(
-            command.buyNowPrice() == null || command.buyNowPrice() > command.startPrice(),
+            request.buyNowPrice() == null || request.buyNowPrice() > request.startPrice(),
             AuctionErrorCode.AUCTION_INVALID_BUY_NOW_PRICE);
     }
 
@@ -262,10 +273,10 @@ public class AuctionService {
      * 시간 파라미터 검증(SEC-009 → AUCTION_008, 422). endAt &gt; now, startAt ≤ endAt, maxEndAt ≥ endAt,
      * window·extend 는 양수·상한 이내, maxEndAt−endAt 는 총연장 상한 이내(게이트2 c).
      */
-    private void validateTime(AuctionRegisterCommand command, Instant now, int windowSec, int extendSec) {
-        Instant endAt = command.endAt();
-        Instant startAt = command.startAt();
-        Instant maxEndAt = command.maxEndAt();
+    private void validateTime(AuctionRegisterRequest request, Instant now, int windowSec, int extendSec) {
+        Instant endAt = request.endAt();
+        Instant startAt = request.startAt();
+        Instant maxEndAt = request.maxEndAt();
         Preconditions.validate(endAt.isAfter(now), AuctionErrorCode.AUCTION_INVALID_TIME_PARAM);
         Preconditions.validate(
             startAt == null || !startAt.isAfter(endAt), AuctionErrorCode.AUCTION_INVALID_TIME_PARAM);
@@ -300,8 +311,8 @@ public class AuctionService {
      * 경매가 경계 행이면 sortValue 가 null 로 인코딩되며, 디코드 측이 이를 "NULL 그룹 경계"로 해석한다
      * ({@code AuctionRepositoryImpl.highestBidKeyset}).
      */
-    private String encodeNext(List<AuctionWithBidCount> content, AuctionSort sort) {
-        Auction last = content.get(content.size() - 1).auction();
+    private String encodeCursor(AuctionWithBidCount row, AuctionSort sort) {
+        Auction last = row.auction();
         String sortValue = switch (sort) {
             case PRICE -> String.valueOf(last.getStartPrice());
             case END_AT -> last.getEndAt().toString();

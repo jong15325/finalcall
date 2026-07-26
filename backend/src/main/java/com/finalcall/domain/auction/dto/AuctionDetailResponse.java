@@ -22,7 +22,7 @@ import lombok.Builder;
 public record AuctionDetailResponse(
     String auctionPublicId,
     AuctionStatus status,
-    AuctionItemView item,
+    AuctionItemResponse item,
     long startPrice,
     Long buyNowPrice,
     Long highestBidAmount,
@@ -37,16 +37,20 @@ public record AuctionDetailResponse(
     Instant createdAt,
     Long minNextBidAmount) {
 
-    public static AuctionDetailResponse from(AuctionDetail detail, Instant now) {
-        Auction auction = detail.auction();
+    /**
+     * 상세 응답을 만든다. 엔티티만으로는 표현할 수 없는 파생값({@code bidCount}·{@code minNextBidAmount})은 서비스가
+     * 계산해 넘긴다 — 표현 계층은 스프링 빈(증분 정책)에 접근할 수 없기 때문이다. {@code minNextBidAmount}는 종료
+     * 상태 경매에서 null 이다(계약 v1.8 F3).
+     */
+    public static AuctionDetailResponse from(Auction auction, long bidCount, Long minNextBidAmount, Instant now) {
         return AuctionDetailResponse.builder()
             .auctionPublicId(auction.getPublicId())
             .status(auction.displayStatus(now))
-            .item(AuctionItemView.from(auction))
+            .item(AuctionItemResponse.from(auction))
             .startPrice(auction.getStartPrice())
             .buyNowPrice(auction.getBuyNowPrice())
             .highestBidAmount(auction.getHighestBidAmount())
-            .bidCount(detail.bidCount())
+            .bidCount(bidCount)
             .startAt(auction.getStartAt())
             .endAt(auction.getEndAt())
             .sellerNickname(auction.getSeller().getNickname())
@@ -55,7 +59,7 @@ public record AuctionDetailResponse(
             .extensionCount(auction.getExtensionCount())
             .maxEndAt(auction.getMaxEndAt())
             .createdAt(auction.getCreatedAt())
-            .minNextBidAmount(detail.minNextBidAmount())
+            .minNextBidAmount(minNextBidAmount)
             .build();
     }
 

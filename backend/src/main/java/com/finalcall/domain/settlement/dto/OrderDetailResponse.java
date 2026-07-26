@@ -14,7 +14,7 @@ import lombok.Builder;
 /**
  * 거래내역 상세 응답(order, 계약 §4.3 {@code OrderDetail} — {@code GET /orders/{id}}). purchase-spec §5.3 =
  * {@code OrderSummary + { settledAt, itemInstancePublicId }}. record 는 상속 불가라 요약 필드를 평면 재나열한다
- * ({@link AuctionItemView}·AuctionDetailResponse 선례 — DTO 는 계약 스키마에 1:1).
+ * (AuctionItemResponse·AuctionDetailResponse 선례 — DTO 는 계약 스키마에 1:1).
  *
  * <p>역할별 노출 규칙은 요약과 동일하다(purchase-spec §5.2): {@code feeAmount}·{@code settleAmount} 은 판매자 전용
  * 이라 구매자 응답에서는 {@code null} → {@link JsonInclude} {@code NON_NULL} 로 필드 자체가 부재한다.
