@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-134
 title: 회원가입 이메일 인증 (FC-114 실기능화)
 state: doing
-children: [FC-117, FC-118]
+children: [FC-117, FC-118, FC-128, FC-129, FC-130, FC-131, FC-132]
 gate: null
 ---
 ## 목표
@@ -34,8 +34,10 @@ gate: null
 - **6. 미인증 제한 정책(이월)** — 어떤 기능을 미인증 시 막나(입찰·판매 등). **핵심 인증 동작 후 별도 결정**(독립 정책 층 — 코어 구현 안 막음).
 - **7. 프론트 UI** — 가입 email 입력 + 마이페이지/배너 인증 진입 + 코드 입력 화면.
 
-## ★ 보류 (2026-07-25) — EPIC-RESTRUCTURE 우선
-설계는 확정(spec v0.1·계약 v1.15)됐으나, 구현은 **EPIC-RESTRUCTURE(feature-first 전환) 완료 후 재개**한다(사용자 결정, 게이트2). 근거: 이메일이 `member/User`를 직접 확장하는데 그 파일이 이동 대상 → 재구성 먼저가 이중 작업을 막는다. FC-117·118 = blocked(depends_on FC-121). 재개 시 기능·계약 불변, **파일 경로만** 새 레이아웃 기준 갱신. 이후 이메일 엔드포인트 티켓은 FC-123부터 발번.
+## 재개 (2026-07-26) — 선행 에픽 완료
+EPIC-RESTRUCTURE·EPIC-CONVENTION-V2 완료로 **구현 재개**(설계·게이트2 기확정, 재게이트 불요). FC-117·118 unblock. **V2 확정 규약 적용**: User=`com.finalcall.domain.member.entity`, ErrorCode=`common/exception`(EmailErrorCode), Properties=member `config/`, DTO=Request/Response.
+분해(spec §8): FC-117(B1 V17)→FC-118(B2 User 필드)→**FC-128(B3 코드저장소)∥FC-129(B4 메일인프라)**→FC-130(B5 ErrorCode·Properties·yml)→**FC-131(B6 signup)∥FC-132(B7 엔드포인트 3종)**. 프론트 F1~F4는 백엔드 계약 확정 후 별도 발번(F2 이메일 인증 화면=디자인 게이트).
+※ 엔드포인트 티켓 발번은 **FC-128~**(FC-123~127은 EPIC-CONVENTION-V2 선점).
 
 ## 진행 방식
 각 결정을 사용자와 확정 → architect가 계약(§) 반영 → backend-impl/frontend-impl 구현 → reviewer → Done. 커밋은 매번 사용자 승인(섹션 13).
