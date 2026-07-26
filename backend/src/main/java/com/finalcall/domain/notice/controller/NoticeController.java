@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.domain.notice.dto.NoticeCreateRequest;
-import com.finalcall.domain.notice.dto.NoticeCursorResponse;
 import com.finalcall.domain.notice.dto.NoticeDetailResponse;
 import com.finalcall.domain.notice.dto.NoticeListResponse;
 import com.finalcall.domain.notice.dto.NoticeUpdateRequest;
@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
  * 공지 컨트롤러(Stage D) — 컨트롤러 컨벤션 참조 구현.
  *
  * <p>반환 타입은 항상 {@link ApiResponse}, 요청 검증은 {@code @Valid}, try-catch 금지(전역 핸들러).
- * 엔티티→응답 DTO 변환은 api 계층에서 수행한다(domain 은 api 를 모른다).
+ * 커서 목록은 공용 {@link CursorResponse} 봉투로 반환한다(FC-126).
  */
 @RestController
 @RequestMapping("/notices")
@@ -68,11 +68,11 @@ public class NoticeController {
         return ApiResponse.success(noticeService.getPage(pageable).map(NoticeListResponse::from));
     }
 
-    /** 커서 목록(무한 스크롤/대규모 트래픽용). */
+    /** 커서 목록(무한 스크롤/대규모 트래픽용). 커서는 notice 특성상 숫자(Long) id로 유지한다. */
     @GetMapping("/cursor")
-    public ApiResponse<NoticeCursorResponse> getByCursor(
+    public ApiResponse<CursorResponse<NoticeListResponse, Long>> getByCursor(
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(NoticeCursorResponse.from(noticeService.getByCursor(cursor, size)));
+        return ApiResponse.success(noticeService.getByCursor(cursor, size));
     }
 }

@@ -9,8 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.NoticeErrorCode;
 import com.finalcall.common.logging.ServiceLog;
+import com.finalcall.common.response.CursorResponse;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.notice.dto.NoticeCursorSlice;
+import com.finalcall.domain.notice.dto.NoticeListResponse;
 import com.finalcall.domain.notice.entity.Notice;
 import com.finalcall.domain.notice.entity.NoticeType;
 import com.finalcall.domain.notice.repository.NoticeRepository;
@@ -52,12 +53,9 @@ public class NoticeService {
     }
 
     @ServiceLog
-    public NoticeCursorSlice getByCursor(Long cursor, int size) {
+    public CursorResponse<NoticeListResponse, Long> getByCursor(Long cursor, int size) {
         List<Notice> fetched = noticeRepository.findActiveByCursor(cursor, size);
-        boolean hasNext = fetched.size() > size;
-        List<Notice> content = hasNext ? fetched.subList(0, size) : fetched;
-        Long nextCursor = content.isEmpty() ? null : content.get(content.size() - 1).getId();
-        return new NoticeCursorSlice(content, nextCursor, hasNext);
+        return CursorResponse.from(fetched, size, NoticeListResponse::from, Notice::getId);
     }
 
     @Transactional
