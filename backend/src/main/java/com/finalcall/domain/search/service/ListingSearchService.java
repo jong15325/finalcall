@@ -12,7 +12,7 @@ import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.exception.SearchErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.domain.search.config.ListingSearchProperties;
-import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.SearchCursor;
 
@@ -56,7 +56,7 @@ public class ListingSearchService {
      * @return 관련도 순 public_id 목록 + 다음 커서 + hasNext(빈 결과는 빈 목록, 계약 C3 "빈 결과=200")
      */
     @ServiceLog
-    public ListingSearchResult search(ListingSearchCondition condition, String cursor, int size) {
+    public ListingSearchHits search(ListingSearchCondition condition, String cursor, int size) {
         validateQuery(condition.q());
         SearchCursor decoded = SearchCursor.decode(cursor);
         String now = Instant.now().toString();
@@ -77,7 +77,7 @@ public class ListingSearchService {
                 return request;
             }, Void.class);
 
-            return toResult(response.hits().hits(), size);
+            return toHits(response.hits().hits(), size);
         } catch (IOException | ElasticsearchException ex) {
             // ES 계층 오류(미가용·타임아웃·질의 오류)만 503 으로 흡수한다 — 로직 버그(NPE 등)는 전역 핸들러로
             //   전파돼 500 으로 드러나게 좁힌다(MINOR-3). ES 는 파생 read-model 이라 일시 실패를 목록 실패로 알린다.
@@ -174,7 +174,7 @@ public class ListingSearchService {
     }
 
     /** size+1 조회 결과에서 hasNext 를 판정하고 public_id 목록·다음 커서를 만든다. */
-    private ListingSearchResult toResult(List<Hit<Void>> hits, int size) {
+    private ListingSearchHits toHits(List<Hit<Void>> hits, int size) {
         boolean hasNext = hits.size() > size;
         List<Hit<Void>> page = hasNext ? hits.subList(0, size) : hits;
         List<String> publicIds = page.stream().map(Hit::id).toList();
@@ -185,6 +185,6 @@ public class ListingSearchService {
             double score = last.score() == null ? 0.0 : last.score();
             nextCursor = SearchCursor.encode(score, last.id());
         }
-        return new ListingSearchResult(publicIds, nextCursor, hasNext);
+        return new ListingSearchHits(publicIds, nextCursor, hasNext);
     }
 }

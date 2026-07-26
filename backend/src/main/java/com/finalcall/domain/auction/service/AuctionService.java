@@ -34,7 +34,7 @@ import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.service.InventoryService;
-import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingSearchService;
@@ -152,16 +152,16 @@ public class AuctionService {
             condition.minLevel(), condition.maxLevel(), condition.skill1(), condition.skill2(),
             condition.goldforceActive(), condition.minPrice(), condition.maxPrice(),
             auctionStatuses(condition.status()));
-        ListingSearchResult result = listingSearchService.search(searchCondition, cursor, size);
+        ListingSearchHits hits = listingSearchService.search(searchCondition, cursor, size);
 
         Map<String, AuctionWithBidCount> byPublicId = auctionRepository
-            .findSummariesByPublicIds(result.publicIds()).stream()
+            .findSummariesByPublicIds(hits.publicIds()).stream()
             .collect(Collectors.toMap(row -> row.auction().getPublicId(), Function.identity(), (a, b) -> a));
-        List<AuctionWithBidCount> ordered = result.publicIds().stream()
+        List<AuctionWithBidCount> ordered = hits.publicIds().stream()
             .map(byPublicId::get)
             .filter(Objects::nonNull)
             .toList();
-        return new AuctionSlice(ordered, result.nextCursor(), result.hasNext());
+        return new AuctionSlice(ordered, hits.nextCursor(), hits.hasNext());
     }
 
     /** 검색 노출 상태 화이트리스트 — MySQL 목록과 동일 규약(null=진행 가능 SCHEDULED·ACTIVE, 지정=해당 상태만). */

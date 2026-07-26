@@ -19,7 +19,7 @@ import org.testcontainers.utility.DockerImageName;
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.domain.search.config.ListingSearchProperties;
-import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
@@ -79,7 +79,7 @@ class ListingSearchIntegrationTest {
     @Test
     void q_로_이름을_매칭하고_기본_상태_노출만_반환한다() {
         // "불의 검" ACTIVE 3건(A1·A2·A3) + SOLD 1건(C1, 기본 노출 제외) + 다른 이름(B1) + SHOP(S1, 종류 격리)
-        ListingSearchResult result = service.search(auctionCondition("불의", null, null), null, 20);
+        ListingSearchHits result = service.search(auctionCondition("불의", null, null), null, 20);
 
         assertThat(result.publicIds()).containsExactlyInAnyOrder("A1", "A2", "A3");
         assertThat(result.hasNext()).isFalse();
@@ -88,7 +88,7 @@ class ListingSearchIntegrationTest {
     @Test
     void 코드축_필터는_q_와_AND_결합된다() {
         // mainCategory=1 인 "불의 검" 은 A1·A3(A2 는 mainCategory=2)
-        ListingSearchResult result = service.search(auctionCondition("불의", 1, null), null, 20);
+        ListingSearchHits result = service.search(auctionCondition("불의", 1, null), null, 20);
 
         assertThat(result.publicIds()).containsExactlyInAnyOrder("A1", "A3");
     }
@@ -96,10 +96,10 @@ class ListingSearchIntegrationTest {
     @Test
     void listingType_이_다르면_격리된다() {
         // 같은 이름의 SHOP 리스팅(S1)은 AUCTION 검색에 나오지 않고, SHOP 검색에만 나온다.
-        ListingSearchResult auctionResult = service.search(auctionCondition("불의", null, null), null, 20);
+        ListingSearchHits auctionResult = service.search(auctionCondition("불의", null, null), null, 20);
         assertThat(auctionResult.publicIds()).doesNotContain("S1");
 
-        ListingSearchResult shopResult = service.search(
+        ListingSearchHits shopResult = service.search(
             new ListingSearchCondition(ListingType.SHOP, "불의", null, null, null, null, null, null, null, null,
                 null, null, null, List.of("ACTIVE")),
             null, 20);
@@ -110,12 +110,12 @@ class ListingSearchIntegrationTest {
 
     @Test
     void relevance_커서로_페이지를_넘겨도_중복_누락이_없다() {
-        ListingSearchResult page1 = service.search(auctionCondition("불의", null, null), null, 2);
+        ListingSearchHits page1 = service.search(auctionCondition("불의", null, null), null, 2);
         assertThat(page1.publicIds()).hasSize(2);
         assertThat(page1.hasNext()).isTrue();
         assertThat(page1.nextCursor()).isNotNull();
 
-        ListingSearchResult page2 = service.search(auctionCondition("불의", null, null), page1.nextCursor(), 2);
+        ListingSearchHits page2 = service.search(auctionCondition("불의", null, null), page1.nextCursor(), 2);
         assertThat(page2.hasNext()).isFalse();
 
         // 두 페이지 합집합 = 전체 3건, 겹침 없음(keyset 안정성).
@@ -144,7 +144,7 @@ class ListingSearchIntegrationTest {
 
     @Test
     void 빈_결과는_에러가_아니라_빈_페이지다() {
-        ListingSearchResult result = service.search(auctionCondition("존재하지않는아이템", null, null), null, 20);
+        ListingSearchHits result = service.search(auctionCondition("존재하지않는아이템", null, null), null, 20);
 
         assertThat(result.publicIds()).isEmpty();
         assertThat(result.hasNext()).isFalse();
@@ -170,11 +170,11 @@ class ListingSearchIntegrationTest {
             .build()));
         client.indices().refresh(refresh -> refresh.index(ALIAS));
 
-        ListingSearchResult matched = service.search(auctionCondition("인챈트", null, null), null, 20);
+        ListingSearchHits matched = service.search(auctionCondition("인챈트", null, null), null, 20);
         assertThat(matched.publicIds()).contains("E1");
 
         // 코드축 필터(mainCategory=5)도 enrichment 문서에 걸린다(join 필드가 실제로 채워짐).
-        ListingSearchResult filtered = service.search(auctionCondition("인챈트", 5, null), null, 20);
+        ListingSearchHits filtered = service.search(auctionCondition("인챈트", 5, null), null, 20);
         assertThat(filtered.publicIds()).containsExactly("E1");
     }
 
@@ -187,7 +187,7 @@ class ListingSearchIntegrationTest {
             null, null, maxPrice, List.of("SCHEDULED", "ACTIVE"));
     }
 
-    private static List<String> concat(ListingSearchResult first, ListingSearchResult second) {
+    private static List<String> concat(ListingSearchHits first, ListingSearchHits second) {
         return java.util.stream.Stream.concat(first.publicIds().stream(), second.publicIds().stream()).toList();
     }
 

@@ -22,11 +22,15 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>로컬 데모 기본 on({@code search.reindex-on-startup=true}), 운영/통합 테스트 off. ES 미가용 시 부팅을 막지 않고
  * 스킵한다(ES 는 파생 read-model — 없어도 앱은 뜬다). {@code @EventListener} 라 self-invocation 함정과 무관하다.
+ *
+ * <p><b>네이밍(V2 §9.10):</b> 협력 빈 표준 접미사 목록({@code Service·Worker·Calculator·Recorder·Initializer·Indexer})에
+ * {@code Reindexer}가 없어 부팅 색인 역할을 그대로 드러내는 {@code Indexer}로 정렬했다(실질 색인은
+ * {@link ListingIndexer}에 위임하는 부팅 트리거 — 의미 왜곡 없이 표준 예외 최소화).
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ListingBootReindexer {
+public class ListingBootIndexer {
 
     private final ListingIndexer listingIndexer;
     private final ListingSearchProperties properties;

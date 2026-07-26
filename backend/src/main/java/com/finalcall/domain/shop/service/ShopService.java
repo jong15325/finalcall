@@ -21,7 +21,7 @@ import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.service.InventoryService;
-import com.finalcall.domain.search.dto.ListingSearchResult;
+import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingSearchService;
@@ -142,15 +142,15 @@ public class ShopService {
             condition.mainCategory(), condition.subGroup(), condition.element(), condition.kind(),
             condition.minLevel(), condition.maxLevel(), null, null, null,
             condition.minPrice(), condition.maxPrice(), shopStatuses(condition.status()));
-        ListingSearchResult result = listingSearchService.search(searchCondition, cursor, size);
+        ListingSearchHits hits = listingSearchService.search(searchCondition, cursor, size);
 
-        Map<String, Shop> byPublicId = shopRepository.findByPublicIds(result.publicIds()).stream()
+        Map<String, Shop> byPublicId = shopRepository.findByPublicIds(hits.publicIds()).stream()
             .collect(Collectors.toMap(Shop::getPublicId, Function.identity(), (a, b) -> a));
-        List<Shop> ordered = result.publicIds().stream()
+        List<Shop> ordered = hits.publicIds().stream()
             .map(byPublicId::get)
             .filter(Objects::nonNull)
             .toList();
-        return new ShopSlice(ordered, result.nextCursor(), result.hasNext());
+        return new ShopSlice(ordered, hits.nextCursor(), hits.hasNext());
     }
 
     /** 검색 노출 상태 화이트리스트 — 공개 목록과 동일 규약(null=판매 중 ACTIVE, 지정=해당 상태만). */
