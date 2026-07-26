@@ -3,7 +3,7 @@ id: EPIC-RESTRUCTURE
 type: epic
 jira_key: KAN-129
 title: 패키지 구조 재구성 — feature-first(도메인별) 전환
-state: doing
+state: done
 children: [FC-119, FC-120, FC-121, FC-122]
 gate: null
 ---
