@@ -11,7 +11,7 @@ import com.finalcall.domain.settlement.entity.SaleOrder;
  *
  * <p>정산 기록은 fresh INSERT({@code saveAndFlush})로만 쓴다 — SOLD TX 는 잔액 조건부 UPDATE 가 영속성 컨텍스트를
  * clear 한 뒤 실행되므로(bid-domain-spec §4.2) 연관을 {@code getReferenceById} 프록시로 채운다. {@code saveAndFlush}
- * 로 {@code (source_type, source_id)} UK 위반(이중 SOLD)을 이 시점에 표면화한다(I-C, ExchangeWriter 선례).
+ * 로 {@code (source_type, source_id)} UK 위반(이중 SOLD)을 이 시점에 표면화한다(I-C, ExchangeRecorder 선례).
  */
 public interface SaleOrderRepository extends JpaRepository<SaleOrder, Long>, SaleOrderRepositoryCustom {
 

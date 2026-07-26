@@ -183,7 +183,7 @@ public class MoneyHoldService {
 
     /**
      * 홀드 원장을 기록한다. {@code saveAndFlush} 로 {@code bid_id} UK 위반을 이 메서드 안에서 표면화한다 —
-     * 커밋 시점까지 미루면 원인 추적이 어렵다({@code ExchangeWriter} 선례).
+     * 커밋 시점까지 미루면 원인 추적이 어렵다({@code ExchangeRecorder} 선례).
      *
      * <p>연관은 {@code getReferenceById} 프록시로 채운다: 앞선 잔액 UPDATE 가 영속성 컨텍스트를 비운 뒤라
      * 관리 엔티티를 재사용할 수 없고, FK 값만 필요해 추가 select 도 불필요하다.

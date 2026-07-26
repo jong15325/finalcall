@@ -15,7 +15,7 @@ import jakarta.validation.constraints.Positive;
  *
  * <p>{@code @Max} 상한은 {@code cashAmount × rate} 오버플로 위생이다(FC-011). 기본 교환비율
  * {@code exchange.rate=1,000,000} 역산 상한({@code Long.MAX_VALUE / 1,000,000})으로, 이 이하이면 지급액 곱이
- * {@code long} 절대금액을 넘지 않아 {@code ExchangeWriter} 의 {@code Math.multiplyExact} 가 던지는
+ * {@code long} 절대금액을 넘지 않아 {@code ExchangeRecorder} 의 {@code Math.multiplyExact} 가 던지는
  * {@code ArithmeticException}(→ 500)이 발생하지 않는다. 초과 요청은 부수효과 전에 400({@code COMMON_001}
  * {@code errors[]})으로 정상화된다. multiplyExact 는 운영상 rate override 극단값을 위한 심층 방어로 유지한다.
  */

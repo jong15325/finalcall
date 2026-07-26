@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
-class ExchangeWriter {
+class ExchangeRecorder {
 
     private static final int RATE_SCALE = 6; // money_exchange.applied_rate DECIMAL(20,6) 스케일과 일치
 

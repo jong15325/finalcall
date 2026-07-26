@@ -19,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 /**
  * 화폐 교환 서비스(currency) — 캐시→게임머니 교환(계약 §4.4 POST /api/v1/exchanges).
  *
- * <p>이 클래스는 <b>멱등 오케스트레이션</b>만 담당하고, 원자 쓰기는 {@link ExchangeWriter}(별도 빈·트랜잭션)에 위임한다.
+ * <p>이 클래스는 <b>멱등 오케스트레이션</b>만 담당하고, 원자 쓰기는 {@link ExchangeRecorder}(별도 빈·트랜잭션)에 위임한다.
  * 클래스 레벨 {@code @Transactional} 을 두지 <b>않는다</b>: replay 선검사와 경쟁 승자 재조회가 <b>각각 자동커밋(개별
- * 스냅샷)</b>으로 돌아야 승자의 커밋을 볼 수 있고, 쓰기 트랜잭션이 {@link ExchangeWriter} 안에서 독립적으로 롤백돼야
+ * 스냅샷)</b>으로 돌아야 승자의 커밋을 볼 수 있고, 쓰기 트랜잭션이 {@link ExchangeRecorder} 안에서 독립적으로 롤백돼야
  * 이중 차감이 없기 때문이다. 오케스트레이터가 장기 트랜잭션을 쥐면 재조회가 스냅샷에 갇혀 승자 행을 놓친다.
  *
  * <p>인증 주체는 SecurityContext 의 userId(내부 PK)다(B-009) — {@code X-User-Id} 헤더는 신뢰하지 않는다(D-065).
@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class ExchangeService {
 
     private final MoneyExchangeRepository moneyExchangeRepository;
-    private final ExchangeWriter exchangeWriter;
+    private final ExchangeRecorder exchangeRecorder;
 
     /**
      * 캐시→게임머니 교환을 멱등하게 처리한다(SEC-004).
@@ -42,7 +42,7 @@ public class ExchangeService {
      *       그대로 반환한다.</li>
      *   <li><b>동시 중복 제출</b>: 선검사를 함께 통과한 두 요청은 UK 로 하나만 커밋된다. 진 쪽은 쓰기 트랜잭션이 통째로
      *       롤백돼 <b>캐시 이중 차감이 없고</b>, 아래 catch 에서 승자 행을 재조회해 최초 결과를 반환한다(오류 아님).</li>
-     *   <li><b>실패 미소비</b>: 캐시 부족(EXC_001)·역방향(EXC_002)은 {@link ExchangeWriter} 트랜잭션 롤백으로 원장에
+     *   <li><b>실패 미소비</b>: 캐시 부족(EXC_001)·역방향(EXC_002)은 {@link ExchangeRecorder} 트랜잭션 롤백으로 원장에
      *       남지 않아 멱등키를 소비하지 않는다 — 충전 후 같은 key 재시도가 정상 진행된다.</li>
      * </ol>
      *
@@ -60,7 +60,7 @@ public class ExchangeService {
 
         try {
             // (2) 원자 처리(캐시 차감 + 게임머니 지급 + 원장 insert)를 단일 트랜잭션에 위임.
-            return exchangeWriter.write(userId, direction, cashAmount, idempotencyKey);
+            return exchangeRecorder.write(userId, direction, cashAmount, idempotencyKey);
         } catch (DataIntegrityViolationException e) {
             // (3) 동시 중복 제출 경쟁: 선검사를 함께 통과한 뒤 UK 를 뺏긴 트랜잭션. write 가 통째로 롤백돼 '이 요청의'
             //     캐시 차감도 되돌려졌다(이중 차감 없음). 승자 행을 새 읽기(자동커밋)로 재조회해 최초 결과를 반환한다.
