@@ -7,7 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.finalcall.domain.shop.ShopExpiryWorkerProperties;
+import com.finalcall.domain.shop.config.ShopExpiryWorkerProperties;
 import com.finalcall.domain.shop.repository.ShopRepository;
 
 import lombok.RequiredArgsConstructor;

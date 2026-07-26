@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.CurrencyErrorCode;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.currency.ExchangeProperties;
+import com.finalcall.domain.currency.config.ExchangeProperties;
 import com.finalcall.domain.currency.entity.ExchangeDirection;
 import com.finalcall.domain.currency.entity.MoneyExchange;
 import com.finalcall.domain.currency.repository.MoneyExchangeRepository;

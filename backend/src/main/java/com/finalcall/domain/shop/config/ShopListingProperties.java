@@ -1,4 +1,4 @@
-package com.finalcall.domain.shop;
+package com.finalcall.domain.shop.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;

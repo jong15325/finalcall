@@ -1,4 +1,4 @@
-package com.finalcall.domain.bid;
+package com.finalcall.domain.bid.config;
 
 import java.util.Comparator;
 import java.util.List;

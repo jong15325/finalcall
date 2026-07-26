@@ -22,8 +22,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.repository.AuctionRepository;
-import com.finalcall.domain.search.ListingSearchProperties;
-import com.finalcall.domain.search.SearchReconciliationProperties;
+import com.finalcall.domain.search.config.ListingSearchProperties;
+import com.finalcall.domain.search.config.SearchReconciliationProperties;
 import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingIndexer;

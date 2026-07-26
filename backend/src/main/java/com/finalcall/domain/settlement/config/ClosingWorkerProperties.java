@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;

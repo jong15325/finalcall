@@ -11,7 +11,7 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.exception.SearchErrorCode;
 import com.finalcall.common.logging.ServiceLog;
-import com.finalcall.domain.search.ListingSearchProperties;
+import com.finalcall.domain.search.config.ListingSearchProperties;
 import com.finalcall.domain.search.dto.ListingSearchResult;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.SearchCursor;

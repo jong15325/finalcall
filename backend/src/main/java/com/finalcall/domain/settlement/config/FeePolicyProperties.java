@@ -1,4 +1,4 @@
-package com.finalcall.domain.settlement;
+package com.finalcall.domain.settlement.config;
 
 import java.util.Comparator;
 import java.util.List;

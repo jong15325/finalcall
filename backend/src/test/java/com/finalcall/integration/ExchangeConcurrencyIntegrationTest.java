@@ -19,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.finalcall.domain.currency.ExchangeProperties;
+import com.finalcall.domain.currency.config.ExchangeProperties;
 import com.finalcall.domain.currency.entity.ExchangeDirection;
 import com.finalcall.domain.currency.entity.MoneyExchange;
 import com.finalcall.domain.currency.repository.MoneyExchangeRepository;

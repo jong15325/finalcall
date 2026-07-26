@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.finalcall.domain.auction.repository.AuctionRepository;
-import com.finalcall.domain.settlement.ClosingWorkerProperties;
+import com.finalcall.domain.settlement.config.ClosingWorkerProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -18,7 +18,7 @@ import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.auction.entity.AuctionBidContext;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.repository.AuctionRepository;
-import com.finalcall.domain.bid.BidIncrementProperties;
+import com.finalcall.domain.bid.config.BidIncrementProperties;
 import com.finalcall.domain.bid.dto.BidPlaceCommand;
 import com.finalcall.domain.bid.dto.BidPlaceResult;
 import com.finalcall.domain.bid.entity.Bid;

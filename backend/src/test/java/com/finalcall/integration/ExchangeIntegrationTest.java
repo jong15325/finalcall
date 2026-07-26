@@ -17,7 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finalcall.domain.currency.ExchangeProperties;
+import com.finalcall.domain.currency.config.ExchangeProperties;
 import com.finalcall.domain.currency.repository.MoneyExchangeRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;

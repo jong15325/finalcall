@@ -16,7 +16,7 @@ import com.finalcall.common.exception.ShopErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
-import com.finalcall.domain.settlement.FeePolicyProperties;
+import com.finalcall.domain.settlement.config.FeePolicyProperties;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 import com.finalcall.domain.settlement.service.FeeCalculator;

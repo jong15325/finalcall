@@ -18,7 +18,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
-import com.finalcall.domain.search.ListingSearchProperties;
+import com.finalcall.domain.search.config.ListingSearchProperties;
 import com.finalcall.domain.search.dto.ListingSearchResult;
 import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingSearchCondition;

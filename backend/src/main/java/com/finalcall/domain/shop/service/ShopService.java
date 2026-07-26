@@ -26,7 +26,7 @@ import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingSearchService;
 import com.finalcall.domain.settlement.service.FeeCalculator;
-import com.finalcall.domain.shop.ShopListingProperties;
+import com.finalcall.domain.shop.config.ShopListingProperties;
 import com.finalcall.domain.shop.dto.MyShopListing;
 import com.finalcall.domain.shop.dto.MyShopSlice;
 import com.finalcall.domain.shop.dto.ShopRegisterCommand;

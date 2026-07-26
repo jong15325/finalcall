@@ -24,7 +24,7 @@ import com.finalcall.domain.bid.entity.BidSnapshot;
 import com.finalcall.domain.bid.repository.BidRepository;
 import com.finalcall.domain.currency.service.MoneyHoldService;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
-import com.finalcall.domain.settlement.FeePolicyProperties;
+import com.finalcall.domain.settlement.config.FeePolicyProperties;
 import com.finalcall.domain.settlement.dto.PurchaseResult;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;

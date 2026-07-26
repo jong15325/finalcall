@@ -12,7 +12,7 @@ import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemTemplate;
 import com.finalcall.domain.item.entity.SkillDefinition;
-import com.finalcall.domain.search.ListingSearchProperties;
+import com.finalcall.domain.search.config.ListingSearchProperties;
 import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.shop.entity.Shop;

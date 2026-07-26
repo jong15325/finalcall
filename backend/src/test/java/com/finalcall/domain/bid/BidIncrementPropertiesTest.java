@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.finalcall.domain.bid.config.BidIncrementProperties;
+
 /**
  * 최소 증분 구간표 단위 검증(bid-domain-spec §3.3 확정 표).
  *

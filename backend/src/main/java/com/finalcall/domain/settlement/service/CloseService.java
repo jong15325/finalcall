@@ -20,7 +20,7 @@ import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
-import com.finalcall.domain.settlement.FeePolicyProperties;
+import com.finalcall.domain.settlement.config.FeePolicyProperties;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 
 import lombok.RequiredArgsConstructor;

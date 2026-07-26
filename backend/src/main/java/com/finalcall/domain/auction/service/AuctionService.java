@@ -29,7 +29,7 @@ import com.finalcall.domain.auction.entity.AuctionSort;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.entity.AuctionWithBidCount;
 import com.finalcall.domain.auction.repository.AuctionRepository;
-import com.finalcall.domain.bid.BidIncrementProperties;
+import com.finalcall.domain.bid.config.BidIncrementProperties;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
