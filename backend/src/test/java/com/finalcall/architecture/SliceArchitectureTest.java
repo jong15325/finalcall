@@ -4,6 +4,7 @@ import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -14,17 +15,13 @@ import com.tngtech.archunit.library.Architectures;
 /**
  * feature-first 슬라이스 규율(EPIC-RESTRUCTURE, proposal v0.2 §10)을 test 코드로 강제한다.
  *
- * <p>구 최상위-레이어 규칙({@link LayerDependencyTest})과 <b>병존</b>한다(Phase 0=FC-120 신설,
- * 구 규칙 삭제는 Phase 3=FC-122). 이전 진행 중(일부만 feature 트리로 이동된 상태)에도 항상 초록이도록
- * 신 규칙은 빈 레이어/빈 결과를 허용한다({@code withOptionalLayers(true)}·{@code allowEmptyShould(true)}).
+ * <p>Phase 3(FC-122)에서 구 최상위-레이어 규칙 파일(구 {@code LayerDependencyTest})을 통째로 삭제하고,
+ * 이 클래스에 신 규칙 3종만 남긴다 — (a) 슬라이스 내부 계층방향, (b) top-level 슬라이스 비순환,
+ * (c) 커널 격리(common·infra). 구 {@code api → domain → infra → common} 레이어 규칙은
+ * FC-121로 {@code com.finalcall.api.*}가 소멸해 죽은 참조가 되었으므로 제거되었다(proposal §10-d).
  *
- * <p>이름 기반 규칙이라 코드가 아직 구 배치(api/·domain/)에 있어도 {@code ..controller..} 등
- * 하위패키지가 없으면 빈 레이어로 통과하고, feature 트리로 이동한 파일부터 즉시 강제된다.
- *
- * <p>규칙 (b) 슬라이스 비순환은 {@link LayerDependencyTest}의 {@code 레이어_순환참조_금지}
- * (현재 패턴 {@code com.finalcall.(*)..} — 최상위 슬라이스)를 그대로 재사용한다. feature 단위
- * 슬라이스({@code com.finalcall.domain.(*)..})로의 전환은 레거시 도메인 간 실제 순환 결합 해소 이후로
- * 미룬다(FC-121 범위 밖). 여기서 중복 정의하지 않는다.
+ * <p>이름 기반 규칙이라 신규 feature가 늘어도 규칙이 불변이며, 빈 레이어/빈 결과를 허용한다
+ * ({@code withOptionalLayers(true)}·{@code allowEmptyShould(true)}).
  */
 @AnalyzeClasses(packages = "com.finalcall", importOptions = ImportOption.DoNotIncludeTests.class)
 class SliceArchitectureTest {
@@ -84,4 +81,19 @@ class SliceArchitectureTest {
             resideInAPackage("com.finalcall..")
                 .and(not(resideInAnyPackage("com.finalcall.infra..", "com.finalcall.common.."))))
         .allowEmptyShould(true);
+
+    /**
+     * (b) 슬라이스 비순환 — 최상위 슬라이스(common·domain·infra·support) 간 순환 참조 금지.
+     *
+     * <p>패턴은 top-level {@code com.finalcall.(*)..}로 <b>유지</b>한다. proposal §10 (b)의 목표 형태는
+     * feature 단위 슬라이스({@code com.finalcall.domain.(*)..})이나, 현재 레거시 도메인(auction↔bid,
+     * auction↔search↔shop↔settlement)이 엔티티 상호참조 등 <b>실제 런타임 결합</b>으로 순환을 이루므로
+     * feature 단위 순환검사는 이 결합을 먼저 끊기 전까지 red가 된다(로직 변경 필요, EPIC-RESTRUCTURE 후속·별도 티켓).
+     * 따라서 feature 단위 승격은 레거시 순환 해소 이후로 보류한다. 현 top-level 패턴은 커널·도메인·support
+     * 슬라이스 간 순환을 막는 유효 규칙이다.
+     */
+    @ArchTest
+    static final ArchRule 슬라이스_비순환 = slices()
+        .matching("com.finalcall.(*)..")
+        .should().beFreeOfCycles();
 }
