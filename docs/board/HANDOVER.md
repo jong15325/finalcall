@@ -1,95 +1,92 @@
 # 총괄(메인 세션) 핸드오버
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-07-27** (EPIC-EMAIL-VERIFY·EPIC-EMAIL-TEMPLATE **둘 다 done·push 완료**. 마감)
+갱신: **2026-07-28** (EPIC-EMAIL-VERIFY-FE 프론트 F1~F4 **구현·검수·커밋 완료** · **미푸시 · Done 미전이** — 게이트3 대기)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
 
-> ★ **이 갱신의 경위**: 회원가입 이메일 인증(EMAIL-VERIFY) 구현 중 사용자가 "메일 문구를 DB 템플릿으로 재사용" 구조 변경을 요청 → 게이트2 승인 후 별도 에픽 **EPIC-EMAIL-TEMPLATE** 신설·구현. 두 에픽을 통합 reviewer로 검수(major M-1 발견·수정·재검 CLOSED)하고 게이트3(done·push)까지 종료했다. 다음은 **프론트 F1~F4**.
+> ★ **이 갱신의 경위**: 백엔드 이메일 인증·템플릿 done 이후 프론트 F1~F4를 발번·구현했다. F2(이메일 인증 화면)는 디자인 게이트로 목업 선제작·사용자 승인 후 구현. reviewer 통과(critical/major 0·minor 3건 보완). 사용자 승인으로 **커밋 2개 완료(미푸시)**. 실 로컬 스택으로 인증 전 흐름을 시연하던 중 사용자가 마감(“일어나서 이어서”). **다음 = 게이트3(push·Done)** 와 잔여 미러/정리.
 
 ---
 
 ## 지금 어디인가 — 한 문단
 
-**백엔드 이메일 인증·템플릿 완료. 다음 = 프론트엔드.** 회원가입 이메일 인증(6자리 코드·네이버 SMTP·Redis Lua 해시)과 재사용 메일 템플릿 저장소(DB `email_template`·`{{name}}` 치환)를 spec 확정본대로 구현·리뷰·done했다. 백엔드 계약은 push됐다(origin/master=`58986c0`). **다음 수 = 프론트 F1~F4 발번·구현**(F3 errorCodes.ts EMAIL_001~007 동기화 선행 필수, F2 이메일 인증 화면=디자인 게이트). 선행 에픽(RESTRUCTURE·CONVENTION-V2)·경매 이전 에픽 모두 done.
+**프론트 이메일 인증 F1~F4 완료·커밋됨(미푸시). 다음 = 게이트3(사용자 push + Done 전이).** 회원가입 email 선택 입력(F1)·이메일 인증 화면(F2: 3상태·6칸 OTP·TTL/쿨다운 카운트다운·시도초과)·errorCodes 동기화(F3)·GET /me 3상태 배너(F4)를 spec/목업 확정본대로 구현·리뷰(passed)했다. 로컬 실행으로 미설정→설정·미인증→코드입력(TTL·쿨다운 실동작)→불일치 에러까지 실제 렌더 검증(인증완료 직전 마감). 코드 2커밋(`a91583f` 코드·`a145968` 보드)은 **로컬에만**, origin/master=`86efbcd` 그대로. **다음 수 = 사용자 push + Done 전이 승인 → 총괄이 티켓/에픽 done 전이·Jira done 미러.**
 
 ---
 
-## A. 완료 — EPIC-EMAIL-VERIFY (KAN-134) · EPIC-EMAIL-TEMPLATE (KAN-148)
+## A. 완료 — EPIC-EMAIL-VERIFY-FE (KAN-152) · 프론트 F1~F4
 
 ### 정본·규약
-- **정본 spec**: `docs/spec/email-verify-spec.md`(v0.1, §6은 2026-07-27 템플릿 연동 갱신) · `docs/spec/email-template-spec.md`(v1.0 DECIDED, 게이트2 2026-07-27). api-contract v1.15(§5 EMAIL_001~007 등재됨).
-- **리뷰 기록**: `docs/board/reviews/EMAIL-VERIFY-TEMPLATE-review.md`(통합 리뷰·M-1 CLOSED).
+- **정본 spec**: `docs/spec/email-verify-spec.md`(§8 프론트 분해)·`docs/spec/api-contract.md`(§2 email 3종·§2.5 GET /me·§5 EMAIL_001~007).
+- **디자인 목업(승인)**: `docs/ux/mockups/template-email-verify.html`(3상태·OTP·쿨다운·에러 카탈로그·웹/모바일 별도 설계). 디자인 게이트 통과(2026-07-27, 사용자 승인).
+- **리뷰 기록**: `docs/board/reviews/EMAIL-VERIFY-FE-review.md`(critical/major 0·minor 5, M-1~3 보완·M-5 정정·M-4 유지).
 
-### 구현 요지 (done 티켓)
+### 구현 요지 (티켓 = review·passed)
 | 티켓 | Jira | 내용 |
 |---|---|---|
-| FC-117 | KAN-135 | Flyway V17 user email 컬럼 3종·email_active UK |
-| FC-118 | KAN-136 | User email·emailVerified 필드·assignEmail/markEmailVerified |
-| FC-128 | KAN-143 | EmailVerificationCodeStore(Redis Lua 원자검증·SHA-256·emailHash TOCTOU) |
-| FC-129 | KAN-144 | 메일 인프라 EmailSender 범용 발송기(send·MimeMessage)·local skip |
-| FC-130 | KAN-145 | EmailErrorCode(EMAIL_001~007)·EmailVerifyProperties·yml |
-| FC-131 | KAN-146 | signup email 선택 입력·EMAIL_007 UK 분기 |
-| FC-132 | KAN-147 | /me/email 3종 엔드포인트·EmailVerificationService·/me 마스킹 노출 |
-| FC-133 | KAN-149 | Flyway V18 email_template 테이블·EMAIL_VERIFICATION 시드 |
-| FC-134 | KAN-150 | EmailTemplate 엔티티·EmailTemplateKey(변수계약)·MailContentType·Repository |
-| FC-135 | KAN-151 | EmailTemplateService(치환·fail-fast 검증)·RenderedEmail·MailErrorCode |
+| FC-136 (F3) | KAN-153 | `types/errorCodes.ts` EMAIL_001~007 동기화·재시도성 메시지 분리(빌드 선행) |
+| FC-137 (F1) | KAN-154 | `SignupForm` email 선택 입력·@Email·생략 전송·EMAIL_007 필드 표면화 |
+| FC-138 (F2) | KAN-155 | `VerificationCard` 활성화 + `lib/api/email.ts`·`OtpInput`·`emailVerifyErrors` — 3상태·OTP·TTL/쿨다운·시도초과 (디자인 게이트) |
+| FC-139 (F4) | KAN-156 | `MeResponse`(auth.ts)·me 쿼리 emailVerified·emailMasked 3상태 배너(마스킹만) |
 
-### 리뷰 결과 (반드시 인지)
-- **M-1(major, CLOSED)**: `verify()` 성공이 detached blind-merge라 verify∥setEmail 경쟁 시 lost-update(구 이메일 verified 확정) → **조건부 원자 UPDATE** `UserRepository.markEmailVerified(id, email) WHERE email=검증이메일`(0행→EMAIL_002)로 차단. 리포지토리 메서드 `@Transactional`로 self-invocation 회피.
-- **minor 후속**(비차단): m-1 프론트 errorCodes.ts EMAIL_001~007 미동기화(F3 소관·프론트 빌드 전 선행 필수), m-4 spec §2.3 "상수시간" 문구↔Lua `==`(구현 근거 타당, architect 문구 갱신 권고).
+### 검수 결과 (반드시 인지)
+- reviewer **critical 0·major 0·minor 5**. 보안(원문 미노출·코드 미로깅·서버 에러 원문 미노출·IDOR/열거방지)·계약 1:1·타이머 정리(setInterval `[mode]` 의존·언마운트 clear)·접근성(OTP role=group·label·one-time-code) 정합.
+- **보완 완료(비차단)**: M-1(쿨다운 시 코드 입력 경로 부재→EMAIL_004도 enterCode 진입)·M-2(만료 후 OtpInput onComplete 자동제출 차단)·M-3(resend EMAIL_006 방어). **유지**: M-4(SignupForm.test prettier 노이즈). **정정**: M-5(FC-139 artifact `session.ts`→`auth.ts`).
+- **테스트**: vitest 590 passed(3연속)·typecheck·lint 그린.
 
-### 민감 포인트 (유지·주의)
-- **코드 미영속 경계**: 코드는 Redis SHA-256 해시만·템플릿 DB엔 `{{code}}` placeholder만·@ServiceLog 인자 미덤프·LoggingEmailSender는 local(sender-enabled=false) 한정.
-- **SEC-007 열거방지**: 3 엔드포인트 주체=SecurityContext만(임의 이메일 파라미터 없음), EMAIL_002 만료·미발송·emailHash불일치 통일, 202 비확증, /me 마스킹.
-- **SMTP 크리덴셜**: `MAIL_USERNAME`/`MAIL_PASSWORD` env only(네이버, 커밋 금지). local `sender-enabled:false`라 크리덴셜 없이 부팅. **실발송 테스트 시 사용자 env 주입 필요**(네이버 POP3/SMTP ON + 앱 비밀번호).
-- **미인증 스쿼팅 = accepted risk**(spec §7). email_active UK가 인증무관 유일성 강제.
+### 실 렌더 검증 (로컬 스택, 스크린샷 사용자 확인)
+미설정(이메일 등록 폼) → 설정·미인증(마스킹 `d***@naver.com`·"미인증"·인증코드받기) → 코드입력(TTL "남은 시간 9:xx"·쿨다운 "xx초 후"·시도 n/5·6칸 OTP) → 불일치 에러(EMAIL_001 "남은 시도 4회") 까지 실제 동작 확인. **인증완료 화면 직전 마감**(코드 254421은 로그에서 확인, 재입력 시 인증완료 예상).
 
 ---
 
-## B. 다음 수 — 프론트엔드 F1~F4 (미발번)
+## B. 다음 수 — 게이트3 + 정리 (미완)
 
-spec `email-verify-spec.md` §8·`email-template-spec.md` 참조. 백엔드 계약 push 완료로 착수 가능. **다음 FC 번호 = FC-136부터**.
-- **F1. 가입 폼** — email 입력(선택 표기)·@Email 검증. (계약 §2)
-- **F2. 이메일 인증 화면**(**디자인 게이트** — 새 화면) — 이메일 설정 + 6자리 코드 입력 + 재전송 쿨다운 카운트·시도초과 안내. 목업 선제작([[design-mockup-first]]·[[options-need-html-mockup]]).
-- **F3. errorCodes.ts** — `EMAIL_001`~`EMAIL_007` 동기화(**프론트 빌드 전 선행 필수** — `errorCodes.test.ts`가 api-contract §5 파싱). 메시지 분리(만료·불일치·시도초과·쿨다운·이미인증·미설정·이미사용중).
-- **F4. GET /me 반영** — `emailVerified`·`emailMasked` 3상태(미설정/미인증/인증완료) 배너·게이트. F2 연계.
+1. **게이트3(push + Done) — 사용자 승인 필요**:
+   - **push는 사용자 직접**(에이전트 차단). 로컬 2커밋(`a91583f`·`a145968`) + 이 HANDOVER 커밋을 origin/master로 push.
+   - **Done 전이(사용자 승인 후 총괄)**: FC-136~139 `state: review→done`, 에픽 EPIC-EMAIL-VERIFY-FE `doing→done`.
+2. **Jira 미러 패리티(총괄)**: KAN-152~156이 현재 **"해야 할 일"(todo) 상태**로 생성됨(review/done 미반영) — Done 전이 시 KAN-153~156·152를 **완료**로 transition. (`getTransitionsForJiraIssue`로 전이 ID 조회 후 `transitionJiraIssue`.)
+3. **(정리) 데모 계정 이메일 원복 검토**: 시연으로 데모 계정 **파랑기사(userId=4)** 에 `email=demo-verify@naver.com`(미인증) 설정됨. 실 DB 변경. 방치해도 무해(미인증·데모)하나, 원복하려면 `PUT /me/email`로 다른 값 재설정 또는 DB에서 정리. pending 코드는 TTL(10분)로 자연 소멸.
+4. **(선택) 네이버 SMTP 실발송 테스트**: 현재 local `sender-enabled=false`(로그 대체)라 **실제 메일 미발송**. dev/prod 또는 로컬에서 실발송하려면 **사용자가 env 주입** — `MAIL_USERNAME`/`MAIL_PASSWORD`(네이버 메일 POP3/SMTP ON + 앱 비밀번호) + `MAIL_SENDER_ENABLED=true`. 미주입 시 health `mail:DOWN`(535)은 정상(로컬 데모 무관).
+5. **(선택·후속 백로그)**: 미인증 기능 제한 정책(입찰·판매 차단 등, spec 열린 결정 6 이월). spec §2.3 "상수시간" 문구 갱신(architect, minor·이월).
 
-의존: F1(계약 확정) · F2(디자인 게이트 후) · F3(계약 §5) · F4(F2 연계). 프론트 디자인은 [[frontend-design-principles]]·[[frontend-design-decisions]]·[[responsive-separate-design]]·[[mockup-fidelity-only-fix]] 준수.
+**제안 커밋(HANDOVER)**: `chore(board): HANDOVER 갱신 — 프론트 F1~F4 커밋 완료·다음 게이트3 (마감)`
 
 ---
 
 ## C. Git 상태
-- **push 완료**: `e8f31e9..58986c0`(이번 세션 이메일 15커밋 + 앞선 미푸시 3, 총 18, 2026-07-27 사용자). **미푸시 없음**, 워킹트리 클린.
-- ⚠️ **실 DB = V17→V18 적용됨**(FC-118·FC-129/133 검증 부팅으로 전진). flyway 최신=18.
+- **미푸시 2커밋**: `a91583f`(feat 코드 15파일)·`a145968`(chore 보드 7파일). **origin/master=`86efbcd` 그대로** — push는 사용자 직접(게이트3).
+- **워킹트리**: 이 HANDOVER 갱신만(미커밋). 그 외 클린.
+- ⚠️ **실 DB = V18까지 적용됨**(무변경). 데모 파랑기사 email 설정 side-effect(B-3).
 - 규율: 부분 커밋 전 `git diff --cached --name-only` 확인([[git-mv-prestage-commit-bleed]]). 커밋 매번 사용자 승인([[commit-needs-approval]]).
 
 ---
 
 ## D. 배경 — 완료 에픽·환경
-- **완료 에픽**: EPIC-EMAIL-VERIFY·EPIC-EMAIL-TEMPLATE(2026-07-27) · EPIC-CONVENTION-V2 · EPIC-RESTRUCTURE · EPIC-SHOP·MARKET-DATA·SHOP-MANAGE·SEARCH·PURCHASE.
-- **V2 규약**(신규 코드 준수): DTO=Request/Response(+공용 `CursorResponse<T,C>`), ErrorCode=`common/exception`, feature Properties=`domain/<f>/config/`, ArchUnit `ConventionArchitectureTest`·`SliceArchitectureTest` 강제. 신규 feature `com.finalcall.domain.mail`(메일 템플릿).
+- **완료 에픽**: EPIC-EMAIL-VERIFY-FE(프론트, 이번·커밋만·미푸시) · EPIC-EMAIL-VERIFY·EPIC-EMAIL-TEMPLATE(백엔드, push됨) · EPIC-CONVENTION-V2 · EPIC-RESTRUCTURE · EPIC-SHOP·MARKET-DATA·SHOP-MANAGE·SEARCH·PURCHASE.
+- **이메일 인증 아키텍처(중요)**: 제공자=**네이버 SMTP**(`smtp.naver.com:465` SSL, 구글 아님). 코드=Redis TTL+SHA-256 해시(Lua 원자). 문구=DB 템플릿 `EMAIL_VERIFICATION`(`{{code}}` 치환, `[장터] 이메일 인증 코드`). 발송기 `EmailSender` 추상화 — **local=LoggingEmailSender(발송 스킵·코드 로그)**, dev/prod=SmtpEmailSender(실발송·fail-fast). 코드 미영속 경계(로그도 마스킹 to·코드는 렌더 인자만).
+- **프론트 신규 파일**: `lib/api/email.ts`·`features/member/components/{VerificationCard(활성화),OtpInput}`·`features/member/lib/emailVerifyErrors.ts`. VerificationCard의 휴대폰 인증은 백엔드 없음 → "준비 중" 유지. CTA=오렌지(앱 전역 표준, 목업 블랙은 템플릿 로컬 색·회귀 아님).
 - 데모 계정 `demo1~10`/`demo1234!`. 마켓 5천 시드.
-- 환경 기동: `docker start finalcall-mysql finalcall-redis`; 검색 스택 `cd backend && docker compose -f docker-compose.local.yml up -d --build` + create-index·register-connectors. 백엔드 `JAVA_HOME=C:\Users\howee\.jdks\ms-21.0.11` (루트)`./gradlew :backend:bootRun --args='--spring.profiles.active=local'`. 프론트 `cd frontend && npm run dev`.
-- 함정: ES 8.18.8 버전일치·Confluent CDN차단(Aiven)·mysql binlog·`flyway repair`·bootRun cwd=레포루트. **finalcall DB 계정은 CREATE DATABASE 권한 없음**(스크래치 검증은 root/root). gradle **동시 실행 금지**(서브에이전트 병렬 시 bootRun/test 자원 경합 — 순차 위임).
+- 환경 기동: `docker start finalcall-mysql finalcall-redis`(ES/Kafka는 이메일·/me엔 불요). 백엔드 `JAVA_HOME=C:\Users\howee\.jdks\ms-21.0.11`(루트)`./gradlew :backend:bootRun --args='--spring.profiles.active=local'`(부팅 ~40s, health 503=ES·mail DOWN이나 API 정상). 프론트 `cd frontend && npm run dev`(5173, /api→8080 프록시). 검색 스택 필요 시 `cd backend && docker compose -f docker-compose.local.yml up -d --build`.
+- 함정: gradle **동시 실행 금지**(서브에이전트 순차 위임). 프론트=npm/vite(gradle 아님). 브라우저 확장 `file://` 차단(로컬 http 서버로 목업 열기). `finalcall` DB 계정 CREATE DATABASE 권한 없음(스크래치=root/root).
 
 ---
 
 ## 이어받는 법 (새 세션)
 1. `CLAUDE.md` 섹션 8~13 숙지(오케스트레이션·게이트·티켓·커밋 규약).
-2. 이 파일 + `git status`(클린·미푸시 없음) + `git log --oneline -20` + `docs/spec/email-verify-spec.md`·`email-template-spec.md`(정본).
-3. 메모리: `commit-needs-approval`·`git-mv-prestage-commit-bleed`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`handoff-completion-report`·`handover-cadence`·`clock-in-resume`.
-4. **미러 패리티**(총괄 전용): 보드 done인데 Jira 미완료 대조. 이번 세션 KAN-135~151·134·148 전부 완료 미러 확인됨.
+2. 이 파일 + `git status`(HANDOVER만 미커밋·2커밋 미푸시) + `git log --oneline -10` + `docs/spec/email-verify-spec.md`·`api-contract.md`(정본).
+3. 메모리: `commit-needs-approval`·`git-mv-prestage-commit-bleed`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`design-mockup-first`·`options-need-html-mockup`·`responsive-separate-design`·`clock-in-resume`·`handover-cadence`.
+4. **미러 패리티**(총괄 전용): KAN-152~156이 아직 todo 상태 → 게이트3 done 전이 시 함께 완료 미러(B-2).
 
 ## 다음 수
-1. **프론트 F1~F4 발번**(FC-136~) → 구현. F3(errorCodes) 선행, F2 디자인 게이트.
-2. (선택) 네이버 SMTP 실발송 테스트 — 사용자 env 주입 시.
-3. (선택) spec §2.3 상수시간 문구 갱신(architect, minor).
+1. **게이트3**: 사용자 push(직접) + Done 전이 승인 → 총괄이 FC-136~139·EPIC-EMAIL-VERIFY-FE done 전이 + Jira KAN-152~156 완료 미러.
+2. (정리) 데모 파랑기사 email side-effect 원복 검토(B-3).
+3. (선택) 네이버 SMTP 실발송 — 사용자 env 주입 시(B-4).
 
 ---
 
 ## 교훈
-1. **contract-first 구조 변경**: 확정 spec 도중 사용자 구조 변경 요청은 architect가 새 spec·영향 티켓·게이트2 자료를 내고 사용자 평문 상신([[gate2-plain-language]]) 후 착수. 이번 메일 템플릿 DB화가 표본.
-2. **서브에이전트 병렬 = gradle 경합**: 파일 무교차라도 동일 워킹트리 gradle 빌드/부팅은 경합 → 순차 위임이 안전. 진짜 병렬 필요 시 worktree 격리 검토.
-3. **동시성 리뷰 실효**: reviewer가 detached blind-merge lost-update(M-1)를 잡음 → 조건부 원자 UPDATE로 수정. NOT_SUPPORTED tx + save(detached)는 blind merge 위험, `@Version` 없으면 조건부 UPDATE(WHERE 술어)로 CAS.
-4. **비파괴 스키마 검증**: V18은 root/root 스크래치 스키마에 V1~V18 적용해 UK·시드·인코딩 실증(실 DB 무오염). ddl-auto=validate는 엔티티 필드 추가 후 스키마 일치 필수.
+1. **디자인 게이트 = 목업 선제작·승인 후 구현**: F2 새 화면을 `template-email-verify.html`로 선제작→스크린샷 상신→승인 후 구현. 웹/모바일 별도 설계([[responsive-separate-design]]). 실구현 CTA는 앱 표준 오렌지로 치환(목업 블랙=템플릿 로컬 색, reviewer가 회귀 아님 확인).
+2. **F3(errorCodes) 빌드 선행**: `errorCodes.test.ts`가 api-contract §5를 파싱하므로 EMAIL 코드 동기화가 나머지 프론트 티켓의 빌드 선행. 반드시 먼저.
+3. **동시성 리뷰 실효(프론트)**: reviewer가 쿨다운 시 코드 입력 경로 부재(M-1)·만료 후 자동제출(M-2)을 잡음 → OTP onComplete 자동제출 가드는 버튼 disabled 조건과 대칭이어야(만료·쿨다운 포함).
+4. **로컬 실 렌더 검증 가치**: local LoggingEmailSender가 코드를 로그로 내보내 실 SMTP 없이도 인증 전 흐름(TTL·쿨다운 카운트다운·에러 상태)을 실제 렌더로 검증 가능. 단 실발송은 네이버 크리덴셜 env 주입 별건.
