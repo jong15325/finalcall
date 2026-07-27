@@ -3,6 +3,10 @@ package com.finalcall.domain.member.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
@@ -34,4 +38,24 @@ public interface UserRepository extends JpaRepository<User, Long> {
     default User findByIdOrThrow(Long id, ErrorCode errorCode) {
         return findById(id).orElseThrow(() -> new BusinessException(errorCode));
     }
+
+    /**
+     * 이메일 인증 성공 확정 — <b>검증한 이메일이 여전히 현재 이메일일 때만</b> {@code email_verified=true} 를
+     * 조건부 원자 UPDATE 한다(FC-132 M-1). detached 전체 컬럼 blind merge 는 검증~커밋 사이 {@code setEmail} 경쟁 시
+     * 구 이메일을 verified 로 덮어쓰는 lost update 구멍이 있어, {@code email} 을 {@code WHERE} 에 담아 DB 행 락 아래
+     * 원자적으로 평가한다. {@code @Version} 없이도 조건부 CAS 로 lost update 를 차단한다.
+     *
+     * <p>{@code @Modifying} 쿼리는 트랜잭션이 필요하므로 {@code @Transactional}(REQUIRED)로 리포지토리 메서드 자체를
+     * 짧은 쓰기 트랜잭션에 담는다 — 호출 측 서비스 verify 가 {@code NOT_SUPPORTED}(SMTP/Redis tx 밖)라도 이 UPDATE 만
+     * 별도 tx 에서 적용된다.
+     *
+     * @param id    대상 사용자 PK
+     * @param email 검증 시점의 현재 이메일(정규화) — 이 값과 저장값이 같을 때만 반영
+     * @return 영향 행 수 — 1 성공, 0 = 검증~커밋 사이 이메일 변경(호출 측이 {@code EMAIL_002} 로 매핑)
+     */
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User u SET u.emailVerified = true "
+        + "WHERE u.id = :id AND u.email = :email AND u.isDeleted = false")
+    int markEmailVerified(@Param("id") Long id, @Param("email") String email);
 }

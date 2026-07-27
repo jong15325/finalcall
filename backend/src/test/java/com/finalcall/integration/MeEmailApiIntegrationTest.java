@@ -1,5 +1,6 @@
 package com.finalcall.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -119,6 +120,23 @@ class MeEmailApiIntegrationTest extends IntegrationTest {
             .content("{\"code\":\"" + wrong + "\"}"))
             .andExpect(status().isUnprocessableEntity())
             .andExpect(jsonPath("$.code").value("EMAIL_001"));
+    }
+
+    @Test
+    void 인증확정_조건부UPDATE는_이메일_일치시에만_반영하고_트랜잭션이_적용된다() {
+        User user = createUser("email_cond", "cond@naver.com");
+        Long id = user.getId();
+
+        // (1) 검증한 이메일과 다른 조건(검증~커밋 사이 setEmail 로 바뀐 상황) → 0행 → verified 반영 안 됨(M-1).
+        //     @Modifying 쿼리는 tx 가 없으면 예외지만 리포지토리 @Transactional 로 정상 실행됨을 함께 실증한다.
+        int stale = userRepository.markEmailVerified(id, "changed@naver.com");
+        assertThat(stale).isZero();
+        assertThat(userRepository.findById(id).orElseThrow().isEmailVerified()).isFalse();
+
+        // (2) 현재 이메일과 일치 → 1행, verified 커밋(재조회로 실제 반영 확인).
+        int applied = userRepository.markEmailVerified(id, "cond@naver.com");
+        assertThat(applied).isEqualTo(1);
+        assertThat(userRepository.findById(id).orElseThrow().isEmailVerified()).isTrue();
     }
 
     @Test

@@ -218,16 +218,33 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    void verify_성공이면_markEmailVerified하고_저장한다() {
+    void verify_성공이면_조건부UPDATE로_인증을_반영한다() {
         authenticateAs("1");
         User user = userOf(1L, EMAIL, false);
         when(userRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(user));
         when(codeStore.verify("1", "123456", EMAIL)).thenReturn(VerifyOutcome.SUCCESS);
+        when(userRepository.markEmailVerified(1L, EMAIL)).thenReturn(1); // 이메일 일치 → 1행
 
         User result = service.verify("123456");
 
         assertThat(result.isEmailVerified()).isTrue();
-        verify(userRepository).save(user); // 성공 시에만 DB 쓰기
+        // blind save 가 아니라 검증한 이메일 조건의 원자 UPDATE 를 호출한다(M-1 lost update 차단).
+        verify(userRepository).markEmailVerified(1L, EMAIL);
+    }
+
+    @Test
+    void verify_성공후_이메일이_바뀌어_영향0이면_EMAIL_002이고_인증반영안됨() {
+        authenticateAs("1");
+        User user = userOf(1L, EMAIL, false);
+        when(userRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(user));
+        when(codeStore.verify("1", "123456", EMAIL)).thenReturn(VerifyOutcome.SUCCESS);
+        // 검증~커밋 사이 setEmail 경쟁으로 이메일이 바뀜 → 조건부 UPDATE 영향 0 → 구 이메일을 verified 로 확정하지 않음.
+        when(userRepository.markEmailVerified(1L, EMAIL)).thenReturn(0);
+
+        assertThatThrownBy(() -> service.verify("123456"))
+            .isInstanceOf(BusinessException.class)
+            .extracting(e -> errorCode((BusinessException)e))
+            .isEqualTo(EmailErrorCode.EMAIL_CODE_EXPIRED_OR_ABSENT);
     }
 
     @Test
@@ -254,7 +271,7 @@ class EmailVerificationServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting(e -> errorCode((BusinessException)e))
             .isEqualTo(expected);
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).markEmailVerified(any(), any());
     }
 
     // ---------------- helpers ----------------

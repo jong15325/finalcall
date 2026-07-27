@@ -43,8 +43,9 @@ import lombok.RequiredArgsConstructor;
  *   <li>{@code requestVerification} — <b>SMTP 발송을 열린 DB 트랜잭션 안에서 하지 않는다</b>(커넥션 점유 회피,
  *       spec §4.3 ⚠). {@code NOT_SUPPORTED} 로 tx 없이 실행 — user 로드는 짧은 auto-commit 조회로 끝내고 발송은
  *       tx 밖에서 한다. 발송 실패는 그대로 전파(verification-request 만 실패, 가입·로그인 무영향 §6).</li>
- *   <li>{@code verify} — Redis 검증(원자 Lua)을 tx 밖에서 먼저 수행하고, 성공 시에만 DB 쓰기(markEmailVerified)를
- *       저장소 자체 tx({@code save} 병합)로 커밋한다. Redis I/O 를 DB 트랜잭션 밖에 둔다.</li>
+ *   <li>{@code verify} — Redis 검증(원자 Lua)을 tx 밖에서 먼저 수행하고, 성공 시에만 <b>조건부 원자 UPDATE</b>
+ *       ({@code UserRepository#markEmailVerified}, 검증한 이메일이 여전히 현재 이메일일 때만 반영 — M-1 lost update
+ *       차단)로 인증 플래그를 커밋한다. Redis I/O 를 DB 트랜잭션 밖에 둔다.</li>
  * </ul>
  *
  * <p>보안: 발급 코드값·{@link RenderedEmail} 은 로그로 남기지 않는다({@code @ServiceLog} 는 메서드명·소요시간만 기록).
@@ -121,8 +122,10 @@ public class EmailVerificationService {
      * 매핑: SUCCESS→{@link User#markEmailVerified} 커밋, MISMATCH→{@code EMAIL_001}, EXPIRED→{@code EMAIL_002},
      * ATTEMPTS_EXCEEDED→{@code EMAIL_003}.
      *
-     * <p>{@code NOT_SUPPORTED} 로 로드·Redis 검증을 tx 밖에서 수행하고, 성공 시에만 {@code save} 로 인증 플래그를
-     * 병합 커밋한다(DB 쓰기만 트랜잭션, Redis 검증은 그 전).
+     * <p>{@code NOT_SUPPORTED} 로 로드·Redis 검증을 tx 밖에서 수행하고, 성공 시에만 조건부 원자 UPDATE
+     * ({@code UserRepository#markEmailVerified})로 인증 플래그를 커밋한다 — 검증한 이메일이 여전히 현재 이메일일 때만
+     * 반영해 검증~커밋 사이 이메일 변경(setEmail 경쟁)의 lost update 를 막고, 영향 0 이면 {@code EMAIL_002} 로
+     * 통일한다(M-1). DB 쓰기만 트랜잭션, Redis 검증은 그 전.
      *
      * @return 인증이 반영된 {@link User}(성공 시 {@code emailVerified=true})
      */
@@ -137,8 +140,13 @@ public class EmailVerificationService {
         VerifyOutcome outcome = codeStore.verify(String.valueOf(user.getId()), code, user.getEmail());
         switch (outcome) {
             case SUCCESS -> {
-                user.markEmailVerified();
-                userRepository.save(user); // 성공 시에만 DB 쓰기 — 저장소 자체 tx 로 병합 커밋
+                // blind full-column merge 대신 조건부 원자 UPDATE(M-1) — "검증한 이메일이 여전히 현재 이메일일
+                // 때만" verified=true 를 반영한다(리포지토리 @Transactional 로 짧은 쓰기 tx 에서 실행). 영향 0 =
+                // 검증~커밋 사이 setEmail 경쟁으로 이메일이 바뀜 → 코드가 더 이상 현재 이메일용이 아니므로
+                // EMAIL_002 로 통일(lost update 차단 — 구 이메일을 verified 로 확정하지 않는다).
+                int updated = userRepository.markEmailVerified(user.getId(), user.getEmail());
+                Preconditions.validate(updated == 1, EmailErrorCode.EMAIL_CODE_EXPIRED_OR_ABSENT); // EMAIL_002
+                user.markEmailVerified(); // 응답 DTO 반영(로컬 detached 인스턴스 — 실제 커밋은 위 조건부 UPDATE)
             }
             case MISMATCH -> throw new BusinessException(EmailErrorCode.EMAIL_CODE_MISMATCH); // EMAIL_001
             case EXPIRED -> throw new BusinessException(EmailErrorCode.EMAIL_CODE_EXPIRED_OR_ABSENT); // EMAIL_002

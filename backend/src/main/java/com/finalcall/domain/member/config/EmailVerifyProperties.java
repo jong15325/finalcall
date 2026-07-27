@@ -3,6 +3,7 @@ package com.finalcall.domain.member.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 
 /**
@@ -21,8 +22,11 @@ import jakarta.validation.constraints.Positive;
 @ConfigurationProperties(prefix = "email.verify")
 public record EmailVerifyProperties(
 
-    /** 인증 코드 자릿수(6 고정, spec §3). */
-    @Positive int codeLength,
+    /**
+     * 인증 코드 자릿수(6 고정, spec §3). 상한 9 는 {@code EmailVerificationCodeStore.generateCode} 의
+     * {@code (int) Math.pow(10, codeLength)} 가 int 오버플로(codeLength≥10)에 빠지지 않도록 부팅 시 방어한다(m-3).
+     */
+    @Positive @Max(9) int codeLength,
 
     /** 코드 만료 시간(초). 이 시간이 지나면 코드는 자연 소멸한다(Redis TTL, spec §2.3). */
     @Positive long ttlSeconds,
