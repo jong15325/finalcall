@@ -3,7 +3,7 @@ id: EPIC-EMAIL-TEMPLATE
 type: epic
 jira_key: KAN-148
 title: 재사용 메일 템플릿 저장소 (DB 문구 보관함)
-state: doing
+state: review
 children: [FC-133, FC-134, FC-135]
 gate: null
 ---
