@@ -1,87 +1,95 @@
 # 총괄(메인 세션) 핸드오버
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-07-27** (EPIC-EMAIL-VERIFY 진행 중 — FC-117 done, FC-118 다음. 마감)
+갱신: **2026-07-27** (EPIC-EMAIL-VERIFY·EPIC-EMAIL-TEMPLATE **둘 다 done·push 완료**. 마감)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
 
-> ★ **이 갱신의 경위**: EPIC-CONVENTION-V2 게이트3 종료 후 **EPIC-EMAIL-VERIFY 재개**. FC-117(Flyway V17)까지 구현·검증·커밋하고 마감했다. 다음은 FC-118(User 엔티티 email 필드).
+> ★ **이 갱신의 경위**: 회원가입 이메일 인증(EMAIL-VERIFY) 구현 중 사용자가 "메일 문구를 DB 템플릿으로 재사용" 구조 변경을 요청 → 게이트2 승인 후 별도 에픽 **EPIC-EMAIL-TEMPLATE** 신설·구현. 두 에픽을 통합 reviewer로 검수(major M-1 발견·수정·재검 CLOSED)하고 게이트3(done·push)까지 종료했다. 다음은 **프론트 F1~F4**.
 
 ---
 
 ## 지금 어디인가 — 한 문단
 
-**EPIC-EMAIL-VERIFY 진행 중. FC-117(Flyway V17) done, FC-118부터 재개.** 회원가입 이메일 인증(6자리 코드·네이버 SMTP·Redis 해시)을 spec 확정본대로 구현 중이다. FC-117로 `user`에 `email`·`email_verified`·`email_active`(생성컬럼 UK) 3종을 추가했고(스크래치 스키마 비파괴 실검증·UK 시맨틱 실증), 커밋됐다. ⚠️ **V17은 다음 앱 부팅 시 자동 적용**된다(실 DB엔 아직 미적용). 하위 티켓 FC-128~132(B3~B7)는 발번 완료(KAN-143~147). 다음 수 = **FC-118(User email 필드·도메인 메서드)** → 이후 **FC-128∥FC-129(코드저장소·메일인프라 병렬)** → FC-130 → FC-131∥FC-132 → reviewer → 게이트3. 선행 에픽(RESTRUCTURE·CONVENTION-V2)은 done.
+**백엔드 이메일 인증·템플릿 완료. 다음 = 프론트엔드.** 회원가입 이메일 인증(6자리 코드·네이버 SMTP·Redis Lua 해시)과 재사용 메일 템플릿 저장소(DB `email_template`·`{{name}}` 치환)를 spec 확정본대로 구현·리뷰·done했다. 백엔드 계약은 push됐다(origin/master=`58986c0`). **다음 수 = 프론트 F1~F4 발번·구현**(F3 errorCodes.ts EMAIL_001~007 동기화 선행 필수, F2 이메일 인증 화면=디자인 게이트). 선행 에픽(RESTRUCTURE·CONVENTION-V2)·경매 이전 에픽 모두 done.
 
 ---
 
-## A. EPIC-EMAIL-VERIFY (진행 중 — KAN-134)
+## A. 완료 — EPIC-EMAIL-VERIFY (KAN-134) · EPIC-EMAIL-TEMPLATE (KAN-148)
 
 ### 정본·규약
-- **정본 spec**: `docs/spec/email-verify-spec.md`(v0.1 확정, 게이트2 승인 2026-07-24). api-contract v1.15. 에픽 파일 `docs/board/epics/EPIC-EMAIL-VERIFY.md`.
-- **V2 규약 적용**: User=`com.finalcall.domain.member.entity`, **ErrorCode(EmailErrorCode)=`common/exception`**, Properties=member `config/`, DTO=Request/Response.
-- **정책값**(spec §3): 코드 만료 10분·재전송 쿨다운 60초·시도 5회·6자리. Properties 바인딩(상수 하드코딩 금지).
+- **정본 spec**: `docs/spec/email-verify-spec.md`(v0.1, §6은 2026-07-27 템플릿 연동 갱신) · `docs/spec/email-template-spec.md`(v1.0 DECIDED, 게이트2 2026-07-27). api-contract v1.15(§5 EMAIL_001~007 등재됨).
+- **리뷰 기록**: `docs/board/reviews/EMAIL-VERIFY-TEMPLATE-review.md`(통합 리뷰·M-1 CLOSED).
 
-### 티켓 상태 (KAN-134 에픽)
-| 티켓 | Jira | 상태 | 내용 |
-|---|---|---|---|
-| FC-117 B1 | KAN-135 | **review(커밋 a8b11d4)** | Flyway V17 email 컬럼 3종·UK |
-| FC-118 B2 | KAN-136 | **todo(다음 수)** | User email·emailVerified 필드 + assignEmail/markEmailVerified |
-| FC-128 B3 | KAN-143 | todo | EmailVerificationCodeStore(Redis·Lua·emailHash) — **FC-117/118과 병렬 가능** |
-| FC-129 B4 | KAN-144 | todo | 메일 인프라(starter-mail·EmailSender·local skip) — 병렬 가능 |
-| FC-130 B5 | KAN-145 | todo | EmailErrorCode·EmailVerifyProperties·yml (FC-128·129 후) |
-| FC-131 B6 | KAN-146 | todo | signup email 선택 + EMAIL_007 (FC-118·130 후) |
-| FC-132 B7 | KAN-147 | todo | 엔드포인트 3종 + service + /me 노출 (FC-118·128·129·130 후) |
+### 구현 요지 (done 티켓)
+| 티켓 | Jira | 내용 |
+|---|---|---|
+| FC-117 | KAN-135 | Flyway V17 user email 컬럼 3종·email_active UK |
+| FC-118 | KAN-136 | User email·emailVerified 필드·assignEmail/markEmailVerified |
+| FC-128 | KAN-143 | EmailVerificationCodeStore(Redis Lua 원자검증·SHA-256·emailHash TOCTOU) |
+| FC-129 | KAN-144 | 메일 인프라 EmailSender 범용 발송기(send·MimeMessage)·local skip |
+| FC-130 | KAN-145 | EmailErrorCode(EMAIL_001~007)·EmailVerifyProperties·yml |
+| FC-131 | KAN-146 | signup email 선택 입력·EMAIL_007 UK 분기 |
+| FC-132 | KAN-147 | /me/email 3종 엔드포인트·EmailVerificationService·/me 마스킹 노출 |
+| FC-133 | KAN-149 | Flyway V18 email_template 테이블·EMAIL_VERIFICATION 시드 |
+| FC-134 | KAN-150 | EmailTemplate 엔티티·EmailTemplateKey(변수계약)·MailContentType·Repository |
+| FC-135 | KAN-151 | EmailTemplateService(치환·fail-fast 검증)·RenderedEmail·MailErrorCode |
 
-### ★ 총괄이 할 일 (재개 시, 순서대로)
-1. **FC-118 착수**(backend-impl): `User`에 `email`(String nullable)·`emailVerified`(boolean) + `assignEmail(정규화 email)`(emailVerified=false 재초기화)·`markEmailVerified()`. @Setter 금지. 정규화는 서비스 책임(엔티티는 정규화값 수신). depends_on FC-117 충족. spec §2.1.
-   - ⚠️ **주의**: FC-118로 email 필드가 엔티티에 생기면 JPA ddl-auto=validate가 **V17 적용된 스키마와 일치해야** 부팅 성공 → FC-118 검증 시 V17이 적용된 DB 필요(앱 부팅=V17 자동 적용, 또는 순서 확인).
-2. **FC-128 ∥ FC-129 팬아웃**(파일 무교차 — Redis store vs mail infra): FC-118과도 병렬 가능(다른 파일). 총괄 판단으로 동시 위임 가능.
-3. FC-130(값 참조) → FC-131 ∥ FC-132(signup vs member email 엔드포인트, 파일 다름).
-4. **reviewer**(에픽 done 전 필수): 동시성(Lua CAS·시도카운트 누수)·인가(주체=SecurityContext·이메일 열거 SEC-007)·TOCTOU(set-email 코드 폐기) 중점. concurrency-review 스킬.
-5. **게이트3**: 에픽 done(사용자 승인)·보드 커밋·사용자 push.
-6. **프론트 F1~F4**: 백엔드 계약 커밋 후 별도 발번(F2 이메일 인증 화면=디자인 게이트).
+### 리뷰 결과 (반드시 인지)
+- **M-1(major, CLOSED)**: `verify()` 성공이 detached blind-merge라 verify∥setEmail 경쟁 시 lost-update(구 이메일 verified 확정) → **조건부 원자 UPDATE** `UserRepository.markEmailVerified(id, email) WHERE email=검증이메일`(0행→EMAIL_002)로 차단. 리포지토리 메서드 `@Transactional`로 self-invocation 회피.
+- **minor 후속**(비차단): m-1 프론트 errorCodes.ts EMAIL_001~007 미동기화(F3 소관·프론트 빌드 전 선행 필수), m-4 spec §2.3 "상수시간" 문구↔Lua `==`(구현 근거 타당, architect 문구 갱신 권고).
 
-### 민감 포인트 (spec 근거)
-- **코드 저장 = Redis TTL+SHA-256, Lua 원자 검증**(attempts 증가·상한·삭제·상수시간 비교). emailHash 바인딩 + set-email의 코드 폐기로 TOCTOU 방어(spec §2.3).
-- **이메일 열거 최소**(SEC-007): 엔드포인트는 주체 자기 이메일만(임의 파라미터 없음). 발송 202가 유효성 확증 아님.
-- **미인증 스쿼팅 = accepted risk**(spec §7). email_active UK가 인증무관 유일성 강제 — 향후 강화안은 별도.
-- **SMTP 크리덴셜 = 사용자 env 주입**(네이버, 총괄 대리 불가). 로컬 `sender-enabled:false`.
+### 민감 포인트 (유지·주의)
+- **코드 미영속 경계**: 코드는 Redis SHA-256 해시만·템플릿 DB엔 `{{code}}` placeholder만·@ServiceLog 인자 미덤프·LoggingEmailSender는 local(sender-enabled=false) 한정.
+- **SEC-007 열거방지**: 3 엔드포인트 주체=SecurityContext만(임의 이메일 파라미터 없음), EMAIL_002 만료·미발송·emailHash불일치 통일, 202 비확증, /me 마스킹.
+- **SMTP 크리덴셜**: `MAIL_USERNAME`/`MAIL_PASSWORD` env only(네이버, 커밋 금지). local `sender-enabled:false`라 크리덴셜 없이 부팅. **실발송 테스트 시 사용자 env 주입 필요**(네이버 POP3/SMTP ON + 앱 비밀번호).
+- **미인증 스쿼팅 = accepted risk**(spec §7). email_active UK가 인증무관 유일성 강제.
 
 ---
 
-## B. Git 상태
-- **push 완료**: `dccf200..e8f31e9`(V2 코드 12커밋, 2026-07-26 사용자).
-- **미푸시 커밋 3건**(다음 push 대상): `1c80e05`(V2 보드 종료) · `a8b11d4`(FC-117 V17) · 이번 마감 **보드 커밋**(FC-117~132 티켓·에픽·HANDOVER).
-- ⚠️ **V17 미적용**: 실 `finalcall.user`엔 email 컬럼 없음(flyway 최신=16). **다음 앱 부팅 시 V17 자동 적용**. FC-118 검증 전 부팅 필요.
-- 규율: 부분 커밋 전 `git diff --cached --name-only` 확인([[git-mv-prestage-commit-bleed]]).
+## B. 다음 수 — 프론트엔드 F1~F4 (미발번)
+
+spec `email-verify-spec.md` §8·`email-template-spec.md` 참조. 백엔드 계약 push 완료로 착수 가능. **다음 FC 번호 = FC-136부터**.
+- **F1. 가입 폼** — email 입력(선택 표기)·@Email 검증. (계약 §2)
+- **F2. 이메일 인증 화면**(**디자인 게이트** — 새 화면) — 이메일 설정 + 6자리 코드 입력 + 재전송 쿨다운 카운트·시도초과 안내. 목업 선제작([[design-mockup-first]]·[[options-need-html-mockup]]).
+- **F3. errorCodes.ts** — `EMAIL_001`~`EMAIL_007` 동기화(**프론트 빌드 전 선행 필수** — `errorCodes.test.ts`가 api-contract §5 파싱). 메시지 분리(만료·불일치·시도초과·쿨다운·이미인증·미설정·이미사용중).
+- **F4. GET /me 반영** — `emailVerified`·`emailMasked` 3상태(미설정/미인증/인증완료) 배너·게이트. F2 연계.
+
+의존: F1(계약 확정) · F2(디자인 게이트 후) · F3(계약 §5) · F4(F2 연계). 프론트 디자인은 [[frontend-design-principles]]·[[frontend-design-decisions]]·[[responsive-separate-design]]·[[mockup-fidelity-only-fix]] 준수.
 
 ---
 
-## C. 배경 — 완료 에픽·환경
-- **완료 에픽**: EPIC-CONVENTION-V2(2026-07-26 게이트3 — feature 내부 어휘·ErrorCode 중앙화·Properties 분리·DTO 축약·ArchUnit e/f/g) · EPIC-RESTRUCTURE(feature-first) · EPIC-SHOP·MARKET-DATA·SHOP-MANAGE·SEARCH·PURCHASE.
-- **V2 규약 요지**(신규 코드 준수): DTO=Request/Response(+공용 `CursorResponse<T,C>`), ErrorCode=`common/exception`, feature Properties=`domain/<f>/config/`, ArchUnit `ConventionArchitectureTest`가 강제. 정본 proposal v0.4 + CLAUDE.md §5.
+## C. Git 상태
+- **push 완료**: `e8f31e9..58986c0`(이번 세션 이메일 15커밋 + 앞선 미푸시 3, 총 18, 2026-07-27 사용자). **미푸시 없음**, 워킹트리 클린.
+- ⚠️ **실 DB = V17→V18 적용됨**(FC-118·FC-129/133 검증 부팅으로 전진). flyway 최신=18.
+- 규율: 부분 커밋 전 `git diff --cached --name-only` 확인([[git-mv-prestage-commit-bleed]]). 커밋 매번 사용자 승인([[commit-needs-approval]]).
+
+---
+
+## D. 배경 — 완료 에픽·환경
+- **완료 에픽**: EPIC-EMAIL-VERIFY·EPIC-EMAIL-TEMPLATE(2026-07-27) · EPIC-CONVENTION-V2 · EPIC-RESTRUCTURE · EPIC-SHOP·MARKET-DATA·SHOP-MANAGE·SEARCH·PURCHASE.
+- **V2 규약**(신규 코드 준수): DTO=Request/Response(+공용 `CursorResponse<T,C>`), ErrorCode=`common/exception`, feature Properties=`domain/<f>/config/`, ArchUnit `ConventionArchitectureTest`·`SliceArchitectureTest` 강제. 신규 feature `com.finalcall.domain.mail`(메일 템플릿).
 - 데모 계정 `demo1~10`/`demo1234!`. 마켓 5천 시드.
 - 환경 기동: `docker start finalcall-mysql finalcall-redis`; 검색 스택 `cd backend && docker compose -f docker-compose.local.yml up -d --build` + create-index·register-connectors. 백엔드 `JAVA_HOME=C:\Users\howee\.jdks\ms-21.0.11` (루트)`./gradlew :backend:bootRun --args='--spring.profiles.active=local'`. 프론트 `cd frontend && npm run dev`.
-- 함정: ES 8.18.8 버전일치·Confluent CDN차단(Aiven)·mysql binlog·`flyway repair`·bootRun cwd=레포루트. **finalcall DB 계정은 CREATE DATABASE 권한 없음**(스크래치 검증은 root/root).
+- 함정: ES 8.18.8 버전일치·Confluent CDN차단(Aiven)·mysql binlog·`flyway repair`·bootRun cwd=레포루트. **finalcall DB 계정은 CREATE DATABASE 권한 없음**(스크래치 검증은 root/root). gradle **동시 실행 금지**(서브에이전트 병렬 시 bootRun/test 자원 경합 — 순차 위임).
 
 ---
 
 ## 이어받는 법 (새 세션)
 1. `CLAUDE.md` 섹션 8~13 숙지(오케스트레이션·게이트·티켓·커밋 규약).
-2. 이 파일 + `git status`(미푸시 3커밋) + `git log --oneline -20` + `docs/spec/email-verify-spec.md`(정본) + `docs/board/epics/EPIC-EMAIL-VERIFY.md`.
+2. 이 파일 + `git status`(클린·미푸시 없음) + `git log --oneline -20` + `docs/spec/email-verify-spec.md`·`email-template-spec.md`(정본).
 3. 메모리: `commit-needs-approval`·`git-mv-prestage-commit-bleed`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`handoff-completion-report`·`handover-cadence`·`clock-in-resume`.
-4. **미러 패리티**(총괄 전용): 보드 done인데 Jira 미완료 대조. 이번 세션 KAN-135 검토중·143~147 todo 미러 확인.
+4. **미러 패리티**(총괄 전용): 보드 done인데 Jira 미완료 대조. 이번 세션 KAN-135~151·134·148 전부 완료 미러 확인됨.
 
 ## 다음 수
-1. **사용자 push**(미푸시 3커밋) — 원하면. 아니어도 로컬 작업 진행 가능.
-2. **FC-118 착수**(User email 필드) → 이후 FC-128∥129 팬아웃 → FC-130 → FC-131∥132 → reviewer → 게이트3.
-3. 프론트 F1~F4는 백엔드 계약 커밋 후.
+1. **프론트 F1~F4 발번**(FC-136~) → 구현. F3(errorCodes) 선행, F2 디자인 게이트.
+2. (선택) 네이버 SMTP 실발송 테스트 — 사용자 env 주입 시.
+3. (선택) spec §2.3 상수시간 문구 갱신(architect, minor).
 
 ---
 
 ## 교훈
-1. **스키마 마이그레이션 = 비파괴 검증**: 실 DB 부팅 대신 스크래치 스키마에 V17 적용해 UK 시맨틱까지 실증(실 DB·flyway 이력 무오염). 되돌리기 어려운 변경은 이 패턴.
-2. **ddl-auto=validate 순서**: DB 컬럼만 추가(FC-117)하면 미매핑 컬럼이라 부팅 OK. 엔티티 필드 추가(FC-118) 후엔 스키마 일치 필수 → V17 적용된 DB 필요.
-3. **도메인별 원자 커밋 + 매 커밋 승인**(섹션 13). backend-impl `git mv` 선-스테이징은 매 커밋 `git reset -q` 후 경로 재지정.
-4. **EmailErrorCode는 V2 규약대로 `common/exception`**(feature 루트 아님) — 신규 도메인도 V2 배치 준수.
+1. **contract-first 구조 변경**: 확정 spec 도중 사용자 구조 변경 요청은 architect가 새 spec·영향 티켓·게이트2 자료를 내고 사용자 평문 상신([[gate2-plain-language]]) 후 착수. 이번 메일 템플릿 DB화가 표본.
+2. **서브에이전트 병렬 = gradle 경합**: 파일 무교차라도 동일 워킹트리 gradle 빌드/부팅은 경합 → 순차 위임이 안전. 진짜 병렬 필요 시 worktree 격리 검토.
+3. **동시성 리뷰 실효**: reviewer가 detached blind-merge lost-update(M-1)를 잡음 → 조건부 원자 UPDATE로 수정. NOT_SUPPORTED tx + save(detached)는 blind merge 위험, `@Version` 없으면 조건부 UPDATE(WHERE 술어)로 CAS.
+4. **비파괴 스키마 검증**: V18은 root/root 스크래치 스키마에 V1~V18 적용해 UK·시드·인코딩 실증(실 DB 무오염). ddl-auto=validate는 엔티티 필드 추가 후 스키마 일치 필수.
