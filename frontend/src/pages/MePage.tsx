@@ -87,7 +87,7 @@ export default function MePage() {
                     />
 
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <VerificationCard />
+                        <VerificationCard profile={meQuery.data} />
                         <WalletSummaryCard
                             balance={balanceQuery.data}
                             isLoading={balanceQuery.isPending}

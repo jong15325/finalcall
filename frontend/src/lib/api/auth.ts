@@ -13,6 +13,13 @@ export interface SignupRequest {
     loginId: string
     password: string
     nickname: string
+    /**
+     * 이메일 — **선택**(계약 §2·email-verify-spec §4.1). 값이 있으면 `@Email`·≤255 로 전송하고,
+     * 없으면 **키 자체를 생략**한다(null·빈문자 전송 아님 → 이메일 없는 계정 생성). 생략을 보장하는
+     * 주체는 제출 폼(`SignupForm`)이다 — 빈 값이면 이 키를 payload 에 넣지 않는다. 인증은 가입
+     * 응답(201, email 미노출) 이후 별도 화면(F2)에서 처리한다.
+     */
+    email?: string
 }
 
 /** `POST /auth/signup` 응답 201 — **토큰을 주지 않는다.** 가입 후 로그인은 별도 호출이다. */
@@ -30,9 +37,22 @@ export interface LoginRequest {
 /** 프로필 (계약 §2.5 `GET`/`PATCH /me` 공통 응답) */
 export interface MeResponse extends UserSummary {
     createdAt: string
+    /**
+     * 이메일 인증 완료 여부(계약 §2.5 v1.15). `emailMasked` 와 조합해 3상태를 가른다 —
+     * `emailMasked=null`→미설정 / non-null & `emailVerified=false`→설정·미인증 / `true`→인증완료.
+     */
+    emailVerified: boolean
+    /**
+     * 마스킹 이메일(예 `a***@naver.com`) 또는 `null`(미설정). **원문은 싣지 않는다**(마스킹만,
+     * 계약 §2.5). 이메일 설정 직후 에코(원문)는 `PUT /me/email` 응답에서만 온다.
+     */
+    emailMasked: string | null
 }
 
-/** 회원가입 — 실패: `AUTH_001`(중복 loginId, 409)·`AUTH_002`(중복 nickname, 409)·400 검증 */
+/**
+ * 회원가입 — 실패: `AUTH_001`(중복 loginId, 409)·`AUTH_002`(중복 nickname, 409)·
+ * `EMAIL_007`(중복 email, 409 — email 제공 시 유니크 위반)·400 검증.
+ */
 export function signup(body: SignupRequest): Promise<SignupResponse> {
     return apiClient.post<SignupResponse>('/auth/signup', body, { auth: false })
 }

@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getMe, updateMe, withdraw } from '@/lib/api/auth'
+import {
+    requestEmailVerification,
+    setEmail,
+    verifyEmailCode,
+} from '@/lib/api/email'
 import { useAuthStore, useIsAuthenticated } from '@/store/authStore'
 import type { MeResponse } from '@/lib/api/auth'
+import type { SetEmailResponse, VerifyEmailResponse } from '@/lib/api/email'
 
 /**
  * 내 프로필 쿼리·변이 (계약 §2.5 `GET/PATCH/DELETE /me`) — FC-074.
@@ -63,5 +69,47 @@ export function useUpdateNickname() {
 export function useWithdraw() {
     return useMutation<void, Error, void>({
         mutationFn: () => withdraw(),
+    })
+}
+
+/**
+ * 이메일 설정/변경 (`PUT /me/email`, 계약 §2) — FC-138.
+ *
+ * ★ 성공 시 프로필 캐시를 무효화한다 — 이메일 설정·변경은 `emailMasked`·`emailVerified` 를
+ *   바꾸므로 `GET /me` 를 재조회해 3상태 카드(F4)를 갱신한다. 실패 `EMAIL_007`(중복)은 호출부가
+ *   `error` 로 받아 필드 문구를 낸다(`emailVerifyErrors.ts`, 원문 미노출).
+ */
+export function useSetEmail() {
+    const queryClient = useQueryClient()
+
+    return useMutation<SetEmailResponse, Error, string>({
+        mutationFn: (email) => setEmail(email),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: meKeys.profile() }),
+    })
+}
+
+/**
+ * 인증 코드 발송 요청 (`POST /me/email/verification-request`, 202) — FC-138.
+ * 프로필을 바꾸지 않으므로(코드는 Redis) 캐시 무효화는 하지 않는다. 쿨다운·시도 상태는 화면 지역
+ * 상태다. 실패 `EMAIL_004`(쿨다운)·`EMAIL_005/006` 은 호출부가 문구·흐름으로 처리한다.
+ */
+export function useRequestEmailVerification() {
+    return useMutation<void, Error, void>({
+        mutationFn: () => requestEmailVerification(),
+    })
+}
+
+/**
+ * 인증 코드 확인 (`POST /me/email/verify`) — FC-138.
+ * 성공 시 `email_verified=true` 커밋 → 프로필 캐시 무효화로 3상태 카드(F4)를 인증완료로 갱신한다.
+ */
+export function useVerifyEmailCode() {
+    const queryClient = useQueryClient()
+
+    return useMutation<VerifyEmailResponse, Error, string>({
+        mutationFn: (code) => verifyEmailCode(code),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: meKeys.profile() }),
     })
 }

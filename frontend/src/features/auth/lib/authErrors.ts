@@ -42,3 +42,16 @@ export function signupErrorMessage(error: unknown): string {
     }
     return '회원가입을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
+
+/**
+ * 가입 이메일 **필드** 전용 서버 에러 문구 — `EMAIL_007`(409, 이미 사용 중)만 email 필드에
+ * 되살린다(FC-136 · 계약 §5). 그 외는 `null` → 공통 문구(`signupErrorMessage`)가 담당한다.
+ * ★ 아이디·닉네임 중복(`AUTH_001`/`002`)과 달리 이메일 중복은 **고쳐야 할 입력이 email** 이라
+ *   필드 옆에 붙인다. 공통 배너와 겹쳐 뜨지 않도록, 폼은 이 값이 있으면 공통 배너를 숨긴다.
+ */
+export function signupEmailErrorMessage(error: unknown): string | null {
+    if (hasErrorCode(error, ERROR_CODES.EMAIL_007)) {
+        return '이미 사용 중인 이메일입니다. 다른 이메일을 입력해 주세요.'
+    }
+    return null
+}

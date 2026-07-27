@@ -21,6 +21,8 @@ const profile: MeResponse = {
     nickname: '모험가레온',
     isAdmin: false,
     createdAt: '2025-11-04T09:00:00Z',
+    emailVerified: false,
+    emailMasked: null,
 }
 
 function renderCard(
