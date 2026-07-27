@@ -1,6 +1,7 @@
 # Email Verification Spec (회원가입 이메일 인증)
 
 상태: **v0.1 (2026-07-25) — 확정.** 게이트2(스키마·계약·정책값) 사용자 승인(2026-07-24, 전 8항목). DRAFT 해제.
+§6은 EPIC-EMAIL-TEMPLATE 연동으로 갱신(2026-07-27, 게이트2 승인 — 메일 문구를 코드 상수→DB 템플릿 소비로 이관).
 소유: architect (변경은 계약 변경 절차 `common/rules.md [6]` + 영향 티켓 산출 후 사용자 확인)
 정본 에픽: `docs/board/epics/EPIC-EMAIL-VERIFY.md`
 연동 계약: api-contract **v1.15**(§2 signup·set-email·verification·§2.5 GET /me·§5 EMAIL_*)
@@ -208,8 +209,16 @@ email:
 - `spring.mail.*`의 `username`/`password` 기본값은 **공통 application.yml에 두지 않는다**(prod fail-fast 무력화 방지, 섹션 4). 로컬은 `application-local.yml`에서 `sender-enabled:false`로 발송 자체를 건너뛰어 크리덴셜 없이 부팅.
 
 ### 6.3 로컬/운영 거동
-- `EmailSender` 추상화 + `email.verify.sender-enabled` 플래그. **local 기본 false** → SMTP 미호출·생성 코드를 로그로 출력(개발자가 크리덴셜 없이 인증 흐름 테스트). **dev/prod = true** → 실발송, `${MAIL_USERNAME}`/`${MAIL_PASSWORD}` 미주입 시 부팅 실패(fail-fast).
+- 범용 `EmailSender` 추상화(§6.4 — 인증·제목·본문을 모르는 순수 발송기) + `email.verify.sender-enabled` 플래그. **local 기본 false** → SMTP 미호출·생성 코드를 로그로 출력(개발자가 크리덴셜 없이 인증 흐름 테스트). **dev/prod = true** → 실발송, `${MAIL_USERNAME}`/`${MAIL_PASSWORD}` 미주입 시 부팅 실패(fail-fast).
 - 발송 실패(SMTP 예외)는 `verification-request`만 실패시키고 **가입·로그인엔 영향 없음**(§4.1 자동발송 미채택 근거).
+
+### 6.4 메일 문구 = `EMAIL_VERIFICATION` 템플릿 소비 (EPIC-EMAIL-TEMPLATE 연동, 2026-07-27 게이트2 승인)
+인증 메일의 제목·본문은 **코드 상수에 심지 않는다**(구 `SmtpEmailSender` `SUBJECT`/`BODY_TEMPLATE` 상수 폐기). 문구는 **mail feature의 DB 템플릿 `EMAIL_VERIFICATION`** 을 소비한다. 정본 = `docs/spec/email-template-spec.md`(v1.0 DECIDED).
+
+- **조립(member 도메인 서비스, verification-request 경로)**: `code = codeStore.issue(...)` → `rendered = emailTemplateService.render(EmailTemplateKey.EMAIL_VERIFICATION, {code, expiryMinutes})` → `emailSender.send(toEmail, rendered.subject(), rendered.body(), html=false)`.
+- **`EmailSender` 시그니처 범용화**: `sendVerificationCode(toEmail, code)` → **`send(toEmail, subject, body, html)`**. 발송기는 템플릿·인증을 모른다(렌더링은 mail feature, 발송 조립은 member 서비스). `LoggingEmailSender`(local)·`SmtpEmailSender`(dev/prod, HTML 대비 `MimeMessage` 전환) 두 구현 유지.
+- **`expiryMinutes` 변수 = `EmailVerifyProperties.ttlSeconds/60` 파생**(신규 property 없음 — 기존 `ttl-seconds=600` 재사용).
+- **코드 미영속 경계 불변**: 템플릿 DB엔 `{{code}}` 자리만 저장, 실제 코드는 발송 시점 렌더 인자로만 주입되고 Redis엔 SHA-256 해시로만 남는다(§2.3). `LoggingEmailSender`의 코드 로그는 local(sender-enabled=false) 한정.
 
 ---
 
