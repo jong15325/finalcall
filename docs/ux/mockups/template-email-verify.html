@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>FinalCall · 이메일 인증 · 디자인 목업 (F2)</title>
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  F2 · EPIC-EMAIL-VERIFY — 계정 설정 · 이메일 인증 (/me/email)
+  ══════════════════════════════════════════════════════════════════════════════
+  이 목업은 디자인 게이트용이다 — 실 React 코드가 아니라 정적 상태 나열이다.
+  형제 화면 template-auth-signup.html / template-auth-login.html 과 같은 시스템으로
+  읽혀야 하므로 토큰·셸·타이포·상태카탈로그 문법을 의도적으로 그대로 계승한다.
+  (새 팔레트·새 폰트 없음. 자체완결 정적 HTML, 외부 CDN·웹폰트 없음.)
+
+  토큰 출처: docs/ux/mockups/template-auth-signup.html §1~§13 (design-system.md v0.5)
+  계약 출처: docs/spec/email-verify-spec.md (v0.1 확정) · api-contract v1.15 §2·§2.5·§5
+    PUT  /api/v1/me/email                     {email}      → 200 {email, emailVerified:false}
+    POST /api/v1/me/email/verification-request (body 없음)  → 202
+    POST /api/v1/me/email/verify              {code:6자리}  → 200 {emailVerified:true}
+    GET  /api/v1/me                            → {..., emailMasked(nullable), emailVerified}
+    에러 EMAIL_001 불일치·002 만료·003 시도초과·004 쿨다운·005 이미인증·006 미설정·007 이미사용중
+
+  ── 이 화면 고유의 결정 ───────────────────────────────────────────────────────
+  ⓐ 3상태 분기의 근거는 GET /me 두 필드다(spec §4.5) — emailMasked(null 여부)로
+     설정 여부를, emailVerified 로 인증 여부를 판정. 화면은 이 조합으로
+     미설정 / 설정·미인증 / 인증완료 세 진입을 가른다. 상태별로 카드 내용이 다르다.
+  ⓑ 이메일 원문은 화면에 없다 — GET /me 는 마스킹만 준다(a***@naver.com). 설정 직후
+     PUT 응답만 방금 제출한 값을 에코하므로, "설정 폼"에서만 원문을 보이고
+     그 외 모든 화면은 마스킹을 쓴다.
+  ⓒ 6자리 코드 = OTP 6칸(spec §3, code-length 6 고정). 한 칸=한 자리, 자동 넘김.
+     붙여넣기 시 6칸 분배. 모바일은 칸을 키워 터치 타깃을 확보한다(§3 반응형).
+  ⓓ 재전송은 항상 60초 쿨다운을 동반한다(spec §3, EMAIL_004). "코드 다시 받기"는
+     쿨다운 중 비활성 + 남은 초 카운트다운. 이건 상태가 아니라 흐름의 상수다.
+  ⓔ 정책값(10분 만료·5회·60초)은 창작하지 않는다 — spec §3 확정값을 그대로 표기.
+  ─────────────────────────────────────────────────────────────────────────────
+-->
+<style>
+/* ══════════════════════════════════════════════════════════════════════════════
+   1. 토큰 — template-auth-signup.html §1 실값 그대로 (design-system v0.5)
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#F7F7F8;
+  --surface:#FFFFFF;
+  --surface-band:#EFEFF1;
+  --surface-sunken:#E8E8EB;
+  --text:#18181B; --text-muted:#52525B; --text-subtle:#67676E;
+  --border:#E4E4E7; --border-muted:#F1F1F3; --border-strong:#818187;
+  --ink:#18181B; --ink-hover:#33333A; --ink-pressed:#000000;
+  --primary:#6E2A9F; --primary-hover:#5C2185; --primary-pressed:#491A6C;
+  --primary-soft:#F1EAF5; --primary-disabled:#E4E4E7; --primary-fg:#FFFFFF;
+  --focus:#6E2A9F;
+  --success:#14742F; --warning:#A0510A; --danger:#C81E1E; --info:#1D4ED8;
+  --success-soft:#ECF5EF; --warning-soft:#F9F1EB; --danger-soft:#FBEDED; --info-soft:#EEF3FD;
+
+  --r-sm:4px; --r-md:6px; --r-lg:8px; --r-xl:12px; --r-full:9999px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.06);
+  --sh-md:0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06);
+  --sh-lg:0 8px 24px rgba(15,23,42,.10);
+  --d-fast:120ms; --d-base:200ms; --d-slow:320ms; --ease:cubic-bezier(0.4,0,0.2,1);
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
+  --s8:32px; --s10:40px; --s12:48px; --s16:64px; --s20:80px;
+  --z-sticky-cta:5;
+  --z-skiplink:10;
+}
+
+/* ── 2. 리셋 — 형제 파일과 동일 ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Pretendard","Pretendard Variable","Apple SD Gothic Neo","Malgun Gothic",
+              -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:1rem; line-height:1.5; font-kerning:normal;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  word-break:keep-all; overflow-wrap:break-word;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+img,svg{display:block;}
+button,input{font:inherit; color:inherit;}
+a{color:var(--primary); text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;}
+a:hover{color:var(--primary-hover);}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:2px;}
+.num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1,"lnum" 1;}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+.sr-only:focus{
+  position:fixed; top:var(--s3); left:var(--s3); z-index:var(--z-skiplink);
+  width:auto; height:auto; margin:0; padding:var(--s2) var(--s4); clip:auto;
+  background:var(--surface); color:var(--text); border:1px solid var(--border-strong);
+  border-radius:var(--r-md); box-shadow:var(--sh-md); font-size:.8125rem; font-weight:700; text-decoration:none;
+}
+code{
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Consolas,"Liberation Mono",monospace;
+  font-size:.9em; background:var(--surface-sunken); border-radius:var(--r-sm); padding:1px 4px;
+}
+.container{max-width:1080px; margin:0 auto; padding:0 var(--s6);}
+@media (max-width:719px){ .container{padding:0 var(--s4);} }
+
+.eyebrow{display:block; font-size:.6875rem; font-weight:700; line-height:1.2; letter-spacing:.12em; color:var(--text-subtle);}
+.eyebrow--ink{color:var(--text-muted);}
+
+/* ── 4. 브랜드 워드마크 — 형제 파일 승계 ────────────────────────────────────── */
+.wordmark{display:inline-flex; align-items:baseline; gap:0; font-weight:800; letter-spacing:-.02em; line-height:1; color:var(--text); text-decoration:none; white-space:nowrap;}
+.wordmark:hover{color:var(--text);}
+.wordmark .wm-a{font-size:1.375rem;}
+.wordmark .wm-b{font-size:1.375rem; position:relative; box-shadow:inset 0 -2px 0 0 var(--primary);}
+
+/* ── 5. 버튼 — §5.1 (primary = ink 블랙 채움) ───────────────────────────────── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);
+  height:44px; padding:0 var(--s5); border:1px solid transparent; border-radius:var(--r-md);
+  font-size:.8125rem; font-weight:700; letter-spacing:.01em; cursor:pointer;
+  background:var(--ink); color:var(--primary-fg); text-decoration:none;
+  transition:background var(--d-fast) var(--ease);
+}
+.btn:hover{background:var(--ink-hover); color:var(--primary-fg);}
+.btn:active{background:var(--ink-pressed);}
+.btn:disabled,.btn[aria-disabled="true"]{background:var(--primary-disabled); color:#A1A1AA; cursor:not-allowed;}
+.btn--sm{height:36px; padding:0 var(--s4); font-size:.75rem;}
+.btn--lg{height:50px; padding:0 var(--s6); font-size:1.125rem; font-weight:800; letter-spacing:-.02em;}
+.btn--block{width:100%;}
+.btn--outline{background:var(--surface); color:var(--text); border-color:var(--border-strong);}
+.btn--outline:hover{background:var(--surface-sunken); color:var(--text);}
+.btn--outline:disabled{background:var(--surface); color:var(--text-subtle); border-color:var(--border);}
+.btn--ghost{background:transparent; color:var(--text-muted); border-color:transparent; text-decoration:underline; text-underline-offset:3px; height:auto; padding:var(--s1) var(--s2); font-size:.8125rem;}
+.btn--ghost:hover{background:transparent; color:var(--primary);}
+
+.spinner{width:18px; height:18px; flex:none; border-radius:var(--r-full); border:2px solid currentColor; border-top-color:transparent; animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── 6. 셸 — 형제 파일 승계 ─────────────────────────────────────────────────── */
+.site-header{background:var(--surface); border-bottom:1px solid var(--border); flex:none;}
+.site-header .inner{display:flex; align-items:center; gap:var(--s4); height:68px;}
+.site-header .crumb{font-size:.6875rem; font-weight:700; letter-spacing:.12em; color:var(--text-subtle);}
+.site-header .crumb::before{content:"／"; margin:0 var(--s3) 0 0; color:var(--border-strong);}
+@media (max-width:719px){ .site-header .inner{height:56px;} .site-header .crumb{display:none;} }
+
+.site-footer{background:var(--surface-band); border-top:1px solid var(--border); flex:none;}
+.site-footer .inner{display:flex; align-items:center; justify-content:space-between; gap:var(--s4); flex-wrap:wrap; padding:var(--s6) 0;}
+.site-footer .copy{margin:0; font-size:.75rem; color:var(--text-subtle);}
+.site-footer .links{display:flex; align-items:center; gap:var(--s4); flex-wrap:wrap;}
+.site-footer .links a{font-size:.75rem; color:var(--text-muted); text-decoration:none;}
+.site-footer .links a:hover{color:var(--primary); text-decoration:underline; text-underline-offset:3px;}
+.site-footer .sep{width:1px; height:11px; background:var(--border-strong); opacity:.5;}
+
+/* ── 7. 페이지 인트로 ───────────────────────────────────────────────────────── */
+main{flex:1 0 auto; padding:var(--s16) 0 var(--s12);}
+@media (max-width:719px){ main{padding:var(--s8) 0 var(--s12);} }
+.page-head{max-width:640px; margin-bottom:var(--s10);}
+.page-head h1{margin:0; font-size:2.125rem; font-weight:800; letter-spacing:-.03em; line-height:1.15; text-wrap:balance;}
+.page-head p{margin:var(--s3) 0 0; font-size:.8125rem; line-height:1.7; color:var(--text-muted); text-wrap:pretty;}
+.page-head .rule{width:40px; height:2px; background:var(--primary); margin-top:var(--s5);}
+@media (max-width:719px){ .page-head h1{font-size:1.625rem;} }
+
+/* 정책 요약 칩 줄 */
+.policy{display:flex; flex-wrap:wrap; gap:var(--s2); margin-top:var(--s5);}
+.policy .chip{
+  display:inline-flex; align-items:center; gap:6px; padding:5px var(--s3);
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r-full);
+  font-size:.75rem; color:var(--text-muted); font-weight:500;
+}
+.policy .chip b{color:var(--text); font-weight:700;}
+
+/* ── 8. 섹션 구분 (웹 흐름 / 모바일 흐름 / 상태 카탈로그) ─────────────────────── */
+.band{padding:var(--s12) 0; border-top:1px solid var(--border);}
+.band:first-of-type{border-top:0;}
+.band--sunken{background:var(--surface-band);}
+.band-head{margin-bottom:var(--s8);}
+.band-head .eyebrow{margin-bottom:var(--s2);}
+.band-head h2{margin:0; font-size:1.375rem; font-weight:800; letter-spacing:-.02em;}
+.band-head p{margin:var(--s2) 0 0; font-size:.8125rem; line-height:1.7; color:var(--text-muted); max-width:72ch; text-wrap:pretty;}
+
+/* 흐름 스텝 라벨 */
+.demo-cap{display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; margin-bottom:var(--s3);}
+.demo-cap .t{font-size:.6875rem; font-weight:700; letter-spacing:.12em; color:var(--text-muted);}
+.demo-cap .code{font-size:.6875rem; font-weight:700; color:var(--text-muted); background:var(--surface-sunken); border-radius:var(--r-sm); padding:1px 6px;}
+.demo-cap .code--api{background:var(--primary-soft); color:var(--primary-pressed);}
+.demo-cap .code--err{background:var(--danger-soft); color:var(--danger);}
+
+/* ── 9. 폼 카드 (데스크톱) ──────────────────────────────────────────────────── */
+.flow-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr)); gap:var(--s8) var(--s10); align-items:start;}
+.form-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:var(--sh-md); padding:var(--s8);}
+@media (max-width:719px){ .form-card{padding:var(--s6) var(--s5);} }
+
+.card-head{margin-bottom:var(--s5);}
+.card-head h3{margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.02em; line-height:1.4;}
+.card-head p{margin:var(--s2) 0 0; font-size:.8125rem; line-height:1.65; color:var(--text-muted); text-wrap:pretty;}
+
+/* 마스킹 이메일 표시 행 */
+.email-row{
+  display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
+  padding:var(--s4); margin-bottom:var(--s5);
+  background:var(--surface-sunken); border:1px solid var(--border); border-radius:var(--r-md);
+}
+.email-row .addr{font-size:1.0625rem; font-weight:700; letter-spacing:-.01em; min-width:0; overflow-wrap:anywhere;}
+.email-row .grow{flex:1;}
+
+/* 상태 배지 */
+.badge{display:inline-flex; align-items:center; gap:5px; padding:3px var(--s2); border-radius:var(--r-full); font-size:.6875rem; font-weight:700; letter-spacing:.02em;}
+.badge svg{width:12px; height:12px;}
+.badge--verified{background:var(--success-soft); color:var(--success);}
+.badge--pending{background:var(--warning-soft); color:var(--warning);}
+.badge--none{background:var(--surface-sunken); color:var(--text-subtle);}
+
+/* 필드 — 형제 파일 §8 승계 */
+.form{display:flex; flex-direction:column; gap:var(--s5);}
+.field{display:flex; flex-direction:column; gap:var(--s2);}
+.field > label{font-size:.6875rem; font-weight:700; line-height:1.2; letter-spacing:.12em; color:var(--text-muted);}
+.field input[type=email],.field input[type=text]{
+  height:44px; width:100%; padding:0 var(--s4);
+  background:var(--surface-sunken); color:var(--text);
+  border:1px solid var(--border-strong); border-radius:var(--r-md);
+  font-size:1.0625rem; font-weight:600; letter-spacing:-.01em;
+  transition:background var(--d-fast) var(--ease), border-color var(--d-fast) var(--ease), box-shadow var(--d-fast) var(--ease);
+}
+.field input::placeholder{color:var(--text-subtle); font-weight:400; letter-spacing:0;}
+.field input:hover{border-color:#6F6F75;}
+.field input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.field input:disabled{color:var(--text-subtle); cursor:not-allowed; border-color:var(--border); background:var(--surface-sunken);}
+.field--error input{border-color:var(--danger); background:var(--surface);}
+.field--error input:focus{box-shadow:0 0 0 3px var(--danger-soft);}
+.field .msg{margin:0; display:flex; align-items:flex-start; gap:5px; font-size:.8125rem; line-height:1.55; color:var(--danger); font-weight:500;}
+.field .msg svg{width:14px; height:14px; flex:none; margin-top:3px;}
+.field .msg.ok{color:var(--success);}
+.field .hint{margin:0; font-size:.8125rem; line-height:1.55; color:var(--text-subtle);}
+
+.form-actions{margin-top:var(--s2); display:flex; flex-direction:column; gap:var(--s3);}
+
+/* 재전송 줄 (쿨다운 카운트다운) */
+.resend{display:flex; align-items:center; justify-content:center; gap:var(--s2); font-size:.8125rem; color:var(--text-muted); text-align:center;}
+.resend .cd{font-weight:700; color:var(--text);}
+
+/* ── 10. OTP 6칸 (데스크톱) ─────────────────────────────────────────────────── */
+.otp{display:flex; gap:var(--s2); justify-content:space-between;}
+.otp input{
+  flex:1 1 0; min-width:0; width:100%; height:58px; text-align:center;
+  padding:0; background:var(--surface-sunken); color:var(--text);
+  border:1px solid var(--border-strong); border-radius:var(--r-md);
+  font-size:1.5rem; font-weight:800; letter-spacing:0; font-variant-numeric:tabular-nums;
+  transition:background var(--d-fast) var(--ease), border-color var(--d-fast) var(--ease), box-shadow var(--d-fast) var(--ease);
+}
+.otp input:hover{border-color:#6F6F75;}
+.otp input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.otp input:disabled{color:var(--text-subtle); background:var(--surface-sunken); border-color:var(--border); cursor:not-allowed;}
+.otp--filled input{background:var(--surface); border-color:var(--border-strong);}
+.otp--error input{border-color:var(--danger); background:var(--surface);}
+.otp--done input{border-color:var(--success); background:var(--success-soft); color:var(--success);}
+
+.otp-meta{display:flex; align-items:center; justify-content:space-between; gap:var(--s3); margin-top:var(--s2); font-size:.75rem; color:var(--text-subtle);}
+.otp-meta .attempts{font-weight:700; color:var(--warning);}
+
+/* ── 11. 알림 배너 — 형제 파일 §9 승계 ──────────────────────────────────────── */
+.banner{display:flex; align-items:flex-start; gap:var(--s3); padding:var(--s4); border-radius:var(--r-md); margin-bottom:var(--s5);}
+.banner svg{width:20px; height:20px; flex:none; margin-top:2px;}
+.banner .bd{min-width:0; flex:1;}
+.banner .lbl{display:block; font-size:.6875rem; font-weight:700; line-height:1.2; letter-spacing:.12em; color:currentColor; opacity:.85;}
+.banner strong{display:block; margin-top:var(--s2); font-size:1.0625rem; font-weight:700; letter-spacing:-.02em; line-height:1.4;}
+.banner p{margin:var(--s2) 0 0; font-size:.8125rem; line-height:1.7; color:var(--text-muted); text-wrap:pretty;}
+.banner--success{background:var(--success-soft); color:var(--success);}
+.banner--warning{background:var(--warning-soft); color:var(--warning);}
+.banner--danger {background:var(--danger-soft);  color:var(--danger);}
+.banner--info   {background:var(--info-soft);    color:var(--info);}
+
+/* ── 12. 모바일 폰 프레임 ───────────────────────────────────────────────────────
+   중요(memory: 반응형 별도 설계): 데스크톱에서 이 페이지를 볼 때도 "모바일 설계"를
+   눈으로 비교할 수 있어야 한다. 미디어쿼리는 실제 뷰포트에서만 발동하므로, 폰 프레임
+   내부는 미디어쿼리에 기대지 않고 .m-* 클래스로 모바일 전용 배치를 항상 렌더한다.
+   차이는 배치가 아니라 설계다 — OTP 칸을 키우고(터치 타깃 ≥52px), 주 CTA 를 프레임
+   하단 sticky 로 붙여 엄지 도달 비용을 없앤다.
+   ─────────────────────────────────────────────────────────────────────────── */
+.phones{display:flex; flex-wrap:wrap; gap:var(--s10) var(--s8); align-items:flex-start;}
+.phone-wrap{width:340px; max-width:100%;}
+.phone{
+  width:100%; border:10px solid #1B1B1F; border-radius:34px; overflow:hidden;
+  background:var(--surface); box-shadow:var(--sh-lg); position:relative;
+}
+.phone .status-bar{height:26px; background:var(--surface); display:flex; align-items:center; justify-content:center; position:relative;}
+.phone .notch{width:96px; height:16px; background:#1B1B1F; border-radius:0 0 12px 12px;}
+.phone .app-bar{display:flex; align-items:center; gap:var(--s2); padding:var(--s3) var(--s4); border-bottom:1px solid var(--border);}
+.phone .app-bar .back{width:20px; height:20px; color:var(--text-muted);}
+.phone .app-bar .title{font-size:.8125rem; font-weight:700; letter-spacing:-.01em;}
+.phone .screen{padding:var(--s5) var(--s4) 0; min-height:360px; display:flex; flex-direction:column;}
+.phone .screen-body{flex:1;}
+/* 프레임 하단 sticky CTA 모사 */
+.phone .m-dock{
+  margin:var(--s5) calc(-1 * var(--s4)) 0; padding:var(--s4) var(--s4) var(--s5);
+  background:var(--surface); border-top:1px solid var(--border-muted);
+  box-shadow:0 -8px 14px -10px rgba(15,23,42,.16); display:flex; flex-direction:column; gap:var(--s3);
+}
+.phone-cap{margin-bottom:var(--s3);}
+
+/* 모바일 전용 컴포넌트 변형 */
+.m-head{margin-bottom:var(--s4);}
+.m-head h3{margin:0; font-size:1.0625rem; font-weight:800; letter-spacing:-.02em; line-height:1.3;}
+.m-head p{margin:var(--s2) 0 0; font-size:.8125rem; line-height:1.6; color:var(--text-muted);}
+.m-field{display:flex; flex-direction:column; gap:var(--s2); margin-bottom:var(--s4);}
+.m-field > label{font-size:.6875rem; font-weight:700; letter-spacing:.12em; color:var(--text-muted);}
+.m-field input{
+  height:50px; width:100%; padding:0 var(--s4);
+  background:var(--surface-sunken); color:var(--text); border:1px solid var(--border-strong); border-radius:var(--r-md);
+  font-size:1.0625rem; font-weight:600;
+}
+.m-field input:focus{outline:none; background:var(--surface); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+/* 모바일 OTP — 칸을 키운다(터치 타깃) */
+.m-otp{display:flex; gap:6px; justify-content:space-between;}
+.m-otp input{
+  flex:1 1 0; min-width:0; height:56px; text-align:center; padding:0;
+  background:var(--surface); color:var(--text); border:1px solid var(--border-strong); border-radius:var(--r-md);
+  font-size:1.375rem; font-weight:800; font-variant-numeric:tabular-nums;
+}
+.m-otp input:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+.m-otp--error input{border-color:var(--danger);}
+.m-otp--done input{border-color:var(--success); background:var(--success-soft); color:var(--success);}
+.m-meta{display:flex; align-items:center; justify-content:space-between; gap:var(--s2); margin-top:var(--s2); font-size:.75rem; color:var(--text-subtle);}
+.m-email-row{display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; padding:var(--s3); margin-bottom:var(--s4); background:var(--surface-sunken); border-radius:var(--r-md);}
+.m-email-row .addr{font-size:1rem; font-weight:700; overflow-wrap:anywhere;}
+.m-banner{display:flex; gap:var(--s3); padding:var(--s3) var(--s4); border-radius:var(--r-md); margin-bottom:var(--s4);}
+.m-banner svg{width:18px; height:18px; flex:none; margin-top:2px;}
+.m-banner .lbl{display:block; font-size:.625rem; font-weight:700; letter-spacing:.1em; opacity:.85;}
+.m-banner strong{display:block; margin-top:3px; font-size:.9375rem; font-weight:700; letter-spacing:-.01em; line-height:1.35;}
+.m-banner p{margin:4px 0 0; font-size:.75rem; line-height:1.6; color:var(--text-muted);}
+.m-banner--success{background:var(--success-soft); color:var(--success);}
+.m-banner--warning{background:var(--warning-soft); color:var(--warning);}
+.m-banner--danger{background:var(--danger-soft); color:var(--danger);}
+.m-resend{display:flex; align-items:center; justify-content:center; gap:6px; font-size:.75rem; color:var(--text-muted);}
+.m-resend .cd{font-weight:700; color:var(--text);}
+
+/* ── 13. 상태 카탈로그 카드 — 형제 파일 §13 승계 ────────────────────────────── */
+.states-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr)); gap:var(--s6);}
+.state{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden;}
+.state > .cap{display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; padding:var(--s3) var(--s5); border-bottom:1px solid var(--border-muted); background:var(--surface);}
+.state .cap .t{font-size:.6875rem; font-weight:700; letter-spacing:.12em; color:var(--text-muted);}
+.state .cap .code{font-size:.6875rem; font-weight:700; color:var(--text-muted); background:var(--surface-sunken); border-radius:var(--r-sm); padding:1px 6px;}
+.state .cap .code--err{background:var(--danger-soft); color:var(--danger);}
+.state .cap .code--warn{background:var(--warning-soft); color:var(--warning);}
+.state .cap .code--ok{background:var(--success-soft); color:var(--success);}
+.state > .bd{padding:var(--s5);}
+.state .note{margin:var(--s4) 0 0; font-size:.75rem; color:var(--text-subtle); line-height:1.7; text-wrap:pretty;}
+.state .retry-tag{display:inline-block; margin-top:var(--s3); font-size:.6875rem; font-weight:700; letter-spacing:.04em; padding:2px var(--s2); border-radius:var(--r-sm);}
+.retry-tag--again{background:var(--info-soft); color:var(--info);}
+.retry-tag--wait{background:var(--warning-soft); color:var(--warning);}
+.retry-tag--reissue{background:var(--danger-soft); color:var(--danger);}
+.retry-tag--none{background:var(--surface-sunken); color:var(--text-subtle);}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important;}
+  .spinner{animation-duration:2.4s !important; animation-iteration-count:infinite !important;}
+}
+</style>
+</head>
+
+<body>
+
+<a href="#main" class="sr-only">본문 바로가기</a>
+
+<header class="site-header">
+  <div class="container">
+    <div class="inner">
+      <a href="template-home-logged-in.html" class="wordmark" aria-label="FinalCall 홈">
+        <span class="wm-a">FINAL</span><span class="wm-b">CALL</span>
+      </a>
+      <span class="crumb">계정 설정 · 이메일 인증</span>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+
+    <!-- ── 페이지 인트로 ─────────────────────────────────────────────────────── -->
+    <div class="page-head">
+      <span class="eyebrow">EMAIL VERIFICATION · F2</span>
+      <h1 style="margin-top:var(--s2)">이메일 인증</h1>
+      <p>
+        이메일은 선택입니다. 등록하면 6자리 코드로 본인 확인을 합니다. 이 목업은
+        <code>GET /me</code>의 <code>emailMasked</code>·<code>emailVerified</code>로 갈리는
+        세 진입(미설정 · 설정·미인증 · 인증완료)과, 코드 입력·재전송·오류 상태를 한 페이지에 나열합니다.
+      </p>
+      <div class="policy" aria-label="인증 정책">
+        <span class="chip">코드 <b>6자리</b></span>
+        <span class="chip">유효 <b>10분</b></span>
+        <span class="chip">재전송 <b>60초</b> 쿨다운</span>
+        <span class="chip">시도 <b>5회</b> 제한</span>
+      </div>
+      <div class="rule" aria-hidden="true"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         BAND 1 · 웹(데스크톱) 핵심 흐름 — 3상태 + 코드 입력
+         ══════════════════════════════════════════════════════════════════════ -->
+    <section class="band" aria-labelledby="h-web">
+      <div class="band-head">
+        <span class="eyebrow">WEB · DESKTOP</span>
+        <h2 id="h-web">웹 화면 · 핵심 흐름</h2>
+        <p>
+          계정 설정 안의 인증 카드. 데스크톱은 폭 여유가 있어 마스킹 이메일·상태 배지·안내를
+          카드 안에 나란히 둡니다. 아래 네 카드는 하나의 카드가 상태에 따라 변하는 모습입니다.
+        </p>
+      </div>
+
+      <div class="flow-grid">
+
+        <!-- 1. 미설정 (emailMasked=null) -->
+        <div>
+          <div class="demo-cap">
+            <span class="t">① 미설정</span>
+            <span class="code">emailMasked = null</span>
+            <span class="code code--api">PUT /me/email</span>
+          </div>
+          <div class="form-card">
+            <div class="card-head">
+              <h3>이메일 등록 <span class="badge badge--none">미설정</span></h3>
+              <p>알림·본인 확인에 쓸 이메일을 등록합니다. 나중에 언제든 바꿀 수 있습니다.</p>
+            </div>
+            <form class="form" novalidate onsubmit="return false">
+              <div class="field">
+                <label for="e1">이메일</label>
+                <input id="e1" type="email" autocomplete="email" placeholder="you@example.com" inputmode="email">
+                <p class="hint">형식이 올바른 주소만 등록됩니다. 등록 후 인증 코드를 보내드립니다.</p>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--lg btn--block">이메일 저장</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 2. 설정·미인증 (emailMasked 있음, emailVerified=false) -->
+        <div>
+          <div class="demo-cap">
+            <span class="t">② 설정·미인증</span>
+            <span class="code">emailVerified = false</span>
+            <span class="code code--api">POST /me/email/verification-request</span>
+          </div>
+          <div class="form-card">
+            <div class="card-head">
+              <h3>인증이 필요해요</h3>
+              <p>등록된 이메일로 6자리 코드를 보내 본인 확인을 합니다.</p>
+            </div>
+            <div class="email-row">
+              <span class="addr">a***@naver.com</span>
+              <span class="grow"></span>
+              <span class="badge badge--pending">
+                <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M6 3.4v3M6 8.2v.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                미인증
+              </span>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn--lg btn--block">인증 코드 받기</button>
+              <button type="button" class="btn--ghost" style="align-self:center">이메일 변경</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 코드 입력 (발송 후) -->
+        <div>
+          <div class="demo-cap">
+            <span class="t">③ 코드 입력</span>
+            <span class="code">코드 발송됨 · TTL 10분</span>
+            <span class="code code--api">POST /me/email/verify</span>
+          </div>
+          <div class="form-card">
+            <div class="card-head">
+              <h3>코드를 입력하세요</h3>
+              <p><b>a***@naver.com</b>으로 보낸 6자리 코드를 입력해 주세요. 10분 안에 유효합니다.</p>
+            </div>
+            <div class="field">
+              <label for="otp1-0" id="otp1-lbl">인증 코드 6자리</label>
+              <div class="otp" role="group" aria-labelledby="otp1-lbl" data-live>
+                <input id="otp1-0" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="1번째 자리">
+                <input inputmode="numeric" maxlength="1" aria-label="2번째 자리">
+                <input inputmode="numeric" maxlength="1" aria-label="3번째 자리">
+                <input inputmode="numeric" maxlength="1" aria-label="4번째 자리">
+                <input inputmode="numeric" maxlength="1" aria-label="5번째 자리">
+                <input inputmode="numeric" maxlength="1" aria-label="6번째 자리">
+              </div>
+              <div class="otp-meta">
+                <span>남은 시간 <span class="num" data-ttl="600">09:58</span></span>
+                <span>시도 <span class="num">0</span>/5</span>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn--lg btn--block">인증하기</button>
+              <div class="resend">
+                코드가 안 왔나요?
+                <button type="button" class="btn--ghost" style="padding:0">코드 다시 받기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 인증완료 (emailVerified=true) -->
+        <div>
+          <div class="demo-cap">
+            <span class="t">④ 인증완료</span>
+            <span class="code">emailVerified = true</span>
+            <span class="code code--api">GET /me</span>
+          </div>
+          <div class="form-card">
+            <div class="banner banner--success" role="status">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M6.4 10.2l2.4 2.4 4.8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div class="bd">
+                <span class="lbl">인증 완료</span>
+                <strong>이메일이 인증되었어요</strong>
+                <p>이제 이 주소로 거래 알림과 본인 확인 메일을 받습니다.</p>
+              </div>
+            </div>
+            <div class="email-row">
+              <span class="addr">a***@naver.com</span>
+              <span class="grow"></span>
+              <span class="badge badge--verified">
+                <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                인증됨
+              </span>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn--lg btn--block btn--outline">이메일 변경</button>
+              <p class="hint" style="text-align:center">이메일을 바꾸면 다시 인증해야 합니다.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         BAND 2 · 모바일 핵심 흐름 — 배치가 아니라 별도 설계
+         ══════════════════════════════════════════════════════════════════════ -->
+    <section class="band band--sunken" aria-labelledby="h-mob">
+      <div class="band-head">
+        <span class="eyebrow">MOBILE</span>
+        <h2 id="h-mob">모바일 화면 · 같은 흐름, 다른 설계</h2>
+        <p>
+          좁은 폭에서는 배치만 줄이지 않습니다. OTP 칸을 키워 터치 타깃을 확보하고(엄지로
+          정확히 눌리게), 주 버튼은 화면 하단 고정 독으로 내려 키보드가 올라와도 엄지 도달
+          거리 안에 둡니다. 아래는 360px 급 화면을 프레임으로 모사한 것입니다.
+        </p>
+      </div>
+
+      <div class="phones">
+
+        <!-- M1. 미설정 -->
+        <div class="phone-wrap">
+          <div class="demo-cap phone-cap"><span class="t">① 미설정</span><span class="code">PUT /me/email</span></div>
+          <div class="phone">
+            <div class="status-bar"><span class="notch"></span></div>
+            <div class="app-bar">
+              <svg class="back" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="title">이메일 인증</span>
+            </div>
+            <div class="screen">
+              <div class="screen-body">
+                <div class="m-head">
+                  <h3>이메일을 등록해 주세요</h3>
+                  <p>본인 확인과 거래 알림에 사용됩니다.</p>
+                </div>
+                <div class="m-field">
+                  <label for="me1">이메일</label>
+                  <input id="me1" type="email" inputmode="email" placeholder="you@example.com">
+                </div>
+                <p class="hint">등록 후 6자리 코드를 보내드립니다.</p>
+              </div>
+              <div class="m-dock">
+                <button type="button" class="btn btn--lg btn--block">이메일 저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- M2. 코드 입력 (모바일 핵심) -->
+        <div class="phone-wrap">
+          <div class="demo-cap phone-cap"><span class="t">② 코드 입력</span><span class="code">POST /me/email/verify</span></div>
+          <div class="phone">
+            <div class="status-bar"><span class="notch"></span></div>
+            <div class="app-bar">
+              <svg class="back" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="title">이메일 인증</span>
+            </div>
+            <div class="screen">
+              <div class="screen-body">
+                <div class="m-head">
+                  <h3>코드를 입력하세요</h3>
+                  <p><b>a***@naver.com</b>으로 보낸 6자리 코드</p>
+                </div>
+                <div class="m-otp" role="group" aria-label="인증 코드 6자리" data-live>
+                  <input inputmode="numeric" autocomplete="one-time-code" maxlength="1" value="4" aria-label="1번째 자리">
+                  <input inputmode="numeric" maxlength="1" value="2" aria-label="2번째 자리">
+                  <input inputmode="numeric" maxlength="1" value="9" aria-label="3번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="4번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="5번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="6번째 자리">
+                </div>
+                <div class="m-meta">
+                  <span>남은 시간 <span class="num" data-ttl="540">09:00</span></span>
+                  <span>시도 <span class="num">0</span>/5</span>
+                </div>
+                <div class="m-resend" style="margin-top:var(--s4)">
+                  코드가 안 왔나요?
+                  <button type="button" class="btn--ghost" style="padding:0">다시 받기</button>
+                </div>
+              </div>
+              <div class="m-dock">
+                <button type="button" class="btn btn--lg btn--block">인증하기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- M3. 쿨다운 중 (재전송 카운트다운) -->
+        <div class="phone-wrap">
+          <div class="demo-cap phone-cap"><span class="t">③ 재전송 쿨다운</span><span class="code code--warn">EMAIL_004</span></div>
+          <div class="phone">
+            <div class="status-bar"><span class="notch"></span></div>
+            <div class="app-bar">
+              <svg class="back" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="title">이메일 인증</span>
+            </div>
+            <div class="screen">
+              <div class="screen-body">
+                <div class="m-banner m-banner--warning" role="status">
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 5.6V10l2.8 1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <div>
+                    <span class="lbl">방금 보냈어요</span>
+                    <strong><span class="num" data-cd="52">52</span>초 후 다시 보낼 수 있어요</strong>
+                    <p>메일함(스팸함 포함)을 먼저 확인해 주세요.</p>
+                  </div>
+                </div>
+                <div class="m-otp" role="group" aria-label="인증 코드 6자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="1번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="2번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="3번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="4번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="5번째 자리">
+                  <input inputmode="numeric" maxlength="1" aria-label="6번째 자리">
+                </div>
+                <div class="m-resend" style="margin-top:var(--s4)">
+                  <span class="cd num" data-cd="52">52</span>초 후 다시 받기
+                </div>
+              </div>
+              <div class="m-dock">
+                <button type="button" class="btn btn--lg btn--block">인증하기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- M4. 인증완료 -->
+        <div class="phone-wrap">
+          <div class="demo-cap phone-cap"><span class="t">④ 인증완료</span><span class="code code--ok">emailVerified=true</span></div>
+          <div class="phone">
+            <div class="status-bar"><span class="notch"></span></div>
+            <div class="app-bar">
+              <svg class="back" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="title">이메일 인증</span>
+            </div>
+            <div class="screen">
+              <div class="screen-body">
+                <div class="m-banner m-banner--success" role="status">
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M6.4 10.2l2.4 2.4 4.8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <div>
+                    <span class="lbl">인증 완료</span>
+                    <strong>이메일이 인증되었어요</strong>
+                    <p>이 주소로 알림을 받습니다.</p>
+                  </div>
+                </div>
+                <div class="m-email-row">
+                  <span class="addr">a***@naver.com</span>
+                  <span style="flex:1"></span>
+                  <span class="badge badge--verified">
+                    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    인증됨
+                  </span>
+                </div>
+              </div>
+              <div class="m-dock">
+                <button type="button" class="btn btn--lg btn--block btn--outline">이메일 변경</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         BAND 3 · 상태 카탈로그 — 에러·특수 (EMAIL_001~007 + 시도초과 + 로딩)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <section class="band" aria-labelledby="h-states">
+      <div class="band-head">
+        <span class="eyebrow">STATE CATALOG</span>
+        <h2 id="h-states">코드·오류 상태</h2>
+        <p>
+          같은 카드의 상태 분기입니다. 캡션의 코드는
+          <code>docs/spec/email-verify-spec.md §5</code>의 실제 <code>EmailErrorCode</code>입니다.
+          <strong>안내 문구는 재시도성이 다릅니다.</strong> 다시 입력(파랑), 기다림(주황),
+          코드 재발급(빨강)으로 갈립니다. 우하단 태그가 그 분류입니다.
+        </p>
+      </div>
+
+      <div class="states-grid">
+
+        <!-- EMAIL_001 코드 불일치 -->
+        <div class="state">
+          <div class="cap"><span class="t">코드 불일치</span><span class="code code--err">EMAIL_001 · 422</span></div>
+          <div class="bd">
+            <div class="otp otp--error" role="group" aria-label="인증 코드">
+              <input value="1" readonly aria-invalid="true"><input value="2" readonly aria-invalid="true"><input value="3" readonly aria-invalid="true">
+              <input value="4" readonly aria-invalid="true"><input value="5" readonly aria-invalid="true"><input value="9" readonly aria-invalid="true">
+            </div>
+            <div class="otp-meta"><span></span><span class="attempts">시도 2/5</span></div>
+            <p class="msg" style="color:var(--danger); font-size:.8125rem; margin-top:var(--s3); display:flex; gap:5px; align-items:flex-start">
+              <svg viewBox="0 0 14 14" fill="none" aria-hidden="true" style="width:14px;height:14px;flex:none;margin-top:3px"><circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1.4"/><path d="M7 4v3.4M7 9.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              코드가 일치하지 않아요. 다시 확인해 주세요. (남은 시도 3회)
+            </p>
+            <span class="retry-tag retry-tag--again">다시 입력</span>
+            <p class="note">
+              시도 카운트를 함께 노출한다. 남은 횟수를 알아야 사용자가 신중해진다.
+              카드·코드는 그대로 두고 틀린 자리만 지워 재입력을 유도한다(코드는 아직 유효).
+            </p>
+          </div>
+        </div>
+
+        <!-- EMAIL_003 시도 초과 -->
+        <div class="state">
+          <div class="cap"><span class="t">시도 초과 · 코드 폐기</span><span class="code code--err">EMAIL_003 · 429</span></div>
+          <div class="bd">
+            <div class="banner banner--danger" role="alert" style="margin-bottom:var(--s3)">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 5.6V11M10 13.6v.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <div class="bd">
+                <span class="lbl">코드 폐기됨</span>
+                <strong>5회를 초과해 코드가 폐기됐어요</strong>
+                <p>보안을 위해 이 코드는 더 쓸 수 없습니다. 코드를 다시 받아 주세요.</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn--block">코드 다시 받기</button>
+            <span class="retry-tag retry-tag--reissue">코드 재발급</span>
+            <p class="note">
+              5회 오입력은 무차별 방어선이다(spec §7). 폐기를 숨기지 않고 명시하되,
+              막다른 길이 아니라 "다시 받기"로 곧장 복구 경로를 준다.
+            </p>
+          </div>
+        </div>
+
+        <!-- EMAIL_002 만료 -->
+        <div class="state">
+          <div class="cap"><span class="t">코드 만료</span><span class="code code--err">EMAIL_002 · 422</span></div>
+          <div class="bd">
+            <div class="banner banner--warning" role="status" style="margin-bottom:var(--s3)">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 5.6V10l2.8 1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div class="bd">
+                <span class="lbl">시간 초과</span>
+                <strong>인증 코드가 만료됐어요</strong>
+                <p>코드는 10분간만 유효합니다. 새 코드를 받아 다시 시도해 주세요.</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn--block">코드 다시 받기</button>
+            <span class="retry-tag retry-tag--reissue">코드 재발급</span>
+            <p class="note">
+              만료와 미발송을 같은 문구로 통일한다(spec §2.3·§5). "존재 여부"를 노출하지
+              않기 위함이다. 사용자 행동은 어느 쪽이든 "다시 받기"로 동일하다.
+            </p>
+          </div>
+        </div>
+
+        <!-- EMAIL_004 재전송 쿨다운 (데스크톱 카운트다운) -->
+        <div class="state">
+          <div class="cap"><span class="t">재전송 쿨다운</span><span class="code code--warn">EMAIL_004 · 429</span></div>
+          <div class="bd">
+            <div class="banner banner--warning" role="status" style="margin-bottom:var(--s3)">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 5.6V10l2.8 1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div class="bd">
+                <span class="lbl">잠시 후 다시</span>
+                <strong><span class="num" data-cd="52">52</span>초 후 다시 보낼 수 있어요</strong>
+                <p>방금 코드를 보냈습니다. 메일함(스팸함 포함)을 먼저 확인해 주세요.</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn--block" disabled aria-disabled="true">
+              <span class="num" data-cd="52">52</span>초 후 다시 받기
+            </button>
+            <span class="retry-tag retry-tag--wait">기다림</span>
+            <p class="note">
+              메일 폭탄·비용 방지선(60초). 버튼을 잠그고 남은 초를 카운트다운으로 노출한다.
+              "왜 못 누르는지"를 색이 아니라 문장으로 말한다. 카운트다운은 실제로 돌고 있다.
+            </p>
+          </div>
+        </div>
+
+        <!-- EMAIL_005 이미 인증됨 -->
+        <div class="state">
+          <div class="cap"><span class="t">이미 인증됨</span><span class="code code--warn">EMAIL_005 · 409</span></div>
+          <div class="bd">
+            <div class="banner banner--info" role="status">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v4.2M10 6.4v.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <div class="bd">
+                <span class="lbl">확인됨</span>
+                <strong>이미 인증된 이메일이에요</strong>
+                <p>추가 인증이 필요 없습니다. 바로 이용하실 수 있어요.</p>
+              </div>
+            </div>
+            <span class="retry-tag retry-tag--none">재시도 불필요</span>
+            <p class="note">
+              오류라기보다 안내다(정보 톤). 이미 인증된 상태에서 코드 요청·확인이 들어오면
+              막지 않고 "이미 됐다"고 알린다. 인증완료 화면(④)으로 자연스럽게 수렴한다.
+            </p>
+          </div>
+        </div>
+
+        <!-- EMAIL_006 이메일 미설정 -->
+        <div class="state">
+          <div class="cap"><span class="t">이메일 미설정</span><span class="code code--warn">EMAIL_006 · 409</span></div>
+          <div class="bd">
+            <div class="banner banner--warning" role="status" style="margin-bottom:var(--s3)">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 5.6V11M10 13.6v.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <div class="bd">
+                <span class="lbl">먼저 등록</span>
+                <strong>등록된 이메일이 없어요</strong>
+                <p>인증하려면 먼저 이메일을 등록해 주세요.</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn--block">이메일 등록하기</button>
+            <span class="retry-tag retry-tag--again">이메일 등록</span>
+            <p class="note">
+              이메일 없이 코드 요청이 도달한 경우(직접 호출·경합). 화면 흐름상 드물지만,
+              막힌 이유와 다음 행동(등록 화면 ①)을 한 번에 준다.
+            </p>
+          </div>
+        </div>
+
+        <!-- EMAIL_007 이미 사용 중 (설정 폼 필드 에러) -->
+        <div class="state">
+          <div class="cap"><span class="t">이미 사용 중인 이메일</span><span class="code code--err">EMAIL_007 · 409</span></div>
+          <div class="bd">
+            <div class="field field--error">
+              <label for="s7a">이메일</label>
+              <input id="s7a" type="email" value="taken@naver.com" aria-invalid="true" aria-describedby="s7a-msg" readonly>
+              <p class="msg" id="s7a-msg">
+                <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5.8" stroke="currentColor" stroke-width="1.4"/><path d="M7 4v3.4M7 9.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                이미 다른 계정에서 사용 중인 이메일이에요.
+              </p>
+            </div>
+            <span class="retry-tag retry-tag--again">다른 주소 입력</span>
+            <p class="note">
+              설정/변경(PUT /me/email)에서 유니크 위반. 폼 단위 배너가 아니라 필드 에러로
+              되돌린다. 고칠 대상(이메일 칸)이 명확하기 때문이다. 회원가입 중복 처리와 동형.
+            </p>
+          </div>
+        </div>
+
+        <!-- 로딩 / 제출 중 -->
+        <div class="state">
+          <div class="cap"><span class="t">제출 중</span><span class="code">loading</span></div>
+          <div class="bd">
+            <div class="otp" role="group" aria-label="인증 코드">
+              <input value="4" disabled><input value="2" disabled><input value="9" disabled>
+              <input value="1" disabled><input value="7" disabled><input value="0" disabled>
+            </div>
+            <div class="form-actions" style="margin-top:var(--s4)">
+              <button type="button" class="btn btn--lg btn--block" disabled aria-busy="true">
+                <span class="spinner" aria-hidden="true"></span> 확인 중
+              </button>
+            </div>
+            <span class="retry-tag retry-tag--none">대기</span>
+            <p class="note">
+              6자리가 다 차면 자동 제출하되, 응답 전까지 칸과 버튼을 잠가 중복 제출을 막는다
+              (<code>disabled + aria-busy</code>). 시도 카운트 누수 방지는 서버 Lua 원자 처리(spec §2.3).
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="inner">
+      <p class="copy">© 2026 FinalCall. All rights reserved.</p>
+      <nav class="links" aria-label="정책 및 고객센터">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <span class="sep" aria-hidden="true"></span>
+        <a href="#">고객센터 <span class="num">1670-0000</span></a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── 재전송 쿨다운 카운트다운 (형제 파일과 동일한 검증 장치) ──────────────────────
+   data-cd 를 가진 노드는 같은 초를 공유해 감소한다. tabular-nums 로 자릿수가 줄어도
+   문장이 밀리지 않는지 눈으로 확인하기 위함. aria-live 는 걸지 않는다(초당 스팸 금지). */
+(function(){
+  var nodes = [].slice.call(document.querySelectorAll('[data-cd]'));
+  if(!nodes.length) return;
+  nodes.forEach(function(n){ n.dataset.left = n.dataset.cd; });
+  setInterval(function(){
+    nodes.forEach(function(n){
+      var s = parseInt(n.dataset.left, 10) - 1;
+      if(s < 0){ s = parseInt(n.dataset.cd, 10); }
+      n.dataset.left = s; n.textContent = s;
+    });
+  }, 1000);
+})();
+
+/* ── TTL(코드 유효시간) 카운트다운 — mm:ss ─────────────────────────────────────── */
+(function(){
+  var nodes = [].slice.call(document.querySelectorAll('[data-ttl]'));
+  if(!nodes.length) return;
+  nodes.forEach(function(n){ n.dataset.left = n.dataset.ttl; });
+  function fmt(s){ var m = Math.floor(s/60), r = s%60; return m + ':' + (r<10?'0':'') + r; }
+  setInterval(function(){
+    nodes.forEach(function(n){
+      var s = parseInt(n.dataset.left, 10) - 1;
+      if(s < 0){ s = parseInt(n.dataset.ttl, 10); }
+      n.dataset.left = s; n.textContent = fmt(s);
+    });
+  }, 1000);
+})();
+
+/* ── OTP 자동 넘김·붙여넣기 분배 (data-live 그룹만) ─────────────────────────────
+   목업 시연용. 실제 구현에서는 useEmailVerify() 훅이 이 자리를 대체한다.
+   한 칸 = 숫자 한 자리, 입력하면 다음 칸으로. 백스페이스는 이전 칸으로.
+   붙여넣기(6자리)는 각 칸에 나눠 담는다. */
+(function(){
+  var groups = [].slice.call(document.querySelectorAll('[data-live]'));
+  groups.forEach(function(g){
+    var inputs = [].slice.call(g.querySelectorAll('input'));
+    inputs.forEach(function(inp, i){
+      inp.addEventListener('input', function(){
+        inp.value = inp.value.replace(/[^0-9]/g,'').slice(0,1);
+        if(inp.value && i < inputs.length-1) inputs[i+1].focus();
+      });
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Backspace' && !inp.value && i > 0){ inputs[i-1].focus(); }
+      });
+      inp.addEventListener('paste', function(e){
+        e.preventDefault();
+        var t = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0,6);
+        for(var k=0; k<t.length && (i+k)<inputs.length; k++){ inputs[i+k].value = t[k]; }
+        var next = Math.min(i + t.length, inputs.length-1);
+        inputs[next].focus();
+      });
+    });
+  });
+})();
+</script>
+
+</body></html>
