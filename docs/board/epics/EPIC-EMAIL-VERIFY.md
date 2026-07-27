@@ -3,7 +3,7 @@ id: EPIC-EMAIL-VERIFY
 type: epic
 jira_key: KAN-134
 title: 회원가입 이메일 인증 (FC-114 실기능화)
-state: review
+state: done
 children: [FC-117, FC-118, FC-128, FC-129, FC-130, FC-131, FC-132]
 gate: null
 ---
