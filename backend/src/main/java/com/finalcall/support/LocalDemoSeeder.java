@@ -123,7 +123,7 @@ public class LocalDemoSeeder implements ApplicationRunner {
             new Member("demo9", "폭풍기사", 2_500_000, 10_000_000),
             new Member("demo10", "마지막입찰자", 900_000, 5_500_000));
         for (Member member : members) {
-            User user = authService.signup(member.handle(), PASSWORD, member.nickname());
+            User user = authService.signup(member.handle(), PASSWORD, member.nickname(), null);
             userIds.put(member.handle(), user.getId());
             data.fund(user.getId(), member.cash(), member.gameMoney());
         }

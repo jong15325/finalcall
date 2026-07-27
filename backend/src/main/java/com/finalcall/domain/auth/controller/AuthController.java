@@ -41,7 +41,8 @@ public class AuthController {
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
-        User created = authService.signup(request.loginId(), request.password(), request.nickname());
+        User created = authService.signup(
+            request.loginId(), request.password(), request.nickname(), request.email());
         return ApiResponse.success(SignupResponse.from(created));
     }
 

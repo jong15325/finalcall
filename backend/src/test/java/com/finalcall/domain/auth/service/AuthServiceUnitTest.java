@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.finalcall.common.exception.AuthErrorCode;
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.EmailErrorCode;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.domain.auth.dto.TokenBundle;
@@ -62,20 +63,66 @@ class AuthServiceUnitTest {
         when(passwordEncoder.encode("pw12345")).thenReturn("hashed-pw");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        User created = authService.signup("hong", "pw12345", "홍길동");
+        User created = authService.signup("hong", "pw12345", "홍길동", null);
 
         assertThat(created.getLoginId()).isEqualTo("hong");
         assertThat(created.getNickname()).isEqualTo("홍길동");
         assertThat(created.getPasswordHash()).isEqualTo("hashed-pw"); // 원문 저장 금지
         assertThat(created.getPublicId()).hasSize(26);                // ULID 생성
+        assertThat(created.getEmail()).isNull();                      // email 미제공 → 이메일 없는 계정
+        assertThat(created.isEmailVerified()).isFalse();
         verify(userBalanceRepository).save(any(UserBalance.class));   // 잔액 동시 생성
+    }
+
+    @Test
+    void email_제공시_정규화해_세팅하고_미인증으로_저장한다() {
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("hong")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("홍길동")).thenReturn(false);
+        when(passwordEncoder.encode("pw12345")).thenReturn("hashed-pw");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // 앞뒤 공백·대문자 → lowercase+trim 정규화(제공자별 정규화 없음, spec §2.2).
+        User created = authService.signup("hong", "pw12345", "홍길동", "  Foo@Bar.COM ");
+
+        assertThat(created.getEmail()).isEqualTo("foo@bar.com");
+        assertThat(created.isEmailVerified()).isFalse(); // 가입 직후는 항상 미인증
+        verify(userBalanceRepository).save(any(UserBalance.class));
+    }
+
+    @Test
+    void email_공백만이면_이메일_없는_계정으로_생성한다() {
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("hong")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("홍길동")).thenReturn(false);
+        when(passwordEncoder.encode("pw12345")).thenReturn("hashed-pw");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        User created = authService.signup("hong", "pw12345", "홍길동", "   ");
+
+        assertThat(created.getEmail()).isNull(); // 빈/공백은 미설정으로 취급(assignEmail 미호출)
+        assertThat(created.isEmailVerified()).isFalse();
+    }
+
+    @Test
+    void 선검사_통과후_email_UK위반이면_EMAIL_007로_매핑() {
+        // 이메일은 열거 위험이라 existsBy 선검사가 없다(SEC-007) → UK 위반 시점에만 EMAIL_007 노출.
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("newid")).thenReturn(false);
+        when(userRepository.existsByNicknameAndIsDeletedFalse("닉네임")).thenReturn(false);
+        when(passwordEncoder.encode("pw12345678")).thenReturn("hashed-pw");
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException(
+                    "Duplicate entry 'foo@bar.com' for key 'uk_user_email_active'"));
+
+        assertThatThrownBy(() -> authService.signup("newid", "pw12345678", "닉네임", "foo@bar.com"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(EmailErrorCode.EMAIL_DUPLICATE);
     }
 
     @Test
     void loginId_중복이면_AUTH_001() {
         when(userRepository.existsByLoginIdAndIsDeletedFalse("dup")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.signup("dup", "pw12345", "닉네임"))
+        assertThatThrownBy(() -> authService.signup("dup", "pw12345", "닉네임", null))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
@@ -89,7 +136,7 @@ class AuthServiceUnitTest {
         when(userRepository.existsByLoginIdAndIsDeletedFalse("hong")).thenReturn(false);
         when(userRepository.existsByNicknameAndIsDeletedFalse("중복닉")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.signup("hong", "pw12345", "중복닉"))
+        assertThatThrownBy(() -> authService.signup("hong", "pw12345", "중복닉", null))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
@@ -108,7 +155,7 @@ class AuthServiceUnitTest {
                 .thenThrow(new DataIntegrityViolationException(
                     "Duplicate entry 'racer' for key 'uk_user_login_id_active'"));
 
-        assertThatThrownBy(() -> authService.signup("racer", "pw12345678", "닉네임"))
+        assertThatThrownBy(() -> authService.signup("racer", "pw12345678", "닉네임", null))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
@@ -123,7 +170,7 @@ class AuthServiceUnitTest {
                 .thenThrow(new DataIntegrityViolationException(
                     "Duplicate entry '중복닉' for key 'uk_user_nickname_active'"));
 
-        assertThatThrownBy(() -> authService.signup("newid", "pw12345678", "중복닉"))
+        assertThatThrownBy(() -> authService.signup("newid", "pw12345678", "중복닉", null))
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(AuthErrorCode.AUTH_DUPLICATE_NICKNAME);

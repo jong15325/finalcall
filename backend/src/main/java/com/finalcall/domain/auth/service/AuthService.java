@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.AuthErrorCode;
 import com.finalcall.common.exception.BusinessException;
+import com.finalcall.common.exception.EmailErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
@@ -47,22 +48,32 @@ public class AuthService {
      *
      * <p>SEC-007(열거 방지): 실패 응답은 AuthErrorCode 표준 메시지만 노출한다(구체 사유 최소화). nickname 중복은 표시용이라 유지.
      *
+     * <p>{@code email} 은 선택(spec §4.1). 값이 있으면 정규화(lowercase+trim)해 {@link User#assignEmail}로 세팅하고
+     * ({@code email_verified=false} 자동), 빈/공백/null 이면 이메일 없는 계정으로 생성한다. <b>이메일 중복 선검사는 두지
+     * 않는다</b>(SEC-007 열거 최소) — 유일성은 {@code uk_user_email_active} UK 안전망({@code EMAIL_007})으로만 강제한다.
+     * 가입은 인증 코드를 자동 발송하지 않는다(가입이 SMTP 에 결합되지 않게, spec §4.1).
+     *
      * @return 생성된 {@link User}(public_id 는 생성자에서 ULID 로 채워짐). 표현 변환은 api 계층이 담당.
      */
     @Transactional
     @ServiceLog
-    public User signup(String loginId, String password, String nickname) {
+    public User signup(String loginId, String password, String nickname, String email) {
         Preconditions.validate(
             !userRepository.existsByLoginIdAndIsDeletedFalse(loginId), AuthErrorCode.AUTH_DUPLICATE_LOGIN_ID);
         Preconditions.validate(
             !userRepository.existsByNicknameAndIsDeletedFalse(nickname), AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
 
         try {
-            User user = userRepository.save(User.builder()
+            User user = User.builder()
                 .loginId(loginId)
                 .passwordHash(passwordEncoder.encode(password))
                 .nickname(nickname)
-                .build());
+                .build();
+            // 이메일 제공 시에만 정규화해 세팅(emailVerified=false 자동). 미제공/공백이면 이메일 없는 계정.
+            if (email != null && !email.isBlank()) {
+                user.assignEmail(email.trim().toLowerCase(Locale.ROOT));
+            }
+            userRepository.save(user);
             // 잔액 행(0,0,0)을 같은 트랜잭션에서 함께 생성한다.
             userBalanceRepository.save(UserBalance.builder().user(user).build());
             return user;
@@ -73,8 +84,9 @@ public class AuthService {
     }
 
     /**
-     * UK 제약 위반을 도메인 예외(AUTH_001/002)로 변환한다. 판정은 제약명 기반.
-     * V4(D-081)에서 UK가 생성 컬럼으로 이전돼 제약명이 {@code uk_user_login_id_active}/{@code uk_user_nickname_active}다.
+     * UK 제약 위반을 도메인 예외(AUTH_001/002·EMAIL_007)로 변환한다. 판정은 제약명 기반.
+     * V4(D-081)에서 UK가 생성 컬럼으로 이전돼 제약명이 {@code uk_user_login_id_active}/{@code uk_user_nickname_active},
+     * 이메일은 V17 {@code uk_user_email_active}(spec §2.2)다.
      */
     private BusinessException toDuplicateException(DataIntegrityViolationException ex) {
         String cause = ex.getMostSpecificCause().getMessage();
@@ -84,6 +96,9 @@ public class AuthService {
         }
         if (lower.contains("uk_user_nickname_active")) {
             return new BusinessException(AuthErrorCode.AUTH_DUPLICATE_NICKNAME);
+        }
+        if (lower.contains("uk_user_email_active")) {
+            return new BusinessException(EmailErrorCode.EMAIL_DUPLICATE);
         }
         // 알 수 없는 무결성 위반(예: 극히 드문 public_id 충돌)은 원본을 유지해 전역 핸들러가 처리한다.
         throw ex;
