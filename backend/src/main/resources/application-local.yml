@@ -50,3 +50,10 @@ search:
   reindex-on-startup: ${SEARCH_REINDEX_ON_STARTUP:true}
   reconciliation:
     correct-on-drift: ${SEARCH_RECONCILIATION_CORRECT_ON_DRIFT:true}
+
+# EPIC-EMAIL-VERIFY(FC-130): 로컬은 발송을 건너뛴다(SMTP 미호출·생성 코드 로그, spec §6.3).
+#   크리덴셜(MAIL_USERNAME/MAIL_PASSWORD) 없이도 부팅·인증 흐름 테스트 가능. dev/prod 는 공통 기본(false)을
+#   env(MAIL_SENDER_ENABLED=true)로 올려 실발송한다.
+email:
+  verify:
+    sender-enabled: false

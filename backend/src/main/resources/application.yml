@@ -31,6 +31,19 @@ spring:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
     connection-timeout: 2s
     socket-timeout: 5s
+  # EPIC-EMAIL-VERIFY(FC-130): 회원가입 이메일 인증 발송(JavaMailSender, 네이버 SMTP 465 SSL, spec §6.2).
+  #   username/password 는 공통 yml 에 기본값을 두지 않는다 — 기본값을 두면 prod fail-fast 가 무력화된다(섹션 4).
+  #   ★ 시크릿(비밀번호)은 커밋 금지 — 사용자가 env(MAIL_USERNAME/MAIL_PASSWORD)로만 주입한다(spec §6.2·섹션 2).
+  #   로컬은 email.verify.sender-enabled=false 로 발송을 건너뛰어 크리덴셜 없이 부팅한다(application-local.yml).
+  mail:
+    host: smtp.naver.com
+    port: 465
+    username: ${MAIL_USERNAME}      # 기본값 없음 → dev/prod 미주입 시 fail-fast
+    password: ${MAIL_PASSWORD}      # 시크릿 — 커밋 금지, env 주입
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.ssl.enable: true    # 465 = SSL(SMTPS)
+      mail.smtp.starttls.enable: false
 
 # Stage 4~5: Actuator 노출 + Prometheus 메트릭 + 분산추적(Micrometer Tracing).
 management:
@@ -81,6 +94,18 @@ bid:
         step: 100000
       - threshold: 100000000
         step: 1000000
+
+# EPIC-EMAIL-VERIFY(FC-130): 이메일 인증 정책값(email-verify-spec §2.4·§3·§6.2). EmailVerifyProperties 로 바인딩.
+#   ★ 컴파일 상수가 아니라 운영 정책이라 설정으로 뺐다. 0/음수면 @Positive 로 부팅이 실패한다(조용한 기본값 대체 금지).
+#   sender-enabled 는 Properties 가 아니라 발송기 @ConditionalOnProperty 가 raw 키로 소비한다(발송 스킵 플래그).
+#     로컬 기본 false(발송 스킵+코드 로그) — application-local.yml 에서 명시. dev/prod 는 true 전제(실발송·fail-fast).
+email:
+  verify:
+    code-length: 6
+    ttl-seconds: 600
+    resend-cooldown-seconds: 60
+    max-attempts: 5
+    sender-enabled: ${MAIL_SENDER_ENABLED:false}
 
 # Stage 5: /actuator/info 응답 내용(env 컨트리뷰터로 노출)
 info:
