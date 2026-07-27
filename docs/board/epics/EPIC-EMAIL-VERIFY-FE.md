@@ -4,7 +4,7 @@ type: epic
 derived_from: EPIC-EMAIL-VERIFY
 jira_key: KAN-152
 title: 이메일 인증 프론트엔드 (F1~F4)
-state: doing
+state: done
 children: [FC-136, FC-137, FC-138, FC-139]
 gate: null
 ---
