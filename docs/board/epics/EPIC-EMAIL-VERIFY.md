@@ -39,5 +39,11 @@ EPIC-RESTRUCTURE·EPIC-CONVENTION-V2 완료로 **구현 재개**(설계·게이�
 분해(spec §8): FC-117(B1 V17)→FC-118(B2 User 필드)→**FC-128(B3 코드저장소)∥FC-129(B4 메일인프라)**→FC-130(B5 ErrorCode·Properties·yml)→**FC-131(B6 signup)∥FC-132(B7 엔드포인트 3종)**. 프론트 F1~F4는 백엔드 계약 확정 후 별도 발번(F2 이메일 인증 화면=디자인 게이트).
 ※ 엔드포인트 티켓 발번은 **FC-128~**(FC-123~127은 EPIC-CONVENTION-V2 선점).
 
+## 구조 변경 (2026-07-27 · 게이트2) — 메일 문구 DB 이관
+사용자 요청으로 이메일 본문을 코드 상수에 심던 방식을 폐기하고 **재사용 템플릿을 DB 저장**하는 방향 승인. 별도 에픽 **EPIC-EMAIL-TEMPLATE**(feature `com.finalcall.domain.mail`, spec `email-template-spec.md` v1.0)로 분리하고 본 에픽이 이를 **의존(소비)** 한다.
+- **FC-129 rework**: EmailSender 시그니처 `sendVerificationCode(to,code)`→`send(to,subject,body,html)` 범용화(문구 책임 제거). review→doing 회귀.
+- **FC-132**: `EmailTemplateService.render`→`EmailSender.send` 조립으로 배선. depends_on에 FC-135(렌더 서비스) 추가.
+- FC-128·130·131·117·118은 EMAIL-TEMPLATE와 무관하게 진행. 수렴점 = FC-132. api-contract 외부 계약 불변.
+
 ## 진행 방식
 각 결정을 사용자와 확정 → architect가 계약(§) 반영 → backend-impl/frontend-impl 구현 → reviewer → Done. 커밋은 매번 사용자 승인(섹션 13).
