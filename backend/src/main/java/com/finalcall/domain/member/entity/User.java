@@ -54,6 +54,14 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 30)
     private String nickname;
 
+    // 정규화(lowercase+trim) 저장 전제, 미설정이면 NULL(V17). 유일성은 생성 컬럼 email_active UK로 강제,
+    // 원본 email 컬럼 UK 미부여(login_id/nickname 패턴 동형, D-081). email_active 는 DB 생성 컬럼이라 미매핑.
+    @Column(name = "email", length = 255)
+    private String email;
+
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
     @Column(name = "is_admin", nullable = false)
     private boolean isAdmin;
 
@@ -81,6 +89,17 @@ public class User extends BaseTimeEntity {
     /** 비밀번호(해시) 변경(도메인 메서드). 해싱은 호출 측 책임. */
     public void changePassword(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    /** 이메일 설정/변경(도메인 메서드). 정규화는 호출 측 책임 · emailVerified 를 false 로 (재)초기화. */
+    public void assignEmail(String normalizedEmail) {
+        this.email = normalizedEmail;
+        this.emailVerified = false;
+    }
+
+    /** 이메일 인증 성공 처리(도메인 메서드). */
+    public void markEmailVerified() {
+        this.emailVerified = true;
     }
 
     /** soft delete — 삭제 플래그와 삭제 시각을 기록한다. */
