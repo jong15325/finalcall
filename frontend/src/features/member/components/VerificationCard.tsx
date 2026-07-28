@@ -226,7 +226,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
             : null
 
     return (
-        <section className="flex h-full flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6">
+        <section className="flex h-full min-w-0 flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6">
             {/* 헤더 — 이메일 인증 상태를 요약 배지로 */}
             <div className="flex items-center gap-3">
                 <span
