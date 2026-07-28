@@ -32,6 +32,12 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, Auction
     Optional<Auction> findByPublicId(String publicId);
 
     /**
+     * 특정 상태 & 마감 미도래 경매 수(FC-144 로컬 데모 시더 멱등 가드용). 진행 중(status=ACTIVE·end_at&gt;now)
+     * 경매 총량을 세어 "목표치 초과분만 추가 생성"하는 top-up 가드에 쓴다. {@code (status, end_at)} 인덱스(V10)로 커버된다.
+     */
+    long countByStatusAndEndAtAfter(AuctionStatus status, Instant now);
+
+    /**
      * public_id → 내부 PK 해석(외부 식별자 B-004). 경매 본문이 필요 없는 종속 리소스 조회
      * (예: {@code GET /auctions/{id}/bids})가 경매 전체 행·연관을 끌어오지 않도록 스칼라만 읽는다.
      * 비어 있으면 {@code AUCTION_004}(404) 판정의 근거가 된다.

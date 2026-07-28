@@ -42,6 +42,12 @@ spring:
 demo:
   seed:
     enabled: ${DEMO_SEED_ENABLED:true}
+    # FC-144: 진행 중(ACTIVE) 경매 대량 시더(LocalActiveAuctionSeeder) on/off. 옵트인(기본 off) — 평상시 부팅에는
+    #   뜨지 않고, 경매장 데모 데이터가 필요한 부팅에서만 DEMO_SEED_ACTIVE_AUCTIONS=true 로 켠다. 멱등(진행 중
+    #   경매를 target 까지 top-up)이라 재실행해도 중복 폭증이 없다. 데이터는 MySQL/ES 에 영속된다.
+    active-auctions:
+      enabled: ${DEMO_SEED_ACTIVE_AUCTIONS:false}
+      target: ${DEMO_SEED_ACTIVE_AUCTIONS_TARGET:100}
 
 # EPIC-SEARCH(FC-107, MAJOR-1): 로컬 데모는 부팅 시 전체 enrichment 재색인을 켠다 — CDC(스냅샷 필드)에 더해
 #   앱이 코드축·join 필드까지 채운 문서를 보장해 런북 스모크(GET /api/v1/auctions?q=...)가 실제 결과를 낸다.
