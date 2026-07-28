@@ -3,7 +3,7 @@
 # 활성 프로파일 미지정 시 local 로 동작하도록 default 만 지정하고,
 # 실제 활성화는 SPRING_PROFILES_ACTIVE 환경변수로만 한다(예: dev/prod 배포 시).
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
@@ -36,8 +36,8 @@ spring:
   #   ★ 시크릿(비밀번호)은 커밋 금지 — 사용자가 env(MAIL_USERNAME/MAIL_PASSWORD)로만 주입한다(spec §6.2·섹션 2).
   #   로컬은 email.verify.sender-enabled=false 로 발송을 건너뛰어 크리덴셜 없이 부팅한다(application-local.yml).
   mail:
-    host: smtp.naver.com
-    port: 465
+    host: ${MAIL_HOST:smtp.naver.com}
+    port: ${MAIL_PORT:465}
     username: ${MAIL_USERNAME}      # 기본값 없음 → dev/prod 미주입 시 fail-fast
     password: ${MAIL_PASSWORD}      # 시크릿 — 커밋 금지, env 주입
     properties:
@@ -70,7 +70,7 @@ management:
     propagation:
       type: W3C            # 전파 포맷(W3C traceparent)
     sampling:
-      probability: 1.0     # 기본(local/dev). prod 는 프로파일에서 0.1 로 오버라이드.
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}     # 기본(local/dev). prod 는 프로파일에서 0.1 로 오버라이드.
   # [INCLUDE_TRACE_EXPORT=false] span export 는 이번 단계 범위 밖. 로그 상관관계까지만.
   #   활성화 시: opentelemetry-exporter-otlp 추가 + management.otlp.tracing.endpoint 설정.
 
@@ -101,10 +101,10 @@ bid:
 #     로컬 기본 false(발송 스킵+코드 로그) — application-local.yml 에서 명시. dev/prod 는 true 전제(실발송·fail-fast).
 email:
   verify:
-    code-length: 6
-    ttl-seconds: 600
-    resend-cooldown-seconds: 60
-    max-attempts: 5
+    code-length: ${EMAIL_VERIFY_CODE_LENGTH:6}
+    ttl-seconds: ${EMAIL_VERIFY_TTL_SECONDS:600}
+    resend-cooldown-seconds: ${EMAIL_VERIFY_RESEND_COOLDOWN_SECONDS:60}
+    max-attempts: ${EMAIL_VERIFY_MAX_ATTEMPTS:5}
     sender-enabled: ${MAIL_SENDER_ENABLED:false}
 
 # Stage 5: /actuator/info 응답 내용(env 컨트리뷰터로 노출)
@@ -150,9 +150,9 @@ resilience4j:
 
 # Stage F1: JWT 인증. secret 은 프로파일별 주입(local 기본값, dev/prod ${ENV} fail-fast).
 jwt:
-  algorithm: HS256          # 시작(대칭키). 확장: RS256(공개키 검증)로 갈아끼울 수 있게 Provider 추상화.
-  access-exp-minutes: 30
-  refresh-exp-days: 14      # refresh 만료(= Redis 저장분 TTL, B-011). 데모 기본값 — 정책에 맞게 조정.
+  algorithm: ${JWT_ALGORITHM:HS256}          # 시작(대칭키). 확장: RS256(공개키 검증)로 갈아끼울 수 있게 Provider 추상화.
+  access-exp-minutes: ${JWT_ACCESS_EXP_MINUTES:30}
+  refresh-exp-days: ${JWT_REFRESH_EXP_DAYS:14}      # refresh 만료(= Redis 저장분 TTL, B-011). 데모 기본값 — 정책에 맞게 조정.
   # secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
 
 # FC-009: 캐시→게임머니 교환 비율(1 캐시 = rate 게임머니). 비즈니스 기본값이며 시크릿이 아니라 공통에 둔다.
@@ -224,7 +224,7 @@ search:
 #   ★ 통합테스트는 게이트웨이 미경유 MockMvc 직접 호출이라 enforced=false 로 내린다(테스트 base).
 gateway:
   internal:
-    enforced: true
+    enforced: ${GATEWAY_INTERNAL_ENFORCED:true}
 
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
 #       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.

@@ -39,6 +39,12 @@ out/
 # 로컬 bootRun 리다이렉트 로그(임시)
 boot*.log
 
+# env 파일(FC-142) — 실 .env 는 시크릿을 담으므로 절대 커밋 금지(로컬·IntelliJ EnvFile 주입용).
+#   .env.example(더미·카탈로그)만 추적한다. FC-141 이 지적한 .env 미등재 결함 해소.
+.env
+.env.*
+!.env.example
+
 # Stage G: 앱 JSON 로그 파일(Alloy tail 대상)
 /logs/
 /app.pid
