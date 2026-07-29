@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useCallback, useMemo, useState } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router'
 import {
     TbAlertTriangle,
     TbBuildingStore,
@@ -9,6 +9,7 @@ import {
 import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
 import ShopCard from '@/features/shop/components/ShopCard'
+import ShopCardInfoDialog from '@/features/shop/components/ShopCardInfoDialog'
 import ShopFilters from '@/features/shop/components/ShopFilters'
 import {
     normalizeShopFilters,
@@ -20,7 +21,10 @@ import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useShopBrowse } from '@/lib/queries/shop'
 import { useItemTemplates } from '@/lib/queries/itemTemplates'
 import { useMyBalance } from '@/lib/queries/balance'
+import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
+import { buildReturnUrlQuery } from '@/lib/returnUrl'
 import type { ShopFilterState } from '@/features/shop/lib/shopFilters'
+import type { ShopSummary } from '@/lib/api/shop'
 
 /**
  * 고정가 아이템 마켓 `/market` (FC-094 — 목업 `market()` · 계약 §3.2 `/shops`).
@@ -41,9 +45,20 @@ const PAGE_SIZE = 24
 
 export default function MarketPage() {
     const [searchParams, setSearchParams] = useSearchParams()
+    const location = useLocation()
     // 골드포스 잔여일은 일 단위라 매초 시계가 불필요 — 마운트 시각 1회로 고정한다.
     // (useNow 매초 구독을 걷어내 5천 대량 목록의 매초 전체 리렌더/잰더를 없앤다, FC-101.)
     const now = useMemo(() => Date.now(), [])
+
+    // 카드 클릭 → 카드정보 구매 모달(FC-146). 선택된 리스팅만 모달로 띄운다(상세 네비 대체).
+    const [selectedShop, setSelectedShop] = useState<ShopSummary | null>(null)
+    const isAuthed = useIsAuthenticated()
+    const myNickname = useAuthStore((state) => state.user?.nickname ?? null)
+    // 대량 목록 memo 유지를 위해 열기 콜백을 안정 참조로 고정한다(매 카드 공유).
+    const openCardInfo = useCallback(
+        (shop: ShopSummary) => setSelectedShop(shop),
+        [],
+    )
 
     const filters = useMemo(
         () => parseShopFilters(searchParams),
@@ -226,6 +241,7 @@ export default function MarketPage() {
                                 key={shop.shopPublicId}
                                 shop={shop}
                                 now={now}
+                                onOpen={openCardInfo}
                             />
                         ))}
                     </section>
@@ -242,6 +258,21 @@ export default function MarketPage() {
                         </p>
                     )}
                 </>
+            )}
+
+            {selectedShop && (
+                <ShopCardInfoDialog
+                    shop={selectedShop}
+                    now={now}
+                    balance={balanceQuery.data}
+                    isAuthed={isAuthed}
+                    isOwn={
+                        myNickname !== null &&
+                        myNickname === selectedShop.sellerNickname
+                    }
+                    loginHref={`${paths.login}${buildReturnUrlQuery(location)}`}
+                    onClose={() => setSelectedShop(null)}
+                />
             )}
         </div>
     )

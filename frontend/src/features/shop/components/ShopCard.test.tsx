@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/react'
 import { useLocation } from 'react-router'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -12,6 +12,8 @@ function LocationProbe() {
 }
 
 const NOW = Date.parse('2026-07-23T00:00:00Z')
+
+const noop = () => {}
 
 const baseShop: ShopSummary = {
     shopPublicId: '01JMARKET0001',
@@ -35,19 +37,24 @@ const baseShop: ShopSummary = {
     price: 2_480_000,
     endAt: '2026-07-30T00:00:00Z',
     sellerNickname: '신뢰상점',
+    sellerCompletedSales: 128,
 }
 
 describe('<ShopCard>', () => {
-    it('상세 링크와 플립·비교 버튼을 중첩하지 않는다', () => {
+    it('카드정보 열기 버튼과 플립·비교 버튼을 중첩하지 않는다(FC-146 모달 전환)', () => {
         const { container } = renderWithProviders(
-            <ShopCard shop={baseShop} now={NOW} />,
+            <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
         )
-        const link = screen.getByRole('link', {
-            name: '불의 전투도끼 상세 보기',
+        // 카드→상세 네비게이션은 카드정보 모달 열기 버튼으로 대체됐다(링크 없음).
+        expect(
+            screen.queryByRole('link', { name: '불의 전투도끼 상세 보기' }),
+        ).not.toBeInTheDocument()
+        const opener = screen.getByRole('button', {
+            name: '불의 전투도끼 카드정보 보기',
         })
-        expect(link).toHaveAttribute('href', '/market/01JMARKET0001')
-        expect(link.querySelector('button')).toBeNull()
-        expect(container.querySelectorAll('button')).toHaveLength(2)
+        expect(opener.querySelector('button')).toBeNull()
+        // 열기 버튼 + 스킬 플립 트리거 + 비교 담기 = 3개.
+        expect(container.querySelectorAll('button')).toHaveLength(3)
         // disclosure(m3): 스킬 플립 트리거는 뒷면 region 을 aria-controls 로 가리킨다.
         const trigger = screen.getByRole('button', {
             name: '불의 전투도끼 스킬 보기',
@@ -59,10 +66,11 @@ describe('<ShopCard>', () => {
         ).toHaveAttribute('id', controls)
     })
 
-    it('비교 버튼 클릭은 상세 페이지로 이동시키지 않는다(확정 UX)', () => {
+    it('정보영역 클릭은 네비게이션 없이 onOpen 으로 모달을 연다', () => {
+        const onOpen = vi.fn()
         renderWithProviders(
             <>
-                <ShopCard shop={baseShop} now={NOW} />
+                <ShopCard shop={baseShop} now={NOW} onOpen={onOpen} />
                 <LocationProbe />
             </>,
             { route: '/market' },
@@ -70,14 +78,29 @@ describe('<ShopCard>', () => {
         expect(screen.getByTestId('location')).toHaveTextContent('/market')
 
         fireEvent.click(
+            screen.getByRole('button', {
+                name: '불의 전투도끼 카드정보 보기',
+            }),
+        )
+
+        // 상세 페이지로 이동하지 않고(경로 불변) 부모에 선택 리스팅을 넘긴다.
+        expect(screen.getByTestId('location')).toHaveTextContent('/market')
+        expect(onOpen).toHaveBeenCalledWith(baseShop)
+    })
+
+    it('비교 버튼 클릭은 모달을 열지 않는다(독립 상위 레이어)', () => {
+        const onOpen = vi.fn()
+        renderWithProviders(
+            <ShopCard shop={baseShop} now={NOW} onOpen={onOpen} />,
+            { route: '/market' },
+        )
+
+        fireEvent.click(
             screen.getByRole('button', { name: '불의 전투도끼 비교에 담기' }),
         )
 
-        // 담기는 상세 링크와 독립 상위 레이어 — 경로 불변, 상세 링크는 그대로 존재.
-        expect(screen.getByTestId('location')).toHaveTextContent('/market')
-        expect(
-            screen.getByRole('link', { name: '불의 전투도끼 상세 보기' }),
-        ).toHaveAttribute('href', '/market/01JMARKET0001')
+        // 담기는 열기 버튼과 독립 상위 레이어 — onOpen 미호출.
+        expect(onOpen).not.toHaveBeenCalled()
     })
 
     it('스킬이 없어도 마켓 이미지 높이 클래스는 유지하고 토글만 생략한다', () => {
@@ -88,6 +111,7 @@ describe('<ShopCard>', () => {
                     item: { ...baseShop.item, skill1: null, skill2: null },
                 }}
                 now={NOW}
+                onOpen={noop}
             />,
         )
         const flip = container.querySelector('.item-card__skill-flip')
@@ -119,6 +143,7 @@ describe('<ShopCard>', () => {
                     },
                 }}
                 now={NOW}
+                onOpen={noop}
             />,
         )
         // NOW=07-23 → 만료 07-30 : 잔여 7일(일 단위 파생, 매초 시계 불필요).

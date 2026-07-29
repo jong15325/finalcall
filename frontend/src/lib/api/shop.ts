@@ -46,6 +46,14 @@ export interface ShopSummary {
     endAt: string | null
     /** 리스팅 고유 정보라 마스킹 대상이 아니다 */
     sellerNickname: string
+    /**
+     * 판매자 완료(정산 성립) 판매 건수 — 계약 §3.3(FC-148)·shop-spec §11.
+     *
+     * ★ `sale_order` 의 `seller_id` 집계(**AUCTION+SHOP 합산**, 취소·유찰·만료·미판매는 정의상 제외).
+     *   집계 카운트라 PII·상대·금액이 없어 공개 노출 안전(판매자 신뢰 지표). ≥0, 이력 없으면 0.
+     * ★ 계약 1:1 — 클라 개명·가공 금지(`types/api.ts` 상단 규칙). 표시 문구·0 처리는 화면 몫.
+     */
+    sellerCompletedSales: number
 }
 
 /** ShopDetail (계약 §3.3 — `GET /shops/{id}`). ShopSummary + `createdAt`. */
