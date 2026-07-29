@@ -3,10 +3,13 @@ id: EPIC-OAUTH
 type: epic
 jira_key: KAN-170
 title: 네이버·카카오 소셜 로그인 (방식 B — 프론트 주도 + 백엔드 교환)
-state: doing
+state: done
 children: [FC-152, FC-153, FC-154, FC-155, FC-156, FC-157]
 gate: null
 ---
+
+> **에픽 완료(2026-07-30)**: 전 자식 done, reviewer 통과(FC-157 PASS · critical 0/major 0/minor 3). 커밋 `090d372`(FC-153)·`b06d728`(FC-154)·`7c2c056`(FC-155)·`f454736`(FC-156)·`5a8303e`(FC-152 spec)·`53ae55b`(board). 라이브 확인 = 키 발급 + 재기동 후(사용자). push는 사용자 직접.
+
 ## 목표
 네이버·카카오 소셜 로그인을 도입한다. 기존 loginId/password 인증에 소셜 신원을 추가하되, **기존 스테이틀리스 JWT·게이트웨이·토큰 인프라를 재사용**한다.
 
