@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { TbLock, TbUser } from 'react-icons/tb'
 import AuthTextField from './AuthTextField'
+import SocialLoginSection from './SocialLoginSection'
 import { loginErrorMessage } from '@/features/auth/lib/authErrors'
 import { paths } from '@/app/paths'
 
@@ -93,6 +94,9 @@ export default function LoginForm({
                     {isSubmitting ? '로그인 중…' : '로그인'}
                 </button>
             </form>
+
+            {/* 소셜 로그인 — 카카오·네이버(design-system §5.11, FC-155). 목업엔 있으나 구현 누락분 보강. */}
+            <SocialLoginSection />
 
             <p className="mt-6 text-center text-xs text-gray-500">
                 계정이 없으신가요?{' '}

@@ -73,6 +73,9 @@ module.exports = {
                     deep: 'var(--orange-deep)',
                     subtle: 'var(--orange-subtle)',
                 },
+                /* 소셜 로그인 — 외부 브랜드 규격(재색 금지, design-system §2.8) */
+                kakao: 'var(--kakao)',
+                naver: 'var(--naver)',
                 /* 표면·경계 */
                 surface: 'var(--surface)',
                 'surface-sunken': 'var(--surface-sunken)',

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { TbId, TbLock, TbLockCheck, TbMail, TbUser } from 'react-icons/tb'
 import AuthTextField from './AuthTextField'
+import SocialLoginSection from './SocialLoginSection'
 import {
     signupEmailErrorMessage,
     signupErrorMessage,
@@ -15,8 +16,9 @@ import { paths } from '@/app/paths'
  * ★ 제출 필드 = 필수 3(`loginId·password·nickname`) + **선택 email**(계약 §2·§4.1, FC-137).
  *   email 은 값이 있을 때만 payload 에 포함하고 빈 값이면 생략한다(이메일 없는 계정). 201 후 토큰
  *   미발급이라 자동 로그인하지 않으며(가입 후 로그인 별도), **이메일 인증은 가입 후 별도 화면(F2)**.
- * ★ 미구현 자리(백엔드 없음, 미호출): 아이디 중복확인(`/auth/ids/availability` 없음)·OAuth(네이버·카카오).
- *   전부 **DOM `disabled` 준비 중 자리**로만 두고 클릭해도 아무 것도 호출하지 않는다(§5 · 404 방지).
+ * ★ 미구현 자리(백엔드 없음, 미호출): 아이디 중복확인(`/auth/ids/availability` 없음)만 **DOM
+ *   `disabled` 준비 중 자리**로 둔다. 소셜(카카오·네이버)은 FC-155 로 활성화 — `SocialLoginSection`
+ *   이 env(client_id) 설정 시 인가 페이지로 이동한다(콜백 처리는 FC-156 별건).
  * ★ 클라 검증(제출 차단): 비밀번호 확인 불일치 · email 형식(값이 있을 때 `@Email`·≤255).
  *   `<form noValidate>` 로 브라우저 말풍선을 끈다.
  */
@@ -228,38 +230,8 @@ export default function SignupForm({
                 </button>
             </form>
 
-            {/* 소셜 가입 자리(예정) — 네이버·카카오. 미호출·DOM 비활성(구글 없음). */}
-            <div
-                className="my-5 flex items-center gap-3 text-xs text-gray-400"
-                role="separator"
-            >
-                <span className="h-px flex-1 bg-line" />
-                또는
-                <span className="h-px flex-1 bg-line" />
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <button
-                    disabled
-                    type="button"
-                    aria-disabled="true"
-                    className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-gray-50 text-sm font-bold text-gray-400"
-                >
-                    카카오로 가입
-                    <span className="text-[10px] font-medium">준비 중</span>
-                </button>
-                <button
-                    disabled
-                    type="button"
-                    aria-disabled="true"
-                    className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-gray-50 text-sm font-bold text-gray-400"
-                >
-                    네이버로 가입
-                    <span className="text-[10px] font-medium">준비 중</span>
-                </button>
-            </div>
-            <p className="mt-3 text-center text-xs text-gray-400">
-                소셜 인증은 아직 연결되지 않았습니다.
-            </p>
+            {/* 소셜 가입 — 카카오·네이버(design-system §5.11, FC-155). 클릭 시 인가 페이지로 이동. */}
+            <SocialLoginSection />
 
             <p className="mt-6 text-center text-xs text-gray-500">
                 이미 계정이 있으신가요?{' '}

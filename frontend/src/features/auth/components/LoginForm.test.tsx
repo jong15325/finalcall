@@ -80,4 +80,14 @@ describe('<LoginForm>', () => {
             screen.getByRole('link', { name: '회원가입' }),
         ).toHaveAttribute('href', '/signup')
     })
+
+    it('소셜 로그인 버튼을 노출한다(FC-155 — 목업 누락분 보강)', () => {
+        renderForm()
+        expect(
+            screen.getByRole('button', { name: /카카오로 계속하기/ }),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('button', { name: /네이버로 계속하기/ }),
+        ).toBeInTheDocument()
+    })
 })

@@ -29,6 +29,10 @@
         --orange-deep: #d9741a;
         --orange-subtle: #fdefe0;
 
+        /* 소셜 로그인 (design-system §2.8) — 외부 브랜드 규격, 팔레트 예외·재색 금지 */
+        --kakao: #fee500;
+        --naver: #03c75a;
+
         /* 표면·경계 */
         --surface: #ffffff;
         --surface-sunken: #f4f5f8;

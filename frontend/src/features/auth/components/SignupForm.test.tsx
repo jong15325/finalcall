@@ -150,14 +150,15 @@ describe('<SignupForm>', () => {
         ).toBeInTheDocument()
     })
 
-    it('미구현 자리(중복확인·소셜)는 DOM 비활성이다', () => {
+    it('중복확인 자리는 DOM 비활성이고, 소셜 버튼은 env 미설정 시 비활성이다', () => {
         renderForm()
         expect(screen.getByRole('button', { name: /중복 확인/ })).toBeDisabled()
+        // 소셜은 FC-155 로 활성화되나 테스트 env 엔 client_id 가 없어 준비 중(비활성)이다.
         expect(
-            screen.getByRole('button', { name: /카카오로 가입/ }),
+            screen.getByRole('button', { name: /카카오로 계속하기/ }),
         ).toBeDisabled()
         expect(
-            screen.getByRole('button', { name: /네이버로 가입/ }),
+            screen.getByRole('button', { name: /네이버로 계속하기/ }),
         ).toBeDisabled()
     })
 
