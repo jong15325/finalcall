@@ -1,7 +1,7 @@
 ---
 id: EPIC-MARKET-QUICKBUY
 type: epic
-jira_key: null
+jira_key: KAN-169
 title: 마켓 즉시구매 — 카드정보 UI 차용한 인라인 구매
 state: done
 owner: main
