@@ -425,11 +425,18 @@ BidSummary (GET /auctions/{id}/bids content 항목) — v1.8, F2:
 
 ShopSummary (GET /shops content 항목):
 ```
-{ shopPublicId, status, item, price, endAt?, sellerNickname }
+{ shopPublicId, status, item, price, endAt?, sellerNickname, sellerCompletedSales }
 ```
 ShopDetail (GET /shops/{id}): ShopSummary + `{ createdAt }`
 
 주: item.nameSnapshot/specSnapshot은 등록 시점 스냅샷(D-045). 실시간 값(현재 소유자 등)은 상세에서 마스킹 노출. 필드 추가는 6절 절차.
+
+> **⚠ PROPOSAL — 판매자 완료 판매 건수(FC-148, EPIC-MARKET-QUICKBUY). 게이트2 성격(계약 필드 추가), 사용자 승인 완료(ⓐ 실데이터 표시·정의=완료 판매 건수, 2026-07-29).** 정본 = `shop-spec.md` §11. **추가 = ShopSummary 에 `sellerCompletedSales`(long) 1필드**(형상 보존 = 필드 추가만). ShopDetail·MyShopSummary(§10.3)는 ShopSummary 를 상속하므로 자동 포함된다.
+> - **`sellerCompletedSales`(long, non-null, ≥0)** = 판매자(`shop.seller_id`)의 **완료(정산 성립) 판매 건수** = `SELECT COUNT(*) FROM sale_order WHERE seller_id = shop.seller_id`. `sale_order` 는 SOLD 정산 성립분만 존재(취소·유찰·만료는 행 없음, `status`는 `SETTLED` 단일값·erd §4.3)하므로 **취소·유찰·만료·미판매는 정의상 자동 제외**된다. 위조 아님 = 실제 정산원장 집계.
+> - **채널 합산(AUCTION + SHOP)**: 경매 낙찰 판매 + 고정가 마켓 판매를 합산한다(판매자 신뢰 지표 = 채널 무관 총 완료 판매). `sale_order` 가 두 채널 공통 핸드오프(§4.3·erd)라 `source_type` 필터 없이 `seller_id` 단일 조건으로 합산이 자연스럽게 산출된다. 마켓 카드 모달 맥락이나 지표 자체는 판매자 전역.
+> - **공개 노출 안전**: 집계 카운트(정수)일 뿐 PII·거래상대·금액이 없다 → 공개 `GET /shops` 목록/상세에 노출 가능(판매자 신뢰 지표). 목록에서 카드정보 모달이 바로 열리므로 목록(ShopSummary) 포함이 자연스럽다.
+> - **성능(N+1 회피)**: 목록 N행 각각 카운트 쿼리 금지. 권장 = **목록 페이지 조회 후 등장한 seller_id 집합으로 1회 배치 집계**(`SELECT seller_id, COUNT(*) FROM sale_order WHERE seller_id IN (:sellerIds) GROUP BY seller_id`, `sale_order (seller_id)` 인덱스 커버) 후 앱에서 매핑. 페이지당 **추가 쿼리 1개**(N+1 아님). 상관 서브쿼리도 허용(키셋 쿼리 오염 대비 배치안 권장). 향후 핫스팟 시 비정규화 카운터로 이관하는 seam 은 §11.4. **스키마·인덱스·에러코드 신규·변경 0**(집계는 기존 `(seller_id)` 인덱스 재사용).
+> - 승인 시 반영: 버전 로그 "6절 계약 변경 — ShopSummary 에 `sellerCompletedSales`(long, 판매자 완료 판매 건수, AUCTION+SHOP 합산, sale_order seller_id 집계) 추가. ShopDetail·MyShopSummary 자동 상속. 공개 노출 안전(집계 카운트). 스키마·인덱스·에러코드 무변경. 정본 shop-spec §11. 구현 = FC-148 하위(backend 집계·frontend 표시)."
 
 ## 4. 아이템·인벤토리·주문·화폐
 

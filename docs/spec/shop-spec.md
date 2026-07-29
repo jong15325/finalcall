@@ -17,6 +17,7 @@
 | v0.2 | 2026-07-22 | **게이트2 기한 모델 정정 반영** — 판매자 endAt 입력 제거(등록 body `{itemInstancePublicId, price}`), 서버가 `end_at = now + shop.listing.default-duration-days`(기본 7일) 자동 계산. 최대값·판매자 지정·기한 범위 폐기(C5 정정). `end_at` nullable = 향후 무기한 캐시아이템용. §3.1에 기한 연장 seam 1줄(per-listing end_at). §3 등록 flow·C5·§6·§7 PROPOSAL 갱신. cancel POST(C6) 채택 확정 |
 | v0.3 | 2026-07-22 | **FC-103 — 판매 관리 조회 계약(PROPOSAL)** §10 신설: `GET /me/shops`(판매자=주체·status 필터 ACTIVE 기본/`ALL`·ShopCursor 재사용). 신규=조회 1개, 취소 재사용. 스키마·에러코드·기존 엔드포인트 무변경(additive read). 게이트2 상신 M1~M3. 구현 FC-104 |
 | v0.4 | 2026-07-22 | **게이트2 M3 정정 반영(사용자)** — '내 판매' 카드에 등록가 + **예상 정산액** 함께 표시. §10.3 응답 DTO = `MyShopSummary`(ShopSummary + 판매자 전용 `estimatedFee`·`estimatedSettle` 예상치, FeeCalculator 재사용). 공개 `ShopSummary` 무오염(별도 DTO 격리). 추정치=예상 표기, 실현값은 /me/orders 유지. §10.5 M3·M3표 갱신. 스키마 무변경(서버 파생값) |
+| v0.5 | 2026-07-29 | **FC-148 — 판매자 완료 판매 건수(거래 횟수) 계약 확정** §11 신설. 사용자 승인(ⓐ 실데이터·정의=완료 판매 건수). `ShopSummary` 에 `sellerCompletedSales`(long, non-null, ≥0) 추가 — `sale_order` seller_id 집계(AUCTION+SHOP 합산, SETTLED 행 존재=완료·취소/유찰/만료 자동 제외). ShopDetail·MyShopSummary 자동 상속. 목록 포함(공개 노출 안전=집계 카운트)·성능=페이지당 배치 IN 집계 1쿼리(N+1 회피, `(seller_id)` 인덱스 커버). 스키마·인덱스·에러코드 무변경. 하위 티켓 FC-148-B(backend 집계)·FC-148-F(frontend 표시). api-contract §3.3 델타 PROPOSAL 병기 |
 
 ---
 
@@ -357,3 +358,94 @@ MyShopSummary (GET /me/shops content):
 | **M3** | 예상 정산액 노출 (게이트2 정정 확정) | **등록가 + 예상 정산액(`estimatedFee`·`estimatedSettle`) 함께 노출**. `/me/shops` 전용 `MyShopSummary`로 격리 — 공개 `ShopSummary` 무오염 | 판매자 본인 화면이라 회계값 노출 안전. 추정치라 "예상"으로 표기(S-B). FeeCalculator 재사용(코드 변경 0) | '내 판매' 카드에 등록가와 함께 "이만큼 팔리면 예상 정산액 N"을 보여준다. 실제 정산액은 팔린 뒤 '내 주문'에서 확정 확인. 남이 보는 공개 목록엔 이 값이 안 나간다 |
 
 **스키마 영향 = 0.** M1~M3은 계약 형태·필터·노출 범위 결정이며 테이블·인덱스·에러코드 신규·변경이 없다(예상 정산액도 서버 파생값 — 컬럼 추가 없음).
+
+---
+
+## 11. 판매자 완료 판매 건수(거래 횟수) — `sellerCompletedSales` (FC-148, EPIC-MARKET-QUICKBUY)
+
+> **게이트2 성격(계약 필드 추가)·사용자 승인 완료(2026-07-29).** 사용자 결정 = ⓐ 실데이터로 표시 + 정의 = **완료된 판매 건수**. 카드정보 구매 모달(FC-146)의 판매자 영역에 목업이 연출값 "거래 128회"를 박아둔 것이 계약에 없는 위조로 드러나(위조 금지) 실데이터 지표로 확정한다. **형상 = ShopSummary 에 필드 1개 추가(additive), 스키마·인덱스·에러코드 변경 0.** 정의·집계에 재량 판단이 있어 아래에 그 선택과 근거를 명시한다(§11.1).
+
+### 11.1 정의 — 무엇을 세나 (재량 선택 명시)
+
+**`sellerCompletedSales` = 판매자(`shop.seller_id`)가 성사시킨 완료(정산 성립) 판매의 총 건수.**
+
+집계식(개념):
+
+```
+sellerCompletedSales(sellerId) = COUNT( sale_order WHERE seller_id = sellerId )
+```
+
+- **기준 상태 = `sale_order` 존재 = 정산 완료(SETTLED).** `sale_order` 는 **SOLD 정산이 성립한 거래에만** 생성되는 원장이다(domain-spec §5 구매 경로 단일화, erd §4.3 — `status` ENUM은 `SETTLED` **단일값**, 정산·소유이전 단일 TX). 즉 "`sale_order` 행이 존재한다 = 그 판매는 완료됐다"가 스키마 불변식이다. 별도의 "완료 상태 컬럼"을 볼 필요가 없다 — 행의 존재 자체가 완료의 정의다.
+- **취소·유찰·만료·미판매 = 정의상 자동 제외.** 고정가 취소(CANCELLED)·만료(EXPIRED)·경매 유찰(UNSOLD)·진행 중(ACTIVE) 리스팅은 **`sale_order` 행을 만들지 않는다**(shop-spec §5 S-E "CANCELLED·EXPIRED 후 sale_order 0건", closing 유찰 대칭). 따라서 카운트에서 별도 제외 조건(WHERE status != …) 없이 자연 배제된다.
+- **환불·크레딧 = 현재 미구현(범위 밖) → 감산 없음.** 정산 후 환불/비례 크레딧은 fee-policy-spec §5의 향후 항목이며 이 프로젝트에 미구현이다. `sale_order` 는 append-only·SETTLED 종단이라 환불로 되돌아가는 상태 전이가 없다 → 현재 카운트는 순수 완료 건수다. **환불 도입 시** 판매 취소로 볼지(감산) 완료 이력으로 볼지는 그 에픽에서 결정할 seam 으로 남긴다(§11.4).
+
+**재량 선택 A — 채널: 경매 낙찰 + 고정가 마켓 합산(권장·확정).**
+- `sale_order` 는 경매 낙찰과 고정가 구매의 **공통 핸드오프**다(`source_type ∈ {AUCTION, SHOP}`, erd §4.3·§5·domain-spec §5). `seller_id` 단일 조건으로 세면 **두 채널이 합산**된다.
+- **근거**: 이 값은 카드정보 모달(마켓)에서 열리지만 의미는 "**이 판매자를 얼마나 믿을 수 있나**"라는 판매자 전역 신뢰 지표다. 판매자의 신뢰도는 채널(경매/고정가)로 쪼개지지 않는다 — 커머스 관행(마켓플레이스 "판매 N회")도 채널 무관 총량이다. 또 `source_type` 필터를 걸지 않는 편이 인덱스(`sale_order (seller_id)`)를 그대로 커버해 더 싸다.
+- **배제한 대안(마켓 SHOP만)**: `WHERE seller_id=? AND source_type='SHOP'`. "이 매물과 같은 채널의 실적만" 보여주자는 관점이나 — (1) 신뢰 지표를 채널로 쪼갤 근거가 약하고, (2) 경매로만 팔아온 유능한 판매자가 마켓 첫 판매 시 "0회"로 보여 오히려 오해를 부른다. **채널 합산을 확정**한다.
+
+### 11.2 데이터 출처 — 실데이터 집계 가능 입증 (위조 없음)
+
+| 항목 | 실측 |
+|---|---|
+| 테이블 | `sale_order`(erd §4.3, `V14__sale_order_and_settlement.sql`로 실생성·EPIC-CLOSING) |
+| 집계 키 | `seller_id`(BIGINT, FK→user) |
+| 커버 인덱스 | `sale_order (seller_id)`(erd §5 — "구매/판매 거래 내역" 용도로 이미 실재) |
+| 채널 | `source_type ∈ {AUCTION, SHOP}` — 필터 없이 합산 |
+| 완료 판정 | 행 존재 = 완료(`status=SETTLED` 단일). 별도 상태 컬럼 불요 |
+| 매핑 | `shop.seller_id` = 리스팅 판매자 = 집계 대상 user |
+
+- **위조 없이 산출됨.** 목업 "거래 128회"는 하드코딩 연출값이었으나, `sellerCompletedSales` 는 실제 정산원장(`sale_order`) 행수를 세므로 데이터가 곧 진실이다. 새 판매자는 0, 첫 판매 정산 성립 시 1로 오른다.
+- **신규 스키마 0.** 집계 대상 테이블·인덱스·컬럼이 전부 이미 존재한다. 새 마이그레이션·컬럼·에러코드가 필요 없다(비정규화 카운터를 택하지 않는 한 — §11.4에서 배제).
+
+### 11.3 노출 위치·성능 전략 — 목록 포함 + 배치 집계(N+1 회피)
+
+**노출 위치 = 공개 `ShopSummary`(목록) 포함 → ShopDetail·MyShopSummary 자동 상속.**
+- 카드정보 구매 모달은 **목록(`GET /shops`)에서 바로 열린다**(FC-146). 모달이 목록 응답 데이터로 구성되므로 `sellerCompletedSales` 를 **목록 응답(ShopSummary)에 넣는 것이 자연스럽다**(상세만 넣으면 모달이 별도 상세 호출을 강제받아 왕복이 는다).
+- **공개 노출 안전**: 이 값은 **집계 카운트(정수)** 일 뿐 거래상대·금액·PII 를 담지 않는다. 판매 실적 카운트는 마켓플레이스의 공개 신뢰 지표(판매 N회)와 동형이라 인증 없는 공개 목록에 실어도 정보 누출이 아니다. → 별도 seller-stats 인증 경로로 뺄 이유가 없다.
+- ShopDetail(= ShopSummary + createdAt)·MyShopSummary(§10.3, = ShopSummary + estimated*)는 **ShopSummary 를 상속**하므로 필드가 자동 포함된다(추가 작업 0). MyShopSummary(내 판매)에서는 자기 판매 건수를 보여줘 무해하다.
+
+**성능 전략 = 페이지당 배치 집계 1회(권장) — N+1 금지.**
+
+| 방식 | 비용 | 판정 |
+|---|---|---|
+| ❌ 행별 카운트 쿼리 | 목록 N행 × 카운트 = **N+1 왕복** | 금지 |
+| ✅ **배치 IN 집계(권장)** | 페이지 조회 후 등장 `seller_id` 집합으로 **추가 쿼리 1개**: `SELECT seller_id, COUNT(*) c FROM sale_order WHERE seller_id IN (:sellerIds) GROUP BY seller_id` → 앱에서 shop→count 매핑, 없으면 0. `(seller_id)` 인덱스 커버 | 채택 |
+| △ 상관 서브쿼리 | 목록 쿼리에 `(SELECT COUNT(*) …)` 스칼라 상관 — 왕복 1회지만 키셋 페이지네이션 쿼리를 오염, 페이지 크기만큼 인덱스 카운트 | 허용(대안) |
+| △ 비정규화 카운터 | user/seller_stats 에 `completed_sales_count` 컬럼 + 정산 TX 증분 | §11.4 seam(현재 미채택) |
+
+- **권장 = 배치 IN 집계.** 이유: (1) 키셋 커서 쿼리(§10.2 ShopCursor)를 건드리지 않아 페이지네이션이 단순하게 유지되고, (2) 페이지당 **딱 1개**의 인덱스 커버 집계 쿼리라 N+1 이 원천 없으며, (3) 스키마·쓰기경로 변경이 0 이다. 목록 페이지 크기가 유한(커서 size)하고 `seller_id` 집합이 그보다 작거나 같아 IN 리스트가 작다.
+- **되돌리기 리스크 낮음**: 배치 집계는 읽기 전용·additive 라 언제든 상관 서브쿼리로 바꾸거나 비정규화 카운터로 이관해도 **계약(필드 형상)은 불변**이다. 집계 방식은 backend-impl 구현 자유도(계약은 값의 의미만 고정).
+
+### 11.4 계약 형상 · 파급 · seam
+
+**계약 형상(형상 보존 = 필드 추가만):**
+```
+ShopSummary:
+  { shopPublicId, status, item, price, endAt?, sellerNickname,
+    sellerCompletedSales }        // long, non-null, ≥ 0. 판매자 완료 판매 건수(AUCTION+SHOP 합산)
+```
+- 필드명 `sellerCompletedSales`, 타입 `long`(정수 카운트), **non-null**(판매 이력 없으면 `0`). 위치 = ShopSummary 말미(sellerNickname 다음). 직렬화 JSON 형상은 필드 1개 추가뿐 — 기존 필드·중첩 불변.
+
+**파급:**
+- **기존 티켓 소급 변경 = 없음.** `sale_order`·`(seller_id)` 인덱스는 읽기만 하고 시그니처를 바꾸지 않는다. EPIC-CLOSING·EPIC-PURCHASE·EPIC-SHOP 완료분 무변경.
+- **ShopDetail·MyShopSummary 자동 상속**(별도 계약 변경 없음). 공개 `GET /shops`·`GET /shops/{id}`·`GET /me/shops` 응답에 필드가 함께 나간다.
+- **auction 대칭 seam(범위 밖)**: 같은 지표를 AuctionSummary/Detail 에도 얹으면 경매 카드에도 판매자 완료 판매 건수를 보일 수 있다(additive·nullable, 상태머신·쿼리 무변경). FC-148 은 마켓 카드 모달 범위라 shop 계열에만 넣고, 경매 대칭은 **후속 seam** 으로 남긴다.
+- **환불 도입 seam**: 향후 환불/크레딧 에픽에서 완료 판매의 "취소" 개념이 생기면 카운트 감산 여부를 그 에픽이 결정한다. 현재는 `sale_order` append-only 라 순수 완료 건수.
+
+**하위 티켓 분해안(파급 티켓):**
+
+| 티켓(제안) | owner | 내용 | DoD |
+|---|---|---|---|
+| **FC-148-B (backend 집계)** | backend-impl | `GET /shops`·`GET /shops/{id}`·`GET /me/shops` 응답 조립에 `sellerCompletedSales` 채우기. 목록은 **배치 IN 집계**(`sale_order (seller_id)` 커버, 페이지 seller_id 집합 1쿼리→매핑, 미등장=0). ShopSummary/ShopDetail/MyShopSummary DTO 에 `long sellerCompletedSales` 필드 추가(정적 form). 상세는 단건 카운트 1쿼리 | 세 응답에 실집계값 노출·N+1 없음(배치 1쿼리)·취소/만료/유찰 0 반영·자기 판매 MyShopSummary 표시 확인. 단위/슬라이스 테스트(합산=경매+고정가, 취소·만료 제외) |
+| **FC-148-F (frontend 표시)** | frontend-impl | 카드정보 구매 모달 판매자 영역의 "거래 N회"를 목업 연출값 대신 `sellerCompletedSales` 실데이터로 바인딩. 0회 처리(신규 판매자 "거래 0회"·문구) | 목업 하드코딩 제거·실필드 바인딩·0 케이스 표기. 형상 목업 충실도(디자인 변경 아님, 값 소스만 교체) |
+
+- 두 티켓은 **계약(이 문서) 확정 후** 팬아웃한다. 쓰기 파일 집합 무교차(backend = shop DTO/service·repository, frontend = 모달 컴포넌트)라 **병렬 가능**. FC-148-B 가 필드를 실제로 응답에 채워야 FC-148-F 가 실데이터를 받으므로, 프론트는 필드 계약(이 문서)만으로 선구현 가능하되 통합 확인은 backend 완료 후.
+
+### 11.5 게이트2 요지(평이한 언어)
+
+- **무엇**: 판매자 영역의 "거래 N회"를 **진짜 판매 완료 횟수**로 만든다(지금 목업의 "128회"는 가짜 숫자였음).
+- **어떻게 세나**: 실제로 **정산까지 끝난 판매**만 센다(경매로 판 것 + 마켓 정가로 판 것 **합산**). 취소·유찰·기한만료·아직 안 팔린 건 **안 센다**(애초에 판매기록이 안 남으므로 자동으로 빠짐). 새 판매자는 0회, 첫 판매가 성사되면 1회로 오른다. 숫자를 지어내지 않는다.
+- **어디에 보이나**: 마켓 카드 목록·상세, 그리고 그 목록에서 바로 뜨는 카드정보 모달에 나온다. 이 숫자는 그냥 "몇 번 팔았나" 카운트라 개인정보가 아니어서 로그인 없이도 공개해도 안전하다(마켓플레이스의 "판매 N회"와 같은 성격).
+- **느려지지 않나**: 목록 20개마다 판매자별 카운트를 **한 번의 합계 조회**로 모아 붙인다(개별로 20번 묻지 않음). 이미 있는 색인을 쓰므로 서버 부담이 작다. 나중에 트래픽이 몰리면 카운트를 미리 저장해두는 방식으로 바꿀 여지도 남겼다(그때도 화면 계약은 그대로).
+- **되돌리기 위험**: 낮음. 화면에 숫자 필드 하나 더 붙이는 것(기존 응답 형상 보존)이고, 계산 방식은 나중에 바꿔도 화면 계약이 안 변한다. DB 구조 변경·새 표·새 에러코드가 전혀 없다.
