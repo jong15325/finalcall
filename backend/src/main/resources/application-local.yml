@@ -16,6 +16,19 @@ gateway:
   internal:
     secret: ${GATEWAY_INTERNAL_SECRET:finalcall-local-gateway-shared-secret-change-me}
 
+# FC-154(EPIC-OAUTH): 소셜 로그인 client-id/secret·redirect-uri 는 local 더미 기본값으로 부팅을 보장한다
+#   (@NotBlank 라 빈 값이면 부팅 실패 — 실키 없이도 컨텍스트가 뜨게 더미를 둔다. 라이브 교환은 실키 env 주입 시).
+#   redirect-uri 는 프론트 /oauth/callback 값과 동일(OAUTH_REDIRECT_URI). ★ 실 client-secret 은 커밋 금지·env only.
+oauth:
+  naver:
+    client-id: ${OAUTH_NAVER_CLIENT_ID:local-naver-client-id}
+    client-secret: ${OAUTH_NAVER_CLIENT_SECRET:local-naver-client-secret}
+    redirect-uri: ${OAUTH_REDIRECT_URI:http://localhost:5173/oauth/callback}
+  kakao:
+    client-id: ${OAUTH_KAKAO_CLIENT_ID:local-kakao-client-id}
+    client-secret: ${OAUTH_KAKAO_CLIENT_SECRET:local-kakao-client-secret}
+    redirect-uri: ${OAUTH_REDIRECT_URI:http://localhost:5173/oauth/callback}
+
 # Stage D: DataSource — local 은 ${ENV:기본값} 으로 환경변수 없이도 뜬다.
 spring:
   datasource:

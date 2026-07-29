@@ -2,6 +2,7 @@ package com.finalcall.domain.auth.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,12 +13,14 @@ import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.auth.dto.LoginRequest;
 import com.finalcall.domain.auth.dto.LoginResponse;
 import com.finalcall.domain.auth.dto.LogoutRequest;
+import com.finalcall.domain.auth.dto.OAuthLoginRequest;
 import com.finalcall.domain.auth.dto.RefreshRequest;
 import com.finalcall.domain.auth.dto.RefreshResponse;
 import com.finalcall.domain.auth.dto.SignupRequest;
 import com.finalcall.domain.auth.dto.SignupResponse;
 import com.finalcall.domain.auth.dto.TokenBundle;
 import com.finalcall.domain.auth.service.AuthService;
+import com.finalcall.domain.auth.service.OAuthService;
 import com.finalcall.domain.member.entity.User;
 
 import jakarta.validation.Valid;
@@ -36,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final OAuthService oauthService;
 
     /** 회원가입 — 성공 시 201, 토큰은 발급하지 않는다(계약 §2). */
     @PostMapping("/signup")
@@ -50,6 +54,18 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         TokenBundle result = authService.login(request.loginId(), request.password());
+        return ApiResponse.success(LoginResponse.from(result));
+    }
+
+    /**
+     * 소셜 로그인·가입(통합) — 성공 시 200, access/refresh 발급(계약 §2 소셜 로그인). 가입·로그인 모두 200이라
+     * 신규/기존 여부가 상태코드로 드러나지 않는다(SEC-007 열거 방지). 응답은 기존 {@link LoginResponse} 형상 그대로다.
+     * 미지원 provider 는 AUTH_006, 인가코드 교환 실패 AUTH_007, provider 통신 실패 AUTH_008(전역 핸들러).
+     */
+    @PostMapping("/oauth/{provider}")
+    public ApiResponse<LoginResponse> oauthLogin(
+        @PathVariable String provider, @Valid @RequestBody OAuthLoginRequest request) {
+        TokenBundle result = oauthService.login(provider, request.code(), request.redirectUri());
         return ApiResponse.success(LoginResponse.from(result));
     }
 

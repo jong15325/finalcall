@@ -155,6 +155,19 @@ jwt:
   refresh-exp-days: ${JWT_REFRESH_EXP_DAYS:14}      # refresh 만료(= Redis 저장분 TTL, B-011). 데모 기본값 — 정책에 맞게 조정.
   # secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
 
+# FC-154(EPIC-OAUTH): 소셜 로그인 provider 설정(OAuthProperties, 계약 §2 소셜 로그인).
+#   token-uri·userinfo-uri 는 provider 표준 상수라 공통에 기본값을 둔다(시크릿 아님, 오버라이드 여지).
+#   ★ client-id/secret·redirect-uri 는 여기 두지 않는다 — 공통에 두면 prod fail-fast(@NotBlank)가 무력화된다.
+#     local 은 application-local.yml 의 ${OAUTH_*:더미} 로, dev/prod 는 env 주입(relaxed binding)으로만 채운다.
+#   ★ client-secret 은 시크릿 — 커밋 금지, env(OAUTH_*_CLIENT_SECRET)로만 주입한다.
+oauth:
+  naver:
+    token-uri: ${OAUTH_NAVER_TOKEN_URI:https://nid.naver.com/oauth2.0/token}
+    userinfo-uri: ${OAUTH_NAVER_USERINFO_URI:https://openapi.naver.com/v1/nid/me}
+  kakao:
+    token-uri: ${OAUTH_KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
+    userinfo-uri: ${OAUTH_KAKAO_USERINFO_URI:https://kapi.kakao.com/v2/user/me}
+
 # FC-009: 캐시→게임머니 교환 비율(1 캐시 = rate 게임머니). 비즈니스 기본값이며 시크릿이 아니라 공통에 둔다.
 #   운영은 EXCHANGE_RATE 환경변수로 override 가능(ExchangeProperties @Positive 로 0/음수 부팅 차단).
 exchange:
