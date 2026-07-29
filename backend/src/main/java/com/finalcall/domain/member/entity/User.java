@@ -44,10 +44,12 @@ public class User extends BaseTimeEntity {
     private String publicId;
 
     // 유일성은 V4 login_id_active 생성 컬럼 UK로 강제(D-081). 원본 컬럼 UK 미부여.
-    @Column(name = "login_id", nullable = false, length = 50)
+    // NOT NULL 해제(EPIC-OAUTH V19): 소셜 전용 계정은 loginId 가 NULL(신원 = user_social_account). 생성 컬럼 UK 는 NULL 을 제외.
+    @Column(name = "login_id", length = 50)
     private String loginId;
 
-    @Column(name = "password_hash", nullable = false, length = 100)
+    // NOT NULL 해제(EPIC-OAUTH V19): 소셜 전용 계정은 비밀번호가 없다(비밀번호 로그인 불가 — AUTH_003).
+    @Column(name = "password_hash", length = 100)
     private String passwordHash;
 
     // 유일성은 V4 nickname_active 생성 컬럼 UK로 강제(D-081). 원본 컬럼 UK 미부여.
