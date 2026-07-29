@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>카드정보 모달 — 디자인 변형 A/B/C/D</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+ * 카드정보 구매 모달 — 전체 디자인 변형 목업 (FC-147)
+ * 앱 라이트/클린 커머스 톤 안에서 상단 레이아웃·판매자 정보 처리를 4가지로 분기.
+ * 토큰은 frontend/src/index.css 정본을 인라인. 게임 카드 자산만 배경 없이 딱 맞게.
+ * ════════════════════════════════════════════════════════════════════════ */
+:root{
+  --navy:#16213a; --navy-900:#101a2e; --navy-800:#1b2a47; --navy-700:#223458;
+  --gold:#c8a028; --gold-bright:#dfc447; --gold-deep:#8b6100; --gold-subtle:#f6edcd;
+  --orange:#ef8a2c; --orange-deep:#d9741a; --orange-subtle:#fdefe0;
+  --surface:#ffffff; --surface-sunken:#f4f5f8; --line:#e4e7ee;
+  --success:#16a34a; --success-subtle:#dcfce7;
+  --gray-50:#f8f9fb; --gray-100:#f1f3f7; --gray-200:#e4e7ee; --gray-300:#cfd4de;
+  --gray-400:#9aa3b2; --gray-500:#6b7484; --gray-600:#4d5461; --gray-700:#3a3f4a;
+  --gray-800:#262a33; --gray-900:#171a20;
+  --el-water:#1d6fd1;
+}
+*{ box-sizing:border-box; }
+html{ -webkit-font-smoothing:antialiased; }
+body{
+  margin:0;
+  font-family:'Noto Sans KR','Malgun Gothic',system-ui,-apple-system,sans-serif;
+  color:var(--gray-700);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #eef1f7 0%, transparent 60%),
+    var(--surface-sunken);
+  line-height:1.5;
+}
+
+/* ── 보드 헤더 ── */
+.board-head{ max-width:1400px; margin:0 auto; padding:40px 32px 8px; }
+.board-head h1{
+  margin:0 0 6px; font-size:24px; font-weight:800; letter-spacing:-0.02em;
+  color:var(--gray-900);
+}
+.board-head p{ margin:0; font-size:13.5px; color:var(--gray-600); max-width:70ch; }
+.axes{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.axes .chip{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 12px; border:1px solid var(--line); border-radius:999px;
+  background:var(--surface); font-size:12px; font-weight:600; color:var(--gray-700);
+}
+.axes .chip b{ color:var(--navy); font-weight:800; }
+
+/* ── 변형 그리드 ── */
+.board{
+  max-width:1400px; margin:0 auto; padding:24px 32px 64px;
+  display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:32px;
+}
+@media (max-width:1080px){ .board{ grid-template-columns:1fr; } }
+
+.cell{ display:flex; flex-direction:column; gap:14px; min-width:0; }
+.vlabel{ display:flex; align-items:flex-start; gap:12px; }
+.vlabel .tag{
+  flex:none; display:grid; place-items:center;
+  width:34px; height:34px; border-radius:10px;
+  background:var(--navy); color:#fff; font-size:16px; font-weight:800;
+}
+.vlabel .txt h2{ margin:0; font-size:15px; font-weight:800; color:var(--gray-900); }
+.vlabel .txt p{ margin:2px 0 0; font-size:12.5px; color:var(--gray-500); }
+.vlabel .txt .seller-note{ color:var(--orange-deep); font-weight:700; }
+
+.stage{
+  display:flex; justify-content:center;
+  padding:22px; border:1px solid var(--line); border-radius:20px;
+  background:rgba(255,255,255,.5);
+}
+
+/* ════════════════ 모달 공통 베이스 ════════════════ */
+.modal{
+  position:relative; width:100%; display:flex; flex-direction:column;
+  border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  background:var(--surface);
+  box-shadow:0 24px 60px rgba(17,26,44,.16);
+  color:var(--gray-700);
+}
+.modal .m-title{
+  display:flex; align-items:center; gap:10px;
+  padding:15px 18px; border-bottom:1px solid var(--line);
+}
+.modal .m-title .ico{ width:15px; height:15px; border-radius:5px; background:var(--navy); }
+.modal .m-title h3{
+  margin:0; font-size:15px; font-weight:800; letter-spacing:-0.01em; color:var(--gray-900);
+}
+.modal .m-title h3 small{
+  margin-left:7px; font-size:9.5px; font-weight:700; letter-spacing:1.2px; color:var(--gray-400);
+}
+.modal .m-x{
+  margin-left:auto; width:30px; height:30px; border:0; border-radius:8px;
+  background:transparent; color:var(--gray-400); font-size:17px; line-height:1;
+  display:grid; place-items:center; cursor:pointer;
+}
+.modal .m-x:hover{ background:var(--gray-100); color:var(--gray-700); }
+
+/* 카드 아트 — 배경 없이, 픽셀아트 그대로, 미세 그림자만(패널 아님) */
+.card-art{ display:grid; place-items:center; }
+.card-art img{
+  image-rendering:pixelated;
+  filter:drop-shadow(0 8px 14px rgba(17,26,44,.20));
+  user-select:none;
+}
+
+/* 속성 값 색 */
+.v-el{ color:var(--el-water); }
+.gf-on{ color:var(--gold-deep); }
+
+/* 특수스킬 리스트 공통 */
+.skills{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+.skills li{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--gray-800); }
+.skills .n{
+  flex:none; display:grid; place-items:center; width:21px; height:21px;
+  border:1px solid var(--line); border-radius:6px; background:var(--surface);
+  color:var(--navy); font-size:11px; font-weight:800;
+}
+.skills .pct{ color:var(--orange-deep); font-weight:800; }
+
+/* 판매자 아바타 공통 */
+.avatar{
+  flex:none; display:grid; place-items:center; border-radius:50%;
+  background:linear-gradient(135deg,var(--navy-700),var(--navy)); color:#fff;
+  font-weight:800; letter-spacing:-0.5px;
+}
+
+/* 구매 CTA 공통 */
+.buy{
+  border:0; border-radius:12px; background:var(--orange); color:#fff;
+  font-weight:800; letter-spacing:.2px; cursor:pointer; text-align:center;
+  transition:background .15s;
+}
+.buy:hover{ background:var(--orange-deep); }
+
+/* ════════════════ A · 좌우 2열 (정통 · 판매자 독립 행) ════════════════ */
+.v-a .m-body{ padding:18px; }
+.v-a .head{ display:grid; grid-template-columns:150px 1fr; gap:18px; }
+.v-a .card-art{ aspect-ratio:72/134; }
+.v-a .card-art img{ width:78%; }
+.v-a dl.attrs{ margin:0; display:flex; flex-direction:column; justify-content:center; }
+.v-a .row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:9px 2px; border-bottom:1px solid var(--line); font-size:12.5px;
+}
+.v-a .row:last-child{ border-bottom:0; }
+.v-a .row dt{ margin:0; color:var(--gray-500); font-weight:600; }
+.v-a .row dd{ margin:0; color:var(--gray-900); font-weight:700; text-align:right; }
+/* 판매자 독립 행 */
+.v-a .seller-strip{
+  display:flex; align-items:center; gap:11px; margin-top:16px;
+  padding:12px 14px; border:1px solid var(--line); border-radius:12px;
+  background:var(--surface-sunken);
+}
+.v-a .seller-strip .avatar{ width:38px; height:38px; font-size:15px; }
+.v-a .seller-strip .lbl{ font-size:11px; font-weight:700; color:var(--gray-500); }
+.v-a .seller-strip .name{ font-size:14px; font-weight:800; color:var(--gray-900); }
+.v-a .seller-strip .trust{
+  margin-left:auto; display:inline-flex; align-items:center; gap:5px;
+  font-size:11.5px; font-weight:700; color:var(--success);
+}
+.v-a .skillbox{
+  margin-top:14px; padding:14px 16px; border:1px solid var(--line);
+  border-radius:12px; background:var(--surface-sunken);
+}
+.v-a .skillbox h4{ margin:0 0 11px; font-size:11px; font-weight:800; letter-spacing:.3px; color:var(--gray-500); }
+.v-a .m-foot{
+  display:flex; align-items:center; gap:14px;
+  padding:15px 18px; border-top:1px solid var(--line); background:var(--surface-sunken);
+}
+.v-a .price .k{ font-size:11px; font-weight:700; color:var(--gray-500); }
+.v-a .price .amt{ font-size:22px; font-weight:800; color:var(--gray-900); line-height:1.1; }
+.v-a .price .amt small{ font-size:12px; font-weight:700; color:var(--gray-500); margin-left:3px; }
+.v-a .buy{ margin-left:auto; min-width:150px; padding:14px 22px; font-size:15px; }
+
+/* ════════════════ B · 상단 히어로 (중앙 카드 · 속성 2열 그리드 · 판매자 footer 좌) ════════════════ */
+.v-b .hero{
+  display:grid; place-items:center; padding:20px 18px 8px;
+}
+.v-b .hero .card-art{ aspect-ratio:72/128; height:190px; }
+.v-b .hero .card-art img{ height:100%; width:auto; }
+.v-b .hero .name{
+  margin:12px 0 2px; font-size:19px; font-weight:800; letter-spacing:-0.02em; color:var(--gray-900);
+}
+.v-b .hero .type{ font-size:12.5px; font-weight:700; color:var(--gray-500); }
+.v-b .m-body{ padding:6px 18px 18px; }
+.v-b .grid{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+}
+.v-b .cellkv{
+  padding:11px 13px; border:1px solid var(--line); border-radius:11px; background:var(--surface-sunken);
+}
+.v-b .cellkv .k{ display:block; font-size:11px; font-weight:700; color:var(--gray-500); margin-bottom:3px; }
+.v-b .cellkv .v{ font-size:14px; font-weight:800; color:var(--gray-900); }
+.v-b .skillbox{ margin-top:8px; padding:13px 15px; border:1px solid var(--line); border-radius:11px; }
+.v-b .skillbox h4{ margin:0 0 10px; font-size:11px; font-weight:800; letter-spacing:.3px; color:var(--gray-500); }
+.v-b .m-foot{
+  display:grid; grid-template-columns:auto 1fr; grid-template-areas:"seller price" "buy buy";
+  gap:12px 14px; align-items:center;
+  padding:15px 18px; border-top:1px solid var(--line); background:var(--surface-sunken);
+}
+.v-b .seller{ grid-area:seller; display:flex; align-items:center; gap:10px; }
+.v-b .seller .avatar{ width:40px; height:40px; font-size:15px; }
+.v-b .seller .lbl{ font-size:10.5px; font-weight:700; color:var(--gray-500); }
+.v-b .seller .name{ font-size:14px; font-weight:800; color:var(--gray-900); }
+.v-b .price{ grid-area:price; text-align:right; }
+.v-b .price .k{ font-size:11px; font-weight:700; color:var(--gray-500); }
+.v-b .price .amt{ font-size:21px; font-weight:800; color:var(--gray-900); line-height:1.1; }
+.v-b .price .amt small{ font-size:12px; font-weight:700; color:var(--gray-500); margin-left:3px; }
+.v-b .buy{ grid-area:buy; width:100%; padding:15px; font-size:15px; }
+
+/* ════════════════ C · 가로 히어로 (큰 카드 좌 · 우 강조 · 판매자 명칭 근처 카드) ════════════════ */
+.v-c .split{ display:grid; grid-template-columns:220px 1fr; }
+.v-c .left{
+  display:grid; place-items:center; padding:22px 12px;
+  background:
+    linear-gradient(180deg,#f7f9fc,#eef1f7);
+  border-right:1px solid var(--line);
+}
+.v-c .left .card-art{ aspect-ratio:72/134; height:250px; }
+.v-c .left .card-art img{ height:100%; width:auto; }
+.v-c .right{ padding:20px 20px 0; }
+.v-c .toprow{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+.v-c .toprow .name{ margin:0; font-size:21px; font-weight:800; letter-spacing:-0.02em; color:var(--gray-900); }
+.v-c .toprow .type{
+  display:inline-flex; align-items:center; gap:6px; margin-top:7px;
+  padding:4px 10px; border-radius:999px; background:var(--gold-subtle);
+  font-size:11.5px; font-weight:800; color:var(--gold-deep);
+}
+.v-c .price{ text-align:right; flex:none; }
+.v-c .price .k{ font-size:11px; font-weight:700; color:var(--gray-500); }
+.v-c .price .amt{ font-size:23px; font-weight:800; color:var(--gray-900); line-height:1.05; }
+.v-c .price .amt small{ font-size:12px; font-weight:700; color:var(--gray-500); margin-left:3px; }
+/* 판매자 카드 — 명칭/가격 바로 아래 */
+.v-c .seller-card{
+  display:flex; align-items:center; gap:11px; margin-top:16px;
+  padding:11px 13px; border:1px solid var(--line); border-radius:12px; background:var(--surface-sunken);
+}
+.v-c .seller-card .avatar{ width:36px; height:36px; font-size:14px; }
+.v-c .seller-card .lbl{ font-size:10.5px; font-weight:700; color:var(--gray-500); }
+.v-c .seller-card .name{ font-size:13.5px; font-weight:800; color:var(--gray-900); }
+.v-c .seller-card .trust{
+  margin-left:auto; font-size:11px; font-weight:700; color:var(--success);
+  display:inline-flex; align-items:center; gap:4px;
+}
+.v-c .attrs{ margin:16px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
+.v-c .row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;
+}
+.v-c .row dt{ margin:0; color:var(--gray-500); font-weight:600; }
+.v-c .row dd{ margin:0; color:var(--gray-900); font-weight:700; }
+.v-c .skillbox{ margin-top:14px; }
+.v-c .skillbox h4{ margin:0 0 9px; font-size:11px; font-weight:800; letter-spacing:.3px; color:var(--gray-500); }
+.v-c .m-foot{
+  grid-column:1 / -1; margin-top:18px;
+  padding:15px 20px; border-top:1px solid var(--line); background:var(--surface-sunken);
+}
+.v-c .buy{ width:100%; padding:15px; font-size:15px; }
+
+/* ════════════════ D · 컴팩트 그리드 (조밀 · 판매자 칩 헤더 메타) ════════════════ */
+.v-d .modal{ max-width:420px; margin:0 auto; }
+.v-d .m-body{ padding:16px; }
+.v-d .headrow{ display:flex; gap:14px; align-items:center; }
+.v-d .card-art{ flex:none; aspect-ratio:72/120; width:84px; }
+.v-d .card-art img{ width:100%; }
+.v-d .meta{ min-width:0; }
+.v-d .meta .name{ margin:0; font-size:17px; font-weight:800; letter-spacing:-0.02em; color:var(--gray-900); }
+.v-d .meta .type{ font-size:12px; font-weight:700; color:var(--gray-500); margin-top:3px; }
+/* 판매자 칩 — 명칭 옆 메타 라인 */
+.v-d .seller-chip{
+  display:inline-flex; align-items:center; gap:7px; margin-top:9px;
+  padding:4px 10px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface);
+}
+.v-d .seller-chip .avatar{ width:22px; height:22px; font-size:10px; }
+.v-d .seller-chip .lbl{ font-size:10px; font-weight:700; color:var(--gray-400); }
+.v-d .seller-chip .name{ font-size:12px; font-weight:800; color:var(--gray-800); }
+.v-d .attrs{ margin:14px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.v-d .cellkv{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:9px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface-sunken);
+  font-size:12px;
+}
+.v-d .cellkv .k{ color:var(--gray-500); font-weight:600; }
+.v-d .cellkv .v{ color:var(--gray-900); font-weight:800; }
+.v-d .cellkv.full{ grid-column:1 / -1; }
+.v-d .skillbox{ margin-top:12px; padding:12px 13px; border:1px solid var(--line); border-radius:10px; background:var(--surface-sunken); }
+.v-d .skillbox h4{ margin:0 0 9px; font-size:10.5px; font-weight:800; letter-spacing:.3px; color:var(--gray-500); }
+.v-d .skills li{ font-size:12.5px; }
+.v-d .m-foot{
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; border-top:1px solid var(--line); background:var(--surface-sunken);
+}
+.v-d .price .k{ font-size:10.5px; font-weight:700; color:var(--gray-500); }
+.v-d .price .amt{ font-size:19px; font-weight:800; color:var(--gray-900); line-height:1.1; }
+.v-d .price .amt small{ font-size:11px; font-weight:700; color:var(--gray-500); margin-left:3px; }
+.v-d .buy{ margin-left:auto; min-width:128px; padding:13px 18px; font-size:14px; }
+
+/* ── 모바일 폴드 실렌더(≤430 컬럼) ── */
+.mobile-cell{ grid-column:1 / -1; }
+.mobile-cell .stage{ background:rgba(255,255,255,.5); }
+.phone{
+  width:390px; max-width:100%; margin:0 auto;
+  border:10px solid #0f1420; border-radius:38px; overflow:hidden;
+  box-shadow:0 30px 70px rgba(17,26,44,.28); background:var(--surface);
+}
+.phone .sheet{ display:flex; flex-direction:column; }
+/* 모바일 = B변형을 하단시트로. 히어로 축소·속성 1열·판매자+가격 한 줄·CTA 풀폭 고정 */
+.phone .v-b .modal{ border:0; border-radius:0; box-shadow:none; }
+.phone .v-b .hero .card-art{ height:150px; }
+.phone .v-b .grid{ grid-template-columns:1fr 1fr; }
+.phone .v-b .m-foot{ position:sticky; bottom:0; }
+
+.legend{
+  grid-column:1 / -1; margin-top:8px; padding:18px 20px;
+  border:1px solid var(--line); border-radius:14px; background:var(--surface);
+  font-size:12.5px; color:var(--gray-600);
+}
+.legend h3{ margin:0 0 10px; font-size:13px; font-weight:800; color:var(--gray-900); }
+.legend ul{ margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px; }
+.legend b{ color:var(--navy); }
+</style>
+</head>
+<body>
+
+<div class="board-head">
+  <h1>카드정보 구매 모달 — 디자인 변형</h1>
+  <p>앱 라이트/클린 커머스 톤(흰 표면·헤어라인·네이비 포인트·오렌지 CTA)을 유지한 채,
+     <b>상단 레이아웃</b>과 <b>판매자 정보 처리</b>를 4가지로 분기했습니다. 구조 요소(헤더·카드 이미지·속성표·특수스킬·가격·구매 CTA)와 게임 카드 자산(배경 없이)은 전 변형 공통입니다.</p>
+  <div class="axes">
+    <span class="chip"><b>A</b> 좌우 2열 · 판매자 독립 행</span>
+    <span class="chip"><b>B</b> 상단 히어로 · 판매자 가격 옆</span>
+    <span class="chip"><b>C</b> 가로 히어로 · 판매자 명칭 근처 카드</span>
+    <span class="chip"><b>D</b> 컴팩트 그리드 · 판매자 칩</span>
+  </div>
+</div>
+
+<div class="board">
+
+  <!-- ══════════ A ══════════ -->
+  <div class="cell v-a" data-variant="A">
+    <div class="vlabel">
+      <div class="tag">A</div>
+      <div class="txt">
+        <h2>좌우 2열 · 정통형</h2>
+        <p>썸네일 좌 · 속성표 우. 현행 구조를 정돈. <span class="seller-note">판매자 = 속성표와 스킬 사이 독립 행(아바타+라벨).</span></p>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="modal">
+        <div class="m-title"><span class="ico"></span><h3>카드정보 <small>CARD INFO</small></h3><button class="m-x">✕</button></div>
+        <div class="m-body">
+          <div class="head">
+            <div class="card-art"><img class="card" alt="세이렌의 눈물" /></div>
+            <dl class="attrs">
+              <div class="row"><dt>타입</dt><dd>골드 · 목걸이</dd></div>
+              <div class="row"><dt>명칭</dt><dd>세이렌의 눈물</dd></div>
+              <div class="row"><dt>채널제한</dt><dd>40제한</dd></div>
+              <div class="row"><dt>속성</dt><dd class="v-el">물</dd></div>
+              <div class="row"><dt>남은 골드 포스</dt><dd class="gf-on">23일</dd></div>
+            </dl>
+          </div>
+          <div class="seller-strip">
+            <div class="avatar">별</div>
+            <div>
+              <div class="lbl">판매자</div>
+              <div class="name">별빛상인</div>
+            </div>
+            <span class="trust">● 거래 128회</span>
+          </div>
+          <div class="skillbox">
+            <h4>특수 스킬</h4>
+            <ul class="skills">
+              <li><span class="n">1</span><span>체력 흡수</span></li>
+              <li><span class="n">2</span><span>크리티컬 확률 증가 <span class="pct">(35%)</span></span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="m-foot">
+          <div class="price"><div class="k">판매가</div><div class="amt">12,400,000<small>골드</small></div></div>
+          <button class="buy">바로 구매</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ B ══════════ -->
+  <div class="cell v-b" data-variant="B">
+    <div class="vlabel">
+      <div class="tag">B</div>
+      <div class="txt">
+        <h2>상단 히어로 · 속성 2열 그리드</h2>
+        <p>카드를 상단 중앙 히어로로, 명칭을 크게. 속성은 아래 2열 카드. <span class="seller-note">판매자 = footer 좌측, 가격 옆에서 크게 읽힘.</span></p>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="modal">
+        <div class="m-title"><span class="ico"></span><h3>카드정보 <small>CARD INFO</small></h3><button class="m-x">✕</button></div>
+        <div class="hero">
+          <div class="card-art"><img class="card" alt="세이렌의 눈물" /></div>
+          <div class="name">세이렌의 눈물</div>
+          <div class="type">골드 · 목걸이 · 물 속성</div>
+        </div>
+        <div class="m-body">
+          <div class="grid">
+            <div class="cellkv"><span class="k">채널제한</span><span class="v">40제한</span></div>
+            <div class="cellkv"><span class="k">속성</span><span class="v v-el">물</span></div>
+            <div class="cellkv"><span class="k">남은 골드 포스</span><span class="v gf-on">23일</span></div>
+            <div class="cellkv"><span class="k">타입</span><span class="v">목걸이</span></div>
+          </div>
+          <div class="skillbox">
+            <h4>특수 스킬</h4>
+            <ul class="skills">
+              <li><span class="n">1</span><span>체력 흡수</span></li>
+              <li><span class="n">2</span><span>크리티컬 확률 증가 <span class="pct">(35%)</span></span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="m-foot">
+          <div class="seller">
+            <div class="avatar">별</div>
+            <div><div class="lbl">판매자</div><div class="name">별빛상인</div></div>
+          </div>
+          <div class="price"><div class="k">판매가</div><div class="amt">12,400,000<small>골드</small></div></div>
+          <button class="buy">바로 구매</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ C ══════════ -->
+  <div class="cell v-c" data-variant="C">
+    <div class="vlabel">
+      <div class="tag">C</div>
+      <div class="txt">
+        <h2>가로 히어로 · 핵심 강조 (과감)</h2>
+        <p>큰 카드 좌측 전체 높이, 우측은 명칭·가격 강조. <span class="seller-note">판매자 = 명칭/가격 바로 아래 신뢰 카드로 맥락화.</span></p>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="modal">
+        <div class="m-title"><span class="ico"></span><h3>카드정보 <small>CARD INFO</small></h3><button class="m-x">✕</button></div>
+        <div class="split">
+          <div class="left"><div class="card-art"><img class="card" alt="세이렌의 눈물" /></div></div>
+          <div class="right">
+            <div class="toprow">
+              <div>
+                <h3 class="name">세이렌의 눈물</h3>
+                <span class="type">◆ 골드 · 목걸이</span>
+              </div>
+              <div class="price"><div class="k">판매가</div><div class="amt">12,400,000<small>골드</small></div></div>
+            </div>
+            <div class="seller-card">
+              <div class="avatar">별</div>
+              <div><div class="lbl">판매자</div><div class="name">별빛상인</div></div>
+              <span class="trust">● 거래 128회</span>
+            </div>
+            <dl class="attrs">
+              <div class="row"><dt>채널제한</dt><dd>40제한</dd></div>
+              <div class="row"><dt>속성</dt><dd class="v-el">물</dd></div>
+              <div class="row"><dt>남은 포스</dt><dd class="gf-on">23일</dd></div>
+              <div class="row"><dt>타입</dt><dd>목걸이</dd></div>
+            </dl>
+            <div class="skillbox">
+              <h4>특수 스킬</h4>
+              <ul class="skills">
+                <li><span class="n">1</span><span>체력 흡수</span></li>
+                <li><span class="n">2</span><span>크리티컬 확률 증가 <span class="pct">(35%)</span></span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="m-foot"><button class="buy">바로 구매</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ D ══════════ -->
+  <div class="cell v-d" data-variant="D">
+    <div class="vlabel">
+      <div class="tag">D</div>
+      <div class="txt">
+        <h2>컴팩트 그리드 · 조밀</h2>
+        <p>작은 썸네일+명칭 헤더, 속성은 조밀한 2열 칩. 모바일 우선. <span class="seller-note">판매자 = 명칭 옆 메타 라인의 아바타 칩.</span></p>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="modal">
+        <div class="m-title"><span class="ico"></span><h3>카드정보 <small>CARD INFO</small></h3><button class="m-x">✕</button></div>
+        <div class="m-body">
+          <div class="headrow">
+            <div class="card-art"><img class="card" alt="세이렌의 눈물" /></div>
+            <div class="meta">
+              <h3 class="name">세이렌의 눈물</h3>
+              <div class="type">골드 · 목걸이 · 물 속성</div>
+              <span class="seller-chip">
+                <span class="avatar">별</span>
+                <span class="lbl">판매자</span>
+                <span class="name">별빛상인</span>
+              </span>
+            </div>
+          </div>
+          <div class="attrs">
+            <div class="cellkv"><span class="k">채널제한</span><span class="v">40제한</span></div>
+            <div class="cellkv"><span class="k">속성</span><span class="v v-el">물</span></div>
+            <div class="cellkv full"><span class="k">남은 골드 포스</span><span class="v gf-on">23일</span></div>
+          </div>
+          <div class="skillbox">
+            <h4>특수 스킬</h4>
+            <ul class="skills">
+              <li><span class="n">1</span><span>체력 흡수</span></li>
+              <li><span class="n">2</span><span>크리티컬 확률 증가 <span class="pct">(35%)</span></span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="m-foot">
+          <div class="price"><div class="k">판매가</div><div class="amt">12,400,000<small>골드</small></div></div>
+          <button class="buy">바로 구매</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 모바일 폴드 실렌더 (권장 B) ══════════ -->
+  <div class="cell mobile-cell" data-variant="MOBILE">
+    <div class="vlabel">
+      <div class="tag" style="background:var(--orange)">▾</div>
+      <div class="txt">
+        <h2>모바일 폴드 — 하단 시트 (예: 변형 B)</h2>
+        <p>≤640px에서 모달은 하단 시트로. 히어로 축소·속성 2열·판매자와 가격 한 줄·구매 CTA 하단 고정.</p>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="phone">
+        <div class="sheet v-b">
+          <div class="modal">
+            <div class="m-title"><span class="ico"></span><h3>카드정보 <small>CARD INFO</small></h3><button class="m-x">✕</button></div>
+            <div class="hero">
+              <div class="card-art"><img class="card" alt="세이렌의 눈물" /></div>
+              <div class="name">세이렌의 눈물</div>
+              <div class="type">골드 · 목걸이 · 물 속성</div>
+            </div>
+            <div class="m-body">
+              <div class="grid">
+                <div class="cellkv"><span class="k">채널제한</span><span class="v">40제한</span></div>
+                <div class="cellkv"><span class="k">속성</span><span class="v v-el">물</span></div>
+                <div class="cellkv"><span class="k">남은 포스</span><span class="v gf-on">23일</span></div>
+                <div class="cellkv"><span class="k">타입</span><span class="v">목걸이</span></div>
+              </div>
+              <div class="skillbox">
+                <h4>특수 스킬</h4>
+                <ul class="skills">
+                  <li><span class="n">1</span><span>체력 흡수</span></li>
+                  <li><span class="n">2</span><span>크리티컬 확률 증가 <span class="pct">(35%)</span></span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="m-foot">
+              <div class="seller">
+                <div class="avatar">별</div>
+                <div><div class="lbl">판매자</div><div class="name">별빛상인</div></div>
+              </div>
+              <div class="price"><div class="k">판매가</div><div class="amt">12,400,000<small>골드</small></div></div>
+              <button class="buy">바로 구매</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 범례 -->
+  <div class="legend">
+    <h3>판매자 정보 처리 요약 (사용자 지적 반영)</h3>
+    <ul>
+      <li><b>A · 독립 행</b>: 속성표와 특수스킬 사이에 아바타+"판매자" 라벨+거래 횟수 행. 뜬금없지 않게 별도 블록으로 격상.</li>
+      <li><b>B · 가격 옆</b>: footer 좌측에 아바타+"판매자"+닉네임을 가격과 나란히. "누구에게 사는가"가 거래 지점에서 바로 읽힘. (권장)</li>
+      <li><b>C · 명칭 근처 카드</b>: 명칭·가격 바로 아래 신뢰 카드(아바타+거래 횟수). 구매 결정 맥락에 밀착.</li>
+      <li><b>D · 메타 칩</b>: 명칭 옆 컴팩트 아바타 칩. 조밀한 레이아웃에 어울리되 읽히는 크기 확보.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  // 게임 카드 자산(프레임 PNG 포함) — 배경 없이 픽셀아트 그대로.
+  var CARD = "data:image/png;base64,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";
+  document.querySelectorAll('img.card').forEach(function(el){ el.src = CARD; });
+</script>
+</body>
+</html>
