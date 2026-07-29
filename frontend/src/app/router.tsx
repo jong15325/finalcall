@@ -22,6 +22,7 @@ import CommunityPage from '@/pages/CommunityPage'
 import WalletChargePage from '@/pages/WalletChargePage'
 import LoginPage from '@/pages/LoginPage'
 import SignupPage from '@/pages/SignupPage'
+import OAuthCallbackPage from '@/pages/OAuthCallbackPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 /**
@@ -41,6 +42,11 @@ function AppRoutes() {
                 <Route element={<AuthLayout />}>
                     <Route path={paths.login} element={<LoginPage />} />
                     <Route path={paths.signup} element={<SignupPage />} />
+                    {/* 소셜 로그인 복귀지 — 성공 시 PublicRoute 가 홈으로 되돌린다(FC-156) */}
+                    <Route
+                        path={paths.oauthCallback}
+                        element={<OAuthCallbackPage />}
+                    />
                 </Route>
             </Route>
 

@@ -1,4 +1,6 @@
 import { apiClient } from './client'
+import { oauthRedirectUri } from '@/features/auth/lib/oauth'
+import type { OAuthProvider } from '@/features/auth/lib/oauth'
 import type { SessionTokens, UserSummary } from '@/store/authStore'
 
 /**
@@ -64,6 +66,27 @@ export function signup(body: SignupRequest): Promise<SignupResponse> {
  */
 export function login(body: LoginRequest): Promise<SessionTokens> {
     return apiClient.post<SessionTokens>('/auth/login', body, { auth: false })
+}
+
+/**
+ * 소셜 로그인·가입(통합) — `POST /auth/oauth/{provider}` (계약 §2 소셜 로그인 방식 B).
+ *
+ * ★ 응답은 **기존 `LoginResponse` 형상 그대로**(`{ accessToken, refreshToken, accessExpiresAt }`)라
+ *   비밀번호 로그인과 토큰 저장 경로를 공유한다(가입·로그인 모두 200 — find-or-create, SEC-007).
+ * ★ `redirectUri` 는 FC-155 인가 요청이 쓴 값과 **동일**해야 한다(provider 토큰 교환의 일치 요건)
+ *   → `oauthRedirectUri()` 단일 출처를 재사용한다(`VITE_OAUTH_REDIRECT_URI`).
+ * ★ `state`(CSRF)는 요청 바디에 두지 않는다 — 프론트 소유이며 콜백에서 대조한다(계약 §2 확정).
+ *   실패: `AUTH_006`(미지원 provider·400)·`AUTH_007`(코드 교환 실패·401)·`AUTH_008`(provider 통신·502).
+ */
+export function oauthLogin(
+    provider: OAuthProvider,
+    code: string,
+): Promise<SessionTokens> {
+    return apiClient.post<SessionTokens>(
+        `/auth/oauth/${provider}`,
+        { code, redirectUri: oauthRedirectUri() },
+        { auth: false },
+    )
 }
 
 /**

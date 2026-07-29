@@ -38,6 +38,7 @@ export const paths = {
     /* 인증 */
     login: '/login',
     signup: '/signup',
+    oauthCallback: '/oauth/callback', // 소셜 로그인 provider 복귀지 (FC-156)
 } as const
 
 /** 경매 상세 경로 조립 */

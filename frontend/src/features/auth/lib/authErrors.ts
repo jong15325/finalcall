@@ -44,6 +44,25 @@ export function signupErrorMessage(error: unknown): string {
 }
 
 /**
+ * 소셜 로그인 콜백 실패 문구 (FC-156 · 계약 §2 소셜 로그인).
+ * 서버 원문은 노출하지 않고 `code` 로 분기한다 — `AUTH_007`(코드 교환 실패)·`AUTH_008`(provider
+ * 통신 실패)은 재시도 안내가 다르다. state 불일치·code 누락 등 **콜백 자체가 무효**한 경우는
+ * 백엔드를 호출하지 않으므로 이 함수가 아니라 콜백 페이지가 직접 안내한다.
+ */
+export function oauthErrorMessage(error: unknown): string {
+    if (hasErrorCode(error, ERROR_CODES.AUTH_008)) {
+        return '소셜 로그인 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    }
+    if (hasErrorCode(error, ERROR_CODES.AUTH_007)) {
+        return '소셜 로그인에 실패했습니다. 다시 시도해 주세요.'
+    }
+    if (hasErrorCode(error, ERROR_CODES.AUTH_006)) {
+        return '지원하지 않는 소셜 로그인입니다.'
+    }
+    return '소셜 로그인을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+}
+
+/**
  * 가입 이메일 **필드** 전용 서버 에러 문구 — `EMAIL_007`(409, 이미 사용 중)만 email 필드에
  * 되살린다(FC-136 · 계약 §5). 그 외는 `null` → 공통 문구(`signupErrorMessage`)가 담당한다.
  * ★ 아이디·닉네임 중복(`AUTH_001`/`002`)과 달리 이메일 중복은 **고쳐야 할 입력이 email** 이라

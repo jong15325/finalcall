@@ -5,10 +5,13 @@ import {
     getMe,
     login as apiLogin,
     logout as apiLogout,
+    oauthLogin as apiOauthLogin,
     signup as apiSignup,
 } from '@/lib/api/auth'
 import type { AuthContextValue } from './AuthContext'
 import type { LoginRequest, SignupRequest } from '@/lib/api/auth'
+import type { OAuthProvider } from '@/features/auth/lib/oauth'
+import type { SessionTokens } from '@/store/authStore'
 import type { ReactNode } from 'react'
 
 /**
@@ -31,15 +34,13 @@ function AuthProvider({ children }: AuthProviderProps) {
     const setUser = useAuthStore((state) => state.setUser)
     const clearSession = useAuthStore((state) => state.clearSession)
 
-    const signIn = useCallback(
-        async (credential: LoginRequest) => {
-            const tokens = await apiLogin(credential)
-
-            /*
-             * ★ 토큰을 먼저 심고 `GET /me` 를 부른다 — 계약 §2 로그인 응답에는 **사용자 정보가
-             *   없다**(토큰 3종뿐). 프로필은 §2.5 의 별도 호출로만 얻는다.
-             *   `apiClient` 가 스토어에서 토큰을 읽으므로 순서가 이렇게 강제된다.
-             */
+    /*
+     * ★ 토큰을 먼저 심고 `GET /me` 를 부른다 — 계약 §2 로그인 응답에는 **사용자 정보가 없다**
+     *   (토큰 3종뿐). 프로필은 §2.5 의 별도 호출로만 얻는다. `apiClient` 가 스토어에서 토큰을
+     *   읽으므로 순서가 이렇게 강제된다. 비밀번호 로그인·소셜 로그인이 **같은 저장 경로**를 공유한다.
+     */
+    const establishSession = useCallback(
+        async (tokens: SessionTokens) => {
             updateTokens(tokens)
 
             try {
@@ -56,6 +57,21 @@ function AuthProvider({ children }: AuthProviderProps) {
             }
         },
         [updateTokens, setUser, clearSession],
+    )
+
+    const signIn = useCallback(
+        async (credential: LoginRequest) => {
+            await establishSession(await apiLogin(credential))
+        },
+        [establishSession],
+    )
+
+    const oauthSignIn = useCallback(
+        async (provider: OAuthProvider, code: string) => {
+            // 소셜 응답도 LoginResponse 형상 그대로라 동일 경로로 세션을 확립한다(계약 §2).
+            await establishSession(await apiOauthLogin(provider, code))
+        },
+        [establishSession],
     )
 
     const signUp = useCallback(async (credential: SignupRequest) => {
@@ -79,10 +95,11 @@ function AuthProvider({ children }: AuthProviderProps) {
             authenticated: accessToken !== null,
             user,
             signIn,
+            oauthSignIn,
             signUp,
             signOut,
         }),
-        [accessToken, user, signIn, signUp, signOut],
+        [accessToken, user, signIn, oauthSignIn, signUp, signOut],
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

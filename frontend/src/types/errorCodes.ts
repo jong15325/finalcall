@@ -20,6 +20,9 @@ export const ERROR_CODES = {
     AUTH_003: 'AUTH_003', // 로그인 자격 불일치 (401)
     AUTH_004: 'AUTH_004', // refresh 만료·무효·재사용 (401)
     AUTH_005: 'AUTH_005', // 권한 없음(관리자 등) (403)
+    AUTH_006: 'AUTH_006', // 미지원 소셜 provider (400)
+    AUTH_007: 'AUTH_007', // 소셜 인가 코드 교환 실패(무효·만료·재사용) (401)
+    AUTH_008: 'AUTH_008', // 소셜 provider 통신 실패(토큰·userinfo·타임아웃) (502)
     MEMBER_001: 'MEMBER_001', // 닉네임 중복(프로필 수정, §2.5) (409)
     MEMBER_002: 'MEMBER_002', // 진행 중 거래 보유로 탈퇴 불가(§2.5) (409)
 
