@@ -23,6 +23,7 @@ Java 21 + Spring Boot 3.5 모놀리식 서비스 + SCG 엣지 게이트웨이(�
 | [member.md](member.md) | 완료·push됨 | 회원 도메인(EPIC-MEMBER) — 프로필/수정/탈퇴. refresh 회전·세션 일괄 폐기(SEC-006), soft delete 재가입 UK(D-081), 열거 방지(COMMON_005/SEC-007), 탈퇴 잔액 소멸 동의(D-080). |
 | [fe-member.md](fe-member.md) | 완료·게이트3 Done | 프론트 내 계정(EPIC-FE-MEMBER) — auth·마이페이지·잔액 표시. contract-first 단일 1패스(팬아웃 교차 분석), `GET /me` 하이드레이션(계약 변경 없이 정합), 디자인 U-020 남색→U-021 라이트 커머스 실코드 교체, COMMON_005 열거방지·메모리 세션·탈퇴 동의(D-080), Jira 미러 누락→규율 전환. |
 | [shop.md](shop.md) | 완료·게이트3 Done | 고정가 마켓(EPIC-SHOP) — "입찰 없는 즉시 SOLD". 정산 꼬리(SettlementRecorder·sale_order source_type=SHOP·수익원장·인벤토리 CAS) **코드 변경 0 재사용**(3번째 소비처), shop 애그리거트 머리만 신규. 동시성 3중 방어(행 FOR UPDATE+status CAS+sale_order UK)·구매/만료 시간축 배타·잔액 user_id 오름차순(A4)·만료 워커 TEMP 직행. contract-first 게이트2 기한 모델 정정→재작업 0, 목업 fidelity+상세 경매디자인 재사용, FC-096 취소 UI 후속 분리. |
+| [market-quickbuy.md](market-quickbuy.md) | 완료·게이트3 Done | 마켓 즉시구매(EPIC-MARKET-QUICKBUY) — 목록에서 게임 "카드정보" UI 차용 모달로 인라인 구매. **구매 API 계약 변경 0**(POST /shops/{id}/purchase 재사용). 규율 2건: **N+1 회피**(판매자 거래횟수를 페이지당 배치 IN 집계 1쿼리로 계약·슬라이스 테스트 Statistics=1 강제)와 **데이터 위조 금지**(연출값을 실데이터/표시파생/제거로 3분 — 거래횟수 실집계 sellerCompletedSales, 채널제한 표시파생 격리, 랭크뱃지 제거). 형상 보존(필드 1개 추가). 디자인 게이트 반복→게이트2 계약 승격→병렬 팬아웃. |
 
 ## 향후 도메인 (자리표시 — 미착수/진행 중)
 
@@ -34,4 +35,4 @@ Java 21 + Spring Boot 3.5 모놀리식 서비스 + SCG 엣지 게이트웨이(�
 - **정산(settlement)** — 구현됨: SettlementRecorder·sale_order·수익원장(경매·즉시구매·고정가 3소비처 공통). 전용 도시에 미작성.
 - **아이템/카테고리(item/category)** — 부분 구현(ItemInstance 에스크로·인벤토리 CAS). 전용 도시에 미작성.
 
-_최종 갱신: 2026-07-22 (portfolio-writer, shop.md 신설 — EPIC-SHOP 고정가 마켓·정산 꼬리 3번째 재사용·동시성 3중 방어)_
+_최종 갱신: 2026-07-29 (portfolio-writer, market-quickbuy.md 신설 — EPIC-MARKET-QUICKBUY 카드정보 모달 인라인 구매·N+1 회피 배치 집계·데이터 위조 금지 3분)_
