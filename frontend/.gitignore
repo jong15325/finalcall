@@ -39,3 +39,9 @@ pnpm-debug.log*
 
 # vite build output (Ecme 템플릿 관례 — vite.config.ts build.outDir)
 build
+
+# vite/vitest config 컴파일 산출물 (tsc 부산물 — 소스는 .ts)
+vite.config.js
+vite.config.d.ts
+vitest.config.js
+vitest.config.d.ts
