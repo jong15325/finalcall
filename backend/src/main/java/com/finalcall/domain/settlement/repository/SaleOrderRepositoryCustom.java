@@ -1,6 +1,8 @@
 package com.finalcall.domain.settlement.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.finalcall.domain.settlement.entity.OrderRole;
@@ -36,4 +38,29 @@ public interface SaleOrderRepositoryCustom {
      * 요청자 PK 로 수행한다({@link com.finalcall.domain.settlement.service.OrderService}).
      */
     Optional<SaleOrder> findDetailByPublicId(String publicId);
+
+    /**
+     * 판매자별 완료(정산 성립) 판매 건수 배치 집계(shop-spec §11, FC-149) —
+     * {@code SELECT seller_id, COUNT(*) FROM sale_order WHERE seller_id IN (:sellerIds) GROUP BY seller_id}.
+     *
+     * <p><b>목록 응답 조립의 N+1 을 페이지당 1쿼리로 제거한다</b> — 리스팅마다 카운트 쿼리를 쏘는 행별 집계는
+     * 금지다(§11.3). 페이지에 등장한 판매자 집합을 한 번에 세고 호출측이 shop→count 로 매핑한다. {@code sale_order}
+     * 는 SOLD 정산 성립분만 존재하므로(취소·유찰·만료는 행 없음, {@code status}=SETTLED 단일값) 별도 상태 필터
+     * 없이 seller_id 만으로 완료 건수가 된다. {@code source_type} 필터도 걸지 않아 경매(AUCTION)·마켓(SHOP) 두 채널이
+     * 합산되며(§11.1), {@code (seller_id)} 인덱스를 그대로 커버한다.
+     *
+     * @param sellerIds 페이지에 등장한 판매자 PK 집합(빈 입력이면 쿼리 없이 빈 맵)
+     * @return seller_id → 완료 판매 건수 맵. <b>미등장 판매자는 키가 없으므로 호출측이 0 으로 매핑한다</b>
+     */
+    Map<Long, Long> countCompletedSalesBySellerIds(Collection<Long> sellerIds);
+
+    /**
+     * 판매자 완료 판매 건수 단건 집계(shop-spec §11, FC-149) — 상세·단건 응답용
+     * {@code SELECT COUNT(*) FROM sale_order WHERE seller_id = :sellerId}. 채널 무필터 합산·{@code (seller_id)}
+     * 인덱스 커버는 배치와 동일하다({@link #countCompletedSalesBySellerIds}).
+     *
+     * @param sellerId 대상 판매자 PK
+     * @return 완료 판매 건수(이력 없으면 0)
+     */
+    long countCompletedSalesBySellerId(Long sellerId);
 }

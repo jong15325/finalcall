@@ -93,10 +93,10 @@ public class ShopController {
         return sort != null && !sort.isBlank() && "relevance".equalsIgnoreCase(sort.split(",")[0].trim());
     }
 
-    /** 고정가 상세 — 인증 불요. 없음 404(SHOP_003). */
+    /** 고정가 상세 — 인증 불요. 없음 404(SHOP_003). 서비스가 판매자 완료 판매 건수까지 채운 DTO 를 반환한다(§11). */
     @GetMapping("/{shopPublicId}")
     public ApiResponse<ShopDetailResponse> detail(@PathVariable String shopPublicId) {
-        return ApiResponse.success(ShopDetailResponse.from(shopService.getDetail(shopPublicId)));
+        return ApiResponse.success(shopService.getDetail(shopPublicId));
     }
 
     /** 고정가 구매 — 인증 필요(구매자=주체). 요청 본문 없음. 성공 201 {@code { orderPublicId, finalPrice }}. */

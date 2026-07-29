@@ -26,6 +26,8 @@ import com.finalcall.domain.item.repository.ItemInstanceRepository;
 import com.finalcall.domain.item.repository.ItemTemplateRepository;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
+import com.finalcall.domain.settlement.entity.SaleOrder;
+import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopStatus;
 import com.finalcall.support.IntegrationTest;
@@ -152,6 +154,54 @@ class ShopApiIntegrationTest extends IntegrationTest {
             .andExpect(jsonPath("$.code").value("SHOP_003"));
     }
 
+    // ---------------- 판매자 완료 판매 건수(sellerCompletedSales, FC-149) ----------------
+
+    @Test
+    void 목록과_상세는_판매자_완료판매_건수를_두채널_합산해_노출한다() throws Exception {
+        User seller = persistUser("sa_scs_s", "판매", 0L);
+        User buyer = persistUser("sa_scs_b", "구매", 0L);
+        // 경매 낙찰 1건 + 마켓 판매 1건 = 완료 2건(source_type 무관 합산). 취소·유찰·만료는 애초에 행 없음.
+        persistSaleOrder(seller, buyer, SaleOrderSourceType.AUCTION, 5001L, 9461);
+        persistSaleOrder(seller, buyer, SaleOrderSourceType.SHOP, 5002L, 9462);
+        Shop shop = persistShop(seller, 9463, 1_000_000L, ShopStatus.ACTIVE);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/shops").param("mainCategory", "9"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].sellerCompletedSales").value(2));
+
+        mockMvc.perform(get("/api/v1/shops/{id}", shop.getPublicId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.sellerCompletedSales").value(2));
+    }
+
+    @Test
+    void 내판매_응답도_판매자_완료판매_건수를_노출한다() throws Exception {
+        User seller = persistUser("sa_scms_s", "판매", 0L);
+        User buyer = persistUser("sa_scms_b", "구매", 0L);
+        persistSaleOrder(seller, buyer, SaleOrderSourceType.SHOP, 5003L, 9464);
+        persistShop(seller, 9465, 1_000_000L, ShopStatus.ACTIVE);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/me/shops").param("status", "ALL")
+            .with(user(String.valueOf(seller.getId()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].sellerCompletedSales").value(1));
+    }
+
+    @Test
+    void 판매이력_없는_판매자는_완료판매_0을_노출한다() throws Exception {
+        User seller = persistUser("sa_sc0_s", "판매", 0L);
+        // 취소된 리스팅이 있어도 sale_order 가 없어 완료 건수는 0(취소·만료 자동 제외).
+        persistShop(seller, 9466, 1_000_000L, ShopStatus.CANCELLED);
+        Shop active = persistShop(seller, 9467, 1_000_000L, ShopStatus.ACTIVE);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/shops/{id}", active.getPublicId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.sellerCompletedSales").value(0));
+    }
+
     // ---------------- 구매 ----------------
 
     @Test
@@ -265,6 +315,20 @@ class ShopApiIntegrationTest extends IntegrationTest {
             .build();
         em.persist(shop);
         return shop;
+    }
+
+    /** 완료(정산 성립) 판매 1건을 나타내는 sale_order 를 직접 심는다(집계 대상 — 완료 건수는 행 존재 자체가 정의). */
+    private void persistSaleOrder(User seller, User buyer, SaleOrderSourceType sourceType, long sourceId,
+        int typeCode) {
+        // LISTED(slot NULL) 아이템 — INVENTORY slot_key UK 충돌 회피(집계는 아이템 위치 무관).
+        ItemInstance item = persistListedItem(seller, typeCode);
+        SaleOrder order = SaleOrder.builder()
+            .sourceType(sourceType).sourceId(sourceId)
+            .buyer(buyer).seller(seller).itemInstance(item)
+            .finalPrice(1_000_000L).feeAmount(50_000L).settleAmount(950_000L)
+            .feePolicyVersion("v1").settledAt(Instant.now())
+            .build();
+        em.persist(order);
     }
 
     private ItemInstance persistInventoryItem(User owner, int slotNo, int typeCode) {

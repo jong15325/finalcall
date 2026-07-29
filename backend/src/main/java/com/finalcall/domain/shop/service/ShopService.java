@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,10 +27,12 @@ import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingSearchService;
+import com.finalcall.domain.settlement.repository.SaleOrderRepository;
 import com.finalcall.domain.settlement.service.FeeCalculator;
 import com.finalcall.domain.shop.config.ShopListingProperties;
 import com.finalcall.domain.shop.dto.MyShopListing;
 import com.finalcall.domain.shop.dto.MyShopSummaryResponse;
+import com.finalcall.domain.shop.dto.ShopDetailResponse;
 import com.finalcall.domain.shop.dto.ShopRegisterRequest;
 import com.finalcall.domain.shop.dto.ShopRegisterResponse;
 import com.finalcall.domain.shop.dto.ShopSummaryResponse;
@@ -67,6 +70,8 @@ public class ShopService {
     private final InventoryService inventoryService;
     private final ShopListingProperties listingProperties;
     private final FeeCalculator feeCalculator;
+    /** 판매자 완료 판매 건수(shop-spec §11) 집계 원천 — sale_order seller_id 배치/단건 카운트. */
+    private final SaleOrderRepository saleOrderRepository;
     /** 자유문 검색(EPIC-SEARCH) — {@code q} 매칭·랭킹·커서는 ES 가, 표시 데이터 하이드레이션은 MySQL(정본)이 담당. */
     private final ListingSearchService listingSearchService;
 
@@ -127,9 +132,11 @@ public class ShopService {
         ShopSearchCondition condition, String cursor, int size) {
         ShopCursor decoded = ShopCursor.decode(cursor);
         List<Shop> fetched = shopRepository.findByCursor(condition, decoded, size);
+        // 판매자 완료 판매 건수는 페이지당 배치 IN 집계 1쿼리로 채운다(§11.3, N+1 회피 — 행별 카운트 금지).
+        Map<Long, Long> completedSales = completedSalesBySeller(fetched);
         // 커서는 매핑 전 원본(Shop)의 마지막 항목에서 정렬 필드 값 + id 로 추출한다.
         return CursorResponse.from(fetched, size,
-            ShopSummaryResponse::from,
+            shop -> ShopSummaryResponse.from(shop, sellerSales(completedSales, shop)),
             shop -> encodeCursor(shop, condition.sort()));
     }
 
@@ -152,10 +159,14 @@ public class ShopService {
 
         Map<String, Shop> byPublicId = shopRepository.findByPublicIds(hits.publicIds()).stream()
             .collect(Collectors.toMap(Shop::getPublicId, Function.identity(), (a, b) -> a));
-        List<ShopSummaryResponse> ordered = hits.publicIds().stream()
+        List<Shop> orderedShops = hits.publicIds().stream()
             .map(byPublicId::get)
             .filter(Objects::nonNull)
-            .map(ShopSummaryResponse::from)
+            .toList();
+        // 배치 IN 집계 1쿼리(§11.3) — ES 하이드레이션 목록에도 동일하게 N+1 없이 완료 판매 건수를 채운다.
+        Map<Long, Long> completedSales = completedSalesBySeller(orderedShops);
+        List<ShopSummaryResponse> ordered = orderedShops.stream()
+            .map(shop -> ShopSummaryResponse.from(shop, sellerSales(completedSales, shop)))
             .toList();
         // 커서·hasNext 는 ES 가 판정한 값을 그대로 보존한다(over-fetch 슬라이싱 아님).
         return CursorResponse.of(ordered, hits.nextCursor(), hits.hasNext());
@@ -189,10 +200,26 @@ public class ShopService {
         Long sellerId = currentUserId();
         ShopCursor decoded = ShopCursor.decode(cursor);
         List<Shop> fetched = shopRepository.findBySellerCursor(sellerId, status, sort, ascending, decoded, size);
+        // 페이지 전체가 동일 판매자(본인)라 완료 판매 건수는 단건 카운트 1회로 채운다(§11.3, 리스팅별 재조회 없음).
+        long completedSales = saleOrderRepository.countCompletedSalesBySellerId(sellerId);
         // 예상 정산 파생은 매핑 클로저(toListing)에서 끝내고 봉투엔 파생완료 요약만 담는다(계약영향 노트 준수).
         return CursorResponse.from(fetched, size,
-            shop -> MyShopSummaryResponse.from(toListing(shop)),
+            shop -> MyShopSummaryResponse.from(toListing(shop), completedSales),
             shop -> encodeCursor(shop, sort));
+    }
+
+    /**
+     * 페이지에 등장한 판매자 집합의 완료 판매 건수를 배치 IN 집계 1쿼리로 모은다(§11.3, N+1 회피). 반환 맵은
+     * 등장 판매자만 담으므로({@link #sellerSales} 가 미등장=0 으로 매핑) 목록 조립이 리스팅마다 카운트를 쏘지 않는다.
+     */
+    private Map<Long, Long> completedSalesBySeller(List<Shop> shops) {
+        Set<Long> sellerIds = shops.stream().map(shop -> shop.getSeller().getId()).collect(Collectors.toSet());
+        return saleOrderRepository.countCompletedSalesBySellerIds(sellerIds);
+    }
+
+    /** 배치 집계 맵에서 리스팅 판매자의 완료 판매 건수를 뽑는다 — 미등장(판매 이력 없음) 판매자는 0. */
+    private long sellerSales(Map<Long, Long> completedSales, Shop shop) {
+        return completedSales.getOrDefault(shop.getSeller().getId(), 0L);
     }
 
     /** 리스팅에 예상 정산을 결합한다. {@code estimatedFee = FeeCalculator.compute(price)}, settle = price − fee. */
@@ -201,11 +228,16 @@ public class ShopService {
         return new MyShopListing(shop, estimatedFee, shop.getPrice() - estimatedFee);
     }
 
-    /** 고정가 상세(계약 §3.2 GET /shops/{id}). itemInstance·template·skill·seller 를 fetch join 한다. 없으면 SHOP_003. */
+    /**
+     * 고정가 상세(계약 §3.2 GET /shops/{id}). itemInstance·template·skill·seller 를 fetch join 한다. 없으면 SHOP_003.
+     * 상세는 단건이라 판매자 완료 판매 건수를 단건 카운트 1쿼리로 채운다(§11.3 — 상세/단건은 단건 카운트 허용).
+     */
     @ServiceLog
-    public Shop getDetail(String publicId) {
-        return shopRepository.findDetailByPublicId(publicId)
+    public ShopDetailResponse getDetail(String publicId) {
+        Shop shop = shopRepository.findDetailByPublicId(publicId)
             .orElseThrow(() -> new BusinessException(ShopErrorCode.SHOP_NOT_FOUND));
+        long completedSales = saleOrderRepository.countCompletedSalesBySellerId(shop.getSeller().getId());
+        return ShopDetailResponse.from(shop, completedSales);
     }
 
     /**

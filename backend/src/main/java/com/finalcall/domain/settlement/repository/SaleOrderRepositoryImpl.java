@@ -1,7 +1,10 @@
 package com.finalcall.domain.settlement.repository;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.finalcall.domain.item.entity.QItemInstance;
@@ -13,7 +16,9 @@ import com.finalcall.domain.settlement.entity.QSaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrder;
 import com.finalcall.domain.settlement.entity.SaleOrderCursor;
 import com.finalcall.domain.settlement.entity.SaleOrderSourceType;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -70,6 +75,34 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepositoryCustom {
             .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
             .where(ORDER.publicId.eq(publicId))
             .fetchOne());
+    }
+
+    @Override
+    public Map<Long, Long> countCompletedSalesBySellerIds(Collection<Long> sellerIds) {
+        if (sellerIds.isEmpty()) {
+            return Map.of(); // 빈 입력이면 IN () 렌더를 피해 쿼리 자체를 생략한다.
+        }
+        // seller_id, COUNT(*) GROUP BY seller_id — 페이지당 1쿼리. seller.id 는 FK 컬럼이라 user 조인 없이
+        //   (seller_id) 인덱스만 커버한다(partyScope 의 seller.id 필터와 동일 규약).
+        NumberExpression<Long> rowCount = ORDER.id.count();
+        Map<Long, Long> counts = new HashMap<>();
+        for (Tuple row : queryFactory.select(ORDER.seller.id, rowCount)
+            .from(ORDER)
+            .where(ORDER.seller.id.in(sellerIds))
+            .groupBy(ORDER.seller.id)
+            .fetch()) {
+            counts.put(row.get(ORDER.seller.id), row.get(rowCount));
+        }
+        return counts;
+    }
+
+    @Override
+    public long countCompletedSalesBySellerId(Long sellerId) {
+        Long count = queryFactory.select(ORDER.id.count())
+            .from(ORDER)
+            .where(ORDER.seller.id.eq(sellerId))
+            .fetchOne();
+        return count == null ? 0L : count;
     }
 
     /**
