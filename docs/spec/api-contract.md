@@ -22,6 +22,7 @@
 
 | v1.8 | 2026-07-18 | 6절 계약 변경 — EPIC-BID 게이트2(FC-030) 결정 반영: (F2) §3.3에 **`BidSummary` 응답 스키마 등재**(`GET /auctions/{id}/bids`가 "offset 페이지(입찰 이력)"로만 적혀 프론트·QA 단일 진실이 없었다). (F3) §3.3 `AuctionDetail`에 **`minNextBidAmount`** 파생 필드 추가(최소 증분 정책의 클라이언트 복제·드리프트 방지). (F4) §5에 **`BID_007`**(경매 미개시, 409) 신설 + §3.1 입찰 에러 목록 반영(종전 코드 집합으로는 SCHEDULED·미도래 경매 입찰을 표현 불가 — `BID_006`은 "마감/종료됨"). (F5) §3.1 입찰에 **첫 입찰 하한 = `startPrice`** 문언 추가(증분식이 "현재 최고가 + 증분"이라 최고가 부재 시 하한이 미규정이었다). 사유: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
+| v1.16 | 2026-07-29 | 6절 계약 변경 — 게이트2(EPIC-OAUTH, FC-152) 승인 반영. 네이버·카카오 소셜 로그인(방식 B — 프론트 주도 + 백엔드 교환). **§2 소셜 로그인 subsection 신설** — `POST /api/v1/auth/oauth/{provider}`(provider ∈ naver\|kakao) 단일 엔드포인트 find-or-create, 요청 `{ code, redirectUri }`(state는 프론트 소유 CSRF·백엔드 미검증이라 요청 바디 제외), 응답 = 기존 `LoginResponse` 형상 그대로(**가입·로그인 모두 200**, 신규/기존 비노출 SEC-007). **§5 `AUTH_006`~`AUTH_008` 등재**(미지원 provider 400·인가코드 교환 실패 401·provider 통신 실패 502). 결정 3건(①로그인·가입 통합 ②이메일 비연결=provider+id가 신원키·소셜 이메일 미저장 ③닉네임 유니크 접미사) 반영. 스키마 = erd v1.5(`user_social_account` 신설·`user.password_hash`·`login_id` nullable화, V19). AUTH_005~008 enum 등록 = 구현 티켓(FC-154). |
 | v1.15 | 2026-07-25 | 6절 계약 변경 — 게이트2(EPIC-EMAIL-VERIFY, 8항목) 승인 반영(2026-07-24): **회원가입 이메일 인증 도입.** **§2 signup 요청에 `email` 선택 필드 추가**(`{ loginId, password, nickname, email? }`, `@Email`·≤255, 미제공 시 이메일 없는 계정 생성 — 응답 201 무변경). **§2 이메일 엔드포인트 3종 신설**(모두 인증 필요·주체=SecurityContext·`/me` 접두): `PUT /api/v1/me/email`(이메일 설정/변경, verified 재초기화·pending 코드 폐기)·`POST /api/v1/me/email/verification-request`(6자리 코드 발송, 202)·`POST /api/v1/me/email/verify`(코드 확인, 200). **§2.5 GET·PATCH `/me` 응답에 `emailVerified`(bool)·`emailMasked`(string, nullable) 추가**(3상태 미설정/미인증/인증완료 구분, 이메일 원문 미노출). **§5 `EMAIL_001`~`EMAIL_007` 등재**(코드 불일치·만료·시도초과·쿨다운·이미인증·미설정·이미사용중). 이메일 유니크 = 활성 회원 기준(`email_active` 생성컬럼 UK, NULL 제외 — Flyway V17). 코드 저장 = Redis TTL+SHA-256(정책 만료10분·쿨다운60초·시도5회·6자리). 발송 = 네이버 SMTP 465 SSL(로컬 스킵+로그·운영 fail-fast). 정본 `email-verify-spec.md` v0.1. 구현 = EPIC-EMAIL-VERIFY 하위(backend/frontend). |
 | v1.14 | 2026-07-24 | 6절 계약 변경 — 게이트2(FC-110 DoD#3) 승인 반영(2026-07-24): **§4.5 관리자 검색 재색인 엔드포인트 2건 신설** — `POST /api/v1/admin/search/reindex`(비동기 202+jobId, `mode` IN_PLACE\|REBUILD)·`GET /api/v1/admin/search/reindex/{jobId}`(job 상태). 운영 초기색인 수단 부재(부팅 트리거 없음) 해소 + 무중단 blue-green alias 스위치. 인가 = 기존 `ROLE_ADMIN`(신규 모델 없음, `/api/v1/admin/**` 보호 배선). **§5 SEARCH 코드 등재** — `SEARCH_001`(엔진 일시불가 503, 기존 enum 정본화)·`SEARCH_002`(재색인 진행 중 409)·`SEARCH_003`(재색인 job 없음 404). 정본 `search-spec.md` v0.4 §12.5. 구현 = FC-110 하위 backend-impl. **q·relevance(C1~C3)는 무관·PROPOSAL 유지** |
 | v1.13 | 2026-07-22 | 6절 계약 변경 — 게이트2(EPIC-PURCHASE, FC-088) 승인 반영: **§3.1 즉시구매 동작 정밀화**(금전=구매자 잔액 직접 차감·홀드 미경유, 진행 최고입찰 홀드 RELEASED+bid OUTBID, 최고입찰자 본인구매 허용, live 종료성 CAS `end_at>now`·result_type=BUYNOW, 요청 본문 없음). **§4.3 SaleOrderResponse 스키마 신설**(BidSummary v1.8 선례) — OrderSummary/OrderDetail 필드 확정 + **역할별 노출 정밀화**(`feeAmount`·`settleAmount` = 판매자 전용, 구매자엔 필드 부재·`finalPrice`만) + IDOR 스코프(`/me/orders`=buyer OR seller, `/orders/{id}`=당사자만) + `myRole`·`counterpartyMasked`(§3.3 마스킹 규약). **§5 AUCTION_006 라벨 확대**("이미 종료" → "처리 불가 상태(종료/즉시구매 시 미개시 포함)", 신규 코드 미추가 — enum↔계약 1:1 유지). **엔드포인트·필드 집합·에러코드 무변경**(즉시구매·orders 엔드포인트 기등재, 신규 필드는 응답 스키마 명세뿐·서버 기존 sale_order 재사용). 스키마 무변경. 사유: 즉시구매+거래내역 확정. 구현 = FC-089(backend)·FC-090(frontend). 정본 `purchase-spec.md` v1.0 |
@@ -129,6 +130,29 @@
 ### POST /api/v1/auth/logout — 로그아웃
 - 인증: 필요
 - 동작: refreshToken 무효화(서버 저장분 폐기 필수, SEC-006). 응답 204
+
+### 소셜 로그인 (OAuth) — 방식 B(프론트 주도 + 백엔드 교환) (EPIC-OAUTH, v1.16)
+
+스키마 정본 = erd §4.1 `user_social_account`·`user` nullable 델타. 게이트2 승인(2026-07-29).
+
+네이버·카카오 소셜 로그인. 프론트가 provider 인가 페이지로 리다이렉트해 `code`를 받고, 백엔드가 그 `code`로 토큰 교환·프로필 조회·find-or-create 후 **기존 `/login`과 동일한 JWT를 발급**한다(스테이틀리스 JWT·게이트웨이·`RefreshTokenStore.issue(userId)`를 그대로 재사용 — provider 무관 userId 기반). provider 리다이렉트 복귀지는 백엔드가 아니라 **프론트 `/oauth/callback`**이다. 콜백 API는 `/login`처럼 permitAll이며 엣지 게이트웨이(X-Gateway-Token, D-068)를 경유한다.
+
+신원 모델(결정, 2026-07-29): 신원 키는 **`provider + provider_user_id`**다. 소셜 프로필의 이메일은 **신원이 아니라 프로필 데이터**이며, 같은 이메일의 기존 비밀번호 계정에 **자동 연결하지 않는다**(결정 2). 로그인·가입은 **단일 엔드포인트가 find-or-create**로 통합한다(결정 1) — 최초 호출=자동가입, 이후=로그인(단일 동작).
+
+#### POST /api/v1/auth/oauth/{provider} — 소셜 로그인·가입(통합)
+- 인증: 불요(콜백 API, `/login` 동류)
+- 경로: `{provider}` ∈ `naver` | `kakao`. 그 외 값은 `AUTH_006`(400).
+- 요청(body): `{ code, redirectUri }`
+  - `code`(string, 필수): provider가 프론트 `/oauth/callback`으로 넘긴 1회용 인가 코드.
+  - `redirectUri`(string, 필수): 프론트가 인가 요청에 사용한 redirect_uri. provider 토큰 교환의 redirect_uri **일치 요건** 충족용. 백엔드는 **서버 설정 화이트리스트**(provider별 env)와 대조해 불일치·형식오류 시 400(검증) — open redirect·토큰 탈취 방어.
+  - `state`(CSRF)는 **프론트 소유**다 — 프론트가 생성·세션 보관하고 콜백 복귀 시 대조한다(불일치면 백엔드를 호출하지 않고 중단). 스테이틀리스 백엔드는 자신이 만들지 않은 state를 권위 있게 검증할 수 없어(세션 부재) **요청 바디에 두지 않는다**(게이트2 확정 2026-07-29 — state 요청필드·에러코드 없음).
+- 동작(단일 TX): (1) `code`+`redirectUri`+서버 보관 client_id/secret으로 provider **토큰 교환** → (2) **userinfo** 조회로 `provider_user_id`(+표시명 등 프로필) 획득 → (3) `user_social_account(provider, provider_user_id)` 조회 — **있으면** 해당 user 로그인, **없으면** user(+ `user_balance`(0,0,0), signup과 동일 흐름) · `user_social_account` 생성(자동가입) → (4) 기존 `TokenProvider` + `RefreshTokenStore.issue(userId)`로 발급.
+- 응답 200: `{ accessToken, refreshToken, accessExpiresAt }` — **기존 `LoginResponse` 형상 그대로**(형상 보존). **가입·로그인 모두 200**(201 미사용) — 신규/기존 여부가 상태코드로 드러나지 않게 통일(SEC-007 열거 방지).
+- 신규 가입 시 계정 채움: `password_hash`=NULL·`login_id`=NULL(소셜 전용 — 비밀번호 로그인 불가) · `email`=NULL(소셜 이메일 미저장, 결정 2) · `nickname`=provider 표시명(닉네임 UK 충돌 시 무작위 접미사, 아래) · `is_admin`=false · `public_id`=ULID.
+- 닉네임 유니크 접미사(결정 3): provider 표시명을 기본값으로 하되 정규화(트림·30자 이내 절단, 접미사 여유 확보)한다. `nickname_active` UK 충돌 시 짧은 **무작위** 접미사(순차 아님 — 열거·경합 회피)를 붙여 재시도(최대 N회, 초과 시 재생성). 표시명이 비었으면 대체 기본값(예: `user`)에서 시작.
+- 이메일(결정 2): 소셜 프로필 이메일은 **`user.email`에 저장하지 않는다**(NULL 유지). `user.email`은 회원이 §2 `PUT /me/email`로 직접 설정·인증하는 자기 소유 채널로만 채워진다 → `email_active` UK(활성 유니크, EMAIL_007)와 소셜 가입이 **충돌하지 않는다**.
+- 에러: `AUTH_006` 미지원 provider(400) · `AUTH_007` 인가 코드 교환 실패(무효·만료·재사용, 401) · `AUTH_008` provider 통신 실패(토큰 교환·userinfo 조회 중 provider 오류·타임아웃, 502) · `redirectUri` 화이트리스트 위반·형식오류(400 검증)
+- 열거 방지(SEC-007): 성공은 신규·기존 불문 200·동일 형상이라 소셜 계정 존재 여부가 응답으로 드러나지 않는다. 시도 제한은 게이트웨이 rate limit(D-068, login·signup 계열과 동일). provider 비밀정보(client secret 등)는 환경변수(`${OAUTH_<PROVIDER>_*}`, 운영 fail-fast)로 두고 프론트에 미노출한다. provider 호출은 풀링 RestClient(FC-151 커넥션 누수 교훈) — 구현 세부(FC-153/154).
 
 ### 2.5 회원 리소스 (member) — 069, v1.4
 
@@ -574,6 +598,9 @@ GET /api/v1/admin/search/reindex/{jobId} — 재색인 job 상태 조회
 | AUTH_003 | 로그인 자격 불일치 | 401 |
 | AUTH_004 | refresh 토큰 만료·무효 | 401 |
 | AUTH_005 | 권한 없음(관리자 등) | 403 |
+| AUTH_006 | 미지원 소셜 provider(경로 provider 오류, §2 OAuth) | 400 |
+| AUTH_007 | 소셜 인가 코드 교환 실패(무효·만료·재사용, §2 OAuth) | 401 |
+| AUTH_008 | 소셜 provider 통신 실패(토큰·userinfo 조회·타임아웃, §2 OAuth) | 502 |
 | MEMBER_001 | 닉네임 중복(프로필 수정, §2.5) | 409 |
 | MEMBER_002 | 진행 중 거래 보유로 탈퇴 불가(§2.5) | 409 |
 | EMAIL_001 | 인증 코드 불일치(§2 이메일 인증) | 422 |

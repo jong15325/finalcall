@@ -1,6 +1,6 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v1.3 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044)·**게이트2 EPIC-CLOSING 정산 스키마**(FC-081 — sale_order NOT NULL·fee_policy_version·source UK·platform_revenue_ledger)·**게이트2 EPIC-PURCHASE**(FC-088 — 즉시구매+거래내역, **스키마 무변경**·semantic만) 반영. [6] 채번은 백엔드 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: v1.5 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044)·**게이트2 EPIC-CLOSING 정산 스키마**(FC-081 — sale_order NOT NULL·fee_policy_version·source UK·platform_revenue_ledger)·**게이트2 EPIC-PURCHASE**(FC-088 — 즉시구매+거래내역, **스키마 무변경**·semantic만)·**게이트2 EPIC-OAUTH**(FC-152 — user_social_account 신설·user.password_hash·login_id nullable화, V19) 반영. [6] 채번은 백엔드 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.5 | 2026-07-29 | 게이트2(EPIC-OAUTH, FC-152) 승인 반영 — 소셜 로그인(방식 B) 스키마 확정. **[4.1] `user_social_account` 테이블 신설**(id·user_id FK·provider·provider_user_id·created_at, **UK(provider, provider_user_id)** — 소셜 신원 1:1·중복가입 차단·find-or-create 앵커). **[4.1] `user.password_hash`·`login_id` 널 N→Y**(소셜 전용 계정은 둘 다 NULL — 비밀번호 로그인 불가·신원=소셜). 소셜 프로필 이메일 **미저장**(결정 2 — user.email NULL 유지·별도 컬럼 없음 → email_active UK 무충돌). [5] 정합성 제약·[6] Flyway group1에 **V19**(현재 최신 V18) 채번 등재. 정본 = api-contract §2 소셜 로그인 |
 | v1.4 | 2026-07-22 | 게이트2(EPIC-PURCHASE, FC-088) 승인 반영 — 즉시구매(BUYNOW)+거래내역 조회. **스키마 무변경**(신규 테이블·컬럼·마이그레이션·UK 없음). [4.2] `sale_order` 표 아래 승인 반영 주 추가 — semantic 델타만: `auction.result_type=BUYNOW`(종전 정의됨·미사용)가 즉시구매 SOLD 전이에서 **실사용 시작**(마감 SOLD=`BID`), `sale_order (buyer_id)`·`(seller_id)` 인덱스가 거래내역 role 스코프 조회에서 **실사용 시작**. `source_type=AUCTION`·`buy_now_price` 재사용, V14 그대로. 정본 = `purchase-spec.md` v1.0 |
 | v1.3 | 2026-07-21 | 게이트2(EPIC-CLOSING, FC-081) 승인 반영 — 마감·낙찰 정산 코어 스키마 확정. **[4.2] `sale_order`**: `fee_amount` **널→NOT NULL**(SOLD에서만 생성), **`fee_policy_version VARCHAR(10) NOT NULL` 신설**(정책 버전 스냅샷·환불 재현), `(source_type,source_id)` **UK 승격**(이중 SOLD 차단). **`platform_revenue_ledger` 테이블 신설**(게이트2 #4=④-C — 수수료 전용 수익 원장, 정산 1:1 sale_order_id UK, 게임머니 총량 보존 I-H). [2] 엔티티 개요·[5] 인덱스·[6] Flyway(V14) 동기화. `sale_order`는 이 V14에서 최초 생성(종전 group4 이연분). 마감 워커 스캔은 기존 `auction (status, end_at)` 커버 — 신규 인덱스 불요. 근거: 게이트2 승인(2026-07-21), closing-domain-spec v1.0 |
 | v1.2 | 2026-07-20 | 게이트2(EPIC-CLOSING) 승인 반영 — [4.2] `sale_order.fee_amount` 설명을 **"정책 ON-HOLD 자리만" → 정책 확정**으로 갱신(판매자 단독 부담, 산식·구간·최소/cap 정본 = 신규 `fee-policy-spec.md`, 값 범위 [100 G, 300,000 G]). 문서 머리 확정 줄의 ON-HOLD 목록에서 "플랫폼 수수료"를 해소 표기. **스키마 무변경**(fee_amount/settle_amount 컬럼·타입·널 그대로). 근거: 게이트2 승인(2026-07-20), fee-policy-spec v1.0 |
@@ -180,9 +181,9 @@ table `user` — 단일 사용자(관리자=플래그). 인증 상세 필드는 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
 | public_id | ULID | N | UK | 외부 노출 식별자(B-004). 대리 식별자라 D-081 패턴 불요 |
-| login_id | VARCHAR(50) | N | | 로그인 식별자(자연키). **원본에 UK를 걸지 않는다** — D-081 |
-| login_id_active | VARCHAR(50) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, login_id)) STORED`. 활성만 유일·삭제행 NULL(D-081) |
-| password_hash | VARCHAR | N | | 비밀번호 해시 |
+| login_id | VARCHAR(50) | Y | | 로그인 식별자(자연키). **원본에 UK를 걸지 않는다** — D-081. **소셜 전용 계정은 NULL**(신원=소셜, EPIC-OAUTH V19) |
+| login_id_active | VARCHAR(50) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, login_id)) STORED`. 활성만 유일·삭제행/소셜계정(login_id NULL) NULL(D-081) |
+| password_hash | VARCHAR | Y | | 비밀번호 해시. **소셜 전용 계정은 NULL**(비밀번호 로그인 불가 — 소셜 계정 비번 로그인 시도는 `AUTH_003`, EPIC-OAUTH V19) |
 | nickname | VARCHAR(30) | N | | 표시명(자연키). **원본에 UK를 걸지 않는다** — D-081 |
 | nickname_active | VARCHAR(30) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, nickname)) STORED` (D-081) |
 | is_admin | BOOLEAN | N | | 관리자 권한 플래그(기본 false) |
@@ -193,6 +194,22 @@ table `user` — 단일 사용자(관리자=플래그). 인증 상세 필드는 
 - 이 UK 구성에 **재가입 허용**(api-contract [2.5] · domain-spec [6.1])이 의존한다. 원본 컬럼에 단일 UK를 걸면 재가입이 동작하지 않는다 — V3가 그 상태였고 V4에서 재구성한다(채번은 백엔드 동기화, [6]).
 - **동반 필수**: `UserRepository` 단건·존재 조회는 활성 필터를 함께 건다(`findByLoginIdAndIsDeletedFalse` 등). UK만 고치면 삭제행+활성행 다건 반환으로 로그인이 깨진다.
 - 컬럼 길이(`login_id` 50 · `nickname` 30)는 V3 실물 기준이며 생성 컬럼은 원본과 동일 타입·길이를 쓴다.
+
+`user` 주(EPIC-OAUTH, v1.5 — 소셜 로그인 방식 B):
+- **`login_id`·`password_hash` NOT NULL 해제**: 소셜 전용 계정은 loginId·비밀번호가 없다(신원 = `user_social_account`의 provider+provider_user_id). 생성 컬럼 `login_id_active`(`IF(is_deleted, NULL, login_id)`)는 NULL을 UK에서 제외하므로 **생성 컬럼·UK 정의 변경 불요**(원본 컬럼 nullable화만). 비밀번호 로그인(§2 `/login`)은 소셜 계정(password_hash NULL)에 대해 자격 불일치(`AUTH_003`)로 처리 — 계정 존재 비노출(SEC-007).
+- 소셜 프로필 **이메일 미저장**(결정 2): `user.email` NULL 유지, `user_social_account`에도 email 컬럼을 두지 않는다 → `email_active` UK(활성 유니크)와 무충돌. `user.email`은 §2 `PUT /me/email`로만 채워지는 자기 소유·검증 채널.
+
+table `user_social_account` — 소셜 신원 연결(EPIC-OAUTH, 방식 B). 한 user가 provider별 소셜 신원을 갖는다. 신원 키 = (provider, provider_user_id)이며 이메일은 신원이 아니다(결정 2).
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 내부 식별자(외부 미노출) |
+| user_id | BIGINT | N | FK→user | 연결 회원 |
+| provider | VARCHAR(20) | N | UK(복합) | 소셜 provider — 대문자 `NAVER` \| `KAKAO` |
+| provider_user_id | VARCHAR(255) | N | UK(복합) | provider의 안정적 사용자 식별자(naver=문자열 해시·kakao=숫자 문자열) |
+| created_at | DATETIME(6) | N | | 최초 연결(자동가입) 시각 |
+
+유니크: **(provider, provider_user_id) 복합 UK** — 하나의 소셜 신원이 정확히 한 user에 매핑(find-or-create 조회·중복가입 방지 앵커). `user_id`는 FK 인덱스로 역참조(한 user의 연결 목록). `public_id` 불요(외부 미노출 내부 연결 테이블). soft delete 미보유(연결 회수는 이 에픽 범위 밖). **선택(향후)**: 계정 연결 플로 도입 시 한 user가 동일 provider 이중 연결을 막는 `(user_id, provider)` UK를 검토(현재 find-or-create만이라 불요).
 
 table `user_balance` — 사용자별 잔액(1:1). 잔액 갱신은 원자적(D-008).
 
@@ -459,6 +476,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 - 출품 중복 방지는 item_instance.location 전이(INVENTORY→LISTED) CAS 단일 승자로 보증(플래그 B). "활성 리스팅 instance 유니크"용 부분 유니크 인덱스는 불요.
 - charge.idempotency_key UK로 충전 콜백 멱등(D-051).
 - money_exchange (user_id, idempotency_key) 복합 UK로 교환 멱등(SEC-004). 클라이언트 공급 키라 사용자 스코프(charge.pg_tx_id 선례 동류).
+- user_social_account (provider, provider_user_id) 복합 UK로 소셜 신원 1:1 매핑·중복가입 DB 차단(find-or-create 조회 앵커, EPIC-OAUTH).
 
 ## 6. Flyway 매핑 (D-036, B-012 정정)
 
@@ -469,6 +487,7 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 마이그레이션 그룹·순서(스켈레톤 소비분 V1·V2 이후 V3부터):
 1. 사용자·잔액 — user, user_balance (백엔드 `V3__user_and_balance`부터, B-012)
    - 1-a. 자연키 UK 재구성 — 백엔드 `V4__user_natural_key_uk.sql` 실물 채번(backend/033 동기화, D-081). V3가 원본 컬럼 단일 UK(`uk_user_login_id`·`uk_user_nickname`)로 [1] 규약을 위반해 재가입([2.5]·domain-spec [6.1])이 미동작했고, V4가 생성 컬럼 UK(`uk_user_login_id_active`·`uk_user_nickname_active`)로 재구성했다. QA-001(Major) FIX.
+   - 1-b. 소셜 신원(EPIC-OAUTH, FC-153) — `user_social_account` 신설 + `user.password_hash`·`login_id` nullable화 = 백엔드 **`V19`**(현재 최신 V18, append-only V1~V18 무편집).
 2. 화폐 — charge, money_exchange, money_hold (후속 버전 분리)
    - 2-a. `money_exchange` = 백엔드 `V5__money_exchange.sql`. `money_hold`는 입찰과 동일 TX·동일 생명주기라 **group 4의 `bid`와 함께 V11**에 채번한다(아래 4 참조). `charge`는 충전 도메인 착수 시.
 3. 아이템 — item_template, skill_definition, item_instance(+slot_key UK), item_ownership_history, temp_storage + 인덱스 (EPIC-ITEM: 백엔드 V6~V8 채번, FC-020/021/022)
