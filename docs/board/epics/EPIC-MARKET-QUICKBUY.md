@@ -3,11 +3,14 @@ id: EPIC-MARKET-QUICKBUY
 type: epic
 jira_key: null
 title: 마켓 즉시구매 — 카드정보 UI 차용한 인라인 구매
-state: doing
+state: done
 owner: main
 children: [FC-145, FC-146, FC-147, FC-148, FC-149, FC-150]
 gate: null
 ---
+
+> **에픽 완료(2026-07-29)**: 전 자식 FC-145~150 done, reviewer 전건 통과, 사용자 승인(게이트3). C1~C4 4개 커밋(`d088645`·`f74c20f`·`25d3652`·`f1aa276`). push는 사용자 직접.
+
 ## 목표
 아이템 마켓(`MarketPage`)에서 아이템 클릭 시 **상세 페이지(`MarketDetailPage`)로 이동하지 않고**, 목록에서 아이템 영역·구매 버튼 클릭 시 게임 **"카드정보(CARD INFO)" UI**(`docs/game_ui/card_info/카드정보-특수스킬.png`)를 차용한 패널로 **바로 구매**하게 한다.
 
