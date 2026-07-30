@@ -6,6 +6,7 @@ import {
     signupEmailErrorMessage,
     signupErrorMessage,
 } from '@/features/auth/lib/authErrors'
+import { checkNicknameAvailability } from '@/lib/api/auth'
 import { paths } from '@/app/paths'
 
 /**
@@ -15,6 +16,8 @@ import { paths } from '@/app/paths'
  * ★ 제출 필드 = 필수 3(`loginId·password·nickname`) + **선택 email**(계약 §2·§4.1, FC-137).
  *   email 은 값이 있을 때만 payload 에 포함하고 빈 값이면 생략한다(이메일 없는 계정). 201 후 토큰
  *   미발급이라 자동 로그인하지 않으며(가입 후 로그인 별도), **이메일 인증은 가입 후 별도 화면(F2)**.
+ * ★ 닉네임 중복확인은 **라이브 조회**다(FC-162 · 계약 §2 v1.17): 입력→"중복 확인"→가용성 조회→
+ *   즉시 피드백. **advisory**라 available:true 여도 제출 시 `AUTH_002`(409)가 최종 권위다.
  * ★ 미구현 자리(백엔드 없음, 미호출): 아이디 중복확인(`/auth/ids/availability` 없음)만 **DOM
  *   `disabled` 준비 중 자리**로 둔다. 소셜(카카오·네이버)은 로그인·가입 통합(find-or-create)이라
  *   회원가입 화면에서는 제공하지 않는다(진입은 로그인 화면 `SocialLoginSection` 한 곳, FC-158).
@@ -57,6 +60,31 @@ function PendingAction({ label }: { label: string }) {
     )
 }
 
+/** 닉네임 라이브 중복확인 상태 — 입력 변경 시 `idle` 로 초기화(재확인 유도). */
+type NicknameCheck = 'idle' | 'checking' | 'available' | 'taken' | 'error'
+
+/** 닉네임 "중복 확인" 활성 버튼(FC-162). 값이 없거나 조회 중이면 비활성. */
+function NicknameCheckButton({
+    checking,
+    disabled,
+    onClick,
+}: {
+    checking: boolean
+    disabled: boolean
+    onClick: () => void
+}) {
+    return (
+        <button
+            type="button"
+            disabled={disabled || checking}
+            className="flex h-11 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-3 text-xs font-bold text-gray-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onClick}
+        >
+            {checking ? '확인 중…' : '중복 확인'}
+        </button>
+    )
+}
+
 export default function SignupForm({
     isSubmitting,
     submitError,
@@ -67,6 +95,42 @@ export default function SignupForm({
     const [passwordConfirm, setPasswordConfirm] = useState('')
     const [email, setEmail] = useState('')
     const [nickname, setNickname] = useState('')
+    const [nicknameCheck, setNicknameCheck] = useState<NicknameCheck>('idle')
+
+    const nicknameTrimmed = nickname.trim()
+
+    // 닉네임이 바뀌면 직전 확인 결과는 무효 → idle 로 되돌려 재확인을 유도한다.
+    const handleNicknameChange = (value: string) => {
+        setNickname(value)
+        setNicknameCheck('idle')
+    }
+
+    // 라이브 중복확인(계약 §2 v1.17). 제출과 동일하게 트림값으로 조회한다.
+    // advisory 라 여기서 제출을 막지 않는다 — 최종 권위는 제출 시 AUTH_002(409)다.
+    const handleCheckNickname = async () => {
+        if (nicknameTrimmed.length === 0 || nicknameCheck === 'checking') return
+        setNicknameCheck('checking')
+        try {
+            const { available } =
+                await checkNicknameAvailability(nicknameTrimmed)
+            setNicknameCheck(available ? 'available' : 'taken')
+        } catch {
+            // 400(형식·길이)·네트워크 모두 재시도 안내로 수렴 — 원문 미노출.
+            setNicknameCheck('error')
+        }
+    }
+
+    const nicknameFeedback =
+        nicknameCheck === 'available'
+            ? { text: '사용 가능한 닉네임입니다.', tone: 'ok' as const }
+            : nicknameCheck === 'taken'
+              ? { text: '이미 사용 중인 닉네임입니다.', tone: 'bad' as const }
+              : nicknameCheck === 'error'
+                ? {
+                      text: '확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                      tone: 'bad' as const,
+                  }
+                : null
 
     const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
     // ★ email 은 선택 — 값이 있을 때만 형식(≤255·`@Email`)을 따진다. 빈 값은 유효(생략 전송).
@@ -207,8 +271,32 @@ export default function SignupForm({
                         value={nickname}
                         autoComplete="nickname"
                         placeholder="닉네임"
-                        onChange={setNickname}
+                        invalid={nicknameCheck === 'taken'}
+                        describedById={
+                            nicknameFeedback ? 'nicknameCheckStatus' : undefined
+                        }
+                        trailing={
+                            <NicknameCheckButton
+                                checking={nicknameCheck === 'checking'}
+                                disabled={nicknameTrimmed.length === 0}
+                                onClick={handleCheckNickname}
+                            />
+                        }
+                        onChange={handleNicknameChange}
                     />
+                    {/* aria-live: 조회 결과를 보조기기에 알린다(결과가 없으면 빈 영역). */}
+                    <p
+                        id="nicknameCheckStatus"
+                        role="status"
+                        aria-live="polite"
+                        className={`mt-1.5 text-xs ${
+                            nicknameFeedback?.tone === 'ok'
+                                ? 'text-success'
+                                : 'text-danger'
+                        }`}
+                    >
+                        {nicknameFeedback?.text ?? ''}
+                    </p>
                 </div>
 
                 {serverError && (
