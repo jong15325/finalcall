@@ -9,15 +9,16 @@
 
 ## 2. `.env` 준비
 ```
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 - `.env` 는 `.gitignore` 로 커밋이 차단된다(시크릿 포함). `.env.example`(더미 카탈로그)만 추적된다.
+- 위치: 백엔드 env 는 `backend/.env`(프론트 `frontend/.env` 와 대칭). Spring 은 `.env` 를 직접 읽지 않고 EnvFile 이 주입하므로 위치는 규약이다.
 - 로컬은 모든 키에 yml 기본값이 있어, 아무 값도 안 채워도 앱은 그대로 뜬다.
   실제로 값을 바꿔야 할 때만 `.env` 에서 해당 줄을 수정한다.
 
 ## 3. 실행 구성에 `.env` 연결
 1. Run/Debug Configurations > (백엔드 Spring Boot 실행 구성) 선택.
-2. **EnvFile** 탭 > **Enable EnvFile** 체크 > `+` 로 프로젝트 루트의 `.env` 추가.
+2. **EnvFile** 탭 > **Enable EnvFile** 체크 > `+` 로 `backend/.env` 추가.
 3. **Active profiles = `local`** 로 둔다(미지정 시에도 `spring.profiles.default: local` 로 동작).
 4. 실행.
 
@@ -37,4 +38,4 @@ MAIL_PASSWORD=<네이버 앱 비밀번호>   # 2단계 인증 사용 시 앱 비
   실패한다. 운영은 `.env` 파일이 아니라 컨테이너/오케스트레이터의 OS 환경변수로 주입한다.
 - **목록/중첩 정책 테이블은 env 대상이 아니다**: `bid.increment.tiers`·`fee.policy.tiers`·
   `resilience4j.*` 는 env 로 표현하기 부적합해 `application.yml` 에서 관리한다(변경도 거기서).
-- 전체 키 카탈로그와 그룹별 설명은 루트 `.env.example` 을 참조한다.
+- 전체 키 카탈로그와 그룹별 설명은 `backend/.env.example` 을 참조한다.
