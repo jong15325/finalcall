@@ -54,7 +54,10 @@ class SocialAccountFindOrCreateIntegrationTest extends IntegrationTest {
         assertThat(reloaded.getLoginId()).isNull();
         assertThat(reloaded.getPasswordHash()).isNull();
         assertThat(reloaded.getEmail()).isNull();
-        assertThat(reloaded.getNickname()).isEqualTo("네이버유저");
+        // 항상-꼬리표(EPIC-NICKNAME-UX v1.17): 표시명 스템 + 무작위 `_XXXX`(총 ≤30). 원문 그대로는 저장하지 않는다.
+        assertThat(reloaded.getNickname()).isNotEqualTo("네이버유저");
+        assertThat(reloaded.getNickname()).startsWith("네이버유저_");
+        assertThat(reloaded.getNickname().length()).isLessThanOrEqualTo(30);
         assertThat(reloaded.getPublicId()).hasSize(26);
 
         UserBalance balance = userBalanceRepository.findByUserId(created.getId()).orElseThrow();

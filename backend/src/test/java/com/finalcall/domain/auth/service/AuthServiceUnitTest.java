@@ -177,6 +177,21 @@ class AuthServiceUnitTest {
     }
 
     @Test
+    void 미존재_닉네임은_가용하다() {
+        when(userRepository.existsByNicknameAndIsDeletedFalse("없는닉")).thenReturn(false);
+
+        assertThat(authService.isNicknameAvailable("없는닉")).isTrue();
+    }
+
+    @Test
+    void 존재하는_닉네임은_가용하지_않다() {
+        // 가입 유니크 검사와 동일 경로(existsByNicknameAndIsDeletedFalse)로 판정 — 조회↔가입 드리프트 방지.
+        when(userRepository.existsByNicknameAndIsDeletedFalse("있는닉")).thenReturn(true);
+
+        assertThat(authService.isNicknameAvailable("있는닉")).isFalse();
+    }
+
+    @Test
     void 로그인에_성공하면_access_refresh_를_발급한다() {
         User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
         ReflectionTestUtils.setField(user, "id", 42L);

@@ -40,10 +40,11 @@ public class SecurityConfig {
             // cors 는 필요 시 여기서 구성(현재는 자리만).
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 회원가입·로그인·토큰재발급·소셜 로그인 콜백(계약 §2 인증 불요) · actuator · 에러 경로는 공개.
+                // 회원가입·로그인·토큰재발급·소셜 로그인 콜백·닉네임 가용성 조회(계약 §2 인증 불요) · actuator · 에러 경로는 공개.
                 //   소셜 로그인(/oauth/**)은 /login 동류의 콜백 API 라 permitAll(엣지 게이트웨이 경유는 유지).
+                //   닉네임 가용성 조회는 회원가입 중 비로그인 호출이라 /login 동류로 permitAll(EPIC-NICKNAME-UX v1.17).
                 .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/refresh",
-                    "/api/v1/auth/oauth/**", "/actuator/**", "/error")
+                    "/api/v1/auth/oauth/**", "/api/v1/auth/nickname/availability", "/actuator/**", "/error")
                 .permitAll()
                 // 데모/참조(sample, notice)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
                 // (notice 는 비인증 생성 시 createdBy=null 을 시연하기 위해 의도적으로 공개)

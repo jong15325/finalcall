@@ -68,31 +68,32 @@ public class SocialAccountRegistrar {
     }
 
     /**
-     * 활성 nickname UK 와 충돌하지 않는 닉네임을 결정한다. 원본이 비어 있으면 대체 기본값을 쓰고, 충돌 시
-     * 무작위 접미사(`_XXXX`)를 붙여 재시도한다. 총 길이는 항상 {@code VARCHAR(30)} 이내로 자른다.
+     * 소셜 최초가입 닉네임을 결정한다(계약 §2 EPIC-NICKNAME-UX v1.17). provider 표시명을 스템으로 정규화한 뒤
+     * <b>항상</b> 무작위 꼬리표(`_XXXX`)를 붙인다 — 소셜 표시명은 흔해 충돌·사칭 소지가 크므로 최초가입부터 유일 핸들을
+     * 부여한다(종전 "UK 충돌 시에만 접미사"에서 개정). 꼬리표 부착 후에도 활성 nickname UK 와 충돌하면 새 꼬리표로 재시도한다.
+     * 스템은 꼬리표 여유분을 뺀 폭으로 잘라 총 길이가 항상 {@code VARCHAR(30)} 이내다(신원 유일성은 (provider,
+     * provider_user_id) UK 담당 — 이 닉네임은 표시용).
      */
     private String resolveUniqueNickname(String desired) {
-        String base = normalizeBase(desired);
-        if (!userRepository.existsByNicknameAndIsDeletedFalse(base)) {
-            return base;
-        }
-        // 접미사 부착분을 위해 stem 을 잘라 총 길이 ≤ 30 을 보장한다.
-        String stem = truncate(base, NICKNAME_MAX_LENGTH - NICKNAME_SUFFIX_TOTAL);
+        String stem = normalizeStem(desired);
         for (int attempt = 0; attempt < NICKNAME_MAX_ATTEMPTS; attempt++) {
             String candidate = stem + "_" + randomSuffix();
             if (!userRepository.existsByNicknameAndIsDeletedFalse(candidate)) {
                 return candidate;
             }
         }
-        // 무작위 접미사 공간(36^4 ≈ 168만)에서 10회 연속 충돌은 사실상 불가능 — 발생 시 깨진 불변식으로 처리.
+        // 무작위 꼬리표 공간(36^4 ≈ 168만)에서 10회 연속 충돌은 사실상 불가능 — 발생 시 깨진 불변식으로 처리.
         throw new BusinessException(CommonErrorCode.INTERNAL_ERROR);
     }
 
-    /** 원본 닉네임 정규화: trim · 공백/빈값이면 대체 기본값 · {@code VARCHAR(30)} 이내로 절단. */
-    private String normalizeBase(String desired) {
+    /**
+     * 표시명을 스템으로 정규화: trim · 공백/빈값이면 대체 기본값 · 꼬리표(`_XXXX`) 부착분을 위해 스템을
+     * {@code NICKNAME_MAX_LENGTH - NICKNAME_SUFFIX_TOTAL}(=25)자 이내로 절단해 총 길이 ≤ {@code VARCHAR(30)} 을 보장한다.
+     */
+    private String normalizeStem(String desired) {
         String trimmed = desired == null ? "" : desired.trim();
         String base = trimmed.isEmpty() ? NICKNAME_FALLBACK_BASE : trimmed;
-        return truncate(base, NICKNAME_MAX_LENGTH);
+        return truncate(base, NICKNAME_MAX_LENGTH - NICKNAME_SUFFIX_TOTAL);
     }
 
     private String truncate(String value, int maxLength) {

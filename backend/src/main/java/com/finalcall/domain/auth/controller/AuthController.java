@@ -2,6 +2,7 @@ package com.finalcall.domain.auth.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +14,8 @@ import com.finalcall.common.response.ApiResponse;
 import com.finalcall.domain.auth.dto.LoginRequest;
 import com.finalcall.domain.auth.dto.LoginResponse;
 import com.finalcall.domain.auth.dto.LogoutRequest;
+import com.finalcall.domain.auth.dto.NicknameAvailabilityRequest;
+import com.finalcall.domain.auth.dto.NicknameAvailabilityResponse;
 import com.finalcall.domain.auth.dto.OAuthLoginRequest;
 import com.finalcall.domain.auth.dto.RefreshRequest;
 import com.finalcall.domain.auth.dto.RefreshResponse;
@@ -48,6 +51,18 @@ public class AuthController {
         User created = authService.signup(
             request.loginId(), request.password(), request.nickname(), request.email());
         return ApiResponse.success(SignupResponse.from(created));
+    }
+
+    /**
+     * 닉네임 가용성 조회 — 인증 불요(permitAll), 회원가입 폼의 라이브 중복확인용(계약 §2 EPIC-NICKNAME-UX v1.17).
+     * 판정은 가입 유니크 검사와 동일 경로(existsByNicknameAndIsDeletedFalse)라 조회↔가입이 드리프트하지 않는다.
+     * advisory 성격이라 최종 권위는 제출 시 signup AUTH_002(409)다. 형식·길이 위반은 @Valid 로 400(COMMON 검증, errors[]).
+     */
+    @GetMapping("/nickname/availability")
+    public ApiResponse<NicknameAvailabilityResponse> nicknameAvailability(
+        @Valid NicknameAvailabilityRequest request) {
+        boolean available = authService.isNicknameAvailable(request.nickname());
+        return ApiResponse.success(NicknameAvailabilityResponse.of(available));
     }
 
     /** 로그인 — 성공 시 200, access/refresh 발급(계약 §2). 실패는 단일 코드 AUTH_003(열거 완화). */
