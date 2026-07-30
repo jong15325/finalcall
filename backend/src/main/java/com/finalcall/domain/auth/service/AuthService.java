@@ -120,6 +120,21 @@ public class AuthService {
     }
 
     /**
+     * 아이디 가용성 조회(라이브 중복확인, spec §2 EPIC-LOGINID-CHECK v1.18). 가입 유니크 검사와 <b>동일 경로</b>
+     * ({@code existsByLoginIdAndIsDeletedFalse}, {@code login_id_active} UK 기준)로 판정해 조회↔가입 드리프트를 막는다.
+     *
+     * <p>advisory 성격이라 예약·스냅샷이 아니다 — 조회~제출 사이 선점(TOCTOU)이 가능하므로 최종 권위는 signup 의
+     * {@code AUTH_001}(409)다. 별도 정규화(trim·lowercase)는 가하지 않는다(signup 이 원문 그대로 저장·검사하므로 동일 원문
+     * 판정으로 일관성 유지). RDB 쓰기가 없어 클래스 기본 readOnly 트랜잭션을 따른다.
+     *
+     * @return {@code true}=현재 사용 가능(활성 회원 중 동일 loginId 없음), {@code false}=사용 중
+     */
+    @ServiceLog
+    public boolean isLoginIdAvailable(String loginId) {
+        return !userRepository.existsByLoginIdAndIsDeletedFalse(loginId);
+    }
+
+    /**
      * 로그인: loginId 조회 + BCrypt 검증. 성공 시 access(JWT) + refresh(opaque·Redis 저장, B-011)를 발급한다.
      *
      * <p>열거 완화(SEC-006/007): loginId 부재·비밀번호 불일치·탈퇴 계정을 <b>단일 코드 AUTH_003</b>으로 통일해

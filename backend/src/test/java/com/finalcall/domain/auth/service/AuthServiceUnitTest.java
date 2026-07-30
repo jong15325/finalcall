@@ -192,6 +192,21 @@ class AuthServiceUnitTest {
     }
 
     @Test
+    void 미존재_아이디는_가용하다() {
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("없는아이디")).thenReturn(false);
+
+        assertThat(authService.isLoginIdAvailable("없는아이디")).isTrue();
+    }
+
+    @Test
+    void 존재하는_아이디는_가용하지_않다() {
+        // 가입 유니크 검사와 동일 경로(existsByLoginIdAndIsDeletedFalse)로 판정 — 조회↔가입 드리프트 방지.
+        when(userRepository.existsByLoginIdAndIsDeletedFalse("있는아이디")).thenReturn(true);
+
+        assertThat(authService.isLoginIdAvailable("있는아이디")).isFalse();
+    }
+
+    @Test
     void 로그인에_성공하면_access_refresh_를_발급한다() {
         User user = User.builder().loginId("hong").passwordHash("hashed-pw").nickname("홍길동").build();
         ReflectionTestUtils.setField(user, "id", 42L);

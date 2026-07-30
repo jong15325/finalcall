@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
+import com.finalcall.domain.auth.dto.LoginIdAvailabilityRequest;
+import com.finalcall.domain.auth.dto.LoginIdAvailabilityResponse;
 import com.finalcall.domain.auth.dto.LoginRequest;
 import com.finalcall.domain.auth.dto.LoginResponse;
 import com.finalcall.domain.auth.dto.LogoutRequest;
@@ -63,6 +65,18 @@ public class AuthController {
         @Valid NicknameAvailabilityRequest request) {
         boolean available = authService.isNicknameAvailable(request.nickname());
         return ApiResponse.success(NicknameAvailabilityResponse.of(available));
+    }
+
+    /**
+     * 아이디 가용성 조회 — 인증 불요(permitAll), 회원가입 폼의 라이브 중복확인용(계약 §2 EPIC-LOGINID-CHECK v1.18).
+     * 판정은 가입 유니크 검사와 동일 경로(existsByLoginIdAndIsDeletedFalse)라 조회↔가입이 드리프트하지 않는다.
+     * advisory 성격이라 최종 권위는 제출 시 signup AUTH_001(409)다. 형식·길이 위반은 @Valid 로 400(COMMON 검증, errors[]).
+     */
+    @GetMapping("/login-id/availability")
+    public ApiResponse<LoginIdAvailabilityResponse> loginIdAvailability(
+        @Valid LoginIdAvailabilityRequest request) {
+        boolean available = authService.isLoginIdAvailable(request.loginId());
+        return ApiResponse.success(LoginIdAvailabilityResponse.of(available));
     }
 
     /** 로그인 — 성공 시 200, access/refresh 발급(계약 §2). 실패는 단일 코드 AUTH_003(열거 완화). */
