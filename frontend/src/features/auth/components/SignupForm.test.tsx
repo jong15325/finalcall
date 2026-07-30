@@ -14,7 +14,7 @@ import { ERROR_CODES } from '@/types/errorCodes'
  *  3. 비밀번호 확인 불일치는 클라 차단(서버 미호출) + 안내 문구.
  *  4. AUTH_001(중복 아이디)·AUTH_002(중복 닉네임)를 code 로 구분해 문구 · 원문 미노출.
  *  5. EMAIL_007(중복 이메일, 409)은 **email 필드**에 문구를 표면화한다(FC-136 메시지).
- *  6. 미구현 자리(중복확인·카카오·네이버)는 DOM disabled(미호출).
+ *  6. 미구현 자리(중복확인)는 DOM disabled(미호출). 소셜은 로그인·가입 통합이라 회원가입엔 없다(FC-158).
  */
 
 function fillValid(
@@ -150,16 +150,19 @@ describe('<SignupForm>', () => {
         ).toBeInTheDocument()
     })
 
-    it('중복확인 자리는 DOM 비활성이고, 소셜 버튼은 env 미설정 시 비활성이다', () => {
+    it('중복확인 자리는 DOM 비활성이다', () => {
         renderForm()
         expect(screen.getByRole('button', { name: /중복 확인/ })).toBeDisabled()
-        // 소셜은 FC-155 로 활성화되나 테스트 env 엔 client_id 가 없어 준비 중(비활성)이다.
+    })
+
+    it('소셜 버튼을 렌더하지 않는다(로그인·가입 통합이라 회원가입엔 잉여, FC-158)', () => {
+        renderForm()
         expect(
-            screen.getByRole('button', { name: /카카오로 계속하기/ }),
-        ).toBeDisabled()
+            screen.queryByRole('button', { name: /카카오로 계속하기/ }),
+        ).toBeNull()
         expect(
-            screen.getByRole('button', { name: /네이버로 계속하기/ }),
-        ).toBeDisabled()
+            screen.queryByRole('button', { name: /네이버로 계속하기/ }),
+        ).toBeNull()
     })
 
     it('로그인 링크를 제공한다', () => {

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { TbId, TbLock, TbLockCheck, TbMail, TbUser } from 'react-icons/tb'
 import AuthTextField from './AuthTextField'
-import SocialLoginSection from './SocialLoginSection'
 import {
     signupEmailErrorMessage,
     signupErrorMessage,
@@ -17,8 +16,8 @@ import { paths } from '@/app/paths'
  *   email 은 값이 있을 때만 payload 에 포함하고 빈 값이면 생략한다(이메일 없는 계정). 201 후 토큰
  *   미발급이라 자동 로그인하지 않으며(가입 후 로그인 별도), **이메일 인증은 가입 후 별도 화면(F2)**.
  * ★ 미구현 자리(백엔드 없음, 미호출): 아이디 중복확인(`/auth/ids/availability` 없음)만 **DOM
- *   `disabled` 준비 중 자리**로 둔다. 소셜(카카오·네이버)은 FC-155 로 활성화 — `SocialLoginSection`
- *   이 env(client_id) 설정 시 인가 페이지로 이동한다(콜백 처리는 FC-156 별건).
+ *   `disabled` 준비 중 자리**로 둔다. 소셜(카카오·네이버)은 로그인·가입 통합(find-or-create)이라
+ *   회원가입 화면에서는 제공하지 않는다(진입은 로그인 화면 `SocialLoginSection` 한 곳, FC-158).
  * ★ 클라 검증(제출 차단): 비밀번호 확인 불일치 · email 형식(값이 있을 때 `@Email`·≤255).
  *   `<form noValidate>` 로 브라우저 말풍선을 끈다.
  */
@@ -229,9 +228,6 @@ export default function SignupForm({
                     {isSubmitting ? '가입 중…' : '회원가입'}
                 </button>
             </form>
-
-            {/* 소셜 가입 — 카카오·네이버(design-system §5.11, FC-155). 클릭 시 인가 페이지로 이동. */}
-            <SocialLoginSection />
 
             <p className="mt-6 text-center text-xs text-gray-500">
                 이미 계정이 있으신가요?{' '}
