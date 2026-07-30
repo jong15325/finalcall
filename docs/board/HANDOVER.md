@@ -44,20 +44,23 @@
 ---
 
 ## C. Git 상태
-- **origin/master = `45a657e`**, 로컬 **10커밋 앞섬**:
-  `59e01bb`(.env 이동)·`668e7e7`(FC-158)·`493f063`(FC-160 spec)·`6f3db69`(FC-161)·`6186ff9`(FC-162)·`fc05afa`(FC-164)·`0367fe0`(FC-165 spec)·`31f080f`(FC-166)·`e448ce7`(FC-167)·(+board docs 커밋).
+- **origin/master = `2d49760`**(사용자가 push함 — 두 에픽+FC-158/159/164 전부 원격 반영). 이후 **FC-169 커밋 3건 로컬 미push**: `aa87527`(fix 프론트 게이팅)·`2bbacbb`(docs spec v1.19)·(+board docs 커밋). **다음 push는 이 3건.**
 - 규율: 커밋 매번 사용자 승인(이 세션 전부 승인받음). push는 사용자 직접.
 
+## C-2. FC-169 (KAN-190) — 회원가입 중복확인 필수 게이팅 · done
+사용자 보고("중복확인 없이 회원가입 뚫림") 수정. advisory→필수 게이팅: 아이디·닉네임 둘 다 available 확인해야 제출, 미확인/중복/값변경 시 차단+안내+포커스, **비동기 경합 가드**(reviewer 1차 MAJOR M1→재작업→PASS), 백엔드 409 최종 방어선 유지. api-contract v1.19.
+
 ## 환경·미러
-- **보드↔Jira 정합**: KAN-177~189 전부 미러(에픽 2개 KAN-179·185 done, 하위·단발 done). 이 세션 상태 전이마다 즉시 미러.
+- **보드↔Jira 정합**: KAN-177~**190** 전부 미러(에픽 2개 KAN-179·185 done, 하위·단발·FC-169 done). 이 세션 상태 전이마다 즉시 미러.
+- **환경 가동 중(세션 말)**: 백엔드 8080(`./gradlew :backend:bootRun` local+`backend/.env`)·프론트 5173(`npm run dev`) background. Docker finalcall 스택 재기동됨. 다음 세션 재기동 시 8080/5173 점유 확인·kill 후. 라이브 스모크 통과(가용성 API·400·403 게이트웨이 강제).
 - **.env**: `backend/.env`(백)·`frontend/.env`(프). 카카오·네이버 키 유지. IntelliJ EnvFile 경로는 `backend/.env`.
 - 함정: `.env` 검증 bash 정본([[env-verify-windows-crlf]]), git push 셸 소켓([[git-push-headless-resolver-fail]]).
 
 ## 이어받는 법 (새 세션)
 1. CLAUDE.md 섹션 8~13(오케스트레이션·게이트·티켓·커밋).
-2. 이 파일 + `git status`(board 커밋 여부) + `git log --oneline -12`(origin=`45a657e`).
-3. 메모리: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`.
-4. **미러 패리티**: KAN-177~189 done 미러 완료.
+2. 이 파일 + `git status`(board 커밋 여부) + `git log --oneline -14`(origin=`2d49760`, 로컬은 FC-169 3커밋 앞섬·미push).
+3. 메모리: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`gateway-authroute-ratelimit-dod`.
+4. **미러 패리티**: KAN-177~190 done 미러 완료.
 
 ## 교훈 (이 세션)
 1. **게이트웨이 배선은 auth 엔드포인트 DoD의 일부**: FC-161이 rate-limit predicate 누락으로 reviewer MAJOR-1 → 재작업. loginId(FC-166)는 처음부터 포함해 재발 없음. "신규 permitAll auth 경로 = 게이트웨이 등재 동반"을 계약 DoD에 고정하라.
