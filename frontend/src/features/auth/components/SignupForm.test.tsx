@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { okEnvelope, renderWithProviders } from '@/test/renderWithProviders'
 import SignupForm from './SignupForm'
 import { ApiError } from '@/lib/api/errors'
@@ -40,6 +40,17 @@ function fillValid(
     }
 }
 
+/**
+ * 아이디·닉네임 중복확인을 모두 available 로 통과시킨다(FC-169 제출 전제).
+ * 호출 전 `fetch` 를 available:true 로 스텁하고 두 필드에 값이 있어야 한다.
+ */
+async function confirmBothAvailable() {
+    fireEvent.click(screen.getByRole('button', { name: '아이디 중복 확인' }))
+    await screen.findByText('사용 가능한 아이디입니다.')
+    fireEvent.click(screen.getByRole('button', { name: '닉네임 중복 확인' }))
+    await screen.findByText('사용 가능한 닉네임입니다.')
+}
+
 function renderForm(
     props: Partial<React.ComponentProps<typeof SignupForm>> = {},
 ) {
@@ -55,9 +66,14 @@ function renderForm(
 }
 
 describe('<SignupForm>', () => {
-    it('email 미입력 시 필수 3필드만 전달한다(email 키 생략)', () => {
+    it('email 미입력 시 필수 3필드만 전달한다(email 키 생략)', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(() => Promise.resolve(okEnvelope({ available: true }))),
+        )
         const { onSubmit } = renderForm()
         fillValid()
+        await confirmBothAvailable()
         fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
         // 정확 일치 매처라 email 키가 있으면 실패한다 → 키 생략을 함께 고정한다(null·빈문자 아님).
         expect(onSubmit).toHaveBeenCalledWith({
@@ -67,9 +83,14 @@ describe('<SignupForm>', () => {
         })
     })
 
-    it('email 입력 시 정규화 없이 트림해 email 을 포함해 전달한다', () => {
+    it('email 입력 시 정규화 없이 트림해 email 을 포함해 전달한다', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(() => Promise.resolve(okEnvelope({ available: true }))),
+        )
         const { onSubmit } = renderForm()
         fillValid({ email: '  leon@example.com  ' })
+        await confirmBothAvailable()
         fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
         expect(onSubmit).toHaveBeenCalledWith({
             loginId: 'player1',
@@ -77,6 +98,117 @@ describe('<SignupForm>', () => {
             nickname: '레온',
             email: 'leon@example.com',
         })
+    })
+
+    it('중복확인 없이 제출하면 차단하고 아이디·닉네임 안내 문구를 낸다(FC-169)', () => {
+        const { onSubmit } = renderForm()
+        fillValid()
+        fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
+        expect(onSubmit).not.toHaveBeenCalled()
+        expect(
+            screen.getByText('아이디 중복확인을 진행해 주세요.'),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByText('닉네임 중복확인을 진행해 주세요.'),
+        ).toBeInTheDocument()
+    })
+
+    it('아이디·닉네임 모두 available 확인 후에는 제출이 통과한다(FC-169)', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(() => Promise.resolve(okEnvelope({ available: true }))),
+        )
+        const { onSubmit } = renderForm()
+        fillValid()
+        await confirmBothAvailable()
+        fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
+        expect(onSubmit).toHaveBeenCalledWith({
+            loginId: 'player1',
+            password: 'secret123',
+            nickname: '레온',
+        })
+    })
+
+    it('확인 후 아이디 값을 바꾸면 다시 제출이 차단된다(재확인 강제, FC-169)', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(() => Promise.resolve(okEnvelope({ available: true }))),
+        )
+        const { onSubmit } = renderForm()
+        fillValid()
+        await confirmBothAvailable()
+        // 확인 후 아이디를 바꾸면 상태가 idle 로 초기화된다.
+        fireEvent.change(screen.getByLabelText('아이디'), {
+            target: { value: 'player2' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
+        expect(onSubmit).not.toHaveBeenCalled()
+        expect(
+            screen.getByText('아이디 중복확인을 진행해 주세요.'),
+        ).toBeInTheDocument()
+    })
+
+    it('조회 in-flight 중 아이디를 바꾸면 stale 응답을 버리고 제출을 차단한다(M1 경합)', async () => {
+        // 아이디 조회는 응답을 지연(deferred)시키고, 닉네임 조회는 즉시 available 로 답한다.
+        let resolveLoginId!: (value: Response) => void
+        const loginIdPending = new Promise<Response>((resolve) => {
+            resolveLoginId = resolve
+        })
+        vi.stubGlobal(
+            'fetch',
+            vi.fn((input: RequestInfo | URL) =>
+                String(input).includes('login-id')
+                    ? loginIdPending
+                    : Promise.resolve(okEnvelope({ available: true })),
+            ),
+        )
+        const { onSubmit } = renderForm()
+        fillValid() // 아이디 player1, 닉네임 레온
+
+        // player1 로 조회를 시작(in-flight) → 응답 도착 전 admin 으로 변경(상태 idle).
+        fireEvent.click(screen.getByRole('button', { name: '아이디 중복 확인' }))
+        fireEvent.change(screen.getByLabelText('아이디'), {
+            target: { value: 'admin' },
+        })
+
+        // 이제 player1 응답(available)이 도착 — stale 이라 반영되면 안 된다.
+        await act(async () => {
+            resolveLoginId(okEnvelope({ available: true }))
+        })
+
+        // 닉네임은 정상 확인해 유일한 미충족이 아이디임을 못박는다.
+        fireEvent.click(screen.getByRole('button', { name: '닉네임 중복 확인' }))
+        await screen.findByText('사용 가능한 닉네임입니다.')
+
+        fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
+        // stale 응답이 무시됐다면 아이디는 여전히 미확인(idle) → 제출 차단 + 안내 문구.
+        expect(onSubmit).not.toHaveBeenCalled()
+        expect(
+            screen.getByText('아이디 중복확인을 진행해 주세요.'),
+        ).toBeInTheDocument()
+        expect(screen.queryByText('사용 가능한 아이디입니다.')).toBeNull()
+    })
+
+    it('아이디가 taken 이면(닉네임 available 이어도) 제출이 차단된다(FC-169)', async () => {
+        // 아이디 조회는 taken(available:false), 닉네임 조회는 available:true 로 분기한다.
+        vi.stubGlobal(
+            'fetch',
+            vi.fn((input: RequestInfo | URL) =>
+                Promise.resolve(
+                    okEnvelope({
+                        available: !String(input).includes('login-id'),
+                    }),
+                ),
+            ),
+        )
+        const { onSubmit } = renderForm()
+        fillValid()
+        fireEvent.click(screen.getByRole('button', { name: '아이디 중복 확인' }))
+        await screen.findByText('이미 사용 중인 아이디입니다.')
+        fireEvent.click(screen.getByRole('button', { name: '닉네임 중복 확인' }))
+        await screen.findByText('사용 가능한 닉네임입니다.')
+        fireEvent.click(screen.getByRole('button', { name: '회원가입' }))
+        expect(onSubmit).not.toHaveBeenCalled()
     })
 
     it('잘못된 이메일 형식은 제출을 차단하고 안내를 낸다', () => {

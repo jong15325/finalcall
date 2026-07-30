@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { TbId, TbLock, TbLockCheck, TbMail, TbUser } from 'react-icons/tb'
 import AuthTextField from './AuthTextField'
@@ -20,10 +20,12 @@ import { paths } from '@/app/paths'
  *   email 은 값이 있을 때만 payload 에 포함하고 빈 값이면 생략한다(이메일 없는 계정). 201 후 토큰
  *   미발급이라 자동 로그인하지 않으며(가입 후 로그인 별도), **이메일 인증은 가입 후 별도 화면(F2)**.
  * ★ 아이디·닉네임 중복확인은 모두 **라이브 조회**다(FC-167·FC-162 · 계약 §2 v1.18·v1.17):
- *   입력→"중복 확인"→가용성 조회→즉시 피드백. **advisory**라 available:true 여도 제출 시
- *   각각 `AUTH_001`(아이디)·`AUTH_002`(닉네임) 409 가 최종 권위다. 소셜(카카오·네이버)은
- *   로그인·가입 통합(find-or-create)이라 회원가입 화면에서는 제공하지 않는다(진입은 로그인
- *   화면 `SocialLoginSection` 한 곳, FC-158).
+ *   입력→"중복 확인"→가용성 조회→즉시 피드백. **제출 전제(필수, FC-169)**라 둘 다 available
+ *   확인돼야 제출한다 — 미확인(idle)·중복(taken)·오류(error)면 제출을 막고 미확인 필드에
+ *   안내 문구를 띄운다. 엔드포인트 자체는 advisory(TOCTOU 가능)라 제출 시 `AUTH_001`(아이디)·
+ *   `AUTH_002`(닉네임) 409 가 최종 방어선으로 남는다. 소셜(카카오·네이버)은 로그인·가입
+ *   통합(find-or-create)이라 회원가입 화면에서는 제공하지 않는다(진입은 로그인 화면
+ *   `SocialLoginSection` 한 곳, FC-158).
  * ★ 클라 검증(제출 차단): 비밀번호 확인 불일치 · email 형식(값이 있을 때 `@Email`·≤255).
  *   `<form noValidate>` 로 브라우저 말풍선을 끈다.
  */
@@ -90,50 +92,71 @@ export default function SignupForm({
     const [email, setEmail] = useState('')
     const [nickname, setNickname] = useState('')
     const [nicknameCheck, setNicknameCheck] = useState<AvailabilityCheck>('idle')
+    // 중복확인 없이 제출을 시도한 적이 있는지(FC-169). true 면 미확인(idle) 필드에 안내 문구를 띄운다.
+    const [submitAttempted, setSubmitAttempted] = useState(false)
 
     const loginIdTrimmed = loginId.trim()
     const nicknameTrimmed = nickname.trim()
 
+    // 현재 입력값의 최신 스냅샷(ref). 조회는 비동기라 응답 도착 시점의 클로저 상태는 낡았을 수
+    // 있어(입력이 그새 바뀜), stale 응답 가드에서 "지금 화면의 값"을 ref 로 읽는다(FC-169 M1).
+    const loginIdRef = useRef(loginId)
+    const nicknameRef = useRef(nickname)
+
     // 아이디가 바뀌면 직전 확인 결과는 무효 → idle 로 되돌려 재확인을 유도한다.
     const handleLoginIdChange = (value: string) => {
+        loginIdRef.current = value
         setLoginId(value)
         setLoginIdCheck('idle')
     }
 
     // 라이브 중복확인(계약 §2 v1.18). 제출과 동일하게 트림값으로 조회한다.
-    // advisory 라 여기서 제출을 막지 않는다 — 최종 권위는 제출 시 AUTH_001(409)다.
+    // 엔드포인트는 advisory 라 제출 시 AUTH_001(409)이 최종 방어선이지만, 제출 게이트(FC-169)는
+    // available 만 통과시킨다. ★ 경합 가드(M1): 조회 in-flight 중 입력이 바뀌면(=검사값 != 현재값)
+    // 낡은 응답을 버려, available 이 언제나 "현재 입력값을 확인한 결과"만 의미하게 한다.
     const handleCheckLoginId = async () => {
-        if (loginIdTrimmed.length === 0 || loginIdCheck === 'checking') return
+        const checked = loginIdTrimmed
+        if (checked.length === 0 || loginIdCheck === 'checking') return
         setLoginIdCheck('checking')
         try {
-            const { available } = await checkLoginIdAvailability(loginIdTrimmed)
+            const { available } = await checkLoginIdAvailability(checked)
+            if (loginIdRef.current.trim() !== checked) return
             setLoginIdCheck(available ? 'available' : 'taken')
         } catch {
             // 400(형식·길이)·네트워크 모두 재시도 안내로 수렴 — 원문 미노출.
+            if (loginIdRef.current.trim() !== checked) return
             setLoginIdCheck('error')
         }
     }
 
     // 닉네임이 바뀌면 직전 확인 결과는 무효 → idle 로 되돌려 재확인을 유도한다.
     const handleNicknameChange = (value: string) => {
+        nicknameRef.current = value
         setNickname(value)
         setNicknameCheck('idle')
     }
 
     // 라이브 중복확인(계약 §2 v1.17). 제출과 동일하게 트림값으로 조회한다.
-    // advisory 라 여기서 제출을 막지 않는다 — 최종 권위는 제출 시 AUTH_002(409)다.
+    // ★ 경합 가드(M1)는 아이디와 대칭 — stale 응답(검사값 != 현재값)은 반영하지 않는다.
     const handleCheckNickname = async () => {
-        if (nicknameTrimmed.length === 0 || nicknameCheck === 'checking') return
+        const checked = nicknameTrimmed
+        if (checked.length === 0 || nicknameCheck === 'checking') return
         setNicknameCheck('checking')
         try {
-            const { available } =
-                await checkNicknameAvailability(nicknameTrimmed)
+            const { available } = await checkNicknameAvailability(checked)
+            if (nicknameRef.current.trim() !== checked) return
             setNicknameCheck(available ? 'available' : 'taken')
         } catch {
             // 400(형식·길이)·네트워크 모두 재시도 안내로 수렴 — 원문 미노출.
+            if (nicknameRef.current.trim() !== checked) return
             setNicknameCheck('error')
         }
     }
+
+    // 제출 전제(FC-169): 아이디·닉네임 모두 available 확인돼야 제출 가능. 값 변경 시 idle 로
+    // 초기화되므로(handle*Change), available 이면 확인된 값 == 현재 입력값이 보장된다.
+    const loginIdConfirmed = loginIdCheck === 'available'
+    const nicknameConfirmed = nicknameCheck === 'available'
 
     const loginIdFeedback =
         loginIdCheck === 'available'
@@ -145,7 +168,13 @@ export default function SignupForm({
                       text: '확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
                       tone: 'bad' as const,
                   }
-                : null
+                : // 미확인(idle) 상태로 제출을 시도하면 중복확인을 요구한다.
+                  submitAttempted && loginIdCheck === 'idle'
+                  ? {
+                        text: '아이디 중복확인을 진행해 주세요.',
+                        tone: 'bad' as const,
+                    }
+                  : null
 
     const nicknameFeedback =
         nicknameCheck === 'available'
@@ -157,7 +186,13 @@ export default function SignupForm({
                       text: '확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
                       tone: 'bad' as const,
                   }
-                : null
+                : // 미확인(idle) 상태로 제출을 시도하면 중복확인을 요구한다.
+                  submitAttempted && nicknameCheck === 'idle'
+                  ? {
+                        text: '닉네임 중복확인을 진행해 주세요.',
+                        tone: 'bad' as const,
+                    }
+                  : null
 
     const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm
     // ★ email 은 선택 — 값이 있을 때만 형식(≤255·`@Email`)을 따진다. 빈 값은 유효(생략 전송).
@@ -188,6 +223,15 @@ export default function SignupForm({
         // ★ 비밀번호 확인 불일치·이메일 형식 오류는 서버로 보내지 않는다(클라 선차단).
         if (password !== passwordConfirm) return
         if (emailFormatInvalid) return
+        // ★ 중복확인 필수(FC-169): 아이디·닉네임 모두 available 이 아니면 제출을 막고, 미확인
+        //   필드에 안내 문구를 띄운 뒤 첫 미충족 필드로 포커스를 옮긴다. 서버 409(AUTH_001·
+        //   AUTH_002)는 TOCTOU 대비 최종 방어선으로 그대로 유지된다.
+        if (!loginIdConfirmed || !nicknameConfirmed) {
+            setSubmitAttempted(true)
+            const firstUnconfirmedId = !loginIdConfirmed ? 'signupId' : 'nickname'
+            document.getElementById(firstUnconfirmedId)?.focus()
+            return
+        }
         onSubmit({
             loginId: loginId.trim(),
             password,
@@ -216,7 +260,7 @@ export default function SignupForm({
                         value={loginId}
                         autoComplete="username"
                         placeholder="로그인에 사용할 아이디"
-                        invalid={loginIdCheck === 'taken'}
+                        invalid={loginIdFeedback?.tone === 'bad'}
                         describedById={
                             loginIdFeedback ? 'loginIdCheckStatus' : undefined
                         }
@@ -322,7 +366,7 @@ export default function SignupForm({
                         value={nickname}
                         autoComplete="nickname"
                         placeholder="닉네임"
-                        invalid={nicknameCheck === 'taken'}
+                        invalid={nicknameFeedback?.tone === 'bad'}
                         describedById={
                             nicknameFeedback ? 'nicknameCheckStatus' : undefined
                         }
