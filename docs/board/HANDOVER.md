@@ -1,69 +1,61 @@
 # 총괄(메인 세션) 핸드오버
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-07-30** (소셜 후속 + 닉네임/아이디 중복확인 UX — **EPIC-NICKNAME-UX·EPIC-LOGINID-CHECK 2개 에픽 + FC-158·159·164 전건 완료·리뷰 PASS·커밋**. push만 대기.)
+갱신: **2026-07-30** (닉네임/아이디 중복확인 UX + 소셜 후속 + 회원가입 게이팅 버그픽스 — **전건 완료·리뷰 PASS·커밋·push·라이브 검증 완료**. 대기 작업 없음.)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
 
-> ★ **이 세션 경위**: (1) 대기였던 `.env`→`backend/.env` 이동 커밋, (2) **FC-158** 회원가입 소셜버튼 제거, (3) **FC-159** 닉네임 유니크 게이트2 — A(해제) 잠정→철회→**B(유지) 확정**(닉네임=판매자 표시 노출), (4) **EPIC-NICKNAME-UX**(FC-160~163) 닉네임 라이브 중복확인 API + 소셜 항상-꼬리표 — reviewer 1차 MAJOR-1(게이트웨이 rate-limit 미배선)→재작업→PASS, (5) **FC-164** oauth rate-limit 선존 gap 수정, (6) **EPIC-LOGINID-CHECK**(FC-165~168) 아이디 라이브 중복확인(준비중 placeholder 교체·닉네임 미러·공용 컴포넌트 일반화) — reviewer PASS. **다음 수 = ① push(사용자 직접) ② 후속 관찰 검토.**
+> ★ **이 세션 경위**: (1) `.env`→`backend/.env` 이동, (2) **FC-158** 회원가입 소셜버튼 제거, (3) **FC-159** 닉네임 유니크 게이트2 → **B(유지) 확정**, (4) **EPIC-NICKNAME-UX**(FC-160~163) 닉네임 라이브 중복확인 API + 소셜 항상-꼬리표(reviewer 1차 MAJOR-1 게이트웨이 rate-limit→재작업→PASS), (5) **FC-164** oauth rate-limit 선존 gap 수정, (6) **EPIC-LOGINID-CHECK**(FC-165~168) 아이디 라이브 중복확인(준비중 placeholder 교체·공용 `AvailabilityCheck` 일반화), (7) **FC-169** 회원가입 중복확인 **필수 게이팅**(사용자 버그보고 "뚫림"; reviewer 1차 MAJOR M1 비동기 경합→재작업→PASS; 라이브 검증 완료). **다음 수 = 백로그(사용자 선택).**
 
 ---
 
 ## 지금 어디인가 — 한 문단
 
-**두 에픽 + 단발 3건 전부 done·커밋 완료, push만 남음.** 회원가입에 닉네임·아이디 **라이브 중복확인**이 붙었고(공용 `AvailabilityCheck` 컴포넌트), 소셜 최초가입은 provider명+**항상 랜덤 꼬리표**, 게이트웨이 auth rate-limit에 신규 3경로(nickname/availability·oauth/**·login-id/availability) 배선 완료. origin/master = `45a657e`, 로컬은 **10커밋 앞섬**(코드/spec 9 + board 1). **다음 수 = ① 사용자 push ② 후속 관찰 3건 검토.**
+**이 세션 전건 완료·push·라이브 검증까지 끝. 대기 작업 없음.** 회원가입에 아이디·닉네임 **라이브 중복확인 + 필수 게이팅**(미확인 시 차단·안내·재확인), 소셜 최초가입 provider명+**항상 랜덤 꼬리표**, 게이트웨이 auth rate-limit에 신규 3경로 배선 완료. origin/master = **`1ee6f3a`**, 로컬 동기화(0/0). Jira KAN-177~190 전부 done 미러. 백엔드 8080·프론트 5173 가동 중.
 
 ---
 
-## A. 완료 (이 세션)
+## A. 완료 (이 세션) — 전부 done·push
 
-### EPIC-NICKNAME-UX (KAN-179~183) — done, reviewer PASS
-닉네임 유니크 **유지**(FC-159 B) 하 UX 2건. FC-160 계약(architect)·FC-161 백엔드(가용성 조회 API+소셜 항상-꼬리표)·FC-162 프론트(닉네임 라이브 확인)·FC-163 리뷰(1차 MAJOR-1 게이트웨이 rate-limit→재작업→PASS).
-- 엔드포인트 `GET /api/v1/auth/nickname/availability`(permitAll·advisory·최종 AUTH_002). 소셜: provider 스템(≤25)+항상 `_XXXX`.
+| 항목 | 내용 | Jira |
+|---|---|---|
+| FC-158 | 회원가입 소셜버튼 제거(로그인 유지) | KAN-177 |
+| FC-159 | 닉네임 유니크 게이트2 → **B(유지)** | KAN-178 |
+| **EPIC-NICKNAME-UX** (FC-160~163) | 닉네임 라이브 중복확인 API(`GET /api/v1/auth/nickname/availability`) + 소셜 항상-꼬리표 | KAN-179~183 |
+| FC-164 | oauth `/api/v1/auth/oauth/**` 게이트웨이 rate-limit 배선(선존 gap) | KAN-184 |
+| **EPIC-LOGINID-CHECK** (FC-165~168) | 아이디 라이브 중복확인(`GET /api/v1/auth/login-id/availability`), 준비중 placeholder 교체, 공용 `AvailabilityCheck` 일반화 | KAN-185~189 |
+| **FC-169** | 회원가입 중복확인 **필수 게이팅**(미확인 차단·재확인·비동기 경합가드), api-contract v1.19 | KAN-190 |
 
-### EPIC-LOGINID-CHECK (KAN-185~189) — done, reviewer PASS
-아이디 라이브 중복확인(준비중 placeholder 교체, 닉네임 미러). FC-165 계약·FC-166 백엔드·FC-167 프론트·FC-168 리뷰(PASS, 게이트웨이 배선 처음부터 포함).
-- 엔드포인트 `GET /api/v1/auth/login-id/availability`(permitAll·advisory·최종 AUTH_001). 프론트 공용 `AvailabilityCheck`/`AvailabilityCheckButton` 일반화(닉네임·아이디 공유).
+- 계약: api-contract v1.15→**v1.19**(가용성 2엔드포인트 + 게이팅 문구). 판정=기존 `existsBy...AndIsDeletedFalse` 재사용(조회↔가입 동일경로). advisory 엔드포인트 + 백엔드 409 최종방어 + 프론트 필수 게이팅.
+- 게이트웨이 `auth-rate-limited` predicate 최종: login·signup·refresh·nickname/availability·oauth/**·login-id/availability.
 
-### 단발
-- **FC-158**(KAN-177) 회원가입 소셜버튼 제거(로그인엔 유지) — done, reviewer PASS.
-- **FC-159**(KAN-178) 닉네임 유니크 검토 — 게이트2 **B(유지)** 결정 — done.
-- **FC-164**(KAN-184) oauth `/api/v1/auth/oauth/**` 게이트웨이 rate-limit 배선(선존 gap, FC-163 발견) — done.
-
----
-
-## B. 다음 수 (다음 세션)
-
-1. **★ push(사용자 직접)** — 로컬 10커밋(아래 C). 소켓 정상이면 `! git push`, 아니면 IntelliJ Push([[git-push-headless-resolver-fail]]).
-2. **후속 관찰 3건(비차단, reviewer 지적)**:
-   - **loginId param 완전 누락 통합테스트 1건**(현 `@NotBlank`가 null 400 보장, 안전망 강화용).
-   - **auth 엔드포인트 신설 시 게이트웨이 predicate 등재 = DoD 고정** — 이번 2회 발생(FC-161 MAJOR-1·FC-164). 컨벤션/체크리스트化 검토(consultant 소환 후보).
-   - loginId/nickname **정규화(trim/lowercase) 도입 시 조회·signup 동반 개정** 필수(현재 둘 다 원문·정합).
-3. **라이브 검증**: 회원가입 화면에서 닉네임·아이디 중복확인 버튼 실동작 + 소셜 로그인 닉네임 꼬리표 눈으로 확인(교훈: 라이브 검증까지가 완료).
-
----
+## B. 다음 수 (백로그 — 대기 작업 없음, 사용자 선택)
+1. **관리자 페이지 에픽**(미착수) — 착수 시 **FC-116**(온디맨드 재색인 API+alias 스위치, KAN 미발행) 언블록. 총괄 추천 우선순위 1순위.
+2. **FC-113** 메모/쪽지 기능(회원 간 메시지) — 독립 신규 도메인(todo).
+3. **FC-114** 회원가입 이메일 인증(todo) — ⚠️ **EPIC-EMAIL-VERIFY 이미 done** → stale 의심, cancelled 정리 필요(대조 후).
+4. **FC-151**(KAN-168, blocked) 백엔드 TCP 커넥션 누수 — 재발 시 재개. **kill 전 `Get-NetTCPConnection | Group State,LocalPort,RemotePort` 캡처** 필수.
+5. **리뷰 후속 관찰(비차단)**: loginId param 누락 통합테스트 1건 · auth 엔드포인트 신설 시 게이트웨이 predicate 등재 DoD 고정([[gateway-authroute-ratelimit-dod]]) · loginId/nickname 정규화 도입 시 조회·signup 동반개정.
 
 ## C. Git 상태
-- **origin/master = `2d49760`**(사용자가 push함 — 두 에픽+FC-158/159/164 전부 원격 반영). 이후 **FC-169 커밋 3건 로컬 미push**: `aa87527`(fix 프론트 게이팅)·`2bbacbb`(docs spec v1.19)·(+board docs 커밋). **다음 push는 이 3건.**
-- 규율: 커밋 매번 사용자 승인(이 세션 전부 승인받음). push는 사용자 직접.
+- **origin/master = `1ee6f3a`**, 로컬 동기화(0/0). 이 세션 13커밋 전부 push됨(`.env`~FC-169).
+- 규율: 커밋 매번 사용자 승인(이 세션 전부 승인). push는 사용자 직접(이 세션 소켓 정상, `! git push` 성공).
 
-## C-2. FC-169 (KAN-190) — 회원가입 중복확인 필수 게이팅 · done
-사용자 보고("중복확인 없이 회원가입 뚫림") 수정. advisory→필수 게이팅: 아이디·닉네임 둘 다 available 확인해야 제출, 미확인/중복/값변경 시 차단+안내+포커스, **비동기 경합 가드**(reviewer 1차 MAJOR M1→재작업→PASS), 백엔드 409 최종 방어선 유지. api-contract v1.19.
-
-## 환경·미러
-- **보드↔Jira 정합**: KAN-177~**190** 전부 미러(에픽 2개 KAN-179·185 done, 하위·단발·FC-169 done). 이 세션 상태 전이마다 즉시 미러.
-- **환경 가동 중(세션 말)**: 백엔드 8080(`./gradlew :backend:bootRun` local+`backend/.env`)·프론트 5173(`npm run dev`) background. Docker finalcall 스택 재기동됨. 다음 세션 재기동 시 8080/5173 점유 확인·kill 후. 라이브 스모크 통과(가용성 API·400·403 게이트웨이 강제).
-- **.env**: `backend/.env`(백)·`frontend/.env`(프). 카카오·네이버 키 유지. IntelliJ EnvFile 경로는 `backend/.env`.
-- 함정: `.env` 검증 bash 정본([[env-verify-windows-crlf]]), git push 셸 소켓([[git-push-headless-resolver-fail]]).
+## 환경 기동·상태
+- **백엔드 8080 · 프론트 5173 가동 중**(총괄 background): `./gradlew :backend:bootRun`(local 프로파일 + `backend/.env` 셸 주입·JAVA_HOME=`C:\Users\howee\.jdks\ms-21.0.11`) · `npm run dev`. 다음 세션 재기동 시 8080/5173 점유 확인·kill 후.
+- **Docker finalcall 스택**(mysql·redis·es·kafka·kafka-connect) 재기동됨(14h 전 종료돼 있던 것 → `docker compose -f backend/docker-compose.local.yml up -d`). ※ 별개 `on-race-main-*` 컨테이너 상존(포트 무충돌).
+- **.env**: `backend/.env`·`frontend/.env`(gitignore). 카카오·네이버 키 유지. gradle bootRun은 .env를 **셸 환경변수로 주입**(dotenv 의존 없음) — CRLF strip·빈값 skip 필수([[env-verify-windows-crlf]]). IntelliJ EnvFile 경로는 `backend/.env`.
+- **게이트웨이(8000) 미기동**: 로컬 프론트 검증은 vite 프록시가 8080 직결+X-Gateway-Token 주입(토큰=`finalcall-local-gateway-shared-secret-change-me`, 백/프론트/local yml 3자 일치)이라 게이트웨이 불요. `GATEWAY_INTERNAL_ENFORCED=true`라 토큰 없는 직접 8080 접근은 403.
+- **라이브 스모크 통과**: 닉네임/아이디 가용성 API(true/false)·400 검증·403 게이트웨이 강제·FC-169 게이팅(브라우저 사용자 확인).
 
 ## 이어받는 법 (새 세션)
 1. CLAUDE.md 섹션 8~13(오케스트레이션·게이트·티켓·커밋).
-2. 이 파일 + `git status`(board 커밋 여부) + `git log --oneline -14`(origin=`2d49760`, 로컬은 FC-169 3커밋 앞섬·미push).
-3. 메모리: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`gateway-authroute-ratelimit-dod`.
+2. 이 파일 + `git status`(0/0 예상) + `git log --oneline -14`(origin=`1ee6f3a`).
+3. 메모리: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`env-verify-windows-crlf`·`gateway-authroute-ratelimit-dod`.
 4. **미러 패리티**: KAN-177~190 done 미러 완료.
 
 ## 교훈 (이 세션)
-1. **게이트웨이 배선은 auth 엔드포인트 DoD의 일부**: FC-161이 rate-limit predicate 누락으로 reviewer MAJOR-1 → 재작업. loginId(FC-166)는 처음부터 포함해 재발 없음. "신규 permitAll auth 경로 = 게이트웨이 등재 동반"을 계약 DoD에 고정하라.
-2. **작은 결정도 스키마·인가면 게이트2**: 닉네임 유니크(A→철회→B)는 UK/signup 파급이라 게이트2로 수렴. 사용자가 표시 노출을 근거로 B 선택.
-3. **패턴 미러는 공용화 기회**: 아이디 중복확인이 닉네임을 그대로 미러 → 프론트가 `AvailabilityCheck`로 일반화(중복 제거).
-4. **advisory 일관성**: 가용성 조회는 예약 아님·UK가 최종 원자 방어 — 코드/프론트/테스트에 일관 반영. 정규화 도입 시 조회·signup 동반 개정.
+1. **게이트웨이 배선 = auth 엔드포인트 DoD**: FC-161 rate-limit predicate 누락→reviewer MAJOR-1→재작업. loginId(FC-166)는 처음부터 포함해 재발 없음. 신규 permitAll auth 경로는 게이트웨이 등재 동반([[gateway-authroute-ratelimit-dod]]).
+2. **작은 결정도 스키마·인가면 게이트2**: 닉네임 유니크(A→철회→B)는 UK/signup 파급이라 게이트2 수렴. 사용자가 표시 노출 근거로 B.
+3. **패턴 미러는 공용화 기회**: 아이디 중복확인이 닉네임 미러 → 프론트 `AvailabilityCheck` 일반화.
+4. **비동기 경합은 리뷰가 잡는다**: FC-169 "값 변경 시 재확인"이 동기 경로만 맞고 in-flight 응답 경합에서 뚫림 → reviewer MAJOR M1. resolve 시점 값비교(ref) 가드로 해소. 상태-비동기 UX는 stale resolve 가드를 기본 점검.
+5. **라이브 검증까지가 완료**: FC-169는 커밋·push 후 브라우저에서 실제 차단 동작을 사용자가 눈으로 확인해 종료.
