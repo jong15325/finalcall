@@ -6,7 +6,10 @@ import {
     signupEmailErrorMessage,
     signupErrorMessage,
 } from '@/features/auth/lib/authErrors'
-import { checkNicknameAvailability } from '@/lib/api/auth'
+import {
+    checkLoginIdAvailability,
+    checkNicknameAvailability,
+} from '@/lib/api/auth'
 import { paths } from '@/app/paths'
 
 /**
@@ -16,11 +19,11 @@ import { paths } from '@/app/paths'
  * ★ 제출 필드 = 필수 3(`loginId·password·nickname`) + **선택 email**(계약 §2·§4.1, FC-137).
  *   email 은 값이 있을 때만 payload 에 포함하고 빈 값이면 생략한다(이메일 없는 계정). 201 후 토큰
  *   미발급이라 자동 로그인하지 않으며(가입 후 로그인 별도), **이메일 인증은 가입 후 별도 화면(F2)**.
- * ★ 닉네임 중복확인은 **라이브 조회**다(FC-162 · 계약 §2 v1.17): 입력→"중복 확인"→가용성 조회→
- *   즉시 피드백. **advisory**라 available:true 여도 제출 시 `AUTH_002`(409)가 최종 권위다.
- * ★ 미구현 자리(백엔드 없음, 미호출): 아이디 중복확인(`/auth/ids/availability` 없음)만 **DOM
- *   `disabled` 준비 중 자리**로 둔다. 소셜(카카오·네이버)은 로그인·가입 통합(find-or-create)이라
- *   회원가입 화면에서는 제공하지 않는다(진입은 로그인 화면 `SocialLoginSection` 한 곳, FC-158).
+ * ★ 아이디·닉네임 중복확인은 모두 **라이브 조회**다(FC-167·FC-162 · 계약 §2 v1.18·v1.17):
+ *   입력→"중복 확인"→가용성 조회→즉시 피드백. **advisory**라 available:true 여도 제출 시
+ *   각각 `AUTH_001`(아이디)·`AUTH_002`(닉네임) 409 가 최종 권위다. 소셜(카카오·네이버)은
+ *   로그인·가입 통합(find-or-create)이라 회원가입 화면에서는 제공하지 않는다(진입은 로그인
+ *   화면 `SocialLoginSection` 한 곳, FC-158).
  * ★ 클라 검증(제출 차단): 비밀번호 확인 불일치 · email 형식(값이 있을 때 `@Email`·≤255).
  *   `<form noValidate>` 로 브라우저 말풍선을 끈다.
  */
@@ -44,31 +47,20 @@ interface SignupFormProps {
  */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** 준비 중 자리 액션 버튼(아이디 중복확인) — 미호출·DOM 비활성. */
-function PendingAction({ label }: { label: string }) {
-    return (
-        <button
-            disabled
-            type="button"
-            aria-disabled="true"
-            title="준비 중입니다"
-            className="flex h-11 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-gray-50 px-3 text-xs font-bold text-gray-400"
-        >
-            {label}
-            <span className="text-[10px] font-medium">준비 중</span>
-        </button>
-    )
-}
+/** 라이브 중복확인 상태 — 입력 변경 시 `idle` 로 초기화(재확인 유도). */
+type AvailabilityCheck = 'idle' | 'checking' | 'available' | 'taken' | 'error'
 
-/** 닉네임 라이브 중복확인 상태 — 입력 변경 시 `idle` 로 초기화(재확인 유도). */
-type NicknameCheck = 'idle' | 'checking' | 'available' | 'taken' | 'error'
-
-/** 닉네임 "중복 확인" 활성 버튼(FC-162). 값이 없거나 조회 중이면 비활성. */
-function NicknameCheckButton({
+/**
+ * "중복 확인" 활성 버튼(아이디·닉네임 공용, FC-167·FC-162). 값이 없거나 조회 중이면 비활성.
+ * `ariaLabel` 로 두 버튼(아이디·닉네임)의 접근성 이름을 구분한다(같은 표시 문구 "중복 확인").
+ */
+function AvailabilityCheckButton({
+    ariaLabel,
     checking,
     disabled,
     onClick,
 }: {
+    ariaLabel: string
     checking: boolean
     disabled: boolean
     onClick: () => void
@@ -76,6 +68,7 @@ function NicknameCheckButton({
     return (
         <button
             type="button"
+            aria-label={ariaLabel}
             disabled={disabled || checking}
             className="flex h-11 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-3 text-xs font-bold text-gray-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-60"
             onClick={onClick}
@@ -91,13 +84,35 @@ export default function SignupForm({
     onSubmit,
 }: SignupFormProps) {
     const [loginId, setLoginId] = useState('')
+    const [loginIdCheck, setLoginIdCheck] = useState<AvailabilityCheck>('idle')
     const [password, setPassword] = useState('')
     const [passwordConfirm, setPasswordConfirm] = useState('')
     const [email, setEmail] = useState('')
     const [nickname, setNickname] = useState('')
-    const [nicknameCheck, setNicknameCheck] = useState<NicknameCheck>('idle')
+    const [nicknameCheck, setNicknameCheck] = useState<AvailabilityCheck>('idle')
 
+    const loginIdTrimmed = loginId.trim()
     const nicknameTrimmed = nickname.trim()
+
+    // 아이디가 바뀌면 직전 확인 결과는 무효 → idle 로 되돌려 재확인을 유도한다.
+    const handleLoginIdChange = (value: string) => {
+        setLoginId(value)
+        setLoginIdCheck('idle')
+    }
+
+    // 라이브 중복확인(계약 §2 v1.18). 제출과 동일하게 트림값으로 조회한다.
+    // advisory 라 여기서 제출을 막지 않는다 — 최종 권위는 제출 시 AUTH_001(409)다.
+    const handleCheckLoginId = async () => {
+        if (loginIdTrimmed.length === 0 || loginIdCheck === 'checking') return
+        setLoginIdCheck('checking')
+        try {
+            const { available } = await checkLoginIdAvailability(loginIdTrimmed)
+            setLoginIdCheck(available ? 'available' : 'taken')
+        } catch {
+            // 400(형식·길이)·네트워크 모두 재시도 안내로 수렴 — 원문 미노출.
+            setLoginIdCheck('error')
+        }
+    }
 
     // 닉네임이 바뀌면 직전 확인 결과는 무효 → idle 로 되돌려 재확인을 유도한다.
     const handleNicknameChange = (value: string) => {
@@ -119,6 +134,18 @@ export default function SignupForm({
             setNicknameCheck('error')
         }
     }
+
+    const loginIdFeedback =
+        loginIdCheck === 'available'
+            ? { text: '사용 가능한 아이디입니다.', tone: 'ok' as const }
+            : loginIdCheck === 'taken'
+              ? { text: '이미 사용 중인 아이디입니다.', tone: 'bad' as const }
+              : loginIdCheck === 'error'
+                ? {
+                      text: '확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                      tone: 'bad' as const,
+                  }
+                : null
 
     const nicknameFeedback =
         nicknameCheck === 'available'
@@ -189,9 +216,33 @@ export default function SignupForm({
                         value={loginId}
                         autoComplete="username"
                         placeholder="로그인에 사용할 아이디"
-                        trailing={<PendingAction label="중복 확인" />}
-                        onChange={setLoginId}
+                        invalid={loginIdCheck === 'taken'}
+                        describedById={
+                            loginIdFeedback ? 'loginIdCheckStatus' : undefined
+                        }
+                        trailing={
+                            <AvailabilityCheckButton
+                                ariaLabel="아이디 중복 확인"
+                                checking={loginIdCheck === 'checking'}
+                                disabled={loginIdTrimmed.length === 0}
+                                onClick={handleCheckLoginId}
+                            />
+                        }
+                        onChange={handleLoginIdChange}
                     />
+                    {/* aria-live: 조회 결과를 보조기기에 알린다(결과가 없으면 빈 영역). */}
+                    <p
+                        id="loginIdCheckStatus"
+                        role="status"
+                        aria-live="polite"
+                        className={`mt-1.5 text-xs ${
+                            loginIdFeedback?.tone === 'ok'
+                                ? 'text-success'
+                                : 'text-danger'
+                        }`}
+                    >
+                        {loginIdFeedback?.text ?? ''}
+                    </p>
                 </div>
 
                 <AuthTextField
@@ -276,7 +327,8 @@ export default function SignupForm({
                             nicknameFeedback ? 'nicknameCheckStatus' : undefined
                         }
                         trailing={
-                            <NicknameCheckButton
+                            <AvailabilityCheckButton
+                                ariaLabel="닉네임 중복 확인"
                                 checking={nicknameCheck === 'checking'}
                                 disabled={nicknameTrimmed.length === 0}
                                 onClick={handleCheckNickname}

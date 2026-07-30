@@ -36,6 +36,12 @@ export interface NicknameAvailabilityResponse {
     available: boolean
 }
 
+/** `GET /auth/login-id/availability` 응답 200 (계약 §2 v1.18). */
+export interface LoginIdAvailabilityResponse {
+    /** `true`=현재 사용 가능 · `false`=사용 중. **advisory**(예약 아님). */
+    available: boolean
+}
+
 /** `POST /auth/login` 요청 (계약 §2) */
 export interface LoginRequest {
     loginId: string
@@ -79,6 +85,23 @@ export function checkNicknameAvailability(
     return apiClient.get<NicknameAvailabilityResponse>(
         '/auth/nickname/availability',
         { query: { nickname }, auth: false },
+    )
+}
+
+/**
+ * 아이디(loginId) 가용성 조회 — 라이브 중복확인(계약 §2 v1.18, 비로그인 `permitAll`).
+ *
+ * ★ **advisory**: `available:true` 는 조회 시점 스냅샷일 뿐 **예약이 아니다**(조회~제출 사이 선점
+ *   TOCTOU 가능). 최종 권위는 제출 시 signup 의 `AUTH_001`(409)다 — 폼은 available:true 여도
+ *   제출 시 409 를 그대로 처리한다(`signupErrorMessage` 재사용).
+ * 실패: 형식·길이 위반 400(신규 도메인 에러코드 없음, 계약 §2). 닉네임 가용성과 대칭.
+ */
+export function checkLoginIdAvailability(
+    loginId: string,
+): Promise<LoginIdAvailabilityResponse> {
+    return apiClient.get<LoginIdAvailabilityResponse>(
+        '/auth/login-id/availability',
+        { query: { loginId }, auth: false },
     )
 }
 
