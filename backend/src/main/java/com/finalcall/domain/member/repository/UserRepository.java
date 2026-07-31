@@ -28,6 +28,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /** 닉네임 중복 검사(가입, AUTH_002) — 활성 회원만 대상(재가입 허용). */
     boolean existsByNicknameAndIsDeletedFalse(String nickname);
 
+    /** 닉네임으로 활성 회원 조회(메모 수신자 정규화, R1·MEMO_001) — 탈퇴행 제외(D-081). */
+    Optional<User> findByNicknameAndIsDeletedFalse(String nickname);
+
     /** 로그인 아이디로 활성 회원 조회(로그인·refresh) — 탈퇴행 제외로 다건 반환을 방지한다. */
     Optional<User> findByLoginIdAndIsDeletedFalse(String loginId);
 
