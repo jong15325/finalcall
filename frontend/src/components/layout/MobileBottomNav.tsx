@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router'
+import { paths } from '@/app/paths'
+import { useUnreadMemoCount } from '@/lib/queries/memos'
 import { mobileNav } from './navItems'
 
 /**
@@ -10,6 +12,9 @@ import { mobileNav } from './navItems'
  * ★ 준비 중(ready=false) 항목은 **`disabled` 버튼** — opacity 만의 비활성 금지(WCAG 4.1.2).
  */
 function MobileBottomNav() {
+    const { data: unreadMemo } = useUnreadMemoCount()
+    const unreadCount = unreadMemo?.count ?? 0
+
     return (
         <nav
             aria-label="모바일 주요 메뉴"
@@ -34,6 +39,8 @@ function MobileBottomNav() {
                         </button>
                     )
                 }
+                const showBadge =
+                    item.to === paths.messages && unreadCount > 0
                 return (
                     <NavLink
                         key={item.label}
@@ -45,7 +52,14 @@ function MobileBottomNav() {
                             }`
                         }
                     >
-                        {Icon && <Icon aria-hidden className="size-6" />}
+                        <span className="relative">
+                            {Icon && <Icon aria-hidden className="size-6" />}
+                            {showBadge && (
+                                <span className="absolute -right-2 -top-1 grid min-w-[15px] place-items-center rounded-full bg-orange px-1 text-[9px] font-bold leading-[15px] text-white tabular-nums">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )}
+                        </span>
                         <span>{item.label}</span>
                     </NavLink>
                 )

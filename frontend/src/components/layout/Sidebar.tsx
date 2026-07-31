@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { NavLink } from 'react-router'
 import { TbChevronDown, TbHeadset, TbX } from 'react-icons/tb'
 import BrandLogo from '@/components/brand/BrandLogo'
+import { paths } from '@/app/paths'
+import { useUnreadMemoCount } from '@/lib/queries/memos'
 import { sidebarNav } from './navItems'
 import type { NavEntry, NavGroup, NavLeaf } from './navItems'
 
@@ -219,6 +221,7 @@ function renderEntry(
     collapsed: boolean,
     onNavigate: () => void,
     liveAuctionCount?: number,
+    unreadMemoCount?: number,
 ) {
     if (entry.kind === 'group') {
         return (
@@ -236,6 +239,9 @@ function renderEntry(
             <LeafRow
                 leaf={entry}
                 collapsed={collapsed}
+                badge={
+                    entry.to === paths.messages ? unreadMemoCount : undefined
+                }
                 onNavigate={onNavigate}
             />
         </li>
@@ -251,6 +257,10 @@ function Sidebar({
 }: SidebarProps) {
     // 드로어 링크 클릭 시 자동 닫힘(모바일). 데스크톱은 no-op 이어도 무해.
     const onNavigate = () => onCloseMobile()
+
+    // 쪽지 미열람 뱃지(계약 §2.6). 헤더·하단 내비와 같은 쿼리를 키로 공유(dedupe).
+    const { data: unreadMemo } = useUnreadMemoCount()
+    const unreadMemoCount = unreadMemo?.count ?? 0
 
     // 핀 OFF(미고정) 레일에서의 hover/focus 확장(flyout). 마우스·키보드를 각각 추적해
     // 마우스가 떠나도 키보드 포커스가 안에 있으면 닫히지 않는다(접근성). 핀 ON 이면 hover 무시.
@@ -355,6 +365,7 @@ function Sidebar({
                                 railCollapsed,
                                 onNavigate,
                                 liveAuctionCount,
+                                unreadMemoCount,
                             ),
                         )}
                     </ul>

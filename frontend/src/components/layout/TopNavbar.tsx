@@ -5,6 +5,7 @@ import {
     TbCircleCheckFilled,
     TbGavel,
     TbBackpack,
+    TbMail,
     TbChevronRight,
     TbUser,
     TbSettings,
@@ -12,6 +13,7 @@ import {
 } from 'react-icons/tb'
 import useAuth from '@/auth/useAuth'
 import { useMyBalance } from '@/lib/queries/balance'
+import { useUnreadMemoCount } from '@/lib/queries/memos'
 import CodeAmount from '@/components/common/CodeAmount'
 import Dropdown from '@/components/common/Dropdown'
 import { paths } from '@/app/paths'
@@ -36,8 +38,11 @@ interface TopNavbarProps {
 function TopNavbar({ onOpenMobile }: TopNavbarProps) {
     const { authenticated, user, signOut } = useAuth()
     const { data: balance } = useMyBalance()
+    const { data: unreadMemo } = useUnreadMemoCount()
     const { title, icon: PageIcon } = usePageContext()
     const navigate = useNavigate()
+
+    const unreadCount = unreadMemo?.count ?? 0
 
     const handleSignOut = async () => {
         await signOut()
@@ -120,6 +125,26 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                             aria-hidden
                             className="hidden size-4 text-gray-400 sm:block"
                         />
+                    </NavLink>
+                )}
+
+                {/* 쪽지 — 로그인 시, 미열람 뱃지(계약 §2.6) */}
+                {authenticated && (
+                    <NavLink
+                        to={paths.messages}
+                        aria-label={
+                            unreadCount > 0
+                                ? `쪽지 · 안 읽음 ${unreadCount}건`
+                                : '쪽지'
+                        }
+                        className="relative flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+                    >
+                        <TbMail aria-hidden className="size-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -right-0.5 -top-0.5 grid min-w-[16px] place-items-center rounded-full bg-orange px-1 text-[10px] font-bold leading-4 text-white ring-2 ring-surface tabular-nums">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
                     </NavLink>
                 )}
 

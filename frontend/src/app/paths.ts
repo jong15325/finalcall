@@ -29,6 +29,7 @@ export const paths = {
     orders: '/me/orders',
     inventory: '/me/inventory',
     tempStorage: '/me/temp-storage',
+    messages: '/me/messages', // 메모/쪽지 (FC-172 — /me/memos 실기능)
     itemDetail: '/items/:id',
 
     /* 지갑 */

@@ -12,6 +12,7 @@ import {
     TbShoppingBag,
     TbGavel,
     TbMessageCircle,
+    TbMail,
     TbUserCircle,
     TbBuildingStore,
     TbLayoutGrid,
@@ -70,6 +71,13 @@ export const sidebarNav: NavEntry[] = [
     },
     {
         kind: 'leaf',
+        label: '쪽지',
+        to: paths.messages,
+        ready: true,
+        icon: TbMail,
+    },
+    {
+        kind: 'leaf',
         label: '마이페이지',
         to: paths.me,
         ready: true,
@@ -88,5 +96,6 @@ export const mobileNav: NavLeaf[] = [
     { label: '실시간 경매', to: paths.auctions, ready: true, icon: TbGavel },
     { label: '홈', to: paths.home, ready: true, icon: TbHome },
     { label: '인벤토리', to: paths.inventory, ready: true, icon: TbLayoutGrid },
+    { label: '쪽지', to: paths.messages, ready: true, icon: TbMail },
     { label: '마이페이지', to: paths.me, ready: true, icon: TbUserCircle },
 ]

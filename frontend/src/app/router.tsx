@@ -12,6 +12,7 @@ import ComparePage from '@/pages/ComparePage'
 import SellPage from '@/pages/SellPage'
 import MePage from '@/pages/MePage'
 import OrdersPage from '@/pages/OrdersPage'
+import MessagesPage from '@/pages/MessagesPage'
 import InventoryPage from '@/pages/InventoryPage'
 import TempStoragePage from '@/pages/TempStoragePage'
 import ItemDetailPage from '@/pages/ItemDetailPage'
@@ -80,6 +81,10 @@ function AppRoutes() {
                     <Route path={paths.sell} element={<SellPage />} />
                     <Route path={paths.me} element={<MePage />} />
                     <Route path={paths.orders} element={<OrdersPage />} />
+                    <Route
+                        path={paths.messages}
+                        element={<MessagesPage />}
+                    />
                     <Route path={paths.inventory} element={<InventoryPage />} />
                     <Route
                         path={paths.tempStorage}

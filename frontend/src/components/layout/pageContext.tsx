@@ -11,6 +11,7 @@ import {
     TbScale,
     TbBuildingStore,
     TbMessageCircle,
+    TbMail,
     TbCreditCard,
 } from 'react-icons/tb'
 import { paths } from '@/app/paths'
@@ -46,6 +47,7 @@ const table: Array<{ pattern: string; ctx: Ctx }> = [
     },
     { pattern: paths.wallet, ctx: { title: '지갑', icon: TbWallet } },
     { pattern: paths.itemDetail, ctx: { title: '아이템 상세', icon: TbBox } },
+    { pattern: paths.messages, ctx: { title: '쪽지', icon: TbMail } },
     { pattern: paths.me, ctx: { title: '마이페이지', icon: TbUserCircle } },
     {
         pattern: paths.marketDetail,
