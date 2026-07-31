@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.6 | 2026-08-01 | EPIC-MEMO(FC-170) — 회원 간 메모(쪽지) 스키마. **[4.1] `user_memo` 테이블 신설**(게임 `new_sp.user_memo` 계승: sender/receiver = user FK + 닉 스냅샷 정규화 R1·`memo_type` 원 코드값 보존·`memo_level_gender` 분해 저장(sender_level/gender)·`body VARCHAR(120)` 용량 계승·is_read/is_deleted). [5] 인덱스 2종(받은함·보낸함 커서 `(*_id, is_deleted, id DESC)`). [6] Flyway group1-c에 **V20**(현재 최신 V19) 채번 등재. **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 스냅샷 2컬럼·현재 기본값 Lv.1·성별 0(남) (b) 깔끔 원문 저장·게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) 발신 자유 텍스트 + 게임 boundary 28바이트 자동 줄바꿈. 정본 = api-contract §2.6(v1.20)·memo-domain-spec v1.0 |
 | v1.5 | 2026-07-29 | 게이트2(EPIC-OAUTH, FC-152) 승인 반영 — 소셜 로그인(방식 B) 스키마 확정. **[4.1] `user_social_account` 테이블 신설**(id·user_id FK·provider·provider_user_id·created_at, **UK(provider, provider_user_id)** — 소셜 신원 1:1·중복가입 차단·find-or-create 앵커). **[4.1] `user.password_hash`·`login_id` 널 N→Y**(소셜 전용 계정은 둘 다 NULL — 비밀번호 로그인 불가·신원=소셜). 소셜 프로필 이메일 **미저장**(결정 2 — user.email NULL 유지·별도 컬럼 없음 → email_active UK 무충돌). [5] 정합성 제약·[6] Flyway group1에 **V19**(현재 최신 V18) 채번 등재. 정본 = api-contract §2 소셜 로그인 |
 | v1.4 | 2026-07-22 | 게이트2(EPIC-PURCHASE, FC-088) 승인 반영 — 즉시구매(BUYNOW)+거래내역 조회. **스키마 무변경**(신규 테이블·컬럼·마이그레이션·UK 없음). [4.2] `sale_order` 표 아래 승인 반영 주 추가 — semantic 델타만: `auction.result_type=BUYNOW`(종전 정의됨·미사용)가 즉시구매 SOLD 전이에서 **실사용 시작**(마감 SOLD=`BID`), `sale_order (buyer_id)`·`(seller_id)` 인덱스가 거래내역 role 스코프 조회에서 **실사용 시작**. `source_type=AUCTION`·`buy_now_price` 재사용, V14 그대로. 정본 = `purchase-spec.md` v1.0 |
 | v1.3 | 2026-07-21 | 게이트2(EPIC-CLOSING, FC-081) 승인 반영 — 마감·낙찰 정산 코어 스키마 확정. **[4.2] `sale_order`**: `fee_amount` **널→NOT NULL**(SOLD에서만 생성), **`fee_policy_version VARCHAR(10) NOT NULL` 신설**(정책 버전 스냅샷·환불 재현), `(source_type,source_id)` **UK 승격**(이중 SOLD 차단). **`platform_revenue_ledger` 테이블 신설**(게이트2 #4=④-C — 수수료 전용 수익 원장, 정산 1:1 sale_order_id UK, 게임머니 총량 보존 I-H). [2] 엔티티 개요·[5] 인덱스·[6] Flyway(V14) 동기화. `sale_order`는 이 V14에서 최초 생성(종전 group4 이연분). 마감 워커 스캔은 기존 `auction (status, end_at)` 커버 — 신규 인덱스 불요. 근거: 게이트2 승인(2026-07-21), closing-domain-spec v1.0 |
@@ -210,6 +211,26 @@ table `user_social_account` — 소셜 신원 연결(EPIC-OAUTH, 방식 B). 한 
 | created_at | DATETIME(6) | N | | 최초 연결(자동가입) 시각 |
 
 유니크: **(provider, provider_user_id) 복합 UK** — 하나의 소셜 신원이 정확히 한 user에 매핑(find-or-create 조회·중복가입 방지 앵커). `user_id`는 FK 인덱스로 역참조(한 user의 연결 목록). `public_id` 불요(외부 미노출 내부 연결 테이블). soft delete 미보유(연결 회수는 이 에픽 범위 밖). **선택(향후)**: 계정 연결 플로 도입 시 한 user가 동일 provider 이중 연결을 막는 `(user_id, provider)` UK를 검토(현재 find-or-create만이라 불요).
+
+table `user_memo` — 회원 간 메모(쪽지). 게임 원본 `new_sp.user_memo` 계승 네이티브 도메인(EPIC-MEMO, **v1.6 확정·게이트2 승인 2026-08-01**). feature `com.finalcall.domain.memo`, 엔티티 `Memo`. 정본 = `memo-domain-spec.md` v1.0.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| public_id | ULID | N | UK | 외부 노출 식별자(B-004). 상세·삭제 경로 리소스. 대리키라 D-081 패턴 불요 |
+| sender_id | BIGINT | Y | FK→user | 발신 회원. 시스템 메모(게임 발신)·임포트 미매칭은 NULL. 웹 유저 발신은 항상 값 |
+| sender_nickname | VARCHAR(16) | N | | 발신 시점 닉 스냅샷(게임 `char(16)` 계약·닉 변경 대비 R1) |
+| sender_level | INT | Y | | 발신자 레벨 스냅샷(게임 boundary가 `level×100+gender` 재합성). **웹 발신 소스(확정 게이트2 a) = 기본값 1**(user 게임레벨 부재, 향후 실값 교체). 시스템 메모·임포트는 NULL |
+| sender_gender | TINYINT | Y | | 발신자 성별 스냅샷(0/1). **웹 발신 소스(확정 게이트2 a) = 기본값 0(남)**(user 성별 부재, 향후 실값 교체). 시스템 메모·임포트는 NULL |
+| receiver_id | BIGINT | Y | FK→user | 수신 회원. 웹 발신은 항상 값(닉→id 정규화). 임포트 미매칭 대비 NULL 허용 |
+| receiver_nickname | VARCHAR(16) | N | | 수신 시점 닉 스냅샷 |
+| memo_type | INT | N | | 게임 코드값 **원형 보존**(5=USER·0/14=SYSTEM). 문자열 enum 변환 금지(게임 클라 int 읽기) |
+| body | VARCHAR(120) | N | | 본문(게임 `char(120)` 용량 계승). 순수 텍스트 저장·28바이트 고정폭은 boundary(spec §8) |
+| is_read | BOOLEAN | N | | 열람 여부(게임 `memo_state` 0/1). 기본 false |
+| read_at | DATETIME(6) | Y | | 최초 열람 시각 |
+| is_deleted | BOOLEAN | N | | soft delete(게임 `memo_del`). 기본 false. **단일 플래그 — 한쪽 삭제가 양쪽 반영**(게임 계약) |
+| deleted_at | DATETIME(6) | Y | | |
+
+주: `updated_at` 미도입(본문 불변·상태 단방향 전이, `BaseCreatedEntity` 계열 — item_ownership_history 선례). `created_at`=발신 시각(게임 `add_date`). soft delete 자연키 UK 패턴(D-081) 불요(닉 컬럼은 스냅샷이지 UK 아님, public_id는 대리키). `*_id` nullable = 시스템 메모·레거시 임포트 미매칭 수용(finalcall 웹 발신은 항상 채움).
 
 table `user_balance` — 사용자별 잔액(1:1). 잔액 갱신은 원자적(D-008).
 
@@ -466,6 +487,8 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | sale_order | (source_type, source_id) **UK** | 출처 리스팅 역참조 + **동일 경매 이중 SOLD 핸드오프 DB 차단**(v1.3 UK 승격 — 이중 정산 방지, closing-domain-spec §6 I-C) |
 | sale_order | (buyer_id), (seller_id) | 구매/판매 거래 내역 |
 | platform_revenue_ledger | (sale_order_id) **UK** | 정산 1:1 + 수수료 이중 적립 DB 차단(v1.3, I-H). 조회·정합 겸용이라 별도 보조 인덱스 불요(기간 집계는 후속 대시보드 시 `(created_at)` 검토) |
+| user_memo | (receiver_id, is_deleted, id DESC) | 받은함 커서 조회(`receiver_id=me AND is_deleted=false`, id desc 안정정렬) + 미열람 개수 집계 커버(EPIC-MEMO, v1.6) |
+| user_memo | (sender_id, is_deleted, id DESC) | 보낸함 커서 조회(`sender_id=me AND is_deleted=false`, id desc) |
 | charge | (user_id, status) | 사용자 충전 내역·진행 상태 |
 | money_hold | (user_id, status) | 사용자 홀드 합계·해제 대상 조회 |
 | item_ownership_history | (instance_id, transferred_at) | 인스턴스 소유 체인 조회(최초=첫 행) |
@@ -488,6 +511,7 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 1. 사용자·잔액 — user, user_balance (백엔드 `V3__user_and_balance`부터, B-012)
    - 1-a. 자연키 UK 재구성 — 백엔드 `V4__user_natural_key_uk.sql` 실물 채번(backend/033 동기화, D-081). V3가 원본 컬럼 단일 UK(`uk_user_login_id`·`uk_user_nickname`)로 [1] 규약을 위반해 재가입([2.5]·domain-spec [6.1])이 미동작했고, V4가 생성 컬럼 UK(`uk_user_login_id_active`·`uk_user_nickname_active`)로 재구성했다. QA-001(Major) FIX.
    - 1-b. 소셜 신원(EPIC-OAUTH, FC-153) — `user_social_account` 신설 + `user.password_hash`·`login_id` nullable화 = 백엔드 **`V19`**(현재 최신 V18, append-only V1~V18 무편집).
+   - 1-c. 회원 부가·메모(EPIC-MEMO, FC-171) — `user_memo` 신설 + 인덱스 2종(`(receiver_id,is_deleted,id DESC)`·`(sender_id,is_deleted,id DESC)`) = 백엔드 **`V20`**(현재 최신 V19, append-only, 테이블명 `user_memo` 유지). **게이트2 확정(2026-08-01) — 채번 확정**(memo-domain-spec §11).
 2. 화폐 — charge, money_exchange, money_hold (후속 버전 분리)
    - 2-a. `money_exchange` = 백엔드 `V5__money_exchange.sql`. `money_hold`는 입찰과 동일 TX·동일 생명주기라 **group 4의 `bid`와 함께 V11**에 채번한다(아래 4 참조). `charge`는 충전 도메인 착수 시.
 3. 아이템 — item_template, skill_definition, item_instance(+slot_key UK), item_ownership_history, temp_storage + 인덱스 (EPIC-ITEM: 백엔드 V6~V8 채번, FC-020/021/022)

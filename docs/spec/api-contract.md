@@ -24,6 +24,7 @@
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
 | v1.16 | 2026-07-29 | 6절 계약 변경 — 게이트2(EPIC-OAUTH, FC-152) 승인 반영. 네이버·카카오 소셜 로그인(방식 B — 프론트 주도 + 백엔드 교환). **§2 소셜 로그인 subsection 신설** — `POST /api/v1/auth/oauth/{provider}`(provider ∈ naver\|kakao) 단일 엔드포인트 find-or-create, 요청 `{ code, redirectUri }`(state는 프론트 소유 CSRF·백엔드 미검증이라 요청 바디 제외), 응답 = 기존 `LoginResponse` 형상 그대로(**가입·로그인 모두 200**, 신규/기존 비노출 SEC-007). **§5 `AUTH_006`~`AUTH_008` 등재**(미지원 provider 400·인가코드 교환 실패 401·provider 통신 실패 502). 결정 3건(①로그인·가입 통합 ②이메일 비연결=provider+id가 신원키·소셜 이메일 미저장 ③닉네임 유니크 접미사) 반영. 스키마 = erd v1.5(`user_social_account` 신설·`user.password_hash`·`login_id` nullable화, V19). AUTH_005~008 enum 등록 = 구현 티켓(FC-154). |
 | v1.18 | 2026-07-30 | 6절 계약 변경 — EPIC-LOGINID-CHECK(FC-165, 사용자 게이트1 승인 2026-07-30) 반영. **§2 `GET /api/v1/auth/login-id/availability` 신설**(회원가입 아이디 라이브 중복확인용, 닉네임 가용성 v1.17 미러). 인증 불요·permitAll(`/nickname/availability`와 동류 등재), 요청 query `loginId`(형식·길이=signup 규칙 재사용 `@NotBlank`·`@Size(max=50)`), 응답 `{ available: boolean }`(DTO `LoginIdAvailability{Request,Response}`), 판정=`existsByLoginIdAndIsDeletedFalse`(가입 유니크 검사와 단일 경로), advisory·최종 권위는 signup `AUTH_001`(409). **게이트웨이 배선을 계약 DoD 로 명문화** — 이 경로를 엣지 게이트웨이 `auth-rate-limited` `Path=` predicate 에 등재(FC-161 MAJOR-1 재발 방지, backend FC-166 이 코드+게이트웨이 동시 수행). **신규 도메인 에러코드 없음**(형식 위반은 COMMON 검증 400). 응답 형상 불변·스키마 무변경. loginId 는 자격증명이라 열거 민감도가 닉네임보다 높으나 signup `AUTH_001`이 이미 존재를 노출해 새 열거면 없음 — rate limit·응답 최소화 최종 점검 = FC-168(reviewer). 구현 = FC-166(backend)·FC-167(frontend). |
+| v1.20 | 2026-08-01 | EPIC-MEMO(FC-170) — **§2.6 메모/쪽지 신설**(회원 간 쪽지, 게임 `new_sp.user_memo` 계승 네이티브 도메인). 엔드포인트 6종(`POST /me/memos` 발신·`GET /me/memos/received`·`/sent` 커서·`/unread-count`·`GET /me/memos/{id}` 상세+읽음 전이·`DELETE /me/memos/{id}` soft delete), 전건 인증·`/me` 접두·주체 SecurityContext·발신 type=5 서버 고정(시스템 메모 사칭 차단). 당사자만 조회라 상대 닉 **비마스킹**, 레벨·성별 **분해 노출**(게임 패킹 int·28바이트 패딩은 게임 boundary 전용·웹 미노출). **§5 `MEMO_001`~`004` 등재**(수신자 없음 404·메모 없음 404·당사자 아님 403·자기 발신 422). 스키마 = erd v1.6(`user_memo` 신설·V20). **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 메모 스냅샷 2컬럼·현재 기본값 `senderLevel=1`·`senderGender=0`(남) (b) 깔끔 원문 저장 + 게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) **발신 = 자유 텍스트 단일 필드 + 게임 boundary 28바이트 자동 줄바꿈(필수)·프론트 미리보기 필수**. 정본 `memo-domain-spec.md` v1.0. 구현 = FC-171(backend)·FC-172(frontend). |
 | v1.19 | 2026-07-30 | 6절 계약 변경 — 회원가입 중복확인 필수 게이팅 반영(FC-169, 사용자 결정 2026-07-30). **§2 `nickname/availability`·`login-id/availability` 두 조항의 프론트 제출 동작 문구만 정정** — 종전 "프론트는 `available:true`여도 제출 시 409 처리(제출 비차단 advisory)"를 "프론트는 회원가입 제출 전 아이디·닉네임 **중복확인(available) 완료를 필수 전제로 요구**(미확인·중복·확인 후 값변경 시 제출 차단·재확인 유도), **백엔드 409(`AUTH_001`/`AUTH_002`)는 최종 방어선으로 유지**"로 변경. **엔드포인트 자체는 여전히 advisory**(예약·스냅샷 아님)임은 유지. **엔드포인트 계약(경로·응답·검증·에러코드) 전부 불변** — 프론트 동작 서술만 정정. erd·타 절 무변경. |
 | v1.17 | 2026-07-30 | 6절 계약 변경 — EPIC-NICKNAME-UX(FC-160, 사용자 게이트1 승인 2026-07-30) 반영. **§2 `GET /api/v1/auth/nickname/availability` 신설**(회원가입 라이브 중복확인용, 인증 불요·permitAll, 응답 `{ available: boolean }`, 판정=`existsByNicknameAndIsDeletedFalse` 재사용으로 유니크 검사와 단일 경로, advisory·최종 권위는 signup `AUTH_002`). **§2 소셜 최초가입 닉네임 정책 개정** — "provider 표시명 + **항상** 무작위 꼬리표(`_XXXX`)"(종전 "UK 충돌 시에만 접미사"에서 개정, 예 `홍길동_A3F9`). 닉네임 **유니크 제약·중복검사 로직 무변경**(FC-159 결정 B, `nickname_active` UK V4 유지) — 조회 API 추가 + 소셜 부여 방식만 손댐. **신규 도메인 에러코드 없음**(형식 위반은 COMMON 검증 400). 응답 형상 불변. 도메인 규칙 정본 = domain-spec §6.1. 구현 = FC-161(backend)·FC-162(frontend), 열거·rate limit 점검 = FC-163(reviewer). |
 | v1.15 | 2026-07-25 | 6절 계약 변경 — 게이트2(EPIC-EMAIL-VERIFY, 8항목) 승인 반영(2026-07-24): **회원가입 이메일 인증 도입.** **§2 signup 요청에 `email` 선택 필드 추가**(`{ loginId, password, nickname, email? }`, `@Email`·≤255, 미제공 시 이메일 없는 계정 생성 — 응답 201 무변경). **§2 이메일 엔드포인트 3종 신설**(모두 인증 필요·주체=SecurityContext·`/me` 접두): `PUT /api/v1/me/email`(이메일 설정/변경, verified 재초기화·pending 코드 폐기)·`POST /api/v1/me/email/verification-request`(6자리 코드 발송, 202)·`POST /api/v1/me/email/verify`(코드 확인, 200). **§2.5 GET·PATCH `/me` 응답에 `emailVerified`(bool)·`emailMasked`(string, nullable) 추가**(3상태 미설정/미인증/인증완료 구분, 이메일 원문 미노출). **§5 `EMAIL_001`~`EMAIL_007` 등재**(코드 불일치·만료·시도초과·쿨다운·이미인증·미설정·이미사용중). 이메일 유니크 = 활성 회원 기준(`email_active` 생성컬럼 UK, NULL 제외 — Flyway V17). 코드 저장 = Redis TTL+SHA-256(정책 만료10분·쿨다운60초·시도5회·6자리). 발송 = 네이버 SMTP 465 SSL(로컬 스킵+로그·운영 fail-fast). 정본 `email-verify-spec.md` v0.1. 구현 = EPIC-EMAIL-VERIFY 하위(backend/frontend). |
@@ -216,6 +217,48 @@
 - 차단 조건: 진행 중 경매(판매자)·홀드 보유 입찰·미완료 주문이 하나라도 있으면 `MEMBER_002`(409). 잔액 잔존은 **차단 사유가 아니다**(D-080).
 - 재가입: login_id·nickname 재사용 허용(domain-spec §6.1, erd 1절 soft delete UK 규약)
 - 에러: `MEMBER_002` 진행 중 거래 보유(409), 400(동의 누락), 401(미인증)
+
+### 2.6 메모/쪽지 (memo) — EPIC-MEMO, v1.20(게이트2 확정 2026-08-01)
+
+회원 간 메모(쪽지). 게임 인게임 쪽지와 **동일 데이터**를 공유하는 finalcall 네이티브 도메인이다(통합 스키마·단일 정본). 게임 클라 고정 계약(28바이트 고정폭 렌더·`레벨×100+성별` 패킹·`char(16)` 닉네임)은 **게임 boundary 포맷터**로 흡수하고, 아래 웹 API는 **분해된 깔끔한 필드**를 노출한다(패킹 int·패딩 문자열 미노출). 도메인 규칙 정본 = `memo-domain-spec.md` v1.0. **게이트2 4결정(memo-domain-spec §11)은 2026-08-01 사용자 승인으로 확정됐고 아래에 반영됐다.**
+
+전 엔드포인트 **인증 필요**, 주체 = SecurityContext, `/me` 접두(§2.5 회원 리소스 규약과 정합 — IDOR 설계 차단). 발신은 `memo_type`을 서버가 **5(USER)로 고정**한다(클라가 임의 type으로 시스템 메모 0/14를 사칭 불가). 발신자는 요청 바디가 아니라 토큰 주체로만 취한다.
+
+메모는 **당사자(발신자·수신자)만** 조회하므로 상대 닉네임을 **마스킹하지 않고 원문 노출**한다(비당사자 마스킹 §3.3과 성격이 다르다 — 대화 상대를 알아야 함). `senderLevel`·`senderGender`는 분해된 값으로 노출(게임 패킹 int는 boundary 전용).
+
+#### POST /api/v1/me/memos — 발신
+- 인증: 필요(발신자 = 주체)
+- 요청(body): `{ receiverNickname, body }` — `receiverNickname`(`@NotBlank`·≤16, 활성 회원 닉네임)·`body`(`@NotBlank`, **자유 텍스트 단일 필드**, 폭 검증 memo-domain-spec §8.3 **≤112바이트**(`getStringByte` metric: 한글 2·영문숫자 1)). `type`·발신자 필드는 요청에 없다(서버 고정). **본문은 사용자가 수동 개행 없이 자유롭게 입력**하며, 게임 표시용 28바이트 자동 줄바꿈은 게임 boundary가 수행한다(웹 저장은 순수 원문 — 게이트2 (d) 확정, memo-domain-spec §8.3). 프론트 작성 화면은 28바이트 줄바꿈 미리보기를 제공(FC-172).
+- 동작: `receiverNickname`을 활성 회원(`existsByNicknameAndIsDeletedFalse` 재사용)으로 조회해 `receiver_id`로 정규화, `sender_id`=주체, `memo_type`=5, 닉·레벨·성별 스냅샷 저장. **레벨·성별 소스(게이트2 (a) 확정) = 현재 기본값 `senderLevel=1`·`senderGender=0`(남)** — user에 게임 레벨·성별 필드가 아직 없어 기본값을 채운다(향후 user 게임필드 도입 시 실값 교체). 저장은 분해 컬럼, 게임 boundary가 `레벨×100+성별` 재합성.
+- 응답 201: `{ memoPublicId, createdAt }`
+- 에러: `MEMO_001` 수신자 없음(404), `MEMO_004` 자기 발신 불가(422), 검증 400, 401
+
+#### GET /api/v1/me/memos/received — 받은함(커서)
+- 인증: 필요. 요청(query): `?cursor=<opaque>&size=<n>`(§1.3 cursor)
+- 응답 200: `CursorResponse<MemoSummary>` — `receiver_id=주체 AND is_deleted=false`, `id desc` 정렬. `MemoSummary` = `{ memoPublicId, type, senderNickname, senderLevel, senderGender, bodyPreview, isRead, createdAt }`(목록은 본문 미리보기 `bodyPreview`).
+- 에러: 401
+
+#### GET /api/v1/me/memos/sent — 보낸함(커서)
+- 인증: 필요. 요청(query): `?cursor=&size=`
+- 응답 200: `CursorResponse<MemoSummary>` — `sender_id=주체 AND is_deleted=false`, `id desc`. 보낸함 `MemoSummary`는 상대가 수신자이므로 `receiverNickname`을 싣는다(sender 필드 자리에 receiver 노출).
+- 에러: 401
+
+#### GET /api/v1/me/memos/unread-count — 미열람 개수
+- 인증: 필요
+- 응답 200: `{ count }` — `receiver_id=주체 AND is_deleted=false AND is_read=false` 카운트(뱃지용).
+- 에러: 401
+
+#### GET /api/v1/me/memos/{memoPublicId} — 상세 열람(+읽음 전이)
+- 인증: 필요. 당사자(sender_id 또는 receiver_id=주체)만.
+- 동작: **호출자가 수신자이고 미열람이면** `is_read=true`·`read_at=now`로 1회 전이(보낸함 열람은 전이 없음).
+- 응답 200: `MemoResponse` = `{ memoPublicId, type, senderNickname, senderLevel, senderGender, receiverNickname, body, isRead, readAt?, createdAt }`
+- 에러: `MEMO_002` 메모 없음(404), `MEMO_003` 당사자 아님(403), 401. (열거 민감 시 타인 메모를 404로 통일할지 reviewer FC-173 확인 — 초안 404/403 구분)
+
+#### DELETE /api/v1/me/memos/{memoPublicId} — 삭제(soft)
+- 인증: 필요. 당사자만.
+- 동작: soft delete(`is_deleted=true`·`deleted_at=now`). **게임 `memo_del` 단일 플래그 계승** — 한쪽 삭제가 양쪽 박스에서 사라진다(당사자별 개별 삭제는 범위 밖, memo-domain-spec §4.2).
+- 응답 204
+- 에러: `MEMO_002` 메모 없음(404), `MEMO_003` 당사자 아님(403), 401
 
 ---
 
@@ -634,6 +677,10 @@ GET /api/v1/admin/search/reindex/{jobId} — 재색인 job 상태 조회
 | AUTH_008 | 소셜 provider 통신 실패(토큰·userinfo 조회·타임아웃, §2 OAuth) | 502 |
 | MEMBER_001 | 닉네임 중복(프로필 수정, §2.5) | 409 |
 | MEMBER_002 | 진행 중 거래 보유로 탈퇴 불가(§2.5) | 409 |
+| MEMO_001 | 수신자(닉네임) 없음 — 활성 회원 아님(§2.6 발신) | 404 |
+| MEMO_002 | 메모 없음(존재하지 않는 public_id, §2.6) | 404 |
+| MEMO_003 | 당사자 아님(남의 메모 열람·삭제, IDOR, §2.6) | 403 |
+| MEMO_004 | 자기 자신에게 발신 불가(§2.6) | 422 |
 | EMAIL_001 | 인증 코드 불일치(§2 이메일 인증) | 422 |
 | EMAIL_002 | 코드 만료·미발송(존재 여부 비노출 통일) | 422 |
 | EMAIL_003 | 시도 횟수 초과(코드 폐기) | 429 |
