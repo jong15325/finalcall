@@ -1,38 +1,30 @@
-import { useEffect, useId, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { Link } from 'react-router'
-import { TbArchive, TbLayoutGrid, TbLock } from 'react-icons/tb'
-import { paths } from '@/app/paths'
 import ItemFrame from '@/features/item/components/ItemFrame'
-import ItemSkillSummary from '@/features/item/components/ItemSkillSummary'
 import { deriveItemSummaryArt } from '@/features/item/lib/itemSummary'
 import type { InventoryItem } from '@/lib/api/inventory'
 import './InventorySlotGrid.css'
 
 /**
- * 인벤토리 슬롯 그리드 (FC-076 — 목업 `.mycard-window`/`.mycard-grid`/`.mycard-tabs` · design-brief B-9).
+ * 인벤토리 슬롯 그리드 (FC-076 → FC-177 개편 — 아이템 마켓과 동형 전체폭 영역).
  *
- * ★ **구조 = 목업 그대로, 색 = 브랜드 토큰**(§2.9). 목업의 Vuexy 퍼플(`#7367f0`)은 템플릿 잔재라
- *   복제하지 않고 장터 팔레트(navy·gold·orange)로 치환한다. DOM 치수(6열·174px 행·24칸/페이지)는 유지.
- * ★ **capacity·used 는 서버값이 정본**(계약 §4.2). 슬롯 확장으로 capacity 를 늘리지 않는다 —
- *   확장(`POST /inventory/expansions`)은 백엔드가 없어 **비활성 자리**(미호출)로만 둔다.
- * ★ 목업 카테고리 탭(정령카드/아바타)은 계약 데이터가 없어 **드롭** — 중립 "전체 아이템" 자리만 남긴다.
- * ★ 슬롯 번호는 **1-based** 로 배치한다(목업 표시 규약과 일치). 채운 슬롯은 `slotNo` 로 자리를 잡고,
- *   빈 슬롯은 번호만 표시한다. used===0 이면 빈 상태 안내 + 임시보관 링크를 함께 보인다.
- * ★ 그리드는 **반응형 열 수**(모바일 2 `<sm` · 태블릿 3 `sm`~`<lg` · PC 6 `≥lg`, FC-086 #1·FC-102).
- *   셀 폭은 **확대 슬롯 폭 96px 로 고정**(`grid-template-columns: repeat(N,96px)`)하고
- *   `justify-center` 로 섹션(≤820px) 중앙 정렬한다 — 늘어나는 `1fr` 을 쓰면 셀이 ~122px 로 벌어져
- *   72×134 아트는 원본 비율을 유지해 슬롯 중앙에 두고, 확대된 여백은 플립 정보 가독성에 사용한다.
- *   고정폭이라 셀 크기가 **뷰포트/페이지·채운·빈 슬롯 구성과 무관하게 결정적**(빈 슬롯 페이지 섹션
- *   수축 붕괴도 원천 차단). 행 높이는 `auto-rows-[178px]` 고정. 섹션 `w-full` 은 유지(무해).
+ * ★ **FC-177 개편**: 좁은 820px 박스·타이틀바·카테고리·확장 자리·페이지 탭을 걷어내고,
+ *   **아이템 마켓(`MarketPage`)과 같은 전체폭 그리드**로 바꾼다(2/3/6열 — 마켓과 동일 반응형).
+ *   헤더·용량 배지·"임시 보관함" 액션은 페이지 셸(`InventoryPage`)이 담당하고, 이 컴포넌트는
+ *   **슬롯 그리드만** 그린다(순수 표시 + 클릭 콜백).
+ * ★ **capacity·used 는 서버값이 정본**(계약 §4.2) — 클라가 파생하지 않는다. 슬롯 1..capacity 를
+ *   `slotNo` 로 채우고 나머지는 빈 슬롯으로 둔다. 페이지네이션은 두지 않는다(승인 목업 = 단일 그리드).
+ * ★ **인벤토리 성격 유지**: 프레임 타일(72×134 아트, 크로마키)·빈 슬롯(번호)·용량. 그리드 셀이
+ *   넓어지므로 프레임은 **원본 비율 그대로 중앙 정렬**한다(아트 왜곡 금지 — 정수배만 확대 가능).
+ * ★ **채운 슬롯 클릭 → 상세 다이얼로그**(부모가 `onItemClick` 으로 받는다). 예전 스킬 플립
+ *   상호작용은 다이얼로그 상세로 흡수해 중복을 제거했다.
  */
-
-const PAGE_SIZE = 24
 
 interface InventorySlotGridProps {
     capacity: number
     used: number
     items: InventoryItem[]
+    /** 채운 슬롯 클릭 콜백(상세 다이얼로그 열기). */
+    onItemClick: (item: InventoryItem) => void
     /** 골드포스 파생 기준 시각(테스트 주입). 기본 Date.now(). */
     now?: number
 }
@@ -41,187 +33,67 @@ function InventorySlotGrid({
     capacity,
     used,
     items,
+    onItemClick,
     now,
 }: InventorySlotGridProps) {
-    const pageCount = Math.max(1, Math.ceil(capacity / PAGE_SIZE))
-    const [page, setPage] = useState(0)
-    const safePage = Math.min(page, pageCount - 1)
-
     // slotNo → 아이템 (1-based 배치). 같은 슬롯 중복은 나중 값이 이긴다(정상 데이터엔 없음).
     const bySlot = new Map<number, InventoryItem>()
     for (const item of items) bySlot.set(item.slotNo, item)
 
-    const firstSlot = safePage * PAGE_SIZE + 1
-    const lastSlot = Math.min(firstSlot + PAGE_SIZE - 1, capacity)
+    const slotCount = Math.max(capacity, used)
     const slotNumbers: number[] = []
-    for (let slot = firstSlot; slot <= lastSlot; slot += 1)
-        slotNumbers.push(slot)
+    for (let slot = 1; slot <= slotCount; slot += 1) slotNumbers.push(slot)
 
     return (
-        <section className="mx-auto w-full max-w-[820px] overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
-            {/* 타이틀 바 — 아이콘 + 이름 + 임시보관 링크(목업 .mycard-title) */}
-            <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
-                <div className="flex items-center gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-navy text-gold-bright">
-                        <TbLayoutGrid aria-hidden className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                        <strong className="block text-base font-bold text-gray-900">
-                            아이템 보관함
-                        </strong>
-                        <small className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                            Inventory storage
-                        </small>
-                    </div>
-                </div>
-                <Link
-                    to={paths.tempStorage}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-orange-subtle px-3 py-2 text-xs font-bold text-orange-deep hover:bg-orange-subtle/70"
-                >
-                    <TbArchive aria-hidden className="size-4" />
-                    임시 보관함
-                </Link>
-            </div>
-
-            {/* 카테고리 — 정령카드/아바타는 계약 데이터 없음 → 드롭. 중립 "전체 아이템" 자리만 */}
-            <div className="border-b border-line px-4 py-2.5">
-                <span className="inline-block rounded-lg bg-navy/5 px-3 py-1.5 text-xs font-bold text-navy">
-                    전체 아이템
-                </span>
-            </div>
-
-            {/* capacity 배지 — 서버값(used/capacity). 확장으로 늘리지 않는다 */}
-            <div className="flex items-center justify-between gap-2 px-4 pt-3">
-                <span className="rounded-full border border-line bg-surface-sunken px-3 py-1.5 text-xs font-bold text-navy">
-                    {used} / {capacity} 사용
-                </span>
-                {used === 0 && (
-                    <span className="text-xs text-gray-400">
-                        보유한 아이템이 없습니다.
-                    </span>
-                )}
-            </div>
-
-            {/* 슬롯 그리드 — 반응형 2/3/6열(모바일<sm·태블릿 sm~<lg·PC≥lg). 셀 폭=확대 슬롯 96px
-                고정 + justify-center 중앙 정렬 → 원본 아트 중앙 정렬·페이지 불변, FC-086 #1·FC-102 */}
-            <div className="p-4">
-                <ul
-                    className="grid auto-rows-[178px] justify-center gap-2.5 [grid-template-columns:repeat(2,96px)] sm:[grid-template-columns:repeat(3,96px)] lg:[grid-template-columns:repeat(6,96px)]"
-                    aria-label={`인벤토리 슬롯 ${firstSlot}–${lastSlot}`}
-                >
-                    {slotNumbers.map((slotNo) => {
-                        const item = bySlot.get(slotNo)
-                        return (
-                            <li key={slotNo}>
-                                {item ? (
-                                    <FilledSlot item={item} now={now} />
-                                ) : (
-                                    <EmptySlot slotNo={slotNo} />
-                                )}
-                            </li>
-                        )
-                    })}
-                </ul>
-            </div>
-
-            {/* 슬롯 확장 — 백엔드 미구현(§5) → 비활성 자리(미호출). capacity 불변 */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3">
-                <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
-                    <TbLock aria-hidden className="size-3.5" />
-                    슬롯 확장은 준비 중입니다.
-                </span>
-                <button
-                    disabled
-                    type="button"
-                    aria-disabled="true"
-                    title="슬롯 확장은 준비 중입니다"
-                    className="shrink-0 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-400"
-                >
-                    슬롯 확장
-                </button>
-            </div>
-
-            {/* 페이지 탭 — 24칸/페이지(목업 .mycard-tabs). 한 페이지면 감춘다 */}
-            {pageCount > 1 && (
-                <nav
-                    aria-label="인벤토리 슬롯 페이지"
-                    className="grid border-t border-line"
-                    style={{
-                        gridTemplateColumns: `repeat(${pageCount}, minmax(0, 1fr))`,
-                    }}
-                >
-                    {Array.from({ length: pageCount }, (_, index) => {
-                        const start = index * PAGE_SIZE + 1
-                        const end = Math.min(start + PAGE_SIZE - 1, capacity)
-                        const active = index === safePage
-                        return (
-                            <button
-                                key={index}
-                                type="button"
-                                aria-pressed={active}
-                                aria-label={`슬롯 ${start}번부터 ${end}번`}
-                                className={`relative border-e border-line py-3 text-center text-xs font-bold last:border-e-0 ${
-                                    active
-                                        ? 'bg-orange-subtle/40 text-orange-deep'
-                                        : 'text-gray-500 hover:bg-gray-50'
-                                }`}
-                                onClick={() => setPage(index)}
-                            >
-                                {active && (
-                                    <span
-                                        aria-hidden
-                                        className="absolute inset-x-4 top-0 h-0.5 rounded-b bg-orange"
-                                    />
-                                )}
-                                {index === 0
-                                    ? '기본 슬롯'
-                                    : `추가 슬롯${index}`}
-                            </button>
-                        )
-                    })}
-                </nav>
-            )}
-        </section>
+        <ul
+            aria-label="인벤토리 슬롯"
+            className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
+        >
+            {slotNumbers.map((slotNo) => {
+                const item = bySlot.get(slotNo)
+                return (
+                    <li key={slotNo}>
+                        {item ? (
+                            <FilledSlot
+                                item={item}
+                                now={now}
+                                onClick={onItemClick}
+                            />
+                        ) : (
+                            <EmptySlot slotNo={slotNo} />
+                        )}
+                    </li>
+                )
+            })}
+        </ul>
     )
 }
 
 /**
- * 채운 슬롯 — 72×134 프레임을 **공용 스프라이트 스테이지**(다크 아웃라인) 박스에 담는다(§4).
+ * 채운 슬롯 — 72×134 프레임을 공용 스프라이트 스테이지(다크 아웃라인) 박스에 담는다.
  *
- * ★ **이미지 중심**(FC-102): 하단 이름 라벨을 제거하고, 스테이지 박스를 곧 슬롯 셀로 삼아
- *   여백(패딩·갭) 없이 셀에 꽉 채운다. 프레임(72×134)은 셀보다 좁으므로 중앙에 두고 다크
- *   아웃라인이 셀 폭을 메운다 — 프레임 아트 비율(72×134·크로마키)은 불변(외부 셀 크기로만 정합).
- *   이름은 링크 `aria-label` 로만 접근성 노출한다.
- * ★ 셀 높이는 그리드 `auto-rows-[178px]` 가 정본(모든 페이지 동일) — 슬롯은 `h-full` 로 채운다.
- *   hover 확대(zoom)·슬롯 밖 팝은 `.inv-slot` 스코프 CSS(InventorySlotGrid.css)가 담당한다.
+ * ★ 셀이 마켓 카드처럼 넓어져도 프레임(72×134)은 **원본 크기로 중앙 정렬**된다(다크 스테이지가
+ *   셀 폭을 메운다) — 아트 비율·크로마키는 불변. hover 확대(zoom)는 `.inv-slot` 스코프 CSS.
+ * ★ 이름은 링크 텍스트 없이 `aria-label` 로만 접근성 노출한다(이미지 중심, FC-102 계승).
+ * ★ 슬롯 전체가 상세 다이얼로그를 여는 버튼이다(클릭 → `onClick(item)`).
  */
-/**
- * ★ **disclosure 패턴**(M1) — 스킬 뒷면은 **토글 버튼의 자손이 아니라** 형제 region 이다.
- *   ARIA `button` 롤은 자손을 presentational 로 지우므로, 스킬 텍스트를 버튼 안에 두면
- *   스크린리더가 영구히 못 읽는다. 그래서 버튼은 비어 있는 오버레이 토글이고, 앞/뒷면은 별도
- *   `region`(id)로 두어 `aria-controls`/`aria-expanded` 로 연결한다. 펼침(`flipped`) 시 뒷면만
- *   접근성 트리에 노출(`aria-hidden`/`inert` 로 반대 면을 잠금)해 SR 이 스킬1·2 를 읽는다.
- * ★ 시각 플립(hover/터치·키보드 `focus-visible`)·Escape 닫기·96×178 슬롯은 CSS 가 유지한다.
- */
-function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
+function FilledSlot({
+    item,
+    now,
+    onClick,
+}: {
+    item: InventoryItem
+    now?: number
+    onClick: (item: InventoryItem) => void
+}) {
     const { art, hasSkill } = deriveItemSummaryArt(item.summary)
     const name = item.summary.displayName
-    const [flipped, setFlipped] = useState(false)
-    const skillsId = useId()
-
-    useEffect(() => {
-        if (!flipped) return
-        const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setFlipped(false)
-        }
-        window.addEventListener('keydown', closeOnEscape)
-        return () => window.removeEventListener('keydown', closeOnEscape)
-    }, [flipped])
 
     return (
-        <div
-            className={`inv-slot inv-slot-flip item-sprite-stage h-full w-full border border-line transition-[border-color,box-shadow] hover:border-navy hover:shadow-md ${hasSkill ? 'is-enabled' : ''}`.trim()}
-            data-flipped={flipped}
+        <button
+            type="button"
+            aria-label={`${name} Lv.${item.summary.level} 상세 보기`}
+            className="inv-slot item-sprite-stage flex h-[168px] w-full items-center justify-center rounded-xl border border-line p-0 transition-[border-color,box-shadow] hover:border-navy hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
             style={
                 art?.src
                     ? ({
@@ -229,71 +101,39 @@ function FilledSlot({ item, now }: { item: InventoryItem; now?: number }) {
                       } as CSSProperties)
                     : undefined
             }
+            onClick={() => onClick(item)}
         >
-            <div className="inv-slot-flip__inner">
-                <div
-                    className="inv-slot-flip__face inv-slot-flip__front"
-                    aria-hidden={flipped}
-                    inert={flipped}
-                >
-                    <ItemFrame
-                        imageUrl={art?.src}
-                        spriteUrl={art?.src}
-                        name={name}
-                        visual={{
-                            goldforceExpireAt: item.summary.goldforceExpireAt,
-                        }}
-                        hasSkill={hasSkill}
-                        size="frame"
-                        now={now}
-                    />
-                </div>
-                {hasSkill && (
-                    <div
-                        id={skillsId}
-                        className="inv-slot-flip__face inv-slot-flip__back"
-                        aria-hidden={!flipped}
-                        inert={!flipped}
-                    >
-                        <ItemSkillSummary
-                            showSlotLabels
-                            skill1={item.summary.skill1Code}
-                            skill2={item.summary.skill2Code}
-                            skillPercent={item.summary.skillPercent}
-                            className="inv-slot-flip__skills"
-                        />
-                    </div>
-                )}
-            </div>
-            {hasSkill && (
-                <button
-                    type="button"
-                    className="inv-slot-flip__trigger"
-                    aria-label={`${name} 스킬 ${flipped ? '닫기' : '보기'}`}
-                    aria-expanded={flipped}
-                    aria-controls={skillsId}
-                    onClick={() => setFlipped((value) => !value)}
-                />
-            )}
-        </div>
+            <ItemFrame
+                imageUrl={art?.src}
+                spriteUrl={art?.src}
+                name={name}
+                visual={{
+                    goldforceExpireAt: item.summary.goldforceExpireAt,
+                }}
+                hasSkill={hasSkill}
+                size="frame"
+                now={now}
+            />
+        </button>
     )
 }
-/** 빈 슬롯 — 번호만(목업 .mycard-slot.is-empty). 상호작용 없음. 셀 높이는 그리드 auto-rows(h-full) 정합. */
+
+/** 빈 슬롯 — 번호만. 상호작용 없음. 채운 슬롯과 같은 높이(h-[168px]). */
 function EmptySlot({ slotNo }: { slotNo: number }) {
     return (
         <div
             aria-label={`빈 슬롯 ${slotNo}`}
-            className="relative flex h-full w-full items-center justify-center border border-dashed border-line bg-surface-sunken"
+            className="relative flex h-[168px] w-full items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
         >
             <span
                 aria-hidden
-                className="flex size-10 items-center justify-center bg-gray-100 text-2xl font-light text-gray-300"
+                className="flex size-10 items-center justify-center rounded-lg bg-gray-100 text-2xl font-light text-gray-300"
             >
                 +
             </span>
             <span
                 aria-hidden
-                className="absolute bottom-1.5 right-2 text-[9px] font-bold text-gray-300"
+                className="absolute bottom-2 right-2.5 text-[10px] font-bold text-gray-300"
             >
                 {String(slotNo).padStart(2, '0')}
             </span>

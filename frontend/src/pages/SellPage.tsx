@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { TbAlertTriangle, TbArchiveOff, TbTag } from 'react-icons/tb'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import { TbAlertTriangle, TbArchiveOff, TbLock, TbTag } from 'react-icons/tb'
 import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
 import ItemFrame from '@/features/item/components/ItemFrame'
 import SellFeeEstimate from '@/features/auction/components/SellFeeEstimate'
@@ -9,6 +9,7 @@ import SellConfirmDialog from '@/features/auction/components/SellConfirmDialog'
 import ShopSellConfirmDialog from '@/features/shop/components/ShopSellConfirmDialog'
 import { itemArt } from '@/features/item/lib/itemArt'
 import { decodeTypeCode, itemTypeLabel } from '@/features/item/lib/itemCode'
+import { elementBadgeLabelOf } from '@/features/item/lib/element'
 import { parseAmount, validateSellForm } from '@/features/auction/lib/sellForm'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useCreateAuction } from '@/lib/queries/auctions'
@@ -26,7 +27,10 @@ import type {
  * ══════════════════════════════════════════════════════════════════════════════
  * ★ **경매 축 마지막 화면. 실 API 연동(데모 데이터 없음).**
  * ══════════════════════════════════════════════════════════════════════════════
- *  - 아이템은 `GET /me/inventory` 에서 고른다(빈 인벤토리는 빈상태). 선택 = `itemInstancePublicId`.
+ *  - **FC-177 선점 모드**: 아이템은 인벤토리에서 고른 것을 `?item=<itemInstancePublicId>` URL
+ *    쿼리로 받아 **선점**한다(리로드 생존·마켓 관례). 전체 아이템 picker 그리드는 제거됐다 —
+ *    선점된 아이템만 **잠금 카드**로 상단 고정하고, 바꾸려면 인벤토리로 되돌아간다.
+ *  - `?item` 없거나 무효(인벤토리에 없음)면 **빈 상태**("인벤토리에서 선택")로 유도한다.
  *  - 클라 검증(`validateSellForm`)은 선행 안내일 뿐 — 최종은 서버(`AUCTION_003`·`AUCTION_008`).
  *  - "경매 등록하기" → 검증 통과 시 **확인 다이얼로그**(BidDialog 배선 이식) → `POST /auctions`.
  *  - 수수료는 **예상**만(fee-policy-spec, 정산 시 서버 확정) — `SellFeeEstimate` 가 명시한다.
@@ -60,13 +64,13 @@ type SellMethod = 'auction' | 'shop'
 
 export default function SellPage() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const inventoryQuery = useMyInventory()
     const createMutation = useCreateAuction()
     const createShopMutation = useCreateShop()
 
     const [sellMethod, setSellMethod] = useState<SellMethod>('auction')
 
-    const [selectedId, setSelectedId] = useState<string | null>(null)
     const [startPrice, setStartPrice] = useState('')
     const [buyNowPrice, setBuyNowPrice] = useState('')
     const [startAt, setStartAt] = useState('')
@@ -94,6 +98,20 @@ export default function SellPage() {
         () => inventoryQuery.data?.items ?? [],
         [inventoryQuery.data],
     )
+
+    // ── 선점(FC-177) — `?item` 이 가리키는 인벤토리 아이템만 판매 대상으로 잠근다. ──────────
+    const itemParam = searchParams.get('item')
+    const preemptedItem = useMemo(
+        () =>
+            itemParam
+                ? (items.find(
+                      (item) => item.itemInstancePublicId === itemParam,
+                  ) ?? null)
+                : null,
+        [items, itemParam],
+    )
+    const selectedId = preemptedItem?.itemInstancePublicId ?? null
+
     const parsedStartPrice = parseAmount(startPrice) ?? 0
     const parsedBuyNowPrice = pendingRequest?.buyNowPrice ?? null
     const parsedShopPrice = parseAmount(shopPrice) ?? 0
@@ -101,20 +119,7 @@ export default function SellPage() {
     const errorFor = (field: SellField): string | undefined =>
         errors.find((error) => error.field === field)?.message
 
-    const selectedName = useMemo(() => {
-        const found = items.find(
-            (item) => item.itemInstancePublicId === selectedId,
-        )
-        return found?.summary.displayName ?? ''
-    }, [items, selectedId])
-
-    const handleSelect = (id: string) => {
-        setSelectedId(id)
-        // 아이템을 고르면 아이템 관련 오류만 걷어낸다(다른 필드 오류는 유지).
-        setErrors((current) =>
-            current.filter((error) => error.field !== 'item'),
-        )
-    }
+    const selectedName = preemptedItem?.summary.displayName ?? ''
 
     const handleOpenConfirm = () => {
         const result = validateSellForm({
@@ -245,37 +250,32 @@ export default function SellPage() {
                 />
             )}
 
-            {inventoryQuery.isSuccess && items.length > 0 && (
+            {/* 선점 실패(FC-177) — 아이템이 있는데 `?item` 이 없거나 인벤토리에 없는 경우 */}
+            {inventoryQuery.isSuccess && items.length > 0 && !preemptedItem && (
+                <StateBlock
+                    icon={TbTag}
+                    title="판매할 아이템을 선택하세요"
+                    description="인벤토리에서 판매할 아이템을 눌러 상세에서 '판매하기'를 선택하세요."
+                    action={
+                        <Link
+                            to={paths.inventory}
+                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        >
+                            인벤토리로 가기
+                        </Link>
+                    }
+                />
+            )}
+
+            {inventoryQuery.isSuccess && preemptedItem && (
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
                     {/* 좌: 폼 */}
                     <section className="rounded-2xl border border-line bg-surface p-5 lg:p-6">
-                        {/* 1. 아이템 선택 */}
+                        {/* 1. 판매할 아이템 — 인벤토리에서 선점한 아이템만 잠금 카드로 고정(FC-177) */}
                         <h2 className="text-base font-bold text-gray-900">
-                            1. 아이템 선택
+                            1. 판매할 아이템
                         </h2>
-                        <fieldset
-                            id="sellItemGroup"
-                            className="mt-3"
-                            aria-invalid={
-                                errorFor('item') !== undefined || undefined
-                            }
-                        >
-                            <legend className="sr-only">출품할 아이템</legend>
-                            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
-                                {items.map((item) => (
-                                    <InventoryPickerItem
-                                        key={item.itemInstancePublicId}
-                                        item={item}
-                                        checked={
-                                            selectedId ===
-                                            item.itemInstancePublicId
-                                        }
-                                        onSelect={handleSelect}
-                                    />
-                                ))}
-                            </div>
-                        </fieldset>
-                        <FieldError message={errorFor('item')} />
+                        <PreemptedItemCard item={preemptedItem} />
 
                         {/* 2. 판매 방식 — 목업 §sell "판매 방식"(경매/고정가) */}
                         <h2 className="mt-6 text-base font-bold text-gray-900">
@@ -530,16 +530,13 @@ function MethodOption({
     )
 }
 
-/** 인벤토리 선택 타일 — 목업 `.inventory-item`(라디오 + 아트 + 이름). */
-function InventoryPickerItem({
-    item,
-    checked,
-    onSelect,
-}: {
-    item: InventoryItem
-    checked: boolean
-    onSelect: (id: string) => void
-}) {
+/**
+ * 선점 아이템 잠금 카드 (FC-177 — 목업 `.picked`).
+ *
+ * ★ 인벤토리에서 선택해 넘어온 아이템만 노출한다(전체 picker 그리드 대체). 여기서 바꿀 수 없고,
+ *   "인벤토리에서 다시 선택"으로 인벤토리에 돌아가 다른 아이템을 고른다(선점 = URL 쿼리 정본).
+ */
+function PreemptedItemCard({ item }: { item: InventoryItem }) {
     const axes = decodeTypeCode(item.summary.typeCode)
     const art = itemArt(
         {
@@ -555,22 +552,9 @@ function InventoryPickerItem({
         item.summary.skill1Code !== null || item.summary.skill2Code !== null
 
     return (
-        <label
-            className={`relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border p-2.5 text-center transition-colors ${
-                checked
-                    ? 'border-orange bg-orange-subtle ring-1 ring-orange'
-                    : 'border-line bg-surface hover:border-navy/40'
-            }`}
-        >
-            <input
-                type="radio"
-                name="sellItem"
-                className="sr-only"
-                checked={checked}
-                onChange={() => onSelect(item.itemInstancePublicId)}
-            />
+        <div className="mt-3 flex items-center gap-4 rounded-xl border border-orange bg-orange-subtle p-3">
             <span
-                className="item-sprite-stage flex items-center justify-center rounded-lg px-2"
+                className="item-sprite-stage flex h-[134px] w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg"
                 style={
                     art?.src
                         ? ({
@@ -588,14 +572,31 @@ function InventoryPickerItem({
                     size="frame"
                 />
             </span>
-            <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-gray-700">
-                {item.summary.displayName}
+            <div className="min-w-0 flex-1">
+                <h3 className="truncate text-base font-bold text-gray-900">
+                    {item.summary.displayName}
+                </h3>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <span className="rounded-md bg-surface px-2 py-1 text-[11px] font-bold text-navy">
+                        {elementBadgeLabelOf(axes.element)}
+                    </span>
+                    <span className="rounded-md bg-navy px-2 py-1 text-[11px] font-bold text-white">
+                        {itemTypeLabel(axes.subGroup, axes.kind)} · Lv.
+                        {item.summary.level}
+                    </span>
+                </div>
+                <Link
+                    to={paths.inventory}
+                    className="mt-2 inline-block text-xs font-bold text-orange-deep underline underline-offset-2 hover:text-orange"
+                >
+                    인벤토리에서 다시 선택
+                </Link>
+            </div>
+            <span className="ml-auto hidden shrink-0 items-center gap-1 self-start rounded-full border border-orange bg-surface px-2.5 py-1 text-[11px] font-bold text-orange-deep sm:inline-flex">
+                <TbLock aria-hidden className="size-3" />
+                선점됨
             </span>
-            <span className="text-[10px] text-gray-400">
-                {itemTypeLabel(axes.subGroup, axes.kind)} · Lv.
-                {item.summary.level}
-            </span>
-        </label>
+        </div>
     )
 }
 
