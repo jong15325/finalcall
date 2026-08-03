@@ -69,20 +69,6 @@ export const sidebarNav: NavEntry[] = [
         icon: TbMessageCircle,
         children: [{ label: '자유 게시판', to: paths.community, ready: false }],
     },
-    {
-        kind: 'leaf',
-        label: '쪽지',
-        to: paths.messages,
-        ready: true,
-        icon: TbMail,
-    },
-    {
-        kind: 'leaf',
-        label: '마이페이지',
-        to: paths.me,
-        ready: true,
-        icon: TbUserCircle,
-    },
 ]
 
 /** 모바일 하단 내비(HANDOVER §5.3). 순서 고정. */

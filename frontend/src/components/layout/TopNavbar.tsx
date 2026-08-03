@@ -107,11 +107,11 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                     </NavLink>
                 )}
 
-                {/* 보유 코드 — 로그인 시 */}
+                {/* 보유 코드 — 로그인 시. 모바일(phone)에서는 숨김(상단 혼잡 완화), sm↑ 노출 */}
                 {authenticated && (
                     <NavLink
                         to={paths.wallet}
-                        className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5 hover:border-gold"
+                        className="hidden items-center gap-2 rounded-full border border-line px-3 py-1.5 hover:border-gold sm:flex"
                     >
                         <span className="hidden text-[11px] font-semibold text-gray-400 sm:block">
                             보유 코드
