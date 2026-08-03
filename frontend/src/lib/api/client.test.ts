@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuthStore } from '@/store/authStore'
 import { ERROR_CODES } from '@/types/errorCodes'
 import { apiClient } from './client'
+import { resetSession } from './session'
 import { ApiError, isApiError } from './errors'
 import type { Mock } from 'vitest'
 
@@ -291,6 +292,117 @@ describe('401 refresh 회전 (계약 §2)', () => {
         // 로그인 실패(AUTH_003)는 정상 신호다. 여기서 회전하면 refresh → 401 → refresh 로 돈다.
         expect(error.code).toBe(ERROR_CODES.AUTH_003)
         expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('FC-174 — refresh 세대 가드 (defect B, spec §3.4)', () => {
+    it('T2: 계정 전환 뒤 착지한 stale refresh 결과는 store 에 쓰이지 않는다 (신원 오귀속 차단)', async () => {
+        signIn() // demo1: access-1 / refresh-1
+
+        let releaseRefresh: (res: Response) => void = () => {}
+        let refreshRequested = false
+
+        fetchMock.mockImplementation(async (url: string) => {
+            const u = String(url)
+            if (u.includes('/auth/refresh')) {
+                refreshRequested = true
+                // demo1 의 refresh 를 in-flight 로 붙잡아, 착지 전에 계정을 전환시킨다.
+                return new Promise<Response>((resolve) => {
+                    releaseRefresh = resolve
+                })
+            }
+            // 원요청 /me: demo1 토큰이면 만료(401), 그 외(demo2)면 통과.
+            return useAuthStore.getState().accessToken === 'access-1'
+                ? fail(ERROR_CODES.COMMON_005, 401)
+                : ok({ nickname: 'demo2' })
+        })
+
+        // demo1 요청 → 401 → refresh in-flight. 아직 await 하지 않는다.
+        const pending = apiClient.get('/me')
+        await vi.waitFor(() => expect(refreshRequested).toBe(true))
+
+        // 계정 전환: demo2 세션으로 원자 교체(refreshToken 라인리지 변경).
+        useAuthStore.getState().setSession({
+            accessToken: 'access-2',
+            refreshToken: 'refresh-2',
+            accessExpiresAt: '2026-07-19T03:00:00Z',
+            user: { userPublicId: 'U2', nickname: 'demo2', isAdmin: false },
+        })
+
+        // demo1 의 회전 결과가 뒤늦게 착지 — 가드가 없으면 이게 demo2 토큰을 덮어쓴다.
+        releaseRefresh(
+            ok({
+                accessToken: 'access-1-rotated',
+                refreshToken: 'refresh-1-rotated',
+                accessExpiresAt: '2026-07-19T02:00:00Z',
+            }),
+        )
+        await pending
+
+        const state = useAuthStore.getState()
+        // stale rotate 폐기 — demo2 토큰이 demo1 회전토큰으로 덮이지 않는다.
+        expect(state.accessToken).toBe('access-2')
+        expect(state.refreshToken).toBe('refresh-2')
+        expect(state.user?.nickname).toBe('demo2')
+    })
+
+    it('T3: 세션 리셋은 in-flight refresh 를 무효화해 다음 401 이 새 refresh 를 시작한다', async () => {
+        signIn() // demo1: access-1 / refresh-1
+
+        let refreshCalls = 0
+        let releaseFirstRefresh: (res: Response) => void = () => {}
+
+        fetchMock.mockImplementation(async (url: string) => {
+            const u = String(url)
+            if (u.includes('/auth/refresh')) {
+                refreshCalls += 1
+                if (refreshCalls === 1) {
+                    // 첫 refresh 를 in-flight 로 붙잡는다.
+                    return new Promise<Response>((resolve) => {
+                        releaseFirstRefresh = resolve
+                    })
+                }
+                // 두 번째 refresh(새 세션) — demo2 유효 토큰으로 회전.
+                return ok({
+                    accessToken: 'access-2b',
+                    refreshToken: 'refresh-2b',
+                    accessExpiresAt: '2026-07-19T04:00:00Z',
+                })
+            }
+            // 원요청: 2차 회전 결과(access-2b)일 때만 통과.
+            return useAuthStore.getState().accessToken === 'access-2b'
+                ? ok({ ok: true })
+                : fail(ERROR_CODES.COMMON_005, 401)
+        })
+
+        // demo1 요청 → 401 → refresh#1 in-flight(held).
+        const stalePending = apiClient.get('/me').catch(() => 'aborted')
+        await vi.waitFor(() => expect(refreshCalls).toBe(1))
+
+        // 세션 리셋 → in-flight refresh 무효화. 이어 demo2 세션 심기.
+        resetSession()
+        useAuthStore.getState().setSession({
+            accessToken: 'access-2', // 만료 가정 — mock 은 access-2b 만 통과.
+            refreshToken: 'refresh-2',
+            accessExpiresAt: '2026-07-19T03:00:00Z',
+            user: { userPublicId: 'U2', nickname: 'demo2', isAdmin: false },
+        })
+
+        // demo2 요청 → 401 → **새** refresh#2(이전 프로미스 재사용 안 함) → 회전 → 재시도 성공.
+        await expect(apiClient.get('/me/balance')).resolves.toEqual({ ok: true })
+        expect(refreshCalls).toBe(2)
+
+        // 뒷정리 — 붙잡아둔 refresh#1 을 풀어 프로미스 누수를 막는다(가드가 착지 쓰기를 폐기).
+        releaseFirstRefresh(
+            ok({
+                accessToken: 'stale',
+                refreshToken: 'stale',
+                accessExpiresAt: '2026-07-19T02:00:00Z',
+            }),
+        )
+        await stalePending
+        // demo2 세션이 stale 착지로 오염되지 않는다.
+        expect(useAuthStore.getState().refreshToken).toBe('refresh-2b')
     })
 })
 

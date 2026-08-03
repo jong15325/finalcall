@@ -9,7 +9,7 @@ import WithdrawDialog from '@/features/member/components/WithdrawDialog'
 import MyShopsSection from '@/features/shop/components/MyShopsSection'
 import { useMe, useUpdateNickname, useWithdraw } from '@/lib/queries/me'
 import { useMyBalance } from '@/lib/queries/balance'
-import { useAuthStore } from '@/store/authStore'
+import { resetSession } from '@/lib/api/session'
 
 /**
  * 마이페이지 통합 홈 `/me` (FC-074 — 목업 accountHub('profile')=accountOverview · design-brief B-7).
@@ -21,7 +21,6 @@ import { useAuthStore } from '@/store/authStore'
  */
 export default function MePage() {
     const navigate = useNavigate()
-    const clearSession = useAuthStore((state) => state.clearSession)
 
     const meQuery = useMe()
     const balanceQuery = useMyBalance()
@@ -38,8 +37,9 @@ export default function MePage() {
     const handleWithdraw = () => {
         withdrawMutation.mutate(undefined, {
             onSuccess: () => {
-                // 서버가 이미 세션을 폐기했다 — 로컬도 비우고 공개 홈으로 나간다.
-                clearSession()
+                // 서버가 이미 세션을 폐기했다 — 로컬 세션·캐시(잔액·인벤토리 등 전역키)까지
+                // 원자적으로 비우고 공개 홈으로 나간다(FC-174, spec §3.3).
+                resetSession()
                 navigate(paths.home, { replace: true })
             },
         })

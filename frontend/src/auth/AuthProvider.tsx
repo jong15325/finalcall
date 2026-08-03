@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import AuthContext from './AuthContext'
 import { useAuthStore } from '@/store/authStore'
+import { resetSessionState } from '@/lib/api/session'
 import {
     getMe,
     login as apiLogin,
@@ -32,15 +34,30 @@ function AuthProvider({ children }: AuthProviderProps) {
     const user = useAuthStore((state) => state.user)
     const updateTokens = useAuthStore((state) => state.updateTokens)
     const setUser = useAuthStore((state) => state.setUser)
-    const clearSession = useAuthStore((state) => state.clearSession)
+    const queryClient = useQueryClient()
 
     /*
-     * ★ 토큰을 먼저 심고 `GET /me` 를 부른다 — 계약 §2 로그인 응답에는 **사용자 정보가 없다**
-     *   (토큰 3종뿐). 프로필은 §2.5 의 별도 호출로만 얻는다. `apiClient` 가 스토어에서 토큰을
-     *   읽으므로 순서가 이렇게 강제된다. 비밀번호 로그인·소셜 로그인이 **같은 저장 경로**를 공유한다.
+     * ★★ **세션 전환의 원자 리셋**(FC-174, spec §4.3-a). store 상태 + in-flight refresh 는
+     *    `resetSessionState()`(모듈 브릿지)로, react-query 캐시는 **컨텍스트 클라이언트**로 비운다.
+     *    프로덕션은 App 이 싱글턴을 주입하므로 이 clear 가 곧 싱글턴 clear 이고, 테스트는 주입한
+     *    클라이언트를 그대로 clear 해 캐시 축출을 단언할 수 있다. 비-React refresh 실패 경로만
+     *    브릿지 `resetSession()`(싱글턴 clear)을 쓴다.
+     */
+    const resetSession = useCallback(() => {
+        resetSessionState()
+        queryClient.clear()
+    }, [queryClient])
+
+    /*
+     * ★ 원자화(spec §3.3): 진입 즉시 이전 계정 상태·캐시를 전량 축출 → 새 토큰 심기 →
+     *   새 토큰으로 `GET /me`(계약 §2 로그인 응답엔 사용자 정보가 없다 — 토큰 3종뿐, §2.5 별도 호출) →
+     *   `setUser`. 실패 시 반쪽 세션을 남기지 않고 다시 리셋한다. "새 토큰 + 옛 user/옛 캐시" 공존
+     *   창을 없앤다 — 로그아웃 없이 계정을 갈아끼워도 이전 신원이 새 요청에 새지 않는다.
+     *   비밀번호 로그인·소셜 로그인이 같은 경로를 공유한다.
      */
     const establishSession = useCallback(
         async (tokens: SessionTokens) => {
+            resetSession()
             updateTokens(tokens)
 
             try {
@@ -52,11 +69,11 @@ function AuthProvider({ children }: AuthProviderProps) {
                 })
             } catch (error) {
                 // 프로필 조회가 깨지면 반쪽 세션을 남기지 않는다 — 실패로 되돌린다.
-                clearSession()
+                resetSession()
                 throw error
             }
         },
-        [updateTokens, setUser, clearSession],
+        [resetSession, updateTokens, setUser],
     )
 
     const signIn = useCallback(
@@ -85,10 +102,10 @@ function AuthProvider({ children }: AuthProviderProps) {
             // 서버 저장 refresh 를 폐기해야 로그아웃이 완결된다(SEC-006).
             if (refreshToken) await apiLogout(refreshToken)
         } finally {
-            // 서버 호출이 실패해도 로컬 세션은 반드시 비운다.
-            clearSession()
+            // 서버 호출이 실패해도 로컬 세션·캐시는 반드시 비운다(FC-174 — 전역키 캐시 잔존 차단).
+            resetSession()
         }
-    }, [clearSession])
+    }, [resetSession])
 
     const value = useMemo<AuthContextValue>(
         () => ({

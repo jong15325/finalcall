@@ -3,9 +3,9 @@ import { ERROR_CODES } from '@/types/errorCodes'
 import { ApiError, networkError, normalizeErrorResponse } from './errors'
 import {
     applyRotatedTokens,
-    clearSession,
     getAccessToken,
     getRefreshToken,
+    resetSession,
 } from './session'
 import type { ApiEnvelope } from '@/types/api'
 import type { SessionTokens } from '@/store/authStore'
@@ -141,10 +141,29 @@ async function rawFetch(
  */
 let refreshPromise: Promise<void> | null = null
 
+/**
+ * ★★ **세션 세대(epoch)** — 세션 리셋(로그아웃·계정 전환·refresh 실패)마다 증가한다(FC-174).
+ *  refresh 는 비동기라 시작 시점과 착지 시점 사이에 세션이 바뀔 수 있다. 이 카운터로
+ *  (i) stale 착지가 자기 promise 를 다시 null 로 만들어 새 세션의 in-flight 를 지우는 사고와,
+ *  (ii) finally 의 promise 정리 대상 오인을 막는다.
+ */
+let refreshEpoch = 0
+
+/**
+ * 세션 리셋 시 in-flight refresh 를 무효화한다(spec §3.4).
+ * epoch 을 올려 진행 중이던 single-flight 가 다음 요청에 재사용되지 않게 하고,
+ * 그 refresh 가 나중에 착지해도 `refreshPromise` 정리 대상이 어긋나지 않게 한다.
+ */
+export function invalidateRefresh(): void {
+    refreshEpoch += 1
+    refreshPromise = null
+}
+
 async function performRefresh(): Promise<void> {
-    const refreshToken = getRefreshToken()
-    if (!refreshToken) {
-        clearSession()
+    // ★ 세대 가드용 라인리지 캡처 — 착지 시점에 이 값이 그대로여야 rotate 결과를 신뢰한다(spec §3.4).
+    const startedRefreshToken = getRefreshToken()
+    if (!startedRefreshToken) {
+        resetSession()
         throw new ApiError({
             code: ERROR_CODES.AUTH_004,
             message: '세션이 없습니다. 다시 로그인해 주세요.',
@@ -153,24 +172,35 @@ async function performRefresh(): Promise<void> {
     }
 
     const res = await rawFetch('/auth/refresh', 'POST', {
-        body: { refreshToken },
+        body: { refreshToken: startedRefreshToken },
         auth: false,
     })
 
     try {
         // 응답: { accessToken, refreshToken(회전된 신규), accessExpiresAt } — 계약 §2
-        applyRotatedTokens(await unwrap<SessionTokens>(res))
+        const rotated = await unwrap<SessionTokens>(res)
+
+        // ★★ 세대 가드: 착지 시점의 refreshToken 이 시작 때와 다르면(그 사이 로그아웃·계정 전환으로
+        //    세션이 리셋/교체됨) 이 회전 결과는 **이전 계정 것**이다 — store 에 쓰지 않고 조용히 폐기한다.
+        //    쓰면 새 세션 토큰을 이전 계정 회전토큰으로 덮어써 신원이 뒤바뀐다(defect ii, spec §1.2).
+        if (getRefreshToken() !== startedRefreshToken) return
+
+        applyRotatedTokens(rotated)
     } catch (error) {
-        // AUTH_004 등 refresh 실패 → 세션 정리 후 재로그인 유도(계약 §2)
-        clearSession()
+        // AUTH_004 등 refresh 실패 → 세션 소멸이므로 캐시까지 리셋(계약 §2, spec §3.3).
+        // 단, 이미 세션이 바뀐 뒤 착지한 stale 실패면 **새 세션을 죽이지 않는다**(가드).
+        if (getRefreshToken() === startedRefreshToken) resetSession()
         throw error
     }
 }
 
 function refreshSession(): Promise<void> {
     if (!refreshPromise) {
+        const epoch = refreshEpoch
         refreshPromise = performRefresh().finally(() => {
-            refreshPromise = null
+            // ★ 내 세대의 promise 일 때만 비운다 — 그 사이 세션이 리셋돼 새 refresh 가 걸렸다면
+            //   그 promise 를 건드리지 않는다(spec §3.4).
+            if (refreshEpoch === epoch) refreshPromise = null
         })
     }
     return refreshPromise
@@ -178,7 +208,7 @@ function refreshSession(): Promise<void> {
 
 /** 테스트 전용 — 모듈 싱글턴인 in-flight refresh 를 비운다(테스트 간 누수 차단). */
 export function __resetRefreshStateForTest(): void {
-    refreshPromise = null
+    invalidateRefresh()
 }
 
 /**
