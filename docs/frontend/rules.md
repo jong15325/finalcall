@@ -87,3 +87,37 @@ src/
   이미 파일을 읽어 둠 · 사용자가 "알아서 진행해"라고 함(**그건 집행 재량이지 역할 변경 승인이 아니다**).
 - F가 `frontend/**` 에 쓰는 경우는 없다. F의 쓰기 범위는 `docs/frontend/` 뿐이다(`rules [3.2]`).
 근거: 사용자 지시(2026-07-16) · `rules [9.20]`~`[9.24]` · D-069 · F-004
+
+## 9. 카드 정본 규약 (EPIC-CARD-SYSTEM)
+
+**절 번호가 9인 이유**: 신설은 최대 번호 + 1이다(§8 주석·`templates [13]` append-only). 중요도가 아니라 발번 순이다.
+
+**발단**: 페이지마다 카드 영역을 재구현해 "똑같이"가 매번 다르게 나왔다(사용자 피드백 2026-08-04). 그리드 문자열·모달 chrome·래퍼/오버레이 버튼이 복붙되고(member가 shop을 베낌), prop boolean이 가법으로 누적되며, 소비자가 feature 경계를 가로질러 손을 뻗어(member→shop·shop→auction) 그래프가 얽혔다. 근거·진단 = `docs/common/proposals/card-system-consolidation-proposal-v0.1.md` §1. 이 절은 그 §2.5 규약을 성문화한다.
+
+### 9.1 정본 컴포넌트를 쓴다 (표면 재구현 금지)
+
+- **새 카드/카드정보/그리드 표면은 `item`의 정본 컴포넌트를 쓴다** — `ItemCard`(세로 카드 본체)·`ItemCardTile`(래퍼+전면 오버레이 버튼+비교+footer로 감싼 상호작용 표면)·`CardInfoDialog`(카드정보 모달 셸)·`ItemCardGrid`(반응형 그리드+스켈레톤).
+- **재작성 금지 대상**: `.shop-card` 류 래퍼, `absolute inset-0 z-10` 전면 오버레이 버튼, 그리드 클래스 문자열(`grid grid-cols-… min-[1200px]:grid-cols-…`), 모달 배선(초점트랩·스크롤락·Esc·backdrop), 카드 카피(이름 클램프·가격 줄·스킬 요약)를 페이지·소비자 컴포넌트에서 손으로 다시 쓰지 않는다.
+- **소비자는 얇은 어댑터로 축소한다**: 도메인 요약 → 카드 데이터 매핑 + variant 선택 + slot 주입까지만 한다. 셸·chrome을 소유하지 않는다.
+- **예외 = 진짜 새 *형태***: 가로 경매 카드처럼 렌더트리가 실제로 다른 형태는 별도 컴포넌트로 둔다(정본에 `layout` boolean으로 욱여넣지 않음). 규칙은 "같은 *형태* 표면은 정본을 쓴다"이지 "모든 것을 한 컴포넌트로"가 아니다. 공유는 하위 프리미티브(스킬 요약·가격 줄·상태배지·프레임 아트) 추출로 한다. (proposal §2.4)
+
+### 9.2 카드 크로스 feature 의존은 → `item` 단방향만
+
+- `item`이 유일 카드 커널이다. **`shop`·`auction`·`member` → `item` 단방향 임포트만 허용**한다.
+- **금지**: 역방향·측면 임포트 — `shop→auction`(비교 오버레이), `member→shop`(카드정보 CSS·channelLimit) 등 feature 경계를 가로지르는 카드 관련 임포트. 필요한 공유 자산은 `item`으로 승격해서 소비한다(전역 store는 cross-cutting이라 예외).
+
+### 9.3 맥락 차이는 variant + slot으로 흡수 (boolean 추가 중단)
+
+- 맥락(마켓/인벤토리/내판매 등)이 늘 때 **boolean prop을 추가하지 않는다**. `hidePrice`·`skillFlip` 식 가법 boolean은 prop 폭발의 시작이며 "같은 디자인"이 어느 boolean을 넘겼는지에 갈리게 한다(reviewer FC-178 지적).
+- 대신 **variant(레이아웃·타이포·flip 프리셋) + nullable 값(가격 부재=줄 없음) + slot(`footer`/`overlay`/`detailLink`)**으로 흡수한다. 기존 slot 확장점은 유지하고 boolean 신설만 중단한다.
+- **구매 뮤테이션 등 feature 결합은 공유 셸에 올리지 않는다** — `CardInfoDialog`의 footer 슬롯으로 소비자가 주입한다(FC-178이 포크를 택한 결합을 슬롯 seam으로 해소). (proposal §2.3·§2.4)
+
+### 9.4 강제 방식
+
+- **(a) reviewer 체크리스트(상시·차단성 판정)**: 카드/그리드/모달을 건드리는 티켓 리뷰 시 두 항목을 확인한다 —
+  1. **카드 표면 재구현 여부**: 래퍼·전면 오버레이 버튼·그리드 클래스 문자열·모달 배선을 페이지/소비자가 다시 썼는가(정본을 우회했는가).
+  2. **크로스 임포트 방향**: 카드 관련 임포트가 `→ item` 단방향인가(역방향·측면 임포트가 새로 생겼는가).
+- **(b) ESLint `no-restricted-imports`(nice-to-have·비차단)**: 가능하면 feature→feature 카드 임포트(→`item` 외)를 기계 금지하고 그리드 클래스 재선언을 탐지한다. 도입은 권고이며 미도입이 티켓을 막지 않는다(리뷰어 체크리스트가 정본 강제선).
+- 이 절은 규범 서술이다 — 컴포넌트 구현·통합은 EPIC-CARD-SYSTEM 하위 티켓(T3~T7)에서 하며, 이 절은 그 결과가 발산하지 않도록 하는 규약이다.
+
+근거: `card-system-consolidation-proposal-v0.1.md` §2.5(게이트1 승인 2026-08-04) · FC-180 · consultant 성문화
