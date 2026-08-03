@@ -61,6 +61,11 @@ interface ItemCardProps {
     /** 마켓 카드에서 이미지 스테이지 뒤에 스킬을 표시한다. */
     skillFlip?: boolean
     /**
+     * 가격 줄을 숨긴다(skillFlip 전용·기본 false). 인벤토리처럼 **가격이 없는 맥락**에서 쓴다 —
+     * 마켓 카드는 이 값을 넘기지 않아 형상 불변이다(FC-178).
+     */
+    hidePrice?: boolean
+    /**
      * 정보영역(이미지 아래)을 덮는 상세 링크 오버레이(skillFlip 전용).
      * 정보 컨테이너 안에 렌더돼 레이아웃으로 크기가 잡히므로 이미지 플립 영역을 덮지 않는다(M2).
      * 라우팅은 호출부(ShopCard 등)가 소유한다 — ItemCard 는 링크를 만들지 않는다(§ 상단).
@@ -78,6 +83,7 @@ function ItemCard({
     sellerNickname,
     footer,
     skillFlip = false,
+    hidePrice = false,
     detailLink,
     className = '',
 }: ItemCardProps) {
@@ -215,9 +221,11 @@ function ItemCard({
                         skillPercent={item.skillPercent}
                         className="item-card__market-skills"
                     />
-                    <div className="item-card__market-price">
-                        <CodeAmount value={price} mode="compact" />
-                    </div>
+                    {!hidePrice && (
+                        <div className="item-card__market-price">
+                            <CodeAmount value={price} mode="compact" />
+                        </div>
+                    )}
                     {detailLink}
                 </div>
             ) : (

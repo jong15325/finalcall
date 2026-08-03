@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/react'
 import { Route, Routes, useSearchParams } from 'react-router'
 import InventoryPage from './InventoryPage'
-import { okEnvelope, renderWithProviders, signInForTest } from '@/test/renderWithProviders'
+import {
+    okEnvelope,
+    renderWithProviders,
+    signInForTest,
+} from '@/test/renderWithProviders'
 import type { InventoryItem } from '@/lib/api/inventory'
 import type { Mock } from 'vitest'
 
@@ -70,7 +74,7 @@ describe('InventoryPage (FC-177)', () => {
 
         expect(await screen.findByText('1 / 24 사용')).toBeInTheDocument()
         expect(
-            screen.getByRole('button', { name: '불의 검 Lv.3 상세 보기' }),
+            screen.getByRole('button', { name: '불의 검 카드정보 보기' }),
         ).toBeInTheDocument()
     })
 
@@ -79,7 +83,7 @@ describe('InventoryPage (FC-177)', () => {
         renderInventory()
 
         const slot = await screen.findByRole('button', {
-            name: '불의 검 Lv.3 상세 보기',
+            name: '불의 검 카드정보 보기',
         })
         fireEvent.click(slot)
 
@@ -87,8 +91,8 @@ describe('InventoryPage (FC-177)', () => {
         const dialog = await screen.findByRole('dialog')
         expect(dialog).toHaveAttribute('aria-modal', 'true')
 
-        // 판매하기 → 선점 쿼리로 이동.
-        fireEvent.click(screen.getByRole('button', { name: '판매하기' }))
+        // 판매 등록 → 선점 쿼리로 이동.
+        fireEvent.click(screen.getByRole('button', { name: '판매 등록' }))
         expect(await screen.findByText('SELL item=INST-1')).toBeInTheDocument()
     })
 })

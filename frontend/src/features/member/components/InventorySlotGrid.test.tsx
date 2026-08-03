@@ -54,11 +54,14 @@ describe('<InventorySlotGrid>', () => {
         expect(grid.className).toContain('min-[1200px]:grid-cols-6')
     })
 
-    it('채운 슬롯 클릭 시 onItemClick(item) 을 부른다(이름은 aria-label 로만)', () => {
+    it('채운 슬롯 = 마켓 카드 오버레이 클릭 시 onItemClick(item) 을 부른다(이름은 aria-label 로만)', () => {
         const target = item(1, 'INST-1', '불의 검')
         const { onItemClick } = renderGrid({ used: 1, items: [target] })
-        const slot = screen.getByRole('button', { name: '불의 검 Lv.3 상세 보기' })
-        // 이미지 중심 — 이름을 별도 텍스트 라벨로 렌더하지 않는다(aria-label 접근성만).
+        // FC-178: 채운 슬롯은 마켓 카드 — 오버레이 버튼 aria-label 로 연다(가격/판매자 없음).
+        const slot = screen.getByRole('button', {
+            name: '불의 검 카드정보 보기',
+        })
+        // 이미지·타입 줄 중심 — 이름은 별도 텍스트 라벨이 아니라 aria-label 로만.
         expect(screen.queryByText('불의 검')).toBeNull()
 
         fireEvent.click(slot)
@@ -81,9 +84,7 @@ describe('<InventorySlotGrid>', () => {
 
     it('페이지 탭·확장 버튼은 제거됐다', () => {
         renderGrid({ capacity: 96 })
-        expect(
-            screen.queryByRole('button', { name: '슬롯 확장' }),
-        ).toBeNull()
+        expect(screen.queryByRole('button', { name: '슬롯 확장' })).toBeNull()
         expect(
             screen.queryByRole('navigation', { name: /슬롯 페이지/ }),
         ).toBeNull()
