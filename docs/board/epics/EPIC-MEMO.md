@@ -1,7 +1,7 @@
 ---
 id: EPIC-MEMO
 type: epic
-jira_key: null
+jira_key: KAN-191
 title: 메모/쪽지 (게임 호환 네이티브 도메인)
 state: done
 children: [FC-170, FC-171, FC-172, FC-173]
