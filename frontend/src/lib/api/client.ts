@@ -159,8 +159,26 @@ export function invalidateRefresh(): void {
     refreshPromise = null
 }
 
+/**
+ * 착지한 refresh 가 **이전 세션 것**인지(=stale) 판정한다(spec §3.4, 이중 가드).
+ * 시작 시점 대비 (i) 세대(epoch)가 올랐거나 — `invalidateRefresh()`(로그아웃·refresh 실패·
+ * `resetSession`)로 세션이 명시 리셋됨 — (ii) refreshToken 라인리지가 바뀌었으면(계정 전환으로
+ * store 가 직접 교체됨) stale 이다. 세대를 우선 판정으로 두어 값 동일성 단독 의존을 제거한다.
+ */
+function isStaleRefresh(
+    startedEpoch: number,
+    startedRefreshToken: string,
+): boolean {
+    return (
+        refreshEpoch !== startedEpoch ||
+        getRefreshToken() !== startedRefreshToken
+    )
+}
+
 async function performRefresh(): Promise<void> {
-    // ★ 세대 가드용 라인리지 캡처 — 착지 시점에 이 값이 그대로여야 rotate 결과를 신뢰한다(spec §3.4).
+    // ★ 세대 가드용 캡처 — 착지 시점에 세대(epoch)·라인리지(refreshToken)가 모두 그대로여야
+    //   rotate 결과를 신뢰한다(spec §3.4). 세션 리셋/전환은 둘 중 하나 이상을 바꾼다.
+    const startedEpoch = refreshEpoch
     const startedRefreshToken = getRefreshToken()
     if (!startedRefreshToken) {
         resetSession()
@@ -180,16 +198,16 @@ async function performRefresh(): Promise<void> {
         // 응답: { accessToken, refreshToken(회전된 신규), accessExpiresAt } — 계약 §2
         const rotated = await unwrap<SessionTokens>(res)
 
-        // ★★ 세대 가드: 착지 시점의 refreshToken 이 시작 때와 다르면(그 사이 로그아웃·계정 전환으로
-        //    세션이 리셋/교체됨) 이 회전 결과는 **이전 계정 것**이다 — store 에 쓰지 않고 조용히 폐기한다.
-        //    쓰면 새 세션 토큰을 이전 계정 회전토큰으로 덮어써 신원이 뒤바뀐다(defect ii, spec §1.2).
-        if (getRefreshToken() !== startedRefreshToken) return
+        // ★★ 세대 가드(이중): 그 사이 세션이 리셋(epoch↑)됐거나 전환(refreshToken 변경)됐으면
+        //    이 회전 결과는 **이전 세션 것**이다 — store 에 쓰지 않고 조용히 폐기한다. 쓰면 새 세션
+        //    토큰을 이전 계정 회전토큰으로 덮어써 신원이 뒤바뀐다(defect ii, spec §1.2·§3.4).
+        if (isStaleRefresh(startedEpoch, startedRefreshToken)) return
 
         applyRotatedTokens(rotated)
     } catch (error) {
         // AUTH_004 등 refresh 실패 → 세션 소멸이므로 캐시까지 리셋(계약 §2, spec §3.3).
-        // 단, 이미 세션이 바뀐 뒤 착지한 stale 실패면 **새 세션을 죽이지 않는다**(가드).
-        if (getRefreshToken() === startedRefreshToken) resetSession()
+        // 단, 이미 세션이 리셋/전환된 뒤 착지한 stale 실패면 **새 세션을 죽이지 않는다**(가드).
+        if (!isStaleRefresh(startedEpoch, startedRefreshToken)) resetSession()
         throw error
     }
 }

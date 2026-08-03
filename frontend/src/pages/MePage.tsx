@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { TbAlertTriangle, TbChevronRight, TbReceipt } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ProfileCard from '@/features/member/components/ProfileCard'
@@ -9,7 +10,7 @@ import WithdrawDialog from '@/features/member/components/WithdrawDialog'
 import MyShopsSection from '@/features/shop/components/MyShopsSection'
 import { useMe, useUpdateNickname, useWithdraw } from '@/lib/queries/me'
 import { useMyBalance } from '@/lib/queries/balance'
-import { resetSession } from '@/lib/api/session'
+import { resetSessionState } from '@/lib/api/session'
 
 /**
  * 마이페이지 통합 홈 `/me` (FC-074 — 목업 accountHub('profile')=accountOverview · design-brief B-7).
@@ -21,6 +22,7 @@ import { resetSession } from '@/lib/api/session'
  */
 export default function MePage() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
 
     const meQuery = useMe()
     const balanceQuery = useMyBalance()
@@ -39,7 +41,11 @@ export default function MePage() {
             onSuccess: () => {
                 // 서버가 이미 세션을 폐기했다 — 로컬 세션·캐시(잔액·인벤토리 등 전역키)까지
                 // 원자적으로 비우고 공개 홈으로 나간다(FC-174, spec §3.3).
-                resetSession()
+                // ★ React 핸들러이므로 캐시는 컨텍스트 클라이언트(`useQueryClient()`)로 축출한다
+                //   (AuthProvider 와 동일 배선, spec §4.3-a). 프로덕션은 App 이 싱글턴을 주입해
+                //   동일 인스턴스이지만, 이 경로가 원칙과 일치하고 테스트로 캐시 축출을 단언할 수 있다.
+                resetSessionState()
+                queryClient.clear()
                 navigate(paths.home, { replace: true })
             },
         })

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuthStore } from '@/store/authStore'
 import { ERROR_CODES } from '@/types/errorCodes'
-import { apiClient } from './client'
+import { apiClient, invalidateRefresh } from './client'
 import { resetSession } from './session'
 import { ApiError, isApiError } from './errors'
 import type { Mock } from 'vitest'
@@ -344,6 +344,48 @@ describe('FC-174 — refresh 세대 가드 (defect B, spec §3.4)', () => {
         expect(state.accessToken).toBe('access-2')
         expect(state.refreshToken).toBe('refresh-2')
         expect(state.user?.nickname).toBe('demo2')
+    })
+
+    it('T2b: 세대(epoch)만 바뀌어도 stale refresh 결과를 폐기한다 (라인리지 동일 — 세대 가드 단독)', async () => {
+        signIn() // demo1: access-1 / refresh-1
+
+        let releaseRefresh: (res: Response) => void = () => {}
+        let refreshRequested = false
+
+        fetchMock.mockImplementation(async (url: string) => {
+            const u = String(url)
+            if (u.includes('/auth/refresh')) {
+                refreshRequested = true
+                return new Promise<Response>((resolve) => {
+                    releaseRefresh = resolve
+                })
+            }
+            // 원요청 /me: access-1(만료) → 401.
+            return fail(ERROR_CODES.COMMON_005, 401)
+        })
+
+        // demo1 요청 → 401 → refresh in-flight(held).
+        const pending = apiClient.get('/me').catch(() => 'aborted')
+        await vi.waitFor(() => expect(refreshRequested).toBe(true))
+
+        // ★ 세션 세대만 올린다 — refreshToken 라인리지(refresh-1)는 store 에 그대로 둔다.
+        //   값 동일성 단독 가드로는 못 잡는 경로다(세대 가드가 잡아야 한다).
+        invalidateRefresh()
+
+        // 회전 결과가 뒤늦게 착지 — 세대가 올랐으므로 폐기돼야 한다.
+        releaseRefresh(
+            ok({
+                accessToken: 'access-1-rotated',
+                refreshToken: 'refresh-1-rotated',
+                accessExpiresAt: '2026-07-19T02:00:00Z',
+            }),
+        )
+        await pending
+
+        const state = useAuthStore.getState()
+        // stale rotate 폐기 — store 는 회전토큰으로 덮이지 않는다(라인리지 동일해도 세대가 다르다).
+        expect(state.accessToken).toBe('access-1')
+        expect(state.refreshToken).toBe('refresh-1')
     })
 
     it('T3: 세션 리셋은 in-flight refresh 를 무효화해 다음 401 이 새 refresh 를 시작한다', async () => {
