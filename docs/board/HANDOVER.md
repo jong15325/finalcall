@@ -1,17 +1,17 @@
 # 총괄(메인 세션) 핸드오버
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-08-04** (EPIC-CARD-SYSTEM 착수 — 카드 컴포넌트 통합. T1·T2·T3 완료·커밋, **T4 착수 직후 사용자 중지 → 다음 세션 재개**. 그 앞 세션분: 메모 라이브검증→세션 신원버그(FC-174/175)·음수정산(FC-176)·인벤토리=마켓카드(FC-177/178) 전건 완료.)
+갱신: **2026-08-04** (EPIC-CARD-SYSTEM 착수 — 카드 컴포넌트 통합. **T1~T4 완료·커밋**, T5·T6 다음 세션. 그 앞 세션분: 메모 라이브검증→세션 신원버그(FC-174/175)·음수정산(FC-176)·인벤토리=마켓카드(FC-177/178) 전건 완료.)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
 
-> ★ **이 세션 경위**: (1) EPIC-MEMO **Jira 백필**(KAN-191~195, 도구 복구). (2) 메모 **라이브 검증** 중 **계정 전환 신원 노출 버그 발견**(demo2로 보낸 쪽지가 sender=demo1 저장) → **FC-174**(세션 원자 리셋+refresh 세대 가드)·**FC-175**(minor 하드닝) 수정·라이브 재검증. (3) 보안 점검(로그인·구매·판매·경매, 대중적 수준) → critical/major 0, 유일 실질결함 **FC-176 음수 정산**(게이트2 B=수수료 클램프) 수정. (4) 판매 UX 개편 — **FC-177**(인벤토리 개편+인벤토리→판매 직접 플로우, /sell?item 선점)·**FC-178**(인벤토리=아이템 마켓 카드정보 모달). (5) 사용자 피드백("카드 재사용이 매번 달라짐") → **EPIC-CARD-SYSTEM**(카드 통합) 게이트1 승인 → **T1**(스킬명 API)·**T2**(카드 규약 rules.md §9)·**T3**(ItemCardGrid 정본+인벤 간격) 완료·커밋. **T4**(CardInfoDialog) 착수 직후 사용자 중지. **다음 수 = push + T4→T5→T6 재개.**
+> ★ **이 세션 경위**: (1) EPIC-MEMO **Jira 백필**(KAN-191~195, 도구 복구). (2) 메모 **라이브 검증** 중 **계정 전환 신원 노출 버그 발견**(demo2로 보낸 쪽지가 sender=demo1 저장) → **FC-174**(세션 원자 리셋+refresh 세대 가드)·**FC-175**(minor 하드닝) 수정·라이브 재검증. (3) 보안 점검(로그인·구매·판매·경매, 대중적 수준) → critical/major 0, 유일 실질결함 **FC-176 음수 정산**(게이트2 B=수수료 클램프) 수정. (4) 판매 UX 개편 — **FC-177**(인벤토리 개편+인벤토리→판매 직접 플로우, /sell?item 선점)·**FC-178**(인벤토리=아이템 마켓 카드정보 모달). (5) 사용자 피드백("카드 재사용이 매번 달라짐") → **EPIC-CARD-SYSTEM**(카드 통합) 게이트1 승인 → **T1**(스킬명 API)·**T2**(카드 규약 rules.md §9)·**T3**(ItemCardGrid 정본+인벤 간격)·**T4**(CardInfoDialog 정본 셸 + Shop/Inventory 리팩터 + CSS·channelLimit shop→item 승격) 완료·커밋. **다음 수 = push + T5→T6.**
 
 ---
 
 ## 지금 어디인가 — 한 문단
 
-**EPIC-CARD-SYSTEM 1차(T1~T3) 완료·커밋, T4 재개 대기.** 카드 영역을 정본 공유 컴포넌트로 통합 중 — 규약(rules.md §9)·정본 그리드(ItemCardGrid, 마켓·경매 픽셀 보존+인벤 gap-2)·스킬명 백엔드 API(ItemSummaryResponse += skill1/2Name)가 done. **T4(CardInfoDialog 정본 셸)는 착수 직후 하네스가 사용자 중지로 종료** — 부분 산출물(신규 셸·CSS/channelLimit 이동·소비자 편집)은 **전부 복구**, 코드는 b69e3e1 상태로 green. origin/master=**`fae437d`**, 로컬 **6 ahead(미push)**. 워킹트리엔 `FC-182.md`(todo 복귀 편집)만.
+**EPIC-CARD-SYSTEM T1~T4 완료·커밋, T5 재개 대기.** 카드 영역을 정본 공유 컴포넌트로 통합 중 — 규약(rules.md §9)·정본 그리드(ItemCardGrid, 마켓·경매 픽셀 보존+인벤 gap-2)·스킬명 백엔드 API(ItemSummaryResponse += skill1/2Name)·**정본 카드정보 모달 셸(CardInfoDialog — Shop/Inventory 포크 흡수, 구매 뮤테이션 footer 슬롯, CSS·channelLimit shop→item 승격)**이 done. (주의: T4는 하네스 'killed' 오보 후에도 실행돼 완료 — 총괄 되돌리기를 에이전트가 재적용, reviewer가 잔재 0·291 테스트 green 확인.) origin/master=**`fae437d`**, 로컬 **8 ahead(미push)**. 워킹트리 clean(커밋 후).
 
 ---
 
@@ -28,6 +28,7 @@
 | **FC-179 (T1)** | 인벤토리 스킬명 API(ItemSummaryResponse += skill1/2Name, api-contract v1.21) | `e71404b` | KAN-201 |
 | **FC-180 (T2)** | 카드 정본 재사용 규약(docs/frontend/rules.md §9) | `b69e3e1` | KAN-203 |
 | **FC-181 (T3)** | ItemCardGrid 정본 + 3그리드 이관 + 인벤 gap-3→gap-2 | `328385a` | KAN-204 |
+| **FC-182 (T4)** | CardInfoDialog 정본 셸 + Shop/Inventory 리팩터 + CSS·channelLimit shop→item 승격 | (T4 커밋) | KAN-205 |
 | (기타) FC-151 | TCP 커넥션 누수 조사 **취소**(재현 불가) | — | KAN-168 완료 |
 | (기타) nav/UI | 좌측 네비 쪽지·마이페이지 제거·모바일 보유코드 숨김 | `697acc8` | — |
 
@@ -36,15 +37,14 @@
 ## B. 다음 수 (재개)
 
 1. **⭐ push(사용자 직접)**: origin=`fae437d` 대비 로컬 **6커밋** 미push — `697acc8`·`291d9d0`·`27c3165`·`e71404b`·`328385a`·`b69e3e1`. `! git push`(실패 시 IntelliJ, [[git-push-headless-resolver-fail]]).
-2. **⭐ EPIC-CARD-SYSTEM 재개(KAN-202)** — 계획 정본 `docs/common/proposals/card-system-consolidation-proposal-v0.1.md`. 직렬 T4→T5→T6:
-   - **T4** FC-182(KAN-205, todo 복귀): `CardInfoDialog` 정본 셸 + Shop/Inventory 포크 리팩터(구매 뮤테이션 footer 슬롯)·CSS/channelLimit shop→item 승격. **위험↑ 모달 a11y·마켓 시각** — 시각 diff·a11y 테스트 게이트. (이번 세션 착수분은 전량 폐기됨, fresh 재실행.)
-   - **T5** FC-183: `ItemCardTile` 정본 + ShopCard/InventoryItemCard 어댑터화 + CardCompareOverlay auction→item 승격. (T4 후)
+2. **⭐ EPIC-CARD-SYSTEM 재개(KAN-202)** — 계획 정본 `docs/common/proposals/card-system-consolidation-proposal-v0.1.md`. T1~T4 done, 직렬 T5→T6 남음:
+   - **T5** FC-183(KAN 미발행): `ItemCardTile` 정본 + ShopCard/InventoryItemCard 어댑터화 + CardCompareOverlay auction→item 승격. (T4 CardInfoDialog·item 커널 기반 위에서)
    - **T6** FC-184: `ItemCard` variant 정비(hidePrice→nullable price·skillFlip→variant) + **스킬명 FE 배선**(T1 API 소비 → 인벤 "스킬 #코드" 해소). (T1·T4·T5 후)
    - T7(경매 카드 프리미티브 추출) 보류.
 3. 백로그(사용자 선택): 게임 아이템 지급 연동 에픽 · 관리자 페이지 에픽(FC-116 언블록) · FC-114 이메일 인증 stale 정리.
 
 ## C. Git 상태
-- **origin/master=`fae437d`**, 로컬 HEAD=`b69e3e1`, **6 ahead·미push**. 워킹트리 = `docs/board/tickets/FC-182.md`(T4 todo 복귀) M 하나뿐.
+- **origin/master=`fae437d`**, 로컬 **8 ahead·미push**(FC-176~178·nav·T1·T3·docs·T4). 워킹트리 clean(T4 커밋 후).
 - 규율: 커밋 매번 사용자 승인(이번 세션 다수 승인). push 사용자 직접([9.3]). **관련 문서는 묶어 커밋**([[commit-consolidation-preference]]).
 
 ## 환경 기동·상태

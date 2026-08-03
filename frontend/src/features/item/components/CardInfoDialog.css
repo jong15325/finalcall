@@ -1,5 +1,10 @@
 /*
- * 카드정보 구매 모달 스타일 (FC-146 재디자인).
+ * 카드정보 모달 스타일 — **정본**(EPIC-CARD-SYSTEM T4 · FC-146 재디자인).
+ *
+ * ★ **위치 승격**: `shop/components/ShopCardInfoDialog.css` → `item`(카드 커널) 이관.
+ *   `CardInfoDialog` 셸이 유일 임포트처이며, Shop/Inventory 소비자는 셸을 통해 이 톤을 공유한다
+ *   (member→shop CSS 교차 임포트 제거 — FE rules §9.2). **클래스명(`.shop-cardinfo*`)은 픽셀
+ *   바이트 동일 보존을 위해 유지**한다(개명은 시각 회귀 리스크라 T4 범위 밖).
  *
  * ★ **게임 비주얼을 버리고 앱 라이트 커머스 문법으로 재설계**한다. 종전(다크 네이비 게임패널·
  *   골드 금속 그라디언트 프레임·베벨)을 전면 걷어내고, 앱 실제 모달 문법(`ShopPurchaseDialog`)에
