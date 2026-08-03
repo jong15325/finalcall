@@ -1,61 +1,67 @@
 # 총괄(메인 세션) 핸드오버
 
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-08-01** (메모/쪽지 에픽 **EPIC-MEMO 전건 완료·리뷰 PASS·보안 clean·커밋·push 완료**. 라이브 검증만 익일 예정, 그 외 대기 없음.)
+갱신: **2026-08-04** (EPIC-CARD-SYSTEM 착수 — 카드 컴포넌트 통합. T1·T2·T3 완료·커밋, **T4 착수 직후 사용자 중지 → 다음 세션 재개**. 그 앞 세션분: 메모 라이브검증→세션 신원버그(FC-174/175)·음수정산(FC-176)·인벤토리=마켓카드(FC-177/178) 전건 완료.)
 
 **재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
 
-> ★ **이 세션 경위**: FC-113(메모/쪽지 백로그) 착수 → 게임 연동 아키텍처 리서치·결정 → **EPIC-MEMO**(FC-170~173)로 구현·완료. (1) 레거시 웹(`KSPWEB-master`)·실게임 DB(`new_sp.user_memo`) 검토 + **전수 조사**(`docs/spec/proposals/game-db-survey.md`), (2) **게이트2급 아키텍처 결정 — finalcall DB가 곧 게임 DB(통합 스키마)·nickname=게임계정·서버 재컴파일 가능/클라 고정·우편함 클레임 패턴**([[game-db-integration-model]]·[[game-memo-byte-format]]), (3) 계약 확정(memo-domain-spec v1.0·api-contract §2.6 v1.20·erd §4.1 V20), (4) 백엔드(FC-171)∥프론트(FC-172) 구현, (5) 디자인 게이트(팔레트 A=navy/gold/orange 확정, [[palette-source-of-truth]]), (6) reviewer(FC-173) **1차 CHANGES-REQUESTED(MAJOR 2)→재작업→재검토 PASS**, (7) 보안 리뷰 clean, (8) 4 atomic 커밋·push. **다음 수 = 라이브 검증(익일) + 백로그(사용자 선택).**
+> ★ **이 세션 경위**: (1) EPIC-MEMO **Jira 백필**(KAN-191~195, 도구 복구). (2) 메모 **라이브 검증** 중 **계정 전환 신원 노출 버그 발견**(demo2로 보낸 쪽지가 sender=demo1 저장) → **FC-174**(세션 원자 리셋+refresh 세대 가드)·**FC-175**(minor 하드닝) 수정·라이브 재검증. (3) 보안 점검(로그인·구매·판매·경매, 대중적 수준) → critical/major 0, 유일 실질결함 **FC-176 음수 정산**(게이트2 B=수수료 클램프) 수정. (4) 판매 UX 개편 — **FC-177**(인벤토리 개편+인벤토리→판매 직접 플로우, /sell?item 선점)·**FC-178**(인벤토리=아이템 마켓 카드정보 모달). (5) 사용자 피드백("카드 재사용이 매번 달라짐") → **EPIC-CARD-SYSTEM**(카드 통합) 게이트1 승인 → **T1**(스킬명 API)·**T2**(카드 규약 rules.md §9)·**T3**(ItemCardGrid 정본+인벤 간격) 완료·커밋. **T4**(CardInfoDialog) 착수 직후 사용자 중지. **다음 수 = push + T4→T5→T6 재개.**
 
 ---
 
 ## 지금 어디인가 — 한 문단
 
-**EPIC-MEMO 전건 완료·push까지 끝. 라이브 검증만 익일 예정.** 회원 간 메모/쪽지를 finalcall 네이티브 도메인으로 구현 — 발신·받은함/보낸함(커서)·상세+읽음전이·삭제, 게임 클라 호환(닉 스냅샷·28바이트 자동 줄바꿈 boundary·레벨/성별 스냅샷 기본 Lv.1·남·`user_memo` V20). origin/master = **`d6a9a43`**, 로컬 동기화(0/0 — `be0ff87` HANDOVER 갱신·`d6a9a43` jira_key 역기록 push 완료). ✅ **Jira 미러 백필 완료**(2026-08-03): KAN-191(에픽)+KAN-192~195(FC-170~173) 생성·Done·Blocks 링크, 보드 `jira_key` 역기록·패리티 일치. 백/프론트 서버는 이 세션에서 재기동 안 함(라이브 검증 시 기동).
+**EPIC-CARD-SYSTEM 1차(T1~T3) 완료·커밋, T4 재개 대기.** 카드 영역을 정본 공유 컴포넌트로 통합 중 — 규약(rules.md §9)·정본 그리드(ItemCardGrid, 마켓·경매 픽셀 보존+인벤 gap-2)·스킬명 백엔드 API(ItemSummaryResponse += skill1/2Name)가 done. **T4(CardInfoDialog 정본 셸)는 착수 직후 하네스가 사용자 중지로 종료** — 부분 산출물(신규 셸·CSS/channelLimit 이동·소비자 편집)은 **전부 복구**, 코드는 b69e3e1 상태로 green. origin/master=**`fae437d`**, 로컬 **6 ahead(미push)**. 워킹트리엔 `FC-182.md`(todo 복귀 편집)만.
 
 ---
 
-## A. 완료 (이 세션) — 전부 done·push (origin=`fbe8ef1`)
+## A. 이번 세션 완료 (전부 done)
 
-| 티켓 | 내용 | 커밋 |
-|---|---|---|
-| FC-170 | 메모 도메인 계약·스키마 확정(게이트2 4결정) | `7c78f32` docs(spec) |
-| FC-171 | 백엔드 도메인(6엔드포인트·바이트 유틸·V20·인가 IDOR 가드) | `6bb8223` feat(memo) |
-| FC-172 | 웹 UI(2단 메신저형·모바일 전환형·안 A 자유입력+28byte 미리보기) | `c03754c` feat(memo) |
-| FC-173 | 통합 리뷰 PASS(1차 MAJOR2→재작업→재검토) | `fbe8ef1` docs(board) |
+| 티켓/에픽 | 내용 | 커밋 | Jira |
+|---|---|---|---|
+| EPIC-MEMO 백필 | KAN-191~195 upsert·Done·링크 | `be0ff87`~`d6a9a43` | 완료 |
+| FC-174 | 계정 전환 세션·캐시 오염 수정(원자 리셋·refresh 세대 가드) | `a37a84d` | KAN-196 |
+| FC-175 | 세션 수정 minor 하드닝(MePage 컨텍스트 clear·세대 가드) | `7c575f2` | KAN-197 |
+| FC-176 | 음수 정산 방지(수수료 판매가 클램프, 게이트2 B) | `fae437d` | KAN-198 |
+| FC-177 | 인벤토리 개편 + 인벤토리→판매 직접 플로우(/sell?item 선점) | `291d9d0` | KAN-199 |
+| FC-178 | 인벤토리=아이템 마켓 카드정보 모달('바로구매'→'판매 등록') | `27c3165` | KAN-200 |
+| **FC-179 (T1)** | 인벤토리 스킬명 API(ItemSummaryResponse += skill1/2Name, api-contract v1.21) | `e71404b` | KAN-201 |
+| **FC-180 (T2)** | 카드 정본 재사용 규약(docs/frontend/rules.md §9) | `b69e3e1` | KAN-203 |
+| **FC-181 (T3)** | ItemCardGrid 정본 + 3그리드 이관 + 인벤 gap-3→gap-2 | `328385a` | KAN-204 |
+| (기타) FC-151 | TCP 커넥션 누수 조사 **취소**(재현 불가) | — | KAN-168 완료 |
+| (기타) nav/UI | 좌측 네비 쪽지·마이페이지 제거·모바일 보유코드 숨김 | `697acc8` | — |
 
-- **게이트2 4결정 확정**: (a) 레벨/성별=메모 스냅샷·기본 Lv.1·남, (b) body 순수 원문 저장·게임출력 시에만 28byte 패딩, (c) `user_memo` 신규+V20, (d) 안 A 자유입력+**28byte 자동 줄바꿈 필수**.
-- **재작업 이력**: MAJOR-1(커서 size 미보정→normalizeSize 이식)·MAJOR-2(발신자 닉 30자→VARCHAR(16) 오버플로→§8.2 16byte 절단) + 인가/전이/경계 테스트 추가.
-- **보안 리뷰 clean**(에픽 완료 직전 온디맨드 1회): IDOR·SQL·XSS·데이터노출 전부 안전.
+- **보안 점검 결과**(보드 미기록·HANDOVER만): 로그인·구매·판매·경매 critical/major 0. minor(로그인 타이밍·게이트웨이 상수시간·availability 열거)는 저신호로 보류. 유일 실질결함=FC-176 처리 완료.
 
-## B. 다음 수 (사용자 선택)
-1. **⭐ 라이브 검증(익일 — 사용자 예정)**: 백엔드 8080·프론트 5173 기동 후 브라우저에서 쪽지 발신/받은함/보낸함/읽음/삭제 확인. "라이브 검증까지가 완료"(지난 세션 교훈).
-2. ~~**Jira 미러 백필**~~ ✅ **완료(2026-08-03)**: KAN-191~195 upsert·Done·Blocks·`jira_key` 역기록([[jira-mirror-discipline]]).
-3. **게임 아이템 지급 연동(신규 에픽 후보)**: 웹 구매→인게임 지급. 이번 에픽의 **우편함 클레임 패턴**을 확장(웹은 지급 대기함에만 기록, 게임이 멱등 claim). 기존 인벤토리 모델(`item_instance.location`)·Kafka 인프라 재사용. 근거 = [[game-db-integration-model]].
-4. **관리자 페이지 에픽**(미착수) — 착수 시 FC-116(재색인 API) 언블록.
-5. **FC-114** 회원가입 이메일 인증(todo) — ⚠️ EPIC-EMAIL-VERIFY 이미 done → stale 의심, cancelled 정리 필요(대조 후).
-6. **FC-151**(blocked) 백엔드 TCP 커넥션 누수 — 재발 시 재개. kill 전 커넥션 캡처 필수.
+## B. 다음 수 (재개)
+
+1. **⭐ push(사용자 직접)**: origin=`fae437d` 대비 로컬 **6커밋** 미push — `697acc8`·`291d9d0`·`27c3165`·`e71404b`·`328385a`·`b69e3e1`. `! git push`(실패 시 IntelliJ, [[git-push-headless-resolver-fail]]).
+2. **⭐ EPIC-CARD-SYSTEM 재개(KAN-202)** — 계획 정본 `docs/common/proposals/card-system-consolidation-proposal-v0.1.md`. 직렬 T4→T5→T6:
+   - **T4** FC-182(KAN-205, todo 복귀): `CardInfoDialog` 정본 셸 + Shop/Inventory 포크 리팩터(구매 뮤테이션 footer 슬롯)·CSS/channelLimit shop→item 승격. **위험↑ 모달 a11y·마켓 시각** — 시각 diff·a11y 테스트 게이트. (이번 세션 착수분은 전량 폐기됨, fresh 재실행.)
+   - **T5** FC-183: `ItemCardTile` 정본 + ShopCard/InventoryItemCard 어댑터화 + CardCompareOverlay auction→item 승격. (T4 후)
+   - **T6** FC-184: `ItemCard` variant 정비(hidePrice→nullable price·skillFlip→variant) + **스킬명 FE 배선**(T1 API 소비 → 인벤 "스킬 #코드" 해소). (T1·T4·T5 후)
+   - T7(경매 카드 프리미티브 추출) 보류.
+3. 백로그(사용자 선택): 게임 아이템 지급 연동 에픽 · 관리자 페이지 에픽(FC-116 언블록) · FC-114 이메일 인증 stale 정리.
 
 ## C. Git 상태
-- **origin/master = `fbe8ef1`**, 로컬 동기화(0/0). 이 세션 4커밋(`7c78f32`~`fbe8ef1`) 전부 push됨.
-- 규율: 커밋 매번 사용자 승인(이 세션 4커밋 승인). push는 사용자 직접(`! git push` 성공).
+- **origin/master=`fae437d`**, 로컬 HEAD=`b69e3e1`, **6 ahead·미push**. 워킹트리 = `docs/board/tickets/FC-182.md`(T4 todo 복귀) M 하나뿐.
+- 규율: 커밋 매번 사용자 승인(이번 세션 다수 승인). push 사용자 직접([9.3]). **관련 문서는 묶어 커밋**([[commit-consolidation-preference]]).
 
 ## 환경 기동·상태
-- **백엔드 8080 · 프론트 5173 = 이 세션 미기동**(익일 라이브 검증 시 기동). 기동법: `./gradlew :backend:bootRun`(local 프로파일 + `backend/.env` 셸 주입·JAVA_HOME=`C:\Users\howee\.jdks\ms-21.0.11`) · `npm run dev`. 8080/5173 점유 확인·kill 후.
-- **게임 DB `new_sp`**: `finalcall-mysql` 컨테이너(3306, root/root)에 상존(`new_sp`·`old_sp`·`sp_2019`·`finalcall`). 이번 세션 전수 조사에 사용. `new_sp.user_memo`=게임 메모 원본(3897행).
-- **Docker finalcall 스택**(mysql·redis·es·kafka): 기동 여부 익일 확인. `docker compose -f backend/docker-compose.local.yml up -d`.
-- **.env**: `backend/.env`·`frontend/.env`(gitignore). CRLF strip·빈값 skip([[env-verify-windows-crlf]]).
-- **게이트웨이(8000) 미기동**: 로컬 프론트 검증은 vite 프록시 8080 직결(X-Gateway-Token 주입). 메모 엔드포인트(`/api/v1/me/memos`)는 `anyRequest().authenticated()`가 커버 — 게이트웨이 신규 배선 불요(게이트웨이 auth-rate-limited는 permitAll 경로만 대상, 메모는 인증 필요라 해당 없음).
+- **백엔드 8080 · 프론트 5173 = 가동 중**(이번 세션 기동, HMR). 기동법: `./gradlew :backend:bootRun`(local + `backend/.env` 셸 주입·JAVA_HOME=`C:\Users\howee\.jdks\ms-21.0.11`) · `frontend`에서 `npm run dev`. env는 CRLF strip·빈값 skip([[env-verify-windows-crlf]]).
+- **Docker finalcall 스택**(mysql 3306·redis 6379·es 9200·kafka 9092·kafka-connect 8083) healthy. `new_sp` 게임 DB도 `finalcall-mysql`에 상존.
+- 브라우저 탭 열려 있음(demo1 로그인). 데모 계정 demo1~demo10 / `demo1234!`(닉: demo1=파랑기사, demo2=홍염상단, demo3=표류대장장이…).
 
 ## 이어받는 법 (새 세션)
 1. CLAUDE.md 섹션 8~13(오케스트레이션·게이트·티켓·커밋).
-2. 이 파일 + `git status`(0/0 예상) + `git log --oneline -6`(origin=`fbe8ef1`).
-3. 메모리(이번 세션 신규): `game-db-integration-model`·`game-memo-byte-format`·`palette-source-of-truth`. 상시: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`env-verify-windows-crlf`·`design-mockup-first`.
-4. **미러 패리티**: ✅ KAN-191~195 백필 완료(2026-08-03)·`jira_key` 역기록·패리티 일치. 추가 대기 없음.
+2. 이 파일 + `git status`(FC-182.md 1건 예상) + `git log --oneline -8`(HEAD=`b69e3e1`, origin=`fae437d`).
+3. **EPIC-CARD-SYSTEM**: 계획 `card-system-consolidation-proposal-v0.1.md`, 규약 `docs/frontend/rules.md §9`. T4(FC-182)부터 재개.
+4. 메모리(이번 세션 신규): `shared-card-components`·`live-verify-multi-account`·`commit-consolidation-preference`. 상시: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`design-mockup-first`·`git-mv-prestage-commit-bleed`.
+5. **미러 패리티**: KAN-191~205 미러됨(EPIC-CARD-SYSTEM=KAN-202 진행중, T4=KAN-205 해야할일). 드리프트 없음.
 
 ## 교훈 (이 세션)
-1. **아키텍처 결정을 리서치로 뒷받침**: 웹구매→인게임지급 패턴을 레퍼런스 조사 후 "우편함 클레임 + 단일 쓰기자"로 정리. "DB 통합"은 절반이고 쓰기 소유자 규칙이 핵심.
-2. **정본 목업 ≠ 실제 앱 색**: 목업 HTML(퍼플/블랙 U-021)이 shipping index.css(navy/gold/orange)와 stale 괴리 → frontend-impl 재작업. 신규 화면 색 정본 = index.css([[palette-source-of-truth]]).
-3. **선택지는 인터랙티브 목업으로**: 입력 방식(자유입력 vs 고정폼)을 28byte 실시간 미리보기 목업으로 보여주고 사용자가 A안 선택.
-4. **리뷰가 슬라이스 사각을 잡는다**: 슬라이스 테스트가 짧은 닉만 써 발신자 닉 오버플로(MAJOR-2)를 못 잡음 → reviewer가 발견, 재작업 시 20자 닉 회귀가드 추가.
-5. **바이트 규칙 동치**: 프론트(코드포인트)↔백엔드(코드유닛) 순회 불일치를 리뷰가 발견 → 백엔드=정본으로 프론트 정렬.
+1. **킬된 에이전트는 부분 산출물을 남긴다.** T4 중지 시 신규 셸 파일 + git mv 파일이동 + 소비자 편집이 워킹트리에 남아 빌드가 깨졌다 — 마감 정리 시 `git status`로 **전수 복구**(rename 원위치·수정 restore·미추적 삭제) 필수([[git-mv-prestage-commit-bleed]]).
+2. **카드 재사용은 정본 공유 컴포넌트로**(EPIC-CARD-SYSTEM) — "똑같이"가 매번 다른 건 페이지마다 재구현 탓([[shared-card-components]]).
+3. **라이브 검증은 계정 전환·신원 격리까지**(FC-174 발견, [[live-verify-multi-account]]).
+4. **스킬명 등 마스터 데이터는 백엔드 단일 원천(SkillDefinition) 노출**, 프론트 enum 복제 금지(게이트2 A).
+5. **가법 계약 델타는 저위험**(ItemSummaryResponse += 스킬명, fetch join 기존이라 N+1 없음).
