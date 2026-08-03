@@ -115,6 +115,28 @@ class ShopPurchaseSettlementIntegrationTest extends ShopTestBase {
     }
 
     @Test
+    void 판매가_클램프_저가_고정가구매는_판매자_잔액을_감소시키지_않는다() {
+        // FC-176: price=1(@Positive 하한) → fee=1(판매가 클램프)·settle=0. 종전엔 fee=100·settle=−99.
+        User seller = persistUser("shop_clamp_s", "판매자", 0L);
+        User buyer = persistUser("shop_clamp_b", "구매자", BALANCE);
+        ItemInstance item = persistListedItem(seller, 9408);
+        long price = 1L;
+        Shop shop = persistActiveShop(seller, item, price, now().plusSeconds(3600));
+
+        long sellerBefore = balanceOf(seller).getGameMoneyBalance();
+        long buyerBefore = balanceOf(buyer).getGameMoneyBalance();
+        long totalBefore = totalGameMoneyPlusRevenue();
+
+        purchaseShop(buyer, shop.getPublicId());
+
+        assertShopSold(shop.getId(), buyer, seller, sellerBefore, buyerBefore, price);
+        assertThat(shopSaleOrders(shop.getId()).get(0).getFeeAmount()).isEqualTo(1L);
+        assertThat(shopSaleOrders(shop.getId()).get(0).getSettleAmount()).isZero();
+        assertThat(balanceOf(seller).getGameMoneyBalance()).isEqualTo(sellerBefore);
+        assertThat(totalGameMoneyPlusRevenue()).isEqualTo(totalBefore);
+    }
+
+    @Test
     void cap_저촉_고액과_최소수수료_저촉_소액_모두_총량이_보존된다() {
         User seller = persistUser("shop_s7", "판매자", 0L);
         User buyer = persistUser("shop_b7", "구매자", BALANCE);

@@ -163,6 +163,28 @@ class PurchaseSettlementIntegrationTest extends PurchaseTestBase {
     }
 
     @Test
+    void 판매가_클램프_저가_즉시구매는_판매자_잔액을_감소시키지_않는다() {
+        // FC-176: buyNow=2(하한 buyNow>startPrice) → fee=2(판매가 클램프)·settle=0. 종전엔 fee=100·settle=−98.
+        User seller = persistUser("buy_clamp_seller", "판매자", 0L);
+        User buyer = persistUser("buy_clamp_buyer", "구매자", BALANCE);
+        ItemInstance item = persistListedItem(seller, 9610);
+        long buyNow = 2L;
+        Auction auction = persistBuyNowAuction(seller, item, 1L, buyNow, now().plusSeconds(3600));
+
+        long sellerBefore = balanceOf(seller).getGameMoneyBalance();
+        long buyerBefore = balanceOf(buyer).getGameMoneyBalance();
+        long totalBefore = totalGameMoneyPlusRevenue();
+
+        purchase(buyer, auction.getPublicId());
+
+        assertBuyNowSold(auction.getId(), buyer, seller, sellerBefore, buyerBefore, buyNow);
+        assertThat(saleOrders(auction.getId()).get(0).getFeeAmount()).isEqualTo(2L);
+        assertThat(saleOrders(auction.getId()).get(0).getSettleAmount()).isZero();
+        assertThat(balanceOf(seller).getGameMoneyBalance()).isEqualTo(sellerBefore);
+        assertThat(totalGameMoneyPlusRevenue()).isEqualTo(totalBefore);
+    }
+
+    @Test
     void cap_저촉_고액과_최소수수료_저촉_소액_모두_총량이_보존된다() {
         User seller = persistUser("buy_cap_seller", "판매자", 0L);
         User buyer = persistUser("buy_cap_buyer", "구매자", BALANCE);

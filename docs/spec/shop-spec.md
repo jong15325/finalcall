@@ -221,6 +221,8 @@ COMMIT
 | **S-G** | 만료 판정 근거는 **락 스냅샷의 최신 end_at**. 무기한(NULL)은 만료 안 됨. 구매(live)·만료(expired) 시간축 배타로 경계 리스팅이 한쪽만 종결 | 조기/이중 만료 |
 | **S-H** | **게임머니 총량 보존** — SOLD 전후 `SUM(game_money_balance) + SUM(platform_revenue_ledger.amount)` 불변. 델타: 구매자 `−price`, 판매자 `+settle`, 원장 `+fee`, `price=settle+fee` ⟹ 합 0. 취소·만료는 금전 이동 0이라 자명 보존 | 게임머니 생성·소멸 |
 
+각주(FC-176, S-B 강화 — 2026-08-03 게이트2 승인): `0 ≤ fee_amount ≤ shop.price` ⟹ **`settle_amount ≥ 0`**. `FeeCalculator` 판매가 클램프(fee-policy-spec §3 5단계)로 소액 리스팅(`shop.price < minFee`, `@Positive` 하한 1)에서도 판매자 잔액이 비감소한다. 계약·형상 변경 없음.
+
 **필수 시나리오(테스트)**:
 1. 정상 구매 — 구매자 −price·판매자 +settle·원장 +fee·아이템 이전·sale_order 1건(source=SHOP). S-A·S-B·S-D·S-E·S-H.
 2. 자기구매 거부(SHOP_SELF_PURCHASE)·잔액부족(SHOP_INSUFFICIENT_BALANCE)·미존재(SHOP_NOT_FOUND).

@@ -110,6 +110,7 @@ COMMIT → 행 락 해제
 | **P-H** | **게임머니 총량 보존** — `SUM(game_money_balance) + SUM(platform_revenue_ledger.amount)` 불변. 델타: 구매자 `−buy_now_price`, 판매자 `+settle`, 원장 `+fee`, `buy_now_price=settle+fee` ⟹ 합 0. 패자 홀드 해제는 held 잠금 해제일 뿐 balance 변화가 없어 총량 무영향 | 게임머니 생성·소멸 |
 
 - **P-F/P-G 비적용**: 즉시구매는 동기 단발 요청이라 워커의 idempotent 재시도(I-F)·소프트클로즈 재검증(I-G)이 없다. 대신 status CAS가 동시 즉시구매·마감 경합에서 단일 승자를 보장한다(P-C).
+- **각주(FC-176, P-B 강화 — 2026-08-03 게이트2 승인)**: `0 ≤ fee_amount ≤ buy_now_price` ⟹ **`settle_amount ≥ 0`**. `FeeCalculator` 판매가 클램프(fee-policy-spec §3 5단계)로 소액 즉시구매(`buy_now_price < minFee`)에서도 판매자 잔액 비감소가 보장된다. 계약·형상 변경 없음.
 
 **필수 시나리오(테스트)**:
 1. 입찰 0건 경매 즉시구매 — 구매자 −buyNow·판매자 +settle·원장 +fee·아이템 이전·sale_order 1건·result_type=BUYNOW. P-A·P-B·P-D·P-E·P-H.

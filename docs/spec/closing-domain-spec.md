@@ -320,6 +320,8 @@ bid-domain-spec §10(I1~I10)을 승계하고, 마감·정산 고유 불변식을
 | **I-G** | `end_at`이 (막판 연장으로) `now`를 넘긴 경매는 마감되지 않는다. 마감 판정 근거는 **락 스냅샷의 최신 end_at**이다 | 연장 무시 조기 마감 |
 | **I-H** | **게임머니 총량 보존** — SOLD TX 전후로 `SUM(user_balance.game_money_balance) + SUM(platform_revenue_ledger.amount)` 가 **불변**. SOLD 델타: 낙찰자 `−final`, 판매자 `+settle`, 원장 `+fee`, 그리고 `final = settle + fee` ⟹ 합 0. `platform_revenue_ledger.sale_order_id` UK가 수수료 이중 적립을 차단해 원장 합이 정산당 정확히 `fee` 1회분만 증가한다. UNSOLD는 금전 이동 0이라 자명 보존 | 게임머니 생성·소멸(무자본 획득 / 수익 누락·이중 적립) |
 
+각주(FC-176, I-B 강화 — 2026-08-03 게이트2 승인): 모든 SOLD 정산에서 `0 ≤ fee_amount ≤ final_price` ⟹ **`settle_amount ≥ 0`**. 판매는 판매자 잔액을 절대 감소시키지 않는다. 소액(`final_price < minFee`) 매물에서 `settle=final_price−minFee`가 음수가 되던 결함은 `FeeCalculator`의 판매가 클램프(`fee = min(fee, final_price)`, fee-policy-spec §3 5단계)로 봉인됐다. 계약·형상 변경 없음.
+
 **필수 시나리오(테스트)**:
 1. SOLD 정상 — 입찰 1건 후 마감 → CAPTURED·판매자 크레딧·소유 이전·sale_order 1건. I-A·I-B·I-D·I-E.
 2. UNSOLD 정상 — 입찰 0건 예약(SCHEDULED)·진행(ACTIVE) 각각 마감 → UNSOLD·아이템 반환·sale_order 0건. I-A·I-E. **SCHEDULED 무입찰 마감 포함(§1.1)**.

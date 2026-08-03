@@ -16,9 +16,14 @@ import lombok.RequiredArgsConstructor;
  *   <li><b>원(=G) 단위 사사오입</b>(round half up) — 누진 합계 산출 직후 한 번만.</li>
  *   <li><b>상한(cap) 클램프</b> — {@code min(rounded, cap)}.</li>
  *   <li><b>최소 클램프</b> — {@code max(capped, minFee)}.</li>
+ *   <li><b>판매가 클램프</b> — {@code min(fee, finalPrice)}. 수수료가 판매가를 넘지 못하게 상한을 씌워
+ *       {@code settle = finalPrice − fee ≥ 0} 을 보장한다(FC-176, fee-policy-spec §3 5단계). {@code minFee} floor
+ *       로 인해 {@code finalPrice < minFee} 인 소액 구간에서만 바인딩되어, 판매가 전액이 수수료·정산 0이 된다.</li>
  * </ol>
- * cap·최소는 <b>계산기 내부</b>에서 클램프한다(fee-policy-spec §7 — 호출부가 아니라 계산기가 단일 책임). 최소와
- * 상한은 값이 겹치지 않아 3·4 순서를 바꿔도 결과가 같으나, 명세 순서를 정본으로 인코딩한다.
+ * cap·최소·판매가 상한은 <b>계산기 내부</b>에서 클램프한다(fee-policy-spec §7 — 호출부가 아니라 계산기가 단일 책임).
+ * cap·최소는 값이 겹치지 않아 3·4 순서를 바꿔도 결과가 같으나, 명세 순서를 정본으로 인코딩한다. 판매가 클램프는
+ * 반드시 최소 클램프 <b>뒤</b>에 와야 한다(순서 유의) — {@code minFee} floor 로 부풀려진 소액 수수료를 판매가로 되눌러야
+ * settle 음수를 막는다.
  *
  * <p>검산(fee-policy-spec §4.1): {@code compute(2_480_000) = 110_200}. 정산액 {@code settle = P − fee} 는 호출부
  * (SOLD TX)가 계산하며, 그 값이 {@code sale_order.settle_amount} 이자 {@code final_price = settle + fee}(I-B)다.
@@ -33,15 +38,16 @@ public class FeeCalculator {
     private final FeePolicyProperties policy;
 
     /**
-     * 최종 판매가에 대한 플랫폼 수수료를 계산한다(누진 → 반올림 → cap → 최소).
+     * 최종 판매가에 대한 플랫폼 수수료를 계산한다(누진 → 반올림 → cap → 최소 → 판매가 클램프).
      *
      * @param finalPrice 최종 확정가(= 낙찰가, 양수)
-     * @return 수수료(G, {@code minFee ≤ fee ≤ cap})
+     * @return 수수료(G, {@code min(cap, finalPrice) 이하} · {@code fee ≤ finalPrice} 보장 ⟹ {@code settle ≥ 0})
      */
     public long compute(long finalPrice) {
         long rounded = roundHalfUp(rawFeeNumerator(finalPrice));
         long capped = Math.min(rounded, policy.cap());
-        return Math.max(capped, policy.minFee());
+        long floored = Math.max(capped, policy.minFee());
+        return Math.min(floored, finalPrice);
     }
 
     /**

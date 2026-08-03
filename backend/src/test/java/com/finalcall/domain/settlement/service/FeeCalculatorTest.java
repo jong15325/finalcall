@@ -64,9 +64,37 @@ class FeeCalculatorTest {
         assertThat(calculator().compute(8_633_333L)).isEqualTo(300_000L);
     }
 
-    @Test
-    void 최소_수수료는_100이다() {
-        // 극소 판매가라도 최소 100 을 보장한다(누진 합계 60 < 100).
-        assertThat(calculator().compute(1L)).isEqualTo(100L);
+    @ParameterizedTest(name = "P={0} → fee={1}, settle={2}")
+    @CsvSource({
+        // FC-176 판매가 클램프(fee-policy-spec §3 5단계): fee ≤ final_price ⟹ settle ≥ 0.
+        // 소액 구간(P < minFee=100)에서 minFee floor 대신 판매가로 클램프된다.
+        "1, 1, 0", // 경매 시작가 하한 — 종전 fee=100/settle=−99 → 클램프 후 fee=1/settle=0
+        "2, 2, 0", // 즉시구매 하한(buyNow > startPrice)
+        "50, 50, 0", // 소액 — raw 3 < minFee 100, 판매가로 클램프
+        "99, 99, 0", // 클램프 상단(P = minFee − 1)
+        "100, 100, 0", // minFee = price 경계(클램프·floor 값 일치)
+        "101, 100, 1" // 클램프 미저촉 시작(minFee floor 유지, settle 양수화)
+    })
+    void 판매가_클램프로_소액_정산은_음수가_되지_않는다(long price, long expectedFee, long expectedSettle) {
+        long fee = calculator().compute(price);
+
+        assertThat(fee).isEqualTo(expectedFee);
+        assertThat(fee).isLessThanOrEqualTo(price); // 신 불변식 fee ≤ final_price
+        assertThat(price - fee).isEqualTo(expectedSettle).isGreaterThanOrEqualTo(0L); // settle ≥ 0
+    }
+
+    @ParameterizedTest(name = "P={0} → fee={1} (클램프 미바인딩)")
+    @CsvSource({
+        // FC-176 회귀 불변: P ≥ minFee(100) 구간은 클램프가 바인딩되지 않아 종전과 동일하다.
+        "1667, 100", // minFee floor 경계(0.06×1,667=100.02 → round 100)
+        "2480000, 110200", // 대표 워크드 예시
+        "20000000, 300000" // cap 300,000
+    })
+    void 판매가_클램프는_고가_구간에서_결과를_바꾸지_않는다(long price, long expectedFee) {
+        long fee = calculator().compute(price);
+
+        assertThat(fee).isEqualTo(expectedFee);
+        assertThat(fee).isLessThanOrEqualTo(price);
+        assertThat(price - fee).isGreaterThanOrEqualTo(0L);
     }
 }

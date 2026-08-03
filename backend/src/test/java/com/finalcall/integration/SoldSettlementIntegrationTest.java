@@ -65,6 +65,31 @@ class SoldSettlementIntegrationTest extends ClosingTestBase {
     }
 
     @Test
+    void 판매가_클램프_저가_낙찰은_판매자_잔액을_감소시키지_않는다() {
+        // FC-176: 시작가 1 경매에 1코인 단일 입찰 → fee=1(판매가 클램프)·settle=0. 종전엔 fee=100·settle=−99.
+        User seller = persistUser("sold_clamp_seller", "판매자", 0L);
+        User winner = persistUser("sold_clamp_winner", "낙찰자", BALANCE);
+        ItemInstance item = persistListedItem(seller, 9104);
+        Auction auction = persistActiveAuction(seller, item, 1L, now().plusSeconds(3600));
+
+        long price = 1L;
+        placeBid(winner, auction.getPublicId(), price);
+        long sellerBefore = balanceOf(seller).getGameMoneyBalance();
+        long winnerBefore = balanceOf(winner).getGameMoneyBalance();
+        long totalBefore = totalGameMoneyPlusRevenue();
+
+        expireAuction(auction.getId(), now().minusSeconds(5));
+        closeService.closeOne(auction.getId(), now());
+
+        // 판매자 비감소(settle≥0)·fee≤price·총량 보존을 assertSold 가 함께 확인한다.
+        assertSold(auction.getId(), winner, seller, sellerBefore, winnerBefore, price);
+        assertThat(saleOrders(auction.getId()).get(0).getFeeAmount()).isEqualTo(1L);
+        assertThat(saleOrders(auction.getId()).get(0).getSettleAmount()).isZero();
+        assertThat(balanceOf(seller).getGameMoneyBalance()).isEqualTo(sellerBefore);
+        assertThat(totalGameMoneyPlusRevenue()).isEqualTo(totalBefore);
+    }
+
+    @Test
     void 최소_수수료_저촉_소액_매물도_총량이_보존된다() {
         User seller = persistUser("sold_min_seller", "판매자", 0L);
         User winner = persistUser("sold_min_winner", "낙찰자", BALANCE);
