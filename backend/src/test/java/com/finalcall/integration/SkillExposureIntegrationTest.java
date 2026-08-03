@@ -131,6 +131,21 @@ class SkillExposureIntegrationTest extends IntegrationTest {
         assertThat(view.skill2Name()).isEqualTo("회복불가 5초");
     }
 
+    @Test
+    void 인벤토리_요약은_스킬명을_코드에_부가해_노출한다() throws Exception {
+        User owner = persistUser("skx_inv", "인벤소유자");
+        // 물의 검(무기) + skill1=119(공격데미지 4 증가) + skill2=202(트리플샷). slotNo 0 단일 항목.
+        persistInventoryItem(owner, 1113, 119, 202, 25);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/me/inventory").with(user(String.valueOf(owner.getId()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items[0].summary.skill1Code").value(119))
+            .andExpect(jsonPath("$.data.items[0].summary.skill2Code").value(202))
+            .andExpect(jsonPath("$.data.items[0].summary.skill1Name").value("공격데미지 4 증가"))
+            .andExpect(jsonPath("$.data.items[0].summary.skill2Name").value("트리플샷"));
+    }
+
     // ---------------- 대량 마켓 시드 ----------------
 
     @Test
