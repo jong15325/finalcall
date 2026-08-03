@@ -11,7 +11,7 @@
 
 ## 지금 어디인가 — 한 문단
 
-**EPIC-MEMO 전건 완료·push까지 끝. 라이브 검증만 익일 예정.** 회원 간 메모/쪽지를 finalcall 네이티브 도메인으로 구현 — 발신·받은함/보낸함(커서)·상세+읽음전이·삭제, 게임 클라 호환(닉 스냅샷·28바이트 자동 줄바꿈 boundary·레벨/성별 스냅샷 기본 Lv.1·남·`user_memo` V20). origin/master = **`fbe8ef1`**, 로컬 동기화(0/0). ⚠️ **Jira 미러 미반영**(세션 내내 Atlassian 도구 미연결) — KAN 백필 필요. 백/프론트 서버는 이 세션에서 재기동 안 함(익일 라이브 검증 시 기동).
+**EPIC-MEMO 전건 완료·push까지 끝. 라이브 검증만 익일 예정.** 회원 간 메모/쪽지를 finalcall 네이티브 도메인으로 구현 — 발신·받은함/보낸함(커서)·상세+읽음전이·삭제, 게임 클라 호환(닉 스냅샷·28바이트 자동 줄바꿈 boundary·레벨/성별 스냅샷 기본 Lv.1·남·`user_memo` V20). origin/master = **`d6a9a43`**, 로컬 동기화(0/0 — `be0ff87` HANDOVER 갱신·`d6a9a43` jira_key 역기록 push 완료). ✅ **Jira 미러 백필 완료**(2026-08-03): KAN-191(에픽)+KAN-192~195(FC-170~173) 생성·Done·Blocks 링크, 보드 `jira_key` 역기록·패리티 일치. 백/프론트 서버는 이 세션에서 재기동 안 함(라이브 검증 시 기동).
 
 ---
 
@@ -30,7 +30,7 @@
 
 ## B. 다음 수 (사용자 선택)
 1. **⭐ 라이브 검증(익일 — 사용자 예정)**: 백엔드 8080·프론트 5173 기동 후 브라우저에서 쪽지 발신/받은함/보낸함/읽음/삭제 확인. "라이브 검증까지가 완료"(지난 세션 교훈).
-2. **Jira 미러 백필(도구 복구 시)**: KAN에 EPIC-MEMO + FC-170~173 upsert. 세션 내내 Atlassian MCP 미연결이라 누락([[jira-mirror-discipline]] — 비차단이나 생략 아님).
+2. ~~**Jira 미러 백필**~~ ✅ **완료(2026-08-03)**: KAN-191~195 upsert·Done·Blocks·`jira_key` 역기록([[jira-mirror-discipline]]).
 3. **게임 아이템 지급 연동(신규 에픽 후보)**: 웹 구매→인게임 지급. 이번 에픽의 **우편함 클레임 패턴**을 확장(웹은 지급 대기함에만 기록, 게임이 멱등 claim). 기존 인벤토리 모델(`item_instance.location`)·Kafka 인프라 재사용. 근거 = [[game-db-integration-model]].
 4. **관리자 페이지 에픽**(미착수) — 착수 시 FC-116(재색인 API) 언블록.
 5. **FC-114** 회원가입 이메일 인증(todo) — ⚠️ EPIC-EMAIL-VERIFY 이미 done → stale 의심, cancelled 정리 필요(대조 후).
@@ -51,7 +51,7 @@
 1. CLAUDE.md 섹션 8~13(오케스트레이션·게이트·티켓·커밋).
 2. 이 파일 + `git status`(0/0 예상) + `git log --oneline -6`(origin=`fbe8ef1`).
 3. 메모리(이번 세션 신규): `game-db-integration-model`·`game-memo-byte-format`·`palette-source-of-truth`. 상시: `commit-needs-approval`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`env-verify-windows-crlf`·`design-mockup-first`.
-4. **미러 패리티**: ⚠️ KAN에 EPIC-MEMO·FC-170~173 **미반영**(도구 미연결). 도구 복구 후 백필.
+4. **미러 패리티**: ✅ KAN-191~195 백필 완료(2026-08-03)·`jira_key` 역기록·패리티 일치. 추가 대기 없음.
 
 ## 교훈 (이 세션)
 1. **아키텍처 결정을 리서치로 뒷받침**: 웹구매→인게임지급 패턴을 레퍼런스 조사 후 "우편함 클레임 + 단일 쓰기자"로 정리. "DB 통합"은 절반이고 쓰기 소유자 규칙이 핵심.
