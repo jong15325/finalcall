@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbArchive, TbLayoutGrid } from 'react-icons/tb'
 import { paths } from '@/app/paths'
+import { ItemCardGridSkeleton } from '@/features/item/components/ItemCardGrid'
 import InventorySlotGrid from '@/features/member/components/InventorySlotGrid'
 import InventoryCardInfoDialog from '@/features/member/components/InventoryCardInfoDialog'
 import { useMyInventory } from '@/lib/queries/inventory'
@@ -55,7 +56,7 @@ export default function InventoryPage() {
             </header>
 
             {inventoryQuery.isPending ? (
-                <InventoryGridSkeleton />
+                <ItemCardGridSkeleton variant="inventory" count={12} />
             ) : inventoryQuery.isError || !inventoryQuery.data ? (
                 <p className="rounded-2xl border border-line bg-surface px-5 py-16 text-center text-sm text-gray-500">
                     인벤토리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
@@ -97,19 +98,3 @@ export default function InventoryPage() {
     )
 }
 
-/** 그리드 영역만 스켈레톤(전체 블러 금지) — 2/3/6 그리드. */
-function InventoryGridSkeleton() {
-    return (
-        <div
-            aria-hidden
-            className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
-        >
-            {Array.from({ length: 12 }).map((_, index) => (
-                <div
-                    key={index}
-                    className="h-[168px] animate-pulse rounded-xl bg-gray-100"
-                />
-            ))}
-        </div>
-    )
-}

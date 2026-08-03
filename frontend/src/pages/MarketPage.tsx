@@ -8,6 +8,9 @@ import {
 } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
+import ItemCardGrid, {
+    ItemCardGridSkeleton,
+} from '@/features/item/components/ItemCardGrid'
 import ShopCard from '@/features/shop/components/ShopCard'
 import ShopCardInfoDialog from '@/features/shop/components/ShopCardInfoDialog'
 import ShopFilters from '@/features/shop/components/ShopFilters'
@@ -175,7 +178,9 @@ export default function MarketPage() {
                 </p>
             )}
 
-            {status === 'loading' && <MarketGridSkeleton />}
+            {status === 'loading' && (
+                <ItemCardGridSkeleton variant="market" count={12} />
+            )}
 
             {status === 'error' && (
                 <StateBlock
@@ -231,11 +236,8 @@ export default function MarketPage() {
 
             {status === 'ready' && (
                 <>
-                    {/* 목업 §9 — PC 6열 / 태블릿 3열 / 모바일 2열 */}
-                    <section
-                        aria-label="마켓 상품 목록"
-                        className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
-                    >
+                    {/* 목업 §9 — PC 6열 / 태블릿 3열 / 모바일 2열(ItemCardGrid market) */}
+                    <ItemCardGrid variant="market" ariaLabel="마켓 상품 목록">
                         {shops.map((shop) => (
                             <ShopCard
                                 key={shop.shopPublicId}
@@ -244,7 +246,7 @@ export default function MarketPage() {
                                 onOpen={openCardInfo}
                             />
                         ))}
-                    </section>
+                    </ItemCardGrid>
 
                     {/* 무한스크롤 감시점 — 목록 끝 문구는 두지 않는다(목업 §17) */}
                     <div ref={sentinelRef} aria-hidden className="h-px" />
@@ -274,30 +276,6 @@ export default function MarketPage() {
                     onClose={() => setSelectedShop(null)}
                 />
             )}
-        </div>
-    )
-}
-
-/** 목록 영역만 스켈레톤(전체 블러 금지, §18) — 2/3/6 그리드. */
-function MarketGridSkeleton() {
-    return (
-        <div
-            aria-hidden
-            className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
-        >
-            {Array.from({ length: 12 }).map((_, index) => (
-                <div
-                    key={index}
-                    className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface"
-                >
-                    <div className="aspect-[72/134] animate-pulse bg-gray-100" />
-                    <div className="flex flex-col gap-1.5 p-3">
-                        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-2 h-7 w-full animate-pulse rounded bg-gray-100" />
-                    </div>
-                </div>
-            ))}
         </div>
     )
 }

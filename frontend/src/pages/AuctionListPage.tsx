@@ -3,6 +3,9 @@ import { Link, useSearchParams } from 'react-router'
 import { TbAlertTriangle, TbGavel, TbSearchOff, TbWallet } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
+import ItemCardGrid, {
+    ItemCardGridSkeleton,
+} from '@/features/item/components/ItemCardGrid'
 import AuctionCard from '@/features/auction/components/AuctionCard'
 import AuctionFilters from '@/features/auction/components/AuctionFilters'
 import {
@@ -146,7 +149,9 @@ export default function AuctionListPage() {
                 </p>
             )}
 
-            {status === 'loading' && <AuctionGridSkeleton />}
+            {status === 'loading' && (
+                <ItemCardGridSkeleton variant="auction" count={8} />
+            )}
 
             {status === 'error' && (
                 <StateBlock
@@ -202,10 +207,7 @@ export default function AuctionListPage() {
 
             {status === 'ready' && (
                 <>
-                    <section
-                        aria-label="경매 목록"
-                        className="grid grid-cols-1 gap-4 xs:grid-cols-2 min-[1200px]:grid-cols-3"
-                    >
+                    <ItemCardGrid variant="auction" ariaLabel="경매 목록">
                         {auctions.map((auction) => (
                             <AuctionCard
                                 key={auction.auctionPublicId}
@@ -213,7 +215,7 @@ export default function AuctionListPage() {
                                 now={now}
                             />
                         ))}
-                    </section>
+                    </ItemCardGrid>
 
                     {/* 무한스크롤 감시점 — 목록 끝 문구는 두지 않는다(목업 §17) */}
                     <div ref={sentinelRef} aria-hidden className="h-px" />
@@ -228,31 +230,6 @@ export default function AuctionListPage() {
                     )}
                 </>
             )}
-        </div>
-    )
-}
-
-/** 목록 영역만 스켈레톤(전체 블러 금지, §18). */
-function AuctionGridSkeleton() {
-    return (
-        <div
-            aria-hidden
-            className="grid grid-cols-1 gap-4 xs:grid-cols-2 min-[1200px]:grid-cols-3"
-        >
-            {Array.from({ length: 8 }).map((_, index) => (
-                <div
-                    key={index}
-                    className="grid min-h-[218px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface xs:grid-cols-[112px_minmax(0,1fr)]"
-                >
-                    <div className="animate-pulse bg-gray-100" />
-                    <div className="flex flex-col gap-2 p-[17px]">
-                        <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-3 h-8 w-full animate-pulse rounded bg-gray-100" />
-                        <div className="mt-auto h-3 w-2/3 animate-pulse rounded bg-gray-100" />
-                    </div>
-                </div>
-            ))}
         </div>
     )
 }

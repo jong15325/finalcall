@@ -1,3 +1,4 @@
+import ItemCardGrid from '@/features/item/components/ItemCardGrid'
 import InventoryItemCard from './InventoryItemCard'
 import type { InventoryItem } from '@/lib/api/inventory'
 
@@ -43,10 +44,7 @@ function InventorySlotGrid({
     for (let slot = 1; slot <= slotCount; slot += 1) slotNumbers.push(slot)
 
     return (
-        <ul
-            aria-label="인벤토리 슬롯"
-            className="grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6"
-        >
+        <ItemCardGrid variant="inventory" as="ul" ariaLabel="인벤토리 슬롯">
             {slotNumbers.map((slotNo) => {
                 const item = bySlot.get(slotNo)
                 return (
@@ -63,7 +61,7 @@ function InventorySlotGrid({
                     </li>
                 )
             })}
-        </ul>
+        </ItemCardGrid>
     )
 }
 
