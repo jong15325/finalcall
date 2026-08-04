@@ -9,7 +9,7 @@ import {
     type AuctionPhase,
 } from '@/features/auction/lib/auctionPhase'
 import { auctionPriceOf } from '@/features/auction/lib/auctionPrice'
-import CardCompareOverlay from './CardCompareOverlay'
+import CardCompareOverlay from '@/features/item/components/CardCompareOverlay'
 import Countdown from './Countdown'
 import type { AuctionSummary } from '@/lib/api/auctions'
 
