@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react'
 import ItemCard from '@/features/item/components/ItemCard'
-import type { ItemCardData } from '@/features/item/components/ItemCard'
+import type {
+    ItemCardData,
+    ItemCardPrice,
+    ItemCardVariant,
+} from '@/features/item/components/ItemCard'
 
 /**
  * ItemCardTile — 카드 *상호작용 표면* 정본 (EPIC-CARD-SYSTEM T5 · 제안 §2.2·§3 단계3).
@@ -28,16 +32,14 @@ interface ItemCardTileProps {
     onOpen: () => void
     /** 열기 버튼 접근성 라벨 접두(아이템 표시명). `${openLabel} 카드정보 보기`. */
     openLabel: string
-    /** 표시 가격(원본 정수). 없으면 `ItemCard` 가 "-". 인벤토리처럼 가격 부재면 미전달. */
-    price?: number | null
+    /** 카드 레이아웃 프리셋(제안 §2.3). 기본 `'browse'` — 마켓/인벤은 `'market'`. */
+    variant?: ItemCardVariant
+    /** 표시 가격. 부재면 가격 줄 없음(인벤토리처럼 가격 없는 맥락은 미전달). */
+    price?: ItemCardPrice | null
     /** 골드포스 파생 기준 시각(목록 마운트 시각 1회로 고정 주입). 기본 Date.now(). */
     now?: number
-    /** 마켓 카드 뒷면 판매자(skillFlip 전용). */
+    /** 마켓 카드 뒷면 판매자(market 전용). */
     sellerNickname?: string
-    /** 마켓 카드 뒷면 스킬 플립 활성(제안 §2.3 T6에서 variant 로 흡수 예정). */
-    skillFlip?: boolean
-    /** 가격 줄 숨김(인벤토리처럼 가격 없는 맥락 · 제안 §2.3 T6에서 nullable price 로 흡수 예정). */
-    hidePrice?: boolean
     /** 카드가 그리드 슬롯 높이를 채운다(인벤토리). 래퍼·본체에 `h-full`. */
     fullHeight?: boolean
     /** 우상단 비교 오버레이 슬롯(마켓 등). 없으면 미렌더. */
@@ -50,11 +52,10 @@ function ItemCardTile({
     item,
     onOpen,
     openLabel,
+    variant = 'browse',
     price,
     now,
     sellerNickname,
-    skillFlip = false,
-    hidePrice = false,
     fullHeight = false,
     compare,
     footer,
@@ -64,8 +65,7 @@ function ItemCardTile({
             className={`shop-card group relative ${fullHeight ? 'h-full ' : ''}rounded-xl transition-transform hover:-translate-y-[3px]`}
         >
             <ItemCard
-                skillFlip={skillFlip}
-                hidePrice={hidePrice}
+                variant={variant}
                 item={item}
                 price={price}
                 now={now}

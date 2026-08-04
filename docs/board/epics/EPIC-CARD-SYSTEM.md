@@ -3,7 +3,7 @@ id: EPIC-CARD-SYSTEM
 type: epic
 jira_key: KAN-202
 title: 카드 컴포넌트 통합 (디자인 시스템)
-state: doing
+state: done
 children: [FC-179, FC-180, FC-181, FC-182, FC-183, FC-184]
 gate: null
 ---

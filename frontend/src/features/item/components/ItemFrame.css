@@ -489,7 +489,7 @@
     }
 }
 
-/* ── 마켓 카드 정보 A안 — skillFlip 전용, 다른 ItemCard 소비자 무변경 ─────────────── */
+/* ── 마켓 카드 정보 A안 — market variant(is-market) 전용, browse 소비자 무변경 ── */
 .item-card__skill-flip.is-market .item-frame__stage,
 .item-card__skill-flip.is-enabled .item-card__skill-flip-back {
     min-height: 252px;

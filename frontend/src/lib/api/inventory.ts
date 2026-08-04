@@ -21,6 +21,9 @@ export interface ItemSummary {
     /** 슬롯이 비면 null. 마법(subGroup 3)은 구조적으로 skill1 이 없다 */
     skill1Code: number | null
     skill2Code: number | null
+    /** 스킬명(계약 v1.21/FC-179 델타). 출처 `skill_definition.name`. 코드가 null이면 각각 null */
+    skill1Name?: string | null
+    skill2Name?: string | null
     skillPercent: number
     /** 골드포스 만료 시각(ISO-8601 UTC). 미적용이면 null. 활성 여부는 클라 파생 */
     goldforceExpireAt: string | null

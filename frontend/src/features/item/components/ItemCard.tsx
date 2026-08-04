@@ -11,6 +11,12 @@
  *   `xs:`(≥576px) 로 PC 크기를 얹는다.
  * ★ 구매/비교는 **오버레이(`overlay`)나 카드 외부 액션(`footer`)** 으로 받는다 — 이미지 크기 불변.
  * ★ 가격은 **줄바꿈 금지**(CodeAmount + whitespace-nowrap). 값 없음(입찰 0건)은 CodeAmount 가 "-".
+ *
+ * ★ **variant 모델**(EPIC-CARD-SYSTEM T6 · 제안 §2.3 — boolean 폭발 제거). 맥락 차이는
+ *   boolean 가법(구 `skillFlip`·`hidePrice`)이 아니라 `variant` + nullable `price` + slot 으로 흡수한다:
+ *   - `variant`: `'browse'`(세로 스택·비플립·기본) · `'market'`(마켓 정보영역 + 스킬 플립).
+ *   - `price`: 부재(undefined·null)면 **가격 줄을 그리지 않는다**(구 `hidePrice=true`). `{ amount: null }`
+ *     이면 줄은 그리되 CodeAmount 가 "-"(입찰 0건). `label` 은 browse 레이아웃에서만 앞에 붙는다.
  */
 import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -44,29 +50,36 @@ export interface ItemCardData {
     specSnapshot?: string
 }
 
+/** 카드 레이아웃·타이포·스킬플립 프리셋(제안 §2.3). */
+export type ItemCardVariant = 'browse' | 'market'
+
+/** 카드 가격 표시(제안 §2.3). 부재면 가격 줄 없음, `amount:null` 이면 "-". */
+export interface ItemCardPrice {
+    /** 표시 금액(원본 정수). `null` 이면 CodeAmount 가 "-"(입찰 0건 등) */
+    amount: number | null
+    /** 금액 앞 라벨(예: "현재가"·"등록가"). browse 레이아웃에서만 표시 */
+    label?: string
+}
+
 interface ItemCardProps {
     item: ItemCardData
-    /** 표시 가격(원본 정수). 예: `highestBidAmount ?? startPrice`(대체는 호출부 결정). 없으면 "-" */
-    price?: number | null
-    /** 가격 앞 라벨(예: "현재가"·"시작가"). 생략 가능 */
-    priceLabel?: string
+    /** 레이아웃·타이포·스킬플립 프리셋(제안 §2.3). 기본 `'browse'`(비플립 세로 스택). */
+    variant?: ItemCardVariant
+    /**
+     * 표시 가격. **부재(undefined·null)면 가격 줄을 그리지 않는다**(구 `hidePrice`). `{ amount: null }`
+     * 이면 줄은 그리되 "-"(입찰 0건). 대체(`highestBidAmount ?? startPrice`)는 호출부가 결정.
+     */
+    price?: ItemCardPrice | null
     /** 골드포스 파생 기준 시각(테스트 주입). 기본 Date.now() */
     now?: number
     /** 프레임 위 오버레이(CompareToggle 등) — 이미지 크기 불변 */
     overlay?: ReactNode
-    /** 마켓 카드 뒷면 판매자(skillFlip 전용). */
+    /** 마켓 카드 뒷면 판매자(market 전용). */
     sellerNickname?: string
     /** 카드 외부 액션 행(구매 버튼 등) */
     footer?: ReactNode
-    /** 마켓 카드에서 이미지 스테이지 뒤에 스킬을 표시한다. */
-    skillFlip?: boolean
     /**
-     * 가격 줄을 숨긴다(skillFlip 전용·기본 false). 인벤토리처럼 **가격이 없는 맥락**에서 쓴다 —
-     * 마켓 카드는 이 값을 넘기지 않아 형상 불변이다(FC-178).
-     */
-    hidePrice?: boolean
-    /**
-     * 정보영역(이미지 아래)을 덮는 상세 링크 오버레이(skillFlip 전용).
+     * 정보영역(이미지 아래)을 덮는 상세 링크 오버레이(market 전용).
      * 정보 컨테이너 안에 렌더돼 레이아웃으로 크기가 잡히므로 이미지 플립 영역을 덮지 않는다(M2).
      * 라우팅은 호출부(ShopCard 등)가 소유한다 — ItemCard 는 링크를 만들지 않는다(§ 상단).
      */
@@ -76,17 +89,17 @@ interface ItemCardProps {
 
 function ItemCard({
     item,
+    variant = 'browse',
     price,
-    priceLabel,
     now,
     overlay,
     sellerNickname,
     footer,
-    skillFlip = false,
-    hidePrice = false,
     detailLink,
     className = '',
 }: ItemCardProps) {
+    // market 은 마켓 정보영역 + 스킬 플립 프리셋(browse 는 비플립 세로 스택).
+    const isMarket = variant === 'market'
     const art = itemArt(
         {
             subGroup: item.subGroup,
@@ -98,7 +111,7 @@ function ItemCard({
         1,
     )
     const hasSkill = item.skill1 !== null || item.skill2 !== null
-    const flipEnabled = skillFlip && hasSkill
+    const flipEnabled = isMarket && hasSkill
     const referenceNow = now ?? Date.now()
     const frameLabel =
         resolveFrameType(
@@ -127,7 +140,7 @@ function ItemCard({
             className={`item-card flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:shadow-md ${className}`.trim()}
         >
             <div
-                className={`item-card__skill-flip ${skillFlip ? 'is-market' : ''} ${flipEnabled ? 'is-enabled' : ''}`.trim()}
+                className={`item-card__skill-flip ${isMarket ? 'is-market' : ''} ${flipEnabled ? 'is-enabled' : ''}`.trim()}
                 data-flipped={flipped}
             >
                 <div className="item-card__skill-flip-inner">
@@ -199,7 +212,7 @@ function ItemCard({
                 )}
             </div>
 
-            {skillFlip ? (
+            {isMarket ? (
                 <div className="item-card__market-info flex flex-1 flex-col p-3">
                     <div className="item-card__market-heading">
                         <h3>{marketTitle}</h3>
@@ -221,9 +234,9 @@ function ItemCard({
                         skillPercent={item.skillPercent}
                         className="item-card__market-skills"
                     />
-                    {!hidePrice && (
+                    {price && (
                         <div className="item-card__market-price">
-                            <CodeAmount value={price} mode="compact" />
+                            <CodeAmount value={price.amount} mode="compact" />
                         </div>
                     )}
                     {detailLink}
@@ -236,18 +249,20 @@ function ItemCard({
                     <p className="truncate text-[11px] text-gray-500 xs:text-xs">
                         {item.specSnapshot || ' '}
                     </p>
-                    <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
-                        {priceLabel && (
-                            <span className="text-[11px] text-gray-400 xs:text-xs">
-                                {priceLabel}
-                            </span>
-                        )}
-                        <CodeAmount
-                            value={price}
-                            mode="compact"
-                            className="text-[13px] font-bold text-gray-900 xs:text-sm"
-                        />
-                    </div>
+                    {price && (
+                        <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
+                            {price.label && (
+                                <span className="text-[11px] text-gray-400 xs:text-xs">
+                                    {price.label}
+                                </span>
+                            )}
+                            <CodeAmount
+                                value={price.amount}
+                                mode="compact"
+                                className="text-[13px] font-bold text-gray-900 xs:text-sm"
+                            />
+                        </div>
+                    )}
                     <ItemSkillSummary
                         skill1={item.skill1}
                         skill2={item.skill2}

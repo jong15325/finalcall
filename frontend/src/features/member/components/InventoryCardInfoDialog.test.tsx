@@ -23,6 +23,8 @@ const target: InventoryItem = {
         level: 3,
         skill1Code: 104,
         skill2Code: null,
+        skill1Name: '공격력 증가',
+        skill2Name: null,
         skillPercent: 18,
         goldforceExpireAt: null,
     },
@@ -59,11 +61,12 @@ describe('<InventoryCardInfoDialog>', () => {
         // 골드포스 없음(goldforceExpireAt null).
         expect(screen.getByText('없음')).toBeInTheDocument()
 
-        // 특수스킬 — 이름 없어 중립 표기로 폴백.
+        // 특수스킬 — v1.21 델타로 실제 이름 표시(마켓 동일 배선, `스킬 #코드` 폴백 아님).
         expect(
             screen.getByRole('heading', { name: '특수 스킬' }),
         ).toBeInTheDocument()
-        expect(screen.getByText('스킬 #104')).toBeInTheDocument()
+        expect(screen.getByText('공격력 증가')).toBeInTheDocument()
+        expect(screen.queryByText('스킬 #104')).toBeNull()
     })
 
     it('판매자·판매가·구매확인은 없고 하단 CTA 는 판매 등록이다', () => {

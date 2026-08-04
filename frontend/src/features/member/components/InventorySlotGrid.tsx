@@ -10,7 +10,7 @@ import type { InventoryItem } from '@/lib/api/inventory'
  *   헤더·용량 배지·"임시 보관함" 액션은 페이지 셸(`InventoryPage`)이 담당하고, 이 컴포넌트는
  *   **슬롯 그리드만** 그린다(순수 표시 + 클릭 콜백).
  * ★ **FC-178**: 채운 슬롯을 **마켓 카드(`InventoryItemCard`)** 로 바꾼다 — 프레임만 있던 타일을
- *   마켓과 동일한 `ItemCard`(skillFlip·가격/판매자 없음) 카드로 교체하고, 클릭 시 카드정보 모달을
+ *   마켓과 동일한 `ItemCard`(variant="market"·가격/판매자 없음) 카드로 교체하고, 클릭 시 카드정보 모달을
  *   연다. 빈 슬롯은 카드 높이에 맞춰 늘어난다(그리드 stretch + `h-full`, 마켓 카드가 더 큼).
  * ★ **capacity·used 는 서버값이 정본**(계약 §4.2) — 클라가 파생하지 않는다. 슬롯 1..capacity 를
  *   `slotNo` 로 채우고 나머지는 빈 슬롯으로 둔다. 페이지네이션은 두지 않는다(승인 목업 = 단일 그리드).

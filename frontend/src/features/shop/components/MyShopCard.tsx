@@ -12,7 +12,7 @@ import type { MyShopSummary } from '@/lib/api/shop'
  * ══════════════════════════════════════════════════════════════════════════════
  * ★ **링크로 감싸지 않는다** — footer 의 '내리기' 버튼과 중첩 인터랙션(링크 안의 버튼)을 피한다.
  *   이곳은 탐색이 아니라 관리 화면이다.
- * ★ **등록가**는 body(`priceLabel="등록가"`), **예상 정산액**은 footer 에 표기한다. 정산액은
+ * ★ **등록가**는 body(`price={{ amount, label: '등록가' }}`), **예상 정산액**은 footer 에 표기한다. 정산액은
  *   실현값이 아니라 예상치이므로(shop-spec §10.3) 라벨에 "예상"을 명시한다. 금액은 `CodeAmount`
  *   (aria 는 항상 전체값 + 코드) — 코드화폐 표기 규율.
  */
@@ -30,8 +30,7 @@ function MyShopCard({ shop, now, onCancel, isCancelling }: MyShopCardProps) {
     return (
         <ItemCard
             item={shop.item}
-            price={shop.price}
-            priceLabel="등록가"
+            price={{ amount: shop.price, label: '등록가' }}
             now={now}
             footer={
                 <div className="flex flex-col gap-2">

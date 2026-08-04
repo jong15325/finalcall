@@ -14,8 +14,9 @@ import type { InventoryItem } from '@/lib/api/inventory'
  *   (내 보유 아이템 → 마켓에 올린다). 클릭 시 부모가 `/sell?item=<itemInstancePublicId>` 로 이동한다.
  * ══════════════════════════════════════════════════════════════════════════════
  * ★ **데이터 매핑**: 요약(`summary`)은 4축을 `typeCode` 로 싣는다(계약 §4.2) → `decodeTypeCode` 로
- *   분해해 셸에 축 props 로 넘긴다. 채널제한·속성·골드포스 등 파생은 셸이 한다. 스킬명은 요약에
- *   없어(코드만) 셸이 중립 표기(`스킬 #코드`)로 폴백한다.
+ *   분해해 셸에 축 props 로 넘긴다. 채널제한·속성·골드포스 등 파생은 셸이 한다. **스킬명(skill1Name/
+ *   skill2Name)은 계약 v1.21(FC-179) 델타로 요약에 실린다** → 그대로 넘겨 모달 스킬 섹션이 실제
+ *   이름을 표시한다(마켓과 동일 배선). 이름이 null 이면 셸이 코드 폴백(`스킬 #코드`)한다.
  */
 
 interface InventoryCardInfoDialogProps {
@@ -62,6 +63,8 @@ function InventoryCardInfoDialog({
             name={summary.displayName}
             skill1={summary.skill1Code}
             skill2={summary.skill2Code}
+            skill1Name={summary.skill1Name}
+            skill2Name={summary.skill2Name}
             skillPercent={summary.skillPercent}
             now={now}
             footer={footer}

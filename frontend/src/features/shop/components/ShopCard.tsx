@@ -38,9 +38,9 @@ interface ShopCardProps {
 function ShopCard({ shop, now, onOpen }: ShopCardProps) {
     return (
         <ItemCardTile
-            skillFlip
+            variant="market"
             item={shop.item}
-            price={shop.price}
+            price={{ amount: shop.price }}
             now={now}
             sellerNickname={shop.sellerNickname}
             openLabel={shop.item.nameSnapshot}

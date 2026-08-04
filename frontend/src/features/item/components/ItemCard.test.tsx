@@ -22,13 +22,13 @@ const baseItem: ItemCardData = {
 
 describe('<ItemCard>', () => {
     it('보존 itemArt 로 아트 경로를 파생해 렌더한다', () => {
-        render(<ItemCard item={baseItem} price={2480000} />)
+        render(<ItemCard item={baseItem} price={{ amount: 2480000 }} />)
         const img = screen.getByRole('img', { name: '불의 전투도끼' })
         expect(img).toHaveAttribute('src', '/art/items/level3/l/fire/axe.png')
     })
 
     it('가격은 CodeAmount 축약 + 전체값 aria-label 로 연동한다', () => {
-        render(<ItemCard item={baseItem} price={2480000} />)
+        render(<ItemCard item={baseItem} price={{ amount: 2480000 }} />)
         // 탐색용 축약 표기
         expect(screen.getByText('248만')).toBeInTheDocument()
         // 보조기술엔 전체값
@@ -36,12 +36,17 @@ describe('<ItemCard>', () => {
     })
 
     it('가격 없음(입찰 0건)은 "-" 로 표기한다', () => {
-        render(<ItemCard item={baseItem} price={null} />)
+        render(<ItemCard item={baseItem} price={{ amount: null }} />)
         expect(screen.getByText('-')).toBeInTheDocument()
     })
 
+    it('price 미전달이면 가격 줄을 그리지 않는다(구 hidePrice)', () => {
+        render(<ItemCard item={baseItem} />)
+        expect(screen.queryByText('-')).not.toBeInTheDocument()
+    })
+
     it('이름·부가설명 스냅샷을 표시한다', () => {
-        render(<ItemCard item={baseItem} price={1000} />)
+        render(<ItemCard item={baseItem} price={{ amount: 1000 }} />)
         expect(
             screen.getByRole('heading', { name: '불의 전투도끼' }),
         ).toBeInTheDocument()
@@ -49,7 +54,7 @@ describe('<ItemCard>', () => {
     })
 
     it('스킬명 미제공 시 코드 중립 표기로 폴백', () => {
-        render(<ItemCard item={baseItem} price={1000} />)
+        render(<ItemCard item={baseItem} price={{ amount: 1000 }} />)
         expect(screen.getByText('스킬 #11')).toBeInTheDocument()
     })
 
@@ -64,7 +69,7 @@ describe('<ItemCard>', () => {
                     skill2Name: '트리플샷',
                     skillPercent: 33,
                 }}
-                price={1000}
+                price={{ amount: 1000 }}
             />,
         )
         expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
@@ -72,12 +77,11 @@ describe('<ItemCard>', () => {
         expect(skill2Line).toHaveTextContent('33%')
     })
 
-    it('priceLabel·footer·overlay 슬롯을 렌더한다', () => {
+    it('price.label·footer·overlay 슬롯을 렌더한다', () => {
         render(
             <ItemCard
                 item={baseItem}
-                price={1000}
-                priceLabel="현재가"
+                price={{ amount: 1000, label: '현재가' }}
                 overlay={<span>OV</span>}
                 footer={<button type="button">구매</button>}
             />,
@@ -87,12 +91,12 @@ describe('<ItemCard>', () => {
         expect(screen.getByRole('button', { name: '구매' })).toBeInTheDocument()
     })
 
-    it('skillFlip 이면 이미지 영역에 스킬 뒷면과 터치 토글을 렌더한다', () => {
+    it('market variant 이면 이미지 영역에 스킬 뒷면과 터치 토글을 렌더한다', () => {
         const { container } = render(
             <ItemCard
-                skillFlip
+                variant="market"
                 item={baseItem}
-                price={1000}
+                price={{ amount: 1000 }}
                 sellerNickname="신뢰상점"
                 overlay={<button type="button">비교</button>}
             />,
@@ -148,32 +152,37 @@ describe('<ItemCard>', () => {
     it('활성 골드포스는 카드 타입 제목을 골드로 파생한다', () => {
         render(
             <ItemCard
-                skillFlip
+                variant="market"
                 item={{
                     ...baseItem,
                     goldforceExpireAt: '2026-08-02T00:00:00Z',
                 }}
                 now={Date.parse('2026-08-01T00:00:00Z')}
-                price={1000}
+                price={{ amount: 1000 }}
             />,
         )
         expect(screen.getAllByText('골드 - 무기')).toHaveLength(2)
         expect(screen.queryByText(/골드포스 잔여/)).not.toBeInTheDocument()
         expect(screen.getByLabelText(/골드포스 잔여/)).toBeInTheDocument()
     })
-    it('스킬이 없으면 skillFlip 이어도 이미지 토글을 만들지 않는다', () => {
+    it('스킬이 없으면 market variant 이어도 이미지 토글을 만들지 않는다', () => {
         render(
             <ItemCard
-                skillFlip
+                variant="market"
                 item={{ ...baseItem, skill1: null, skill2: null }}
-                price={1000}
+                price={{ amount: 1000 }}
             />,
         )
         expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })
     it('미등록 조합은 아트를 폴백(플레이스홀더)한다 — 깨진 이미지 금지', () => {
         // element 9 는 사전에 없음 → itemArt null → 플레이스홀더
-        render(<ItemCard item={{ ...baseItem, element: 9 }} price={1000} />)
+        render(
+            <ItemCard
+                item={{ ...baseItem, element: 9 }}
+                price={{ amount: 1000 }}
+            />,
+        )
         const placeholder = screen.getByRole('img', { name: '불의 전투도끼' })
         expect(placeholder.tagName).not.toBe('IMG')
     })
