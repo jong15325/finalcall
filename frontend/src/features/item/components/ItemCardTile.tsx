@@ -40,7 +40,7 @@ interface ItemCardTileProps {
     now?: number
     /** 마켓 카드 뒷면 판매자(market 전용). */
     sellerNickname?: string
-    /** 카드가 그리드 슬롯 높이를 채운다(인벤토리). 래퍼·본체에 `h-full`. */
+    /** 카드가 그리드 슬롯을 꽉 채운다(인벤토리 — 셀 폭 균일 정렬). 래퍼·본체에 `h-full w-full`. */
     fullHeight?: boolean
     /** 우상단 비교 오버레이 슬롯(마켓 등). 없으면 미렌더. */
     compare?: ReactNode
@@ -65,7 +65,7 @@ function ItemCardTile({
 }: ItemCardTileProps) {
     return (
         <div
-            className={`shop-card group relative ${fullHeight ? 'h-full ' : ''}rounded-xl transition-transform hover:-translate-y-[3px]`}
+            className={`shop-card group relative ${fullHeight ? 'h-full w-full ' : ''}rounded-xl transition-transform hover:-translate-y-[3px]`}
         >
             <ItemCard
                 variant={variant}
