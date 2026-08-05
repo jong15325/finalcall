@@ -29,6 +29,7 @@ import com.finalcall.domain.bid.repository.BidRepository;
 import com.finalcall.domain.bid.service.BidService;
 import com.finalcall.domain.currency.entity.MoneyHoldStatus;
 import com.finalcall.domain.currency.repository.MoneyHoldRepository;
+import com.finalcall.domain.delivery.repository.ItemDeliveryRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.entity.ItemTemplate;
@@ -83,6 +84,9 @@ public abstract class ClosingTestBase extends IntegrationTest {
     protected SaleOrderRepository saleOrderRepository;
 
     @Autowired
+    protected ItemDeliveryRepository itemDeliveryRepository;
+
+    @Autowired
     protected PlatformRevenueLedgerRepository platformRevenueLedgerRepository;
 
     @Autowired
@@ -112,8 +116,10 @@ public abstract class ClosingTestBase extends IntegrationTest {
     @BeforeEach
     @AfterEach
     void cleanClosingData() {
-        // FK 순서: ledger → sale_order → money_hold → bid → auction → 소유이력(내 TRADE 행) → item/user.
+        // FK 순서: 배송 → ledger → sale_order → money_hold → bid → auction → 소유이력(내 TRADE 행) → item/user.
+        // item_delivery 는 sale_order·item_instance·user 를 FK 로 참조하므로(FC-187 enqueue) 셋을 지우기 전에 먼저 비운다.
         transactionTemplate.executeWithoutResult(status -> {
+            itemDeliveryRepository.deleteAllInBatch();
             platformRevenueLedgerRepository.deleteAllInBatch();
             saleOrderRepository.deleteAllInBatch();
             moneyHoldRepository.deleteAllInBatch();

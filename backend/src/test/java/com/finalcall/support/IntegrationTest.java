@@ -29,12 +29,14 @@ import org.springframework.test.web.servlet.MockMvc;
 //   시드가 테스트 데이터에 개입하면 픽스처·불변식 단언이 비결정적으로 깨진다.
 // EPIC-SHOP: 고정가 만료 워커 배경 tick 도 끈다(shop.expiry.worker.enabled=false) — 배경 tick 이 테스트 데이터를
 //   비결정적으로 만료하지 못하게 하고, 만료 검증은 ShopExpiryWorker.sweepOnce()/ShopExpiryService.expireOne() 직접 호출로 한다.
+// EPIC-ITEM-DELIVERY: 배송 라이프사이클 워커 배경 tick 도 끈다(delivery.worker.enabled=false) — 배경 tick 이 테스트
+//   데이터를 비결정적으로 IN_GAME 전이·리스 재청구하지 못하게 하고, reconcile/reclaim 검증은 워커 메서드 직접 호출로 한다.
 // EPIC-SEARCH: 검색 화해 워커 배경 tick 을 끄고(search.reconciliation.enabled=false), ES 미기동 통합 테스트에서
 //   /actuator/health 가 ES DOWN 으로 503 이 되지 않도록 ES health 컨트리뷰터를 끈다(색인/검색 검증은 ES
 //   Testcontainer 를 띄우는 ListingSearchIntegrationTest 가 전담 — 여기 base 는 MySQL/Redis 만 공유한다).
 @TestPropertySource(properties = {
     "gateway.internal.enforced=false", "closing.worker.enabled=false", "shop.expiry.worker.enabled=false",
-    "demo.seed.enabled=false", "search.reconciliation.enabled=false",
+    "delivery.worker.enabled=false", "demo.seed.enabled=false", "search.reconciliation.enabled=false",
     "search.reindex-on-startup=false", "management.health.elasticsearch.enabled=false"})
 public abstract class IntegrationTest {
 

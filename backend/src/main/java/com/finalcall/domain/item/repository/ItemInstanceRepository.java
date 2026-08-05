@@ -71,6 +71,26 @@ public interface ItemInstanceRepository
         + "WHERE i.id = :id AND i.location = com.finalcall.domain.item.entity.ItemLocation.LISTED")
     int transferListedToTemp(@Param("id") Long id, @Param("owner") User owner);
 
+    /**
+     * 배송 APPLIED 관측 소유 이동(INVENTORY/TEMP→IN_GAME) 조건부 CAS(delivery-domain-spec §5.4·§6.1·§9.2, FC-188).
+     *
+     * <p>웹 reconciler 가 게임 apply 성공(배송 APPLIED)을 관측해 finalcall {@code item_instance} 를 "게임 이관됨"
+     * 으로 전이시킨다 — 소유 정본은 웹이며 게임은 {@code item_instance} 를 쓰지 않는다(쓰기 소유자 규칙 §5.4).
+     * {@code WHERE location IN ('INVENTORY','TEMP')} 로 <b>단일 승자</b>를 DB 가 보증한다(동시 reconcile·이미 이관됨은
+     * 0행 → 멱등 skip). 전이 시 {@code slot_no} 를 NULL 로 해제한다(IN_GAME XOR: slot_no NULL·temp_storage 없음·
+     * 활성 리스팅 없음, spec §3.1). 연계 {@code temp_storage} 행 삭제는 호출 측(reconciler)이 동일 TX 로 처리한다.
+     * LISTED 는 대상이 아니라 자동 배제된다(APPLIED 시점 아이템은 구매자 커스터디 INVENTORY/TEMP 이며, 미완료 배송
+     * 재판매 가드가 그 창의 재출품을 막아 LISTED 로 새지 않는다).
+     *
+     * @return 영향 행 수(1=이관 성공, 0=대상이 커스터디가 아님 = 이미 IN_GAME/동시 선점 패자)
+     */
+    @Modifying
+    @Query("UPDATE ItemInstance i SET i.location = com.finalcall.domain.item.entity.ItemLocation.IN_GAME, "
+        + "i.slotNo = null "
+        + "WHERE i.id = :id AND i.location IN (com.finalcall.domain.item.entity.ItemLocation.INVENTORY, "
+        + "com.finalcall.domain.item.entity.ItemLocation.TEMP)")
+    int markInGameIfInCustody(@Param("id") Long id);
+
     /** 소유자의 특정 위치 아이템 수(인벤토리 사용량 계산 등). owner.id 로 해석된다. */
     long countByOwnerIdAndLocation(Long ownerId, ItemLocation location);
 

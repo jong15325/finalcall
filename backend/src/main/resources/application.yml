@@ -213,6 +213,17 @@ shop:
       fixed-delay-ms: ${SHOP_EXPIRY_WORKER_FIXED_DELAY_MS:60000}
       batch-size: ${SHOP_EXPIRY_WORKER_BATCH_SIZE:200}
 
+# FC-188(EPIC-ITEM-DELIVERY): 배송 라이프사이클 워커(delivery-domain-spec §4·§5.4·§7.1). 웹이 소유하는 배송 쓰기측
+#   배경 작업 — reconcile(APPLIED→IN_GAME 소유 이동) + reclaim(리스 만료 CLAIMED→PENDING 재청구)을 한 tick 에 묶는다.
+#   enabled=true 운영 상시. 통합 테스트는 false 로 배경 tick 을 끄고 워커를 직접 호출해 결정적으로 검증한다.
+#   배송은 마감보다 시급성이 낮아 긴 주기(기본 5초). lease-timeout-ms — 게임 청구(CLAIMED) 리스 유효 기간(기본 60초).
+delivery:
+  worker:
+    enabled: ${DELIVERY_WORKER_ENABLED:true}
+    fixed-delay-ms: ${DELIVERY_WORKER_FIXED_DELAY_MS:5000}
+    batch-size: ${DELIVERY_WORKER_BATCH_SIZE:200}
+    lease-timeout-ms: ${DELIVERY_WORKER_LEASE_TIMEOUT_MS:60000}
+
 # FC-107(EPIC-SEARCH): 검색 질의·화해 설정(search-spec §12.4·§12.5·§12.7).
 #   index-alias — 앱이 질의하는 읽기 alias(재색인은 이 alias 원자 스위치, 물리 인덱스명 미참조).
 #   min/max-query-length — q 규약(계약 C3): 최소 2(ngram min_gram 정합)·최대 64(비용 상한). 위반 400(COMMON).

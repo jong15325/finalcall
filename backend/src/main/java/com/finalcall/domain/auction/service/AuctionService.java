@@ -31,6 +31,8 @@ import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.entity.AuctionWithBidCount;
 import com.finalcall.domain.auction.repository.AuctionRepository;
 import com.finalcall.domain.bid.config.BidIncrementProperties;
+import com.finalcall.domain.delivery.entity.DeliveryStatus;
+import com.finalcall.domain.delivery.repository.ItemDeliveryRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
@@ -68,6 +70,7 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final ItemInstanceRepository itemInstanceRepository;
+    private final ItemDeliveryRepository itemDeliveryRepository;
     private final InventoryService inventoryService;
     /** 최소 증분 정책의 단일 진실원(bid 도메인 소유). 상세 응답 파생값 산출에만 쓴다 — 정책을 복제하지 않는다. */
     private final BidIncrementProperties incrementProperties;
@@ -90,6 +93,15 @@ public class AuctionService {
         ItemInstance item = itemInstanceRepository.findDetailByPublicId(request.itemInstancePublicId())
             .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_ITEM_NOT_SELLABLE));
         Preconditions.validate(item.isOwnedBy(sellerId), AuctionErrorCode.AUCTION_ITEM_NOT_SELLABLE);
+
+        // 재판매 차단(delivery-domain-spec §5.4·§6.1·D-F, FC-188) — FAILED 아닌 배송(PENDING/CLAIMED/DEFERRED/APPLIED)이
+        //   있는 아이템은 게임으로 배송 중이거나 이미 전달됐으므로 출품 불가. location='INVENTORY' CAS 에 더한 검증으로
+        //   웹↔게임 이중 존재·이중 배송을 원천 차단한다. ★ APPLIED 포함이 lag 창(게임 apply~웹 reconciler IN_GAME 전이
+        //   사이, item_instance 아직 INVENTORY)을 봉쇄한다(D-F). IN_GAME 이관 완료 후엔 CAS 가 자동 배제(중복無).
+        Preconditions.validate(
+            !itemDeliveryRepository.existsByItemInstanceIdAndStatusIn(
+                item.getId(), DeliveryStatus.LISTING_BLOCKING_STATUSES),
+            AuctionErrorCode.AUCTION_ITEM_NOT_SELLABLE);
 
         int windowSec = request.softCloseWindowSec() != null ? request.softCloseWindowSec() : DEFAULT_SOFT_CLOSE_SEC;
         int extendSec = request.softCloseExtendSec() != null ? request.softCloseExtendSec() : DEFAULT_SOFT_CLOSE_SEC;

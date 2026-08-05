@@ -19,6 +19,8 @@ import com.finalcall.common.exception.ShopErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.response.CursorResponse;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.delivery.entity.DeliveryStatus;
+import com.finalcall.domain.delivery.repository.ItemDeliveryRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
@@ -67,6 +69,7 @@ public class ShopService {
 
     private final ShopRepository shopRepository;
     private final ItemInstanceRepository itemInstanceRepository;
+    private final ItemDeliveryRepository itemDeliveryRepository;
     private final InventoryService inventoryService;
     private final ShopListingProperties listingProperties;
     private final FeeCalculator feeCalculator;
@@ -95,6 +98,14 @@ public class ShopService {
         ItemInstance item = itemInstanceRepository.findDetailByPublicId(request.itemInstancePublicId())
             .orElseThrow(() -> new BusinessException(ShopErrorCode.SHOP_ITEM_NOT_SELLABLE));
         Preconditions.validate(item.isOwnedBy(sellerId), ShopErrorCode.SHOP_ITEM_NOT_SELLABLE);
+
+        // 재판매 차단(delivery-domain-spec §5.4·§6.1·D-F, FC-188) — FAILED 아닌 배송(PENDING/CLAIMED/DEFERRED/APPLIED)이
+        //   있는 아이템은 게임으로 배송 중이거나 이미 전달됐으므로 출품 불가. 경매와 같은 item CAS 를 공유하므로 양
+        //   경로에서 균일 차단한다. ★ APPLIED 포함이 lag 창(게임 apply~웹 reconciler IN_GAME 전이 사이)을 봉쇄한다(D-F).
+        Preconditions.validate(
+            !itemDeliveryRepository.existsByItemInstanceIdAndStatusIn(
+                item.getId(), DeliveryStatus.LISTING_BLOCKING_STATUSES),
+            ShopErrorCode.SHOP_ITEM_NOT_SELLABLE);
 
         // 기한 자동 계산(shop-spec §3.1) — 판매자는 고르지 않는다. end_at = now + 설정 일수(하드코딩 금지).
         Instant endAt = now.plus(listingProperties.defaultDurationDays(), ChronoUnit.DAYS);
