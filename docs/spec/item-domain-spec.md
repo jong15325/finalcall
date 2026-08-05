@@ -1,6 +1,6 @@
 # FinalCall Item·Inventory Domain Spec (아이템·인벤토리 도메인 스펙)
 
-상태: v0.4 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)** + **§3.1 LISTED 전이 드리프트 정정(2026-07-18, FC-030)** — 초안의 엔티티 메서드 `markListed()` 서술을 실구현(조건부 CAS `markListedIfInInventory`)에 맞게 갱신했다(FC-029 리뷰 판단 #5). **v0.4(2026-07-19, 게이트2 FC-044)**: §2.1 `item_template` 코드 축을 교정된 정의로 갱신(`main_category`=상품군·`sub_group`=대분류) + `kind`의 `sub_group` 의존·마법 2값 검증 주의 + 시드 정합 부채 명기. 코드값 열거 정본은 api-contract §3.3.1. 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
+상태: v0.5 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)** + **§3.1 LISTED 전이 드리프트 정정(2026-07-18, FC-030)** + **§2.3·§3.1 location `IN_GAME` 상태축 확장(2026-08-05, FC-185 EPIC-ITEM-DELIVERY 게이트2 형상 (a) — 게임 이관 상태=enum 확장·재판매 차단 XOR 연장, 정본 `delivery-domain-spec.md` v1.0)** — 초안의 엔티티 메서드 `markListed()` 서술을 실구현(조건부 CAS `markListedIfInInventory`)에 맞게 갱신했다(FC-029 리뷰 판단 #5). **v0.4(2026-07-19, 게이트2 FC-044)**: §2.1 `item_template` 코드 축을 교정된 정의로 갱신(`main_category`=상품군·`sub_group`=대분류) + `kind`의 `sub_group` 의존·마법 2값 검증 주의 + 시드 정합 부채 명기. 코드값 열거 정본은 api-contract §3.3.1. 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
 소유: architect (spec). 게이트2 4항목 전부 승인 완료(§9) → 구현 착수 근거.
 근거: api-contract v1.5 §4.1·§4.2·§5, erd v0.8 §2(결정 플래그 B)·§4.3·§5·§6, domain-spec v0.5 §7, CLAUDE.md 섹션 5(도메인 컨벤션), D-044~047·D-062·D-066·D-067·D-073.
 범위: 정본을 대체하지 않는다. **본 문서는 구현 지침(불변식·응답 필드·에러코드·슬라이싱)의 단일 참조점**이며, 스키마/계약 변경이 필요한 항목은 §7(갭)·§9(게이트2)로 분리해 상신 대상으로 표시한다.
@@ -56,7 +56,7 @@
 | skill2_id | BIGINT | Y | FK→skill_definition | 슬롯2 |
 | skill_percent | INT | N | | 발동확률(합성 결과) |
 | gf_expire_at | DATETIME(6) | Y | | 골드포스 만료(활성/잔여는 파생) |
-| location | ENUM(문자열) | N | | INVENTORY / TEMP / LISTED |
+| location | ENUM(문자열) | N | | INVENTORY / TEMP / LISTED / **IN_GAME**(게임 이관 완료 — EPIC-ITEM-DELIVERY, 배송 APPLIED 시 전이. §3.1) |
 | slot_no | INT | Y | | INVENTORY일 때 0~95, 그 외 NULL |
 - soft delete 없음(아이템은 소멸이 아니라 소유 이전·이력 보존; erd에 is_deleted 미표기).
 - 불변식은 §3 참조.
@@ -87,11 +87,12 @@
 ### 3.1 location XOR (플래그 B, erd §2·§4.3)
 `item_instance.location`이 단일 디스크리미네이터다. 상태별 정확히 하나만 참이어야 한다.
 
-| location | slot_no | temp_storage 행 | 활성 리스팅(auction/shop) |
-|---|---|---|---|
-| INVENTORY | NOT NULL(0~95) | 없음 | 없음 |
-| TEMP | NULL | 존재(1:1) | 없음 |
-| LISTED | NULL | 없음 | 존재(참조) |
+| location | slot_no | temp_storage 행 | 활성 리스팅(auction/shop) | 게임 user_item 재료화 |
+|---|---|---|---|---|
+| INVENTORY | NOT NULL(0~95) | 없음 | 없음 | 없음 |
+| TEMP | NULL | 존재(1:1) | 없음 | 없음 |
+| LISTED | NULL | 없음 | 존재(참조) | 없음 |
+| **IN_GAME** | NULL | 없음 | 없음 | **존재(item_uuid 1:1)** — 웹 커스터디에서 이탈, 재판매 불가 |
 
 - **앱 강제**: 위치 전이는 전용 경로로만 수행하고 `@Setter`를 두지 않는다(섹션 5).
   - INVENTORY·TEMP 방향 전이는 도메인 메서드(`ItemInstance.placeInInventory(slotNo)` / `moveToTemp()`)가 slot_no·연계 행을 원자적으로 세팅한다.
@@ -100,6 +101,10 @@
   - INVENTORY↔slot_no 결속 + slot 유일성은 §3.2(생성 컬럼 UK).
   - TEMP↔temp_storage는 `temp_storage.instance_id` UK(1:1) + 앱 트랜잭션(행 생성/삭제와 location 전이 동일 TX).
   - LISTED↔활성 리스팅은 auction/shop 등록 시 INVENTORY→LISTED CAS(중복 출품 차단, erd §5 "부분 유니크 불요")로 보증. **EPIC-ITEM 범위 밖**(auction 에픽) — 본 스펙은 relocate·인벤토리 경로만 다루고 LISTED 전이는 auction 에픽이 소유.
+  - **IN_GAME↔게임 이관은 배송 APPLIED 후 웹이 전이**(INVENTORY/TEMP→IN_GAME CAS). 게임 `user_item.itm_uuid` 1:1로 재료화 존재. **EPIC-ITEM-DELIVERY 범위**(delivery-domain-spec §5.4·§6.1) — 본 스펙은 상태축·재판매 차단 불변식만 반영하고 전이 배선은 배송 에픽이 소유.
+
+- **게임 이관 상태(IN_GAME) — 게이트2 형상 (a) 확정(EPIC-ITEM-DELIVERY, FC-185)**: 장터에서 산 아이템을 게임 캐릭터 인벤토리로 도착시키는 배송 다리(delivery-domain-spec)가 완결(APPLIED)되면 finalcall `item_instance`는 "게임 이관됨" 상태가 된다. 이 상태 표현은 **location enum 확장(`IN_GAME`)** 으로 확정한다(별도 배송 상태 축 기각). 근거: location은 단일 디스크리미네이터(플래그 B)이며, 별도 boolean/status 축을 두면 디스크리미네이터가 둘이 되어 모순 상태(location=INVENTORY ∧ delivered=true = 웹·게임 이중 존재)를 표현 가능해진다 — 배송 다리가 막으려는 바로 그 상태다. 단일 축 확장이 이중 존재를 구조적으로 불가능하게 하고, 출품 CAS `markListedIfInInventory`(`WHERE location='INVENTORY'`)가 IN_GAME 아이템을 자동 배제해 **재판매를 별도 가드 없이 차단**한다.
+  - **재판매 차단 불변식(location XOR 연장)**: (1) IN_GAME 아이템은 위 XOR 표대로 출품 불가(웹·게임 이중 존재 방지). (2) **배송 진행 창(PENDING/CLAIMED/DEFERRED)** 동안에도 재판매 차단 — 해당 item_instance에 미완료 배송이 있으면 출품을 막는다(출품 경로가 location='INVENTORY' CAS에 더해 "미완료 배송 부재"를 검증. delivery-domain-spec §6.1·불변식 D-F, 소유 = 배송 에픽 FC-188). 이로써 같은 item_instance에 2건 이상 배송 발생을 원천 차단한다.
 
 ### 3.2 slot 유일성 — **확정(게이트2 승인 2026-07-18, erd v0.9)**
 동일 owner가 같은 slot_no에 두 아이템을 둘 수 없다(relocate INV_002의 DB 근거). D-081 생성 컬럼 UK 패턴을 위치 스코프로 응용해 DB가 최종 강제한다:
@@ -288,5 +293,6 @@ FC-023 쓰기 파일 집합:
 - temp_storage.expire_at 회수 규칙(erd 미확정) — 이연.
 - LISTED 전이(INVENTORY→LISTED CAS)·에스크로 해제 복귀 = auction 에픽 소유.
 - TRADE 소유이전 트리거·sale_order 연계 = auction/order 에픽 소유.
+- **IN_GAME 전이(배송 APPLIED 후)·미완료 배송 재판매 가드 = EPIC-ITEM-DELIVERY 소유**(delivery-domain-spec §5.4·§6.1·§13 (a)). 본 스펙은 상태축·XOR 불변식만 반영. 역방향(게임→장터 출품) 및 게임 살아있는 인벤토리 완전 통합(A)은 후속 별건.
 - 아이템 시각 자산(이미지)·감정 = 범위 밖(domain-spec §7.6).
 - market-prices = §9-c 이연.

@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.7 | 2026-08-05 | EPIC-ITEM-DELIVERY(FC-185) — 게임 아이템 지급 우편함 스키마. **[2] 엔티티 개요·[4.4] `item_delivery` 테이블 신설**(finalcall-native 내구 우편함: sale_order 1:1 UK·item_instance/recipient FK·item_uuid char40 멱등키 UK·자족 스냅샷 type_code/level/skill1_code/skill2_code/skill_percent/gf_expire_at·status PENDING/CLAIMED/APPLIED/DEFERRED/FAILED·claim_token 리스·append 원장 updated_at 없음). **[4.3] `item_instance.location`에 `IN_GAME` 값 추가**(게임 이관 완료 — 배송 APPLIED 시 전이, 재판매 차단 XOR 연장) + 불변식에 IN_GAME 행. [5] 인덱스 2종(`(status, created_at)` poller·리스 재청구·`(recipient_user_id, status)` 접속 claim·배송 상태 조회). [6] Flyway 신규 group 6(게임 연동·배송)에 **V21**(현재 최신 V20) 채번 등재. **게이트2 형상 3건(FC-185)**: (a) 이관 상태 = location enum 확장 `IN_GAME`(별도 상태축 기각) (b) 게임 claim = DB 직접 프로토콜(웹 REST 아님) (c) sale_order_id 1:1 UK가 낙찰·즉시구매 양 경로 커버(SettlementRecorder 공통 꼬리). **마이그레이션 실물은 미작성**(FC-186 backend-impl 소유). 정본 = `delivery-domain-spec.md` v1.0 · api-contract §4.6. |
 | v1.6 | 2026-08-01 | EPIC-MEMO(FC-170) — 회원 간 메모(쪽지) 스키마. **[4.1] `user_memo` 테이블 신설**(게임 `new_sp.user_memo` 계승: sender/receiver = user FK + 닉 스냅샷 정규화 R1·`memo_type` 원 코드값 보존·`memo_level_gender` 분해 저장(sender_level/gender)·`body VARCHAR(120)` 용량 계승·is_read/is_deleted). [5] 인덱스 2종(받은함·보낸함 커서 `(*_id, is_deleted, id DESC)`). [6] Flyway group1-c에 **V20**(현재 최신 V19) 채번 등재. **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 스냅샷 2컬럼·현재 기본값 Lv.1·성별 0(남) (b) 깔끔 원문 저장·게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) 발신 자유 텍스트 + 게임 boundary 28바이트 자동 줄바꿈. 정본 = api-contract §2.6(v1.20)·memo-domain-spec v1.0 |
 | v1.5 | 2026-07-29 | 게이트2(EPIC-OAUTH, FC-152) 승인 반영 — 소셜 로그인(방식 B) 스키마 확정. **[4.1] `user_social_account` 테이블 신설**(id·user_id FK·provider·provider_user_id·created_at, **UK(provider, provider_user_id)** — 소셜 신원 1:1·중복가입 차단·find-or-create 앵커). **[4.1] `user.password_hash`·`login_id` 널 N→Y**(소셜 전용 계정은 둘 다 NULL — 비밀번호 로그인 불가·신원=소셜). 소셜 프로필 이메일 **미저장**(결정 2 — user.email NULL 유지·별도 컬럼 없음 → email_active UK 무충돌). [5] 정합성 제약·[6] Flyway group1에 **V19**(현재 최신 V18) 채번 등재. 정본 = api-contract §2 소셜 로그인 |
 | v1.4 | 2026-07-22 | 게이트2(EPIC-PURCHASE, FC-088) 승인 반영 — 즉시구매(BUYNOW)+거래내역 조회. **스키마 무변경**(신규 테이블·컬럼·마이그레이션·UK 없음). [4.2] `sale_order` 표 아래 승인 반영 주 추가 — semantic 델타만: `auction.result_type=BUYNOW`(종전 정의됨·미사용)가 즉시구매 SOLD 전이에서 **실사용 시작**(마감 SOLD=`BID`), `sale_order (buyer_id)`·`(seller_id)` 인덱스가 거래내역 role 스코프 조회에서 **실사용 시작**. `source_type=AUCTION`·`buy_now_price` 재사용, V14 그대로. 정본 = `purchase-spec.md` v1.0 |
@@ -90,6 +91,7 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 - `shop` — 고정가 판매(domain-spec 용어 FixedSale/고정가 ↔ 테이블 shop). item_instance 1건 보유(에스크로).
 - `sale_order` — 판매 성립(SOLD) 시 생성되는 거래(결제·정산·소유 이전). 경매·고정가 공통 핸드오프.
 - `platform_revenue_ledger` — 사업자 수익 원장(EPIC-CLOSING, v1.3). SOLD 정산 1건당 수수료 1행 적립(append-only). 게임머니 총량 보존의 회계 축.
+- `item_delivery` — 게임 아이템 지급 우편함(EPIC-ITEM-DELIVERY, v1.7). SOLD/BUYNOW 정산 1건당 배송 1행(sale_order 1:1). finalcall-native 내구 정본(웹→게임 인벤토리 다리), 자족 스냅샷·item_uuid 멱등키. 게임이 DB 직접 claim(§4.4·delivery-domain-spec).
 
 아이템 (D-044~047·D-062·D-066)
 - `item_template` — 아이템 정의 마스터. 타입코드 정규화(상품군·대분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073). 코드값 정본은 api-contract §3.3.1.
@@ -420,13 +422,13 @@ table `item_instance` — 개별 아이템(D-045, ②③④⑤). 위치 디스�
 | skill2_id | BIGINT | Y | FK→skill_definition | 특수스킬 슬롯2 |
 | skill_percent | INT | N | | 스킬 발동확률(합성 결과, ②) |
 | gf_expire_at | DATETIME(6) | Y | | 골드포스 만료시각(③). 활성/잔여는 파생 |
-| location | ENUM | N | | INVENTORY / TEMP / LISTED (위치 단일진실, 플래그 B) |
+| location | ENUM | N | | INVENTORY / TEMP / LISTED / **IN_GAME** (위치 단일진실, 플래그 B). IN_GAME = 게임 이관 완료(배송 APPLIED 시 전이, EPIC-ITEM-DELIVERY v1.7) |
 | slot_no | INT | Y | | INVENTORY일 때 인벤토리 슬롯(0~95). 그 외 NULL |
 | slot_key | VARCHAR(40) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(location='INVENTORY', CONCAT(owner_id,'-',slot_no), NULL)) STORED`. INVENTORY 행만 값 → (owner, slot) 유일 보장·그 외 NULL(다중 허용). slot 이중 배정 DB 차단(G2, v0.9). D-081 생성 컬럼 UK 패턴 응용 |
 
 유니크: `uk_item_instance_slot (slot_key)` — 동일 소유자·동일 슬롯의 이중 배정을 DB에서 차단(relocate 동시성 최종 방어선, "정합성은 DB" domain-spec §8).
 
-불변식(XOR): location=INVENTORY ⇒ slot_no NOT NULL(0~95) · slot_key 유일 · temp_storage 행 없음 / TEMP ⇒ slot_no NULL · slot_key NULL · temp_storage 행 존재 / LISTED ⇒ slot_no NULL · slot_key NULL · 활성 auction·shop이 참조. 앱(전용 도메인 메서드) + DB 제약(slot_key UK · temp_storage.instance_id UK · 리스팅 CAS) 강제.
+불변식(XOR): location=INVENTORY ⇒ slot_no NOT NULL(0~95) · slot_key 유일 · temp_storage 행 없음 / TEMP ⇒ slot_no NULL · slot_key NULL · temp_storage 행 존재 / LISTED ⇒ slot_no NULL · slot_key NULL · 활성 auction·shop이 참조 / **IN_GAME ⇒ slot_no NULL · slot_key NULL · temp_storage 행 없음 · 활성 리스팅 없음 · 게임 `user_item`에 재료화 존재(item_uuid 1:1)** — 웹 커스터디에서 이탈, 재판매 불가(출품 CAS `WHERE location='INVENTORY'`가 자동 배제). 앱(전용 도메인 메서드) + DB 제약(slot_key UK · temp_storage.instance_id UK · 리스팅 CAS) 강제. IN_GAME 전이는 배송 APPLIED 관측 후 웹이 수행(delivery-domain-spec §5.4·§6.1).
 
 table `item_ownership_history` — 소유 이전 이력(④). 최초 소유자 = 인스턴스별 첫 행(별도 캐시 컬럼 없음).
 
@@ -447,6 +449,31 @@ table `temp_storage` — 임시보관(오버플로우, ⑤-2). location=TEMP일 
 | owner_id | BIGINT | N | FK→user | |
 | stored_at | DATETIME(6) | N | | 임시보관 시각 |
 | expire_at | DATETIME(6) | Y | | 선택 보관 기한(회수 규칙 미확정) |
+
+### 4.4 게임 아이템 지급 우편함 (EPIC-ITEM-DELIVERY, v1.7)
+
+table `item_delivery` — 장터 낙찰(SOLD)·즉시구매(BUYNOW) 아이템을 게임 캐릭터 인벤토리(`new_sp.user_item`)로 도착시키는 **finalcall-native 내구 우편함(다리)**. 정산 1건당 배송 1행(sale_order 1:1). DB=내구 정본, Redis=best-effort 알림(하이브리드 — 순수 Redis 기각, bid §8 정신). 게임이 **DB 직접 CAS로 claim/apply**(웹 REST API 아님). 정본 = `delivery-domain-spec.md` v1.0. feature `com.finalcall.domain.settlement`(또는 `delivery`, 응집 판단 backend).
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| public_id | ULID | N | UK | 외부 노출 식별자(B-004). 구매자 배송 상태 조회 경로 리소스 |
+| sale_order_id | BIGINT | N | UK, FK→sale_order | 정산 1:1. **UK가 이중 배송 생성을 DB 차단**(형상 (c) — 낙찰·즉시구매 양 경로가 SettlementRecorder 공통 꼬리에서 생성, platform_revenue_ledger 선례) |
+| item_instance_id | BIGINT | N | FK→item_instance | 배송 대상(소유 정본 링크) |
+| recipient_user_id | BIGINT | N | FK→user | 수령 구매자(= item_instance.owner_id) |
+| recipient_nickname | VARCHAR(16) | N | | 수령 닉 스냅샷(게임 usr_name 매핑 계약 char16, R1) |
+| item_uuid | CHAR(40) | N | UK | **멱등키** — 게임 `user_item.itm_uuid`로 이관, 중복 apply UK 차단(at-least-once 전달 + exactly-once 효과) |
+| type_code | INT | N | | 배송 시점 분해 스냅샷(자족 — 게임 boundary가 이 값만으로 재패킹) |
+| level | INT | N | | finalcall 1-based(게임 이관 시 −1은 게임 boundary) |
+| skill1_code | INT | Y | | 스냅샷(마법 등 부재 시 NULL) |
+| skill2_code | INT | Y | | 스냅샷 |
+| skill_percent | INT | N | | 스냅샷 |
+| gf_expire_at | DATETIME(6) | Y | | 골드포스 만료 스냅샷 |
+| status | VARCHAR(20) | N | | PENDING / CLAIMED / APPLIED / DEFERRED / FAILED |
+| claim_token | VARCHAR(40) | Y | | 청구 세션 토큰(리스 소유자·만료 ack 무효화) |
+| claimed_at | DATETIME(6) | Y | | 청구 시각(리스 타임아웃 기준) |
+| applied_at | DATETIME(6) | Y | | 게임 인벤 적용 완료 시각 |
+
+주: `public_id` 부여(외부 노출 — 구매자 배송 상태 조회). `updated_at` 미도입(append 원장 — 상태 시각은 `claimed_at`/`applied_at`이 담음, item_ownership_history·platform_revenue_ledger 선례). `created_at`(enqueue 시각)은 공통 컬럼 생략 규칙대로 표에서 뺐다. soft delete 없음(상태 전이, D-081 무관 — 닉·item_uuid는 스냅샷/멱등키지 재사용 자연키 아님). 게임 boundary 번역(itm_skill 재패킹·level−1·usr_id 매핑)은 전적으로 게임 서버 소속(delivery-spec §6.2·§12.2, memo boundary 선례).
 
 ### [4] 말미 주 — soft delete 자연키 스윕 결과 (074-3, D-081)
 
@@ -487,6 +514,8 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | sale_order | (source_type, source_id) **UK** | 출처 리스팅 역참조 + **동일 경매 이중 SOLD 핸드오프 DB 차단**(v1.3 UK 승격 — 이중 정산 방지, closing-domain-spec §6 I-C) |
 | sale_order | (buyer_id), (seller_id) | 구매/판매 거래 내역 |
 | platform_revenue_ledger | (sale_order_id) **UK** | 정산 1:1 + 수수료 이중 적립 DB 차단(v1.3, I-H). 조회·정합 겸용이라 별도 보조 인덱스 불요(기간 집계는 후속 대시보드 시 `(created_at)` 검토) |
+| item_delivery | (status, created_at) | poller가 PENDING/DEFERRED를 오래된 순 스캔 + 리스 만료 재청구 sweeper 스캔(closing findClosableIds 선례, EPIC-ITEM-DELIVERY v1.7) |
+| item_delivery | (recipient_user_id, status) | 접속 시 claim(플레이어별 대기 배송) + Redis 신호 수신 시 조회 + 구매자 배송 상태 조회(`GET /me/deliveries` recipient 스코프) |
 | user_memo | (receiver_id, is_deleted, id DESC) | 받은함 커서 조회(`receiver_id=me AND is_deleted=false`, id desc 안정정렬) + 미열람 개수 집계 커버(EPIC-MEMO, v1.6) |
 | user_memo | (sender_id, is_deleted, id DESC) | 보낸함 커서 조회(`sender_id=me AND is_deleted=false`, id desc) |
 | charge | (user_id, status) | 사용자 충전 내역·진행 상태 |
@@ -500,6 +529,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 - charge.idempotency_key UK로 충전 콜백 멱등(D-051).
 - money_exchange (user_id, idempotency_key) 복합 UK로 교환 멱등(SEC-004). 클라이언트 공급 키라 사용자 스코프(charge.pg_tx_id 선례 동류).
 - user_social_account (provider, provider_user_id) 복합 UK로 소셜 신원 1:1 매핑·중복가입 DB 차단(find-or-create 조회 앵커, EPIC-OAUTH).
+- item_delivery.sale_order_id UK로 정산당 배송 이중 생성 DB 차단(낙찰·즉시구매 양 경로 공통 꼬리, platform_revenue_ledger 선례). item_delivery.item_uuid UK로 게임 인벤 중복 apply 차단(at-least-once 전달 + exactly-once 효과, EPIC-ITEM-DELIVERY). 상태 전이(claim/apply/재청구)는 조건부 CAS(WHERE 현재상태[+claim_token])로 단일 승자.
 
 ## 6. Flyway 매핑 (D-036, B-012 정정)
 
@@ -520,5 +550,7 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
    - 4-b. `bid` + `money_hold` = 백엔드 **`V11__bid_and_money_hold.sql`** 단일 채번(EPIC-BID, FC-031). `money_hold.bid_id`가 NOT NULL FK+UK라 `bid` → `money_hold` 순서. 동 파일에 F6 인덱스(`auction (status, highest_bid_amount)`)도 포함한다.
    - 4-c. `sale_order` + `platform_revenue_ledger` = 백엔드 **`V14__sale_order_and_settlement.sql`** 단일 채번(EPIC-CLOSING, v1.3). `platform_revenue_ledger.sale_order_id`가 NOT NULL FK+UK라 `sale_order` → `platform_revenue_ledger` 순서. `sale_order`는 여기서 최초 생성(종전 "V12+ 이연"분 — 실제 채번은 V14, 중간 V12·V13은 아이템 시드 재작성·데모 시드가 소비). `shop`은 후속 에픽(EPIC-SHOP).
 5. 아이템 시드 — 최소 스텁 시드(게이트2 승인, FC-019). **EPIC-ITEM 내로 앞당김**(group 4 판매·거래보다 먼저 — 인벤토리·카탈로그·경매 공급이 시드에 의존): item_template ~8건(대분류2×종류2×속성2) + skill_definition ~5건 + **시드 소유자 user·user_balance(현재 member 시드 부재 → 시드에 포함)** + item_instance ~10건(location=INVENTORY, transfer_type=SEED, ownership_history 첫 행 동반). 원게임 대량 실데이터·정밀 수치는 이연(D-067). 진입 경로 = 시드-only(관리자 지급 API 미도입, 게이트2 2026-07-18)
+6. 게임 연동·배송 — item_delivery + 인덱스 2종(EPIC-ITEM-DELIVERY, FC-186)
+   - 6-a. 아이템 지급 우편함 — `item_delivery` 신설 + `(status, created_at)`·`(recipient_user_id, status)` 인덱스 + `item_instance.location` enum에 `IN_GAME` 값 추가 = 백엔드 **`V21`**(현재 최신 V20, append-only). `sale_order`(V14)·`item_instance`(V7) 선행 필요(FK). 게임 `user_item.itm_uuid` UK 신설은 게임 스키마·서버 조정 단계(후속 별건, delivery-spec §12.2)라 이 마이그레이션 범위 밖. **게이트2 형상 3건 확정(FC-185)** — (a) location IN_GAME 확장 (b) 게임 claim DB 프로토콜 (c) sale_order_id 1:1 UK 양 경로 커버(delivery-domain-spec §13).
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

@@ -24,6 +24,7 @@
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
 | v1.16 | 2026-07-29 | 6절 계약 변경 — 게이트2(EPIC-OAUTH, FC-152) 승인 반영. 네이버·카카오 소셜 로그인(방식 B — 프론트 주도 + 백엔드 교환). **§2 소셜 로그인 subsection 신설** — `POST /api/v1/auth/oauth/{provider}`(provider ∈ naver\|kakao) 단일 엔드포인트 find-or-create, 요청 `{ code, redirectUri }`(state는 프론트 소유 CSRF·백엔드 미검증이라 요청 바디 제외), 응답 = 기존 `LoginResponse` 형상 그대로(**가입·로그인 모두 200**, 신규/기존 비노출 SEC-007). **§5 `AUTH_006`~`AUTH_008` 등재**(미지원 provider 400·인가코드 교환 실패 401·provider 통신 실패 502). 결정 3건(①로그인·가입 통합 ②이메일 비연결=provider+id가 신원키·소셜 이메일 미저장 ③닉네임 유니크 접미사) 반영. 스키마 = erd v1.5(`user_social_account` 신설·`user.password_hash`·`login_id` nullable화, V19). AUTH_005~008 enum 등록 = 구현 티켓(FC-154). |
 | v1.18 | 2026-07-30 | 6절 계약 변경 — EPIC-LOGINID-CHECK(FC-165, 사용자 게이트1 승인 2026-07-30) 반영. **§2 `GET /api/v1/auth/login-id/availability` 신설**(회원가입 아이디 라이브 중복확인용, 닉네임 가용성 v1.17 미러). 인증 불요·permitAll(`/nickname/availability`와 동류 등재), 요청 query `loginId`(형식·길이=signup 규칙 재사용 `@NotBlank`·`@Size(max=50)`), 응답 `{ available: boolean }`(DTO `LoginIdAvailability{Request,Response}`), 판정=`existsByLoginIdAndIsDeletedFalse`(가입 유니크 검사와 단일 경로), advisory·최종 권위는 signup `AUTH_001`(409). **게이트웨이 배선을 계약 DoD 로 명문화** — 이 경로를 엣지 게이트웨이 `auth-rate-limited` `Path=` predicate 에 등재(FC-161 MAJOR-1 재발 방지, backend FC-166 이 코드+게이트웨이 동시 수행). **신규 도메인 에러코드 없음**(형식 위반은 COMMON 검증 400). 응답 형상 불변·스키마 무변경. loginId 는 자격증명이라 열거 민감도가 닉네임보다 높으나 signup `AUTH_001`이 이미 존재를 노출해 새 열거면 없음 — rate limit·응답 최소화 최종 점검 = FC-168(reviewer). 구현 = FC-166(backend)·FC-167(frontend). |
+| v1.22 | 2026-08-05 | EPIC-ITEM-DELIVERY(FC-185) — **§4.6 게임 아이템 지급·배송 신설**. (a) **구매자 배송 상태 조회(웹 REST)** `GET /me/deliveries`(커서·`status` 필터)·`GET /me/deliveries/{id}`(당사자만) — `recipient=주체` 스코프(IDOR 차단), `DeliverySummary`(status PENDING/CLAIMED/APPLIED/DEFERRED/FAILED·item 요약·itemInstancePublicId), claimToken/claimedAt 미노출. **기존 `/me/inventory`·`/me/orders` 응답 형상 불변**(배송 상태는 신규 엔드포인트에서만·형상 보존). (b) **게임 claim = DB 직접 프로토콜 명세**(웹 REST API 아님 — 통합 스키마 read 통합/write 소유자, memo boundary 선례): claim/apply/ack 조건부 CAS·item_uuid UK exactly-once·boundary 번역은 게임 서버 소속·claim 실이식은 후속 별건. api-contract envelope·에러체계 미편입(비-API 프로토콜 문서화). **§5 `DELIVERY_001`(배송 없음·미존재/비당사자 통일 404) 등재.** 스키마 = erd v1.7(`item_delivery` 신설 V21·`item_instance.location` IN_GAME 확장). **게이트2 형상 3건(delivery-domain-spec §13) 사용자 승인 대상**: (a) location enum 확장 IN_GAME (b) 게임 claim DB 프로토콜 (c) sale_order_id 1:1 UK 양 경로 커버. 정본 `delivery-domain-spec.md` v1.0. 구현 = FC-186~189(backend)·FC-190(frontend). |
 | v1.21 | 2026-08-04 | 6절 계약 변경 — EPIC-CARD-SYSTEM T1(FC-179, 게이트2 A 승인 2026-08-04) 반영. **§4.2 인벤토리·임시보관 "요약"(ItemSummaryResponse) 블록에 `skill1Name`·`skill2Name`(string, nullable) 가법 추가.** 출처 `skill_definition.name`, `skill1Code`/`skill2Code`가 null이면 각각 null(마법 카드는 skill1 부재라 skill1Name=null). §3.3 공통 item 블록의 스킬명(v1.14/FC-098)을 요약 블록에도 대칭 적용해 스킬명 단일 원천을 백엔드로 통일한다(프론트 "스킬 #코드" 폴백 제거). **순수 가법** — 기존 필드(`skill1Code`·`skill2Code`·`skillPercent` 등)·JSON 형상·에러코드·엔드포인트 전부 불변, 인벤토리·임시보관 쿼리가 skill_definition 을 이미 fetch join 하고 코드 노출에서 `getSkill1()`을 이미 참조하므로 N+1·추가 조인 없음. 스키마 무변경(DB 마이그레이션 없음). 정본 `card-system-consolidation-proposal-v0.1.md` §4. FE 배선 = T6. |
 | v1.20 | 2026-08-01 | EPIC-MEMO(FC-170) — **§2.6 메모/쪽지 신설**(회원 간 쪽지, 게임 `new_sp.user_memo` 계승 네이티브 도메인). 엔드포인트 6종(`POST /me/memos` 발신·`GET /me/memos/received`·`/sent` 커서·`/unread-count`·`GET /me/memos/{id}` 상세+읽음 전이·`DELETE /me/memos/{id}` soft delete), 전건 인증·`/me` 접두·주체 SecurityContext·발신 type=5 서버 고정(시스템 메모 사칭 차단). 당사자만 조회라 상대 닉 **비마스킹**, 레벨·성별 **분해 노출**(게임 패킹 int·28바이트 패딩은 게임 boundary 전용·웹 미노출). **§5 `MEMO_001`~`004` 등재**(수신자 없음 404·메모 없음 404·당사자 아님 403·자기 발신 422). 스키마 = erd v1.6(`user_memo` 신설·V20). **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 메모 스냅샷 2컬럼·현재 기본값 `senderLevel=1`·`senderGender=0`(남) (b) 깔끔 원문 저장 + 게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) **발신 = 자유 텍스트 단일 필드 + 게임 boundary 28바이트 자동 줄바꿈(필수)·프론트 미리보기 필수**. 정본 `memo-domain-spec.md` v1.0. 구현 = FC-171(backend)·FC-172(frontend). |
 | v1.19 | 2026-07-30 | 6절 계약 변경 — 회원가입 중복확인 필수 게이팅 반영(FC-169, 사용자 결정 2026-07-30). **§2 `nickname/availability`·`login-id/availability` 두 조항의 프론트 제출 동작 문구만 정정** — 종전 "프론트는 `available:true`여도 제출 시 409 처리(제출 비차단 advisory)"를 "프론트는 회원가입 제출 전 아이디·닉네임 **중복확인(available) 완료를 필수 전제로 요구**(미확인·중복·확인 후 값변경 시 제출 차단·재확인 유도), **백엔드 409(`AUTH_001`/`AUTH_002`)는 최종 방어선으로 유지**"로 변경. **엔드포인트 자체는 여전히 advisory**(예약·스냅샷 아님)임은 유지. **엔드포인트 계약(경로·응답·검증·에러코드) 전부 불변** — 프론트 동작 서술만 정정. erd·타 절 무변경. |
@@ -662,6 +663,39 @@ GET /api/v1/admin/search/reindex/{jobId} — 재색인 job 상태 조회
   - job 상태는 인메모리(단일 인스턴스)라 앱 재기동 시 유실될 수 있다(재트리거로 복구 — 재색인은 파생 read-model 재구성이라 안전).
 - 에러: `SEARCH_003` 재색인 job 없음(404)
 
+### 4.6 게임 아이템 지급·배송 (delivery) — EPIC-ITEM-DELIVERY, v1.22
+
+장터 낙찰(SOLD)·즉시구매(BUYNOW) 아이템을 게임 캐릭터 인벤토리로 도착시키는 **웹측 우편함(다리)** 계약이다. 도메인 규칙 정본 = `delivery-domain-spec.md` v1.0. **게이트2 형상 3건(delivery-spec §13)은 사용자 승인 대상.** 우편함 정본 = DB(`item_delivery`), Redis는 best-effort 알림(하이브리드 — 순수 Redis 기각, bid §8 정신).
+
+#### 4.6.1 구매자 배송 상태 조회 (웹 REST)
+
+전 엔드포인트 **인증 필요**, 주체 = SecurityContext, `/me` 접두(`recipient_user_id=주체` 스코프 — IDOR 설계 차단).
+
+GET /api/v1/me/deliveries — 내 배송 목록(커서)
+- 인증: 필요. 요청(query): `?cursor=<opaque>&size=<n>`(§1.3 cursor), 필터 `status`(선택, 대문자)
+- 응답 200: `CursorResponse<DeliverySummary>` — `recipient_user_id=주체` 스코프, `created_at desc`(내부 단조 키 안정 정렬).
+- `DeliverySummary` = `{ deliveryPublicId, status, item, itemInstancePublicId, createdAt, appliedAt? }`. `status` ∈ `PENDING`(게임으로 배송중)·`CLAIMED`(게임 수령 중)·`APPLIED`(도착)·`DEFERRED`(게임 인벤 만실·보류)·`FAILED`(실패·관리자 확인). `item` = §3.3 item 블록 요약(typeCode·displayName·level·스킬·발동확률·골드포스). **`claimToken`·`claimedAt`은 미노출**(내부 리스 메커니즘).
+- 에러: 401
+
+GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
+- 인증: 필요. 당사자(recipient=주체)만.
+- 응답 200: `DeliverySummary` + `{ recipientNickname }`
+- 에러: `DELIVERY_001` 배송 없음(404 — 미존재·비당사자 통일, public_id ULID라 열거 무해), 401
+
+- **프론트(FC-190)**: 인벤토리·구매내역에서 아이템별 배송 상태 배지("게임으로 배송중/도착/보류")로 표기하며, `itemInstancePublicId`로 인벤/주문 항목과 교차 조회한다. **기존 `/me/inventory`·`/me/orders` 응답 스키마는 불변**(형상 보존) — 배송 상태는 이 신규 엔드포인트에서만 온다. 아이템이 게임에 도착(APPLIED)하면 `item_instance.location=IN_GAME`으로 이동해 웹 인벤토리에서 빠진다(재판매 불가).
+
+#### 4.6.2 게임 claim = DB 직접 프로토콜 (웹 REST API 아님 — 형상 (b) 확정)
+
+- **게임의 claim/apply/ack는 웹 REST 엔드포인트가 아니다.** 게임 서버가 finalcall MySQL에 **DB 직접 접근**해 조건부 CAS로 수행한다(통합 스키마·read 통합/write 소유자 모델, memo boundary 포맷터=게임 서버 소속 선례). 이 계약은 api-contract의 요청/응답 envelope(§1.4)·에러코드 체계에 편입하지 않는다 — **비-API 프로토콜**로 문서화만 한다. 절차·SQL 규격 정본 = `delivery-domain-spec.md` §5.2.
+  - claim: `UPDATE item_delivery SET status='CLAIMED', claim_token=?, claimed_at=NOW(6) WHERE id=? AND status IN ('PENDING','DEFERRED')` — 영향행 1=단일 승자.
+  - apply: 게임이 자족 스냅샷 + boundary 번역(itm_skill 재패킹·level−1·usr_id 매핑)으로 `user_item` INSERT(itm_uuid = delivery.item_uuid). `user_item.itm_uuid` UK가 중복 apply를 no-op화(exactly-once 효과).
+  - ack: `UPDATE item_delivery SET status='APPLIED', applied_at=NOW(6) WHERE id=? AND status='CLAIMED' AND claim_token=?` — 만료 토큰 ack 무시.
+  - defer(만실): `status='DEFERRED'`로 되돌림(우편함 안전 보관).
+- **boundary 번역(itm_skill 패킹·level−1·usr_id 매핑)은 전적으로 게임 서버 소속**(delivery-spec §6.2, memo §8 선례)이며 웹 계약이 아니다. **게임 서버 claim 실이식은 후속 별건**(delivery-spec §12.2) — 이번 계약은 게임이 맞출 DB 규격만 확정한다.
+- 웹이 게임에 제공하는 계약면 = (1) `item_delivery` 스키마·상태 머신, (2) 자족 스냅샷 컬럼 집합, (3) `item_uuid` 멱등키 규약, (4) Redis 신호 채널 `delivery:{recipientUserId}`(best-effort).
+
+---
+
 ## 5. 에러코드 표
 
 `{DOMAIN}_{NNN}` 코드 ↔ HTTP status. 응답 envelope의 `code`에 실린다(1.4). 백엔드 도메인 ErrorCode enum과 1:1. 단 게이트웨이 엣지 코드(`GATEWAY_*`, 1.6)는 엣지에서 발생하므로 이 1:1 규칙의 예외다(도메인 enum 미등재).
@@ -720,6 +754,7 @@ GET /api/v1/admin/search/reindex/{jobId} — 재색인 job 상태 조회
 | INV_002 | 슬롯 점유 | 409 |
 | ORDER_001 | 주문 없음 | 404 |
 | ORDER_002 | 당사자 아님 | 403 |
+| DELIVERY_001 | 배송 없음(미존재·비당사자 통일, §4.6) | 404 |
 | CHARGE_001 | 승인 검증 실패 | 422 |
 | CHARGE_002 | 금액 불일치(토스 승인액 대조) | 422 |
 | CHARGE_003 | 충전 소유자 불일치(SEC-002) | 403 |
