@@ -45,19 +45,15 @@ const SOURCE_TABS: { value: OrderSourceType | 'ALL'; label: string }[] = [
  * ══════════════════════════════════════════════════════════════════════════════
  * ★★ **배송은 구매자 도메인** — `myRole==='BUYER'` 인 주문에만 상태를 얹는다(판매 카드엔 없음).
  * ══════════════════════════════════════════════════════════════════════════════
- * ★ 교차 키 = `itemInstancePublicId`(계약 §4.6). **단, 현재 계약상 `OrderSummary`(목록)에는 이
- *   필드가 없다** — `OrderDetail`(단건 조회)에만 있다(계약 §4.3). 그래서 목록 배지는 백엔드가
- *   목록에도 `itemInstancePublicId` 를 실어줄 때(FC-192 통합 대상) 활성화된다. 필드가 없으면
- *   조용히 배지를 생략한다(graceful degrade — 형상 불변 유지, `OrderSummary` 타입 미개변).
+ * ★ 교차 키 = `itemInstancePublicId`(계약 §4.6). FC-193 로 `OrderSummary`(목록)에도 이 필드가
+ *   additive 로 실린다(계약 §4.3). 필드가 없으면(배포 시차) 조용히 배지를 생략한다(graceful).
  */
-type OrderWithInstance = OrderSummary & { itemInstancePublicId?: string }
-
 function deliveryStatusFor(
     order: OrderSummary,
     deliveries: DeliveryLookup | undefined,
 ): DeliveryStatus | undefined {
     if (order.myRole !== 'BUYER' || !deliveries) return undefined
-    const instanceId = (order as OrderWithInstance).itemInstancePublicId
+    const instanceId = order.itemInstancePublicId
     if (!instanceId) return undefined
     return deliveries.get(instanceId)?.status
 }

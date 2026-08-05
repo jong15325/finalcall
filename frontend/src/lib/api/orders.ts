@@ -47,6 +47,11 @@ export interface OrderSummary {
     finalPrice: number
     status: string
     createdAt: string
+    /**
+     * 아이템 인스턴스 외부 식별자(ULID). 배송 상태 교차 조회 키(계약 §4.6·§4.3, FC-193 additive).
+     * OrderDetail 동명 필드와 같은 의미. 서버·클라 배포 시차로 부재할 수 있어 optional 로 둔다.
+     */
+    itemInstancePublicId?: string
     /** 판매자 전용 — 플랫폼 수수료(구매자 응답엔 부재) */
     feeAmount?: number
     /** 판매자 전용 — 정산 수취액 = finalPrice − feeAmount(구매자 응답엔 부재) */

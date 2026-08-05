@@ -605,10 +605,11 @@ GET /api/v1/orders/{orderPublicId} — 주문 상세
 >   ```
 >   OrderSummary (GET /me/orders content):
 >     { orderPublicId, myRole, sourceType, counterpartyMasked, item, finalPrice, status, createdAt,
->       feeAmount?, settleAmount? }   // feeAmount·settleAmount 는 myRole==SELLER 일 때만 존재
->   OrderDetail (GET /orders/{id}): OrderSummary + { settledAt, itemInstancePublicId }
+>       itemInstancePublicId, feeAmount?, settleAmount? }   // feeAmount·settleAmount 는 myRole==SELLER 일 때만 존재
+>   OrderDetail (GET /orders/{id}): OrderSummary + { settledAt }
 >   ```
 >   `myRole`=`BUYER|SELLER`(요청자 대비 파생), `sourceType`=`AUCTION`(코어. BID/BUYNOW 구분은 미노출 — B3), `counterpartyMasked`=상대 nickname 마스킹(§3.3 규약, userPublicId·loginId 미노출), `item`=§3.3 item 블록 요약.
+>   - **`itemInstancePublicId`(v1.x, EPIC-ITEM-DELIVERY · FC-193, additive)**: ULID char26. 주문이 인도한 아이템 인스턴스의 공개 식별자로, `OrderDetail`의 동명 필드와 **동일 의미·타입**이다(단건 전용이던 필드를 목록에도 승격). `/me/deliveries`의 `DeliverySummary.itemInstancePublicId`(§4.6)와 교차하는 **주문↔배송 교차 키** — 구매내역 목록에서 배송 배지를 잇는다. 기존 필드·순서·형상 불변(추가만).
 
 ### 4.4 화폐(잔액·충전·교환)
 

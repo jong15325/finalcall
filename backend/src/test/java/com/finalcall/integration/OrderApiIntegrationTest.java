@@ -54,7 +54,9 @@ class OrderApiIntegrationTest extends IntegrationTest {
     void 구매자_목록은_상대_마스킹만_보이고_수수료_정산액은_필드로도_부재한다() throws Exception {
         User seller = persistUser("ord_b_seller", "김판매", 0L);
         User buyer = persistUser("ord_b_buyer", "이구매", 0L);
-        persistOrder(buyer, seller, persistListedItem(seller, 9501), 1001L);
+        ItemInstance item = persistListedItem(seller, 9501);
+        persistOrder(buyer, seller, item, 1001L);
+        String itemInstancePublicId = item.getPublicId();
         flushClear();
 
         String body = mockMvc.perform(get("/api/v1/me/orders").with(user(String.valueOf(buyer.getId()))))
@@ -63,6 +65,8 @@ class OrderApiIntegrationTest extends IntegrationTest {
             .andExpect(jsonPath("$.data.content[0].sourceType").value("AUCTION"))
             .andExpect(jsonPath("$.data.content[0].finalPrice").value(FINAL_PRICE))
             .andExpect(jsonPath("$.data.content[0].counterpartyMasked").value("김판***"))
+            // FC-193 additive: 목록 요약도 배송 배지 교차표시용 인스턴스 public_id 를 싣는다(OrderDetail 과 동일 소스).
+            .andExpect(jsonPath("$.data.content[0].itemInstancePublicId").value(itemInstancePublicId))
             // 구매자에겐 수수료·정산액 필드가 아예 없다(NON_NULL 제외).
             .andExpect(jsonPath("$.data.content[0].feeAmount").doesNotExist())
             .andExpect(jsonPath("$.data.content[0].settleAmount").doesNotExist())

@@ -23,6 +23,10 @@ import lombok.Builder;
  *
  * <p>{@code counterpartyMasked} 는 상대 nickname 마스킹(§3.3 규약 — 앞 2자 + {@code ***})이며 userPublicId·loginId 는
  * 노출하지 않는다. {@code sourceType} 은 코어에서 {@code AUCTION} 만 나간다(BID/BUYNOW 구분은 미노출 — B3).
+ *
+ * <p>{@code itemInstancePublicId} 는 낙찰 아이템 인스턴스의 public_id(ULID char26)로 {@link OrderDetailResponse}
+ * 동명 필드와 동일 의미·소스다(FC-193 additive). FE 가 이 키로 목록 항목에 배송 상태(/me/deliveries)를 교차
+ * 표시한다. 기존 필드·JSON 형상은 불변이다.
  */
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -32,6 +36,7 @@ public record OrderSummaryResponse(
     SaleOrderSourceType sourceType,
     String counterpartyMasked,
     OrderItemResponse item,
+    String itemInstancePublicId,
     long finalPrice,
     SaleOrderStatus status,
     Instant createdAt,
@@ -56,6 +61,7 @@ public record OrderSummaryResponse(
             .sourceType(order.getSourceType())
             .counterpartyMasked(counterpartyMasked)
             .item(OrderItemResponse.from(order.getItemInstance()))
+            .itemInstancePublicId(order.getItemInstance().getPublicId())
             .finalPrice(order.getFinalPrice())
             .status(order.getStatus())
             .createdAt(order.getCreatedAt())
