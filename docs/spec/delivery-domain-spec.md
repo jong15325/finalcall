@@ -1,6 +1,6 @@
 # FinalCall Delivery Domain Spec (아이템 지급·우편함 도메인 스펙)
 
-상태: **v1.0 — FC-185(EPIC-ITEM-DELIVERY 계약 정본화, architect) 산출.** `game-item-delivery-proposal-v0.1`(게이트2 확정 G1~G7 + 확정 3건)을
+상태: **v1.1 — FC-185(EPIC-ITEM-DELIVERY 계약 정본화, architect) 산출 + FC-191 리뷰 MAJOR-2 정합화(재판매 가드 상태집합).** `game-item-delivery-proposal-v0.1`(게이트2 확정 G1~G7 + 확정 3건)을
 확정 spec으로 승격한다. 장터에서 낙찰(SOLD)·즉시구매(BUYNOW)한 아이템을 **웹측 내구 우편함(`item_delivery`)까지 도착**시키는 다리의
 계약·설계 정본이다. 게임이 실제로 받아가는 실이식(claim 구현·boundary 번역)은 게임 서버 조정 단계(후속 별건, §12.2)로 분리한다.
 소유: architect(spec). **게이트2 형상 3건(§13)은 사용자 승인 대상**이며, 승인분이 `erd.md`(item_delivery·V21)·`api-contract.md`(배송 상태 조회·게임 claim DB 프로토콜)·`item-domain-spec.md`(location IN_GAME 확장)에 반영된다.
@@ -15,6 +15,7 @@
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.1 | 2026-08-05 | FC-191 리뷰 MAJOR-2 정합화 — §5.4↔§6.1 재판매 가드 상태집합 불일치 해소. 가드 정의를 **"item_instance에 FAILED 아닌 배송(PENDING/CLAIMED/DEFERRED/APPLIED) 존재 시 출품 차단"**으로 통일(종전 §6.1이 APPLIED를 제외해 게임 apply~웹 IN_GAME 전이 lag 창에서 재출품→이중 존재 D-F 위반 가능했다). §5.4·§6.1·§7.2·§8(D-F·시나리오6)·§11·§14(FC-188) 정합. FAILED 제외 근거(관리자 개입·게임 미재료화) 명시. **형상·계약·G1~G7·erd·api-contract 불변**(가드 상태집합 서술만 정정, backend FC-188이 이 정의대로 확장 중). |
 | v1.0 | 2026-08-05 | FC-185 계약 정본화 — proposal v0.1(게이트2 확정 G1~G7) 승격. §1 단절 지점·§2 G1 배치(B-지금/A-목표)·§3 G2 하이브리드 전송·§4 성능 모델·§5 G4 claim 프로토콜(상태 머신·CAS·리스·멱등)·§6 G5 소유 이동+경계 포맷터·§7 G6·G7 실패 회수+`item_delivery` 스키마·§8 불변식(D-A~D-H)·§9 상태 전이표·§10 계약 델타·§11 프론트 영향·§12 범위/개발 순서·§13 게이트2 형상 3건. erd V21·api-contract 배송조회+게임 claim DB 프로토콜·item-spec location IN_GAME 확장에 반영. |
 
 ---
@@ -164,7 +165,7 @@ UPDATE item_delivery SET status='DEFERRED' WHERE id=:id AND status='CLAIMED' AND
 | item_instance.location → IN_GAME (APPLIED 관측 시) | **웹(finalcall)** | 소유 정본=웹(§6.1·premise #2). 게임은 item_instance를 쓰지 않는다 |
 
 - **게임은 `user_item`(live inventory)과 `item_delivery`의 claim/apply 전이만 쓴다. `item_instance`는 절대 쓰지 않는다**(소유 정본=웹, 쓰기 소유자 규칙).
-- **APPLIED → IN_GAME 전이는 웹 소관**: 웹 reconciler가 `status='APPLIED'`이나 아직 IN_GAME 아닌 배송을 관측해 `item_instance.location`을 IN_GAME으로 CAS 전이(§6.1). 게임 apply와 웹 전이 사이 짧은 lag이 있으나 재판매 가드(§6.1 D-E)가 그 창을 덮는다.
+- **APPLIED → IN_GAME 전이는 웹 소관**: 웹 reconciler가 `status='APPLIED'`이나 아직 IN_GAME 아닌 배송을 관측해 `item_instance.location`을 IN_GAME으로 CAS 전이(§6.1). 게임 apply와 웹 전이 사이 짧은 lag이 있으나, **재판매 가드의 상태집합이 `APPLIED`를 포함**하므로(§6.1 — 가드 = FAILED 아닌 모든 배송) 이 lag 창에서 재출품이 막혀 이중 존재(D-F)가 발생하지 않는다. IN_GAME 전이 완료 후에는 location XOR CAS가 이어받아 차단한다.
 
 ---
 
@@ -177,7 +178,10 @@ UPDATE item_delivery SET status='DEFERRED' WHERE id=:id AND status='CLAIMED' AND
 - **재판매 차단 불변식(location XOR 연장, item-spec §3.1)**:
   - `IN_GAME` ⇒ `slot_no` NULL · `temp_storage` 행 없음 · 활성 리스팅 없음(웹 커스터디에서 이탈) · 게임 `user_item`에 재료화 존재(멱등키 item_uuid 1:1).
   - **출품 CAS `markListedIfInInventory`(`WHERE location='INVENTORY'`)가 IN_GAME 아이템 출품을 자동 배제** → 이관된 아이템은 다시 리스팅·재판매되지 않는다(별도 가드 불요).
-- **배송 진행 창(PENDING/CLAIMED/DEFERRED) 재판매 차단**: item_instance는 SOLD 직후 구매자 소유로 INVENTORY/TEMP에 있으나(P-E 보존), **미완료 배송(PENDING/CLAIMED/DEFERRED)이 존재하는 동안에는 출품(재판매)을 차단**한다. 출품 경로(auction/shop 등록)가 location='INVENTORY' CAS에 더해 "해당 item_instance에 미완료 배송 부재"를 검증한다(FC-188 소유. 구현 기법 = 리스팅 경로 배송 존재 가드. 부분 유니크 제약 대안은 backend 재량). 이로써 같은 item_instance에 대한 **2건 이상 배송 발생을 원천 차단**(item_delivery.item_instance_id는 FK·비유니크지만 미완료 배송은 사실상 최대 1건).
+- **배송 존재 창 재판매 차단(★ 가드 상태집합 = FAILED 아닌 모든 배송)**: item_instance는 SOLD 직후 구매자 소유로 INVENTORY/TEMP에 있으나(P-E 보존), **해당 item_instance에 `FAILED`가 아닌 배송(= `PENDING`·`CLAIMED`·`DEFERRED`·`APPLIED`)이 존재하는 동안에는 출품(재판매)을 차단**한다. 출품 경로(auction/shop 등록)가 location='INVENTORY' CAS에 더해 "해당 item_instance에 FAILED 아닌 배송 부재"를 검증한다(FC-188 소유. 구현 기법 = 리스팅 경로 배송 존재 가드. 부분 유니크 제약 대안은 backend 재량).
+  - **★ APPLIED를 반드시 포함하는 이유(FC-191 MAJOR-2 정합화)**: 게임 apply(status=APPLIED)와 웹 reconciler의 `location→IN_GAME` 전이 사이에는 짧은 **lag 창**이 있다(§5.4 — 게임과 웹이 서로 다른 시각에 각자 테이블을 쓴다). 이 창에서 item_instance는 아직 INVENTORY/TEMP인데 아이템은 이미 게임 인벤에 재료화돼 있다. 가드가 APPLIED를 제외하면 이 창에서 재출품이 뚫려 **웹·게임 이중 존재(D-F 위반)** 가 발생한다. 따라서 가드는 APPLIED까지 포함해 lag 창 전체를 덮고, IN_GAME 전이가 완료되면 그 이후는 location XOR CAS(`WHERE location='INVENTORY'`)가 출품을 차단한다 — **두 방어선(배송 존재 가드 → location XOR)이 lag 창을 이음매 없이 연결한다.**
+  - **`FAILED`가 가드에서 제외되는 이유**: FAILED는 하드 실패(스펙 불량·계정 밴·매핑 불가 usr_id)로 격리돼 **관리자 개입 대상**이며(§7.1) 게임 인벤에 재료화되지 않았다 — 아이템은 여전히 웹 커스터디에만 있으므로 재출품·재처리를 막을 이유가 없다. FAILED 건은 관리자가 재발행/취소로 정리한다.
+  - 이로써 같은 item_instance에 대한 **2건 이상 배송 발생을 원천 차단**(item_delivery.item_instance_id는 FK·비유니크지만 FAILED 아닌 배송은 사실상 최대 1건).
 - 역방향(게임 인벤→장터 출품)은 **범위 밖**(§12). 이번 다리는 **웹→게임 단방향 지급**만.
 
 ### 6.2 경계 포맷터 (finalcall → 게임 user_item) — 전적으로 게임 서버 소속
@@ -244,7 +248,7 @@ UPDATE item_delivery SET status='DEFERRED' WHERE id=:id AND status='CLAIMED' AND
 
 `item_delivery` 주:
 - `public_id` 부여(외부 노출 — 구매자 배송 상태 조회 §10). `updated_at` 미도입(append 원장, 상태 시각은 `claimed_at`/`applied_at`).
-- `sale_order_id` UK 1:1이 이중 배송을 차단하므로 재판매 가드(§6.1)와 함께 item_instance당 미완료 배송 최대 1건이 사실상 보장된다.
+- `sale_order_id` UK 1:1이 이중 배송을 차단하므로 재판매 가드(§6.1, 상태집합=FAILED 아닌 배송)와 함께 item_instance당 FAILED 아닌 배송 최대 1건이 사실상 보장된다.
 - soft delete 없음(배송은 소멸이 아니라 상태 전이. APPLIED 행 아카이브는 §4 성능 완충).
 
 ### 7.3 enqueue 원자성 (G3) — SettlementRecorder 공통 꼬리
@@ -268,7 +272,7 @@ closing I-A~I-H·purchase P-A~P-H를 승계하고(배송은 정산 꼬리에 결
 | **D-C** | 배송 행은 **자족**: `type_code`·`level`·`skill1_code`·`skill2_code`·`skill_percent`·`gf_expire_at`·`item_uuid`·`recipient_user_id`·`recipient_nickname`을 자체 보유해 item_instance 참조 없이 게임 번역이 가능 | 스냅샷 불충분(게임 재패킹 불가) |
 | **D-D** | claim은 **idempotent CAS 단일 승자**. 같은 배송에 claim을 N회(동시 포함) 호출해도 최대 1인이 CLAIMED. 리스 만료 재청구는 status를 PENDING으로 회수 | 다중 인스턴스 이중 청구 |
 | **D-E** | 전달 at-least-once + apply exactly-once. 재청구로 같은 배송이 여러 번 apply돼도 `user_item.itm_uuid` UK로 게임 인벤에 정확히 1개만 존재 | 이중 지급 |
-| **D-F** | APPLIED 시에만 `item_instance.location=IN_GAME`. IN_GAME ⇒ slot_no NULL·temp_storage 없음·활성 리스팅 없음. IN_GAME/미완료배송 아이템은 출품(재판매) 불가(§6.1 XOR·가드) | 웹·게임 이중 존재·재판매 |
+| **D-F** | 이중 존재·재판매 원천 차단. **item_instance에 `FAILED`가 아닌 배송(PENDING/CLAIMED/DEFERRED/APPLIED)이 존재하면 출품(재판매) 불가**(§6.1 배송 존재 가드). APPLIED 후 웹 reconciler가 `location=IN_GAME`으로 전이하며, IN_GAME ⇒ slot_no NULL·temp_storage 없음·활성 리스팅 없음이고 그 이후는 location XOR CAS가 출품을 차단한다. **가드가 APPLIED를 포함하므로 게임 apply~IN_GAME 전이 lag 창까지 이음매 없이 덮인다.** FAILED는 게임 미재료화·관리자 개입 대상이라 가드 제외(§7.1) | 웹·게임 이중 존재·재판매(특히 apply~IN_GAME lag 창) |
 | **D-G** | 배송 실패(만실·타임아웃·하드)는 **금전 미역전**. 판매(sale_order·CAPTURED/직접차감·수익원장)는 불변. 아이템은 우편함/커스터디에 안전 보관 | 총량 보존(I-H) 파괴·판매 원장 붕괴 |
 | **D-H** | 상태는 단조 전이(PENDING→CLAIMED→APPLIED, CLAIMED↔DEFERRED, CLAIMED→PENDING 재청구). APPLIED·FAILED는 종착. 각 전이는 CAS(WHERE 현재상태[+토큰])라 잘못된 순서 전이·만료 토큰 ack 무효 | 상태 오전이·유령 지급 |
 
@@ -278,7 +282,7 @@ closing I-A~I-H·purchase P-A~P-H를 승계하고(배송은 정산 꼬리에 결
 3. 정산 롤백 — 정산 실패 시 배송도 롤백(고아 배송 없음). D-B.
 4. claim 동시 N회 — 정확히 1인 CLAIMED, 패자 skip. D-D.
 5. 재청구 후 이중 apply 시도 — item_uuid UK로 게임 인벤 1개만. D-E.
-6. APPLIED → IN_GAME 전이 + 재판매 차단(출품 CAS 0행) + 미완료 배송 창 출품 차단. D-F.
+6. 재판매 차단 전 구간 — (a) PENDING/CLAIMED/DEFERRED 창 출품 차단, (b) **APPLIED 직후 IN_GAME 전이 전 lag 창에서도 출품 차단**(가드 상태집합에 APPLIED 포함), (c) IN_GAME 전이 후 location XOR CAS 0행 차단. FAILED 건은 출품 허용(가드 제외). D-F.
 7. 만실 DEFERRED·타임아웃 재청구·하드 FAILED에서 금전 미역전. D-G.
 
 ---
@@ -334,7 +338,7 @@ closing I-A~I-H·purchase P-A~P-H를 승계하고(배송은 정산 꼬리에 결
 
 - **배송 상태 표시**: 구매자 인벤토리·구매내역에서 아이템별 "게임으로 배송중(PENDING/CLAIMED/DEFERRED) / 도착(APPLIED) / 보류(FAILED)" 배지. 데이터원 = `GET /me/deliveries`(§10.1), `itemInstancePublicId`로 인벤/주문 항목과 교차.
 - **인벤토리·주문 응답 스키마 불변**: 신규 계약은 `/me/deliveries`뿐이며 기존 `/me/inventory`·`/me/orders` 응답 형상은 건드리지 않는다(형상 보존).
-- **게임 도착 후(APPLIED)**: item_instance가 IN_GAME으로 이동해 웹 인벤토리에서 빠진다 → 프론트는 "게임 도착" 상태로 표기하고 인벤 목록에서 제외. 재판매(출품) 버튼은 미완료 배송·IN_GAME 아이템에 비활성.
+- **게임 도착 후(APPLIED)**: item_instance가 IN_GAME으로 이동해 웹 인벤토리에서 빠진다 → 프론트는 "게임 도착" 상태로 표기하고 인벤 목록에서 제외. 재판매(출품) 버튼은 **FAILED 아닌 배송(배송중·도착)·IN_GAME 아이템에 비활성**(백엔드 가드가 최종 방어선, §6.1).
 - **게임 claim은 프론트 무관**(DB 프로토콜, 게임 서버 후속 별건).
 
 ---
@@ -377,7 +381,7 @@ proposal §7.2가 "형상 상신 항목"으로 남긴 3건을 architect 확정�
 
 - **FC-186 (backend-impl · 우편함 스키마)**: `V21__item_delivery.sql`(§7.2, 최신 V20→V21) + `ItemDelivery` 엔티티·`ItemDeliveryRepository`(+Custom/Impl). enum `DeliveryStatus`(PENDING/CLAIMED/APPLIED/DEFERRED/FAILED). `item_instance.location`에 `IN_GAME` 값 추가(enum·§13 (a)). feature 배치 = `com.finalcall.domain.settlement.*`(정산 응집) 또는 `com.finalcall.domain.delivery.*`(응집 판단 backend 재량, closing/purchase 선례).
 - **FC-187 (backend-impl · enqueue)**: `SettlementRecorder.record(...)` 꼬리에 `item_delivery` INSERT(PENDING) 1행 + item_uuid 발급 + 자족 스냅샷 복사(§7.3). 낙찰·즉시구매 양 경로 자동 적용(§13 (c)). PC clear 함정 준수. 불변식 D-A·D-B·D-C.
-- **FC-188 (backend-impl · 소유 이동·재판매 차단·실패 안전보관)**: APPLIED→IN_GAME reconciler(웹 소유, §5.4·§6.1) + 미완료 배송 재판매 가드(리스팅 경로) + 리스 만료 재청구 sweeper + DEFERRED/FAILED 처리(§7.1). 불변식 D-D·D-F·D-G·D-H.
+- **FC-188 (backend-impl · 소유 이동·재판매 차단·실패 안전보관)**: APPLIED→IN_GAME reconciler(웹 소유, §5.4·§6.1) + **재판매 가드 = "item_instance에 FAILED 아닌 배송(PENDING/CLAIMED/DEFERRED/APPLIED) 존재 시 출품 차단"**(리스팅 경로, apply~IN_GAME lag 창까지 커버 — §6.1·D-F) + 리스 만료 재청구 sweeper + DEFERRED/FAILED 처리(§7.1). 불변식 D-D·D-F·D-G·D-H.
 - **FC-189 (backend-impl · Redis 알림)**: 정산 커밋 후 `delivery:{recipientUserId}` best-effort PUBLISH(§3.3). 실패 무해(정확성 무영향). AOP self-invocation·커밋 후 발행 타이밍 주의.
 - **FC-190 (frontend-impl · 배송 상태 UI)**: `GET /me/deliveries` 소비, 인벤/구매내역 배송 상태 배지(§10.1·§11). 기존 인벤/주문 응답 형상 불변. 새 표시라 디자인 게이트 여부는 총괄 판단(단순 배지면 자동).
 - **FC-191 (reviewer · 통합 리뷰)**: 정산 TX 원자성(D-B)·멱등(D-D·D-E)·이중 존재 차단(D-F)·금전 미역전(D-G) 중점. 정산 최고위험 → end-of-turn 리뷰 한시 on 검토.

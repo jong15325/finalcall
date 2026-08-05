@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-210
 title: 게임 아이템 지급 연동 (웹 우편함 다리)
 state: doing
-children: [FC-185, FC-186, FC-187, FC-188, FC-189, FC-190, FC-191]
+children: [FC-185, FC-186, FC-187, FC-188, FC-189, FC-190, FC-191, FC-192, FC-193]
 gate: null
 ---
 
