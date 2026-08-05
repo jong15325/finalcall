@@ -195,10 +195,28 @@ Outbox+CDC=결합 최저·게임 코드 변경 필요. **핵심: 결합 낮을�
 **합의 시 분기점**: (i) 같은 MySQL 인스턴스 read-only 조회 허용 여부(강경 vs 절충), (ii) eventual consistency 수용
 범위와 강정합 요구 지점(경매 확정·이중판매 방지). 전문·인용 = 스크래치패드 `game-integration-research.md`(휘발성).
 
+### 진전 (2026-08-05, EPIC-ITEM-DELIVERY — write-이전 경계 절반 해소, 전체는 여전히 OPEN)
+> 이 항목의 **원칙 4**("낙찰 후 게임 아이템 이전은 마켓이 new_sp 직접 write 금지 → 게임 API/이벤트 위임")와
+> **원칙 1**("new_sp write 소유권=게임 single writer, 마켓은 참조만")이 EPIC-ITEM-DELIVERY(게이트3 완료)에서
+> **구체 아키텍처로 착지**했다. 케이스 스터디 = [item-delivery.md](item-delivery.md).
+
+- **위임 방식이 "게임 API"가 아니라 "내구 우편함(트랜잭셔널 아웃박스) + 게임 claim(DB 직접 CAS)"으로 확정**됐다.
+  후보 3안 중 C(게임 API)의 "쓰기는 소유자 위임" 정신은 지키되, 지연 민감 인벤 경로에 REST 홉·인증을 얹지 않고
+  **통합 스키마 내 write 소유자 분리**(웹=우편함 enqueue, 게임=user_item claim)로 구현했다. 게임은 `item_instance`를
+  절대 쓰지 않고 웹은 `user_item`을 절대 쓰지 않는다(single writer 원칙 1 준수).
+- **"읽기는 복제, 쓰기는 소유자 위임"의 쓰기 절반**이 exactly-once(정산 TX 내 아웃박스)·멱등(item_uuid UK)·
+  금전 미역전(총량 보존 I-H)으로 못박혔다. 순수 Redis 매체를 정확성 경계로 삼는 안은 이 논의의 "eventual
+  consistency 수용 범위" 쟁점에서 **강정합이 필요한 지점(아이템·금전 지급)** 으로 분류돼 기각됐다(하이브리드 채택).
+- **여전히 OPEN인 부분**: (1) **읽기 복제/조회 경계**(옵션 A/B·read-only·CDC)는 이 에픽 범위 밖 — 배송은 write
+  단방향(웹→게임)만 다뤘다. (2) **완전 통합(A)**: 게임 살아있는 인벤토리 finalcall 이관은 별도 에픽·별도 게이트2로
+  이연(우편함이 그 점진 이관 seam). (3) **화폐 소유권 이원화**(원칙 2)·크로스DB 조인(쟁점 3)은 미해소. (4) 게임
+  서버 실이식·boundary 번역(phase-2)은 게임 재컴파일 대기.
+
 ### 다음 (해당 에픽 착수 시)
 - 위 조사 기반 **사용자+총괄 합의**(옵션 A/B/C·read-only 쟁점) → architect가 (c) 화폐·소유권 경계 확정 →
   (d) 조인/동기화 리스크 완화안을 게이트2로 상신.
 - UI 차용 상세 설계·이미지·값 매핑은 그 뒤(노트가 "추후"로 명시).
+- **읽기 경계**(옵션 A/B/CDC)는 write-이전(EPIC-ITEM-DELIVERY)과 별개로 남아 있다 — 조회·프로필 통합 에픽에서 확정.
 
 ### 증거
 - 임포트: `new_sp` DB(docker `finalcall-mysql`), 세션 대화(2026-07-18).
@@ -214,3 +232,4 @@ Outbox+CDC=결합 최저·게임 코드 변경 필요. **핵심: 결합 낮을�
 _최초 작성: 2026-07-18 (portfolio-writer, 프로세스 로그 신설 — 항목 1 해결됨 · 항목 2 OPEN)_
 _갱신: 2026-07-18 (portfolio-writer, 항목 2 OPEN → 해결 전이 — 확정·codify `b125456`·정본 `5c10d97`·배선 `a690f67`, 사용자 영역 잔여 명시)_
 _갱신: 2026-07-18 (총괄, 항목 3 신설 — 게임 데이터 통합 설계 논의 OPEN, new_sp 라이브 인게임 DB 제약·업계 레퍼런스 합의 필요)_
+_갱신: 2026-08-05 (portfolio-writer, 항목 3에 EPIC-ITEM-DELIVERY 진전 추가 — write-이전 경계(원칙 4·1)가 하이브리드 우편함+게임 claim으로 착지, 읽기 경계·완전통합·화폐 이원화는 여전히 OPEN)_

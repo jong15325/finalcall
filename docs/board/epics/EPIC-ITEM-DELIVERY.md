@@ -3,10 +3,12 @@ id: EPIC-ITEM-DELIVERY
 type: epic
 jira_key: KAN-210
 title: 게임 아이템 지급 연동 (웹 우편함 다리)
-state: doing
+state: done
 children: [FC-185, FC-186, FC-187, FC-188, FC-189, FC-190, FC-191, FC-192, FC-193]
 gate: null
 ---
+
+> **게이트3 완료(2026-08-05)**: FC-185~193 전건 reviewer PASS·커밋. 에픽 완료 `/security-review` clean(신규 취약점 0). 사용자 Done 승인. push는 사용자 직접(로컬 미push). FC-194(환경 테스트 2건)는 에픽 밖 백로그. 게임 서버 claim 실이식·boundary 번역은 후속(phase-2) 별건.
 
 > **게이트1 승인(2026-08-05)**: 분해안 7티켓 그대로 확정. 순서 = FC-185(계약) → FC-186(스키마) → {FC-187→FC-189, FC-188}(백엔드 직렬, 정산영역 파일 겹침) ∥ FC-190(프론트, 계약 후 병렬) → FC-191(리뷰).
 
