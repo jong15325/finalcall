@@ -44,6 +44,8 @@ interface ItemCardTileProps {
     fullHeight?: boolean
     /** 우상단 비교 오버레이 슬롯(마켓 등). 없으면 미렌더. */
     compare?: ReactNode
+    /** 좌상단 배지 오버레이 슬롯(배송 상태 등, FC-190). 없으면 미렌더. 열기 버튼(z-10) 위층(z-20). */
+    badge?: ReactNode
     /** 카드 외부 액션 행(`ItemCard` footer 로 전달). */
     footer?: ReactNode
 }
@@ -58,6 +60,7 @@ function ItemCardTile({
     sellerNickname,
     fullHeight = false,
     compare,
+    badge,
     footer,
 }: ItemCardTileProps) {
     return (
@@ -82,6 +85,9 @@ function ItemCardTile({
             />
             {compare && (
                 <div className="absolute right-1.5 top-1.5 z-20">{compare}</div>
+            )}
+            {badge && (
+                <div className="absolute left-1.5 top-1.5 z-20">{badge}</div>
             )}
         </div>
     )

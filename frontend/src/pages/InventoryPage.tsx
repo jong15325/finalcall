@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbArchive, TbLayoutGrid } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import { ItemCardGridSkeleton } from '@/features/item/components/ItemCardGrid'
 import InventorySlotGrid from '@/features/member/components/InventorySlotGrid'
 import InventoryCardInfoDialog from '@/features/member/components/InventoryCardInfoDialog'
+import DeliveredBanner from '@/features/delivery/components/DeliveredBanner'
+import { isArrived } from '@/features/delivery/lib/deliveryView'
 import { useMyInventory } from '@/lib/queries/inventory'
+import { useDeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
 
 /**
@@ -22,7 +25,20 @@ import type { InventoryItem } from '@/lib/api/inventory'
 export default function InventoryPage() {
     const navigate = useNavigate()
     const inventoryQuery = useMyInventory()
+    // 배송 상태 교차 조회(계약 §4.6). 실패해도 인벤은 그대로 뜬다(배지만 빠짐, best-effort).
+    const deliveryQuery = useDeliveryLookup()
+    const deliveries = deliveryQuery.data
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
+
+    // 게임 도착(APPLIED) 배송 — 상단 배너로 세션 1회 알린다. APPLIED 아이템은 IN_GAME 으로 빠져
+    // 인벤 목록엔 없으므로 배송 lookup 에서 직접 뽑는다.
+    const arrived = useMemo(
+        () =>
+            deliveries
+                ? [...deliveries.values()].filter((d) => isArrived(d.status))
+                : [],
+        [deliveries],
+    )
 
     // 판매하기 → 판매 페이지가 이 아이템을 선점하도록 URL 쿼리로 넘긴다(리로드 생존, 마켓 관례).
     const goToSell = (item: InventoryItem) => {
@@ -55,6 +71,9 @@ export default function InventoryPage() {
                 </Link>
             </header>
 
+            {/* 게임 도착 알림 — 세션 1회 dismiss(디자인 승인). 도착이 없으면 아무것도 안 그림. */}
+            <DeliveredBanner arrived={arrived} />
+
             {inventoryQuery.isPending ? (
                 <ItemCardGridSkeleton variant="inventory" count={12} />
             ) : inventoryQuery.isError || !inventoryQuery.data ? (
@@ -82,6 +101,7 @@ export default function InventoryPage() {
                         capacity={inventoryQuery.data.capacity}
                         used={inventoryQuery.data.used}
                         items={inventoryQuery.data.items}
+                        deliveries={deliveries}
                         onItemClick={setSelectedItem}
                     />
                 </>
@@ -90,6 +110,10 @@ export default function InventoryPage() {
             {selectedItem && (
                 <InventoryCardInfoDialog
                     item={selectedItem}
+                    deliveryStatus={
+                        deliveries?.get(selectedItem.itemInstancePublicId)
+                            ?.status
+                    }
                     onSell={goToSell}
                     onClose={() => setSelectedItem(null)}
                 />

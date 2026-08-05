@@ -98,6 +98,9 @@ export const ERROR_CODES = {
     ORDER_001: 'ORDER_001', // 주문 없음 (404)
     ORDER_002: 'ORDER_002', // 당사자 아님 (403)
 
+    // 배송(delivery, §4.6) — 미존재·비당사자 통일 404(public_id ULID라 열거 무해)
+    DELIVERY_001: 'DELIVERY_001', // 배송 없음(존재하지 않거나 비당사자 public_id) (404)
+
     // 화폐
     CHARGE_001: 'CHARGE_001', // 승인 검증 실패 (422)
     CHARGE_002: 'CHARGE_002', // 금액 불일치 (422)

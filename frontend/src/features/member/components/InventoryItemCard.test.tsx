@@ -72,4 +72,38 @@ describe('<InventoryItemCard>', () => {
             (InventoryItemCard as unknown as { $$typeof: symbol }).$$typeof,
         ).toBe(Symbol.for('react.memo'))
     })
+
+    it('배송중이면 배지 + "배송 중 · 판매 등록 불가" 잠금 문구를 상시 노출한다(FC-190)', () => {
+        render(
+            <InventoryItemCard
+                item={target}
+                now={NOW}
+                onOpen={vi.fn()}
+                deliveryStatus="PENDING"
+            />,
+        )
+        expect(screen.getByText('배송중')).toBeInTheDocument()
+        expect(screen.getByText('배송 중 · 판매 등록 불가')).toBeInTheDocument()
+    })
+
+    it('FAILED 는 문의 안내 잠금 문구를 노출한다(FC-190)', () => {
+        render(
+            <InventoryItemCard
+                item={target}
+                now={NOW}
+                onOpen={vi.fn()}
+                deliveryStatus="FAILED"
+            />,
+        )
+        expect(screen.getByText('문제')).toBeInTheDocument()
+        expect(
+            screen.getByText('지급 실패 · 고객센터 문의'),
+        ).toBeInTheDocument()
+    })
+
+    it('배송 상태가 없으면 배지·잠금 문구가 없다(일반 보유 아이템)', () => {
+        render(<InventoryItemCard item={target} now={NOW} onOpen={vi.fn()} />)
+        expect(screen.queryByText('배송중')).toBeNull()
+        expect(screen.queryByText(/판매 등록 불가/)).toBeNull()
+    })
 })

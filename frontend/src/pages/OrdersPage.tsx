@@ -3,11 +3,15 @@ import { TbAlertTriangle, TbReceipt, TbReceiptOff } from 'react-icons/tb'
 import OrderCard from '@/features/order/components/OrderCard'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyOrders } from '@/lib/queries/orders'
+import { useDeliveryLookup } from '@/lib/queries/deliveries'
 import type {
     OrderListQuery,
     OrderRole,
     OrderSourceType,
+    OrderSummary,
 } from '@/lib/api/orders'
+import type { DeliveryStatus } from '@/lib/api/deliveries'
+import type { DeliveryLookup } from '@/lib/queries/deliveries'
 
 /**
  * 거래내역 `/me/orders` (FC-090 → FC-094 에서 출처 필터 노출 · 계약 §4.3).
@@ -35,6 +39,29 @@ const SOURCE_TABS: { value: OrderSourceType | 'ALL'; label: string }[] = [
     { value: 'SHOP', label: '고정가' },
 ]
 
+/**
+ * 주문 → 배송 상태(교차 조회, FC-190).
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★★ **배송은 구매자 도메인** — `myRole==='BUYER'` 인 주문에만 상태를 얹는다(판매 카드엔 없음).
+ * ══════════════════════════════════════════════════════════════════════════════
+ * ★ 교차 키 = `itemInstancePublicId`(계약 §4.6). **단, 현재 계약상 `OrderSummary`(목록)에는 이
+ *   필드가 없다** — `OrderDetail`(단건 조회)에만 있다(계약 §4.3). 그래서 목록 배지는 백엔드가
+ *   목록에도 `itemInstancePublicId` 를 실어줄 때(FC-192 통합 대상) 활성화된다. 필드가 없으면
+ *   조용히 배지를 생략한다(graceful degrade — 형상 불변 유지, `OrderSummary` 타입 미개변).
+ */
+type OrderWithInstance = OrderSummary & { itemInstancePublicId?: string }
+
+function deliveryStatusFor(
+    order: OrderSummary,
+    deliveries: DeliveryLookup | undefined,
+): DeliveryStatus | undefined {
+    if (order.myRole !== 'BUYER' || !deliveries) return undefined
+    const instanceId = (order as OrderWithInstance).itemInstancePublicId
+    if (!instanceId) return undefined
+    return deliveries.get(instanceId)?.status
+}
+
 export default function OrdersPage() {
     const [role, setRole] = useState<OrderRole | 'ALL'>('ALL')
     const [source, setSource] = useState<OrderSourceType | 'ALL'>('ALL')
@@ -61,6 +88,9 @@ export default function OrdersPage() {
         () => data?.pages.flatMap((page) => page.content) ?? [],
         [data],
     )
+
+    // 배송 상태 교차 조회(계약 §4.6). 실패해도 주문은 그대로 뜬다(배지만 빠짐, best-effort).
+    const deliveries = useDeliveryLookup().data
 
     const sentinelRef = useInfiniteScroll({
         hasNext: Boolean(hasNextPage),
@@ -193,6 +223,10 @@ export default function OrdersPage() {
                             <OrderCard
                                 key={order.orderPublicId}
                                 order={order}
+                                deliveryStatus={deliveryStatusFor(
+                                    order,
+                                    deliveries,
+                                )}
                             />
                         ))}
                     </section>

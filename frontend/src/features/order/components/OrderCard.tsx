@@ -8,6 +8,8 @@ import {
     orderSourceLabelOf,
     showsSellerAccounting,
 } from '@/features/order/lib/orderView'
+import DeliveryBadge from '@/features/delivery/components/DeliveryBadge'
+import type { DeliveryStatus } from '@/lib/api/deliveries'
 import type { OrderSummary } from '@/lib/api/orders'
 
 /**
@@ -23,10 +25,19 @@ import type { OrderSummary } from '@/lib/api/orders'
  *
  * ★ 금액은 `CodeAmount`(정수·**full** 모드) — 거래 확정 내역이라 축약이 아닌 원본 표기(§3.1).
  * ★ 색은 브랜드 토큰(navy/gold/gray). 상세 링크는 걸지 않는다(주문 상세는 이번 범위 밖 — 목록만).
+ *
+ * ★ **배송 상태 행(FC-190)**: `deliveryStatus` 가 주어지면 결제 아래에 배송 상태 행을 얹는다
+ *   (계약 §4.6, 형상 보존 — 주문 응답엔 배송 정보가 없다). **구매 카드에만** 표시한다 — 배송은
+ *   구매자 도메인(`recipient=주체`)이라 상위(OrdersPage)가 BUYER 에게만 status 를 넘긴다.
  */
 
 interface OrderCardProps {
     order: OrderSummary
+    /**
+     * 교차 조회한 배송 상태(계약 §4.6). 부재면 배송 행 없음. 상위가 `itemInstancePublicId` 로
+     * 조회해 **구매 카드에만** 넘긴다(판매 카드엔 넘기지 않는다).
+     */
+    deliveryStatus?: DeliveryStatus
 }
 
 const dateFormat = new Intl.DateTimeFormat('ko-KR', {
@@ -35,7 +46,7 @@ const dateFormat = new Intl.DateTimeFormat('ko-KR', {
     day: '2-digit',
 })
 
-function OrderCard({ order }: OrderCardProps) {
+function OrderCard({ order, deliveryStatus }: OrderCardProps) {
     const { item } = order
     const art = itemArt(
         {
@@ -146,6 +157,20 @@ function OrderCard({ order }: OrderCardProps) {
                         </>
                     )}
                 </dl>
+
+                {/* 배송 상태 행 — 구매 카드에만(상위가 BUYER 에게만 status 주입). */}
+                {deliveryStatus !== undefined && (
+                    <div className="mt-2.5 flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2">
+                        <span className="text-xs font-medium text-gray-500">
+                            배송 상태
+                        </span>
+                        <DeliveryBadge
+                            long
+                            status={deliveryStatus}
+                            size="md"
+                        />
+                    </div>
+                )}
             </div>
         </article>
     )

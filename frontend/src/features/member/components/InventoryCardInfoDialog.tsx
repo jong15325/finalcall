@@ -1,5 +1,7 @@
 import CardInfoDialog from '@/features/item/components/CardInfoDialog'
 import { decodeTypeCode } from '@/features/item/lib/itemCode'
+import { isFailed, isShipping } from '@/features/delivery/lib/deliveryView'
+import type { DeliveryStatus } from '@/lib/api/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
 
 /**
@@ -26,6 +28,8 @@ interface InventoryCardInfoDialogProps {
     /** 판매 등록 — 부모가 `/sell?item=<itemInstancePublicId>` 로 이동한다. */
     onSell: (item: InventoryItem) => void
     onClose: () => void
+    /** 교차 조회한 배송 상태(계약 §4.6). 배송중·실패면 재판매(판매 등록)를 잠근다. */
+    deliveryStatus?: DeliveryStatus
 }
 
 function InventoryCardInfoDialog({
@@ -33,22 +37,38 @@ function InventoryCardInfoDialog({
     now,
     onSell,
     onClose,
+    deliveryStatus,
 }: InventoryCardInfoDialogProps) {
     const { summary } = item
     const axes = decodeTypeCode(summary.typeCode)
 
-    // 하단 액션: 안내 + '판매 등록'(판매자·판매가·구매확인 없음).
+    // 배송 진행 중·실패 아이템은 재판매 불가(카드와 동일 규칙, 디자인 승인 "상시 노출").
+    const shipping = deliveryStatus !== undefined && isShipping(deliveryStatus)
+    const failed = deliveryStatus !== undefined && isFailed(deliveryStatus)
+    const sellLocked = shipping || failed
+
+    // 하단 액션: 안내 + '판매 등록'(판매자·판매가·구매확인 없음). 배송 진행 중이면 잠금.
     const footer = (
         <>
             <p className="min-w-0 text-[13px] font-medium leading-snug text-gray-500">
-                내 인벤토리 아이템입니다. 판매 등록으로 마켓에 올려보세요.
+                {shipping
+                    ? '게임으로 배송 중인 아이템입니다. 배송이 끝나면 게임에서 사용할 수 있어요.'
+                    : failed
+                      ? '배송에 문제가 있어 고객센터 확인이 필요합니다.'
+                      : '내 인벤토리 아이템입니다. 판매 등록으로 마켓에 올려보세요.'}
             </p>
             <button
                 type="button"
-                className="ci-buy"
+                className="ci-buy disabled:opacity-50"
+                disabled={sellLocked}
+                aria-disabled={sellLocked}
                 onClick={() => onSell(item)}
             >
-                판매 등록
+                {shipping
+                    ? '배송 중'
+                    : failed
+                      ? '문의 필요'
+                      : '판매 등록'}
             </button>
         </>
     )

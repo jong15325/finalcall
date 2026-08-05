@@ -1,5 +1,6 @@
 import ItemCardGrid from '@/features/item/components/ItemCardGrid'
 import InventoryItemCard from './InventoryItemCard'
+import type { DeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
 
 /**
@@ -26,6 +27,8 @@ interface InventorySlotGridProps {
     onItemClick: (item: InventoryItem) => void
     /** 골드포스 파생 기준 시각(테스트 주입). 기본 Date.now(). */
     now?: number
+    /** 배송 교차 조회 맵(FC-190, 계약 §4.6). 카드가 `itemInstancePublicId` 로 배송 상태를 얹는다. */
+    deliveries?: DeliveryLookup
 }
 
 function InventorySlotGrid({
@@ -34,6 +37,7 @@ function InventorySlotGrid({
     items,
     onItemClick,
     now,
+    deliveries,
 }: InventorySlotGridProps) {
     // slotNo → 아이템 (1-based 배치). 같은 슬롯 중복은 나중 값이 이긴다(정상 데이터엔 없음).
     const bySlot = new Map<number, InventoryItem>()
@@ -53,6 +57,10 @@ function InventorySlotGrid({
                             <InventoryItemCard
                                 item={item}
                                 now={now}
+                                deliveryStatus={
+                                    deliveries?.get(item.itemInstancePublicId)
+                                        ?.status
+                                }
                                 onOpen={onItemClick}
                             />
                         ) : (
