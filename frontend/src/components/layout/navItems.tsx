@@ -14,7 +14,6 @@ import {
     TbMessageCircle,
     TbUserCircle,
     TbBuildingStore,
-    TbLayoutGrid,
     TbHome,
 } from 'react-icons/tb'
 import { boardPath, paths } from '@/app/paths'
@@ -79,6 +78,8 @@ export const sidebarNav: NavEntry[] = [
  *
  * ★ 쪽지 자리를 **게시판**으로 교체했다(FC-202). 쪽지 진입은 상단바(TopNavbar 쪽지 아이콘·미열람
  *   뱃지)와 마이페이지로 유지되므로 하단 탭에서 빠져도 도달 경로가 살아 있다.
+ * ★ 인벤토리 탭을 제거했다(FC-205). 인벤토리 진입은 마이페이지(ProfileCard '인벤토리' 버튼)와
+ *   상단바(PC 전용 인벤토리 바로가기)로 유지되므로 하단 탭에서 빠져도 도달 경로가 살아 있다.
  */
 export const mobileNav: NavLeaf[] = [
     {
@@ -89,7 +90,6 @@ export const mobileNav: NavLeaf[] = [
     },
     { label: '실시간 경매', to: paths.auctions, ready: true, icon: TbGavel },
     { label: '홈', to: paths.home, ready: true, icon: TbHome },
-    { label: '인벤토리', to: paths.inventory, ready: true, icon: TbLayoutGrid },
     { label: '게시판', to: paths.boards, ready: true, icon: TbMessageCircle },
     { label: '마이페이지', to: paths.me, ready: true, icon: TbUserCircle },
 ]
