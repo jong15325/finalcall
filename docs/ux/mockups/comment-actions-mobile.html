@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장터 · 댓글 액션 배치 재정렬 (모바일)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  FC-215 — 댓글/대댓글 액션 버튼 배치 재정렬 디자인 게이트 목업 (모바일 390px)
+  ══════════════════════════════════════════════════════════════════════════════
+  실구현 아님. 승인용 목업. 팔레트 정본 = frontend/src/index.css.
+  모바일은 별도 설계(배치만 바꾸지 않음): 좁은 폭에 맞춰 메타를 별행으로 내리고,
+  수정/삭제는 ⋮ kebab → 하단 시트, 액션 버튼은 터치 타깃 44px 확보.
+  레퍼런스는 배치 관행만 참고. 색·폰트·브랜드 복제 금지.
+-->
+<style>
+:root{
+  --navy:#16213a; --navy-900:#101a2e; --navy-800:#1b2a47; --navy-700:#223458; --navy-600:#2c4270; --navy-500:#385189;
+  --gold:#c8a028; --gold-bright:#dfc447; --gold-deep:#8b6100; --gold-subtle:#f6edcd;
+  --orange:#ef8a2c; --orange-deep:#d9741a; --orange-subtle:#fdefe0;
+  --surface:#ffffff; --surface-sunken:#f4f5f8; --line:#e4e7ee;
+  --danger:#e11d48; --danger-subtle:#ffe4e6;
+  --gray-50:#f8f9fb; --gray-100:#f1f3f7; --gray-200:#e4e7ee; --gray-300:#cfd4de; --gray-400:#9aa3b2;
+  --gray-500:#6b7484; --gray-600:#4d5461; --gray-700:#3a3f4a; --gray-800:#262a33; --gray-900:#171a20;
+  --r-lg:8px; --r-xl:12px; --r-2xl:16px; --r-full:9999px;
+  --sh-md:0 4px 12px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.06);
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0; background:#e9ebf0; color:var(--gray-700);
+  font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; word-break:keep-all;}
+button{font:inherit; color:inherit; cursor:pointer;}
+h1,h2,h3,h4{margin:0; color:var(--gray-900);}
+svg{display:block;}
+
+.doc{max-width:920px; margin:0 auto; padding:36px 20px 90px;}
+.doc-head h1{font-size:24px; font-weight:800; letter-spacing:-.02em;}
+.doc-head p{margin:8px 0 0; color:var(--gray-500); font-size:14px; line-height:1.7;}
+.legend{margin:16px 0 30px; padding:14px 16px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-xl); font-size:13px; color:var(--gray-600); line-height:1.85;}
+.legend b{color:var(--gray-900);}
+.legend .sw{display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:middle; margin:0 2px;}
+
+/* 폰 프레임 나열 */
+.rack{display:flex; flex-wrap:wrap; gap:34px; justify-content:center; margin-top:20px;}
+.phone{width:390px;}
+.phone .cap{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+.phone .cap .id{display:inline-grid; place-items:center; min-width:24px; height:24px; padding:0 7px;
+  background:var(--navy); color:#fff; border-radius:var(--r-full); font-size:12px; font-weight:800;}
+.phone .cap h2{font-size:15px; font-weight:800;}
+.phone .cap.next .id{background:var(--orange);}
+.frame{border:10px solid #11151f; border-radius:38px; overflow:hidden; background:#11151f;
+  box-shadow:0 18px 46px rgba(15,23,42,.28);}
+.notch{height:26px; background:#11151f; display:flex; align-items:center; justify-content:center;}
+.notch::after{content:''; width:120px; height:6px; border-radius:var(--r-full); background:#2a2f3d;}
+.viewport{background:var(--surface); max-height:none;}
+.vp-head{position:sticky; top:0; z-index:2; height:46px; display:flex; align-items:center; gap:8px;
+  padding:0 14px; background:var(--surface); border-bottom:1px solid var(--line); font-size:14px; font-weight:800; color:var(--gray-900);}
+.vp-head svg{width:20px; height:20px; color:var(--gray-700);}
+.vp-body{padding:6px 14px 20px;}
+
+/* 댓글 개수 헤더 */
+.c-head{display:flex; align-items:center; gap:6px; padding:14px 0 4px; font-size:15px; font-weight:800; color:var(--gray-900);}
+.c-head svg{width:16px; height:16px; color:var(--navy);}
+.c-head .n{color:var(--orange-deep);}
+.c-head .sort{margin-left:auto; display:inline-flex; align-items:center; gap:5px; height:34px; padding:0 12px;
+  border:1px solid var(--line); border-radius:var(--r-lg); font-size:12px; font-weight:700; color:var(--gray-600);}
+.c-head .sort svg{width:13px; height:13px; color:var(--gray-400);}
+
+/* ══ 댓글 아이템 (모바일) ══ */
+.comment{display:flex; gap:10px; padding:15px 0; border-top:1px solid var(--line);}
+.comment .av{width:34px; height:34px; flex:none; border-radius:50%; background:var(--gray-200); color:var(--gray-600);
+  display:grid; place-items:center; font-weight:700; font-size:13px;}
+.comment.mine .av{background:var(--navy-600); color:#fff;}
+.cbody{flex:1; min-width:0;}
+/* 모바일: 상단 행 = 닉네임 + (우측)kebab, 시간은 별행 메타로 */
+.crow1{display:flex; align-items:center; gap:8px;}
+.crow1 b{color:var(--gray-900); font-weight:700; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.crow1 .best-tag{display:inline-flex; align-items:center; gap:2px; height:18px; padding:0 6px; border-radius:4px;
+  background:var(--gold); color:var(--navy-900); font-size:10px; font-weight:800; flex:none;}
+.crow1 .best-tag svg{width:10px; height:10px;}
+.kebab{margin-left:auto; flex:none;}
+.kebab-btn{width:44px; height:44px; margin:-8px -10px -8px 0; display:grid; place-items:center;
+  border:0; background:transparent; border-radius:var(--r-full); color:var(--gray-400);}
+.kebab-btn:active{background:var(--gray-100);}
+.kebab-btn svg{width:20px; height:20px;}
+.cmeta{margin-top:2px; font-size:12px; color:var(--gray-400);}
+.ctext{margin-top:6px; font-size:14px; color:var(--gray-700); line-height:1.7;}
+.mention{display:inline-flex; align-items:center; height:20px; padding:0 7px; margin-right:4px; border-radius:var(--r-full);
+  background:var(--navy); color:#fff; font-size:12px; font-weight:700; vertical-align:1px;}
+
+/* 액션 바 — 44px 터치 타깃 */
+.cactions{display:flex; align-items:center; gap:8px; margin-top:10px;}
+.react{display:inline-flex; align-items:center; gap:6px; height:38px; padding:0 14px; border:1px solid var(--line);
+  border-radius:var(--r-full); background:var(--surface); font-size:13px; font-weight:700; color:var(--gray-500);}
+.react svg{width:17px; height:17px;}
+.react .rc{font-variant-numeric:tabular-nums;}
+.react.like.on{border-color:var(--orange); background:var(--orange-subtle); color:var(--orange-deep);}
+.react.dislike.on{border-color:var(--gray-400); background:var(--gray-100); color:var(--gray-700);}
+.react[disabled]{opacity:.55;}
+.act-text{display:inline-flex; align-items:center; gap:6px; height:38px; padding:0 12px;
+  border:0; background:transparent; border-radius:var(--r-full); font-size:13px; font-weight:700; color:var(--gray-500);}
+.act-text svg{width:16px; height:16px;}
+.act-text:active{background:var(--gray-100);}
+.reply-toggle{color:var(--navy-500);}
+.reply-toggle svg{transition:transform .15s;}
+.reply-toggle.open svg{transform:rotate(180deg);}
+.push-right{margin-left:auto;}
+
+/* 답글 스레드 — 모바일 들여쓰기 축소(border 없음) */
+.thread{margin:4px 0 2px 16px; padding-left:8px;}
+.thread .comment{padding:13px 0; border-top:1px solid var(--gray-100);}
+.thread .comment:first-child{border-top:0;}
+.thread .av{width:30px; height:30px; font-size:12px;}
+
+/* tombstone */
+.comment.tomb .av{background:var(--gray-100); color:var(--gray-300);}
+.tomb-text{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--gray-400);}
+.tomb-text svg{width:15px; height:15px; color:var(--gray-300);}
+
+/* 하단 시트(kebab 열림) */
+.sheet-wrap{position:relative; margin-top:14px;}
+.sheet-scrim{position:absolute; inset:0; background:var(--navy-900); opacity:.35; border-radius:26px;}
+.sheet{position:absolute; left:0; right:0; bottom:0; background:var(--surface);
+  border-top-left-radius:18px; border-top-right-radius:18px; padding:8px 10px 16px; box-shadow:var(--sh-md);}
+.sheet .grip{width:40px; height:5px; border-radius:var(--r-full); background:var(--gray-300); margin:6px auto 10px;}
+.sheet button{display:flex; width:100%; align-items:center; gap:12px; height:52px; padding:0 14px;
+  border:0; background:transparent; border-radius:12px; font-size:15px; font-weight:600; color:var(--gray-700); text-align:left;}
+.sheet button svg{width:20px; height:20px; color:var(--gray-500);}
+.sheet button:active{background:var(--gray-100);}
+.sheet button.del{color:var(--danger);}
+.sheet button.del svg{color:var(--danger);}
+.sheet .cancel{justify-content:center; margin-top:6px; background:var(--surface-sunken); font-weight:700; color:var(--gray-600);}
+
+.mock-note{margin-top:14px; padding:12px 16px; border:1px dashed var(--gray-300); border-radius:var(--r-lg);
+  background:var(--surface); font-size:12.5px; color:var(--gray-600); line-height:1.85;}
+.mock-note b{color:var(--gray-900);}
+.mock-note code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:var(--gray-100);
+  padding:1px 5px; border-radius:4px; color:var(--navy-700);}
+.mock-note ul{margin:6px 0 0; padding-left:18px;} .mock-note li{margin:3px 0;}
+.best-cap{display:flex; align-items:center; gap:6px; padding:8px 12px; margin-top:8px; background:var(--gold-subtle);
+  font-size:11px; font-weight:800; color:var(--gold-deep); border-radius:var(--r-lg);}
+.best-cap svg{width:13px; height:13px;}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9-3 3 3 3"/><path d="M2 12h13a5 5 0 0 0 5-5V5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-kebab" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26 6.86.9-5.06 4.66 1.35 6.78L12 17.77 5.95 21.6l1.35-6.78L2.24 9.16l6.86-.9Z"/></symbol>
+  <symbol id="i-msgoff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3h7A4.5 4.5 0 0 1 20 7.5v.5"/><path d="M20 12v1.5a4.5 4.5 0 0 1-4.5 4.5H11l-4 3v-3H6.5A4.5 4.5 0 0 1 2 14V7.5"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></symbol>
+</defs></svg>
+
+<div class="doc">
+  <div class="doc-head">
+    <h1>댓글 액션 배치 재정렬 (모바일 390px)</h1>
+    <p>FC-215 디자인 게이트. 모바일 전용 배치(배치만 바꾸지 않고 별도 설계). 시간·수정여부를 <b>메타 별행</b>으로 내리고,
+       수정/삭제는 <b>⋮ kebab → 하단 시트</b>, 액션 버튼은 <b>44px 터치 타깃</b>.</p>
+  </div>
+  <div class="legend">
+    <b>모바일 배치 원칙</b><br>
+    · <b>상단 행</b>: 닉네임(말줄임) + 우측 <b>⋮</b>(본인 글만). 좁은 폭에서 한 글자 줄바꿈 방지(닉 <code>truncate</code>).<br>
+    · <b>메타 별행</b>: "3시간 전 · 수정됨"을 닉 아래로 내려 헤더 혼잡 해소.<br>
+    · <b>액션바</b>: 공감·비공감 + 답글을 한 줄, 높이 38px(터치 44px 히트영역). 답글 토글은 우측.<br>
+    · <b>수정/삭제</b>: ⋮ 탭 시 <b>하단 시트</b>(엄지 도달·큰 타깃). 확인/삭제는 별도 확인.<br>
+    <span class="sw" style="background:#ef8a2c"></span>공감 활성=오렌지 · <span class="sw" style="background:#f1f3f7;border:1px solid #cfd4de"></span>비공감 활성=회색(팔레트 불변).
+  </div>
+
+  <div class="rack">
+    <!-- ══ 폰 1: 기본(본인 루트 + 답글) ══ -->
+    <div class="phone">
+      <div class="cap next"><span class="id">A</span><h2>제안 배치 · 루트(본인) + 답글</h2></div>
+      <div class="frame"><div class="notch"></div><div class="viewport">
+        <div class="vp-head"><svg><use href="#i-back"/></svg>자유게시판</div>
+        <div class="vp-body">
+          <div class="c-head"><svg><use href="#i-msg"/></svg>댓글 <span class="n">5</span>
+            <span class="sort"><svg><use href="#i-sort"/></svg>최신순</span></div>
+
+          <!-- 루트(본인) -->
+          <div class="comment mine">
+            <div class="av">규</div>
+            <div class="cbody">
+              <div class="crow1">
+                <b>규장각</b>
+                <span class="kebab"><button class="kebab-btn"><svg><use href="#i-kebab"/></svg></button></span>
+              </div>
+              <div class="cmeta">3시간 전 · 수정됨</div>
+              <div class="ctext">이 매물 시세 대비 괜찮네요. 옵션까지 붙어서 이 가격이면 바로 입찰 각이에요.</div>
+              <div class="cactions">
+                <button class="react like on"><svg><use href="#i-up"/></svg><span class="rc">12</span></button>
+                <button class="react dislike"><svg><use href="#i-down"/></svg><span class="rc">0</span></button>
+                <button class="act-text"><svg><use href="#i-reply"/></svg>답글</button>
+                <button class="act-text reply-toggle open push-right"><svg><use href="#i-chevron"/></svg>답글 2</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 답글 스레드 -->
+          <div class="thread">
+            <div class="comment">
+              <div class="av">달</div>
+              <div class="cbody">
+                <div class="crow1"><b>달빛상인</b></div>
+                <div class="cmeta">1시간 전</div>
+                <div class="ctext"><span class="mention">@규장각</span>저도 동의합니다. 마감 직전 눈치싸움이 관건일 듯.</div>
+                <div class="cactions">
+                  <button class="react like"><svg><use href="#i-up"/></svg><span class="rc">2</span></button>
+                  <button class="react dislike"><svg><use href="#i-down"/></svg><span class="rc">0</span></button>
+                  <button class="act-text push-right"><svg><use href="#i-reply"/></svg>답글</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="mock-note">
+        <b>대비: 현재</b>는 닉·시간·수정여부·[수정][삭제]가 한 헤더 행에 몰려 <b>390px에서 줄바꿈·혼잡</b>.
+        <b>제안</b>은 닉+<code>⋮</code>만 상단, 시간은 메타 별행, 수정/삭제는 시트로 이동.
+      </div>
+    </div>
+
+    <!-- ══ 폰 2: kebab 하단 시트 열림 + BEST/tombstone ══ -->
+    <div class="phone">
+      <div class="cap next"><span class="id">B</span><h2>⋮ 하단 시트 · BEST · 삭제됨</h2></div>
+      <div class="frame"><div class="notch"></div><div class="viewport">
+        <div class="vp-head"><svg><use href="#i-back"/></svg>자유게시판</div>
+        <div class="vp-body">
+          <div class="best-cap"><svg><use href="#i-star"/></svg>BEST 댓글 · 공감 상위</div>
+          <!-- BEST(타인) -->
+          <div class="comment" style="border-top:0">
+            <div class="av">고</div>
+            <div class="cbody">
+              <div class="crow1"><b>고수그이</b><span class="best-tag"><svg><use href="#i-star"/></svg>BEST</span></div>
+              <div class="cmeta">5시간 전</div>
+              <div class="ctext">거래 3번 해봤는데 응대 빠르고 시세도 정직했어요. 믿고 입찰하세요.</div>
+              <div class="cactions">
+                <button class="react like on"><svg><use href="#i-up"/></svg><span class="rc">48</span></button>
+                <button class="react dislike"><svg><use href="#i-down"/></svg><span class="rc">1</span></button>
+                <button class="act-text reply-toggle push-right"><svg><use href="#i-chevron"/></svg>답글 6</button>
+              </div>
+            </div>
+          </div>
+          <!-- tombstone -->
+          <div class="comment tomb">
+            <div class="av"><svg style="width:15px;height:15px"><use href="#i-trash"/></svg></div>
+            <div class="cbody">
+              <div class="tomb-text"><svg><use href="#i-msgoff"/></svg>삭제된 댓글입니다.</div>
+              <div class="cactions">
+                <button class="act-text reply-toggle open" style="padding-left:0"><svg><use href="#i-chevron"/></svg>답글 2</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- kebab 하단 시트(본인 루트에서 ⋮ 탭 시) -->
+          <div class="sheet-wrap" style="height:180px">
+            <div class="sheet-scrim"></div>
+            <div class="sheet">
+              <div class="grip"></div>
+              <button><svg><use href="#i-pencil"/></svg>수정</button>
+              <button class="del"><svg><use href="#i-trash"/></svg>삭제</button>
+              <button class="cancel">닫기</button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="mock-note">
+        <b>⋮ 하단 시트</b>: 수정/삭제를 엄지 도달 영역에 큰 타깃(52px)으로. <b>tombstone</b>은 답글 토글만.
+        <b>BEST</b>는 골드 배지·캡션 유지, 액션바만 새 배치. kebab은 본인 글에만.
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>
