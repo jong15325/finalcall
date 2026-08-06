@@ -1,14 +1,12 @@
 import {
     useInfiniteQuery,
     useMutation,
-    useQuery,
     useQueryClient,
 } from '@tanstack/react-query'
 import {
     createComment,
     createReply,
     deleteComment,
-    getBestComments,
     getComments,
     getReplies,
     toggleReaction,
@@ -46,9 +44,6 @@ export const commentKeys = {
     /** 답글 목록(루트별). 접두 `[...replyLists(), postPublicId]`로 글의 전 스레드 무효화. */
     replies: (postPublicId: string, rootCommentPublicId: string) =>
         [...commentKeys.replyLists(), postPublicId, rootCommentPublicId] as const,
-    /** BEST 댓글(글별). `commentKeys.all` 접두 아래라 반응 낙관 패치가 함께 훑는다(정합). */
-    best: (postPublicId: string) =>
-        [...commentKeys.all, 'best', postPublicId] as const,
 }
 
 const COMMENT_PAGE_SIZE = 20
@@ -80,24 +75,6 @@ export function useComments(postPublicId: string, sort: CommentSort) {
             ),
         initialPageParam: 0,
         getNextPageParam: nextOffsetPageParam,
-        refetchOnWindowFocus: false,
-    })
-}
-
-/**
- * BEST 댓글(계약 §6.3, §13.3 — 공감 상위 고정 랭킹·param 없음). 임계 미달이면 빈 배열.
- *
- * ★ 캐시 데이터 = `RootCommentResponse[]`(응답의 `comments`만 보관) — 반응 낙관 패치가 훑는
- *   형상(배열)을 단순하게 유지한다. 페이지 진입 시 fresh, 반응은 카운트만 낙관 반영한다
- *   (BEST 멤버십/순서 변화는 다음 자연 refetch에 반영 — 즉시 재조회 시 항목 튐 방지).
- */
-export function useBestComments(postPublicId: string) {
-    return useQuery<RootCommentResponse[]>({
-        queryKey: commentKeys.best(postPublicId),
-        queryFn: async ({ signal }) => {
-            const result = await getBestComments(postPublicId, signal)
-            return result.comments
-        },
         refetchOnWindowFocus: false,
     })
 }
@@ -173,21 +150,6 @@ function invalidateReplyThreads(
 }
 
 /**
- * 글의 BEST 랭킹 무효화 — **내용·존재가 바뀌는 수정/삭제에서만** 부른다.
- * BEST 쿼리는 `refetchOnWindowFocus:false`라 자연 refetch가 없어, 수정하면 옛 본문이,
- * 삭제하면 계약상 제외돼야 할 댓글이 골드 섹션에 잔류한다(§6.3 "삭제·tombstone 제외"). 반응
- * 토글은 재정렬 튐 방지로 무효화하지 않는다(카운트만 낙관 반영) — 여기서 부르지 않는다.
- */
-function invalidateBest(
-    queryClient: ReturnType<typeof useQueryClient>,
-    postPublicId: string,
-) {
-    void queryClient.invalidateQueries({
-        queryKey: commentKeys.best(postPublicId),
-    })
-}
-
-/**
  * 루트 댓글 작성(계약 §6.3).
  * ★ 무효화·보정 = 이 글 루트 목록(새 댓글 반영) + 상세 `commentCount` +1(로컬) +
  *   글 목록 카드 카운트. 상세는 무효화하지 않는다(조회수 부풀림 방지).
@@ -256,9 +218,6 @@ export function useUpdateComment(
         onSuccess: () => {
             invalidateRootLists(queryClient, postPublicId)
             invalidateReplyThreads(queryClient, postPublicId)
-            // 루트가 BEST에 올라 있으면 수정 본문이 골드 카드에도 반영돼야 한다(중복 노출 정합).
-            // 대상이 답글이면 BEST 무관하나, 훅은 루트/답글을 구분하지 않고 best refetch는 무해하다.
-            invalidateBest(queryClient, postPublicId)
         },
     })
 }
@@ -281,9 +240,6 @@ export function useDeleteComment(
             invalidateRootLists(queryClient, postPublicId)
             invalidateReplyThreads(queryClient, postPublicId)
             bumpCommentCount(queryClient, slug, postPublicId, -1)
-            // 삭제된 루트는 BEST에서 제외돼야 한다(§6.3) — best 쿼리는 자연 refetch가 없어 명시 무효화.
-            // 답글 삭제는 BEST 무관하나 훅이 대상을 구분하지 않고 best refetch는 무해하다.
-            invalidateBest(queryClient, postPublicId)
             void queryClient.invalidateQueries({
                 queryKey: boardKeys.postLists(),
             })
@@ -327,16 +283,12 @@ function nextReactionState(
     }
 }
 
-/** comments 하위 캐시가 갖는 두 형상 — infinite 목록/스레드, BEST 배열. */
-type CommentCache =
-    | InfiniteData<OffsetPage<CommentResponse>>
-    | CommentResponse[]
+/** comments 하위 캐시 형상 — infinite 목록/스레드. */
+type CommentCache = InfiniteData<OffsetPage<CommentResponse>>
 
 /**
- * comments 캐시 전체(루트 목록 전 정렬 + 답글 스레드 전 루트 + **BEST**)를 가로질러 대상 댓글
- * 1건의 반응 필드를 patcher로 교체한다. 대상이 루트·답글·BEST 어디에 있든 접두 `commentKeys.all`을
- * 스캔한다 — BEST(배열)와 목록(infinite pages) 두 형상을 모두 처리하고, 같은 `commentPublicId`가
- * 여러 캐시에 중복(BEST↔목록 중복 노출)돼도 모두 같은 값으로 갱신해 정합을 유지한다.
+ * comments 캐시 전체(루트 목록 전 정렬 + 답글 스레드 전 루트)를 가로질러 대상 댓글 1건의 반응
+ * 필드를 patcher로 교체한다. 대상이 루트·답글 어디에 있든 접두 `commentKeys.all`을 스캔한다.
  * `replyCount`·`mentionedNickname` 등 항목 고유 필드는 스프레드로 보존한다.
  */
 function patchReactionInCaches(
@@ -353,9 +305,6 @@ function patchReactionInCaches(
         { queryKey: commentKeys.all },
         (data) => {
             if (!data) return data
-            // BEST — 배열
-            if (Array.isArray(data)) return data.map(patchItem)
-            // 목록·답글 — infinite pages
             return {
                 ...data,
                 pages: data.pages.map((page) => ({

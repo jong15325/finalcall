@@ -9,7 +9,6 @@ import {
     TbChevronDown,
     TbArrowBackUp,
     TbMessageOff,
-    TbStarFilled,
     TbDotsVertical,
 } from 'react-icons/tb'
 import { paths } from '@/app/paths'
@@ -38,7 +37,9 @@ import type {
  * ★ 답글(대댓글)은 `ReplyItem` 이 그리며 루트·답글 공통 몸통은 `CommentBody` 로 공유한다
  *   (수정/삭제 인라인·공감/비공감 토글·본문/tombstone 분기).
  * ★ **공감/비공감(FC-211)** — 낙관적 토글. 비로그인 클릭은 로그인 유도, 본인 댓글은 비활성
- *   (COMMENT_003 서버 방어). **BEST 는 FC-212**. 인가 권위는 서버(§1.2).
+ *   (COMMENT_003 서버 방어). 인가 권위는 서버(§1.2).
+ * ★ **인라인 답글(FC-216)** — "답글" 클릭 시 폼이 그 댓글/답글 **바로 아래**에 뜬다. 동시에
+ *   하나만 열리며(`replyingTo.targetPublicId`가 열린 노드), 다른 대상 클릭 시 이전이 닫히고 이동한다.
  */
 const CONTENT_MAX = 1000
 
@@ -52,15 +53,12 @@ interface CommentItemProps {
     slug: string
     postPublicId: string
     comment: RootCommentResponse
-    /** BEST 섹션에서 렌더할 때 골드 배지 표시(FC-212). 본 목록에서는 false. */
-    isBest?: boolean
 }
 
 export default function CommentItem({
     slug,
     postPublicId,
     comment,
-    isBest = false,
 }: CommentItemProps) {
     const hasReplies = comment.replyCount > 0
     // 상세 로드 시 답글이 있으면 기본 펼침(지연 로딩 대신 초기부터 조회). 토글로 접기 가능.
@@ -110,6 +108,8 @@ export default function CommentItem({
         </>
     )
 
+    const closeReplyForm = () => setReplyingTo(null)
+
     return (
         <li className="border-t border-line first:border-t-0">
             <CommentBody
@@ -118,9 +118,21 @@ export default function CommentItem({
                 comment={comment}
                 variant="root"
                 mention={null}
-                isBest={isBest}
                 actions={actions}
             />
+
+            {/* 루트에 단 답글 폼 — 루트 바로 아래(스레드 들여쓰기 정렬)에 인라인(FC-216) */}
+            {replyingTo?.targetPublicId === comment.commentPublicId && (
+                <div className="ml-4 pl-2 sm:ml-11 sm:pl-4">
+                    <ReplyComposer
+                        slug={slug}
+                        postPublicId={postPublicId}
+                        rootCommentPublicId={comment.commentPublicId}
+                        target={replyingTo}
+                        onDone={closeReplyForm}
+                    />
+                </div>
+            )}
 
             {expanded && (
                 <ReplyThread
@@ -129,7 +141,7 @@ export default function CommentItem({
                     rootCommentPublicId={comment.commentPublicId}
                     replyingTo={replyingTo}
                     onReply={openReplyForm}
-                    onCloseForm={() => setReplyingTo(null)}
+                    onCloseForm={closeReplyForm}
                 />
             )}
         </li>
@@ -192,8 +204,11 @@ function ReplyThread({
                             key={reply.commentPublicId}
                             slug={slug}
                             postPublicId={postPublicId}
+                            rootCommentPublicId={rootCommentPublicId}
                             reply={reply}
+                            replyingTo={replyingTo}
                             onReply={onReply}
+                            onCloseForm={onCloseForm}
                         />
                     ))}
                 </ul>
@@ -210,16 +225,6 @@ function ReplyThread({
                     {isFetchingNextPage ? '불러오는 중…' : '답글 더 보기'}
                 </button>
             )}
-
-            {replyingTo && (
-                <ReplyComposer
-                    slug={slug}
-                    postPublicId={postPublicId}
-                    rootCommentPublicId={rootCommentPublicId}
-                    target={replyingTo}
-                    onDone={onCloseForm}
-                />
-            )}
         </div>
     )
 }
@@ -228,13 +233,19 @@ function ReplyThread({
 function ReplyItem({
     slug,
     postPublicId,
+    rootCommentPublicId,
     reply,
+    replyingTo,
     onReply,
+    onCloseForm,
 }: {
     slug: string
     postPublicId: string
+    rootCommentPublicId: string
     reply: CommentResponse & { mentionedNickname: string | null }
+    replyingTo: ReplyTarget | null
     onReply: (target: ReplyTarget) => void
+    onCloseForm: () => void
 }) {
     // 이 답글에 "답글" → 서버가 같은 루트로 평탄화하고 이 답글 작성자에게 @멘션(§13.1).
     const actions = (
@@ -263,6 +274,17 @@ function ReplyItem({
                 mention={reply.mentionedNickname}
                 actions={actions}
             />
+
+            {/* 이 답글에 단 답글 폼 — 답글 바로 아래에 인라인(FC-216) */}
+            {replyingTo?.targetPublicId === reply.commentPublicId && (
+                <ReplyComposer
+                    slug={slug}
+                    postPublicId={postPublicId}
+                    rootCommentPublicId={rootCommentPublicId}
+                    target={replyingTo}
+                    onDone={onCloseForm}
+                />
+            )}
         </li>
     )
 }
@@ -275,7 +297,6 @@ function CommentBody({
     variant,
     mention,
     actions,
-    isBest = false,
 }: {
     slug: string
     postPublicId: string
@@ -285,8 +306,6 @@ function CommentBody({
     mention: string | null
     /** 액션 바 슬롯 — 답글·답글 토글 등 변주별 버튼 */
     actions: React.ReactNode
-    /** BEST 섹션 렌더 시 작성자 옆 골드 배지(FC-212) */
-    isBest?: boolean
 }) {
     const [editing, setEditing] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
@@ -384,12 +403,6 @@ function CommentBody({
                             <b className="min-w-0 truncate text-sm font-bold text-gray-900">
                                 {comment.authorNickname}
                             </b>
-                            {isBest && (
-                                <span className="inline-flex h-[18px] shrink-0 items-center gap-0.5 rounded bg-gold px-1.5 text-[10px] font-extrabold tracking-wide text-navy-900">
-                                    <TbStarFilled aria-hidden className="size-2.5" />
-                                    BEST
-                                </span>
-                            )}
                             <span className="hidden shrink-0 whitespace-nowrap text-xs text-gray-400 sm:inline">
                                 {formatPostTime(comment.createdAt)}
                                 {edited && ' · 수정됨'}

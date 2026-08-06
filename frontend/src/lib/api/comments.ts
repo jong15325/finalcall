@@ -41,7 +41,7 @@ export interface CommentResponse {
     deleted: boolean
 }
 
-/** 루트 목록·BEST 항목 = 코어 + `replyCount`(이 루트의 활성 답글 수, 네이버 "답글 N개"). */
+/** 루트 목록 항목 = 코어 + `replyCount`(이 루트의 활성 답글 수, 네이버 "답글 N개"). */
 export interface RootCommentResponse extends CommentResponse {
     replyCount: number
 }
@@ -178,22 +178,5 @@ export function toggleReaction(
     return apiClient.put<ReactionResult>(
         `/posts/${postPublicId}/comments/${commentPublicId}/reaction`,
         { type },
-    )
-}
-
-/**
- * `GET /posts/{postPublicId}/comments/best` — BEST 댓글(공개·param 없음, 계약 §6.3, §13.3).
- *
- * ★ 루트 댓글 중 공감 상위 고정 랭킹(임계 미달이면 빈 배열). 항목은 루트 목록과 **동일 형상**
- *   (`RootCommentResponse`) — 정렬 목록과 분리된 하이라이트라 목록에도 **중복 노출**된다(네이버식).
- * ★ 목록·답글과 같은 optional-auth(토큰 있으면 `myReaction`·`editable` 부여).
- */
-export function getBestComments(
-    postPublicId: string,
-    signal?: AbortSignal,
-): Promise<{ comments: RootCommentResponse[] }> {
-    return apiClient.get<{ comments: RootCommentResponse[] }>(
-        `/posts/${postPublicId}/comments/best`,
-        { signal },
     )
 }

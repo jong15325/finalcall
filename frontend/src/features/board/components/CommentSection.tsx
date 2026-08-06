@@ -7,15 +7,10 @@ import {
     TbArrowsSort,
     TbChevronDown,
     TbCheck,
-    TbStarFilled,
 } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import { buildReturnUrlQuery } from '@/lib/returnUrl'
-import {
-    useBestComments,
-    useComments,
-    useCreateComment,
-} from '@/lib/queries/comments'
+import { useComments, useCreateComment } from '@/lib/queries/comments'
 import { useIsAuthenticated } from '@/store/authStore'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { commentErrorMessage } from '@/features/board/lib/boardErrors'
@@ -26,7 +21,7 @@ import type { CommentSort } from '@/lib/api/comments'
  * 댓글 영역 — 네이버식 대댓글 (계약 v1.24 §6.3, EPIC-COMMENT-V2) — FC-210.
  *
  * ★ `allowComments=false`(공지)면 미노출·안내. 허용이면 개수 헤더 + 정렬 컨트롤 + 작성 폼
- *   (로그인 유저만) + BEST 자리(FC-212) + 루트 목록(정렬·지연 답글).
+ *   (로그인 유저만) + 루트 목록(정렬·지연 답글).
  * ★ **가짜 댓글을 렌더하지 않는다**(FC-048). 개수는 상세의 비정규화 `commentCount`(계약 §6.2).
  * ★ 목록은 **루트 댓글만** — 답글은 각 루트가 펼칠 때 지연 로딩한다(§13.1, `CommentItem`).
  */
@@ -84,8 +79,6 @@ export default function CommentSection({
             </div>
 
             <CommentComposer slug={slug} postPublicId={postPublicId} />
-
-            <CommentBestSection slug={slug} postPublicId={postPublicId} />
 
             <CommentList slug={slug} postPublicId={postPublicId} sort={sort} />
         </section>
@@ -186,48 +179,6 @@ function CommentSortControl({
                     </div>
                 </>
             )}
-        </div>
-    )
-}
-
-/* ── BEST 댓글 섹션 (공감 상위 고정 랭킹, 계약 §13.3) ───────────────────── */
-/**
- * BEST는 정렬 목록과 분리된 고정 랭킹이며 **목록에도 중복 노출**된다(네이버식 하이라이트).
- * ★ 임계 미달(빈 배열)·로딩·에러면 **미노출** — 부가 섹션이라 본 목록을 가리지 않는다.
- *   가짜 데이터를 만들지 않는다(FC-048). 항목은 `CommentItem`(isBest)으로 렌더해 반응·답글 등
- *   본 목록과 동일 기능을 갖고, 같은 `commentPublicId` 반응은 캐시 스캔으로 목록과 정합된다.
- */
-function CommentBestSection({
-    slug,
-    postPublicId,
-}: {
-    slug: string
-    postPublicId: string
-}) {
-    const { data } = useBestComments(postPublicId)
-    const best = data ?? []
-    if (best.length === 0) return null
-
-    return (
-        <div className="mt-5 overflow-hidden rounded-xl border border-gold-subtle">
-            <div className="flex items-center gap-1.5 bg-gold-subtle px-3.5 py-2 text-xs font-extrabold text-gold-deep">
-                <TbStarFilled aria-hidden className="size-3.5" />
-                BEST 댓글
-                <span className="ml-auto font-semibold opacity-75">
-                    공감 상위 · 목록에도 함께 표시
-                </span>
-            </div>
-            <ul className="px-3.5">
-                {best.map((comment) => (
-                    <CommentItem
-                        key={comment.commentPublicId}
-                        isBest
-                        slug={slug}
-                        postPublicId={postPublicId}
-                        comment={comment}
-                    />
-                ))}
-            </ul>
         </div>
     )
 }
