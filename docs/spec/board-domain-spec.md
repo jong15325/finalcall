@@ -1,12 +1,13 @@
 # FinalCall 게시판 도메인 스펙 (board · post · comment · image)
 
-상태: **v1.1 — EPIC-COMMENT-V2 댓글 확장 계약(FC-206). 게이트2 3건(§14) 사용자 승인 완료(2026-08-06).** (v1.0 EPIC-BOARD 계약 확정·게이트2 3건(§11) 승인 완료 2026-08-06.) 이후 변경은 계약 변경 절차(`common/rules.md [6]`) + 영향 티켓 산출 경유.
+상태: **v1.2 — FC-217 BEST 댓글 기능 제거(2026-08-07, 사용자 요청). 정렬 순공감순(`LIKES`)은 유지.** (v1.1 EPIC-COMMENT-V2 댓글 확장 계약(FC-206)·게이트2 3건(§14) 사용자 승인 완료 2026-08-06. v1.0 EPIC-BOARD 계약 확정·게이트2 3건(§11) 승인 완료 2026-08-06.) 이후 변경은 계약 변경 절차(`common/rules.md [6]`) + 영향 티켓 산출 경유.
 소유: 기획/설계(architect).
 근거: EPIC-BOARD 게이트1 4결정(2026-08-06) — (1) 게시판=시드 정의 우선(관리자 UI 다음 에픽) (2) 댓글 포함 (3) 이미지 포함 (4) 공지(notice) 흡수. 게이트2 3건 승인(2026-08-06). CLAUDE.md §5(도메인 컨벤션)·§9.7~§9.10(V2 어휘·배치). 기존 `notice` 참조 구현(단순 CRUD). erd v1.8·api-contract v1.23.
 정본 매핑: 스키마 = `erd.md` §4.5, API 계약 = `api-contract.md` §6.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.2 | 2026-08-07 | **FC-217 — BEST 댓글 기능 제거(사용자 요청).** §13.3에서 BEST 규칙(선정 임계 `min-likes`·상위 N `max-count`·별도 엔드포인트 `GET …/comments/best`·순공감 고정 랭킹)을 전면 삭제하고 절 제목을 "정렬 · BEST 댓글" → "정렬"로 변경. **정렬 param(순공감순 `LIKES` 포함)·`like_count` 비정규화·`ix_comment_likes` 인덱스는 유지**(정렬은 BEST와 별개 기능). §13 헤더·§4 인가표·§2.3 요약의 "BEST" 문언 정리. 백엔드 `CommentController.best`·`getBestComments`·`findBestRootComments`·`BoardCommentBestProperties`·`BestCommentsResponse`·`board.comment.best.*` 동반 제거(api §6.3 v1.25). 스키마 무변경(BEST는 컬럼 추가 없음). |
 | v1.1 | 2026-08-06 | **EPIC-COMMENT-V2 — 네이버식 댓글 확장 계약 확정(FC-206, 게이트2 3건 §14 사용자 승인 2026-08-06).** 결정: (a) 답글 = A1(1단계 평탄화 + 닉 스냅샷 @멘션) · (b) 반응 = B1(comment_reaction 유저당 1행 UK + 원자 카운트 비정규화) · (c) 기존 댓글 API = C1(하위호환 없이 형상 교체·형상보존 예외 승인) · **★기본 정렬 = 최신순(LATEST)**(초안 LIKES에서 변경) · 삭제 tombstone 확정 · 자기 반응 금지 COMMENT_003 확정 · comment_count 루트+답글 총계 확정. 평면 댓글(FC-199/203)을 대댓글(1단계)·공감/비공감·정렬(최신/과거/순공감)·BEST로 확장. **§2.3 Comment 확장**(parent_comment_id 활성·mentioned_nickname·like/dislike/reply_count), **§13 신설**(대댓글 1단계 모델·comment_reaction·정렬·BEST·삭제 tombstone·인가 불변식), **§14 신설**(게이트2 3건 — 답글 모델·반응 스키마·기존 API 형상 교체). §4 인가·§5 불변식·§6 카운터 갱신. 스키마 = erd v1.9(comment_reaction·comment 확장 V24), API = api-contract §6.3(v1.24). 구현 = FC-207~209(backend)·FC-210~212(frontend) |
 | v1.0 | 2026-08-06 | **게이트2 3건 사용자 승인 확정** — (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + `StoragePort`(S3 호환 단일 구현)·presigned GET 서빙(§7 전면 재작성) (b) 공지 흡수=이전+정리·notice 제거·board 참조구현 승계·CLAUDE.md §1 갱신(FC-201 포함) (c) 옵션 표준 3축. Board·Post·Comment·PostImage 도메인 모델·인가 불변식·공지 흡수 순서 정본화. FC-196 계약 확정 |
 | v0.1 | 2026-08-06 | 골격 착수(PROPOSAL) — 도메인 모델·인가 불변식·이미지 스토리지 추상화·공지 흡수 전략·게이트2 3건 상신 |
@@ -78,7 +79,7 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 | `replyCount` | **v1.1 신설** — 답글 수 비정규화(루트 댓글만 유효, 답글 생성/삭제 동일 TX 증감) |
 | soft delete | `isDeleted`·`deletedAt`. 삭제 루트는 활성 답글 보유 시 tombstone 잔류(§13.4) |
 
-댓글의 대댓글·반응·정렬·BEST 모델 전체는 **§13**(EPIC-COMMENT-V2), 공감/비공감 저장 엔티티 `CommentReaction`은 §13.2 정본이다.
+댓글의 대댓글·반응·정렬 모델 전체는 **§13**(EPIC-COMMENT-V2), 공감/비공감 저장 엔티티 `CommentReaction`은 §13.2 정본이다.
 
 ### 2.3.1 CommentReaction (공감/비공감) — v1.1
 
@@ -131,7 +132,7 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 
 | 동작 | 인가 규칙 | 위반 시 |
 |---|---|---|
-| 게시판 목록·글 목록·글 상세·댓글 목록·답글 목록·BEST 댓글·이미지 조회 | **공개**(인증 불요, 인증 시 뷰어종속 `myReaction`·`editable` 부여) | — |
+| 게시판 목록·글 목록·글 상세·댓글 목록·답글 목록·이미지 조회 | **공개**(인증 불요, 인증 시 뷰어종속 `myReaction`·`editable` 부여) | — |
 | 게시글 작성 | 인증 필요 + `board.isActive` + `writePolicy` 충족: `ADMIN_ONLY`→`ROLE_ADMIN` 필요 / `AUTHENTICATED`→임의 인증 | 미인증 401 · 정책 위반 `BOARD_002`(403) · 비활성 `BOARD_001`(404) |
 | 게시글 수정·삭제 | 인증 필요 + (**작성자 본인** `authorId==subject`) **OR** `ROLE_ADMIN` | `POST_002`(403) |
 | 댓글 작성 | 인증 필요 + `board.allowComments==true` + 글 존재(미삭제) | 비허용 `BOARD_003`(422) · 글 없음 `POST_001`(404) |
@@ -342,9 +343,9 @@ EPIC-COMMENT-V2 하위 티켓(§13·§14):
 
 ---
 
-## 13. 댓글 v2 — 대댓글·공감/비공감·정렬·BEST (EPIC-COMMENT-V2)
+## 13. 댓글 v2 — 대댓글·공감/비공감·정렬 (EPIC-COMMENT-V2)
 
-게이트1 확정(2026-08-06): **풀 네이버**(대댓글 + 공감/비공감 + 정렬 + BEST) · 중첩 **1단계**. 기존 평면 댓글(§2.3 v1.0)을 확장한다. 정본 스키마 = erd §4.5(`comment` 확장·`comment_reaction`), API = api-contract §6.3.
+게이트1 확정(2026-08-06): **풀 네이버**(대댓글 + 공감/비공감 + 정렬) · 중첩 **1단계**. 기존 평면 댓글(§2.3 v1.0)을 확장한다. 정본 스키마 = erd §4.5(`comment` 확장·`comment_reaction`), API = api-contract §6.3. (BEST 댓글은 FC-217에서 제거됨 — §13.3 주 참조.)
 
 ### 13.1 대댓글 (답글) — 1단계 저장 모델
 
@@ -375,7 +376,9 @@ EPIC-COMMENT-V2 하위 티켓(§13·§14):
 - **자기 반응 금지(R-3)**: 대상 댓글 `authorId == 주체`면 `COMMENT_003`(422).
 - **myReaction 노출**: 목록·답글·BEST 응답의 `myReaction`은 뷰어 종속(`LIKE`|`DISLIKE`|`null`)이다 — 인증 시 뷰어의 반응 행을 배치 조회(`comment_id IN (…) AND user_id=주체`, UK 커버)해 채우고, 비인증은 `null`. `editable`(§1.0)과 같은 optional-auth 패턴(토큰 있으면 붙임, `getComments` 선례).
 
-### 13.3 정렬 · BEST 댓글
+### 13.3 정렬
+
+> **BEST 댓글 제거(FC-217, 2026-08-07)**: 순공감 상위 고정 랭킹(별도 엔드포인트 `GET …/comments/best`·임계 설정)은 **전면 폐지**됐다(사용자 요청). 아래 정렬 param(순공감순 `LIKES` 포함)만 유지된다 — 정렬은 BEST와 별개 기능이다.
 
 - **루트 목록 정렬 param** `sort`(query, 루트 목록에만 적용):
 
@@ -385,10 +388,7 @@ EPIC-COMMENT-V2 하위 티켓(§13·§14):
 | `OLDEST` | 과거순(작성순) | `id ASC` |
 | `LIKES` | 순공감순 | `like_count DESC, id DESC` |
 
-기본값 = **`LATEST`(최신순)**(게이트2 사용자 확정 2026-08-06 — 초안 `LIKES`에서 변경). 화이트리스트 외 값은 검증 400. 정렬 키 ↔ 인덱스 1:1(erd §5, B-006) — `LATEST`·`OLDEST`는 `(post_id, parent_comment_id, id)` 인덱스가 정·역방향 모두 커버(id 단조), `LIKES`는 `(post_id, parent_comment_id, like_count)`가 커버. **답글 목록은 항상 `OLDEST`(id asc) 고정**(스레드 시간순, param 없음). **BEST 댓글은 목록 기본 정렬과 무관하게 공감 상위 기준 유지**(§13.3 BEST 항).
-
-- **BEST 댓글**: 루트 댓글 중 `like_count >= board.comment.best.min-likes`(설정, 권장 기본 3)인 것을 `(like_count − dislike_count) DESC, id DESC`로 정렬해 상위 `board.comment.best.max-count`(설정, 권장 기본 3)건. 답글은 BEST 대상 아님. 삭제·tombstone 루트 제외. 임계 미달이면 빈 목록(BEST 섹션 미노출).
-- **노출 방식**: **별도 엔드포인트** `GET …/comments/best`(§api 6.3)로 BEST 목록을 반환한다(정렬 목록과 분리 — BEST는 정렬 param과 무관한 고정 랭킹이라 페이지네이션에 얽지 않는다). 프론트는 BEST 섹션을 상단에 렌더하고, 그 아래 정렬 목록(`GET …/comments?sort=`)을 렌더한다. BEST 댓글은 정렬 목록에도 **중복 노출**된다(네이버 동일 — BEST는 하이라이트일 뿐 목록에서 빼지 않는다). 설정값은 데모 트래픽에 맞춰 낮출 수 있다(포트폴리오).
+기본값 = **`LATEST`(최신순)**(게이트2 사용자 확정 2026-08-06 — 초안 `LIKES`에서 변경). 화이트리스트 외 값은 검증 400. 정렬 키 ↔ 인덱스 1:1(erd §5, B-006) — `LATEST`·`OLDEST`는 `(post_id, parent_comment_id, id)` 인덱스가 정·역방향 모두 커버(id 단조), `LIKES`는 `(post_id, parent_comment_id, like_count)`가 커버. **답글 목록은 항상 `OLDEST`(id asc) 고정**(스레드 시간순, param 없음).
 
 ### 13.4 삭제 댓글 tombstone (스레드 보존)
 

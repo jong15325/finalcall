@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
-import com.finalcall.domain.board.dto.BestCommentsResponse;
 import com.finalcall.domain.board.dto.CommentCreateRequest;
 import com.finalcall.domain.board.dto.CommentCreateResponse;
 import com.finalcall.domain.board.dto.CommentPageResponse;
@@ -64,16 +63,6 @@ public class CommentController {
         @RequestParam(required = false) String sort) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), normalizeSize(size), CommentSort.from(sort).toSort());
         return ApiResponse.success(commentService.getComments(postPublicId, pageable));
-    }
-
-    /**
-     * BEST 댓글(FC-209, api §6.3) — 공개. param 없는 고정 랭킹(순공감 상위·임계 이상·상위 N, 설정 {@code board.comment.best.*}).
-     * 정렬 목록과 분리된 배열 {@code { comments: [...] }} 로 반환한다. 임계 미달이면 빈 배열. 글 없음/삭제 {@code POST_001}(404).
-     * 경로 {@code /best} 는 단일 세그먼트라 답글({@code /{id}/replies})·반응({@code /{id}/reaction}) 경로와 겹치지 않는다.
-     */
-    @GetMapping("/best")
-    public ApiResponse<BestCommentsResponse> best(@PathVariable String postPublicId) {
-        return ApiResponse.success(commentService.getBestComments(postPublicId));
     }
 
     /** 답글 목록(offset) — 공개. id asc(시간순 고정, param 없음). 대상 없음/완전삭제 {@code COMMENT_001}·글 없음 {@code POST_001}. */

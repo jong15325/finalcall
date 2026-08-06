@@ -1,6 +1,5 @@
 package com.finalcall.domain.board.repository;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -42,21 +41,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     /** 루트의 활성 답글 offset 목록(api §6.3) — {@code parent_comment_id=루트 AND is_deleted=false}, id asc(시간순 고정). */
     Page<Comment> findByParentCommentIdAndIsDeletedFalseOrderByIdAsc(Long parentCommentId, Pageable pageable);
-
-    /**
-     * BEST 댓글 목록(api §6.3, FC-209 · board-spec §13.3) — 루트 댓글 중 {@code like_count >= minLikes}(임계) 인 활성 댓글을
-     * <b>순공감(like−dislike) DESC, id DESC</b> 로 정렬해 상위 {@code pageable} 개수(N)만 반환한다. 삭제·tombstone 은
-     * {@code is_deleted = false} 로 배제한다(tombstone 은 삭제 상태라 자연 제외). 정렬 목록의 {@code sort} 와 무관한 고정
-     * 랭킹이라 offset 페이지가 아닌 상위 N 스캔이다 — {@code pageable} 은 {@code PageRequest.of(0, maxCount)}(정렬 없음)로
-     * LIMIT 만 실어 넘긴다(ORDER BY 는 이 JPQL 이 소유). 임계 미달이면 빈 리스트. 임계·상위 스캔은 {@code ix_comment_likes}
-     * {@code (post_id, parent_comment_id, like_count)} 가 커버한다(erd §5, B-006).
-     */
-    @Query("SELECT c FROM Comment c "
-        + "WHERE c.postId = :postId AND c.parentCommentId IS NULL "
-        + "AND c.isDeleted = false AND c.likeCount >= :minLikes "
-        + "ORDER BY (c.likeCount - c.dislikeCount) DESC, c.id DESC")
-    List<Comment> findBestRootComments(
-        @Param("postId") Long postId, @Param("minLikes") int minLikes, Pageable pageable);
 
     /** public_id 로 활성 단건 조회(수정·삭제·답글 대상) — 삭제행 제외(board-spec P-2). */
     Optional<Comment> findByPublicIdAndIsDeletedFalse(String publicId);

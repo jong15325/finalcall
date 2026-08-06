@@ -15,7 +15,7 @@ import com.finalcall.common.exception.CommonErrorCode;
  * {@code LATEST}/{@code OLDEST} 는 {@code (post_id, parent_comment_id, id)} 가 정·역방향 커버, {@code LIKES} 는
  * {@code (post_id, parent_comment_id, like_count)} 가 커버한다. 답글 목록은 이 정렬을 쓰지 않는다(항상 id asc 고정).
  *
- * <p>{@code LIKES}(순공감 정렬)와 BEST 고정 랭킹은 FC-209 에서 완성됐다({@code CommentService.getBestComments}).
+ * <p>{@code LIKES}(순공감 정렬)는 FC-209 에서 완성됐다({@code CommentService.getComments} 의 Sort 주입).
  */
 public enum CommentSort {
 

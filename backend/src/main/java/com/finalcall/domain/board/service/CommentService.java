@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,8 +22,6 @@ import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.exception.PostErrorCode;
 import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.util.Preconditions;
-import com.finalcall.domain.board.config.BoardCommentBestProperties;
-import com.finalcall.domain.board.dto.BestCommentsResponse;
 import com.finalcall.domain.board.dto.CommentCreateRequest;
 import com.finalcall.domain.board.dto.CommentCreateResponse;
 import com.finalcall.domain.board.dto.CommentPageResponse;
@@ -72,10 +69,9 @@ import lombok.RequiredArgsConstructor;
  * 댓글 반응은 {@code COMMENT_003}(422, R-3). 목록·답글 조회는 뷰어의 반응을 배치 조회({@link #viewerReactions})해 {@code myReaction}
  * 을 채운다(N+1 회피·optional-auth — 비인증은 null).
  *
- * <p><b>정렬·BEST(FC-209, board-spec §13.3)</b>: 루트 목록 정렬은 {@code CommentSort}(LATEST/OLDEST/LIKES) 화이트리스트를
- * {@code pageable} 의 Sort 로 주입받는다({@link #getComments}). BEST({@link #getBestComments})는 정렬 목록과 분리된 고정
- * 랭킹으로, 루트 댓글 중 {@code like_count >= min-likes}(설정)를 순공감({@code like_count − dislike_count}) DESC·id DESC 로
- * 정렬해 상위 {@code max-count}(설정)건을 반환한다(삭제·tombstone 제외, myReaction·editable 뷰어 종속).
+ * <p><b>정렬(FC-209, board-spec §13.3)</b>: 루트 목록 정렬은 {@code CommentSort}(LATEST/OLDEST/LIKES) 화이트리스트를
+ * {@code pageable} 의 Sort 로 주입받는다({@link #getComments}). LIKES 는 순공감({@code like_count}) DESC·id DESC 로
+ * 정렬한다(삭제·tombstone 은 목록 매핑에서 마스킹, myReaction·editable 뷰어 종속).
  */
 @Service
 @RequiredArgsConstructor
@@ -89,7 +85,6 @@ public class CommentService {
     private final PostRepository postRepository;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
-    private final BoardCommentBestProperties bestProperties;
 
     /**
      * 글별 루트 댓글 목록(api §6.3, FC-207, offset·공개) — {@code parent_comment_id IS NULL AND (is_deleted=false OR
@@ -134,30 +129,6 @@ public class CommentService {
         return ReplyPageResponse.from(page,
             reply -> ReplyResponse.from(reply, isEditable(reply, viewerId, admin),
                 myReactionOf(myReactions, reply)));
-    }
-
-    /**
-     * BEST 댓글(api §6.3, FC-209 · board-spec §13.3, 공개·optional-auth) — 루트 댓글 중 {@code like_count >= min-likes}(설정)를
-     * 순공감({@code like_count − dislike_count}) DESC·id DESC 로 정렬해 상위 {@code max-count}(설정)건. 삭제·tombstone 제외
-     * (repository 가 {@code is_deleted=false} 로 배제). 정렬 목록({@link #getComments})과 분리된 고정 랭킹이라 param 없이 단순
-     * 배열로 반환한다(정렬 목록에도 중복 노출된다 — 하이라이트일 뿐 목록에서 빼지 않는다). 임계 미달이면 빈 배열. 글 미존재·
-     * 삭제는 {@code POST_001}(404). {@code editable}·{@code myReaction} 은 뷰어 종속으로 목록과 동일하게 채운다(비인증 null).
-     * BEST 는 활성 루트만이라 tombstone 마스킹은 발생하지 않으나 매핑은 {@code CommentResponse.fromRoot} 를 공유한다.
-     */
-    @ServiceLog
-    public BestCommentsResponse getBestComments(String postPublicId) {
-        Post post = postRepository.findActiveByPublicIdOrThrow(postPublicId, PostErrorCode.POST_NOT_FOUND);
-        List<Comment> best = commentRepository.findBestRootComments(
-            post.getId(), bestProperties.minLikes(), PageRequest.of(0, bestProperties.maxCount()));
-
-        Long viewerId = currentUserIdOrNull();
-        boolean admin = viewerId != null && currentUserIsAdmin();
-        Map<Long, ReactionType> myReactions = viewerReactions(best, viewerId);
-        List<CommentResponse> comments = best.stream()
-            .map(comment -> CommentResponse.fromRoot(comment, isEditable(comment, viewerId, admin),
-                myReactionOf(myReactions, comment)))
-            .toList();
-        return BestCommentsResponse.of(comments);
     }
 
     /**
