@@ -24,6 +24,7 @@
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
 | v1.16 | 2026-07-29 | 6절 계약 변경 — 게이트2(EPIC-OAUTH, FC-152) 승인 반영. 네이버·카카오 소셜 로그인(방식 B — 프론트 주도 + 백엔드 교환). **§2 소셜 로그인 subsection 신설** — `POST /api/v1/auth/oauth/{provider}`(provider ∈ naver\|kakao) 단일 엔드포인트 find-or-create, 요청 `{ code, redirectUri }`(state는 프론트 소유 CSRF·백엔드 미검증이라 요청 바디 제외), 응답 = 기존 `LoginResponse` 형상 그대로(**가입·로그인 모두 200**, 신규/기존 비노출 SEC-007). **§5 `AUTH_006`~`AUTH_008` 등재**(미지원 provider 400·인가코드 교환 실패 401·provider 통신 실패 502). 결정 3건(①로그인·가입 통합 ②이메일 비연결=provider+id가 신원키·소셜 이메일 미저장 ③닉네임 유니크 접미사) 반영. 스키마 = erd v1.5(`user_social_account` 신설·`user.password_hash`·`login_id` nullable화, V19). AUTH_005~008 enum 등록 = 구현 티켓(FC-154). |
 | v1.18 | 2026-07-30 | 6절 계약 변경 — EPIC-LOGINID-CHECK(FC-165, 사용자 게이트1 승인 2026-07-30) 반영. **§2 `GET /api/v1/auth/login-id/availability` 신설**(회원가입 아이디 라이브 중복확인용, 닉네임 가용성 v1.17 미러). 인증 불요·permitAll(`/nickname/availability`와 동류 등재), 요청 query `loginId`(형식·길이=signup 규칙 재사용 `@NotBlank`·`@Size(max=50)`), 응답 `{ available: boolean }`(DTO `LoginIdAvailability{Request,Response}`), 판정=`existsByLoginIdAndIsDeletedFalse`(가입 유니크 검사와 단일 경로), advisory·최종 권위는 signup `AUTH_001`(409). **게이트웨이 배선을 계약 DoD 로 명문화** — 이 경로를 엣지 게이트웨이 `auth-rate-limited` `Path=` predicate 에 등재(FC-161 MAJOR-1 재발 방지, backend FC-166 이 코드+게이트웨이 동시 수행). **신규 도메인 에러코드 없음**(형식 위반은 COMMON 검증 400). 응답 형상 불변·스키마 무변경. loginId 는 자격증명이라 열거 민감도가 닉네임보다 높으나 signup `AUTH_001`이 이미 존재를 노출해 새 열거면 없음 — rate limit·응답 최소화 최종 점검 = FC-168(reviewer). 구현 = FC-166(backend)·FC-167(frontend). |
+| v1.23 | 2026-08-06 | EPIC-BOARD(FC-196) — 커스텀 게시판 시스템. **게이트2 3건 사용자 승인 확정(2026-08-06).** **§6 게시판(board·post·comment·image) 신설**(§5 에러코드 표 뒤 가법 — 기존 §1~§5 번호 불변). 게시판 목록(`GET /boards`·`/boards/{slug}`)·게시글 CRUD+커서목록(`/boards/{slug}/posts`)·댓글 CRUD(`/posts/{postPublicId}/comments` offset)·**이미지 업로드(`POST /board-images` multipart, 응답·목록·상세의 `url`=오브젝트 스토리지 presigned GET)**. 인가 = 목록·상세 공개·쓰기 인증+게시판 write_policy(ADMIN_ONLY→ROLE_ADMIN·AUTHENTICATED)·수정삭제 작성자\|admin(IDOR 주체=SecurityContext). **§5 에러코드 표에 `BOARD_001`~`003`·`POST_001`~`002`·`COMMENT_001`~`002`·`IMAGE_001`~`002` 등재.** 스키마 = erd v1.8(`board`·`post`·`comment`·`post_image` 신설 V22·공지 이관 V23). **공지(notice) 흡수** — `/notices/**` 참조구현 API 폐지·notice 도메인 제거·board가 새 참조구현 승계·CLAUDE.md §1 갱신(§6 서두·FC-201). **게이트2 3건 확정**: (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + StoragePort(S3 호환)·비공개 버킷 presigned GET 서빙(로컬 디스크·`/raw` 프록시 기각) (b) 공지 흡수·notice 제거·참조구현 승계 (c) 옵션 모델 표준 3축. 정본 `board-domain-spec.md` v1.0. 구현 = FC-197~201(backend)·FC-202~204(frontend). |
 | v1.22 | 2026-08-05 | EPIC-ITEM-DELIVERY(FC-185) — **§4.6 게임 아이템 지급·배송 신설**. (a) **구매자 배송 상태 조회(웹 REST)** `GET /me/deliveries`(커서·`status` 필터)·`GET /me/deliveries/{id}`(당사자만) — `recipient=주체` 스코프(IDOR 차단), `DeliverySummary`(status PENDING/CLAIMED/APPLIED/DEFERRED/FAILED·item 요약·itemInstancePublicId), claimToken/claimedAt 미노출. **기존 `/me/inventory`·`/me/orders` 응답 형상 불변**(배송 상태는 신규 엔드포인트에서만·형상 보존). (b) **게임 claim = DB 직접 프로토콜 명세**(웹 REST API 아님 — 통합 스키마 read 통합/write 소유자, memo boundary 선례): claim/apply/ack 조건부 CAS·item_uuid UK exactly-once·boundary 번역은 게임 서버 소속·claim 실이식은 후속 별건. api-contract envelope·에러체계 미편입(비-API 프로토콜 문서화). **§5 `DELIVERY_001`(배송 없음·미존재/비당사자 통일 404) 등재.** 스키마 = erd v1.7(`item_delivery` 신설 V21·`item_instance.location` IN_GAME 확장). **게이트2 형상 3건(delivery-domain-spec §13) 사용자 승인 대상**: (a) location enum 확장 IN_GAME (b) 게임 claim DB 프로토콜 (c) sale_order_id 1:1 UK 양 경로 커버. 정본 `delivery-domain-spec.md` v1.0. 구현 = FC-186~189(backend)·FC-190(frontend). |
 | v1.21 | 2026-08-04 | 6절 계약 변경 — EPIC-CARD-SYSTEM T1(FC-179, 게이트2 A 승인 2026-08-04) 반영. **§4.2 인벤토리·임시보관 "요약"(ItemSummaryResponse) 블록에 `skill1Name`·`skill2Name`(string, nullable) 가법 추가.** 출처 `skill_definition.name`, `skill1Code`/`skill2Code`가 null이면 각각 null(마법 카드는 skill1 부재라 skill1Name=null). §3.3 공통 item 블록의 스킬명(v1.14/FC-098)을 요약 블록에도 대칭 적용해 스킬명 단일 원천을 백엔드로 통일한다(프론트 "스킬 #코드" 폴백 제거). **순수 가법** — 기존 필드(`skill1Code`·`skill2Code`·`skillPercent` 등)·JSON 형상·에러코드·엔드포인트 전부 불변, 인벤토리·임시보관 쿼리가 skill_definition 을 이미 fetch join 하고 코드 노출에서 `getSkill1()`을 이미 참조하므로 N+1·추가 조인 없음. 스키마 무변경(DB 마이그레이션 없음). 정본 `card-system-consolidation-proposal-v0.1.md` §4. FE 배선 = T6. |
 | v1.20 | 2026-08-01 | EPIC-MEMO(FC-170) — **§2.6 메모/쪽지 신설**(회원 간 쪽지, 게임 `new_sp.user_memo` 계승 네이티브 도메인). 엔드포인트 6종(`POST /me/memos` 발신·`GET /me/memos/received`·`/sent` 커서·`/unread-count`·`GET /me/memos/{id}` 상세+읽음 전이·`DELETE /me/memos/{id}` soft delete), 전건 인증·`/me` 접두·주체 SecurityContext·발신 type=5 서버 고정(시스템 메모 사칭 차단). 당사자만 조회라 상대 닉 **비마스킹**, 레벨·성별 **분해 노출**(게임 패킹 int·28바이트 패딩은 게임 boundary 전용·웹 미노출). **§5 `MEMO_001`~`004` 등재**(수신자 없음 404·메모 없음 404·당사자 아님 403·자기 발신 422). 스키마 = erd v1.6(`user_memo` 신설·V20). **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 메모 스냅샷 2컬럼·현재 기본값 `senderLevel=1`·`senderGender=0`(남) (b) 깔끔 원문 저장 + 게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) **발신 = 자유 텍스트 단일 필드 + 게임 boundary 28바이트 자동 줄바꿈(필수)·프론트 미리보기 필수**. 정본 `memo-domain-spec.md` v1.0. 구현 = FC-171(backend)·FC-172(frontend). |
@@ -756,6 +757,15 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 | ORDER_001 | 주문 없음 | 404 |
 | ORDER_002 | 당사자 아님 | 403 |
 | DELIVERY_001 | 배송 없음(미존재·비당사자 통일, §4.6) | 404 |
+| BOARD_001 | 게시판 없음(slug 미존재 또는 비활성, §6) | 404 |
+| BOARD_002 | 게시판 쓰기 권한 없음(write_policy 위반 — ADMIN_ONLY 게시판 비관리자 작성·수정·삭제, §6) | 403 |
+| BOARD_003 | 댓글 비허용 게시판(allow_comments=false, §6) | 422 |
+| POST_001 | 게시글 없음(미존재·삭제됨, §6) | 404 |
+| POST_002 | 게시글 작성자 아님(수정·삭제 IDOR, non-admin, §6) | 403 |
+| COMMENT_001 | 댓글 없음(미존재·삭제됨, §6) | 404 |
+| COMMENT_002 | 댓글 작성자 아님(수정·삭제 IDOR, non-admin, §6) | 403 |
+| IMAGE_001 | 지원하지 않는 이미지 형식(jpeg·png·webp·gif 외, §6) | 422 |
+| IMAGE_002 | 이미지 용량 초과(>5MB, §6) | 422 |
 | CHARGE_001 | 승인 검증 실패 | 422 |
 | CHARGE_002 | 금액 불일치(토스 승인액 대조) | 422 |
 | CHARGE_003 | 충전 소유자 불일치(SEC-002) | 403 |
@@ -768,3 +778,106 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 | GATEWAY_403 | 게이트웨이 미경유 직접접근 차단(엣지) | 403 |
 
 주: 검증 실패(형식) 400 + `errors[]`(1.4). 코드 목록은 엔드포인트 추가 시 확장.
+
+---
+
+## 6. 게시판 (board · post · comment · image) — EPIC-BOARD, v1.23(게이트2 승인 확정 2026-08-06)
+
+> **가법 신설**: §5(에러코드 표) 뒤에 두어 기존 §1~§5 번호를 보존한다(파괴적 재번호 회피). 이 절은 커스텀 게시판 시스템 계약이며, 도메인 규칙 정본 = `board-domain-spec.md` v1.0, 스키마 = `erd.md` §4.5. **게이트2 3건(board-spec §11) 사용자 승인 완료** — 이미지 저장=오브젝트 스토리지(MinIO/S3)·presigned GET 서빙.
+
+게시판을 하드코딩 enum(구 `NoticeType`)이 아니라 **DB 레코드(Board 레지스트리)**로 정의한다. 게시판마다 쓰기 정책·댓글 허용·유형을 옵션으로 갖고, 시드로 공지·커뮤니티·이벤트 3개를 심는다(관리자 CRUD UI는 다음 에픽). 기존 `notice`(V1 참조 구현)는 **공지 게시판으로 흡수**되며 `/notices/**` API·notice 도메인은 폐지된다 — **board 도메인이 새 참조 구현**(컨벤션 쇼케이스)을 승계한다(board-spec §8·§11(b)).
+
+공통: 외부 식별자는 게시판=`slug`(사람이 읽는 well-known 키·`^[a-z0-9-]{2,50}$`), 게시글·댓글·이미지=`publicId`(ULID). 목록·상세·이미지 조회는 **공개**(인증 불요), 쓰기(작성·수정·삭제·업로드)는 **인증 필요**. 인가 주체·작성자는 요청 바디가 아니라 SecurityContext(userId)로만 취한다(B-009·IDOR 차단). 관리자 판정 = JWT `admin` 클레임 → `ROLE_ADMIN`.
+
+### 6.1 게시판 (board)
+
+#### GET /api/v1/boards — 게시판 목록
+- 인증: 불요
+- 응답 200: `{ boards: [ BoardResponse... ] }` — `is_active=true`만, `sort_order asc` 정렬.
+- `BoardResponse` = `{ slug, name, description, boardType, writePolicy, allowComments, sortOrder }`. `boardType` ∈ `GENERAL`\|`NOTICE`\|`EVENT`, `writePolicy` ∈ `ADMIN_ONLY`\|`AUTHENTICATED`.
+
+#### GET /api/v1/boards/{slug} — 게시판 단건
+- 인증: 불요
+- 응답 200: `BoardResponse`
+- 에러: `BOARD_001` 게시판 없음(slug 미존재·비활성, 404)
+
+### 6.2 게시글 (post)
+
+#### GET /api/v1/boards/{slug}/posts — 게시글 목록(커서)
+- 인증: 불요. 요청(query): `?cursor=<opaque>&size=<n>`(§1.3 cursor)
+- 응답 200: `CursorResponse<PostSummary>` — `board_id=slug게시판 AND is_deleted=false`, 정렬 **`is_pinned DESC, id DESC`**(고정 우선·최신순). 커서 키=`id`.
+- `PostSummary` = `{ postPublicId, title, authorNickname, isPinned, viewCount, commentCount, thumbnailUrl?, createdAt }`. `thumbnailUrl`=첫 첨부 이미지 url(없으면 null). `authorNickname`=작성 시점 스냅샷(흡수 공지·시스템 글은 시드 표시명).
+- 에러: `BOARD_001`(404), 401 없음(공개)
+
+#### POST /api/v1/boards/{slug}/posts — 게시글 작성
+- 인증: **필요** + 게시판 `write_policy` 충족(`ADMIN_ONLY`→`ROLE_ADMIN`·`AUTHENTICATED`→임의 인증) + `board.is_active`
+- 요청(body): `{ title, content, imagePublicIds?: [ ULID... ] }` — `title`(`@NotBlank`·≤200), `content`(`@NotBlank`·≤10000, TEXT), `imagePublicIds`(선택·≤10, §6.4 업로드로 받은 이미지 귀속). 작성자·조회수·댓글수 필드는 요청에 없다(서버 세팅).
+- 동작: 작성자=주체(`author_id`·`author_nickname` 스냅샷), `imagePublicIds`의 각 이미지를 **업로더==주체 검증 후** `post_id` 바인딩(재귀속 금지). `view_count`·`comment_count`=0.
+- 응답 201: `{ postPublicId }`
+- 에러: `BOARD_001` 게시판 없음·비활성(404), `BOARD_002` 쓰기 권한 없음(write_policy 위반, 403), 검증 400, 401
+
+#### GET /api/v1/boards/{slug}/posts/{postPublicId} — 게시글 상세
+- 인증: 불요
+- 동작: 조회수 원자 증가(`UPDATE post SET view_count=view_count+1`, 디둡 없음 — board-spec §6.2).
+- 응답 200: `PostDetailResponse` = `{ postPublicId, boardSlug, title, content, authorNickname, isPinned, viewCount, commentCount, images: [ { imagePublicId, url, sortOrder } ], createdAt, updatedAt, editable }`. `editable`=요청 주체가 작성자이거나 관리자면 true(비로그인·타인 false — 프론트 수정/삭제 버튼 노출 제어, 인가 권위는 서버 §1.2).
+- 에러: `POST_001` 게시글 없음·삭제됨(404), `BOARD_001`(404)
+
+#### PUT /api/v1/boards/{slug}/posts/{postPublicId} — 게시글 수정
+- 인증: **필요** + (작성자 본인 `author_id==주체`) **OR** `ROLE_ADMIN`. ADMIN_ONLY 게시판은 관리자만(작성자라도 비관리자 불가, board-spec I-3).
+- 요청(body): `{ title, content, imagePublicIds? }`(작성과 동일 스키마·검증). `imagePublicIds`는 최종 이미지 집합(누락분 언바인딩·신규분 바인딩).
+- 응답 204(본문 없음)
+- 에러: `POST_001`(404), `POST_002` 작성자 아님(403), `BOARD_002`(ADMIN_ONLY 위반, 403), 검증 400, 401
+
+#### DELETE /api/v1/boards/{slug}/posts/{postPublicId} — 게시글 삭제(soft)
+- 인증: **필요** + (작성자 본인) OR `ROLE_ADMIN`
+- 동작: soft delete(`is_deleted=true`·`deleted_at=now`). 댓글은 글 필터로 자연 배제(개별 정리 없음).
+- 응답 204
+- 에러: `POST_001`(404), `POST_002`(403), `BOARD_002`(403), 401
+
+### 6.3 댓글 (comment)
+
+댓글 경로는 게시글 `public_id`(전역 유일)에 직접 건다(§1.1 1단 중첩). 목록은 글당 소규모라 offset(§1.3 예외).
+
+#### GET /api/v1/posts/{postPublicId}/comments — 댓글 목록(offset)
+- 인증: 불요. 요청(query): `?page=<n>&size=<n>`(기본 size 20·상한 100)
+- 응답 200: offset 페이지 `{ content: [ CommentResponse... ], page, size, totalElements, totalPages }` — `post_id=글 AND is_deleted=false`, `id asc`(작성순).
+- `CommentResponse` = `{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable }`.
+- 에러: `POST_001` 글 없음(404)
+
+#### POST /api/v1/posts/{postPublicId}/comments — 댓글 작성
+- 인증: **필요** + 게시판 `allow_comments==true` + 글 존재(미삭제)
+- 요청(body): `{ content }`(`@NotBlank`·≤1000). 작성자=주체.
+- 동작: 댓글 저장 + `post.comment_count` **동일 TX +1**(board-spec §6.1).
+- 응답 201: `{ commentPublicId, createdAt }`
+- 에러: `POST_001` 글 없음(404), `BOARD_003` 댓글 비허용 게시판(422), 검증 400, 401
+
+#### PUT /api/v1/posts/{postPublicId}/comments/{commentPublicId} — 댓글 수정
+- 인증: **필요** + (작성자 본인) OR `ROLE_ADMIN`
+- 요청(body): `{ content }`
+- 응답 204
+- 에러: `COMMENT_001` 댓글 없음(404), `COMMENT_002` 작성자 아님(403), 검증 400, 401
+
+#### DELETE /api/v1/posts/{postPublicId}/comments/{commentPublicId} — 댓글 삭제(soft)
+- 인증: **필요** + (작성자 본인) OR `ROLE_ADMIN`
+- 동작: soft delete + `post.comment_count` 동일 TX −1.
+- 응답 204
+- 에러: `COMMENT_001`(404), `COMMENT_002`(403), 401
+
+### 6.4 이미지 (board image) — 2단계 업로드 + 오브젝트 스토리지(게이트2 (a) 확정)
+
+이미지는 **오브젝트 스토리지**(로컬=MinIO·운영=S3, 비공개 버킷)에 저장한다. 먼저 업로드해 `imagePublicId`·`url`을 받고, 게시글 작성/수정 시 `imagePublicIds[]`로 귀속한다(board-spec §7). **응답·목록·상세의 `url`은 서버가 읽기 시점에 생성한 presigned GET URL(단기 TTL, 기본 1시간)**이다 — 클라는 이 `url`을 저장·재사용하지 않고 응답마다 갱신값을 쓴다. 이미지는 **첨부 갤러리(`images[]`) 모델**로 렌더하며(본문 이미지·이벤트 배너 = 첨부, `sortOrder` 배치), `content` 본문 TEXT에는 storage URL을 저장하지 않는다(presigned 만료 URL 박힘 방지). 서빙 전략 근거(백엔드 프록시·공개-read 버킷 기각) = board-spec §7.4.
+
+#### POST /api/v1/board-images — 이미지 업로드
+- 인증: **필요**. 요청: `multipart/form-data`, 파트 `file`(단일 이미지)
+- 제약: 허용 MIME `image/jpeg`·`image/png`·`image/webp`·`image/gif`(실제 콘텐츠 sniff), 최대 5MB.
+- 동작: 서버가 검증 → 오브젝트 스토리지에 PUT(object key `board/{yyyy}/{MM}/{imagePublicId}.{ext}`, board-spec §7.3) → `post_image` 생성(`post_id=NULL` 고아·`uploader_id=주체`). 게시글 저장 시 바인딩(§6.2, 업로더==주체 검증).
+- 응답 201: `{ imagePublicId, url }` — `url` = presigned GET(즉시 미리보기용, TTL).
+- 에러: `IMAGE_001` 지원하지 않는 형식(422), `IMAGE_002` 용량 초과(422), 401
+
+주: 별도 이미지 서빙 엔드포인트(백엔드 프록시 `/raw`)는 **두지 않는다** — 스토리지가 presigned URL로 바이트를 직접 서빙한다(board-spec §7.4). S3/MinIO 동일 코드(endpoint 설정만 상이). 삭제·고아 정리는 `StoragePort.delete(key)`.
+
+### 6.5 인가·배선 요약(구현 참조)
+
+- SecurityConfig: 공개 GET(`/api/v1/boards/**` GET·`/api/v1/posts/*/comments` GET) permitAll, 그 외 board 쓰기 경로(게시글·댓글·이미지 업로드)는 `anyRequest().authenticated()`. **이미지 서빙은 앱 경로가 아니라 스토리지 presigned URL이라 별도 permitAll 불요**(백엔드 프록시 없음). **기존 `/notices/**` permitAll 라인은 제거**(notice 폐지, board-spec §8.2). write_policy(ADMIN_ONLY) 세부 게이팅은 서비스 계층(`ROLE_ADMIN` authorities 검사) — URL 패턴만으로 표현 못 함(게시판별 정책이 DB 값이므로).
+- 게이트웨이(D-068): 신규 permitAll GET 경로는 인증 계열이 아니라 auth-rate-limited predicate 등재 대상 아님(닉네임 가용성 선례와 무관). 일반 라우팅으로 충분.
+

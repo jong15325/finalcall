@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.8 | 2026-08-06 | EPIC-BOARD(FC-196) — 커스텀 게시판 시스템 스키마. **게이트2 3건 사용자 승인 확정(2026-08-06).** **[2] 엔티티 개요·[4.5] `board`·`post`·`comment`·`post_image` 4테이블 신설**: `board`(레지스트리 — slug UK 자연키·no public_id·is_active 비활성토글 삭제·write_policy ADMIN_ONLY/AUTHENTICATED·allow_comments·board_type GENERAL/NOTICE/EVENT, soft delete 미도입 → D-081 무관), `post`(public_id·board FK·author_id nullable+닉 스냅샷·title/content·view_count/comment_count 비정규화·is_pinned·soft delete), `comment`(public_id·post FK·author 귀속·parent_comment_id 예약·soft delete), `post_image`(public_id·post_id nullable 고아·uploader FK·storage_key=오브젝트 스토리지 object key — 2단계 업로드). [5] 인덱스 5종(`post (board_id,is_deleted,is_pinned,id)`·`post (author_id)`·`comment (post_id,is_deleted,id)`·`post_image (post_id,sort_order)`·`post_image (uploader_id,created_at)` 고아정리). [6] Flyway 신규 group 7(커뮤니티 게시판)에 **V22**(board+post+comment+post_image+인덱스+시드)·**V23**(공지 이관+notice 유예 DROP) 예약(현재 최신 V21). **공지(notice) 흡수** — 활성 notice 행 → post(공지 게시판) 이관(author_id NULL·닉 '공지사항' 스냅샷·URGENT→is_pinned), notice 도메인·NoticeType·NoticeErrorCode 제거·CLAUDE.md §1 참조구현 bullet→board 갱신(§8, FC-201). **게이트2 3건 확정**: (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + StoragePort(S3 호환 단일 구현)·비공개 버킷 presigned GET 서빙 (b) 공지 흡수·notice 제거·board 참조구현 승계 (c) 옵션 모델 표준 3축. **마이그레이션·MinIO 인프라 실물 미작성**(FC-197·200·201 backend-impl 소유). 정본 = `board-domain-spec.md` v1.0 · api-contract §6. |
 | v1.7 | 2026-08-05 | EPIC-ITEM-DELIVERY(FC-185) — 게임 아이템 지급 우편함 스키마. **[2] 엔티티 개요·[4.4] `item_delivery` 테이블 신설**(finalcall-native 내구 우편함: sale_order 1:1 UK·item_instance/recipient FK·item_uuid char40 멱등키 UK·자족 스냅샷 type_code/level/skill1_code/skill2_code/skill_percent/gf_expire_at·status PENDING/CLAIMED/APPLIED/DEFERRED/FAILED·claim_token 리스·append 원장 updated_at 없음). **[4.3] `item_instance.location`에 `IN_GAME` 값 추가**(게임 이관 완료 — 배송 APPLIED 시 전이, 재판매 차단 XOR 연장) + 불변식에 IN_GAME 행. [5] 인덱스 2종(`(status, created_at)` poller·리스 재청구·`(recipient_user_id, status)` 접속 claim·배송 상태 조회). [6] Flyway 신규 group 6(게임 연동·배송)에 **V21**(현재 최신 V20) 채번 등재. **게이트2 형상 3건(FC-185)**: (a) 이관 상태 = location enum 확장 `IN_GAME`(별도 상태축 기각) (b) 게임 claim = DB 직접 프로토콜(웹 REST 아님) (c) sale_order_id 1:1 UK가 낙찰·즉시구매 양 경로 커버(SettlementRecorder 공통 꼬리). **마이그레이션 실물은 미작성**(FC-186 backend-impl 소유). 정본 = `delivery-domain-spec.md` v1.0 · api-contract §4.6. |
 | v1.6 | 2026-08-01 | EPIC-MEMO(FC-170) — 회원 간 메모(쪽지) 스키마. **[4.1] `user_memo` 테이블 신설**(게임 `new_sp.user_memo` 계승: sender/receiver = user FK + 닉 스냅샷 정규화 R1·`memo_type` 원 코드값 보존·`memo_level_gender` 분해 저장(sender_level/gender)·`body VARCHAR(120)` 용량 계승·is_read/is_deleted). [5] 인덱스 2종(받은함·보낸함 커서 `(*_id, is_deleted, id DESC)`). [6] Flyway group1-c에 **V20**(현재 최신 V19) 채번 등재. **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 스냅샷 2컬럼·현재 기본값 Lv.1·성별 0(남) (b) 깔끔 원문 저장·게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) 발신 자유 텍스트 + 게임 boundary 28바이트 자동 줄바꿈. 정본 = api-contract §2.6(v1.20)·memo-domain-spec v1.0 |
 | v1.5 | 2026-07-29 | 게이트2(EPIC-OAUTH, FC-152) 승인 반영 — 소셜 로그인(방식 B) 스키마 확정. **[4.1] `user_social_account` 테이블 신설**(id·user_id FK·provider·provider_user_id·created_at, **UK(provider, provider_user_id)** — 소셜 신원 1:1·중복가입 차단·find-or-create 앵커). **[4.1] `user.password_hash`·`login_id` 널 N→Y**(소셜 전용 계정은 둘 다 NULL — 비밀번호 로그인 불가·신원=소셜). 소셜 프로필 이메일 **미저장**(결정 2 — user.email NULL 유지·별도 컬럼 없음 → email_active UK 무충돌). [5] 정합성 제약·[6] Flyway group1에 **V19**(현재 최신 V18) 채번 등재. 정본 = api-contract §2 소셜 로그인 |
@@ -92,6 +93,12 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 - `sale_order` — 판매 성립(SOLD) 시 생성되는 거래(결제·정산·소유 이전). 경매·고정가 공통 핸드오프.
 - `platform_revenue_ledger` — 사업자 수익 원장(EPIC-CLOSING, v1.3). SOLD 정산 1건당 수수료 1행 적립(append-only). 게임머니 총량 보존의 회계 축.
 - `item_delivery` — 게임 아이템 지급 우편함(EPIC-ITEM-DELIVERY, v1.7). SOLD/BUYNOW 정산 1건당 배송 1행(sale_order 1:1). finalcall-native 내구 정본(웹→게임 인벤토리 다리), 자족 스냅샷·item_uuid 멱등키. 게임이 DB 직접 claim(§4.4·delivery-domain-spec).
+
+커뮤니티·콘텐츠 (EPIC-BOARD, v1.8 — 게이트2 승인 확정)
+- `board` — 게시판 레지스트리(§4.5). slug 자연키·is_active 비활성토글·write_policy·allow_comments·board_type. 하드코딩 enum(구 `NoticeType`) 대체 — 코드 수정 없이 게시판 추가·변경. 시드 3건(공지·커뮤니티·이벤트).
+- `post` — 게시글. board 귀속·작성자 귀속·soft delete·이미지 첨부·조회수/댓글수 비정규화·상단 고정. 기존 `notice`를 흡수(§8 board-spec).
+- `comment` — 게시글 댓글. post 귀속·작성자 귀속·soft delete·대댓글 컬럼 예약.
+- `post_image` — 게시글 이미지 첨부. 2단계 업로드(고아→바인딩). 파일 실체는 오브젝트 스토리지(MinIO 로컬·S3 운영), 표는 메타·object key만 보유.
 
 아이템 (D-044~047·D-062·D-066)
 - `item_template` — 아이템 정의 마스터. 타입코드 정규화(상품군·대분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073). 코드값 정본은 api-contract §3.3.1.
@@ -475,17 +482,83 @@ table `item_delivery` — 장터 낙찰(SOLD)·즉시구매(BUYNOW) 아이템을
 
 주: `public_id` 부여(외부 노출 — 구매자 배송 상태 조회). `updated_at` 미도입(append 원장 — 상태 시각은 `claimed_at`/`applied_at`이 담음, item_ownership_history·platform_revenue_ledger 선례). `created_at`(enqueue 시각)은 공통 컬럼 생략 규칙대로 표에서 뺐다. soft delete 없음(상태 전이, D-081 무관 — 닉·item_uuid는 스냅샷/멱등키지 재사용 자연키 아님). 게임 boundary 번역(itm_skill 재패킹·level−1·usr_id 매핑)은 전적으로 게임 서버 소속(delivery-spec §6.2·§12.2, memo boundary 선례).
 
+### 4.5 커뮤니티 게시판 (EPIC-BOARD, v1.8 — 게이트2 승인 확정 2026-08-06)
+
+커스텀 게시판 시스템. 게시판을 DB 레코드(`board`)로 정의해 코드 수정 없이 추가·변경한다. feature `com.finalcall.domain.board`. 도메인 규칙·인가 불변식 정본 = `board-domain-spec.md` v1.0, API = api-contract §6. 기존 `notice`(V1 참조 구현)를 흡수(§8 board-spec).
+
+table `board` — 게시판 레지스트리. slug=URL 키·외부 식별자(사람이 읽는 well-known 키, `public_id` 미부여 — category 성격). soft delete 미도입(비활성 토글로 "삭제") → slug 재사용 충돌 없음 → D-081 패턴 불요.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| slug | VARCHAR(50) | N | UK | URL 키·외부 식별자. `^[a-z0-9-]{2,50}$`. 불변 자연키(비활성 토글 삭제라 원본 UK로 충분) |
+| name | VARCHAR(50) | N | | 표시명(공지사항·커뮤니티·이벤트) |
+| description | VARCHAR(200) | Y | | 설명 |
+| sort_order | INT | N | | 목록 정렬(오름차순) |
+| is_active | BOOLEAN | N | | 활성 여부(기본 true). 비활성=목록 비노출·쓰기 차단 |
+| write_policy | VARCHAR(20) | N | | 쓰기 정책 enum `ADMIN_ONLY` \| `AUTHENTICATED`(§4 인가) |
+| allow_comments | BOOLEAN | N | | 댓글 허용 여부 |
+| board_type | VARCHAR(20) | N | | 유형 enum `GENERAL` \| `NOTICE` \| `EVENT`(프론트 렌더링·정렬 힌트, 인가 무관) |
+
+시드(V22, board-spec §9): `notice`(공지사항·NOTICE·ADMIN_ONLY·댓글off·sort 0) · `community`(커뮤니티·GENERAL·AUTHENTICATED·댓글on·sort 1) · `event`(이벤트·EVENT·ADMIN_ONLY·댓글on·sort 2).
+
+table `post` — 게시글. board 귀속·작성자 귀속·soft delete. 기존 `notice`를 흡수(V23 이관).
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| public_id | ULID | N | UK | 외부 노출 식별자(B-004). 상세·수정·삭제 경로 리소스. 대리키라 D-081 불요 |
+| board_id | BIGINT | N | FK→board | 귀속 게시판 |
+| author_id | BIGINT | Y | FK→user | 작성자. **웹 작성은 항상 값**(인가 주체). 흡수 공지·시스템 글은 NULL(memo `sender_id` 선례) |
+| author_nickname | VARCHAR(30) | N | | 작성 시점 닉 스냅샷(nick 변경·탈퇴 대비 R1·목록 조인 회피). 시스템 글은 시드 표시명 |
+| title | VARCHAR(200) | N | | 제목 |
+| content | TEXT | N | | 본문(≤10000자, notice VARCHAR(2000) 무손실 흡수) |
+| view_count | INT | N | | 조회수(비정규화, 상세 조회 원자 증가·디둡 없음) |
+| comment_count | INT | N | | 댓글 수(비정규화, 댓글 생성/삭제 동일 TX 증감 — 목록 N+1 회피) |
+| is_pinned | BOOLEAN | N | | 상단 고정(기본 false). 목록 정렬 1순위 |
+| is_deleted | BOOLEAN | N | | soft delete(기본 false) |
+| deleted_at | DATETIME(6) | Y | | |
+
+주: soft delete 자연키 UK 패턴(D-081) 불요(public_id는 대리키·author_nickname은 스냅샷이지 UK 아님). `updated_at` 보유(수정 반영). 조회·목록은 활성 필터(`is_deleted=false`) 동반 필수(notice 선례).
+
+table `comment` — 게시글 댓글. post 귀속·작성자 귀속·soft delete.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| public_id | ULID | N | UK | 외부 노출 식별자. 수정·삭제 경로 리소스 |
+| post_id | BIGINT | N | FK→post | 귀속 게시글 |
+| author_id | BIGINT | Y | FK→user | 작성자(웹 작성 항상 값·인가 주체). 시스템 댓글 대비 NULL 허용 |
+| author_nickname | VARCHAR(30) | N | | 작성 시점 닉 스냅샷 |
+| content | VARCHAR(1000) | N | | 본문 |
+| parent_comment_id | BIGINT | Y | FK→comment | 대댓글 앵커(self-FK). **이번 에픽 컬럼만 예약**(reply UI 다음 에픽·평면 서빙) |
+| is_deleted | BOOLEAN | N | | soft delete(기본 false) |
+| deleted_at | DATETIME(6) | Y | | |
+
+table `post_image` — 게시글 이미지 첨부. 2단계 업로드(업로드=고아 → 게시글 저장 시 바인딩). 파일 실체는 **오브젝트 스토리지(MinIO 로컬·S3 운영, StoragePort S3 호환 단일 구현·비공개 버킷 presigned GET 서빙, 게이트2 (a) 확정)**, 이 표는 메타·object key만 보유. 노출 `url`은 읽기 시점 생성 presigned GET(board-spec §7.4).
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| public_id | ULID | N | UK | 외부 노출 식별자·raw 서빙 경로 키 |
+| post_id | BIGINT | Y | FK→post | 귀속 게시글. **업로드 시점 NULL(고아), 게시글 저장 시 바인딩**(재귀속 금지) |
+| uploader_id | BIGINT | N | FK→user | 업로더. 고아 정리·바인딩 인가(업로더==작성자만 귀속) |
+| storage_key | VARCHAR(255) | N | | 스토리지 내부 키(경로/객체키). 백엔드 전용·미노출 |
+| original_filename | VARCHAR(255) | Y | | 원본 파일명 |
+| content_type | VARCHAR(100) | N | | MIME(image/jpeg·png·webp·gif) |
+| file_size | BIGINT | N | | 바이트(상한 5MB) |
+| sort_order | INT | N | | 게시글 내 표시 순서(기본 0) |
+
+주: `created_at`만 보유(append·`updated_at` 미도입 — item_ownership_history 선례). soft delete 없음(게시글 삭제 시 함께 정리·고아는 sweeper). `public_id`는 대리키라 D-081 불요.
+
 ### [4] 말미 주 — soft delete 자연키 스윕 결과 (074-3, D-081)
 
 **D-081 패턴 적용 대상 = `user` 1건. 그 외 0건.**
 
 탐색 방법(D-086): `erd.md` 전수에 패턴 `is_deleted|deleted_at` 및 `^\| (login_id|nickname|pg_tx_id|type_code|skill_code|public_id) \|` 실행. bash·호스트 Grep 양쪽 교차검증(결과 일치 — stale 아님).
 
-- **soft delete 보유 테이블**: `user` 뿐이다(`is_deleted` 컬럼 보유 테이블 전수 = 1). 따라서 현재 함정을 밟을 수 있는 테이블은 `user` 하나이며 [4.1]에서 처리했다.
+- **D-081 함정 = "자연키 UK + soft delete" 동시 보유일 때만** 성립한다. 자연키 UK를 PK로 쓰는 유일 케이스는 `user`(login_id·nickname)이며 [4.1]에서 처리했다. `is_deleted`를 뒤에 추가한 테이블들(`user_memo`·`post`·`comment` 등, v1.6·v1.8)은 **자연키 UK가 없어**(식별자가 `public_id` 대리키) 함정 대상이 아니다 — soft delete만으로는 트리거되지 않는다.
 - **조건부 리스크 — 자연키 UK 보유, soft delete 미보유**: 아래 테이블은 자연키 UK를 갖지만 `is_deleted`가 없어 **현재는 무관**하다. 다만 향후 soft delete를 도입하면 그 순간 D-081 패턴이 의무가 된다([1] 트리거 조건).
   - `charge.pg_tx_id` (PG 승인 식별자)
   - `item_template.type_code` 및 `(main_category, sub_group, element, kind)` 조합
   - `skill_definition.skill_code`
+  - `board.slug` (게시판 URL 키, v1.8 — 단 board는 soft delete 대신 `is_active` 토글로 "삭제"하므로 slug 재사용 충돌이 성립하지 않아 도입 계획 자체가 없다)
 - **패턴 불요**: `public_id`(ULID) 계열 전부 — 시스템 발급 대리 식별자라 재사용되지 않아 삭제행-신규행 충돌이 성립하지 않는다.
 - FK 1:1 유니크(`user_balance.user_id`·`money_hold.bid_id`·`temp_storage.instance_id`)는 자연키가 아니라 대상 아님.
 
@@ -522,6 +595,11 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | money_hold | (user_id, status) | 사용자 홀드 합계·해제 대상 조회 |
 | item_ownership_history | (instance_id, transferred_at) | 인스턴스 소유 체인 조회(최초=첫 행) |
 | temp_storage | (owner_id, stored_at, instance_id) | 사용자 임시보관 목록 + cursor 안정 정렬(G3, v0.9). 계약 §4.2 `GET /me/temp-storage` cursor 페이지네이션 키(stored_at desc, instance_id desc)를 인덱스로 커버 |
+| post | (board_id, is_deleted, is_pinned, id) | 게시판별 글 목록 커서 조회(`board_id=? AND is_deleted=false`, 정렬 `is_pinned DESC, id DESC` — 고정 우선·최신순, EPIC-BOARD v1.8). api §6 `GET /boards/{slug}/posts` |
+| post | (author_id) | 작성자 글 역참조(내 글·인가 검증) |
+| comment | (post_id, is_deleted, id) | 게시글 댓글 목록(`post_id=? AND is_deleted=false`, id asc 시간순) + comment_count 정합 |
+| post_image | (post_id, sort_order) | 게시글 이미지 갤러리 순서 조회 |
+| post_image | (uploader_id, created_at) | 고아 이미지 정리 sweeper(바인딩 안 된 오래된 업로드) + 내 업로드 조회 |
 
 정합성 인덱스·제약(D-008):
 - 종료성 전이(auction·shop status)는 조건부 CAS UPDATE(WHERE status='ACTIVE')로 단일 승자. 별도 인덱스보다 status 조건이 핵심.
@@ -552,5 +630,8 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 5. 아이템 시드 — 최소 스텁 시드(게이트2 승인, FC-019). **EPIC-ITEM 내로 앞당김**(group 4 판매·거래보다 먼저 — 인벤토리·카탈로그·경매 공급이 시드에 의존): item_template ~8건(대분류2×종류2×속성2) + skill_definition ~5건 + **시드 소유자 user·user_balance(현재 member 시드 부재 → 시드에 포함)** + item_instance ~10건(location=INVENTORY, transfer_type=SEED, ownership_history 첫 행 동반). 원게임 대량 실데이터·정밀 수치는 이연(D-067). 진입 경로 = 시드-only(관리자 지급 API 미도입, 게이트2 2026-07-18)
 6. 게임 연동·배송 — item_delivery + 인덱스 2종(EPIC-ITEM-DELIVERY, FC-186)
    - 6-a. 아이템 지급 우편함 — `item_delivery` 신설 + `(status, created_at)`·`(recipient_user_id, status)` 인덱스 + `item_instance.location` enum에 `IN_GAME` 값 추가 = 백엔드 **`V21`**(현재 최신 V20, append-only). `sale_order`(V14)·`item_instance`(V7) 선행 필요(FK). 게임 `user_item.itm_uuid` UK 신설은 게임 스키마·서버 조정 단계(후속 별건, delivery-spec §12.2)라 이 마이그레이션 범위 밖. **게이트2 형상 3건 확정(FC-185)** — (a) location IN_GAME 확장 (b) 게임 claim DB 프로토콜 (c) sale_order_id 1:1 UK 양 경로 커버(delivery-domain-spec §13).
+7. 커뮤니티 게시판 — board, post, comment, post_image (EPIC-BOARD, FC-197·201, v1.8 — 게이트2 승인 확정)
+   - 7-a. 게시판·게시글·댓글·이미지 — `board`·`post`·`comment`·`post_image` 신설 + 인덱스 5종(§5) + `board` 시드 3건(공지·커뮤니티·이벤트) = 백엔드 **`V22`**(현재 최신 V21, append-only). `board` → `post`(board_id FK) → `comment`(post_id FK)·`post_image`(post_id FK) 순서. `user`(author_id·uploader_id FK) 선행 필요. FC-197 소유. (이미지 파일 실체는 오브젝트 스토리지 — DB 스키마 밖, MinIO 로컬 인프라는 FC-200 docker-compose.)
+   - 7-b. 공지 흡수 — 기존 `notice`(V1) 활성 행을 공지 게시판 `post`로 이관(`INSERT INTO post (...) SELECT <공지board_id>, NULL, '공지사항', title, content, (type='URGENT'), created_at, updated_at FROM notice WHERE is_deleted=false`) = 백엔드 **`V23`**. `notice` 테이블 DROP은 **1버전 유예 후 별도 마이그레이션**(롤백 안전, board-spec §8.2). FC-201 소유(+ notice 도메인 코드·CLAUDE.md §1 참조구현 bullet 갱신 동반).
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).
