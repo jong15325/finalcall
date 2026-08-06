@@ -14,8 +14,10 @@ import lombok.RequiredArgsConstructor;
  * 흐름(미존재·소유권)만 담는다.
  *
  * <ul>
- *   <li>{@code COMMENT_001} — 댓글 없음·삭제됨(404). 수정·삭제 대상 활성 댓글이 없을 때(board-spec P-2 활성 필터).
+ *   <li>{@code COMMENT_001} — 댓글 없음·삭제됨(404). 수정·삭제·반응 대상 활성 댓글이 없을 때(board-spec P-2 활성 필터).
  *   <li>{@code COMMENT_002} — 작성자 아님(403). 수정·삭제 IDOR 차단(작성자 본인 OR {@code ROLE_ADMIN}만, board-spec I-2).
+ *   <li>{@code COMMENT_003} — 자기 댓글 반응 불가(422). 공감/비공감 토글이 본인 작성 댓글일 때(board-spec R-3, self-bid
+ *       {@code BID_003} 선례). EPIC-COMMENT-V2(FC-208) 추가.
  * </ul>
  */
 @Getter
@@ -23,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 public enum CommentErrorCode implements ErrorCode {
 
     COMMENT_NOT_FOUND("COMMENT_001", HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
-    COMMENT_NOT_OWNER("COMMENT_002", HttpStatus.FORBIDDEN, "댓글을 수정·삭제할 권한이 없습니다.");
+    COMMENT_NOT_OWNER("COMMENT_002", HttpStatus.FORBIDDEN, "댓글을 수정·삭제할 권한이 없습니다."),
+    COMMENT_SELF_REACTION("COMMENT_003", HttpStatus.UNPROCESSABLE_ENTITY, "자신의 댓글에는 공감·비공감할 수 없습니다.");
 
     private final String code;
     private final HttpStatus status;

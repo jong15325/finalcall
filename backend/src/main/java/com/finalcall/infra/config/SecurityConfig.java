@@ -71,10 +71,18 @@ public class SecurityConfig {
                 //   않아 별도 등재가 필요하다. ★ GET 만 연다 — 작성(POST)·수정(PUT)·삭제(DELETE)는 아래 anyRequest().authenticated()
                 //   로 인증을 유지하고, write_policy(ADMIN_ONLY) 세부 게이팅은 서비스 계층이 판정한다(§6.5).
                 .requestMatchers(HttpMethod.GET, "/api/v1/boards/*/posts", "/api/v1/boards/*/posts/*").permitAll()
-                // 댓글 목록 조회는 공개(계약 §6.3 인증 불요). 댓글 경로는 게시글 public_id 에 직접 건다(§1.1 1단 중첩).
-                //   ★ GET 만 연다 — 작성(POST)·수정(PUT)·삭제(DELETE)는 아래 anyRequest().authenticated() 로 인증을 유지하고,
-                //   allow_comments 게이팅·소유검증(작성자 OR ROLE_ADMIN)은 서비스 계층이 판정한다(§6.5).
+                // 댓글·답글 목록 조회는 공개(계약 §6.3·§6.5 인증 불요). 댓글 경로는 게시글 public_id 에 직접 건다(§1.1 1단 중첩).
+                //   ★ GET 만 연다 — 작성(POST)·답글 작성(POST …/replies)·수정(PUT)·삭제(DELETE)는 아래 anyRequest().authenticated()
+                //   로 인증을 유지하고, allow_comments 게이팅·소유검증(작성자 OR ROLE_ADMIN)·대댓글 루트 정규화는 서비스가 판정한다.
+                //   답글 목록(EPIC-COMMENT-V2, FC-207)은 세그먼트가 더 깊어(…/comments/*/replies) 위 단일 매처가 삼키지 않으므로
+                //   별도 등재한다. 반응 토글(PUT …/comments/*/reaction, FC-208)은 GET 이 아니라(공개 GET 매처가 안 삼킴) 아래
+                //   anyRequest().authenticated() 로 인증이 강제되고, 자기 반응 금지(COMMENT_003)는 서비스가 판정한다(§6.5) —
+                //   별도 매처 불요(반응 GET 없음). BEST(GET …/comments/best, FC-209)는 세그먼트가 더 깊어(…/comments/best)
+                //   위 단일 매처(…/comments)가 삼키지 않으므로 아래 별도 등재한다 — 공개·optional-auth(인증 시 myReaction·editable).
+                //   {@code /best} 는 리터럴 세그먼트라 답글(…/comments/*/replies)·반응(…/comments/*/reaction) 매처와 겹치지 않는다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/posts/*/comments").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts/*/comments/best").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts/*/comments/*/replies").permitAll()
                 // 이미지 업로드(POST /api/v1/board-images, api §6.4)는 인증 필요 — 공개 GET 화이트리스트에 없어 아래
                 //   anyRequest().authenticated() 로 자연히 인증이 강제된다(별도 서빙 엔드포인트 없음, 노출은 스토리지 presigned URL, §6.5).
                 // 그 외(예: /api/v1/auth/logout, /api/v1/me/**, POST /api/v1/auctions, POST /api/v1/shops)는 인증 필요.

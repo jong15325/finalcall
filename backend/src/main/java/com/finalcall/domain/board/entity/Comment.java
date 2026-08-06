@@ -20,7 +20,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 댓글 엔티티(EPIC-BOARD, FC-199) — post 귀속·작성자 귀속·soft delete. erd §4.5 · board-spec §2.3.
+ * 댓글 엔티티(EPIC-BOARD, FC-199 · EPIC-COMMENT-V2, FC-207) — post 귀속·작성자 귀속·soft delete + 대댓글 1단계 확장.
+ * erd §4.5 · board-spec §2.3·§13.
  *
  * <p>컨벤션(CLAUDE.md §5): {@code @NoArgsConstructor(PROTECTED)}·생성자 {@code @Builder}(private)·{@code @Setter} 금지
  * → 상태 변경은 도메인 메서드({@link #update}·{@link #delete})로만. 시각 필드는 {@link BaseTimeEntity}(created_at·updated_at)가
@@ -30,8 +31,14 @@ import lombok.NoArgsConstructor;
  * (R1 닉 변경·탈퇴 대비, 목록 조인 회피)이라 조회 시 user 로 내비게이션할 필요가 없어 연관 매핑을 두지 않는다(작성자 인가는
  * {@code authorId} 비교로 충분). {@code authorId} 는 nullable — 웹 작성은 항상 값(인가 주체)이나 시스템 댓글 대비 NULL 허용.
  *
- * <p>{@code parentCommentId} 는 대댓글 앵커(self-FK)다 — <b>이번 에픽은 컬럼만 예약</b>하고 평면 목록으로 서빙한다
- * (reply 로직·UI 는 다음 에픽, board-spec §2.3·§11(c)). 항상 {@code null} 로 저장한다(생성자에서 세팅하지 않음).
+ * <p><b>대댓글 1단계(FC-207, board-spec §13.1·C-2)</b>: {@code parentCommentId} 는 대댓글 앵커(self-FK)로 <b>활성</b>이다 —
+ * 답글은 항상 <b>최상위(루트) 댓글</b>을 가리킨다(2단계 트리 금지·답글의 답글도 같은 루트로 평탄화). 루트 댓글은 {@code null}.
+ * {@code mentionedNickname} 은 답글의 답글일 때 @멘션 대상(그 답글 작성자) 닉 스냅샷이며 직접 답글·루트는 {@code null}
+ * (표시 전용, 대상 댓글 참조는 저장하지 않는다).
+ *
+ * <p><b>비정규화 카운트</b>: {@code likeCount}·{@code dislikeCount}(공감/비공감, 반응과 동일 TX 원자 증감 — 값 갱신 로직은
+ * FC-208)·{@code replyCount}(루트만 유효, 답글 생성/삭제 동일 TX 원자 증감 — {@code CommentRepository} 원자 UPDATE). 삭제 루트
+ * tombstone 판정({@code isDeleted && replyCount>0})에 {@code replyCount} 를 쓴다(board-spec §13.4).
  */
 @Entity
 @Getter
@@ -60,9 +67,25 @@ public class Comment extends BaseTimeEntity {
     @Column(nullable = false, length = 1000)
     private String content;
 
-    // 대댓글 앵커(self-FK) — 이번 에픽은 컬럼만 예약(항상 null). reply UI 는 다음 에픽(board-spec §2.3).
+    // 대댓글 앵커(self-FK, FC-207 활성) — 답글은 항상 루트 댓글 id(1단계). 루트 댓글은 null. 작성 시 확정·불변.
     @Column(name = "parent_comment_id", updatable = false)
     private Long parentCommentId;
+
+    // 답글의 답글일 때 @멘션 대상(그 답글 작성자) 닉 스냅샷. 직접 답글·루트는 null. 표시 전용·작성 시 확정·불변(board-spec §13.1).
+    @Column(name = "mentioned_nickname", updatable = false, length = 30)
+    private String mentionedNickname;
+
+    // 공감 수(비정규화). 반응과 동일 TX 원자 증감(값 갱신 로직 FC-208, CommentRepository UPDATE). 엔티티 dirty 로 만지지 않는다.
+    @Column(name = "like_count", nullable = false)
+    private int likeCount;
+
+    // 비공감 수(비정규화). 반응과 동일 TX 원자 증감(FC-208).
+    @Column(name = "dislike_count", nullable = false)
+    private int dislikeCount;
+
+    // 답글 수(비정규화, 루트만 유효). 답글 생성/삭제 동일 TX 원자 증감. tombstone 판정(isDeleted && replyCount>0)에 사용.
+    @Column(name = "reply_count", nullable = false)
+    private int replyCount;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
@@ -71,14 +94,30 @@ public class Comment extends BaseTimeEntity {
     private Instant deletedAt;
 
     @Builder
-    private Comment(String publicId, Long postId, Long authorId, String authorNickname, String content) {
+    private Comment(String publicId, Long postId, Long authorId, String authorNickname, String content,
+        Long parentCommentId, String mentionedNickname) {
         this.publicId = publicId != null ? publicId : Ulid.generate();
         this.postId = postId;
         this.authorId = authorId;
         this.authorNickname = authorNickname;
         this.content = content;
-        // parentCommentId 는 세팅하지 않는다 — 대댓글은 다음 에픽(컬럼 예약만, 항상 null).
+        // parentCommentId != null 이면 답글(루트 id 로 정규화된 값을 서비스가 전달). null 이면 루트 댓글.
+        this.parentCommentId = parentCommentId;
+        this.mentionedNickname = mentionedNickname;
+        this.likeCount = 0;
+        this.dislikeCount = 0;
+        this.replyCount = 0;
         this.isDeleted = false;
+    }
+
+    /** 루트 댓글(최상위)인지 — {@code parentCommentId IS NULL}(board-spec §13.1). 답글이면 false. */
+    public boolean isRoot() {
+        return parentCommentId == null;
+    }
+
+    /** 삭제됐으나 활성 답글이 남아 목록에 잔류하는 tombstone 인지(board-spec §13.4 — 본문·작성자·반응 마스킹 대상). */
+    public boolean isTombstone() {
+        return isDeleted && replyCount > 0;
     }
 
     /** 이 댓글이 주어진 게시글에 귀속되는지(경로 postPublicId 게시글과 댓글의 post 정합 검증). */

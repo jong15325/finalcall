@@ -1,6 +1,7 @@
 package com.finalcall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -63,7 +64,8 @@ class CommentApiIntegrationTest extends IntegrationTest {
     // ---------------- 목록(offset·공개) ----------------
 
     @Test
-    void 목록은_작성순으로_인증없이_조회된다() throws Exception {
+    void 목록은_기본_최신순으로_인증없이_조회된다() throws Exception {
+        // EPIC-COMMENT-V2(FC-207): 기본 정렬 = LATEST(id DESC, 게이트2 확정). 나중에 단 댓글이 먼저 온다.
         User author = persistUser("cmt_list1", "목록작성자1");
         Post post = persistPost(boardId("community"), author, "댓글대상글", false);
         persistComment(post, author, "첫 댓글");
@@ -74,11 +76,64 @@ class CommentApiIntegrationTest extends IntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.content.length()").value(2))
-            .andExpect(jsonPath("$.data.content[0].content").value("첫 댓글"))
-            .andExpect(jsonPath("$.data.content[1].content").value("둘째 댓글"))
+            .andExpect(jsonPath("$.data.content[0].content").value("둘째 댓글"))
+            .andExpect(jsonPath("$.data.content[1].content").value("첫 댓글"))
             .andExpect(jsonPath("$.data.totalElements").value(2))
-            // 비로그인 조회는 editable=false.
-            .andExpect(jsonPath("$.data.content[0].editable").value(false));
+            // 루트 댓글은 replyCount(답글 없으면 0)를 싣는다(FC-207). 비로그인 조회는 editable=false·myReaction=null(필드 present).
+            .andExpect(jsonPath("$.data.content[0].replyCount").value(0))
+            .andExpect(jsonPath("$.data.content[0].editable").value(false))
+            .andExpect(jsonPath("$.data.content[0].myReaction").value(nullValue()));
+    }
+
+    @Test
+    void 목록은_sort_OLDEST로_과거순_조회된다() throws Exception {
+        User author = persistUser("cmt_oldest", "과거순작성자");
+        Post post = persistPost(boardId("community"), author, "정렬글", false);
+        persistComment(post, author, "첫 댓글");
+        persistComment(post, author, "둘째 댓글");
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments", post.getPublicId()).param("sort", "OLDEST"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].content").value("첫 댓글"))
+            .andExpect(jsonPath("$.data.content[1].content").value("둘째 댓글"));
+    }
+
+    @Test
+    void 목록은_sort_LIKES로_순공감순_동률은_최신순으로_조회된다() throws Exception {
+        // FC-209: LIKES = like_count DESC, id DESC(동률 최신 우선). 카운트는 원자 UPDATE 로 직접 세운다(반응 API 우회).
+        User author = persistUser("cmt_likes", "순공감작성자");
+        Post post = persistPost(boardId("community"), author, "순공감글", false);
+        Comment low = persistComment(post, author, "공감1"); // like=1
+        Comment high = persistComment(post, author, "공감5"); // like=5
+        Comment midOld = persistComment(post, author, "공감3-과거"); // like=3, id 작음
+        Comment midNew = persistComment(post, author, "공감3-최신"); // like=3, id 큼
+        bumpLike(high, 5);
+        bumpLike(midOld, 3);
+        bumpLike(midNew, 3);
+        bumpLike(low, 1);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments", post.getPublicId()).param("sort", "LIKES"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(4))
+            // 5 > 3 > 3 > 1. 동률(3)은 id DESC 라 나중에 단 midNew 가 midOld 보다 앞.
+            .andExpect(jsonPath("$.data.content[0].content").value("공감5"))
+            .andExpect(jsonPath("$.data.content[0].likeCount").value(5))
+            .andExpect(jsonPath("$.data.content[1].content").value("공감3-최신"))
+            .andExpect(jsonPath("$.data.content[2].content").value("공감3-과거"))
+            .andExpect(jsonPath("$.data.content[3].content").value("공감1"));
+    }
+
+    @Test
+    void 목록_잘못된_sort는_400_COMMON_001() throws Exception {
+        User author = persistUser("cmt_badsort", "정렬오류작성자");
+        Post post = persistPost(boardId("community"), author, "글", false);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments", post.getPublicId()).param("sort", "BOGUS"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("COMMON_001"));
     }
 
     @Test
@@ -231,7 +286,7 @@ class CommentApiIntegrationTest extends IntegrationTest {
         flushClear();
         assertThat(postRepository.findById(post.getId()).orElseThrow().getCommentCount()).isEqualTo(1);
 
-        Comment saved = commentRepository.findByPostIdAndIsDeletedFalseOrderByIdAsc(
+        Comment saved = commentRepository.findRootComments(
             post.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getContent().get(0);
         flushClear();
 
@@ -288,6 +343,13 @@ class CommentApiIntegrationTest extends IntegrationTest {
             .authorId(author != null ? author.getId() : null)
             .authorNickname(nickname)
             .title(title).content("본문").isPinned(pinned).build());
+    }
+
+    /** 반응 API 를 우회해 like_count 를 원자 UPDATE 로 직접 세운다(정렬 랭킹 픽스처, 반응자 다수 준비 회피). */
+    private void bumpLike(Comment comment, int times) {
+        for (int i = 0; i < times; i++) {
+            commentRepository.incrementLikeCount(comment.getId());
+        }
     }
 
     private Comment persistComment(Post post, User author, String content) {

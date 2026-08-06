@@ -265,6 +265,13 @@ board:
       presign-ttl: ${BOARD_IMAGE_PRESIGN_TTL:PT1H}
       path-style: ${BOARD_IMAGE_PATH_STYLE:true}
       ensure-bucket-on-startup: ${BOARD_IMAGE_ENSURE_BUCKET:true}
+  # FC-209(EPIC-COMMENT-V2): BEST 댓글 선정 임계·개수(board-domain-spec §13.3 · api §6.3). BoardCommentBestProperties 바인딩.
+  #   min-likes — BEST 후보 최소 공감 수(루트 like_count 이 이 값 이상). max-count — 노출 상위 N. 데모 트래픽에 맞춰 낮출 수 있다.
+  #   @Validated @Positive 라 0 이하·누락이면 부팅 실패(하드코딩·조용한 기본값 대체 금지, CLAUDE.md §4). 권장 기본 3·3.
+  comment:
+    best:
+      min-likes: ${BOARD_COMMENT_BEST_MIN_LIKES:3}
+      max-count: ${BOARD_COMMENT_BEST_MAX_COUNT:3}
 
 # D-068: 직접접근 차단(엣지 게이트웨이 공유비밀 검증). enforced 는 실 프로파일에서 항상 켠다.
 #   secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.
