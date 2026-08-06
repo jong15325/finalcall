@@ -10,7 +10,7 @@ import {
     TbSearchOff,
     TbChevronLeft,
 } from 'react-icons/tb'
-import { boardPath, boardPostEditPath, paths } from '@/app/paths'
+import { boardPath, boardPostEditPath } from '@/app/paths'
 import { useBoard, usePostDetail, useDeletePost } from '@/lib/queries/boards'
 import {
     avatarInitial,
@@ -346,10 +346,10 @@ export default function PostDetailPage() {
             {/* 목록으로(하단) — 비로그인·타인도 목록 복귀 */}
             <div className="text-center">
                 <Link
-                    to={paths.boards}
+                    to={boardPath(slug)}
                     className="text-sm font-semibold text-gray-400 hover:text-navy"
                 >
-                    다른 게시판 보기
+                    목록으로
                 </Link>
             </div>
         </div>

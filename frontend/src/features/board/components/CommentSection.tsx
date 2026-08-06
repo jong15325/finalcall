@@ -16,9 +16,8 @@ import {
     useComments,
     useCreateComment,
 } from '@/lib/queries/comments'
-import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
+import { useIsAuthenticated } from '@/store/authStore'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
-import { avatarInitial } from '@/features/board/lib/postView'
 import { commentErrorMessage } from '@/features/board/lib/boardErrors'
 import CommentItem from './CommentItem'
 import type { CommentSort } from '@/lib/api/comments'
@@ -242,7 +241,6 @@ function CommentComposer({
     postPublicId: string
 }) {
     const isAuthenticated = useIsAuthenticated()
-    const nickname = useAuthStore((state) => state.user?.nickname)
     const location = useLocation()
     const [content, setContent] = useState('')
     const createMutation = useCreateComment(slug, postPublicId)
@@ -278,14 +276,8 @@ function CommentComposer({
     }
 
     return (
-        <form className="mt-4 flex gap-3" onSubmit={handleSubmit}>
-            <span
-                aria-hidden
-                className="grid size-9 shrink-0 place-items-center rounded-full bg-navy-600 text-sm font-bold text-white"
-            >
-                {avatarInitial(nickname)}
-            </span>
-            <div className="min-w-0 flex-1 rounded-lg border border-line bg-surface-sunken px-3 py-2.5 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange-subtle">
+        <form className="mt-4" onSubmit={handleSubmit}>
+            <div className="rounded-lg border border-line bg-surface-sunken px-3 py-2.5 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange-subtle">
                 <label htmlFor="comment-content" className="sr-only">
                     댓글 내용
                 </label>

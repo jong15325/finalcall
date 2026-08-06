@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
     TbPencil,
@@ -10,6 +10,7 @@ import {
     TbArrowBackUp,
     TbMessageOff,
     TbStarFilled,
+    TbDotsVertical,
 } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import { buildReturnUrlQuery } from '@/lib/returnUrl'
@@ -61,9 +62,10 @@ export default function CommentItem({
     comment,
     isBest = false,
 }: CommentItemProps) {
-    const [expanded, setExpanded] = useState(false)
-    const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null)
     const hasReplies = comment.replyCount > 0
+    // 상세 로드 시 답글이 있으면 기본 펼침(지연 로딩 대신 초기부터 조회). 토글로 접기 가능.
+    const [expanded, setExpanded] = useState(hasReplies)
+    const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null)
 
     // 답글 폼을 열면 스레드도 함께 펼친다(폼이 스레드 하단에 붙으므로).
     const openReplyForm = (target: ReplyTarget) => {
@@ -73,6 +75,22 @@ export default function CommentItem({
 
     const actions = (
         <>
+            {/* tombstone(삭제 루트)에는 신규 답글 불가(§13.4) → 답글 버튼 미노출 */}
+            {!comment.deleted && (
+                <button
+                    type="button"
+                    className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    onClick={() =>
+                        openReplyForm({
+                            targetPublicId: comment.commentPublicId,
+                            mentionLabel: null,
+                        })
+                    }
+                >
+                    <TbArrowBackUp aria-hidden className="size-3.5" />
+                    답글
+                </button>
+            )}
             {hasReplies && (
                 <button
                     type="button"
@@ -87,22 +105,6 @@ export default function CommentItem({
                     />
                     답글 {comment.replyCount}
                     {expanded ? ' 접기' : ''}
-                </button>
-            )}
-            {/* tombstone(삭제 루트)에는 신규 답글 불가(§13.4) → 답글쓰기 미노출 */}
-            {!comment.deleted && (
-                <button
-                    type="button"
-                    className="ml-auto inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                    onClick={() =>
-                        openReplyForm({
-                            targetPublicId: comment.commentPublicId,
-                            mentionLabel: null,
-                        })
-                    }
-                >
-                    <TbArrowBackUp aria-hidden className="size-3.5" />
-                    답글쓰기
                 </button>
             )}
         </>
@@ -163,7 +165,7 @@ function ReplyThread({
     const replies = data?.pages.flatMap((page) => page.content) ?? []
 
     return (
-        <div className="ml-11 border-l-2 border-line pl-4">
+        <div className="ml-4 pl-2 sm:ml-11 sm:pl-4">
             {isPending ? (
                 <div aria-hidden className="flex gap-3 py-3.5">
                     <div className="size-8 shrink-0 animate-pulse rounded-full bg-gray-100" />
@@ -234,11 +236,11 @@ function ReplyItem({
     reply: CommentResponse & { mentionedNickname: string | null }
     onReply: (target: ReplyTarget) => void
 }) {
-    // 이 답글에 "답글쓰기" → 서버가 같은 루트로 평탄화하고 이 답글 작성자에게 @멘션(§13.1).
+    // 이 답글에 "답글" → 서버가 같은 루트로 평탄화하고 이 답글 작성자에게 @멘션(§13.1).
     const actions = (
         <button
             type="button"
-            className="ml-auto inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
             onClick={() =>
                 onReply({
                     targetPublicId: reply.commentPublicId,
@@ -247,7 +249,7 @@ function ReplyItem({
             }
         >
             <TbArrowBackUp aria-hidden className="size-3.5" />
-            답글쓰기
+            답글
         </button>
     )
 
@@ -281,7 +283,7 @@ function CommentBody({
     variant: 'root' | 'reply'
     /** 답글의 답글이면 @멘션 대상 닉(직접 답글·루트는 null) */
     mention: string | null
-    /** 액션 바 슬롯 — 답글 토글·답글쓰기 등 변주별 버튼 */
+    /** 액션 바 슬롯 — 답글·답글 토글 등 변주별 버튼 */
     actions: React.ReactNode
     /** BEST 섹션 렌더 시 작성자 옆 골드 배지(FC-212) */
     isBest?: boolean
@@ -377,17 +379,18 @@ function CommentBody({
                     </div>
                 ) : (
                     <>
+                        {/* 상단 행 — 웹: 닉·시간·⋮ / 모바일: 닉·⋮(시간은 아래 메타 별행) */}
                         <div className="flex items-center gap-2">
-                            <b className="text-sm font-bold text-gray-900">
+                            <b className="min-w-0 truncate text-sm font-bold text-gray-900">
                                 {comment.authorNickname}
                             </b>
                             {isBest && (
-                                <span className="inline-flex h-[18px] items-center gap-0.5 rounded bg-gold px-1.5 text-[10px] font-extrabold tracking-wide text-navy-900">
+                                <span className="inline-flex h-[18px] shrink-0 items-center gap-0.5 rounded bg-gold px-1.5 text-[10px] font-extrabold tracking-wide text-navy-900">
                                     <TbStarFilled aria-hidden className="size-2.5" />
                                     BEST
                                 </span>
                             )}
-                            <span className="text-xs text-gray-400">
+                            <span className="hidden shrink-0 whitespace-nowrap text-xs text-gray-400 sm:inline">
                                 {formatPostTime(comment.createdAt)}
                                 {edited && ' · 수정됨'}
                             </span>
@@ -395,33 +398,17 @@ function CommentBody({
                             {comment.editable &&
                                 !editing &&
                                 !confirmDelete && (
-                                    <span className="ml-auto flex gap-1.5">
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center gap-0.5 text-xs font-semibold text-gray-400 hover:text-gray-700"
-                                            onClick={startEdit}
-                                        >
-                                            <TbPencil
-                                                aria-hidden
-                                                className="size-3.5"
-                                            />
-                                            수정
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center gap-0.5 text-xs font-semibold text-gray-400 hover:text-danger"
-                                            onClick={() =>
-                                                setConfirmDelete(true)
-                                            }
-                                        >
-                                            <TbTrash
-                                                aria-hidden
-                                                className="size-3.5"
-                                            />
-                                            삭제
-                                        </button>
-                                    </span>
+                                    <CommentEditMenu
+                                        onEdit={startEdit}
+                                        onDelete={() => setConfirmDelete(true)}
+                                    />
                                 )}
+                        </div>
+
+                        {/* 모바일 전용 메타 별행 — 헤더 혼잡·자간 깨짐 방지 */}
+                        <div className="mt-0.5 text-xs text-gray-400 sm:hidden">
+                            {formatPostTime(comment.createdAt)}
+                            {edited && ' · 수정됨'}
                         </div>
 
                         {editing ? (
@@ -519,7 +506,7 @@ function CommentBody({
                     </>
                 )}
 
-                {/* 액션 바 — 공감/비공감 토글 + 변주 슬롯(답글 토글·답글쓰기). tombstone은 슬롯만. */}
+                {/* 액션 바 — 공감/비공감(맨 앞) · 구분선 · 답글·답글토글. tombstone은 슬롯만. */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     {!comment.deleted && (
                         <>
@@ -538,6 +525,10 @@ function CommentBody({
                                 disabled={isOwnComment}
                                 pending={reactionMutation.isPending}
                                 onToggle={() => handleReact('DISLIKE')}
+                            />
+                            <span
+                                aria-hidden
+                                className="mx-0.5 h-4 w-px bg-line"
                             />
                         </>
                     )}
@@ -609,6 +600,100 @@ function ReactionButton({
     )
 }
 
+/* ── 수정/삭제 오버플로 메뉴 (본인·관리자만, FC-215) ─────────────────────── */
+/**
+ * 승인 배치(A안): 헤더 우측 ⋮ 버튼. 웹=앵커 드롭다운, 모바일=하단 시트(엄지 도달·큰 타깃).
+ * `CommentSortControl` 반응형 패턴을 미러링 — 같은 열림 상태를 반응형 유틸리티로 두 표현.
+ * ★ 바깥 클릭·Esc 로 닫힘. 삭제는 기존 확인 흐름(`onDelete`가 confirmDelete 인라인을 연다).
+ */
+function CommentEditMenu({
+    onEdit,
+    onDelete,
+}: {
+    onEdit: () => void
+    onDelete: () => void
+}) {
+    const [open, setOpen] = useState(false)
+    const rootRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const onPointer = (event: MouseEvent) => {
+            if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+        }
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setOpen(false)
+        }
+        document.addEventListener('mousedown', onPointer)
+        document.addEventListener('keydown', onKey)
+        return () => {
+            document.removeEventListener('mousedown', onPointer)
+            document.removeEventListener('keydown', onKey)
+        }
+    }, [open])
+
+    const choose = (fn: () => void) => {
+        setOpen(false)
+        fn()
+    }
+
+    return (
+        <div ref={rootRef} className="relative ml-auto shrink-0">
+            <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-label="댓글 관리 메뉴"
+                className="-mr-1 grid size-8 place-items-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                onClick={() => setOpen((v) => !v)}
+            >
+                <TbDotsVertical aria-hidden className="size-[18px]" />
+            </button>
+
+            {open && (
+                <>
+                    {/* 모바일 스크림 — 시트 뒤 어둡게 + 바깥 탭 닫기 */}
+                    <div
+                        aria-hidden
+                        className="fixed inset-0 z-40 bg-navy-900/35 sm:hidden"
+                        onClick={() => setOpen(false)}
+                    />
+                    <div
+                        role="menu"
+                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-line bg-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-1 sm:w-32 sm:rounded-xl sm:border sm:p-1.5"
+                    >
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-gray-600 hover:bg-gray-100 sm:h-9 sm:text-xs"
+                            onClick={() => choose(onEdit)}
+                        >
+                            <TbPencil aria-hidden className="size-4 sm:size-3.5" />
+                            수정
+                        </button>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-danger hover:bg-danger-subtle sm:h-9 sm:text-xs"
+                            onClick={() => choose(onDelete)}
+                        >
+                            <TbTrash aria-hidden className="size-4 sm:size-3.5" />
+                            삭제
+                        </button>
+                        <button
+                            type="button"
+                            className="mt-1 flex h-12 w-full items-center justify-center rounded-lg bg-surface-sunken text-sm font-bold text-gray-600 sm:hidden"
+                            onClick={() => setOpen(false)}
+                        >
+                            닫기
+                        </button>
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
 /* ── 답글 작성 폼 (@멘션 프리필·로그인 유저만) ──────────────────────────── */
 function ReplyComposer({
     slug,
@@ -624,7 +709,6 @@ function ReplyComposer({
     onDone: () => void
 }) {
     const isAuthenticated = useIsAuthenticated()
-    const nickname = useAuthStore((state) => state.user?.nickname)
     const location = useLocation()
     const [content, setContent] = useState('')
     const createReplyMutation = useCreateReply(
@@ -678,14 +762,8 @@ function ReplyComposer({
     }
 
     return (
-        <form className="my-2 flex gap-2.5" onSubmit={handleSubmit}>
-            <span
-                aria-hidden
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-navy-600 text-xs font-bold text-white"
-            >
-                {avatarInitial(nickname)}
-            </span>
-            <div className="min-w-0 flex-1 rounded-lg border border-line bg-surface-sunken px-3 py-2.5 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange-subtle">
+        <form className="my-2" onSubmit={handleSubmit}>
+            <div className="rounded-lg border border-line bg-surface-sunken px-3 py-2.5 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange-subtle">
                 {target.mentionLabel && (
                     <div className="mb-1.5 text-xs text-gray-500">
                         <span className="mr-1 inline-flex h-5 items-center rounded-full bg-navy px-2 text-xs font-bold text-white">

@@ -5,6 +5,7 @@ import {
     TbAlertTriangle,
     TbMessageOff,
     TbSearchOff,
+    TbChevronLeft,
 } from 'react-icons/tb'
 import { boardPath, boardWritePath, paths } from '@/app/paths'
 import { useBoard, useBoards, usePostList } from '@/lib/queries/boards'
@@ -92,6 +93,15 @@ export default function BoardPostListPage() {
 
     return (
         <div className="flex flex-col gap-4">
+            {/* 허브 복귀 — 게시판 목록(허브)으로 */}
+            <Link
+                to={paths.boards}
+                className="inline-flex w-max items-center gap-1 text-sm font-semibold text-gray-500 hover:text-navy"
+            >
+                <TbChevronLeft aria-hidden className="size-4" />
+                게시판
+            </Link>
+
             {/* 게시판 탭 — 게시판 간 이동 */}
             {boardsQuery.data && boardsQuery.data.length > 0 && (
                 <div className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-line bg-surface p-1">
