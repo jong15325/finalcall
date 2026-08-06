@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
-import CommunityPage from './CommunityPage'
 import WalletChargePage from './WalletChargePage'
 
 /**
@@ -12,15 +11,10 @@ import WalletChargePage from './WalletChargePage'
  *  2. **미구현 엔드포인트 호출 0**(FC-048) — 렌더만으로 fetch 를 부르지 않는다.
  *
  * ★ 아이템 마켓은 FC-094 에서 `/shops` 실기능으로 승격되어 준비 중 자리에서 빠졌다.
+ * ★ 커뮤니티는 FC-202 에서 실 게시판(`/boards/community`)으로 승격돼 준비 중 자리에서 빠졌다.
  */
 
 const CASES = [
-    {
-        name: '커뮤니티',
-        Page: CommunityPage,
-        title: '커뮤니티',
-        note: /커뮤니티 게시판은 준비 중이에요/,
-    },
     {
         name: '코드 충전',
         Page: WalletChargePage,

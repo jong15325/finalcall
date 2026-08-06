@@ -18,8 +18,14 @@ export const paths = {
     auctionDetail: '/auctions/:id',
     sell: '/sell',
 
-    /* 커뮤니티 */
-    community: '/community', // [준비 중] 커뮤니티 CRUD 없음
+    /* 게시판 (EPIC-BOARD, FC-202) — 허브 → 목록 → 상세 → 작성/수정 */
+    boards: '/boards', // 게시판 허브(커뮤니티·공지·이벤트 카드)
+    board: '/boards/:slug', // 게시판별 글 목록(커서 무한스크롤)
+    boardWrite: '/boards/:slug/write', // 글 작성
+    boardPost: '/boards/:slug/:postId', // 글 상세
+    boardPostEdit: '/boards/:slug/:postId/edit', // 글 수정
+    // 구 커뮤니티 자리 — /boards/community 로 리다이렉트(하위호환)
+    community: '/community',
 
     /* 비교 */
     compare: '/compare',
@@ -50,3 +56,17 @@ export const marketDetailPath = (id: string) => `/market/${id}`
 
 /** 보유 아이템 인스턴스 상세 경로 조립 */
 export const itemDetailPath = (id: string) => `/items/${id}`
+
+/** 게시판 목록 경로 조립 */
+export const boardPath = (slug: string) => `/boards/${slug}`
+
+/** 게시판 글 작성 경로 조립 */
+export const boardWritePath = (slug: string) => `/boards/${slug}/write`
+
+/** 게시글 상세 경로 조립 */
+export const boardPostPath = (slug: string, postId: string) =>
+    `/boards/${slug}/${postId}`
+
+/** 게시글 수정 경로 조립 */
+export const boardPostEditPath = (slug: string, postId: string) =>
+    `/boards/${slug}/${postId}/edit`

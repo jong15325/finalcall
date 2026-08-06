@@ -12,8 +12,8 @@ import type { CursorPage } from '@/types/api'
  *  1. **마감 임박 = 실연동 프리뷰** + **클라 마감 제외** — endAt 지난(서버는 여전히 ACTIVE) 경매는
  *     안 보이고, 살아있는 경매만 카드로 뜬다.
  *  2. 배너 캐러셀이 렌더된다(프로모션 배너 region).
- *  3. **목업 섹션 헤드 유지** + **추천 마켓·공지는 자리보류**(호출 없이 404 방지).
- *  4. **공지는 skeleton 자리**(FC-080) — 가짜 제목·날짜를 렌더하지 않는다(리뷰 M-1).
+ *  3. **목업 섹션 헤드 유지** + **추천 마켓은 자리보류**(호출 없이 404 방지).
+ *  4. **공지는 실연동**(FC-204) — `GET /boards/notice/posts`. 빈 응답이면 빈 상태 안내(가짜 데이터 없음).
  */
 
 function makeAuction(overrides: Partial<AuctionSummary>): AuctionSummary {
@@ -71,24 +71,20 @@ describe('<HomePage>', () => {
         expect(screen.getByText('오늘의 추천 마켓 아이템')).toBeInTheDocument()
         expect(screen.getByText('공지사항')).toBeInTheDocument()
 
-        // 추천 마켓·공지는 API 호출 없이 자리보류(본문 안내).
+        // 추천 마켓은 API 호출 없이 자리보류(본문 안내).
         expect(
             screen.getByText('고정가 마켓은 준비 중이에요.'),
         ).toBeInTheDocument()
-        expect(
-            screen.getByText('공지 연동은 준비 중이에요.'),
-        ).toBeInTheDocument()
-        // ★ 공지는 skeleton 자리 — 가짜 제목·날짜를 렌더하지 않는다(리뷰 M-1 · FC-080).
-        expect(
-            screen.getByRole('list', { name: '공지 연동 준비 중' }),
-        ).toBeInTheDocument()
-        expect(
-            screen.queryByText('안전 거래 정책 및 판매 수수료 변경 사전 안내'),
-        ).not.toBeInTheDocument()
 
         await waitFor(() =>
             expect(
                 screen.getByText('지금 마감 임박한 경매가 없어요'),
+            ).toBeInTheDocument(),
+        )
+        // ★ 공지는 실연동 — 빈 응답이면 빈 상태 안내(가짜 제목·날짜 없음).
+        await waitFor(() =>
+            expect(
+                screen.getByText('등록된 공지가 없어요.'),
             ).toBeInTheDocument(),
         )
     })

@@ -113,6 +113,17 @@ export const ERROR_CODES = {
     SEARCH_002: 'SEARCH_002', // 재색인 이미 진행 중(single-flight, §4.5) (409) — ★ 재색인 API 미구현(FC-116 이월), 정합상 등재
     SEARCH_003: 'SEARCH_003', // 재색인 job 없음(§4.5) (404) — ★ 재색인 API 미구현(FC-116 이월), 정합상 등재
 
+    // 게시판·게시글·댓글·이미지 (board-domain-spec, §6)
+    BOARD_001: 'BOARD_001', // 게시판 없음(slug 미존재·비활성) (404)
+    BOARD_002: 'BOARD_002', // 게시판 쓰기 권한 없음(write_policy 위반) (403)
+    BOARD_003: 'BOARD_003', // 댓글 비허용 게시판(allow_comments=false) (422)
+    POST_001: 'POST_001', // 게시글 없음(미존재·삭제됨) (404)
+    POST_002: 'POST_002', // 게시글 작성자 아님(수정·삭제 IDOR, non-admin) (403)
+    COMMENT_001: 'COMMENT_001', // 댓글 없음(미존재·삭제됨) (404)
+    COMMENT_002: 'COMMENT_002', // 댓글 작성자 아님(수정·삭제 IDOR, non-admin) (403)
+    IMAGE_001: 'IMAGE_001', // 지원하지 않는 이미지 형식(jpeg·png·webp·gif 외) (422)
+    IMAGE_002: 'IMAGE_002', // 이미지 용량 초과(>5MB) (422)
+
     // 게이트웨이 엣지 (§1.6 — 도메인 enum 미등재)
     GATEWAY_429: 'GATEWAY_429', // rate limit 초과 (429)
     GATEWAY_403: 'GATEWAY_403', // 게이트웨이 미경유 직접접근 차단 (403)

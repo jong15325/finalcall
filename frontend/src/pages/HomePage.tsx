@@ -1,17 +1,21 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router'
 import {
     TbAlertTriangle,
     TbBuildingStore,
     TbFlame,
+    TbPin,
     TbSpeakerphone,
 } from 'react-icons/tb'
-import { paths } from '@/app/paths'
+import { boardPath, boardPostPath, paths } from '@/app/paths'
 import AuctionPreviewCard from '@/features/auction/components/AuctionPreviewCard'
 import { auctionPhaseOf } from '@/features/auction/lib/auctionPhase'
 import { useNow } from '@/features/auction/lib/useNow'
+import { formatPostTime } from '@/features/board/lib/postView'
 import HomeBanner from '@/features/home/components/HomeBanner'
 import HomeSection from '@/features/home/components/HomeSection'
 import { useAuctionList } from '@/lib/queries/auctions'
+import { usePostList } from '@/lib/queries/boards'
 import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
 
 /**
@@ -27,9 +31,9 @@ import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
  * ★ **마감 임박 = `endAt` 오름차 정렬 + 클라 마감 제외**. 마감 강등 워커가 없어 `endAt` 지난 경매도
  *   `status: ACTIVE` 로 내려오므로(rebuild-contract-map 주의 3), 정렬 상위에 낀 **이미 끝난 경매를
  *   클라가 걸러**(`auctionPhaseOf`) 진짜 임박한 것만 6장 보인다. 그래서 6장보다 넉넉히 받는다.
- * ★ **추천 마켓·공지는 자리보류.** 고정가 마켓(`/shops`)·공지(`/notices`)는 홈에서 **호출하지 않는다**
- *   (FC-048 사고 방지, §5). 헤드·캡션은 목업대로 유지하고 데이터만 **비활성 skeleton 자리**로 둔다 —
- *   가짜 제목·날짜를 실제처럼 렌더하지 않는다(정직성, FC-070-073 리뷰 M-1 · FC-080 통일).
+ * ★ **추천 마켓은 자리보류**(고정가 마켓 `/shops` 미호출, FC-048). **공지는 FC-204 에서 실연동** —
+ *   공지 게시판(`/boards/notice`)이 흡수돼(FC-201) `GET /boards/notice/posts` 로 서빙되므로 홈이
+ *   실제 공지를 3~5줄 보여준다(더 이상 자리보류 아님).
  */
 
 /** 마감 임박 프리뷰 — endAt 오름차, 클라 필터 여유분 포함(6장 표시) */
@@ -37,8 +41,9 @@ const PREVIEW_QUERY: AuctionListQuery = { sort: 'endAt,asc', size: 12 }
 const PREVIEW_COUNT = 6
 /** 추천 마켓 자리보류 골격 칸 수(목업 6) */
 const MARKET_PLACEHOLDER_COUNT = 6
-/** 공지 자리보류 골격 줄 수(목업 목록 높이) */
-const NOTICE_PLACEHOLDER_COUNT = 5
+/** 공지 게시판 slug(FC-201 흡수) + 홈 미리보기 줄 수 */
+const NOTICE_SLUG = 'notice'
+const NOTICE_PREVIEW_COUNT = 5
 
 export default function HomePage() {
     const now = useNow()
@@ -172,43 +177,87 @@ function RecommendMarketSection() {
     )
 }
 
-/* ── 공지사항 (연동 예정 자리보류) ──────────────────────────────────────────
+/* ── 공지사항 (실연동 — FC-204) ─────────────────────────────────────────────
  *
- * ★ 공지(`NoticeController`)는 스켈레톤 참조구현이라 **product 계약(`/api/v1`) 밖 `/notices`** 에
- *   있고, dev 프록시(`/api`)·클라이언트 base(`/api/v1`)·`api-contract` 어디에도 실려 있지 않다.
- *   억지로 붙이면 전송로가 둘로 갈리므로(FC-056 위배) **연동을 보류**한다.
- * ★ FC-070-073 리뷰 M-1: 과거 정적 5제목·날짜를 실제처럼 렌더해 마켓 자리(빈 skeleton)와 어긋났다.
- *   → 추천 마켓과 **같은 방식의 비활성 skeleton**으로 통일한다(가짜 제목·날짜 제거, 실 호출 없음).
+ * ★ 공지 게시판(slug=`notice`, FC-201 흡수)을 `GET /boards/notice/posts`(커서) 로 받아 최신 공지
+ *   3~5줄을 보여준다. 목록 화면과 **같은 쿼리 키**(`usePostList('notice')`)라 캐시를 공유한다 —
+ *   홈에서 로드한 첫 페이지를 공지 목록 화면이 재사용한다.
+ * ★ 항목 클릭 → `/boards/notice/:postId`, "더 보기" → `/boards/notice`. 서버 정렬(고정 우선·최신순)을
+ *   그대로 쓰고, 홈은 첫 페이지 앞에서 몇 줄만 자른다. 로딩/빈/에러는 섹션 안에서 낸다(§5 상태 격리).
  */
 function NoticeSection() {
+    const { data, isPending, isError } = usePostList(NOTICE_SLUG)
+    const notices = (data?.pages[0]?.content ?? []).slice(
+        0,
+        NOTICE_PREVIEW_COUNT,
+    )
+
     return (
         <HomeSection
             icon={TbSpeakerphone}
             title="공지사항"
-            seeAllHref={paths.community}
+            seeAllHref={boardPath(NOTICE_SLUG)}
             seeAllLabel="더 보기"
         >
-            <ul
-                aria-label="공지 연동 준비 중"
-                className="divide-y divide-line overflow-hidden rounded-xl border border-dashed border-line bg-surface"
-            >
-                {Array.from({ length: NOTICE_PLACEHOLDER_COUNT }).map(
-                    (_, index) => (
-                        <li
-                            key={index}
-                            aria-disabled="true"
-                            className="flex items-center gap-3 px-4 py-3"
-                        >
-                            <span className="h-4 w-10 shrink-0 rounded-full bg-gray-100" />
-                            <span className="h-3 min-w-0 flex-1 rounded bg-gray-100" />
-                            <span className="h-3 w-10 shrink-0 rounded bg-gray-100" />
+            {isPending && (
+                <ul
+                    aria-hidden
+                    className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface"
+                >
+                    {Array.from({ length: NOTICE_PREVIEW_COUNT }).map(
+                        (_, index) => (
+                            <li
+                                key={index}
+                                className="flex items-center gap-3 px-4 py-3"
+                            >
+                                <span className="h-3 min-w-0 flex-1 animate-pulse rounded bg-gray-100" />
+                                <span className="h-3 w-10 shrink-0 animate-pulse rounded bg-gray-100" />
+                            </li>
+                        ),
+                    )}
+                </ul>
+            )}
+
+            {!isPending && isError && (
+                <p className="rounded-xl border border-dashed border-line bg-surface px-4 py-6 text-center text-sm text-gray-500">
+                    공지를 불러오지 못했어요.
+                </p>
+            )}
+
+            {!isPending && !isError && notices.length === 0 && (
+                <p className="rounded-xl border border-dashed border-line bg-surface px-4 py-6 text-center text-sm text-gray-400">
+                    등록된 공지가 없어요.
+                </p>
+            )}
+
+            {notices.length > 0 && (
+                <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+                    {notices.map((notice) => (
+                        <li key={notice.postPublicId}>
+                            <Link
+                                to={boardPostPath(
+                                    NOTICE_SLUG,
+                                    notice.postPublicId,
+                                )}
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
+                            >
+                                {notice.isPinned && (
+                                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-gold-subtle px-1.5 py-0.5 text-[10px] font-bold text-gold-deep">
+                                        <TbPin aria-hidden className="size-3" />
+                                        고정
+                                    </span>
+                                )}
+                                <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">
+                                    {notice.title}
+                                </span>
+                                <span className="shrink-0 text-xs text-gray-400">
+                                    {formatPostTime(notice.createdAt)}
+                                </span>
+                            </Link>
                         </li>
-                    ),
-                )}
-            </ul>
-            <p className="mt-2 text-center text-xs text-gray-400">
-                공지 연동은 준비 중이에요.
-            </p>
+                    ))}
+                </ul>
+            )}
         </HomeSection>
     )
 }

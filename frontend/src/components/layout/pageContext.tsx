@@ -57,6 +57,21 @@ const table: Array<{ pattern: string; ctx: Ctx }> = [
         pattern: paths.market,
         ctx: { title: '아이템 마켓', icon: TbBuildingStore },
     },
+    // 게시판 — 구체 경로 우선(작성/수정 → 상세 → 목록 → 허브)
+    {
+        pattern: paths.boardPostEdit,
+        ctx: { title: '글 수정', icon: TbMessageCircle },
+    },
+    {
+        pattern: paths.boardWrite,
+        ctx: { title: '글쓰기', icon: TbMessageCircle },
+    },
+    {
+        pattern: paths.boardPost,
+        ctx: { title: '게시글', icon: TbMessageCircle },
+    },
+    { pattern: paths.board, ctx: { title: '게시판', icon: TbMessageCircle } },
+    { pattern: paths.boards, ctx: { title: '게시판', icon: TbMessageCircle } },
     {
         pattern: paths.community,
         ctx: { title: '커뮤니티', icon: TbMessageCircle },

@@ -12,13 +12,12 @@ import {
     TbShoppingBag,
     TbGavel,
     TbMessageCircle,
-    TbMail,
     TbUserCircle,
     TbBuildingStore,
     TbLayoutGrid,
     TbHome,
 } from 'react-icons/tb'
-import { paths } from '@/app/paths'
+import { boardPath, paths } from '@/app/paths'
 import type { ComponentType } from 'react'
 
 export interface NavLeaf {
@@ -65,13 +64,22 @@ export const sidebarNav: NavEntry[] = [
     },
     {
         kind: 'group',
-        label: '커뮤니티',
+        label: '게시판',
         icon: TbMessageCircle,
-        children: [{ label: '자유 게시판', to: paths.community, ready: false }],
+        children: [
+            { label: '공지사항', to: boardPath('notice'), ready: true },
+            { label: '커뮤니티', to: boardPath('community'), ready: true },
+            { label: '이벤트', to: boardPath('event'), ready: true },
+        ],
     },
 ]
 
-/** 모바일 하단 내비(HANDOVER §5.3). 순서 고정. */
+/**
+ * 모바일 하단 내비(HANDOVER §5.3). 순서 고정.
+ *
+ * ★ 쪽지 자리를 **게시판**으로 교체했다(FC-202). 쪽지 진입은 상단바(TopNavbar 쪽지 아이콘·미열람
+ *   뱃지)와 마이페이지로 유지되므로 하단 탭에서 빠져도 도달 경로가 살아 있다.
+ */
 export const mobileNav: NavLeaf[] = [
     {
         label: '아이템마켓',
@@ -82,6 +90,6 @@ export const mobileNav: NavLeaf[] = [
     { label: '실시간 경매', to: paths.auctions, ready: true, icon: TbGavel },
     { label: '홈', to: paths.home, ready: true, icon: TbHome },
     { label: '인벤토리', to: paths.inventory, ready: true, icon: TbLayoutGrid },
-    { label: '쪽지', to: paths.messages, ready: true, icon: TbMail },
+    { label: '게시판', to: paths.boards, ready: true, icon: TbMessageCircle },
     { label: '마이페이지', to: paths.me, ready: true, icon: TbUserCircle },
 ]

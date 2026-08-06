@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import AppShell from '@/components/layout/AppShell'
 import AuthLayout from '@/components/layout/AuthLayout'
 import ProtectedRoute from '@/components/route/ProtectedRoute'
@@ -19,7 +19,10 @@ import ItemDetailPage from '@/pages/ItemDetailPage'
 import WalletPage from '@/pages/WalletPage'
 import MarketPage from '@/pages/MarketPage'
 import MarketDetailPage from '@/pages/MarketDetailPage'
-import CommunityPage from '@/pages/CommunityPage'
+import BoardHubPage from '@/pages/BoardHubPage'
+import BoardPostListPage from '@/pages/BoardPostListPage'
+import PostDetailPage from '@/pages/PostDetailPage'
+import PostWritePage from '@/pages/PostWritePage'
 import WalletChargePage from '@/pages/WalletChargePage'
 import LoginPage from '@/pages/LoginPage'
 import SignupPage from '@/pages/SignupPage'
@@ -69,8 +72,19 @@ function AppRoutes() {
                     element={<MarketDetailPage />}
                 />
 
+                {/* 게시판(공개) — 허브·목록·상세. 작성/수정은 로그인 필요(아래 ProtectedRoute) */}
+                <Route path={paths.boards} element={<BoardHubPage />} />
+                <Route path={paths.board} element={<BoardPostListPage />} />
+                <Route path={paths.boardPost} element={<PostDetailPage />} />
+                {/* 구 커뮤니티 자리 → 커뮤니티 게시판으로 리다이렉트(하위호환) */}
+                <Route
+                    path={paths.community}
+                    element={
+                        <Navigate replace to="/boards/community" />
+                    }
+                />
+
                 {/* 준비 중 자리(404 방지) */}
-                <Route path={paths.community} element={<CommunityPage />} />
                 <Route
                     path={paths.walletCharge}
                     element={<WalletChargePage />}
@@ -94,6 +108,15 @@ function AppRoutes() {
                     <Route
                         path={paths.itemDetail}
                         element={<ItemDetailPage />}
+                    />
+                    {/* 게시글 작성/수정 — 로그인 필요(게시판별 쓰기정책은 화면이 표시 제어) */}
+                    <Route
+                        path={paths.boardWrite}
+                        element={<PostWritePage />}
+                    />
+                    <Route
+                        path={paths.boardPostEdit}
+                        element={<PostWritePage />}
                     />
                 </Route>
 

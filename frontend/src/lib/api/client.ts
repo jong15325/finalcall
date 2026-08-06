@@ -104,7 +104,11 @@ async function rawFetch(
 ): Promise<Response> {
     const { query, body, headers, auth = true, signal } = options
     const finalHeaders = new Headers(headers)
-    if (body !== undefined) finalHeaders.set('Content-Type', 'application/json')
+    // FormData(멀티파트 업로드)는 Content-Type 을 브라우저가 boundary 와 함께 자동 설정한다 —
+    // 우리가 지정하면 boundary 가 빠져 서버가 파싱하지 못한다(계약 §6.4 이미지 업로드).
+    const isFormData = body instanceof FormData
+    if (body !== undefined && !isFormData)
+        finalHeaders.set('Content-Type', 'application/json')
     finalHeaders.set('Accept', 'application/json')
 
     if (auth) {
@@ -116,7 +120,12 @@ async function rawFetch(
         return await fetch(buildUrl(path, query), {
             method,
             headers: finalHeaders,
-            body: body !== undefined ? JSON.stringify(body) : undefined,
+            body:
+                body === undefined
+                    ? undefined
+                    : isFormData
+                      ? (body as FormData)
+                      : JSON.stringify(body),
             signal,
         })
     } catch (error) {
