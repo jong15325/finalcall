@@ -20,6 +20,7 @@
 
 | v1.0 | 2026-07-18 | 게이트2(FC-030, EPIC-BID) 승인 반영 — **F1** [4.2] `bid`에 `public_id ULID NOT NULL UK` 추가(외부 노출 식별자 [1]·B-004 규약 이행. api-contract §3.1 입찰 응답 `bidPublicId`·§3.3 `BidSummary`가 요구하는데 표에 없어 계약을 만족하는 구현이 불가능했다 — bid-domain-spec §11 G1 발견). **F6** [5] `auction (status, highest_bid_amount)` 인덱스 신설(계약 §3.3 목록 정렬 화이트리스트 `highestBidAmount`가 EPIC-BID에서 실사용 시작 — auction-domain-spec §7 G5 이연분 해소). 부수: [5] `bid (auction_id, amount DESC)` 이유 열에 "현재 최고 입찰 식별 커버·`(auction_id, status)` 불요" 근거 명시(bid-domain-spec §11 G4). [6] Flyway group 2·4에 V11 실물 채번 동기화. 근거: 게이트2 승인(2026-07-18), bid-domain-spec v0.2 |
 
+| v1.9 | 2026-08-06 | EPIC-COMMENT-V2(FC-206) — 네이버식 댓글 확장 스키마. **게이트2 3건 사용자 승인 확정(board-spec §14, 2026-08-06 — (a)A1 답글 1단계+닉 스냅샷 @멘션 · (b)B1 comment_reaction 유저당1행 UK+원자 카운트 · (c)C1 형상 교체 · 기본 정렬 LATEST · 삭제 tombstone · COMMENT_003 자기반응 금지).** **[2] 엔티티 개요에 `comment_reaction` 신설** + **[4.5] `comment` 확장**(`parent_comment_id` 예약→**활성**·`mentioned_nickname VARCHAR(30) NULL` 신설(답글의 답글 @멘션 대상 닉 스냅샷)·비정규화 카운트 3종 `like_count`·`dislike_count`·`reply_count` INT NOT NULL DEFAULT 0) + **`comment_reaction` 테이블 신설**(공감/비공감 — comment/user FK·`reaction_type` LIKE/DISLIKE·**UK(comment_id, user_id)** 유저당 댓글당 1행·전환은 UPDATE·취소는 DELETE). [5] 인덱스 재편(`comment` 루트목록 `(post_id, parent_comment_id, id)`·답글목록 `(parent_comment_id, is_deleted, id)`·순공감순/BEST `(post_id, parent_comment_id, like_count)` — 구 `(post_id, is_deleted, id)` 대체·`comment_reaction` UK가 myReaction 조회 겸함). [6] Flyway group 7-c에 **V24**(comment ALTER + comment_reaction CREATE + 인덱스, 현재 최신 V23) 예약. **대댓글 = 1단계 저장**(모든 답글이 최상위 댓글에 `parent_comment_id`로 귀속·답글의 답글도 같은 루트·대상 닉은 `mentioned_nickname` 스냅샷). **삭제 루트 tombstone**(활성 답글 보유 시 목록 잔류·본문 마스킹). **마이그레이션 실물 미작성**(FC-207 backend-impl 소유). 정본 = `board-domain-spec.md` v1.1 · api-contract §6.3. |
 | v1.8 | 2026-08-06 | EPIC-BOARD(FC-196) — 커스텀 게시판 시스템 스키마. **게이트2 3건 사용자 승인 확정(2026-08-06).** **[2] 엔티티 개요·[4.5] `board`·`post`·`comment`·`post_image` 4테이블 신설**: `board`(레지스트리 — slug UK 자연키·no public_id·is_active 비활성토글 삭제·write_policy ADMIN_ONLY/AUTHENTICATED·allow_comments·board_type GENERAL/NOTICE/EVENT, soft delete 미도입 → D-081 무관), `post`(public_id·board FK·author_id nullable+닉 스냅샷·title/content·view_count/comment_count 비정규화·is_pinned·soft delete), `comment`(public_id·post FK·author 귀속·parent_comment_id 예약·soft delete), `post_image`(public_id·post_id nullable 고아·uploader FK·storage_key=오브젝트 스토리지 object key — 2단계 업로드). [5] 인덱스 5종(`post (board_id,is_deleted,is_pinned,id)`·`post (author_id)`·`comment (post_id,is_deleted,id)`·`post_image (post_id,sort_order)`·`post_image (uploader_id,created_at)` 고아정리). [6] Flyway 신규 group 7(커뮤니티 게시판)에 **V22**(board+post+comment+post_image+인덱스+시드)·**V23**(공지 이관+notice 유예 DROP) 예약(현재 최신 V21). **공지(notice) 흡수** — 활성 notice 행 → post(공지 게시판) 이관(author_id NULL·닉 '공지사항' 스냅샷·URGENT→is_pinned), notice 도메인·NoticeType·NoticeErrorCode 제거·CLAUDE.md §1 참조구현 bullet→board 갱신(§8, FC-201). **게이트2 3건 확정**: (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + StoragePort(S3 호환 단일 구현)·비공개 버킷 presigned GET 서빙 (b) 공지 흡수·notice 제거·board 참조구현 승계 (c) 옵션 모델 표준 3축. **마이그레이션·MinIO 인프라 실물 미작성**(FC-197·200·201 backend-impl 소유). 정본 = `board-domain-spec.md` v1.0 · api-contract §6. |
 | v1.7 | 2026-08-05 | EPIC-ITEM-DELIVERY(FC-185) — 게임 아이템 지급 우편함 스키마. **[2] 엔티티 개요·[4.4] `item_delivery` 테이블 신설**(finalcall-native 내구 우편함: sale_order 1:1 UK·item_instance/recipient FK·item_uuid char40 멱등키 UK·자족 스냅샷 type_code/level/skill1_code/skill2_code/skill_percent/gf_expire_at·status PENDING/CLAIMED/APPLIED/DEFERRED/FAILED·claim_token 리스·append 원장 updated_at 없음). **[4.3] `item_instance.location`에 `IN_GAME` 값 추가**(게임 이관 완료 — 배송 APPLIED 시 전이, 재판매 차단 XOR 연장) + 불변식에 IN_GAME 행. [5] 인덱스 2종(`(status, created_at)` poller·리스 재청구·`(recipient_user_id, status)` 접속 claim·배송 상태 조회). [6] Flyway 신규 group 6(게임 연동·배송)에 **V21**(현재 최신 V20) 채번 등재. **게이트2 형상 3건(FC-185)**: (a) 이관 상태 = location enum 확장 `IN_GAME`(별도 상태축 기각) (b) 게임 claim = DB 직접 프로토콜(웹 REST 아님) (c) sale_order_id 1:1 UK가 낙찰·즉시구매 양 경로 커버(SettlementRecorder 공통 꼬리). **마이그레이션 실물은 미작성**(FC-186 backend-impl 소유). 정본 = `delivery-domain-spec.md` v1.0 · api-contract §4.6. |
 | v1.6 | 2026-08-01 | EPIC-MEMO(FC-170) — 회원 간 메모(쪽지) 스키마. **[4.1] `user_memo` 테이블 신설**(게임 `new_sp.user_memo` 계승: sender/receiver = user FK + 닉 스냅샷 정규화 R1·`memo_type` 원 코드값 보존·`memo_level_gender` 분해 저장(sender_level/gender)·`body VARCHAR(120)` 용량 계승·is_read/is_deleted). [5] 인덱스 2종(받은함·보낸함 커서 `(*_id, is_deleted, id DESC)`). [6] Flyway group1-c에 **V20**(현재 최신 V19) 채번 등재. **게이트2 4결정 사용자 승인 확정(2026-08-01)**: (a) 레벨·성별 = 스냅샷 2컬럼·현재 기본값 Lv.1·성별 0(남) (b) 깔끔 원문 저장·게임 boundary에서만 28바이트 패딩 (c) `user_memo` 신규·V20·이름 유지 (d) 발신 자유 텍스트 + 게임 boundary 28바이트 자동 줄바꿈. 정본 = api-contract §2.6(v1.20)·memo-domain-spec v1.0 |
@@ -97,7 +98,8 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 커뮤니티·콘텐츠 (EPIC-BOARD, v1.8 — 게이트2 승인 확정)
 - `board` — 게시판 레지스트리(§4.5). slug 자연키·is_active 비활성토글·write_policy·allow_comments·board_type. 하드코딩 enum(구 `NoticeType`) 대체 — 코드 수정 없이 게시판 추가·변경. 시드 3건(공지·커뮤니티·이벤트).
 - `post` — 게시글. board 귀속·작성자 귀속·soft delete·이미지 첨부·조회수/댓글수 비정규화·상단 고정. 기존 `notice`를 흡수(§8 board-spec).
-- `comment` — 게시글 댓글. post 귀속·작성자 귀속·soft delete·대댓글 컬럼 예약.
+- `comment` — 게시글 댓글. post 귀속·작성자 귀속·soft delete·**대댓글 활성**(parent_comment_id·1단계 귀속·mentioned_nickname 멘션 스냅샷)·**공감/비공감 비정규화 카운트**(like/dislike/reply_count) (EPIC-COMMENT-V2, v1.9).
+- `comment_reaction` — 댓글 공감/비공감(EPIC-COMMENT-V2, v1.9). comment·user 귀속·`reaction_type` LIKE/DISLIKE·UK(comment_id,user_id)로 유저당 댓글당 1행(전환 UPDATE·취소 DELETE).
 - `post_image` — 게시글 이미지 첨부. 2단계 업로드(고아→바인딩). 파일 실체는 오브젝트 스토리지(MinIO 로컬·S3 운영), 표는 메타·object key만 보유.
 
 아이템 (D-044~047·D-062·D-066)
@@ -519,18 +521,37 @@ table `post` — 게시글. board 귀속·작성자 귀속·soft delete. 기존 
 
 주: soft delete 자연키 UK 패턴(D-081) 불요(public_id는 대리키·author_nickname은 스냅샷이지 UK 아님). `updated_at` 보유(수정 반영). 조회·목록은 활성 필터(`is_deleted=false`) 동반 필수(notice 선례).
 
-table `comment` — 게시글 댓글. post 귀속·작성자 귀속·soft delete.
+table `comment` — 게시글 댓글. post 귀속·작성자 귀속·soft delete. **대댓글 1단계·공감/비공감 비정규화(EPIC-COMMENT-V2, v1.9).**
 
 | 컬럼 | 타입 | 널 | 키 | 설명 |
 |---|---|---|---|---|
-| public_id | ULID | N | UK | 외부 노출 식별자. 수정·삭제 경로 리소스 |
+| public_id | ULID | N | UK | 외부 노출 식별자. 수정·삭제·답글·반응 경로 리소스 |
 | post_id | BIGINT | N | FK→post | 귀속 게시글 |
 | author_id | BIGINT | Y | FK→user | 작성자(웹 작성 항상 값·인가 주체). 시스템 댓글 대비 NULL 허용 |
 | author_nickname | VARCHAR(30) | N | | 작성 시점 닉 스냅샷 |
 | content | VARCHAR(1000) | N | | 본문 |
-| parent_comment_id | BIGINT | Y | FK→comment | 대댓글 앵커(self-FK). **이번 에픽 컬럼만 예약**(reply UI 다음 에픽·평면 서빙) |
+| parent_comment_id | BIGINT | Y | FK→comment | 대댓글 앵커(self-FK). **v1.9 활성** — 답글은 항상 **최상위(루트) 댓글**을 가리킨다(1단계, board-spec §13.1). 루트 댓글은 NULL |
+| mentioned_nickname | VARCHAR(30) | Y | | **v1.9 신설** — 답글의 답글일 때 @멘션 대상 닉 스냅샷(직접 답글·루트 댓글은 NULL). 표시 전용(대상 댓글 참조 저장 안 함, board-spec §13.1) |
+| like_count | INT | N | | **v1.9 신설** — 공감 수(비정규화, 반응과 동일 TX 원자 증감). 기본 0 |
+| dislike_count | INT | N | | **v1.9 신설** — 비공감 수(비정규화, 동일 TX). 기본 0 |
+| reply_count | INT | N | | **v1.9 신설** — 답글 수(비정규화, 루트 댓글만 유효·답글은 0). 답글 생성/삭제 동일 TX 증감. 기본 0 |
 | is_deleted | BOOLEAN | N | | soft delete(기본 false) |
 | deleted_at | DATETIME(6) | Y | | |
+
+주(v1.9): soft delete 자연키 UK 패턴(D-081) 불요(public_id 대리키). 조회·목록은 활성 필터(`is_deleted=false`) 동반 필수. **예외 — 삭제 루트 tombstone**: `parent_comment_id IS NULL AND is_deleted=true`라도 `reply_count>0`이면 목록에 tombstone(본문 마스킹)으로 잔류시켜 활성 답글의 스레드를 보존한다(board-spec §13.4). 답글(`parent_comment_id IS NOT NULL`)은 삭제 시 완전 배제.
+
+table `comment_reaction` — 댓글 공감/비공감(EPIC-COMMENT-V2, v1.9). 유저당 댓글당 **1행**(UK)·전환은 행 UPDATE·취소는 행 DELETE. 카운트는 `comment.like_count`/`dislike_count`에 비정규화(동일 TX 원자 UPDATE).
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 대리 PK(외부 미노출 — 반응은 public_id 불요, 토글은 comment+user로 upsert) |
+| comment_id | BIGINT | N | FK→comment | 반응 대상 댓글(루트·답글 무관) |
+| user_id | BIGINT | N | FK→user | 반응 주체(SecurityContext) |
+| reaction_type | VARCHAR(10) | N | | `LIKE` \| `DISLIKE`. 전환 시 이 컬럼만 UPDATE |
+| created_at | DATETIME(6) | N | | 최초 반응 시각 |
+| updated_at | DATETIME(6) | N | | 전환 시각(BaseTimeEntity) |
+
+주: **UK(comment_id, user_id)** — 유저당 댓글당 1행 DB 강제(중복 반응·이중 카운트 차단, money_exchange·charge 멱등 UK 선례와 동류의 유일성 앵커). 이 UK가 myReaction 조회(`comment_id IN (…) AND user_id=?`)도 커버해 별도 인덱스 불요. `public_id` 없음(반응은 URL 리소스가 아니라 대상 댓글 하위 토글). soft delete 없음(취소=물리 DELETE, append 원장 아님).
 
 table `post_image` — 게시글 이미지 첨부. 2단계 업로드(업로드=고아 → 게시글 저장 시 바인딩). 파일 실체는 **오브젝트 스토리지(MinIO 로컬·S3 운영, StoragePort S3 호환 단일 구현·비공개 버킷 presigned GET 서빙, 게이트2 (a) 확정)**, 이 표는 메타·object key만 보유. 노출 `url`은 읽기 시점 생성 presigned GET(board-spec §7.4).
 
@@ -597,7 +618,10 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | temp_storage | (owner_id, stored_at, instance_id) | 사용자 임시보관 목록 + cursor 안정 정렬(G3, v0.9). 계약 §4.2 `GET /me/temp-storage` cursor 페이지네이션 키(stored_at desc, instance_id desc)를 인덱스로 커버 |
 | post | (board_id, is_deleted, is_pinned, id) | 게시판별 글 목록 커서 조회(`board_id=? AND is_deleted=false`, 정렬 `is_pinned DESC, id DESC` — 고정 우선·최신순, EPIC-BOARD v1.8). api §6 `GET /boards/{slug}/posts` |
 | post | (author_id) | 작성자 글 역참조(내 글·인가 검증) |
-| comment | (post_id, is_deleted, id) | 게시글 댓글 목록(`post_id=? AND is_deleted=false`, id asc 시간순) + comment_count 정합 |
+| comment | (post_id, parent_comment_id, id) | **v1.9** 루트 댓글 목록(`post_id=? AND parent_comment_id IS NULL`, 최신순 id DESC·과거순 id ASC). 삭제·tombstone(`is_deleted OR reply_count>0`) 필터는 글당 소규모라 인출 후 후처리. 구 `(post_id, is_deleted, id)` 대체(EPIC-COMMENT-V2) |
+| comment | (parent_comment_id, is_deleted, id) | **v1.9** 특정 루트의 답글 목록(`parent_comment_id=? AND is_deleted=false`, id asc 시간순) + reply_count 정합. 구 fk_comment_parent 단일 인덱스 대체 |
+| comment | (post_id, parent_comment_id, like_count) | **v1.9** 순공감순 정렬(`ORDER BY like_count DESC`)·BEST 댓글 상위 스캔(`like_count>=임계`). 정렬 화이트리스트 ↔ 인덱스 1:1(B-006) |
+| comment_reaction | (comment_id, user_id) **UK** | **v1.9** 유저당 댓글당 1행 DB 강제(중복 반응·이중 카운트 차단) + myReaction 조회(`comment_id IN (…) AND user_id=?`) 커버. 별도 보조 인덱스 불요 |
 | post_image | (post_id, sort_order) | 게시글 이미지 갤러리 순서 조회 |
 | post_image | (uploader_id, created_at) | 고아 이미지 정리 sweeper(바인딩 안 된 오래된 업로드) + 내 업로드 조회 |
 
@@ -630,8 +654,9 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 5. 아이템 시드 — 최소 스텁 시드(게이트2 승인, FC-019). **EPIC-ITEM 내로 앞당김**(group 4 판매·거래보다 먼저 — 인벤토리·카탈로그·경매 공급이 시드에 의존): item_template ~8건(대분류2×종류2×속성2) + skill_definition ~5건 + **시드 소유자 user·user_balance(현재 member 시드 부재 → 시드에 포함)** + item_instance ~10건(location=INVENTORY, transfer_type=SEED, ownership_history 첫 행 동반). 원게임 대량 실데이터·정밀 수치는 이연(D-067). 진입 경로 = 시드-only(관리자 지급 API 미도입, 게이트2 2026-07-18)
 6. 게임 연동·배송 — item_delivery + 인덱스 2종(EPIC-ITEM-DELIVERY, FC-186)
    - 6-a. 아이템 지급 우편함 — `item_delivery` 신설 + `(status, created_at)`·`(recipient_user_id, status)` 인덱스 + `item_instance.location` enum에 `IN_GAME` 값 추가 = 백엔드 **`V21`**(현재 최신 V20, append-only). `sale_order`(V14)·`item_instance`(V7) 선행 필요(FK). 게임 `user_item.itm_uuid` UK 신설은 게임 스키마·서버 조정 단계(후속 별건, delivery-spec §12.2)라 이 마이그레이션 범위 밖. **게이트2 형상 3건 확정(FC-185)** — (a) location IN_GAME 확장 (b) 게임 claim DB 프로토콜 (c) sale_order_id 1:1 UK 양 경로 커버(delivery-domain-spec §13).
-7. 커뮤니티 게시판 — board, post, comment, post_image (EPIC-BOARD, FC-197·201, v1.8 — 게이트2 승인 확정)
+7. 커뮤니티 게시판 — board, post, comment, post_image (EPIC-BOARD, FC-197·201, v1.8) + comment_reaction·comment 확장 (EPIC-COMMENT-V2, FC-207, v1.9)
    - 7-a. 게시판·게시글·댓글·이미지 — `board`·`post`·`comment`·`post_image` 신설 + 인덱스 5종(§5) + `board` 시드 3건(공지·커뮤니티·이벤트) = 백엔드 **`V22`**(현재 최신 V21, append-only). `board` → `post`(board_id FK) → `comment`(post_id FK)·`post_image`(post_id FK) 순서. `user`(author_id·uploader_id FK) 선행 필요. FC-197 소유. (이미지 파일 실체는 오브젝트 스토리지 — DB 스키마 밖, MinIO 로컬 인프라는 FC-200 docker-compose.)
    - 7-b. 공지 흡수 — 기존 `notice`(V1) 활성 행을 공지 게시판 `post`로 이관(`INSERT INTO post (...) SELECT <공지board_id>, NULL, '공지사항', title, content, (type='URGENT'), created_at, updated_at FROM notice WHERE is_deleted=false`) = 백엔드 **`V23`**. `notice` 테이블 DROP은 **1버전 유예 후 별도 마이그레이션**(롤백 안전, board-spec §8.2). FC-201 소유(+ notice 도메인 코드·CLAUDE.md §1 참조구현 bullet 갱신 동반).
+   - 7-c. 댓글 v2 확장(EPIC-COMMENT-V2, FC-207) — `comment` ALTER(`mentioned_nickname` 추가·`like_count`/`dislike_count`/`reply_count` 추가 DEFAULT 0·`parent_comment_id` 활성화는 컬럼 존치라 DDL 무변경) + `comment_reaction` 신설 + 인덱스 재편(구 `ix_comment_post_list (post_id,is_deleted,id)` DROP → 신 3종 `(post_id,parent_comment_id,id)`·`(parent_comment_id,is_deleted,id)`·`(post_id,parent_comment_id,like_count)` + `comment_reaction` UK) = 백엔드 **`V24`**(현재 최신 V23, append-only). `comment`(V22)·`user`(V3, comment_reaction.user_id FK) 선행. FC-207 소유. **게이트2 3건 사용자 승인 확정(board-spec §14, 2026-08-06)** — (a) 답글 1단계 저장·@멘션 (b) comment_reaction 유저당 1행·전환·카운트 비정규화 (c) 기존 댓글 API 형상 교체 파급. 기본 정렬 = LATEST.
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

@@ -24,6 +24,7 @@
 | v1.9 | 2026-07-18 | 6절 계약 변경 — §3.3 **공통 item 블록 필드 타입 명세 추가**(필드별 타입·nullable·출처 표). 종전에는 필드명만 나열돼 타입 진술이 없었고, 프론트(FC-036)가 `element` 등 코드 축을 `string`으로 추정하는 드리프트가 발생했다. 실제 서버는 5개 코드 축·`level`·`skillPercent` 전부 **정수**(`AuctionItemView` record `int`, erd `INT` 정합)이며 `skill1`·`skill2`·`goldforceExpireAt`만 nullable이다. 아울러 **`element` 코드값(1=물·2=불 외)은 "미확정"으로 명시**했다 — 시드(V9)에 1·2만 실재하고 3·4는 erd 나열 순서 추정에 불과해 정본에 확정 기재하지 않는다(EPIC-ITEM 시드 확장 시 실측 확정). 사유: 계약 타입 공백 보완(FC-030 후속 spec 정본 보정). **엔드포인트·필드 집합·에러코드 무변경**(기존 구현과 이미 정합, 파급 없음) |
 | v1.16 | 2026-07-29 | 6절 계약 변경 — 게이트2(EPIC-OAUTH, FC-152) 승인 반영. 네이버·카카오 소셜 로그인(방식 B — 프론트 주도 + 백엔드 교환). **§2 소셜 로그인 subsection 신설** — `POST /api/v1/auth/oauth/{provider}`(provider ∈ naver\|kakao) 단일 엔드포인트 find-or-create, 요청 `{ code, redirectUri }`(state는 프론트 소유 CSRF·백엔드 미검증이라 요청 바디 제외), 응답 = 기존 `LoginResponse` 형상 그대로(**가입·로그인 모두 200**, 신규/기존 비노출 SEC-007). **§5 `AUTH_006`~`AUTH_008` 등재**(미지원 provider 400·인가코드 교환 실패 401·provider 통신 실패 502). 결정 3건(①로그인·가입 통합 ②이메일 비연결=provider+id가 신원키·소셜 이메일 미저장 ③닉네임 유니크 접미사) 반영. 스키마 = erd v1.5(`user_social_account` 신설·`user.password_hash`·`login_id` nullable화, V19). AUTH_005~008 enum 등록 = 구현 티켓(FC-154). |
 | v1.18 | 2026-07-30 | 6절 계약 변경 — EPIC-LOGINID-CHECK(FC-165, 사용자 게이트1 승인 2026-07-30) 반영. **§2 `GET /api/v1/auth/login-id/availability` 신설**(회원가입 아이디 라이브 중복확인용, 닉네임 가용성 v1.17 미러). 인증 불요·permitAll(`/nickname/availability`와 동류 등재), 요청 query `loginId`(형식·길이=signup 규칙 재사용 `@NotBlank`·`@Size(max=50)`), 응답 `{ available: boolean }`(DTO `LoginIdAvailability{Request,Response}`), 판정=`existsByLoginIdAndIsDeletedFalse`(가입 유니크 검사와 단일 경로), advisory·최종 권위는 signup `AUTH_001`(409). **게이트웨이 배선을 계약 DoD 로 명문화** — 이 경로를 엣지 게이트웨이 `auth-rate-limited` `Path=` predicate 에 등재(FC-161 MAJOR-1 재발 방지, backend FC-166 이 코드+게이트웨이 동시 수행). **신규 도메인 에러코드 없음**(형식 위반은 COMMON 검증 400). 응답 형상 불변·스키마 무변경. loginId 는 자격증명이라 열거 민감도가 닉네임보다 높으나 signup `AUTH_001`이 이미 존재를 노출해 새 열거면 없음 — rate limit·응답 최소화 최종 점검 = FC-168(reviewer). 구현 = FC-166(backend)·FC-167(frontend). |
+| v1.24 | 2026-08-06 | EPIC-COMMENT-V2(FC-206) — 네이버식 댓글 확장. **게이트2 3건 사용자 승인 확정(board-spec §14, 2026-08-06 — (a)A1 답글 1단계+@멘션 · (b)B1 comment_reaction 유저당1행 UK · (c)C1 형상 교체 · 기본 정렬 LATEST · 삭제 tombstone · COMMENT_003).** **§6.3 댓글 절 재작성** — (1) **루트 댓글 목록**(`GET /posts/{id}/comments`)에 `sort` param(`LATEST` 최신순 기본·`OLDEST`·`LIKES` 순공감순) + 응답 `CommentResponse`에 `replyCount`·`likeCount`·`dislikeCount`·`myReaction`(뷰어종속 optional-auth)·`deleted`(tombstone) 가법 + **루트만 반환**(답글 분리); (2) **답글 목록**(`GET /posts/{id}/comments/{commentPublicId}/replies` offset·id asc, `ReplyResponse` = CommentResponse + `mentionedNickname`); (3) **답글 작성**(`POST …/comments/{commentPublicId}/replies`, parentCommentId·mentionedNickname 서버 파생); (4) **반응 토글**(`PUT …/comments/{commentPublicId}/reaction { type: LIKE|DISLIKE }`, 등록·전환·취소 흡수·응답 `{ likeCount, dislikeCount, myReaction }`); (5) **BEST 댓글**(`GET /posts/{id}/comments/best`, 순공감 상위 N·임계). **§5 `COMMENT_003`(자기 댓글 반응 불가, 422) 등재.** 대댓글 = **1단계 저장**(답글의 답글도 루트 귀속·`@멘션` 닉 스냅샷). **삭제 루트 tombstone**(활성 답글 보유 시 마스킹 잔류). **기존 댓글 목록 형상 하위호환 없이 교체**(FC-199/203 방금 배포·외부 소비자 없음·게이트2 (c)). 스키마 = erd v1.9(comment_reaction·comment 확장 V24). 정본 = `board-domain-spec.md` v1.1 §13·§14. 구현 = FC-207~209(backend)·FC-210~212(frontend). |
 | v1.23 | 2026-08-06 | EPIC-BOARD(FC-196) — 커스텀 게시판 시스템. **게이트2 3건 사용자 승인 확정(2026-08-06).** **§6 게시판(board·post·comment·image) 신설**(§5 에러코드 표 뒤 가법 — 기존 §1~§5 번호 불변). 게시판 목록(`GET /boards`·`/boards/{slug}`)·게시글 CRUD+커서목록(`/boards/{slug}/posts`)·댓글 CRUD(`/posts/{postPublicId}/comments` offset)·**이미지 업로드(`POST /board-images` multipart, 응답·목록·상세의 `url`=오브젝트 스토리지 presigned GET)**. 인가 = 목록·상세 공개·쓰기 인증+게시판 write_policy(ADMIN_ONLY→ROLE_ADMIN·AUTHENTICATED)·수정삭제 작성자\|admin(IDOR 주체=SecurityContext). **§5 에러코드 표에 `BOARD_001`~`003`·`POST_001`~`002`·`COMMENT_001`~`002`·`IMAGE_001`~`002` 등재.** 스키마 = erd v1.8(`board`·`post`·`comment`·`post_image` 신설 V22·공지 이관 V23). **공지(notice) 흡수** — `/notices/**` 참조구현 API 폐지·notice 도메인 제거·board가 새 참조구현 승계·CLAUDE.md §1 갱신(§6 서두·FC-201). **게이트2 3건 확정**: (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + StoragePort(S3 호환)·비공개 버킷 presigned GET 서빙(로컬 디스크·`/raw` 프록시 기각) (b) 공지 흡수·notice 제거·참조구현 승계 (c) 옵션 모델 표준 3축. 정본 `board-domain-spec.md` v1.0. 구현 = FC-197~201(backend)·FC-202~204(frontend). |
 | v1.22 | 2026-08-05 | EPIC-ITEM-DELIVERY(FC-185) — **§4.6 게임 아이템 지급·배송 신설**. (a) **구매자 배송 상태 조회(웹 REST)** `GET /me/deliveries`(커서·`status` 필터)·`GET /me/deliveries/{id}`(당사자만) — `recipient=주체` 스코프(IDOR 차단), `DeliverySummary`(status PENDING/CLAIMED/APPLIED/DEFERRED/FAILED·item 요약·itemInstancePublicId), claimToken/claimedAt 미노출. **기존 `/me/inventory`·`/me/orders` 응답 형상 불변**(배송 상태는 신규 엔드포인트에서만·형상 보존). (b) **게임 claim = DB 직접 프로토콜 명세**(웹 REST API 아님 — 통합 스키마 read 통합/write 소유자, memo boundary 선례): claim/apply/ack 조건부 CAS·item_uuid UK exactly-once·boundary 번역은 게임 서버 소속·claim 실이식은 후속 별건. api-contract envelope·에러체계 미편입(비-API 프로토콜 문서화). **§5 `DELIVERY_001`(배송 없음·미존재/비당사자 통일 404) 등재.** 스키마 = erd v1.7(`item_delivery` 신설 V21·`item_instance.location` IN_GAME 확장). **게이트2 형상 3건(delivery-domain-spec §13) 사용자 승인 대상**: (a) location enum 확장 IN_GAME (b) 게임 claim DB 프로토콜 (c) sale_order_id 1:1 UK 양 경로 커버. 정본 `delivery-domain-spec.md` v1.0. 구현 = FC-186~189(backend)·FC-190(frontend). |
 | v1.21 | 2026-08-04 | 6절 계약 변경 — EPIC-CARD-SYSTEM T1(FC-179, 게이트2 A 승인 2026-08-04) 반영. **§4.2 인벤토리·임시보관 "요약"(ItemSummaryResponse) 블록에 `skill1Name`·`skill2Name`(string, nullable) 가법 추가.** 출처 `skill_definition.name`, `skill1Code`/`skill2Code`가 null이면 각각 null(마법 카드는 skill1 부재라 skill1Name=null). §3.3 공통 item 블록의 스킬명(v1.14/FC-098)을 요약 블록에도 대칭 적용해 스킬명 단일 원천을 백엔드로 통일한다(프론트 "스킬 #코드" 폴백 제거). **순수 가법** — 기존 필드(`skill1Code`·`skill2Code`·`skillPercent` 등)·JSON 형상·에러코드·엔드포인트 전부 불변, 인벤토리·임시보관 쿼리가 skill_definition 을 이미 fetch join 하고 코드 노출에서 `getSkill1()`을 이미 참조하므로 N+1·추가 조인 없음. 스키마 무변경(DB 마이그레이션 없음). 정본 `card-system-consolidation-proposal-v0.1.md` §4. FE 배선 = T6. |
@@ -764,6 +765,7 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 | POST_002 | 게시글 작성자 아님(수정·삭제 IDOR, non-admin, §6) | 403 |
 | COMMENT_001 | 댓글 없음(미존재·삭제됨, §6) | 404 |
 | COMMENT_002 | 댓글 작성자 아님(수정·삭제 IDOR, non-admin, §6) | 403 |
+| COMMENT_003 | 자기 댓글 공감/비공감 불가(반응 토글, §6.3) | 422 |
 | IMAGE_001 | 지원하지 않는 이미지 형식(jpeg·png·webp·gif 외, §6) | 422 |
 | IMAGE_002 | 이미지 용량 초과(>5MB, §6) | 422 |
 | CHARGE_001 | 승인 검증 실패 | 422 |
@@ -834,34 +836,65 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 - 응답 204
 - 에러: `POST_001`(404), `POST_002`(403), `BOARD_002`(403), 401
 
-### 6.3 댓글 (comment)
+### 6.3 댓글 (comment) — v1.24 네이버식 확장(대댓글·공감/비공감·정렬·BEST)
 
-댓글 경로는 게시글 `public_id`(전역 유일)에 직접 건다(§1.1 1단 중첩). 목록은 글당 소규모라 offset(§1.3 예외).
+댓글 경로는 게시글 `public_id`(전역 유일)에 직접 건다. 목록은 글당 소규모라 offset(§1.3 예외). **v1.24**: 목록은 **루트 댓글만** 반환하고(답글은 별도 API), 각 댓글에 답글 수·공감/비공감·내 반응을 싣는다. 정본 = board-spec §13·§14(게이트2 3건 상신). 스키마 = erd §4.5(`comment` 확장·`comment_reaction`).
 
-#### GET /api/v1/posts/{postPublicId}/comments — 댓글 목록(offset)
-- 인증: 불요. 요청(query): `?page=<n>&size=<n>`(기본 size 20·상한 100)
-- 응답 200: offset 페이지 `{ content: [ CommentResponse... ], page, size, totalElements, totalPages }` — `post_id=글 AND is_deleted=false`, `id asc`(작성순).
-- `CommentResponse` = `{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable }`.
+> **형상 교체(게이트2 (c) 확정)**: v1.0 `CommentResponse{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable }` → v1.24로 **하위호환 없이 교체**한다(FC-199/203 방금 배포·외부 소비자 없음·형상보존 예외 사용자 승인 2026-08-06). 아래가 신 계약이다.
+
+`CommentResponse`(루트 목록·답글 공통 코어) = `{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable, likeCount, dislikeCount, myReaction, deleted }`
+- `likeCount`·`dislikeCount`(int) = 비정규화 카운트. `myReaction` ∈ `LIKE`|`DISLIKE`|`null`(뷰어 종속 — 인증 시 뷰어의 반응, 비인증·미반응 `null`). `editable`·`myReaction`은 optional-auth(토큰 있으면 부여, `getItemInstance` 선례).
+- `deleted`(bool) = tombstone 여부(board-spec §13.4). `true`면 `content`·`authorNickname`=`null`, `likeCount/dislikeCount`=0, `editable`=false, `myReaction`=null(마스킹).
+
+#### GET /api/v1/posts/{postPublicId}/comments — 루트 댓글 목록(offset)
+- 인증: 불요(인증 시 `myReaction`·`editable` 부여). 요청(query): `?page=<n>&size=<n>`(기본 size 20·상한 100), `?sort=<LATEST|OLDEST|LIKES>`(기본 `LATEST`)
+- `sort`: `LATEST` 최신순(`id DESC`·**기본**, 게이트2 확정) · `OLDEST` 과거순(`id ASC`) · `LIKES` 순공감순(`like_count DESC, id DESC`). 화이트리스트 외 400. `LATEST`/`OLDEST`는 `(post_id, parent_comment_id, id)` 인덱스가 정·역방향 커버, `LIKES`는 `(post_id, parent_comment_id, like_count)` 커버(erd §5).
+- 응답 200: offset 페이지 `{ content: [ CommentResponse + { replyCount } ... ], page, size, totalElements, totalPages }` — `post_id=글 AND parent_comment_id IS NULL AND (is_deleted=false OR reply_count>0)`(tombstone 포함, board-spec §13.4). `replyCount`(int)=이 루트의 활성 답글 수(네이버 "답글 N개").
 - 에러: `POST_001` 글 없음(404)
 
-#### POST /api/v1/posts/{postPublicId}/comments — 댓글 작성
+#### GET /api/v1/posts/{postPublicId}/comments/{commentPublicId}/replies — 답글 목록(offset)
+- 인증: 불요(인증 시 `myReaction`·`editable` 부여). 요청(query): `?page=<n>&size=<n>`(기본 20·상한 100). 정렬은 `id asc` 고정(시간순, param 없음).
+- 응답 200: offset 페이지 `{ content: [ ReplyResponse... ], page, size, totalElements, totalPages }` — `parent_comment_id=대상댓글 AND is_deleted=false`.
+- `ReplyResponse` = `CommentResponse` + `{ mentionedNickname }`(string|null — 답글의 답글이면 @멘션 대상 닉 스냅샷, 직접 답글이면 null). 답글은 `replyCount` 없음(1단계).
+- 에러: `COMMENT_001` 대상 댓글 없음·삭제(404), `POST_001` 글 없음(404)
+
+#### POST /api/v1/posts/{postPublicId}/comments — 루트 댓글 작성
 - 인증: **필요** + 게시판 `allow_comments==true` + 글 존재(미삭제)
-- 요청(body): `{ content }`(`@NotBlank`·≤1000). 작성자=주체.
+- 요청(body): `{ content }`(`@NotBlank`·≤1000). 작성자=주체. `parent_comment_id`=NULL(루트).
 - 동작: 댓글 저장 + `post.comment_count` **동일 TX +1**(board-spec §6.1).
 - 응답 201: `{ commentPublicId, createdAt }`
-- 에러: `POST_001` 글 없음(404), `BOARD_003` 댓글 비허용 게시판(422), 검증 400, 401
+- 에러: `POST_001` 글 없음(404), `BOARD_003` 댓글 비허용(422), 검증 400, 401
 
-#### PUT /api/v1/posts/{postPublicId}/comments/{commentPublicId} — 댓글 수정
-- 인증: **필요** + (작성자 본인) OR `ROLE_ADMIN`
-- 요청(body): `{ content }`
-- 응답 204
-- 에러: `COMMENT_001` 댓글 없음(404), `COMMENT_002` 작성자 아님(403), 검증 400, 401
+#### POST /api/v1/posts/{postPublicId}/comments/{commentPublicId}/replies — 답글 작성
+- 인증: **필요** + 게시판 `allow_comments==true` + 대상 댓글 존재(미삭제)
+- 요청(body): `{ content }`(`@NotBlank`·≤1000). 작성자=주체. 대상 = 경로 `commentPublicId`.
+- 동작(board-spec §13.1): 서버가 대상 댓글의 루트를 해석한다 — 대상이 루트면 `parentCommentId=대상.id`·`mentionedNickname=null`; 대상이 답글이면 `parentCommentId=대상.parentCommentId`(루트로 평탄화)·`mentionedNickname=대상.authorNickname`(@멘션). 저장 + 루트 `comment.reply_count` **동일 TX +1** + `post.comment_count` **동일 TX +1**(답글도 총계 포함).
+- 응답 201: `{ commentPublicId, createdAt }`
+- 에러: `COMMENT_001` 대상 댓글 없음·삭제(404), `POST_001` 글 없음(404), `BOARD_003` 댓글 비허용(422), 검증 400, 401
 
-#### DELETE /api/v1/posts/{postPublicId}/comments/{commentPublicId} — 댓글 삭제(soft)
+#### PUT /api/v1/posts/{postPublicId}/comments/{commentPublicId} — 댓글·답글 수정
+- 인증: **필요** + (작성자 본인) OR `ROLE_ADMIN`. 루트·답글 공통(commentPublicId로 대상).
+- 요청(body): `{ content }`. 응답 204
+- 에러: `COMMENT_001`(404), `COMMENT_002` 작성자 아님(403), 검증 400, 401
+
+#### DELETE /api/v1/posts/{postPublicId}/comments/{commentPublicId} — 댓글·답글 삭제(soft)
 - 인증: **필요** + (작성자 본인) OR `ROLE_ADMIN`
-- 동작: soft delete + `post.comment_count` 동일 TX −1.
+- 동작(board-spec §13.4): soft delete + `post.comment_count` 동일 TX −1. 답글 삭제면 루트 `reply_count` 동일 TX −1. 루트 삭제 시 활성 답글이 있으면 tombstone으로 목록 잔류(마스킹), 없으면 완전 배제.
 - 응답 204
 - 에러: `COMMENT_001`(404), `COMMENT_002`(403), 401
+
+#### PUT /api/v1/posts/{postPublicId}/comments/{commentPublicId}/reaction — 공감/비공감 토글
+- 인증: **필요** + 대상 댓글 존재(미삭제) + **본인 댓글 아님**
+- 요청(body): `{ type: <LIKE|DISLIKE> }`(화이트리스트 외 400)
+- 동작(board-spec §13.2): 유저당 댓글당 1행(UK). 현재 반응이 요청 type과 같으면 취소(DELETE), 다르면 등록/전환(INSERT/UPDATE). `comment.like_count`/`dislike_count`를 **동일 TX 원자 UPDATE**로 동기화.
+- 응답 200: `{ likeCount, dislikeCount, myReaction }` — 반영 후 최종 상태(`myReaction`=null이면 취소됨). 프론트 낙관적 업데이트의 권위 응답.
+- 에러: `COMMENT_001` 댓글 없음·삭제(404), `COMMENT_003` 자기 댓글 반응 불가(422), 검증 400, 401
+
+#### GET /api/v1/posts/{postPublicId}/comments/best — BEST 댓글
+- 인증: 불요(인증 시 `myReaction`·`editable` 부여). 요청 param 없음(고정 랭킹).
+- 응답 200: `{ comments: [ CommentResponse + { replyCount } ... ] }` — 루트 댓글 중 `like_count >= 임계`(설정 `board.comment.best.min-likes`)를 `(like_count − dislike_count) DESC, id DESC` 정렬해 상위 `board.comment.best.max-count`건. 삭제·tombstone 제외. 임계 미달이면 빈 배열.
+- 주: BEST는 정렬 목록(위 `GET …/comments`)과 **분리된 고정 랭킹**이며 정렬 목록에도 중복 노출된다(네이버 동일 — 하이라이트일 뿐 목록에서 빼지 않음). 설정값은 데모 트래픽에 맞춰 낮출 수 있다(board-spec §13.3).
+- 에러: `POST_001` 글 없음(404)
 
 ### 6.4 이미지 (board image) — 2단계 업로드 + 오브젝트 스토리지(게이트2 (a) 확정)
 
@@ -878,6 +911,6 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 
 ### 6.5 인가·배선 요약(구현 참조)
 
-- SecurityConfig: 공개 GET(`/api/v1/boards/**` GET·`/api/v1/posts/*/comments` GET) permitAll, 그 외 board 쓰기 경로(게시글·댓글·이미지 업로드)는 `anyRequest().authenticated()`. **이미지 서빙은 앱 경로가 아니라 스토리지 presigned URL이라 별도 permitAll 불요**(백엔드 프록시 없음). **기존 `/notices/**` permitAll 라인은 제거**(notice 폐지, board-spec §8.2). write_policy(ADMIN_ONLY) 세부 게이팅은 서비스 계층(`ROLE_ADMIN` authorities 검사) — URL 패턴만으로 표현 못 함(게시판별 정책이 DB 값이므로).
+- SecurityConfig: 공개 GET(`/api/v1/boards/**` GET·`/api/v1/posts/*/comments` GET·`/api/v1/posts/*/comments/*/replies` GET·`/api/v1/posts/*/comments/best` GET) permitAll, 그 외 board 쓰기 경로(게시글·댓글·답글·반응·이미지 업로드)는 `anyRequest().authenticated()`. **반응 토글(`PUT …/reaction`)·답글 작성(`POST …/replies`)은 인증 필요**(공개 GET 패턴이 이들을 삼키지 않도록 HTTP 메서드로 분리 — GET만 permitAll). **이미지 서빙은 앱 경로가 아니라 스토리지 presigned URL이라 별도 permitAll 불요**(백엔드 프록시 없음). **기존 `/notices/**` permitAll 라인은 제거**(notice 폐지, board-spec §8.2). write_policy(ADMIN_ONLY) 세부 게이팅·자기 반응 금지(`COMMENT_003`)는 서비스 계층 판정(URL 패턴만으로 표현 못 함).
 - 게이트웨이(D-068): 신규 permitAll GET 경로는 인증 계열이 아니라 auth-rate-limited predicate 등재 대상 아님(닉네임 가용성 선례와 무관). 일반 라우팅으로 충분.
 

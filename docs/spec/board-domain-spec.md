@@ -1,12 +1,13 @@
 # FinalCall 게시판 도메인 스펙 (board · post · comment · image)
 
-상태: **v1.0 — EPIC-BOARD 계약 확정(FC-196). 게이트2 3건(§11) 사용자 승인 완료(2026-08-06).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) + 영향 티켓 산출 경유.
+상태: **v1.1 — EPIC-COMMENT-V2 댓글 확장 계약(FC-206). 게이트2 3건(§14) 사용자 승인 완료(2026-08-06).** (v1.0 EPIC-BOARD 계약 확정·게이트2 3건(§11) 승인 완료 2026-08-06.) 이후 변경은 계약 변경 절차(`common/rules.md [6]`) + 영향 티켓 산출 경유.
 소유: 기획/설계(architect).
 근거: EPIC-BOARD 게이트1 4결정(2026-08-06) — (1) 게시판=시드 정의 우선(관리자 UI 다음 에픽) (2) 댓글 포함 (3) 이미지 포함 (4) 공지(notice) 흡수. 게이트2 3건 승인(2026-08-06). CLAUDE.md §5(도메인 컨벤션)·§9.7~§9.10(V2 어휘·배치). 기존 `notice` 참조 구현(단순 CRUD). erd v1.8·api-contract v1.23.
 정본 매핑: 스키마 = `erd.md` §4.5, API 계약 = `api-contract.md` §6.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.1 | 2026-08-06 | **EPIC-COMMENT-V2 — 네이버식 댓글 확장 계약 확정(FC-206, 게이트2 3건 §14 사용자 승인 2026-08-06).** 결정: (a) 답글 = A1(1단계 평탄화 + 닉 스냅샷 @멘션) · (b) 반응 = B1(comment_reaction 유저당 1행 UK + 원자 카운트 비정규화) · (c) 기존 댓글 API = C1(하위호환 없이 형상 교체·형상보존 예외 승인) · **★기본 정렬 = 최신순(LATEST)**(초안 LIKES에서 변경) · 삭제 tombstone 확정 · 자기 반응 금지 COMMENT_003 확정 · comment_count 루트+답글 총계 확정. 평면 댓글(FC-199/203)을 대댓글(1단계)·공감/비공감·정렬(최신/과거/순공감)·BEST로 확장. **§2.3 Comment 확장**(parent_comment_id 활성·mentioned_nickname·like/dislike/reply_count), **§13 신설**(대댓글 1단계 모델·comment_reaction·정렬·BEST·삭제 tombstone·인가 불변식), **§14 신설**(게이트2 3건 — 답글 모델·반응 스키마·기존 API 형상 교체). §4 인가·§5 불변식·§6 카운터 갱신. 스키마 = erd v1.9(comment_reaction·comment 확장 V24), API = api-contract §6.3(v1.24). 구현 = FC-207~209(backend)·FC-210~212(frontend) |
 | v1.0 | 2026-08-06 | **게이트2 3건 사용자 승인 확정** — (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + `StoragePort`(S3 호환 단일 구현)·presigned GET 서빙(§7 전면 재작성) (b) 공지 흡수=이전+정리·notice 제거·board 참조구현 승계·CLAUDE.md §1 갱신(FC-201 포함) (c) 옵션 표준 3축. Board·Post·Comment·PostImage 도메인 모델·인가 불변식·공지 흡수 순서 정본화. FC-196 계약 확정 |
 | v0.1 | 2026-08-06 | 골격 착수(PROPOSAL) — 도메인 모델·인가 불변식·이미지 스토리지 추상화·공지 흡수 전략·게이트2 3건 상신 |
 
@@ -62,7 +63,7 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 | `isPinned` | 상단 고정(공지·이벤트 상단 노출). 목록 정렬 1순위 |
 | soft delete | `isDeleted`·`deletedAt` — 삭제 글은 조회에서 제외(NOT_FOUND) |
 
-### 2.3 Comment (댓글)
+### 2.3 Comment (댓글) — v1.1 대댓글·반응 확장
 
 | 필드 | 의미 |
 |---|---|
@@ -71,8 +72,23 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 | `authorId` | 작성자 FK→user(웹 작성 항상 값). 인가 주체 |
 | `authorNickname` | 작성 시점 닉 스냅샷(≤30) |
 | `content` | 본문 ≤1000자, `@NotBlank` |
-| `parentCommentId` | 대댓글 앵커(self-FK, nullable). **이번 에픽은 컬럼만 예약**하고 평면 목록으로 서빙한다(reply UI 다음 에픽, §11(c)) |
-| soft delete | `isDeleted`·`deletedAt` |
+| `parentCommentId` | 대댓글 앵커(self-FK, nullable). **v1.1 활성** — 답글은 항상 **최상위(루트) 댓글**을 가리킨다(1단계, §13.1). 루트 댓글은 NULL |
+| `mentionedNickname` | **v1.1 신설**(nullable) — 답글의 답글일 때 @멘션 대상 닉 스냅샷. 직접 답글·루트 댓글은 NULL(§13.1) |
+| `likeCount`·`dislikeCount` | **v1.1 신설** — 공감·비공감 비정규화 카운트(comment_reaction과 동일 TX 원자 증감, §13.2) |
+| `replyCount` | **v1.1 신설** — 답글 수 비정규화(루트 댓글만 유효, 답글 생성/삭제 동일 TX 증감) |
+| soft delete | `isDeleted`·`deletedAt`. 삭제 루트는 활성 답글 보유 시 tombstone 잔류(§13.4) |
+
+댓글의 대댓글·반응·정렬·BEST 모델 전체는 **§13**(EPIC-COMMENT-V2), 공감/비공감 저장 엔티티 `CommentReaction`은 §13.2 정본이다.
+
+### 2.3.1 CommentReaction (공감/비공감) — v1.1
+
+| 필드 | 의미 |
+|---|---|
+| `commentId` | 반응 대상 댓글 FK(루트·답글 무관) |
+| `userId` | 반응 주체 FK→user(SecurityContext) |
+| `reactionType` | `LIKE` \| `DISLIKE`. 전환 시 이 컬럼만 UPDATE |
+
+유저당 댓글당 **1행**(UK(comment_id,user_id))·`public_id` 없음(대상 댓글 하위 토글, URL 리소스 아님)·soft delete 없음(취소=물리 DELETE). 상세 = §13.2·erd §4.5.
 
 ### 2.4 PostImage (이미지 첨부)
 
@@ -115,11 +131,13 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 
 | 동작 | 인가 규칙 | 위반 시 |
 |---|---|---|
-| 게시판 목록·글 목록·글 상세·댓글 목록·이미지 조회 | **공개**(인증 불요) | — |
+| 게시판 목록·글 목록·글 상세·댓글 목록·답글 목록·BEST 댓글·이미지 조회 | **공개**(인증 불요, 인증 시 뷰어종속 `myReaction`·`editable` 부여) | — |
 | 게시글 작성 | 인증 필요 + `board.isActive` + `writePolicy` 충족: `ADMIN_ONLY`→`ROLE_ADMIN` 필요 / `AUTHENTICATED`→임의 인증 | 미인증 401 · 정책 위반 `BOARD_002`(403) · 비활성 `BOARD_001`(404) |
 | 게시글 수정·삭제 | 인증 필요 + (**작성자 본인** `authorId==subject`) **OR** `ROLE_ADMIN` | `POST_002`(403) |
 | 댓글 작성 | 인증 필요 + `board.allowComments==true` + 글 존재(미삭제) | 비허용 `BOARD_003`(422) · 글 없음 `POST_001`(404) |
 | 댓글 수정·삭제 | 인증 필요 + (작성자 본인) OR `ROLE_ADMIN` | `COMMENT_002`(403) |
+| 답글 작성 | 인증 필요 + `board.allowComments==true` + 대상 댓글·글 존재(미삭제) | 비허용 `BOARD_003`(422) · 대상 없음 `COMMENT_001`(404) |
+| 댓글·답글 반응(공감/비공감 토글) | 인증 필요 + 대상 댓글 존재(미삭제) + **본인 댓글 아님** | 대상 없음 `COMMENT_001`(404) · 자기 반응 `COMMENT_003`(422) |
 | 이미지 업로드 | 인증 필요(임의 인증) | 401 |
 
 인가 불변식:
@@ -137,14 +155,22 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 - **P-2** soft delete된 글·댓글은 목록·상세·카운트에서 제외(`isDeleted=false` 필터 동반 필수 — notice 선례, N+1/다건 바인딩 파손 방지).
 - **C-1** Comment는 항상 하나의 Post에 귀속. 글이 soft delete되면 그 댓글은 조회에서 함께 사라진다(글 필터로 자연 배제, 댓글 개별 정리 불요).
 - **I-1(이미지)** PostImage.`postId`는 바인딩 전 NULL(고아), 바인딩 후 고정. 한 이미지는 한 게시글에만 귀속(재귀속 금지). 바인딩은 업로더==작성자==주체일 때만.
-- **N-1(비정규화 정합)** `post.commentCount`는 댓글 생성 시 +1, soft delete 시 −1을 **동일 TX**에서 수행한다. `post.viewCount`는 상세 조회 시 원자 증가(§6.2).
+- **N-1(비정규화 정합)** `post.commentCount`는 댓글·답글 생성 시 +1, soft delete 시 −1을 **동일 TX**에서 수행한다(루트·답글 모두 총계에 포함, §6.1). `post.viewCount`는 상세 조회 시 원자 증가(§6.2).
+- **C-2(대댓글 1단계)** 답글의 `parentCommentId`는 항상 **루트 댓글**(자신이 `parentCommentId IS NULL`)만 가리킨다. 답글에 대한 답글도 그 루트에 귀속(2단계 트리 금지, §13.1).
+- **R-1(반응 유일)** 한 유저는 한 댓글에 반응 1행만 갖는다(UK(comment_id,user_id) DB 강제). `LIKE↔DISLIKE` 전환은 행 UPDATE, 취소는 DELETE — 어떤 경로도 2행을 만들지 않는다(§13.2).
+- **R-2(카운트 정합)** `comment.likeCount`/`dislikeCount`는 반응 행 변화와 **동일 TX 원자 UPDATE**로만 증감한다. `comment.replyCount`는 답글 생성/삭제와 동일 TX 증감(루트 댓글 대상).
+- **R-3(자기 반응 금지)** 본인 작성 댓글에는 공감/비공감 불가(`COMMENT_003`, 422 — self-bid `BID_003` 선례).
 
 ---
 
 ## 6. 상태·카운터
 
 ### 6.1 comment_count (비정규화)
-목록(`PostSummary`)이 댓글 수를 싣는데 글마다 `COUNT(comment)` 서브쿼리는 N+1이다. `post.comment_count`를 비정규화하고 댓글 생성/삭제와 동일 TX에서 증감한다. 초기 흡수·시드 글은 0.
+목록(`PostSummary`)이 댓글 수를 싣는데 글마다 `COUNT(comment)` 서브쿼리는 N+1이다. `post.comment_count`를 비정규화하고 댓글 생성/삭제와 동일 TX에서 증감한다. 초기 흡수·시드 글은 0. **v1.1**: 답글(대댓글)도 댓글이므로 **총계에 포함**한다 — 답글 생성 시에도 `post.comment_count` +1, 답글 삭제 시 −1(헤더 "댓글 N"은 루트+답글 총합, 네이버 동일). 루트별 답글 수는 별도 `comment.reply_count`(§13.3)로 관리한다.
+
+### 6.4 comment 반응·답글 카운트 (비정규화, v1.1)
+- `comment.like_count`/`dislike_count`: `comment_reaction` 행 변화(등록·전환·취소)와 **동일 TX 원자 UPDATE**(`SET like_count = like_count ± 1`). in-memory 증감 금지(동시 반응 폭주 손실 방지, N-1 선례).
+- `comment.reply_count`(루트만): 답글 생성 +1·soft delete −1을 동일 TX 원자 UPDATE. 삭제 루트 tombstone 판정(§13.4)에 사용.
 
 ### 6.2 view_count
 게시글 상세(`GET .../posts/{id}`) 조회 시 `UPDATE post SET view_count = view_count + 1 WHERE id=?`로 원자 증가한다. 이번 에픽은 **중복 제거(동일 사용자 재조회 무증가)를 하지 않는다**(단순 카운터). 봇·새로고침 증폭은 감수(포트폴리오 범위) — 향후 조회 로그·TTL 디둡은 확장.
@@ -285,6 +311,7 @@ CLAUDE.md §1은 notice를 "참조 구현(컨벤션 쇼케이스)"으로 명시�
 
 ### (c) 게시판 옵션 모델 범위 — **확정: 표준 3축**
 - **결정**: `write_policy`(ADMIN_ONLY|AUTHENTICATED) · `allow_comments` · `board_type`(GENERAL|NOTICE|EVENT). 대댓글은 컬럼(`parent_comment_id`)만 예약하고 UI는 다음 에픽. 읽기정책·태그·길이/첨부 상한 등은 YAGNI로 제외(향후 관리자 CRUD 에픽에서 가법 추가 — 스키마가 이를 견딤).
+  - **(v1.1 갱신)** "다음 에픽" = **EPIC-COMMENT-V2**(FC-206)가 이 예약을 활성화한다 — 대댓글 1단계·공감/비공감·정렬·BEST(§13·§14). 이 §11(c)는 v1.0 확정 시점 기록이며, 대댓글 모델 정본은 §13이다.
 
 ---
 
@@ -300,3 +327,108 @@ CLAUDE.md §1은 notice를 "참조 구현(컨벤션 쇼케이스)"으로 명시�
 | FC-202 | 게시판/글목록/상세/작성 화면(디자인 게이트) | §8.4·api §6 |
 | FC-203 | 댓글 UI | §2.3·api §6 |
 | FC-204 | 이미지 첨부 UI + 공지 페이지 새 API 전환 | §7·§8.4 |
+
+EPIC-COMMENT-V2 하위 티켓(§13·§14):
+
+| 티켓 | 산출 | 계약 근거 |
+|---|---|---|
+| FC-206 | 댓글 v2 계약·스키마(이 문서 v1.1·erd v1.9·api §6.3·§14 게이트2) | §13·§14 |
+| FC-207 | 대댓글 threading(V24 스키마) + 답글 목록·답글 작성 API + 루트 replyCount + tombstone | §13.1·§13.4·api §6.3 |
+| FC-208 | 공감/비공감 — comment_reaction·토글(등록·전환·취소)·카운트 비정규화 | §13.2·api §6.3 |
+| FC-209 | 정렬(순공감/최신/과거) + BEST 댓글 | §13.3·api §6.3 |
+| FC-210 | 네이버식 댓글 UI — 대댓글·답글 펼치기·답글 폼·@멘션(디자인 게이트) | §13.1·api §6.3 |
+| FC-211 | 공감/비공감 버튼·카운트 | §13.2·api §6.3 |
+| FC-212 | 정렬 드롭다운 + BEST 표시 | §13.3·api §6.3 |
+
+---
+
+## 13. 댓글 v2 — 대댓글·공감/비공감·정렬·BEST (EPIC-COMMENT-V2)
+
+게이트1 확정(2026-08-06): **풀 네이버**(대댓글 + 공감/비공감 + 정렬 + BEST) · 중첩 **1단계**. 기존 평면 댓글(§2.3 v1.0)을 확장한다. 정본 스키마 = erd §4.5(`comment` 확장·`comment_reaction`), API = api-contract §6.3.
+
+### 13.1 대댓글 (답글) — 1단계 저장 모델
+
+- **저장 형상**: 답글은 `parent_comment_id`로 **루트 댓글**(자신이 `parent_comment_id IS NULL`인 최상위 댓글)에 귀속한다. 트리는 **깊이 1단계로 평탄화**된다 — 답글의 답글도 물리적으로 같은 루트에 붙는다(2단계 트리 없음, C-2).
+- **답글 대상 = 경로의 댓글**: 답글 작성은 대상 댓글의 `commentPublicId`를 경로로 받는다(§api 6.3 `POST …/comments/{commentPublicId}/replies`). 서버가 대상 댓글을 로드해 루트를 해석한다:
+  - 대상이 **루트**(`parentCommentId IS NULL`)면 → 새 답글 `parentCommentId = 대상.id`, `mentionedNickname = NULL`(루트에 직접 단 답글, 멘션 없음).
+  - 대상이 **답글**(`parentCommentId != NULL`)이면 → 새 답글 `parentCommentId = 대상.parentCommentId`(같은 루트로 평탄화), `mentionedNickname = 대상.authorNickname`(그 답글 작성자에게 @멘션).
+- **@멘션 표현(게이트2 (a) 권장안)**: 대상 닉 **스냅샷 1컬럼**(`mentioned_nickname`)만 저장한다 — 대상 `commentPublicId` 참조는 저장하지 않는다. 표시는 프론트가 `mentionedNickname`을 답글 본문 앞 `@닉` 배지로 렌더(네이버 형상). 대상 댓글로의 스크롤/링크는 이 에픽 범위 밖(닉 스냅샷은 닉 변경·탈퇴에도 안정, R1 선례). 멘션은 **인가·알림에 관여하지 않는다**(순수 표시).
+- **답글 목록 지연 로딩**: 루트 목록은 답글 본문을 싣지 않고 `replyCount`만 싣는다(네이버 "답글 N개"). 프론트가 펼칠 때 `GET …/comments/{root}/replies`(offset·id asc 시간순)로 답글을 가져온다.
+- **삭제**: 답글 soft delete는 완전 배제(§13.4). 루트 삭제 시 활성 답글이 있으면 tombstone(§13.4).
+
+### 13.2 공감/비공감 (comment_reaction)
+
+- **엔티티**: `CommentReaction{ commentId, userId, reactionType(LIKE|DISLIKE) }`, **UK(comment_id, user_id)**(유저당 댓글당 1행). 루트·답글 모두 반응 대상.
+- **토글 의미론**(단일 엔드포인트 `PUT …/reaction { type }`, 게이트2 (b)):
+
+| 현재 내 반응 | 요청 type | 동작 | 카운트 델타(동일 TX) |
+|---|---|---|---|
+| 없음 | LIKE | INSERT(LIKE) | like +1 |
+| 없음 | DISLIKE | INSERT(DISLIKE) | dislike +1 |
+| LIKE | LIKE | DELETE(취소) | like −1 |
+| LIKE | DISLIKE | UPDATE(→DISLIKE) | like −1, dislike +1 |
+| DISLIKE | DISLIKE | DELETE(취소) | dislike −1 |
+| DISLIKE | LIKE | UPDATE(→LIKE) | dislike −1, like +1 |
+
+- **카운트 비정규화(R-2)**: 위 델타는 `comment.like_count`/`dislike_count`에 **동일 TX 원자 UPDATE**로 반영(§6.4). in-memory 증감 금지. 반응 행과 카운트가 한 TX라 손실 증분 없음.
+- **동시성**: UK가 중복 INSERT를 DB에서 차단(경합 시 한쪽 UK 위반 → 재조회·전환 경로). 카운트 UPDATE는 원자 증감이라 동시 반응에서 손실 없음.
+- **자기 반응 금지(R-3)**: 대상 댓글 `authorId == 주체`면 `COMMENT_003`(422).
+- **myReaction 노출**: 목록·답글·BEST 응답의 `myReaction`은 뷰어 종속(`LIKE`|`DISLIKE`|`null`)이다 — 인증 시 뷰어의 반응 행을 배치 조회(`comment_id IN (…) AND user_id=주체`, UK 커버)해 채우고, 비인증은 `null`. `editable`(§1.0)과 같은 optional-auth 패턴(토큰 있으면 붙임, `getComments` 선례).
+
+### 13.3 정렬 · BEST 댓글
+
+- **루트 목록 정렬 param** `sort`(query, 루트 목록에만 적용):
+
+| 값 | 의미 | 정렬 키 |
+|---|---|---|
+| `LATEST` | 최신순(기본값) | `id DESC` |
+| `OLDEST` | 과거순(작성순) | `id ASC` |
+| `LIKES` | 순공감순 | `like_count DESC, id DESC` |
+
+기본값 = **`LATEST`(최신순)**(게이트2 사용자 확정 2026-08-06 — 초안 `LIKES`에서 변경). 화이트리스트 외 값은 검증 400. 정렬 키 ↔ 인덱스 1:1(erd §5, B-006) — `LATEST`·`OLDEST`는 `(post_id, parent_comment_id, id)` 인덱스가 정·역방향 모두 커버(id 단조), `LIKES`는 `(post_id, parent_comment_id, like_count)`가 커버. **답글 목록은 항상 `OLDEST`(id asc) 고정**(스레드 시간순, param 없음). **BEST 댓글은 목록 기본 정렬과 무관하게 공감 상위 기준 유지**(§13.3 BEST 항).
+
+- **BEST 댓글**: 루트 댓글 중 `like_count >= board.comment.best.min-likes`(설정, 권장 기본 3)인 것을 `(like_count − dislike_count) DESC, id DESC`로 정렬해 상위 `board.comment.best.max-count`(설정, 권장 기본 3)건. 답글은 BEST 대상 아님. 삭제·tombstone 루트 제외. 임계 미달이면 빈 목록(BEST 섹션 미노출).
+- **노출 방식**: **별도 엔드포인트** `GET …/comments/best`(§api 6.3)로 BEST 목록을 반환한다(정렬 목록과 분리 — BEST는 정렬 param과 무관한 고정 랭킹이라 페이지네이션에 얽지 않는다). 프론트는 BEST 섹션을 상단에 렌더하고, 그 아래 정렬 목록(`GET …/comments?sort=`)을 렌더한다. BEST 댓글은 정렬 목록에도 **중복 노출**된다(네이버 동일 — BEST는 하이라이트일 뿐 목록에서 빼지 않는다). 설정값은 데모 트래픽에 맞춰 낮출 수 있다(포트폴리오).
+
+### 13.4 삭제 댓글 tombstone (스레드 보존)
+
+- **답글 삭제** → 목록에서 완전 배제(활성 필터). 루트 `reply_count` −1(동일 TX).
+- **루트 삭제**:
+  - 활성 답글 **없음**(`reply_count == 0`) → 완전 배제(v1.0 동작).
+  - 활성 답글 **있음**(`reply_count > 0`) → **tombstone 잔류**: 목록에 남되 본문·작성자·반응을 마스킹한다(응답 `deleted: true`·`content: null`·`authorNickname: null`·`likeCount/dislikeCount: 0`·`editable: false`·`myReaction: null`). `replyCount`·`createdAt`은 유지해 답글 접근을 보존한다. 삭제 루트에는 신규 답글·반응 불가(`COMMENT_001`).
+- **루트 목록 쿼리**: `post_id=? AND parent_comment_id IS NULL AND (is_deleted=false OR reply_count>0)`. tombstone 판정은 인출 후 매핑에서 수행(글당 소규모, erd §5 인덱스 주). `post.comment_count`는 삭제 시점에 이미 −1 됐으므로 tombstone은 헤더 총계에 포함하지 않는다(본문이 사라진 자리표시일 뿐).
+
+### 13.5 서비스 구조 (V2 §9.10)
+
+오케스트레이션 `CommentService` + 협력 빈. 반응 토글 판정은 내부 계산 VO(`ReactionDecision{ delta, resultingType }` 등, 영속·직렬화 아님 → `service/` 잔류)로 추출 가능. `CommentReaction` 엔티티·`CommentReactionRepository`는 board feature 내 `entity/`·`repository/`. 반응 카운트 원자 UPDATE는 `CommentRepository` default/`@Modifying` 메서드(`incrementLikeCount` 등, `PostRepository.incrementCommentCount` 선례).
+
+---
+
+## 14. 게이트2 3건 — EPIC-COMMENT-V2 (사용자 승인 확정 2026-08-06)
+
+> **확정**: (a) A1 · (b) B1 · (c) C1 전부 권장안대로 승인. **기본 정렬은 사용자가 `LATEST`(최신순)로 확정**(초안 `LIKES`에서 변경, §13.3). 삭제 tombstone·자기 반응 금지(COMMENT_003)·comment_count 루트+답글 총계 모두 확정. 아래 각 항의 "권장안"이 확정안이다.
+
+### (a) 답글(대댓글) 저장 모델 · @멘션 표현 — **확정: A1 = 1단계 평탄화 + 닉 스냅샷 멘션**
+
+- **권장안**: 모든 답글을 루트 댓글에 `parent_comment_id`로 귀속(1단계). 답글의 답글도 같은 루트로 평탄화하고, 대상 답글 작성자 닉을 `mentioned_nickname`(스냅샷 1컬럼)에 저장해 `@닉`으로 표시(§13.1).
+- **선택지**: (A1) 1단계 평탄화 + 닉 스냅샷 멘션(권장) · (A2) 1단계 + 대상 `commentPublicId` 참조까지 저장(대상 댓글 링크·스크롤 가능) · (A3) 진짜 N단계 트리(재귀 조회).
+- **근거**: 게이트1이 "1단계·@멘션"으로 확정 → A3 기각. A2는 대상 댓글 링크가 가능하나 이 에픽 UI 범위(펼침·@배지)엔 불필요하고 대상 삭제 시 dangling 참조 관리 부담. A1은 닉 스냅샷이라 대상 삭제·닉 변경에 안정(R1 선례)이고 저장·렌더가 최소. 향후 링크가 필요하면 A2로 가법 확장(스키마가 견딤).
+
+### (b) 반응 스키마 (comment_reaction) — **확정: B1 = 유저당 1행 UK + 원자 카운트 비정규화**
+
+- **권장안**: `comment_reaction(comment_id, user_id, reaction_type)` + **UK(comment_id, user_id)**. LIKE↔DISLIKE 전환 = 행 UPDATE, 취소 = 행 DELETE(§13.2 표). `comment.like_count`/`dislike_count`는 반응 변화와 **동일 TX 원자 UPDATE**로 동기화. 단일 토글 엔드포인트 `PUT …/reaction { type }`가 등록·전환·취소를 모두 흡수하고 결과 상태(`{ likeCount, dislikeCount, myReaction }`)를 반환.
+- **선택지**: (B1) 유저당 1행 UK + 비정규화 카운트(권장) · (B2) append-only 반응 로그(취소도 새 행) + 실시간 `COUNT`/집계 · (B3) 카운트만 컬럼(개별 반응 행 없음, myReaction 불가).
+- **근거**: B3은 myReaction·중복 방지 불가(뷰어가 자기 반응을 알 수 없고 중복 반응 차단 불가) → 기각. B2는 감사 이력엔 좋으나 매 조회 집계 비용·현재 상태 판정 복잡 → 반응은 이력보다 현재 상태가 본질이라 과설계. B1은 UK가 유일성·이중 카운트를 DB에서 강제(charge.pg_tx_id·money_exchange 멱등 UK 선례)하고, 원자 UPDATE가 동시 반응 폭주에서 손실 없이 카운트를 유지(N-1 비정규화 선례). 카운트가 비정규화라 목록에서 `COUNT` 서브쿼리 N+1 없음.
+
+### (c) 기존 댓글 API 형상 교체 파급 — **확정: C1 = 하위호환 없이 형상 교체(형상보존 예외 승인)**
+
+- **상황**: FC-199(백엔드)·FC-203(프론트)이 방금 배포됐고 **외부 소비자가 없다**(내부 프론트만 이 계약을 소비). 목록 응답이 평면 `CommentResponse{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable }`에서 루트 목록(+`replyCount`·`likeCount`·`dislikeCount`·`myReaction`·`deleted`)으로 바뀌고, `GET /comments`가 이제 **루트 댓글만** 반환한다(답글은 별도 API).
+- **권장안**: **버저닝·마이그레이션 없이 형상 직접 교체**(v1.1 계약이 v1.0 응답을 대체). 백엔드 `CommentResponse`/서비스/DTO를 교체하고, 프론트를 새 형상으로 동시 전환. 방금 배포라 유예할 외부 계약이 없어 하위호환 레이어는 순부채다.
+- **선택지**: (C1) 형상 직접 교체(권장) · (C2) `v2` 필드 가법(구 필드 유지 + 신 필드 추가, 점진 이행) · (C3) 신규 엔드포인트 병행(구 `/comments`, 신 `/comments?v=2`).
+- **근거**: C2·C3은 외부 소비자가 있을 때의 무중단 이행 기법인데 소비자가 내부 프론트 하나뿐이라 이득이 없고 dead 코드·이중 유지만 남긴다. C1이 계약을 단일 진실로 유지한다. **형상 보존 원칙의 예외를 명시적으로 승인받는 항목**(V2 §9.7 "직렬화 JSON 형상 불변"은 어휘 정리에 적용 — 이번은 의도된 계약 형상 변경이라 게이트2로 상신).
+- **영향받는 프론트 파일·티켓**(contract-first 파급):
+  - `frontend/src/lib/api/comments.ts` — `CommentResponse` 인터페이스에 `replyCount`·`likeCount`·`dislikeCount`·`myReaction`·`deleted` 추가, `getComments`에 `sort` param, 신규 함수 `getReplies`·`createReply`·`toggleReaction`·`getBestComments` (FC-210~212 소비).
+  - `frontend/src/lib/queries/comments.ts` — 루트/답글 쿼리 분리, 반응 뮤테이션(낙관적 업데이트+권위 응답), BEST 쿼리, `sort` 키.
+  - `frontend/src/features/board/components/CommentSection.tsx` — 정렬 드롭다운·BEST 섹션·루트 목록.
+  - `frontend/src/features/board/components/CommentItem.tsx` — 답글 펼치기·답글 폼·@멘션 배지·공감/비공감 버튼·tombstone 렌더.
+  - 티켓: **FC-210**(대댓글 UI)·**FC-211**(반응 버튼)·**FC-212**(정렬+BEST)가 위 파일을 소유. 백엔드 **FC-207**(threading·답글 API)·**FC-208**(반응)·**FC-209**(정렬·BEST). 이 4 프론트 파일은 FC-210에서 신 형상으로 1차 전환되고 FC-211·212가 증분한다.
