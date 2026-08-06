@@ -62,6 +62,11 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	// EPIC-EMAIL-VERIFY(FC-129): 이메일 인증 코드 SMTP 발송(JavaMailSender). 버전은 BOM 관리.
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// EPIC-BOARD(FC-200): 게시글 이미지 오브젝트 스토리지(로컬 MinIO·운영 S3, StoragePort S3 호환 단일 구현).
+	//   S3Presigner(비공개 버킷 presigned GET)는 s3 모듈에 포함된다 — 별도 presigner 아티팩트 불요.
+	//   AWS SDK v2 는 Spring Boot BOM 관리 밖이라 AWS SDK BOM 을 platform 으로 임포트해 버전을 정합시킨다.
+	implementation platform('software.amazon.awssdk:bom:2.28.29')
+	implementation 'software.amazon.awssdk:s3'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -71,6 +76,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:mysql'
+	// EPIC-BOARD(FC-200): MinIO Testcontainer 로 실 업로드·presigned GET 검증(S3 호환). 버전은 testcontainers BOM 관리.
+	testImplementation 'org.testcontainers:minio'
 	// EPIC-SEARCH(FC-107): ES Testcontainer 로 색인/검색 쿼리 테스트(CDC 스택은 런북 수동 검증). 버전은 BOM 관리.
 	testImplementation 'org.testcontainers:elasticsearch'
 	testImplementation 'org.springframework.security:spring-security-test'

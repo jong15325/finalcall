@@ -34,10 +34,14 @@ import org.springframework.test.web.servlet.MockMvc;
 // EPIC-SEARCH: 검색 화해 워커 배경 tick 을 끄고(search.reconciliation.enabled=false), ES 미기동 통합 테스트에서
 //   /actuator/health 가 ES DOWN 으로 503 이 되지 않도록 ES health 컨트리뷰터를 끈다(색인/검색 검증은 ES
 //   Testcontainer 를 띄우는 ListingSearchIntegrationTest 가 전담 — 여기 base 는 MySQL/Redis 만 공유한다).
+// EPIC-BOARD(FC-200): 게시글 이미지 스토리지(MinIO/S3) 부팅 시 버킷 생성 러너를 끈다 — 스토리지 무관 통합 테스트에서
+//   MinIO 미기동에 startup 접속 지연·경고가 나지 않도록. 실 스토리지 검증은 MinIO Testcontainer 를 띄우는
+//   BoardImageStorageIntegrationTest 가 전담하고, 바인딩·인가는 StoragePort 를 @MockBean 으로 대체해 검증한다.
 @TestPropertySource(properties = {
     "gateway.internal.enforced=false", "closing.worker.enabled=false", "shop.expiry.worker.enabled=false",
     "delivery.worker.enabled=false", "demo.seed.enabled=false", "search.reconciliation.enabled=false",
-    "search.reindex-on-startup=false", "management.health.elasticsearch.enabled=false"})
+    "search.reindex-on-startup=false", "management.health.elasticsearch.enabled=false",
+    "board.image.storage.ensure-bucket-on-startup=false"})
 public abstract class IntegrationTest {
 
     @Autowired

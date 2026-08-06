@@ -18,7 +18,7 @@ import com.finalcall.support.TestcontainersConfiguration;
 import jakarta.persistence.EntityManager;
 
 /**
- * 회원 리포지토리 슬라이스 테스트(member). notice 슬라이스 테스트 컨벤션을 따른다.
+ * 회원 리포지토리 슬라이스 테스트(member). 슬라이스 테스트 컨벤션(H2 대체 금지·Testcontainers)을 따른다.
  *
  * <p>★ {@code @AutoConfigureTestDatabase(replace = NONE)} 로 H2 대체를 막고 실제 MySQL(Testcontainers)을 써야
  * Flyway DDL·V4 생성 컬럼 UK·MySQL 문법이 실제로 검증된다. @DataJpaTest 는 기본 @Transactional → 각 테스트 롤백.

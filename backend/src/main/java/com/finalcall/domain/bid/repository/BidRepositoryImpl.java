@@ -25,7 +25,7 @@ public class BidRepositoryImpl implements BidRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * content 쿼리와 count 쿼리를 분리한다(notice 참조 구현 선례).
+     * content 쿼리와 count 쿼리를 분리한다(참조 구현 선례).
      *
      * <p>{@code bidder} 를 fetch join 하는 이유는 응답의 {@code bidderMasked}(닉네임 마스킹)다 — OSIV 가 꺼져 있어
      * 표현 계층에서 lazy 접근이 불가능하고, fetch 하지 않으면 페이지 크기만큼 N+1 이 난다. to-one fetch 라

@@ -14,6 +14,13 @@ spring:
     serialization:
       # Instant 등 시간 타입을 epoch 숫자가 아닌 ISO-8601 문자열로 직렬화(TIMESTAMP_FORMAT=ISO-8601).
       write-dates-as-timestamps: false
+  # EPIC-BOARD(FC-200): 게시글 이미지 업로드(multipart). 프레임워크 상한을 넉넉히 두고(10MB) 실제 5MB 제한은
+  #   서비스가 검증해 IMAGE_002(422)로 통일한다 — 프레임워크 MaxUploadSizeExceededException 이 아니라 계약 에러코드로
+  #   응답하기 위함(api §6.4). 기본값(1MB)이면 5MB 이미지가 프레임워크 단계에서 잘려 계약 에러코드가 나오지 않는다.
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   # Stage D: JPA — 전 프로파일 validate(스키마는 Flyway 관리). DataSource 는 프로파일별로 주입.
   jpa:
     hibernate:
@@ -242,6 +249,22 @@ search:
     fixed-delay-ms: ${SEARCH_RECONCILIATION_FIXED_DELAY_MS:300000}
     correct-on-drift: ${SEARCH_RECONCILIATION_CORRECT_ON_DRIFT:false}
     price-bucket-size: ${SEARCH_RECONCILIATION_PRICE_BUCKET_SIZE:100000}
+
+# FC-200(EPIC-BOARD): 게시글 이미지 오브젝트 스토리지(로컬 MinIO·운영 S3, board-domain-spec §7.6·§7.7). BoardImageStorageProperties 바인딩.
+#   endpoint — S3 API 엔드포인트(로컬 MinIO=http://localhost:9000). 운영 S3 는 BOARD_IMAGE_ENDPOINT 로 실 엔드포인트를 주입한다.
+#   presign-ttl — presigned GET 만료(ISO-8601 Duration, 기본 1시간). 게시판 이미지는 공개 콘텐츠라 인가 게이팅이 아닌 "버킷 비공개+안정 접근" 목적이라 넉넉히 둔다.
+#   path-style — MinIO=true(path-style), 운영 S3=false 권장(virtual-hosted). ensure-bucket-on-startup — 앱 부팅 시 버킷 idempotent 확인·생성(로컬 런북 단순화, 통합 테스트 base 에서 off).
+#   ★ access-key/secret-key(시크릿)는 여기 두지 않는다 — 공통에 기본값을 두면 운영이 상속받아 IAM 역할 fallback 이 무력화된다.
+#     로컬 더미는 application-local.yml 에, 운영은 미주입(빈 값) → S3StoragePort 가 SDK 기본 자격증명 체인(IAM 역할)을 쓴다.
+board:
+  image:
+    storage:
+      endpoint: ${BOARD_IMAGE_ENDPOINT:http://localhost:9000}
+      region: ${BOARD_IMAGE_REGION:us-east-1}
+      bucket: ${BOARD_IMAGE_BUCKET:finalcall-board-images}
+      presign-ttl: ${BOARD_IMAGE_PRESIGN_TTL:PT1H}
+      path-style: ${BOARD_IMAGE_PATH_STYLE:true}
+      ensure-bucket-on-startup: ${BOARD_IMAGE_ENSURE_BUCKET:true}
 
 # D-068: 직접접근 차단(엣지 게이트웨이 공유비밀 검증). enforced 는 실 프로파일에서 항상 켠다.
 #   secret 은 여기 두지 않는다(공통에 두면 prod fail-fast 무력화). application-<profile>.yml 참조.

@@ -21,7 +21,7 @@ import com.finalcall.support.TestcontainersConfiguration;
 import jakarta.persistence.EntityManager;
 
 /**
- * 메모 리포지토리 슬라이스 테스트(memo). notice·member 슬라이스 컨벤션을 따른다.
+ * 메모 리포지토리 슬라이스 테스트(memo). member 슬라이스 컨벤션을 따른다.
  *
  * <p>★ {@code @AutoConfigureTestDatabase(replace = NONE)} 로 H2 대체를 막고 실제 MySQL(Testcontainers)을 써야
  * Flyway V20 DDL·TINYINT(sender_gender) 매핑·id DESC keyset 커서·user FK 가 실제로 검증된다. @DataJpaTest 는 기본

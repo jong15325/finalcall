@@ -48,9 +48,9 @@ public class SecurityConfig {
                     "/api/v1/auth/oauth/**", "/api/v1/auth/nickname/availability",
                     "/api/v1/auth/login-id/availability", "/actuator/**", "/error")
                 .permitAll()
-                // 데모/참조(sample, notice)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
-                // (notice 는 비인증 생성 시 createdBy=null 을 시연하기 위해 의도적으로 공개)
-                .requestMatchers("/sample/**", "/notices/**").permitAll()
+                // 데모/참조(sample)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
+                //   (notice 참조 구현은 board 로 흡수·제거됨 — FC-201. 게시판 공개 경로는 아래 /api/v1/boards 참조.)
+                .requestMatchers("/sample/**").permitAll()
                 // 아이템 카탈로그·인스턴스 상세는 공개(계약 §4.1 인증 불요 / items 상세는 인증 optional).
                 //   me/** 인벤토리는 아래 anyRequest().authenticated() 로 인증을 강제한다(계약 §4.2).
                 .requestMatchers(HttpMethod.GET, "/api/v1/item-templates", "/api/v1/items/**").permitAll()
@@ -64,6 +64,19 @@ public class SecurityConfig {
                 // 고정가 목록·상세는 공개(계약 §3.2 인증 불요). 등록(POST)·구매(POST .../purchase)·취소(POST
                 //   .../cancel)는 아래 인증 강제. GET "/api/v1/shops/*" 는 단일 세그먼트라 2세그먼트 POST 경로와 겹치지 않는다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/shops", "/api/v1/shops/*").permitAll()
+                // 게시판 목록·단건 조회는 공개(계약 §6.1 인증 불요). 단일 세그먼트라 쓰기(관리자 CRUD)·게시글 하위 경로와 겹치지 않는다.
+                //   write_policy(ADMIN_ONLY) 세부 게이팅은 서비스 계층 담당(게시판별 정책이 DB 값이라 URL 패턴으로 표현 불가, §6.5).
+                .requestMatchers(HttpMethod.GET, "/api/v1/boards", "/api/v1/boards/*").permitAll()
+                // 게시글 목록·상세 조회는 공개(계약 §6.2 인증 불요). 위 "/api/v1/boards/*" 는 단일 세그먼트라 posts 하위 경로에 걸리지
+                //   않아 별도 등재가 필요하다. ★ GET 만 연다 — 작성(POST)·수정(PUT)·삭제(DELETE)는 아래 anyRequest().authenticated()
+                //   로 인증을 유지하고, write_policy(ADMIN_ONLY) 세부 게이팅은 서비스 계층이 판정한다(§6.5).
+                .requestMatchers(HttpMethod.GET, "/api/v1/boards/*/posts", "/api/v1/boards/*/posts/*").permitAll()
+                // 댓글 목록 조회는 공개(계약 §6.3 인증 불요). 댓글 경로는 게시글 public_id 에 직접 건다(§1.1 1단 중첩).
+                //   ★ GET 만 연다 — 작성(POST)·수정(PUT)·삭제(DELETE)는 아래 anyRequest().authenticated() 로 인증을 유지하고,
+                //   allow_comments 게이팅·소유검증(작성자 OR ROLE_ADMIN)은 서비스 계층이 판정한다(§6.5).
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts/*/comments").permitAll()
+                // 이미지 업로드(POST /api/v1/board-images, api §6.4)는 인증 필요 — 공개 GET 화이트리스트에 없어 아래
+                //   anyRequest().authenticated() 로 자연히 인증이 강제된다(별도 서빙 엔드포인트 없음, 노출은 스토리지 presigned URL, §6.5).
                 // 그 외(예: /api/v1/auth/logout, /api/v1/me/**, POST /api/v1/auctions, POST /api/v1/shops)는 인증 필요.
                 .anyRequest().authenticated())
             .exceptionHandling(eh -> eh
