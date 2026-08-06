@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장터 · 댓글 v2(네이버식) — 디자인 게이트 목업 (모바일)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  FC-210 · EPIC-COMMENT-V2 — 네이버식 댓글 UI 디자인 게이트 목업 (모바일)
+  ══════════════════════════════════════════════════════════════════════════════
+  실구현이 아니라 디자인 승인용 목업. 팔레트 정본 = frontend/src/index.css.
+  웹(comment-web.html)과 같은 구조를 모바일 폭(390px)에 맞춰 재설계([[responsive-separate-design]]).
+  모바일 재설계 요지:
+    - 정렬은 드롭다운 대신 하단 시트(bottom-sheet) 방식(엄지 도달·큰 터치 타깃).
+    - 반응/답글 액션은 아이콘 필로 압축, 44px 터치 타깃 유지.
+    - 답글 스레드 들여쓰기는 얕게(좌측 12px 레일), 좁은 폭에서 본문 폭 확보.
+  계약 정본: api-contract v1.24 §6.3 · board-domain-spec v1.1 §13.
+-->
+<style>
+:root{
+  --navy:#16213a; --navy-900:#101a2e; --navy-700:#223458; --navy-600:#2c4270; --navy-500:#385189;
+  --gold:#c8a028; --gold-bright:#dfc447; --gold-deep:#8b6100; --gold-subtle:#f6edcd;
+  --orange:#ef8a2c; --orange-deep:#d9741a; --orange-subtle:#fdefe0;
+  --surface:#ffffff; --surface-sunken:#f4f5f8; --line:#e4e7ee;
+  --danger:#e11d48; --danger-subtle:#ffe4e6;
+  --gray-50:#f8f9fb; --gray-100:#f1f3f7; --gray-200:#e4e7ee; --gray-300:#cfd4de; --gray-400:#9aa3b2;
+  --gray-500:#6b7484; --gray-600:#4d5461; --gray-700:#3a3f4a; --gray-800:#262a33; --gray-900:#171a20;
+  --r-lg:8px; --r-xl:12px; --r-2xl:16px; --r-full:9999px;
+  --sh-md:0 4px 12px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.06);
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0; background:#e9ebf0; color:var(--gray-700);
+  font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; word-break:keep-all;}
+button{font:inherit; color:inherit; cursor:pointer;}
+a{color:inherit; text-decoration:none;}
+h1,h2,h3,h4{margin:0; color:var(--gray-900);}
+.num{font-variant-numeric:tabular-nums;}
+svg{display:block;}
+
+.doc{max-width:920px; margin:0 auto; padding:36px 20px 80px;}
+.doc-head h1{font-size:23px; font-weight:800; letter-spacing:-.02em;}
+.doc-head p{margin:8px 0 0; color:var(--gray-500); font-size:14px;}
+.legend{margin:14px 0 28px; padding:13px 15px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-xl); font-size:12.5px; color:var(--gray-600); line-height:1.75;}
+.legend b{color:var(--gray-900);}
+.legend .sw{display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:middle; margin:0 2px;}
+
+.rowset{display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start;}
+.col{flex:1; min-width:330px;}
+.col .cap{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+.col .cap .id{display:inline-grid; place-items:center; min-width:24px; height:24px; padding:0 7px;
+  background:var(--navy); color:#fff; border-radius:var(--r-full); font-size:12px; font-weight:800;}
+.col .cap h2{font-size:15px; font-weight:800;}
+
+/* 기기 프레임 */
+.phone{width:390px; max-width:100%; margin:0 auto; border:9px solid #11151f; border-radius:38px;
+  background:var(--surface); overflow:hidden; box-shadow:0 18px 48px rgba(15,23,42,.28); position:relative;}
+.phone .notch{height:26px; background:var(--surface); position:relative;}
+.phone .notch::after{content:''; position:absolute; top:8px; left:50%; transform:translateX(-50%);
+  width:110px; height:20px; background:#11151f; border-radius:12px;}
+.appbar{display:flex; align-items:center; gap:10px; height:48px; padding:0 14px; background:var(--surface);
+  border-bottom:1px solid var(--line);}
+.appbar .bk{width:30px; height:30px; display:grid; place-items:center; color:var(--gray-700);}
+.appbar .bk svg{width:20px; height:20px;}
+.appbar .ttl{font-size:15px; font-weight:800; color:var(--gray-900);}
+.screen-body{max-height:660px; overflow:auto; background:var(--surface);}
+.pad{padding:14px;}
+
+/* 본문 꼬리 */
+.post-tail{padding:12px 14px; border-bottom:1px solid var(--line); color:var(--gray-500); font-size:13px;}
+.post-tail .t{font-size:16px; font-weight:800; color:var(--gray-900); margin-bottom:3px;}
+
+/* 버튼 */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; height:40px; padding:0 16px;
+  border:1px solid transparent; border-radius:var(--r-lg); font-size:14px; font-weight:700;}
+.btn svg{width:16px; height:16px;}
+.btn--cta{background:var(--orange); color:#fff;}
+.btn--outline{background:var(--surface); color:var(--gray-600); border-color:var(--line);}
+.btn--sm{height:34px; padding:0 13px; font-size:13px;}
+.btn[disabled]{opacity:.5; cursor:not-allowed;}
+
+/* 헤더 + 정렬(모바일: 텍스트 pill, 탭 시 하단 시트) */
+.c-head{display:flex; align-items:center; gap:8px; padding:14px 14px 4px;}
+.c-head h4{font-size:15px; font-weight:800; display:flex; align-items:center; gap:6px;}
+.c-head h4 svg{width:16px; height:16px; color:var(--navy);}
+.c-head h4 .n{color:var(--orange-deep);}
+.sort-pill{margin-left:auto; display:inline-flex; align-items:center; gap:5px; height:32px; padding:0 12px;
+  background:var(--gray-100); border:0; border-radius:var(--r-full); font-size:13px; font-weight:700; color:var(--gray-600);}
+.sort-pill svg{width:15px; height:15px; color:var(--gray-500);}
+
+/* 작성 폼 */
+.composer{display:flex; gap:9px; padding:12px 14px;}
+.composer .av{width:34px; height:34px; flex:none; border-radius:50%; background:var(--navy-600); color:#fff;
+  display:grid; place-items:center; font-weight:700; font-size:13px;}
+.composer .field{flex:1; border:1px solid var(--line); border-radius:var(--r-lg); background:var(--surface-sunken); padding:9px 11px;}
+.composer .field.focus{border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-subtle); background:var(--surface);}
+.composer textarea{width:100%; border:0; background:transparent; resize:none; font:inherit; color:var(--gray-700);
+  min-height:40px; outline:none;}
+.composer .cbar{display:flex; align-items:center; justify-content:space-between; margin-top:6px;}
+.composer .cbar .cnt{font-size:12px; color:var(--gray-400);}
+
+/* BEST */
+.best-block{margin:6px 14px; border:1px solid var(--gold-subtle); border-radius:var(--r-xl); overflow:hidden;}
+.best-cap{display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--gold-subtle);
+  font-size:12px; font-weight:800; color:var(--gold-deep);}
+.best-cap svg{width:14px; height:14px;}
+.best-block .comment{padding:12px; border-top:1px solid var(--gold-subtle);}
+.best-block .comment:first-of-type{border-top:0;}
+
+/* 댓글 아이템 */
+.c-list{padding:0 14px;}
+.comment{display:flex; gap:9px; padding:14px 0; border-top:1px solid var(--line);}
+.c-list > .comment:first-child{border-top:0;}
+.comment .av{width:34px; height:34px; flex:none; border-radius:50%; background:var(--gray-200); color:var(--gray-600);
+  display:grid; place-items:center; font-weight:700; font-size:13px;}
+.comment.mine .av{background:var(--navy-600); color:#fff;}
+.cbody{flex:1; min-width:0;}
+.cmeta{display:flex; align-items:center; gap:7px; font-size:13px; flex-wrap:wrap;}
+.cmeta b{color:var(--gray-900); font-weight:700;}
+.cmeta .best-tag{display:inline-flex; align-items:center; height:17px; padding:0 5px; border-radius:4px;
+  background:var(--gold); color:var(--navy-900); font-size:10px; font-weight:800;}
+.cmeta .t{color:var(--gray-400); font-size:12px;}
+.cmeta .own{margin-left:auto; display:flex; gap:10px;}
+.cmeta .own button{background:none; border:0; color:var(--gray-400); font-size:12px; font-weight:600; padding:2px 0;}
+.cmeta .own button.del{color:var(--gray-400);}
+.ctext{margin-top:5px; font-size:14px; color:var(--gray-700); line-height:1.6;}
+.mention{display:inline-flex; align-items:center; height:20px; padding:0 7px; margin-right:4px; border-radius:var(--r-full);
+  background:var(--navy); color:#fff; font-size:12px; font-weight:700; vertical-align:1px;}
+
+/* 반응 + 답글 액션(모바일: 압축·44px 터치) */
+.cactions{display:flex; align-items:center; gap:6px; margin-top:9px; flex-wrap:wrap;}
+.react{display:inline-flex; align-items:center; gap:5px; height:32px; padding:0 10px; border:1px solid var(--line);
+  border-radius:var(--r-full); background:var(--surface); font-size:12px; font-weight:700; color:var(--gray-500);}
+.react svg{width:15px; height:15px;}
+.react .rc{font-variant-numeric:tabular-nums;}
+.react.like.on{border-color:var(--orange); background:var(--orange-subtle); color:var(--orange-deep);}
+.react.dislike.on{border-color:var(--gray-400); background:var(--gray-100); color:var(--gray-700);}
+.react[disabled]{opacity:.55; cursor:not-allowed;}
+.reply-toggle{display:inline-flex; align-items:center; gap:4px; height:32px; padding:0 10px; border:0;
+  background:transparent; border-radius:var(--r-full); font-size:12px; font-weight:700; color:var(--navy-500);}
+.reply-toggle svg{width:13px; height:13px; transition:transform .15s;}
+.reply-toggle.open svg{transform:rotate(180deg);}
+.reply-write{margin-left:auto; display:inline-flex; align-items:center; gap:4px; height:32px; padding:0 10px;
+  border:0; background:transparent; border-radius:var(--r-full); font-size:12px; font-weight:700; color:var(--gray-500);}
+.reply-write svg{width:13px; height:13px;}
+
+/* 답글 스레드(모바일: 얕은 들여쓰기) */
+.thread{margin:8px 0 0 12px; padding-left:12px; border-left:2px solid var(--line);}
+.thread .comment{padding:12px 0; border-top:1px solid var(--gray-100);}
+.thread .comment:first-child{border-top:0;}
+.thread .av{width:28px; height:28px; font-size:12px;}
+.thread .composer{padding:8px 0 2px;}
+.thread .composer .av{width:28px; height:28px; font-size:12px;}
+.reply-target{display:inline-flex; align-items:center; gap:5px; margin-bottom:7px; font-size:12px; color:var(--gray-500);}
+
+/* tombstone */
+.comment.tomb .av{background:var(--gray-100); color:var(--gray-300);}
+.tomb-text{display:flex; align-items:center; gap:7px; margin-top:2px; font-size:13px; color:var(--gray-400);}
+.tomb-text svg{width:15px; height:15px; color:var(--gray-300);}
+
+/* 인라인 수정 */
+.edit-box{margin-top:8px; border:1px solid var(--orange); border-radius:var(--r-lg); background:var(--surface);
+  box-shadow:0 0 0 3px var(--orange-subtle); padding:9px 11px;}
+.edit-box textarea{width:100%; border:0; background:transparent; resize:vertical; font:inherit; color:var(--gray-800);
+  min-height:52px; outline:none; line-height:1.6;}
+.edit-box .ebar{display:flex; align-items:center; gap:8px; margin-top:6px;}
+.edit-box .ebar .cnt{font-size:12px; color:var(--gray-400); margin-right:auto;}
+.confirm-del{display:flex; align-items:center; gap:8px; margin-top:8px; padding:10px; background:var(--danger-subtle); border-radius:var(--r-lg);}
+.confirm-del span{font-size:13px; font-weight:700; color:var(--danger);}
+.confirm-del .acts{margin-left:auto; display:flex; gap:8px;}
+
+/* 상태 */
+.state{display:flex; flex-direction:column; align-items:center; text-align:center; padding:40px 20px;
+  border:1px dashed var(--line); border-radius:var(--r-xl); background:var(--surface-sunken); margin:12px 14px;}
+.state .ic{width:50px; height:50px; border-radius:15px; background:var(--gray-100); color:var(--gray-400);
+  display:grid; place-items:center; margin-bottom:12px;}
+.state .ic svg{width:23px; height:23px;}
+.state h3{font-size:15px; font-weight:800;}
+.state p{margin:5px 0 0; color:var(--gray-500); font-size:13px;}
+.login-cue{display:flex; align-items:center; justify-content:center; gap:6px; margin:8px 14px 14px;
+  padding:15px; border:1px dashed var(--line); border-radius:var(--r-lg); background:var(--surface); font-size:13px; color:var(--gray-500);}
+.login-cue a{font-weight:800; color:var(--navy);}
+.comments-off{display:flex; align-items:center; justify-content:center; gap:7px; margin:14px; padding:20px;
+  text-align:center; color:var(--gray-400); font-size:13px; background:var(--surface-sunken); border-radius:var(--r-lg);}
+.comments-off svg{width:15px; height:15px;}
+
+/* 하단 정렬 시트 */
+.sheet-scrim{position:absolute; inset:0; background:rgba(15,23,42,.35); display:flex; align-items:flex-end;}
+.sheet{width:100%; background:var(--surface); border-radius:18px 18px 0 0; padding:8px 0 14px;}
+.sheet .grab{width:38px; height:4px; border-radius:3px; background:var(--gray-300); margin:8px auto 6px;}
+.sheet .sh-ttl{padding:6px 20px 8px; font-size:13px; font-weight:800; color:var(--gray-500);}
+.sheet button{display:flex; width:100%; align-items:center; gap:10px; height:52px; padding:0 20px; border:0;
+  background:transparent; font-size:15px; font-weight:700; color:var(--gray-700); text-align:left;}
+.sheet button.on{color:var(--navy);}
+.sheet button.on::after{content:'✓'; margin-left:auto; color:var(--orange-deep); font-size:16px;}
+.sheet button:active{background:var(--gray-50);}
+
+.mock-note{margin:12px 0 0; padding:12px 15px; border:1px dashed var(--gray-300); border-radius:var(--r-lg);
+  background:var(--surface); font-size:12.5px; color:var(--gray-600); line-height:1.75;}
+.mock-note b{color:var(--gray-900);}
+.mock-note code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:var(--gray-100);
+  padding:1px 5px; border-radius:4px; color:var(--navy-700);}
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="doc-head">
+    <h1>댓글 v2 — 네이버식 대댓글·공감·정렬·BEST (모바일)</h1>
+    <p>FC-210 · EPIC-COMMENT-V2 디자인 게이트 목업. 계약 <b>api-contract v1.24 §6.3</b> · <b>board-domain-spec v1.1 §13</b>.
+       웹과 같은 구조를 390px 폭으로 재설계(정렬=하단 시트·얕은 답글 들여쓰기·44px 터치 타깃).</p>
+  </div>
+  <div class="legend">
+    <b>팔레트</b>
+    <span class="sw" style="background:#16213a"></span>네이비(@멘션·BEST 텍스트) &nbsp;·&nbsp;
+    <span class="sw" style="background:#c8a028"></span>골드(BEST) &nbsp;·&nbsp;
+    <span class="sw" style="background:#ef8a2c"></span>오렌지(CTA·공감 활성) &nbsp;·&nbsp;
+    <span class="sw" style="background:#f1f3f7;border:1px solid #cfd4de"></span>그레이(비공감·중립)<br>
+    <b>모바일 차이</b> — 정렬은 하단 시트 · 답글 들여쓰기 12px(본문 폭 확보) · 반응/답글 액션 압축 필(44px 터치).
+  </div>
+
+  <div class="rowset">
+
+    <!-- A. 기본: 정렬 + BEST + 루트 목록 -->
+    <div class="col">
+      <div class="cap"><span class="id">A</span><h2>정렬 + BEST + 루트 목록 (로그인)</h2></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><span class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></span><span class="ttl">글 상세</span></div>
+        <div class="screen-body">
+          <div class="post-tail"><div class="t">물결 장궁 +9 낙찰 후기</div>… 시세 정보 공유차 글 남겨요.</div>
+
+          <div class="c-head">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">24</span></h4>
+            <button class="sort-pill">최신순<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg></button>
+          </div>
+
+          <div class="composer">
+            <div class="av">달</div>
+            <div class="field"><textarea placeholder="따뜻한 댓글을 남겨보세요."></textarea>
+              <div class="cbar"><span class="cnt num">0 / 1000</span><button class="btn btn--cta btn--sm" disabled>등록</button></div></div>
+          </div>
+
+          <div class="best-block">
+            <div class="best-cap"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.3 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>BEST 댓글</div>
+            <div class="comment">
+              <div class="av">서</div>
+              <div class="cbody">
+                <div class="cmeta"><b>서리한</b><span class="best-tag">BEST</span><span class="t">3시간 전</span></div>
+                <div class="ctext">시세 정리 감사합니다. 강화 패치 이후 +9 매물이 줄어서 지금이 저점 같아요.</div>
+                <div class="cactions">
+                  <button class="react like on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">38</span></button>
+                  <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">1</span></button>
+                  <button class="reply-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 5</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-list">
+            <!-- 내가 공감 누른 루트 -->
+            <div class="comment">
+              <div class="av">궁</div>
+              <div class="cbody">
+                <div class="cmeta"><b>궁수왕</b><span class="t">1시간 전</span></div>
+                <div class="ctext">저도 어제 +8 낙찰받았는데 안심되네요 ㅎㅎ</div>
+                <div class="cactions">
+                  <button class="react like on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">6</span></button>
+                  <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                  <button class="reply-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 2</button>
+                </div>
+              </div>
+            </div>
+            <!-- 내 댓글(수정/삭제·반응 비활성) -->
+            <div class="comment mine">
+              <div class="av">달</div>
+              <div class="cbody">
+                <div class="cmeta"><b>달빛상인</b><span class="t">40분 전 · 수정됨</span>
+                  <span class="own"><button>수정</button><button class="del">삭제</button></span></div>
+                <div class="ctext">시세는 수급 따라 바뀌니 참고만 하세요!</div>
+                <div class="cactions">
+                  <button class="react like" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">2</span></button>
+                  <button class="react dislike" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-note"><b>계약:</b> 루트 목록(기본 <code>LATEST</code>)에 <code>replyCount</code>·<code>likeCount</code>·<code>myReaction</code>. BEST는 공감 상위 별도 랭킹(목록 중복 노출). 본인 댓글 반응 비활성(<code>COMMENT_003</code>). 반응/정렬/BEST는 FC-210에서 자리만.</div>
+    </div>
+
+    <!-- B. 답글 펼침 + @멘션 + 답글 폼 -->
+    <div class="col">
+      <div class="cap"><span class="id">B</span><h2>답글 펼침 · @멘션 · 답글 폼</h2></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><span class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></span><span class="ttl">글 상세</span></div>
+        <div class="screen-body">
+          <div class="c-list" style="padding-top:6px">
+            <div class="comment">
+              <div class="av">궁</div>
+              <div class="cbody">
+                <div class="cmeta"><b>궁수왕</b><span class="t">1시간 전</span></div>
+                <div class="ctext">저도 어제 +8 낙찰받았는데 안심되네요 ㅎㅎ</div>
+                <div class="cactions">
+                  <button class="react like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">6</span></button>
+                  <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                  <button class="reply-toggle open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 2 접기</button>
+                </div>
+
+                <div class="thread">
+                  <div class="comment">
+                    <div class="av">서</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>서리한</b><span class="t">55분 전</span></div>
+                      <div class="ctext">축하드려요! +8도 요즘 귀합니다.</div>
+                      <div class="cactions">
+                        <button class="react like on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">3</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="comment mine">
+                    <div class="av">달</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>달빛상인</b><span class="t">50분 전</span>
+                        <span class="own"><button>수정</button><button class="del">삭제</button></span></div>
+                      <div class="ctext"><span class="mention">@서리한</span>맞아요, +8부터는 매물이 드물어요.</div>
+                      <div class="cactions">
+                        <button class="react like" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">1</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="composer">
+                    <div class="av">달</div>
+                    <div class="field focus">
+                      <div class="reply-target"><span class="mention">@서리한</span> 님에게 답글</div>
+                      <textarea>좋은 정보 감사합니다!</textarea>
+                      <div class="cbar"><span class="cnt num">10 / 1000</span>
+                        <span style="display:flex;gap:8px"><button class="btn btn--outline btn--sm">취소</button><button class="btn btn--cta btn--sm">답글</button></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-note"><b>계약(§13.1):</b> 대댓글 1단계 평탄화 — 답글의 답글도 같은 레벨 + <code>@닉</code> 배지(<code>mentionedNickname</code> 스냅샷). 답글은 항상 시간순. 좁은 폭 위해 들여쓰기 12px·답글 라벨 축약("답글").</div>
+    </div>
+
+    <!-- C. tombstone -->
+    <div class="col">
+      <div class="cap"><span class="id">C</span><h2>tombstone — 삭제 루트 · 답글 보존</h2></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><span class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></span><span class="ttl">글 상세</span></div>
+        <div class="screen-body">
+          <div class="c-list" style="padding-top:6px">
+            <div class="comment tomb">
+              <div class="av"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg></div>
+              <div class="cbody">
+                <div class="tomb-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>삭제된 댓글입니다.</div>
+                <div class="cactions"><button class="reply-toggle open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 2 접기</button></div>
+                <div class="thread">
+                  <div class="comment">
+                    <div class="av">서</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>서리한</b><span class="t">30분 전</span></div>
+                      <div class="ctext">윗분 댓글 삭제되셨네요. 답글은 남아 있어요.</div>
+                      <div class="cactions">
+                        <button class="react like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">2</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="comment">
+                    <div class="av">궁</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>궁수왕</b><span class="t">20분 전</span></div>
+                      <div class="ctext"><span class="mention">@서리한</span>ㅇㅇ 스레드는 유지되네요.</div>
+                      <div class="cactions">
+                        <button class="react like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">0</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-note"><b>계약(§13.4):</b> 활성 답글이 있는 루트 삭제 → tombstone 잔류(본문·작성자·반응 마스킹, <code>replyCount</code>·<code>createdAt</code> 유지). 답글 없으면 완전 배제. 헤더 총계 불포함.</div>
+    </div>
+
+    <!-- D. 정렬 하단 시트 -->
+    <div class="col">
+      <div class="cap"><span class="id">D</span><h2>정렬 — 하단 시트(엄지 도달)</h2></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><span class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></span><span class="ttl">글 상세</span></div>
+        <div class="screen-body" style="position:relative">
+          <div class="c-head">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">24</span></h4>
+            <button class="sort-pill">최신순<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg></button>
+          </div>
+          <div class="c-list">
+            <div class="comment"><div class="av">궁</div><div class="cbody">
+              <div class="cmeta"><b>궁수왕</b><span class="t">1시간 전</span></div>
+              <div class="ctext">저도 어제 +8 낙찰받았는데 안심되네요 ㅎㅎ</div></div></div>
+            <div class="comment"><div class="av">서</div><div class="cbody">
+              <div class="cmeta"><b>서리한</b><span class="t">3시간 전</span></div>
+              <div class="ctext">시세 정리 감사합니다.</div></div></div>
+          </div>
+          <!-- 하단 시트 오버레이 -->
+          <div class="sheet-scrim">
+            <div class="sheet">
+              <div class="grab"></div>
+              <div class="sh-ttl">정렬</div>
+              <button class="on">최신순</button>
+              <button>과거순</button>
+              <button>순공감순</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-note"><b>정렬(§13.3):</b> 모바일은 드롭다운 대신 <b>하단 시트</b>(엄지 도달·52px 터치). <code>LATEST</code>(기본)·<code>OLDEST</code>·<code>LIKES</code>. 루트 목록에만 적용, BEST는 고정 랭킹.</div>
+    </div>
+
+    <!-- E. 빈 / 로그인 / 공지 비허용 -->
+    <div class="col">
+      <div class="cap"><span class="id">E</span><h2>빈 · 로그인 유도 · 공지 비허용</h2></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><span class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></span><span class="ttl">글 상세</span></div>
+        <div class="screen-body">
+          <!-- 빈 + 작성폼 -->
+          <div class="c-head"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">0</span></h4></div>
+          <div class="composer"><div class="av">달</div><div class="field"><textarea placeholder="따뜻한 댓글을 남겨보세요."></textarea>
+            <div class="cbar"><span class="cnt num">0 / 1000</span><button class="btn btn--cta btn--sm" disabled>등록</button></div></div></div>
+          <div class="state">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <h3>아직 댓글이 없어요</h3><p>첫 댓글을 남겨보세요.</p>
+          </div>
+          <!-- 로그인 유도 -->
+          <div class="login-cue">댓글을 작성하려면 <a href="#">로그인</a> 하세요.</div>
+          <!-- 공지 비허용 -->
+          <div class="comments-off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>이 게시판은 댓글을 받지 않습니다.</div>
+        </div>
+      </div>
+      <div class="mock-note"><b>상태:</b> 빈(첫 댓글 유도)·비로그인(작성 자리에 로그인 안내, 목록/BEST는 공개)·공지(<code>allowComments=false</code> → 섹션 미노출). 세 상태를 한 화면에 모아 보인 것(실제는 배타).</div>
+    </div>
+
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장터 · 댓글 v2(네이버식) — 디자인 게이트 목업 (웹)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  FC-210 · EPIC-COMMENT-V2 — 네이버식 댓글 UI 디자인 게이트 목업 (웹/데스크톱)
+  ══════════════════════════════════════════════════════════════════════════════
+  이 파일은 실구현이 아니라 **디자인 승인용 목업**이다(HTML 목업 → 사용자 승인 → 실구현).
+  팔레트 정본 = frontend/src/index.css (navy #16213a · gold #c8a028 · orange #ef8a2c).
+  네이버 댓글은 **구조만 참고**(대댓글 1단계·답글 펼치기·공감/비공감·정렬·BEST 배치).
+  색·폰트·로고는 우리 것 — 네이버 그린/폰트/브랜드는 복제하지 않는다([[palette-source-of-truth]]).
+
+  계약 정본: api-contract v1.24 §6.3 · board-domain-spec v1.1 §13.
+    - 루트 목록(+replyCount·likeCount·dislikeCount·myReaction·deleted) · 답글 지연 로딩
+    - 정렬 LATEST(기본)|OLDEST|LIKES · BEST 별도 랭킹(공감 상위, 목록에도 중복 노출)
+    - 대댓글 1단계 평탄화 + @멘션 닉 스냅샷 · tombstone(삭제 루트·답글 보존)
+
+  담는 상태:
+    A. 정렬 바 + BEST 섹션 + 루트 목록(답글 접힘·myReaction 강조·editable)
+    B. 답글 펼친 상태 — 들여쓴 답글·@멘션 배지·답글 폼
+    C. tombstone — 삭제된 루트 마스킹 + 답글 보존
+    D. 부수 상태 — 정렬 드롭다운 열림 · 빈 · 로그인 유도 · 공지 비허용
+-->
+<style>
+/* ══ 토큰 — index.css 실값 (창작 금지) ════════════════════════════════════ */
+:root{
+  --navy:#16213a; --navy-900:#101a2e; --navy-800:#1b2a47; --navy-700:#223458; --navy-600:#2c4270; --navy-500:#385189;
+  --gold:#c8a028; --gold-bright:#dfc447; --gold-deep:#8b6100; --gold-subtle:#f6edcd;
+  --orange:#ef8a2c; --orange-deep:#d9741a; --orange-subtle:#fdefe0;
+  --surface:#ffffff; --surface-sunken:#f4f5f8; --line:#e4e7ee;
+  --success:#16a34a; --success-subtle:#dcfce7; --danger:#e11d48; --danger-subtle:#ffe4e6;
+  --warning:#d99a1a; --warning-subtle:#fdf2d6;
+  --gray-50:#f8f9fb; --gray-100:#f1f3f7; --gray-200:#e4e7ee; --gray-300:#cfd4de; --gray-400:#9aa3b2;
+  --gray-500:#6b7484; --gray-600:#4d5461; --gray-700:#3a3f4a; --gray-800:#262a33; --gray-900:#171a20;
+  --r-lg:8px; --r-xl:12px; --r-2xl:16px; --r-full:9999px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.06);
+  --sh-md:0 4px 12px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.06);
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0; background:#e9ebf0; color:var(--gray-700);
+  font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; word-break:keep-all;}
+button{font:inherit; color:inherit; cursor:pointer;}
+a{color:inherit; text-decoration:none;}
+h1,h2,h3,h4{margin:0; color:var(--gray-900);}
+.num{font-variant-numeric:tabular-nums;}
+svg{display:block;}
+
+/* 목업 페이지 골격 */
+.doc{max-width:1000px; margin:0 auto; padding:40px 24px 96px;}
+.doc-head h1{font-size:26px; font-weight:800; letter-spacing:-.02em;}
+.doc-head p{margin:8px 0 0; color:var(--gray-500); font-size:14px;}
+.legend{margin:16px 0 32px; padding:14px 16px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-xl); font-size:13px; color:var(--gray-600); line-height:1.8;}
+.legend b{color:var(--gray-900);}
+.legend .sw{display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:middle; margin:0 2px;}
+
+.screen{margin-top:44px;}
+.screen-tag{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.screen-tag .id{display:inline-grid; place-items:center; min-width:26px; height:26px; padding:0 8px;
+  background:var(--navy); color:#fff; border-radius:var(--r-full); font-size:13px; font-weight:800;}
+.screen-tag h2{font-size:18px; font-weight:800; letter-spacing:-.01em;}
+.screen-tag .route{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; color:var(--gray-500);}
+
+.browser{border:1px solid #cfd4de; border-radius:14px; overflow:hidden; background:var(--surface);
+  box-shadow:0 12px 40px rgba(15,23,42,.12);}
+.chrome{display:flex; align-items:center; gap:10px; height:40px; padding:0 14px;
+  background:#dfe2ea; border-bottom:1px solid #cfd4de;}
+.chrome .dots{display:flex; gap:6px;}
+.chrome .dots i{width:11px; height:11px; border-radius:50%; background:#c3c8d2;}
+.chrome .url{flex:1; height:24px; padding:0 12px; background:#fff; border-radius:var(--r-full);
+  display:flex; align-items:center; font-size:12px; color:var(--gray-500);
+  font-family:ui-monospace,Menlo,Consolas,monospace;}
+.chrome .url b{color:var(--gray-800); font-weight:600;}
+.stage{padding:26px 30px; background:var(--surface);}
+
+/* 상세 본문 꼬리(문맥 표시용, 최소) */
+.post-tail{padding-bottom:14px; border-bottom:1px solid var(--line); color:var(--gray-500); font-size:13px;}
+.post-tail .t{font-size:17px; font-weight:800; color:var(--gray-900); margin-bottom:4px;}
+
+/* ══ 버튼 ════════════════════════════════════════════════════════════════ */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; height:38px; padding:0 16px;
+  border:1px solid transparent; border-radius:var(--r-lg); font-size:14px; font-weight:700; white-space:nowrap;}
+.btn svg{width:16px; height:16px;}
+.btn--cta{background:var(--orange); color:#fff;}
+.btn--cta:hover{background:var(--orange-deep);}
+.btn--outline{background:var(--surface); color:var(--gray-600); border-color:var(--line);}
+.btn--outline:hover{border-color:var(--navy);}
+.btn--sm{height:32px; padding:0 12px; font-size:13px;}
+.btn--danger{background:var(--danger); color:#fff;}
+.btn[disabled]{opacity:.5; cursor:not-allowed;}
+
+/* ══ 댓글 헤더 + 정렬 바 ══════════════════════════════════════════════════ */
+.c-wrap{margin-top:4px;}
+.c-head{display:flex; align-items:center; gap:8px; padding-top:22px;}
+.c-head h4{font-size:16px; font-weight:800; display:flex; align-items:center; gap:6px;}
+.c-head h4 svg{width:17px; height:17px; color:var(--navy);}
+.c-head h4 .n{color:var(--orange-deep);}
+.c-head .sortbar{margin-left:auto; position:relative;}
+.sort-btn{display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-lg); font-size:13px; font-weight:700; color:var(--gray-600);}
+.sort-btn:hover{border-color:var(--navy);}
+.sort-btn svg{width:14px; height:14px; color:var(--gray-400);}
+.sort-menu{position:absolute; right:0; top:38px; width:150px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-lg); box-shadow:var(--sh-md); padding:5px; z-index:5;}
+.sort-menu button{display:flex; width:100%; align-items:center; gap:8px; height:34px; padding:0 10px;
+  border:0; background:transparent; border-radius:6px; font-size:13px; font-weight:600; color:var(--gray-600); text-align:left;}
+.sort-menu button:hover{background:var(--gray-100);}
+.sort-menu button.on{color:var(--navy); font-weight:800;}
+.sort-menu button.on::after{content:'✓'; margin-left:auto; color:var(--orange-deep);}
+
+/* ══ 작성 폼 ══════════════════════════════════════════════════════════════ */
+.composer{display:flex; gap:10px; margin:16px 0 8px;}
+.composer .av{width:36px; height:36px; flex:none; border-radius:50%; background:var(--navy-600); color:#fff;
+  display:grid; place-items:center; font-weight:700; font-size:14px;}
+.composer .field{flex:1; border:1px solid var(--line); border-radius:var(--r-lg); background:var(--surface-sunken);
+  padding:10px 12px;}
+.composer .field.focus{border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-subtle); background:var(--surface);}
+.composer textarea{width:100%; border:0; background:transparent; resize:none; font:inherit; color:var(--gray-700);
+  min-height:42px; outline:none;}
+.composer .cbar{display:flex; align-items:center; justify-content:space-between; margin-top:6px;}
+.composer .cbar .cnt{font-size:12px; color:var(--gray-400);}
+
+/* ══ BEST 섹션 ════════════════════════════════════════════════════════════ */
+.best-block{margin:18px 0 6px; border:1px solid var(--gold-subtle); border-radius:var(--r-xl); overflow:hidden;}
+.best-cap{display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--gold-subtle);
+  font-size:12px; font-weight:800; color:var(--gold-deep); letter-spacing:.02em;}
+.best-cap svg{width:14px; height:14px;}
+.best-cap .hint{margin-left:auto; font-weight:600; color:var(--gold-deep); opacity:.75;}
+.best-block .comment{padding:14px 16px; border-top:1px solid var(--gold-subtle);}
+.best-block .comment:first-of-type{border-top:0;}
+
+/* ══ 댓글 아이템 ══════════════════════════════════════════════════════════ */
+.c-list{margin-top:8px;}
+.comment{display:flex; gap:10px; padding:16px 0; border-top:1px solid var(--line);}
+.comment .av{width:36px; height:36px; flex:none; border-radius:50%; background:var(--gray-200); color:var(--gray-600);
+  display:grid; place-items:center; font-weight:700; font-size:14px;}
+.comment.mine .av{background:var(--navy-600); color:#fff;}
+.cbody{flex:1; min-width:0;}
+.cmeta{display:flex; align-items:center; gap:8px; font-size:13px;}
+.cmeta b{color:var(--gray-900); font-weight:700;}
+.cmeta .best-tag{display:inline-flex; align-items:center; height:18px; padding:0 6px; border-radius:4px;
+  background:var(--gold); color:var(--navy-900); font-size:10px; font-weight:800; letter-spacing:.02em;}
+.cmeta .t{color:var(--gray-400); font-size:12px;}
+.cmeta .own{margin-left:auto; display:flex; gap:8px;}
+.cmeta .own button{background:none; border:0; color:var(--gray-400); font-size:12px; font-weight:600; padding:0;}
+.cmeta .own button:hover{color:var(--gray-700);}
+.cmeta .own button.del:hover{color:var(--danger);}
+.ctext{margin-top:5px; font-size:14px; color:var(--gray-700); line-height:1.65;}
+.mention{display:inline-flex; align-items:center; height:20px; padding:0 7px; margin-right:4px; border-radius:var(--r-full);
+  background:var(--navy); color:#fff; font-size:12px; font-weight:700; vertical-align:1px;}
+
+/* 반응 + 답글 액션 바 */
+.cactions{display:flex; align-items:center; gap:6px; margin-top:9px;}
+.react{display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 11px; border:1px solid var(--line);
+  border-radius:var(--r-full); background:var(--surface); font-size:12px; font-weight:700; color:var(--gray-500);}
+.react svg{width:15px; height:15px;}
+.react .rc{font-variant-numeric:tabular-nums;}
+.react:hover{border-color:var(--gray-300); background:var(--gray-50);}
+.react.like.on{border-color:var(--orange); background:var(--orange-subtle); color:var(--orange-deep);}
+.react.dislike.on{border-color:var(--gray-400); background:var(--gray-100); color:var(--gray-700);}
+.react[disabled]{opacity:.55; cursor:not-allowed;}
+.reply-toggle{display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 11px; margin-left:2px;
+  border:0; background:transparent; border-radius:var(--r-full); font-size:12px; font-weight:700; color:var(--navy-500);}
+.reply-toggle svg{width:14px; height:14px; transition:transform .15s;}
+.reply-toggle.open svg{transform:rotate(180deg);}
+.reply-toggle:hover{background:var(--gray-100); color:var(--navy);}
+.reply-write{margin-left:auto; display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 11px;
+  border:0; background:transparent; border-radius:var(--r-full); font-size:12px; font-weight:700; color:var(--gray-500);}
+.reply-write svg{width:14px; height:14px;}
+.reply-write:hover{background:var(--gray-100); color:var(--gray-700);}
+
+/* ══ 답글 스레드(펼침) ════════════════════════════════════════════════════ */
+.thread{margin:6px 0 2px 46px; padding-left:16px; border-left:2px solid var(--line);}
+.thread .comment{padding:14px 0; border-top:1px solid var(--gray-100);}
+.thread .comment:first-child{border-top:0;}
+.thread .av{width:30px; height:30px; font-size:12px;}
+/* 답글 작성 폼(스레드 하단) */
+.thread .composer{margin:8px 0 4px;}
+.thread .composer .av{width:30px; height:30px; font-size:12px;}
+.reply-target{display:inline-flex; align-items:center; gap:5px; margin-bottom:7px; font-size:12px; color:var(--gray-500);}
+.reply-target .mention{margin-right:0;}
+
+/* ══ tombstone ════════════════════════════════════════════════════════════ */
+.comment.tomb .av{background:var(--gray-100); color:var(--gray-300);}
+.tomb-text{display:flex; align-items:center; gap:7px; margin-top:2px; font-size:13px; color:var(--gray-400); font-style:normal;}
+.tomb-text svg{width:15px; height:15px; color:var(--gray-300);}
+
+/* ══ 인라인 수정/삭제 ════════════════════════════════════════════════════ */
+.edit-box{margin-top:8px; border:1px solid var(--orange); border-radius:var(--r-lg); background:var(--surface);
+  box-shadow:0 0 0 3px var(--orange-subtle); padding:10px 12px;}
+.edit-box textarea{width:100%; border:0; background:transparent; resize:vertical; font:inherit; color:var(--gray-800);
+  min-height:56px; outline:none; line-height:1.6;}
+.edit-box .ebar{display:flex; align-items:center; gap:8px; margin-top:6px;}
+.edit-box .ebar .cnt{font-size:12px; color:var(--gray-400); margin-right:auto;}
+.confirm-del{display:flex; align-items:center; gap:10px; margin-top:8px; padding:10px 12px;
+  background:var(--danger-subtle); border-radius:var(--r-lg);}
+.confirm-del span{font-size:13px; font-weight:700; color:var(--danger);}
+.confirm-del .acts{margin-left:auto; display:flex; gap:8px;}
+
+/* ══ 빈/안내 상태 ════════════════════════════════════════════════════════ */
+.state{display:flex; flex-direction:column; align-items:center; text-align:center; padding:44px 24px;
+  border:1px dashed var(--line); border-radius:var(--r-2xl); background:var(--surface-sunken); margin-top:12px;}
+.state .ic{width:52px; height:52px; border-radius:15px; background:var(--gray-100); color:var(--gray-400);
+  display:grid; place-items:center; margin-bottom:12px;}
+.state .ic svg{width:24px; height:24px;}
+.state h3{font-size:15px; font-weight:800;}
+.state p{margin:5px 0 0; color:var(--gray-500); font-size:13px;}
+.login-cue{display:flex; align-items:center; justify-content:center; gap:6px; margin:16px 0 6px;
+  padding:16px; border:1px dashed var(--line); border-radius:var(--r-lg); background:var(--surface);
+  font-size:13px; color:var(--gray-500);}
+.login-cue a{font-weight:800; color:var(--navy);}
+.login-cue a:hover{color:var(--orange-deep);}
+.comments-off{display:flex; align-items:center; justify-content:center; gap:7px; margin-top:22px; padding:20px;
+  text-align:center; color:var(--gray-400); font-size:13px; background:var(--surface-sunken); border-radius:var(--r-lg);}
+.comments-off svg{width:15px; height:15px;}
+
+/* ══ 목업 주석 ════════════════════════════════════════════════════════════ */
+.mock-note{margin-top:12px; padding:12px 16px; border:1px dashed var(--gray-300); border-radius:var(--r-lg);
+  background:var(--surface); font-size:12.5px; color:var(--gray-600); line-height:1.75;}
+.mock-note b{color:var(--gray-900);}
+.mock-note code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:var(--gray-100);
+  padding:1px 5px; border-radius:4px; color:var(--navy-700);}
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="doc-head">
+    <h1>댓글 v2 — 네이버식 대댓글·공감·정렬·BEST (웹)</h1>
+    <p>FC-210 · EPIC-COMMENT-V2 디자인 게이트 목업. 계약 <b>api-contract v1.24 §6.3</b> · <b>board-domain-spec v1.1 §13</b>.
+       네이버 <b>구조만</b> 차용(대댓글 1단계·답글 펼치기·공감/비공감·정렬·BEST) — 색·폰트는 장터 팔레트.</p>
+  </div>
+  <div class="legend">
+    <b>팔레트</b>
+    <span class="sw" style="background:#16213a"></span>네이비(구조·@멘션·BEST 텍스트) &nbsp;·&nbsp;
+    <span class="sw" style="background:#c8a028"></span>골드(BEST 하이라이트) &nbsp;·&nbsp;
+    <span class="sw" style="background:#ef8a2c"></span>오렌지(CTA·<b>공감 활성</b>) &nbsp;·&nbsp;
+    <span class="sw" style="background:#f1f3f7;border:1px solid #cfd4de"></span>그레이(비공감 활성·중립)<br>
+    <b>구조 매핑</b> — 공감 활성 = 오렌지 필(따뜻함, "따뜻한 댓글" 톤) · 비공감 활성 = 회색 필(중립) · @멘션 = 네이비 필 · BEST = 골드 배지·테두리 · 답글 = 좌측 레일 들여쓰기.
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       A. 정렬 바 + BEST + 루트 목록 (답글 접힘) — 기본 화면
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">A</span><h2>정렬 바 + BEST + 루트 목록 (기본 · 로그인 상태)</h2><span class="route">/boards/community/:postId</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">jangteo.app<b>/boards/community/01J8…</b></div></div>
+      <div class="stage">
+        <div class="post-tail">
+          <div class="t">물결 장궁 +9 낙찰 후기 (시세 공유)</div>
+          … 오늘 드디어 물결 장궁을 낙찰받았습니다. 시세 정보 공유차 글 남겨요.
+        </div>
+
+        <div class="c-wrap">
+          <!-- 헤더 + 정렬 -->
+          <div class="c-head">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">24</span></h4>
+            <div class="sortbar">
+              <button class="sort-btn">최신순<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+            </div>
+          </div>
+
+          <!-- 작성 폼 -->
+          <div class="composer">
+            <div class="av">달</div>
+            <div class="field">
+              <textarea placeholder="따뜻한 댓글을 남겨보세요."></textarea>
+              <div class="cbar"><span class="cnt num">0 / 1000</span><button class="btn btn--cta btn--sm" disabled>등록</button></div>
+            </div>
+          </div>
+
+          <!-- BEST 섹션 -->
+          <div class="best-block">
+            <div class="best-cap">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.3 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>
+              BEST 댓글<span class="hint">공감 상위 · 목록에도 함께 표시</span>
+            </div>
+            <!-- BEST 1 -->
+            <div class="comment">
+              <div class="av">서</div>
+              <div class="cbody">
+                <div class="cmeta"><b>서리한</b><span class="best-tag">BEST</span><span class="t">3시간 전</span></div>
+                <div class="ctext">물결 장궁 시세 정리 감사합니다. 최근 강화 성공률 패치 이후로 +9 매물이 확 줄어서 지금이 저점 같아요. 축하드립니다!</div>
+                <div class="cactions">
+                  <button class="react like on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">38</span></button>
+                  <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">1</span></button>
+                  <button class="reply-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 5</button>
+                  <button class="reply-write"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 루트 목록 -->
+          <div class="c-list">
+            <!-- 루트 2: 내가 공감 누른 댓글(myReaction=LIKE) -->
+            <div class="comment">
+              <div class="av">궁</div>
+              <div class="cbody">
+                <div class="cmeta"><b>궁수왕</b><span class="t">1시간 전</span></div>
+                <div class="ctext">저도 어제 +8 낙찰받았는데 이 글 보고 안심되네요 ㅎㅎ</div>
+                <div class="cactions">
+                  <button class="react like on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">6</span></button>
+                  <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                  <button class="reply-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 2</button>
+                  <button class="reply-write"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 루트 3: 내 댓글(editable · 수정/삭제 · 반응 비활성=자기댓글 금지 · 답글 없음) -->
+            <div class="comment mine">
+              <div class="av">달</div>
+              <div class="cbody">
+                <div class="cmeta"><b>달빛상인</b><span class="t">40분 전 · 수정됨</span>
+                  <span class="own"><button>수정</button><button class="del">삭제</button></span>
+                </div>
+                <div class="ctext">시세는 매물 수급 따라 계속 바뀌니 참고만 하세요! 궁금한 거 있으면 답글 주세요.</div>
+                <div class="cactions">
+                  <button class="react like" disabled title="본인 댓글에는 공감할 수 없어요"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">2</span></button>
+                  <button class="react dislike" disabled title="본인 댓글에는 비공감할 수 없어요"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                  <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-note"><b>계약:</b> 목록은 <b>루트 댓글만</b>(<code>GET …/comments?sort=LATEST</code> 기본 최신순) — 각 항목에 <code>replyCount</code>·<code>likeCount</code>·<code>dislikeCount</code>·<code>myReaction</code>. BEST(<code>GET …/comments/best</code>)는 공감 상위 <b>별도 랭킹</b>이라 목록에도 <b>중복 노출</b>(네이버 동일). <code>myReaction=LIKE</code>는 오렌지 필로 강조. <b>본인 댓글</b>은 반응 버튼 비활성(<code>COMMENT_003</code> 422 사전 차단) + 수정/삭제(<code>editable</code>) 노출. <b>공감/비공감·정렬·BEST 버튼은 FC-210에서 "자리"만</b>(동작은 FC-211·212).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       B. 답글 펼친 상태 + @멘션 + 답글 폼
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">B</span><h2>답글 펼침 — 들여쓰기 스레드 · @멘션 배지 · 답글 폼</h2><span class="route">GET …/comments/{root}/replies</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">jangteo.app<b>/boards/community/01J8…</b></div></div>
+      <div class="stage">
+        <div class="c-wrap">
+          <div class="c-list">
+            <!-- 루트(펼침 상태) -->
+            <div class="comment">
+              <div class="av">궁</div>
+              <div class="cbody">
+                <div class="cmeta"><b>궁수왕</b><span class="t">1시간 전</span></div>
+                <div class="ctext">저도 어제 +8 낙찰받았는데 이 글 보고 안심되네요 ㅎㅎ</div>
+                <div class="cactions">
+                  <button class="react like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">6</span></button>
+                  <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                  <button class="reply-toggle open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 2 접기</button>
+                  <button class="reply-write"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                </div>
+
+                <!-- 답글 스레드 -->
+                <div class="thread">
+                  <!-- 직접 답글(멘션 없음) -->
+                  <div class="comment">
+                    <div class="av">서</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>서리한</b><span class="t">55분 전</span></div>
+                      <div class="ctext">축하드려요! +8도 요즘 귀합니다.</div>
+                      <div class="cactions">
+                        <button class="react like on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">3</span></button>
+                        <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 답글의 답글 → 같은 레벨 + @멘션 배지 -->
+                  <div class="comment mine">
+                    <div class="av">달</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>달빛상인</b><span class="t">50분 전</span>
+                        <span class="own"><button>수정</button><button class="del">삭제</button></span>
+                      </div>
+                      <div class="ctext"><span class="mention">@서리한</span>맞아요, +8부터는 매물 자체가 드물어요.</div>
+                      <div class="cactions">
+                        <button class="react like" disabled title="본인 댓글에는 공감할 수 없어요"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">1</span></button>
+                        <button class="react dislike" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 답글 작성 폼(대상 @멘션 프리필) -->
+                  <div class="composer">
+                    <div class="av">달</div>
+                    <div class="field focus">
+                      <div class="reply-target"><span class="mention">@서리한</span> 님에게 답글</div>
+                      <textarea>좋은 정보 감사합니다!</textarea>
+                      <div class="cbar"><span class="cnt num">10 / 1000</span>
+                        <span style="display:flex;gap:8px"><button class="btn btn--outline btn--sm">취소</button><button class="btn btn--cta btn--sm">답글 등록</button></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-note"><b>계약(§13.1):</b> 대댓글은 <b>1단계 평탄화</b> — 답글의 답글도 같은 루트에 같은 레벨로 붙고, 대상 작성자 닉을 <code>mentionedNickname</code> 스냅샷으로 받아 <b>@닉 배지</b>로 표시(순수 표시·인가/알림 무관). 답글은 <code>replyCount</code> 없음(1단계). 답글 목록은 <b>항상 시간순</b>(<code>id asc</code>, param 없음). "답글쓰기"를 답글에 누르면 그 작성자에게 <b>@멘션 프리필</b>. 스레드는 좌측 네이비-라인 레일로 들여쓰기.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       C. tombstone — 삭제된 루트 마스킹 + 답글 보존
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">C</span><h2>tombstone — 삭제된 루트(마스킹) · 답글 보존</h2><span class="route">deleted:true · replyCount &gt; 0</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">jangteo.app<b>/boards/community/01J8…</b></div></div>
+      <div class="stage">
+        <div class="c-wrap">
+          <div class="c-list">
+            <div class="comment tomb">
+              <div class="av"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg></div>
+              <div class="cbody">
+                <div class="tomb-text">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+                  삭제된 댓글입니다.
+                </div>
+                <div class="cactions">
+                  <button class="reply-toggle open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>답글 2 접기</button>
+                </div>
+                <div class="thread">
+                  <div class="comment">
+                    <div class="av">서</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>서리한</b><span class="t">30분 전</span></div>
+                      <div class="ctext">윗분 댓글 삭제되셨네요. 그래도 답글은 남아 있어요.</div>
+                      <div class="cactions">
+                        <button class="react like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">2</span></button>
+                        <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="comment">
+                    <div class="av">궁</div>
+                    <div class="cbody">
+                      <div class="cmeta"><b>궁수왕</b><span class="t">20분 전</span></div>
+                      <div class="ctext"><span class="mention">@서리한</span>ㅇㅇ 스레드는 유지되네요.</div>
+                      <div class="cactions">
+                        <button class="react like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9H3v-9zM7 11l4-8a2 2 0 0 1 3 1.7V9h5.2a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg><span class="rc num">0</span></button>
+                        <button class="react dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 13V4h4v9zM17 13l-4 8a2 2 0 0 1-3-1.7V15H4.8a2 2 0 0 1-2-2.3l1.3-7a2 2 0 0 1 2-1.7H17"/></svg><span class="rc num">0</span></button>
+                        <button class="reply-write" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l7 7-7 7v-4H3V9z"/></svg>답글쓰기</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-note"><b>계약(§13.4):</b> 루트 삭제 시 <b>활성 답글이 있으면</b> tombstone으로 목록 잔류 — 본문·작성자·반응 마스킹(<code>deleted:true</code>·<code>content:null</code>·<code>authorNickname:null</code>·카운트 0·<code>editable:false</code>), <code>replyCount</code>·<code>createdAt</code>은 유지해 답글 접근 보존. 신규 답글·반응 불가. 활성 답글이 없으면 목록에서 <b>완전 배제</b>(tombstone 없음). tombstone은 헤더 총계에 <b>불포함</b>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       D. 부수 상태 — 정렬 드롭다운 열림 · 빈 · 로그인 유도 · 공지 비허용
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">D</span><h2>부수 상태 — 정렬 열림 · 빈 · 로그인 유도 · 공지 비허용</h2></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">…상태 모음</div></div>
+      <div class="stage" style="display:grid; grid-template-columns:1fr 1fr; gap:26px;">
+
+        <!-- D1 정렬 드롭다운 열림 -->
+        <div>
+          <div class="c-head" style="padding-top:0">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">24</span></h4>
+            <div class="sortbar">
+              <button class="sort-btn">최신순<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+              <div class="sort-menu">
+                <button class="on">최신순</button>
+                <button>과거순</button>
+                <button>순공감순</button>
+              </div>
+            </div>
+          </div>
+          <div class="mock-note"><b>정렬(§13.3):</b> <code>LATEST</code>(최신순·기본)·<code>OLDEST</code>(과거순)·<code>LIKES</code>(순공감순). 루트 목록에만 적용, 답글은 항상 시간순. BEST는 정렬과 무관한 고정 랭킹.</div>
+        </div>
+
+        <!-- D2 빈 상태 -->
+        <div>
+          <div class="c-head" style="padding-top:0">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">0</span></h4>
+          </div>
+          <div class="composer" style="margin-top:14px">
+            <div class="av">달</div>
+            <div class="field"><textarea placeholder="따뜻한 댓글을 남겨보세요."></textarea>
+              <div class="cbar"><span class="cnt num">0 / 1000</span><button class="btn btn--cta btn--sm" disabled>등록</button></div></div>
+          </div>
+          <div class="state">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <h3>아직 댓글이 없어요</h3><p>첫 댓글을 남겨보세요.</p>
+          </div>
+        </div>
+
+        <!-- D3 로그인 유도 -->
+        <div>
+          <div class="c-head" style="padding-top:0">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 <span class="n">24</span></h4>
+          </div>
+          <div class="login-cue">댓글을 작성하려면 <a href="#">로그인</a> 하세요.</div>
+          <div class="mock-note"><b>비로그인:</b> 목록·답글·BEST는 그대로 공개(공감/답글 <b>버튼은 보이되</b> 클릭 시 로그인 유도). 작성 폼 자리에 로그인 안내.</div>
+        </div>
+
+        <!-- D4 공지 비허용 -->
+        <div>
+          <div class="c-head" style="padding-top:0">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글</h4>
+          </div>
+          <div class="comments-off">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            이 게시판은 댓글을 받지 않습니다.
+          </div>
+          <div class="mock-note"><b>공지(<code>allowComments=false</code>):</b> 댓글 섹션 전체 미노출·안내 문구. 정렬·BEST·작성 폼 모두 없음.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>
