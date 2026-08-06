@@ -75,6 +75,8 @@ export function commentErrorMessage(error: unknown): string {
             return '댓글을 찾을 수 없어요. 이미 삭제됐을 수 있어요.'
         case ERROR_CODES.COMMENT_002:
             return '본인이 작성한 댓글만 수정·삭제할 수 있어요.'
+        case ERROR_CODES.COMMENT_003:
+            return '본인이 작성한 댓글에는 공감·비공감할 수 없어요.'
         default:
             if (error.status === 400 && error.fieldErrors?.length) {
                 return error.fieldErrors[0].reason

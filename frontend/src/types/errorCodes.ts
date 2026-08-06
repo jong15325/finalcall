@@ -121,6 +121,7 @@ export const ERROR_CODES = {
     POST_002: 'POST_002', // 게시글 작성자 아님(수정·삭제 IDOR, non-admin) (403)
     COMMENT_001: 'COMMENT_001', // 댓글 없음(미존재·삭제됨) (404)
     COMMENT_002: 'COMMENT_002', // 댓글 작성자 아님(수정·삭제 IDOR, non-admin) (403)
+    COMMENT_003: 'COMMENT_003', // 자기 댓글 공감/비공감 금지(반응 토글) (422)
     IMAGE_001: 'IMAGE_001', // 지원하지 않는 이미지 형식(jpeg·png·webp·gif 외) (422)
     IMAGE_002: 'IMAGE_002', // 이미지 용량 초과(>5MB) (422)
 
