@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장터 · 게시판 — 디자인 게이트 목업 (웹)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  FC-202 · EPIC-BOARD — 게시판 화면 디자인 게이트 목업 (웹/데스크톱)
+  ══════════════════════════════════════════════════════════════════════════════
+  이 파일은 실구현이 아니라 **디자인 승인용 목업**이다(HTML 목업 → 사용자 승인 → 실구현).
+  팔레트 정본 = frontend/src/index.css (navy #16213a · gold #c8a028 · orange #ef8a2c).
+  구 template-*.html 의 퍼플(#6E2A9F)은 stale 이라 복제하지 않는다([[palette-source-of-truth]]).
+  톤·컴포넌트는 현행 React 앱(rounded-xl 카드·border-line·orange CTA·StateBlock 빈상태)을 따른다.
+
+  담는 화면(계약 api-contract v1.23 §6 · board-domain-spec v1.0):
+    A. /boards            — 게시판 진입 허브(3게시판 카드)
+    B. /boards/community  — 글 목록(커서·상단고정 핀·글쓰기·상단 탭)  + 공지/이벤트 변주
+    C. /boards/community/{id} — 글 상세(본문·이미지 갤러리·조회수·작성자·댓글)  + 공지 변주
+    D. /boards/community/write — 글 작성/수정 폼(제목·본문·이미지 첨부)
+
+  각 화면은 가짜 브라우저 크롬(URL 바)으로 감싸 **라우트 제안**을 눈에 보이게 한다.
+  게임 아트는 쓰지 않는다(게시판 이미지=유저 업로드 사진, "게임은 아이템만" 원칙 → 회색 플레이스홀더).
+-->
+<style>
+/* ══ 1. 토큰 — index.css 실값 (창작 금지) ══════════════════════════════════ */
+:root{
+  --navy:#16213a; --navy-900:#101a2e; --navy-800:#1b2a47; --navy-700:#223458; --navy-600:#2c4270; --navy-500:#385189;
+  --gold:#c8a028; --gold-bright:#dfc447; --gold-deep:#8b6100; --gold-subtle:#f6edcd;
+  --orange:#ef8a2c; --orange-deep:#d9741a; --orange-subtle:#fdefe0;
+  --surface:#ffffff; --surface-sunken:#f4f5f8; --line:#e4e7ee;
+  --success:#16a34a; --success-subtle:#dcfce7; --danger:#e11d48; --danger-subtle:#ffe4e6;
+  --warning:#d99a1a; --warning-subtle:#fdf2d6;
+  --gray-50:#f8f9fb; --gray-100:#f1f3f7; --gray-200:#e4e7ee; --gray-300:#cfd4de; --gray-400:#9aa3b2;
+  --gray-500:#6b7484; --gray-600:#4d5461; --gray-700:#3a3f4a; --gray-800:#262a33; --gray-900:#171a20;
+  --r-lg:8px; --r-xl:12px; --r-2xl:16px; --r-full:9999px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.06);
+  --sh-md:0 4px 12px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.06);
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0; background:#e9ebf0; color:var(--gray-700);
+  font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; word-break:keep-all;}
+img{display:block; max-width:100%;}
+button{font:inherit; color:inherit; cursor:pointer;}
+a{color:inherit; text-decoration:none;}
+h1,h2,h3,h4{margin:0; color:var(--gray-900);}
+.num{font-variant-numeric:tabular-nums;}
+
+/* 목업 페이지 골격 */
+.doc{max-width:1320px; margin:0 auto; padding:40px 24px 96px;}
+.doc-head{margin-bottom:8px;}
+.doc-head h1{font-size:26px; font-weight:800; letter-spacing:-.02em;}
+.doc-head p{margin:8px 0 0; color:var(--gray-500); font-size:14px;}
+.legend{margin:16px 0 32px; padding:14px 16px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-xl); font-size:13px; color:var(--gray-600); line-height:1.8;}
+.legend b{color:var(--gray-900);}
+.legend .sw{display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:middle; margin:0 2px;}
+
+.screen{margin-top:44px;}
+.screen-tag{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+.screen-tag .id{display:inline-grid; place-items:center; min-width:26px; height:26px; padding:0 8px;
+  background:var(--navy); color:#fff; border-radius:var(--r-full); font-size:13px; font-weight:800;}
+.screen-tag h2{font-size:18px; font-weight:800; letter-spacing:-.01em;}
+.screen-tag .route{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; color:var(--gray-500);}
+
+/* 가짜 브라우저 크롬 */
+.browser{border:1px solid #cfd4de; border-radius:14px; overflow:hidden; background:var(--surface-sunken);
+  box-shadow:0 12px 40px rgba(15,23,42,.12);}
+.chrome{display:flex; align-items:center; gap:10px; height:40px; padding:0 14px;
+  background:#dfe2ea; border-bottom:1px solid #cfd4de;}
+.chrome .dots{display:flex; gap:6px;}
+.chrome .dots i{width:11px; height:11px; border-radius:50%; background:#c3c8d2;}
+.chrome .url{flex:1; height:24px; padding:0 12px; background:#fff; border-radius:var(--r-full);
+  display:flex; align-items:center; font-size:12px; color:var(--gray-500);
+  font-family:ui-monospace,Menlo,Consolas,monospace;}
+.chrome .url b{color:var(--gray-800); font-weight:600;}
+
+/* ══ 2. 앱 셸 (얇은 아이콘 레일 + 상단바) — AppShell 축약 ═════════════════ */
+.app{display:flex; min-height:520px; background:var(--surface-sunken);}
+.rail{width:64px; flex:none; background:var(--navy); display:flex; flex-direction:column;
+  align-items:center; padding:14px 0; gap:6px;}
+.rail .brand{width:36px; height:36px; border-radius:10px; background:var(--gold);
+  display:grid; place-items:center; color:var(--navy-900); font-weight:800; font-size:15px; margin-bottom:10px;}
+.rail .ri{width:40px; height:40px; border-radius:10px; display:grid; place-items:center;
+  color:#a9b4cc;}
+.rail .ri.on{background:var(--navy-700); color:#fff;}
+.rail .ri svg{width:20px; height:20px;}
+.main-col{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{height:56px; flex:none; background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:14px; padding:0 20px;}
+.topbar .search{flex:1; max-width:420px; height:36px; background:var(--surface-sunken);
+  border:1px solid var(--line); border-radius:var(--r-lg); display:flex; align-items:center; gap:8px;
+  padding:0 12px; color:var(--gray-400); font-size:13px;}
+.topbar .spacer{flex:1;}
+.topbar .tb-ico{width:36px; height:36px; border-radius:var(--r-lg); display:grid; place-items:center; color:var(--gray-500);}
+.topbar .avatar{width:32px; height:32px; border-radius:50%; background:var(--navy-600); color:#fff;
+  display:grid; place-items:center; font-weight:700; font-size:13px;}
+.view{padding:24px; overflow:auto;}
+.view.narrow > .wrap{max-width:820px; margin:0 auto;}
+
+/* ══ 3. 공용 컴포넌트 ═════════════════════════════════════════════════════ */
+.page-head{margin-bottom:18px;}
+.page-head h1{font-size:24px; font-weight:800; letter-spacing:-.02em; display:flex; align-items:center; gap:8px;}
+.page-head h1 svg{width:24px; height:24px; color:var(--navy);}
+.page-head .lead{margin:6px 0 0; color:var(--gray-500); font-size:14px;}
+.crumbs{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--gray-400); margin-bottom:10px;}
+.crumbs a{color:var(--gray-500);}
+.crumbs a:hover{color:var(--navy);}
+
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; height:40px; padding:0 16px;
+  border:1px solid transparent; border-radius:var(--r-lg); font-size:14px; font-weight:700; white-space:nowrap;}
+.btn svg{width:16px; height:16px;}
+.btn--cta{background:var(--orange); color:#fff;}
+.btn--cta:hover{background:var(--orange-deep);}
+.btn--navy{background:var(--navy); color:#fff;}
+.btn--navy:hover{background:var(--navy-800);}
+.btn--outline{background:var(--surface); color:var(--gray-600); border-color:var(--line);}
+.btn--outline:hover{border-color:var(--navy);}
+.btn--ghost{background:transparent; color:var(--gray-500);}
+.btn--ghost:hover{background:var(--gray-100); color:var(--gray-700);}
+.btn--sm{height:34px; padding:0 12px; font-size:13px;}
+.btn--danger{background:var(--surface); color:var(--danger); border-color:var(--danger-subtle);}
+
+/* 상단 게시판 탭 (in-board 이동) */
+.board-tabs{display:flex; gap:4px; padding:4px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-full); width:max-content; margin-bottom:18px;}
+.board-tabs a{display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 16px;
+  border-radius:var(--r-full); font-size:13px; font-weight:700; color:var(--gray-500);}
+.board-tabs a svg{width:15px; height:15px;}
+.board-tabs a.on{background:var(--navy); color:#fff;}
+
+/* 유형 배지 */
+.badge{display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 8px; border-radius:var(--r-full);
+  font-size:11px; font-weight:700;}
+.badge svg{width:12px; height:12px;}
+.badge--notice{background:var(--navy); color:#fff;}
+.badge--event{background:var(--orange-subtle); color:var(--orange-deep);}
+.badge--general{background:var(--gray-100); color:var(--gray-600);}
+.badge--pin{background:var(--gold-subtle); color:var(--gold-deep);}
+
+/* ══ 4-A. 게시판 허브 카드 ════════════════════════════════════════════════ */
+.hub-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+.hub-card{display:flex; flex-direction:column; gap:12px; padding:20px; background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-2xl);}
+.hub-card:hover{border-color:var(--navy); box-shadow:var(--sh-md);}
+.hub-card .ic{width:44px; height:44px; border-radius:12px; display:grid; place-items:center;}
+.hub-card .ic svg{width:22px; height:22px;}
+.hub-card.notice .ic{background:var(--navy); color:var(--gold-bright);}
+.hub-card.general .ic{background:var(--navy); color:#fff;}
+.hub-card.event  .ic{background:var(--orange-subtle); color:var(--orange-deep);}
+.hub-card h3{font-size:17px; font-weight:800;}
+.hub-card p{margin:0; color:var(--gray-500); font-size:13px; line-height:1.6;}
+.hub-card .meta{display:flex; align-items:center; gap:8px; margin-top:2px; flex-wrap:wrap;}
+.hub-card .meta .m{font-size:12px; color:var(--gray-400);}
+.hub-card .go{margin-top:auto; display:flex; align-items:center; justify-content:space-between;
+  padding-top:12px; border-top:1px solid var(--line); font-size:13px; font-weight:700; color:var(--navy);}
+
+/* ══ 4-B. 글 목록 ═════════════════════════════════════════════════════════ */
+.list-head{display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:14px;}
+.postlist{display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--r-xl);
+  overflow:hidden; background:var(--surface);}
+.post-row{display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--line);}
+.post-row:last-child{border-bottom:0;}
+.post-row:hover{background:var(--gray-50);}
+.post-row.pinned{background:var(--gold-subtle);}
+.post-row.pinned:hover{background:#f2e7bf;}
+.post-row .thumb{width:56px; height:56px; flex:none; border-radius:var(--r-lg); background:var(--gray-100);
+  display:grid; place-items:center; color:var(--gray-300); overflow:hidden;}
+.post-row .thumb svg{width:22px; height:22px;}
+.post-row .body{flex:1; min-width:0;}
+.post-row .title-line{display:flex; align-items:center; gap:8px;}
+.post-row .title{font-size:15px; font-weight:700; color:var(--gray-900); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;}
+.post-row .cc{display:inline-flex; align-items:center; gap:3px; font-size:13px; font-weight:700; color:var(--orange-deep); flex:none;}
+.post-row .cc svg{width:14px; height:14px;}
+.post-row .sub{display:flex; align-items:center; gap:10px; margin-top:4px; font-size:12px; color:var(--gray-400);}
+.post-row .sub .dot{width:2px; height:2px; border-radius:50%; background:var(--gray-300);}
+.post-row .sub .v{display:inline-flex; align-items:center; gap:3px;}
+.post-row .sub svg{width:13px; height:13px;}
+
+/* 이벤트 목록 = 배너 카드 */
+.event-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+.event-card{border:1px solid var(--line); border-radius:var(--r-xl); overflow:hidden; background:var(--surface);}
+.event-card:hover{box-shadow:var(--sh-md); border-color:var(--gray-300);}
+.event-card .banner{aspect-ratio:16/7; background:linear-gradient(120deg,var(--navy-700),var(--navy-500));
+  display:grid; place-items:center; color:#8ea3c9; position:relative;}
+.event-card .banner svg{width:34px; height:34px;}
+.event-card .banner .pin{position:absolute; left:12px; top:12px;}
+.event-card .ec-body{padding:14px 16px;}
+.event-card .ec-body h3{font-size:15px; font-weight:800;}
+.event-card .ec-body .sub{display:flex; align-items:center; gap:10px; margin-top:6px; font-size:12px; color:var(--gray-400);}
+
+.sentinel{padding:14px; text-align:center; font-size:12px; color:var(--gray-400);}
+
+/* 빈 상태 (StateBlock) */
+.state{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  padding:56px 24px; border:1px dashed var(--line); border-radius:var(--r-2xl); background:var(--surface);}
+.state .ic{width:56px; height:56px; border-radius:16px; background:var(--gray-100); color:var(--gray-400);
+  display:grid; place-items:center; margin-bottom:14px;}
+.state .ic svg{width:26px; height:26px;}
+.state h3{font-size:16px; font-weight:800;}
+.state p{margin:6px 0 0; color:var(--gray-500); font-size:14px;}
+
+/* ══ 4-C. 글 상세 ═════════════════════════════════════════════════════════ */
+.detail{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-2xl); padding:26px 28px;}
+.detail .d-head{padding-bottom:18px; border-bottom:1px solid var(--line);}
+.detail .d-title{font-size:23px; font-weight:800; letter-spacing:-.02em; line-height:1.35;
+  display:flex; align-items:flex-start; gap:8px;}
+.detail .d-meta{display:flex; align-items:center; gap:12px; margin-top:12px; font-size:13px; color:var(--gray-500);}
+.detail .d-meta .who{display:inline-flex; align-items:center; gap:6px; font-weight:700; color:var(--gray-700);}
+.detail .d-meta .who .av{width:24px; height:24px; border-radius:50%; background:var(--navy-600); color:#fff;
+  display:grid; place-items:center; font-size:11px; font-weight:700;}
+.detail .d-meta .v{display:inline-flex; align-items:center; gap:4px;}
+.detail .d-meta .dot{width:2px; height:2px; border-radius:50%; background:var(--gray-300);}
+.detail .d-meta svg{width:14px; height:14px;}
+.detail .d-actions{margin-left:auto; display:flex; gap:8px;}
+.detail .content{padding:22px 0; font-size:15px; line-height:1.85; color:var(--gray-700);}
+.gallery{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding-bottom:22px;}
+.gallery .g{aspect-ratio:4/3; border-radius:var(--r-lg); background:var(--gray-100); border:1px solid var(--line);
+  display:grid; place-items:center; color:var(--gray-300);}
+.gallery .g svg{width:26px; height:26px;}
+.gallery .g.wide{grid-column:span 2; aspect-ratio:auto;}
+
+/* 댓글 */
+.comments{margin-top:6px; padding-top:22px; border-top:1px solid var(--line);}
+.comments h4{font-size:15px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:6px;}
+.comments h4 .n{color:var(--orange-deep);}
+.composer{display:flex; gap:10px; margin-bottom:20px;}
+.composer .av{width:34px; height:34px; flex:none; border-radius:50%; background:var(--navy-600); color:#fff;
+  display:grid; place-items:center; font-weight:700; font-size:13px;}
+.composer .field{flex:1; border:1px solid var(--line); border-radius:var(--r-lg); background:var(--surface-sunken);
+  padding:10px 12px;}
+.composer textarea{width:100%; border:0; background:transparent; resize:none; font:inherit; color:var(--gray-700);
+  min-height:44px; outline:none;}
+.composer .cbar{display:flex; align-items:center; justify-content:space-between; margin-top:6px;}
+.composer .cbar .cnt{font-size:12px; color:var(--gray-400);}
+.comment{display:flex; gap:10px; padding:14px 0; border-top:1px solid var(--line);}
+.comment .av{width:34px; height:34px; flex:none; border-radius:50%; background:var(--gray-200); color:var(--gray-600);
+  display:grid; place-items:center; font-weight:700; font-size:13px;}
+.comment .cbody{flex:1; min-width:0;}
+.comment .cmeta{display:flex; align-items:center; gap:8px; font-size:13px;}
+.comment .cmeta b{color:var(--gray-900); font-weight:700;}
+.comment .cmeta .t{color:var(--gray-400); font-size:12px;}
+.comment .cmeta .own{margin-left:auto; display:flex; gap:6px;}
+.comment .cmeta .own button{background:none; border:0; color:var(--gray-400); font-size:12px; font-weight:600;}
+.comment .cmeta .own button:hover{color:var(--gray-700);}
+.comment .ctext{margin-top:5px; font-size:14px; color:var(--gray-700); line-height:1.6;}
+.comments-off{padding:20px; text-align:center; color:var(--gray-400); font-size:13px;
+  background:var(--surface-sunken); border-radius:var(--r-lg);}
+
+/* ══ 4-D. 작성 폼 ═════════════════════════════════════════════════════════ */
+.form-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-2xl); padding:26px 28px;}
+.field-group{margin-bottom:20px;}
+.field-group label{display:block; font-size:13px; font-weight:700; color:var(--gray-700); margin-bottom:7px;}
+.field-group label .req{color:var(--orange-deep);}
+.input{width:100%; height:44px; padding:0 14px; border:1px solid var(--line); border-radius:var(--r-lg);
+  background:var(--surface); font:inherit; color:var(--gray-800); outline:none;}
+.input:focus{border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-subtle);}
+textarea.input{height:auto; min-height:220px; padding:12px 14px; resize:vertical; line-height:1.7;}
+.field-group .hint{display:flex; justify-content:space-between; margin-top:6px; font-size:12px; color:var(--gray-400);}
+.dropzone{border:1.5px dashed var(--gray-300); border-radius:var(--r-xl); background:var(--surface-sunken);
+  padding:22px; text-align:center; color:var(--gray-500);}
+.dropzone .ic{width:44px; height:44px; margin:0 auto 8px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--line); display:grid; place-items:center; color:var(--gray-400);}
+.dropzone .ic svg{width:22px; height:22px;}
+.dropzone b{color:var(--navy);}
+.thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:10px; margin-top:14px;}
+.thumbs .th{position:relative; aspect-ratio:1; border-radius:var(--r-lg); background:var(--gray-100);
+  border:1px solid var(--line); display:grid; place-items:center; color:var(--gray-300);}
+.thumbs .th svg{width:22px; height:22px;}
+.thumbs .th .x{position:absolute; top:5px; right:5px; width:20px; height:20px; border-radius:50%;
+  background:rgba(23,26,32,.7); color:#fff; display:grid; place-items:center; font-size:12px; border:0;}
+.thumbs .th .up{position:absolute; inset:0; border-radius:inherit; background:rgba(255,255,255,.6);
+  display:grid; place-items:center; font-size:11px; font-weight:700; color:var(--navy);}
+.thumbs .add{border:1.5px dashed var(--gray-300); background:var(--surface); color:var(--gray-400);}
+.form-actions{display:flex; justify-content:flex-end; gap:10px; padding-top:8px; border-top:1px solid var(--line);}
+.write-note{display:flex; gap:8px; align-items:flex-start; padding:12px 14px; background:var(--surface-sunken);
+  border-radius:var(--r-lg); font-size:13px; color:var(--gray-600); margin-bottom:20px;}
+.write-note svg{width:16px; height:16px; color:var(--navy); flex:none; margin-top:2px;}
+
+/* 목업 주석 */
+.mock-note{margin-top:12px; padding:12px 16px; border:1px dashed var(--gray-300); border-radius:var(--r-lg);
+  background:#fffef7; font-size:13px; color:var(--gray-600); line-height:1.7;}
+.mock-note b{color:var(--gray-900);}
+.mock-note code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; background:var(--gray-100);
+  padding:1px 5px; border-radius:4px; color:var(--navy);}
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="doc-head">
+    <h1>장터 · 게시판 — 디자인 게이트 목업 (웹)</h1>
+    <p>FC-202 · EPIC-BOARD. 실구현 전 디자인 승인용. 팔레트=index.css(navy/gold/orange). 각 화면은 브라우저 URL 바로 제안 라우트를 표시합니다.</p>
+  </div>
+  <div class="legend">
+    <b>팔레트</b>
+    <span class="sw" style="background:#16213a"></span>네이비(구조·헤더)
+    <span class="sw" style="background:#c8a028"></span>골드(상단고정 핀·강조)
+    <span class="sw" style="background:#ef8a2c"></span>오렌지(주요 액션·댓글수) &nbsp;·&nbsp;
+    <b>게시판 유형 변주</b> — 공지(NOTICE·관리자만·댓글off) / 커뮤니티(GENERAL·유저 쓰기·댓글on) / 이벤트(EVENT·배너·관리자만·댓글on).
+    게시판 이미지는 유저 사진(회색 플레이스홀더) — 게임 아트 아님.
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       A. 게시판 진입 허브  /boards
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">A</span><h2>게시판 진입 — 허브</h2><span class="route">/boards</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>
+        <div class="url">jangteo.app<b>/boards</b></div></div>
+      <div class="app">
+        <nav class="rail">
+          <div class="brand">SP</div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+          <div class="ri on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        </nav>
+        <div class="main-col">
+          <div class="topbar">
+            <div class="search"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>아이템·게시글 검색</div>
+            <div class="spacer"></div>
+            <div class="tb-ico"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3a4.5 4.5 0 0 0-4.5 4.5c0 3-1 4-1.5 4.5h12c-.5-.5-1.5-1.5-1.5-4.5A4.5 4.5 0 0 0 10 3Z"/></svg></div>
+            <div class="avatar">달</div>
+          </div>
+          <div class="view">
+            <div class="page-head">
+              <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>게시판</h1>
+              <p class="lead">공지·커뮤니티·이벤트 소식을 확인하고 이야기를 나눠보세요.</p>
+            </div>
+            <div class="hub-grid">
+              <a class="hub-card notice">
+                <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l14-6v14L3 13zM17 8a3 3 0 0 1 0 8"/></svg></div>
+                <h3>공지사항</h3>
+                <p>장터 운영 소식과 업데이트를 안내합니다.</p>
+                <div class="meta"><span class="badge badge--notice">관리자</span><span class="m">댓글 없음</span></div>
+                <div class="go">바로가기 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+              </a>
+              <a class="hub-card general">
+                <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                <h3>커뮤니티</h3>
+                <p>거래 후기와 정보를 자유롭게 나누는 게시판이에요.</p>
+                <div class="meta"><span class="badge badge--general">누구나</span><span class="m">댓글 · 이미지</span></div>
+                <div class="go">바로가기 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+              </a>
+              <a class="hub-card event">
+                <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM4 9h16M8 3v4M16 3v4"/></svg></div>
+                <h3>이벤트</h3>
+                <p>진행 중인 이벤트와 혜택을 놓치지 마세요.</p>
+                <div class="meta"><span class="badge badge--event">진행 중 2</span><span class="m">댓글 참여</span></div>
+                <div class="go">바로가기 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+              </a>
+            </div>
+            <div class="mock-note"><b>라우트 제안:</b> <code>/boards</code> 허브 → <code>/boards/:slug</code> 목록 → <code>/boards/:slug/:postId</code> 상세 → <code>/boards/:slug/write</code> 작성. 사이드바 "커뮤니티" 그룹은 3게시판(공지·커뮤니티·이벤트) leaf 로 확장. <b>대안(B 화면 상단 탭):</b> 허브 없이 목록 상단 세그먼트 탭으로 게시판을 오가는 방식 — 게시판이 3개뿐이라 허브가 얇을 수 있음.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       B. 글 목록  /boards/community  (상단 탭 · 상단고정 핀 · 글쓰기)
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">B</span><h2>글 목록 — 커뮤니티 (유저 쓰기 · 댓글)</h2><span class="route">/boards/community</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>
+        <div class="url">jangteo.app<b>/boards/community</b></div></div>
+      <div class="app">
+        <nav class="rail">
+          <div class="brand">SP</div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+          <div class="ri on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        </nav>
+        <div class="main-col">
+          <div class="topbar">
+            <div class="search"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>아이템·게시글 검색</div>
+            <div class="spacer"></div>
+            <div class="tb-ico"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3a4.5 4.5 0 0 0-4.5 4.5c0 3-1 4-1.5 4.5h12c-.5-.5-1.5-1.5-1.5-4.5A4.5 4.5 0 0 0 10 3Z"/></svg></div>
+            <div class="avatar">달</div>
+          </div>
+          <div class="view">
+            <div class="crumbs"><a>게시판</a><span>/</span><span>커뮤니티</span></div>
+            <div class="board-tabs">
+              <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l14-6v14L3 13z"/></svg>공지사항</a>
+              <a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>커뮤니티</a>
+              <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 3v4M16 3v4"/></svg>이벤트</a>
+            </div>
+            <div class="list-head">
+              <div class="page-head" style="margin:0">
+                <h1 style="font-size:22px">커뮤니티</h1>
+                <p class="lead">거래 후기와 정보를 자유롭게 나누는 게시판이에요.</p>
+              </div>
+              <!-- write_policy=AUTHENTICATED → 로그인 회원에게 글쓰기 노출 -->
+              <a class="btn btn--cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>글쓰기</a>
+            </div>
+            <div class="postlist">
+              <!-- 상단고정(isPinned) — 골드 배경 + 핀 배지, 목록 최상단 -->
+              <a class="post-row pinned">
+                <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+                <div class="body">
+                  <div class="title-line">
+                    <span class="badge badge--pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 3h10l-2-3V4M12 16v4"/></svg>고정</span>
+                    <span class="title">거래 사기 예방 가이드 — 꼭 읽어주세요</span>
+                    <span class="cc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>42</span>
+                  </div>
+                  <div class="sub"><span>운영자</span><span class="dot"></span><span>3일 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>1,204</span></div>
+                </div>
+              </a>
+              <a class="post-row">
+                <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+                <div class="body">
+                  <div class="title-line">
+                    <span class="title">불의 대검 +7 낙찰 후기 (사진 첨부)</span>
+                    <span class="cc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>17</span>
+                  </div>
+                  <div class="sub"><span>달빛상인</span><span class="dot"></span><span>2시간 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>328</span></div>
+                </div>
+              </a>
+              <a class="post-row">
+                <div class="thumb" style="background:transparent"></div>
+                <div class="body">
+                  <div class="title-line">
+                    <span class="title">요즘 물속성 활 시세 어떤가요?</span>
+                    <span class="cc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>8</span>
+                  </div>
+                  <div class="sub"><span>서리한</span><span class="dot"></span><span>5시간 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>96</span></div>
+                </div>
+              </a>
+              <a class="post-row">
+                <div class="thumb" style="background:transparent"></div>
+                <div class="body">
+                  <div class="title-line">
+                    <span class="title">골드포스 만료 전에 파는 게 이득일까요</span>
+                  </div>
+                  <div class="sub"><span>바람의검객</span><span class="dot"></span><span>어제</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>211</span></div>
+                </div>
+              </a>
+              <div class="sentinel">더 불러오는 중…</div>
+            </div>
+            <div class="mock-note"><b>목록 규칙(계약):</b> 커서 무한스크롤 · 정렬 <code>isPinned DESC, id DESC</code>(고정 우선·최신순). <code>PostSummary</code> = 제목·작성자닉·조회수·댓글수·상단고정·썸네일(첫 이미지). 썸네일 없으면 자리 비움. <b>인가 UI:</b> 글쓰기 버튼은 <code>writePolicy</code>로 노출 제어(권위는 서버) — 커뮤니티=로그인 회원, 공지·이벤트=관리자만.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       B2. 글 목록 변주 — 공지(관리자 전용·댓글 없음) / 이벤트(배너)
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">B2</span><h2>글 목록 변주 — 공지 · 이벤트</h2><span class="route">/boards/notice · /boards/event</span></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+      <!-- 공지 목록 -->
+      <div class="browser">
+        <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">…<b>/boards/notice</b></div></div>
+        <div style="background:var(--surface-sunken); padding:20px;">
+          <div class="board-tabs" style="margin-bottom:14px">
+            <a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l14-6v14L3 13z"/></svg>공지사항</a>
+            <a>커뮤니티</a><a>이벤트</a>
+          </div>
+          <div class="list-head" style="margin-bottom:12px">
+            <div><h1 style="font-size:18px">공지사항 <span class="badge badge--notice" style="vertical-align:middle">관리자</span></h1></div>
+            <!-- write_policy=ADMIN_ONLY → 일반 유저에게 글쓰기 버튼 미노출 -->
+            <span style="font-size:12px; color:var(--gray-400)">관리자만 작성</span>
+          </div>
+          <div class="postlist">
+            <a class="post-row pinned" style="padding:12px 16px">
+              <div class="body"><div class="title-line"><span class="badge badge--pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 3h10l-2-3V4M12 16v4"/></svg>고정</span><span class="title">[중요] 정기 점검 안내 (8/10 02:00~04:00)</span></div>
+              <div class="sub"><span>공지사항</span><span class="dot"></span><span>1일 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>3,102</span></div></div>
+            </a>
+            <a class="post-row" style="padding:12px 16px"><div class="body"><div class="title-line"><span class="title">이용약관 개정 안내</span></div>
+              <div class="sub"><span>공지사항</span><span class="dot"></span><span>5일 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>842</span></div></div></a>
+            <a class="post-row" style="padding:12px 16px"><div class="body"><div class="title-line"><span class="title">신규 기능 업데이트 (배송 시스템)</span></div>
+              <div class="sub"><span>공지사항</span><span class="dot"></span><span>1주 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>1,530</span></div></div></a>
+          </div>
+          <div class="mock-note"><b>공지 변주:</b> 댓글수 배지 없음(<code>allowComments=false</code>) · 글쓰기 버튼 없음(관리자만) · 작성자=흡수된 "공지사항" 스냅샷.</div>
+        </div>
+      </div>
+      <!-- 이벤트 목록 (배너) -->
+      <div class="browser">
+        <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">…<b>/boards/event</b></div></div>
+        <div style="background:var(--surface-sunken); padding:20px;">
+          <div class="board-tabs" style="margin-bottom:14px">
+            <a>공지사항</a><a>커뮤니티</a>
+            <a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 3v4M16 3v4"/></svg>이벤트</a>
+          </div>
+          <div class="list-head" style="margin-bottom:12px"><div><h1 style="font-size:18px">이벤트</h1></div></div>
+          <div class="event-grid">
+            <a class="event-card">
+              <div class="banner"><span class="pin"><span class="badge badge--pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 3h10l-2-3V4M12 16v4"/></svg>진행중</span></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              <div class="ec-body"><h3>여름맞이 수수료 0% 이벤트</h3>
+                <div class="sub"><span class="badge badge--event">D-5</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>63</span></div></div>
+            </a>
+            <a class="event-card">
+              <div class="banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              <div class="ec-body"><h3>첫 거래 축하 골드 지급</h3>
+                <div class="sub"><span class="badge badge--event">진행중</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>28</span></div></div>
+            </a>
+          </div>
+          <div class="mock-note"><b>이벤트 변주:</b> 배너 썸네일(첫 이미지) 강조 카드 그리드 · 댓글 참여 가능(<code>allowComments=true</code>) · 작성은 관리자만.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       C. 글 상세  /boards/community/{id}
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">C</span><h2>글 상세 — 커뮤니티 (본문·갤러리·댓글)</h2><span class="route">/boards/community/:postId</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>
+        <div class="url">jangteo.app<b>/boards/community/01J8XR2K…</b></div></div>
+      <div class="app">
+        <nav class="rail">
+          <div class="brand">SP</div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+          <div class="ri on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        </nav>
+        <div class="main-col">
+          <div class="topbar">
+            <div class="search"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>아이템·게시글 검색</div>
+            <div class="spacer"></div>
+            <div class="tb-ico"><svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3a4.5 4.5 0 0 0-4.5 4.5c0 3-1 4-1.5 4.5h12c-.5-.5-1.5-1.5-1.5-4.5A4.5 4.5 0 0 0 10 3Z"/></svg></div>
+            <div class="avatar">달</div>
+          </div>
+          <div class="view narrow"><div class="wrap">
+            <div class="crumbs"><a>게시판</a><span>/</span><a>커뮤니티</a><span>/</span><span>글 보기</span></div>
+            <div class="detail">
+              <div class="d-head">
+                <h2 class="d-title">불의 대검 +7 낙찰 후기 (사진 첨부)</h2>
+                <div class="d-meta">
+                  <span class="who"><span class="av">달</span>달빛상인</span>
+                  <span class="dot"></span><span>2시간 전</span>
+                  <span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>328</span>
+                  <span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>17</span>
+                  <!-- editable=true(작성자 본인 or 관리자) 일 때만 노출 -->
+                  <span class="d-actions">
+                    <button class="btn btn--outline btn--sm">수정</button>
+                    <button class="btn btn--danger btn--sm">삭제</button>
+                  </span>
+                </div>
+              </div>
+              <div class="content">
+                지난 주 마감 30초 전 입찰로 겨우 낙찰받은 불의 대검 +7 후기입니다. 배송까지 문제없이 잘 받았고,
+                골드포스도 아직 9일 남아 있어서 만족스럽네요. 아래는 인증 사진입니다.
+              </div>
+              <div class="gallery">
+                <div class="g wide" style="aspect-ratio:16/9"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/><circle cx="9" cy="9" r="1.6"/></svg></div>
+                <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+                <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+                <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              </div>
+              <!-- 댓글 (allowComments=true) -->
+              <div class="comments">
+                <h4>댓글 <span class="n">17</span></h4>
+                <div class="composer">
+                  <div class="av">달</div>
+                  <div class="field">
+                    <textarea placeholder="따뜻한 댓글을 남겨보세요."></textarea>
+                    <div class="cbar"><span class="cnt">0 / 1000</span><button class="btn btn--cta btn--sm">등록</button></div>
+                  </div>
+                </div>
+                <div class="comment">
+                  <div class="av">서</div>
+                  <div class="cbody">
+                    <div class="cmeta"><b>서리한</b><span class="t">1시간 전</span></div>
+                    <div class="ctext">축하드려요! 저도 물결 장궁 노리고 있는데 시세 정보 감사합니다.</div>
+                  </div>
+                </div>
+                <div class="comment">
+                  <div class="av">달</div>
+                  <div class="cbody">
+                    <div class="cmeta"><b>달빛상인</b><span class="t">50분 전</span>
+                      <!-- editable=true 인 댓글에만 -->
+                      <span class="own"><button>수정</button><button>삭제</button></span></div>
+                    <div class="ctext">@서리한 화이팅입니다 :)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mock-note"><b>상세 규칙(계약):</b> 상세 조회 시 <code>viewCount</code> 원자 증가. 이미지 <code>images[]</code>는 서버가 읽기 시점 생성한 presigned URL(응답마다 갱신·클라 캐시 금지). 수정/삭제·댓글 수정/삭제 버튼은 <code>editable</code>(작성자 본인 or 관리자)일 때만 노출 — 권위는 서버.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C2. 공지 상세 변주 -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">C2</span><h2>글 상세 변주 — 공지 (댓글 off)</h2><span class="route">/boards/notice/:postId</span></div>
+    <div class="browser" style="max-width:860px">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">…<b>/boards/notice/01J8…</b></div></div>
+      <div style="background:var(--surface-sunken); padding:24px;">
+        <div class="detail">
+          <div class="d-head">
+            <h2 class="d-title"><span class="badge badge--pin" style="margin-top:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 3h10l-2-3V4M12 16v4"/></svg>고정</span>[중요] 정기 점검 안내 (8/10 02:00~04:00)</h2>
+            <div class="d-meta">
+              <span class="who"><span class="av" style="background:var(--navy)">공</span>공지사항</span>
+              <span class="dot"></span><span>1일 전</span>
+              <span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>3,102</span>
+              <!-- 관리자로 로그인했을 때만 수정/삭제 노출(editable) -->
+            </div>
+          </div>
+          <div class="content">안녕하세요, 장터입니다. 서비스 안정화를 위한 정기 점검을 아래와 같이 진행합니다.<br>점검 시간 동안 경매·입찰·거래가 일시 중단됩니다. 이용에 참고 부탁드립니다.</div>
+          <div class="comments-off"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M18 6 6 18M6 6l12 12"/></svg> 이 게시판은 댓글을 받지 않습니다.</div>
+        </div>
+        <div class="mock-note"><b>공지 상세 변주:</b> 작성자=공지사항(관리자 스냅샷) · 댓글 섹션 자리에 "댓글 미허용" 안내(<code>allowComments=false</code>) · 수정/삭제는 관리자 로그인(editable) 시에만.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       D. 글 작성/수정  /boards/community/write
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="screen">
+    <div class="screen-tag"><span class="id">D</span><h2>글 작성 / 수정</h2><span class="route">/boards/community/write · …/:postId/edit</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>
+        <div class="url">jangteo.app<b>/boards/community/write</b></div></div>
+      <div class="app">
+        <nav class="rail">
+          <div class="brand">SP</div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
+          <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+          <div class="ri on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        </nav>
+        <div class="main-col">
+          <div class="topbar">
+            <div class="search"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>아이템·게시글 검색</div>
+            <div class="spacer"></div>
+            <div class="avatar">달</div>
+          </div>
+          <div class="view narrow"><div class="wrap">
+            <div class="crumbs"><a>게시판</a><span>/</span><a>커뮤니티</a><span>/</span><span>글쓰기</span></div>
+            <div class="page-head"><h1 style="font-size:20px">글쓰기</h1></div>
+            <div class="form-card">
+              <div class="write-note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                <span><b>커뮤니티</b>에 글을 올립니다. 로그인 회원 누구나 작성할 수 있어요. 서로 존중하는 글을 남겨주세요.</span>
+              </div>
+              <div class="field-group">
+                <label>제목 <span class="req">*</span></label>
+                <input class="input" placeholder="제목을 입력하세요" value="불의 대검 +7 낙찰 후기 (사진 첨부)">
+                <div class="hint"><span></span><span>34 / 200</span></div>
+              </div>
+              <div class="field-group">
+                <label>내용 <span class="req">*</span></label>
+                <textarea class="input" placeholder="내용을 입력하세요">지난 주 마감 30초 전 입찰로 겨우 낙찰받은 불의 대검 +7 후기입니다…</textarea>
+                <div class="hint"><span></span><span>128 / 10,000</span></div>
+              </div>
+              <div class="field-group">
+                <label>이미지 첨부 <span style="color:var(--gray-400); font-weight:500">(최대 10장 · 5MB · jpg/png/webp/gif)</span></label>
+                <div class="dropzone">
+                  <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
+                  이미지를 끌어다 놓거나 <b>클릭해서 업로드</b>
+                </div>
+                <div class="thumbs">
+                  <div class="th"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg><button class="x">✕</button></div>
+                  <div class="th"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg><button class="x">✕</button><div class="up">업로드 중 62%</div></div>
+                  <div class="th add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn--outline">취소</button>
+                <button class="btn btn--cta">등록</button>
+              </div>
+            </div>
+            <div class="mock-note"><b>작성 규칙(계약):</b> 2단계 업로드 — 이미지를 먼저 <code>POST /board-images</code>로 올려 <code>imagePublicId</code>·미리보기 url 을 받고, 등록 시 <code>imagePublicIds[]</code>로 귀속. 제목 ≤200 · 본문 ≤10,000 · 첨부 ≤10장. 수정 화면은 같은 폼(기존 값 프리필). 이벤트/공지 글쓰기는 관리자만 이 화면에 진입.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body></html>

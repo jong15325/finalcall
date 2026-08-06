@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장터 · 게시판 — 디자인 게이트 목업 (모바일)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  FC-202 · EPIC-BOARD — 게시판 화면 디자인 게이트 목업 (모바일 375px)
+  웹과 배치를 다르게 설계한다([[responsive-separate-design]]) — 상단 탭 스크롤·전폭 리스트·
+  하단 탭바(BottomNav)·플로팅 글쓰기 버튼(FAB)·이미지 갤러리 가로 스와이프.
+  팔레트=index.css. 게임 아트 아님(회색 플레이스홀더).
+-->
+<style>
+:root{
+  --navy:#16213a; --navy-900:#101a2e; --navy-800:#1b2a47; --navy-700:#223458; --navy-600:#2c4270; --navy-500:#385189;
+  --gold:#c8a028; --gold-bright:#dfc447; --gold-deep:#8b6100; --gold-subtle:#f6edcd;
+  --orange:#ef8a2c; --orange-deep:#d9741a; --orange-subtle:#fdefe0;
+  --surface:#ffffff; --surface-sunken:#f4f5f8; --line:#e4e7ee;
+  --danger:#e11d48; --danger-subtle:#ffe4e6;
+  --gray-100:#f1f3f7; --gray-200:#e4e7ee; --gray-300:#cfd4de; --gray-400:#9aa3b2;
+  --gray-500:#6b7484; --gray-600:#4d5461; --gray-700:#3a3f4a; --gray-900:#171a20;
+  --r-lg:8px; --r-xl:12px; --r-2xl:16px; --r-full:9999px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0; background:#e9ebf0; color:var(--gray-700);
+  font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; word-break:keep-all;}
+img{display:block; max-width:100%;}
+button{font:inherit; color:inherit; cursor:pointer;}
+h1,h2,h3,h4{margin:0; color:var(--gray-900);}
+.num{font-variant-numeric:tabular-nums;}
+
+.doc{max-width:1280px; margin:0 auto; padding:40px 24px 96px;}
+.doc-head h1{font-size:26px; font-weight:800; letter-spacing:-.02em;}
+.doc-head p{margin:8px 0 0; color:var(--gray-500);}
+.strip{display:flex; gap:28px; flex-wrap:wrap; margin-top:32px;}
+.dev-col{display:flex; flex-direction:column; align-items:center; gap:12px;}
+.dev-label{font-size:13px; font-weight:800; color:var(--gray-900);}
+.dev-label span{display:block; font-weight:500; color:var(--gray-500); font-size:12px; margin-top:2px;}
+
+/* 폰 프레임 */
+.phone{width:375px; height:760px; background:var(--surface-sunken); border:10px solid #1c2230;
+  border-radius:40px; overflow:hidden; position:relative; box-shadow:0 18px 50px rgba(15,23,42,.18);
+  display:flex; flex-direction:column;}
+.notch{position:absolute; top:0; left:50%; transform:translateX(-50%); width:150px; height:26px;
+  background:#1c2230; border-radius:0 0 16px 16px; z-index:30;}
+/* 상단 앱바 */
+.appbar{height:52px; flex:none; background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:8px; padding:0 12px; padding-top:6px; z-index:20;}
+.appbar .ic{width:36px; height:36px; border-radius:var(--r-lg); display:grid; place-items:center; color:var(--gray-600);}
+.appbar .ic svg{width:20px; height:20px;}
+.appbar h1{font-size:16px; font-weight:800; flex:1; text-align:center;}
+.appbar .r{width:36px;}
+/* 스크롤 영역 */
+.screen-body{flex:1; overflow:auto; padding:14px 14px 78px;}
+/* 하단 탭바 */
+.bottomnav{position:absolute; bottom:0; left:0; right:0; height:60px; background:var(--surface);
+  border-top:1px solid var(--line); display:flex; z-index:25;}
+.bottomnav a{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  font-size:10px; font-weight:600; color:var(--gray-400);}
+.bottomnav a svg{width:20px; height:20px;}
+.bottomnav a.on{color:var(--navy);}
+/* FAB */
+.fab{position:absolute; right:16px; bottom:76px; width:52px; height:52px; border-radius:50%;
+  background:var(--orange); color:#fff; display:grid; place-items:center; z-index:26; border:0;
+  box-shadow:0 6px 16px rgba(15,23,42,.18);}
+.fab svg{width:24px; height:24px;}
+
+/* 공통 조각 */
+.badge{display:inline-flex; align-items:center; gap:3px; height:20px; padding:0 7px; border-radius:var(--r-full);
+  font-size:10px; font-weight:700;}
+.badge svg{width:11px; height:11px;}
+.badge--notice{background:var(--navy); color:#fff;}
+.badge--event{background:var(--orange-subtle); color:var(--orange-deep);}
+.badge--general{background:var(--gray-100); color:var(--gray-600);}
+.badge--pin{background:var(--gold-subtle); color:var(--gold-deep);}
+
+/* 상단 탭 스크롤 */
+.mtabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; scrollbar-width:none;}
+.mtabs::-webkit-scrollbar{display:none;}
+.mtabs a{flex:none; height:34px; padding:0 16px; border-radius:var(--r-full); font-size:13px; font-weight:700;
+  color:var(--gray-500); background:var(--surface); border:1px solid var(--line); display:inline-flex; align-items:center;}
+.mtabs a.on{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+/* 허브 카드 (모바일 세로) */
+.hub{display:flex; flex-direction:column; gap:12px;}
+.hubc{display:flex; align-items:center; gap:14px; padding:16px; background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--r-2xl);}
+.hubc .ic{width:44px; height:44px; flex:none; border-radius:12px; display:grid; place-items:center;}
+.hubc .ic svg{width:22px; height:22px;}
+.hubc.notice .ic{background:var(--navy); color:var(--gold-bright);}
+.hubc.general .ic{background:var(--navy); color:#fff;}
+.hubc.event .ic{background:var(--orange-subtle); color:var(--orange-deep);}
+.hubc .t{flex:1; min-width:0;}
+.hubc h3{font-size:15px; font-weight:800;}
+.hubc p{margin:3px 0 0; font-size:12px; color:var(--gray-500);}
+.hubc .chev{color:var(--gray-300);}
+
+/* 리스트 */
+.mhead{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+.mhead h2{font-size:18px; font-weight:800;}
+.plist{display:flex; flex-direction:column; gap:8px;}
+.pcard{display:flex; gap:12px; padding:13px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-xl);}
+.pcard.pinned{background:var(--gold-subtle); border-color:#ecdca6;}
+.pcard .thumb{width:52px; height:52px; flex:none; border-radius:var(--r-lg); background:var(--gray-100);
+  display:grid; place-items:center; color:var(--gray-300);}
+.pcard .thumb svg{width:20px; height:20px;}
+.pcard .b{flex:1; min-width:0;}
+.pcard .tl{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.pcard .title{font-size:14px; font-weight:700; color:var(--gray-900); line-height:1.4;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.pcard .sub{display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--gray-400); flex-wrap:wrap;}
+.pcard .sub .dot{width:2px; height:2px; border-radius:50%; background:var(--gray-300);}
+.pcard .sub .v{display:inline-flex; align-items:center; gap:3px;}
+.pcard .sub svg{width:12px; height:12px;}
+.pcard .cc{color:var(--orange-deep); font-weight:700;}
+
+/* 이벤트 배너 카드 (모바일 1열) */
+.ecard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-xl); overflow:hidden;}
+.ecard .banner{aspect-ratio:16/8; background:linear-gradient(120deg,var(--navy-700),var(--navy-500));
+  display:grid; place-items:center; color:#8ea3c9; position:relative;}
+.ecard .banner svg{width:30px; height:30px;}
+.ecard .banner .pin{position:absolute; left:10px; top:10px;}
+.ecard .eb{padding:12px 14px;}
+.ecard .eb h3{font-size:14px; font-weight:800;}
+.ecard .eb .sub{display:flex; gap:8px; margin-top:5px; font-size:11px; color:var(--gray-400); align-items:center;}
+
+.sentinel{padding:12px; text-align:center; font-size:11px; color:var(--gray-400);}
+
+/* 상세 */
+.d-title{font-size:19px; font-weight:800; line-height:1.4; letter-spacing:-.01em;}
+.d-meta{display:flex; align-items:center; gap:8px; margin-top:10px; padding-bottom:14px; border-bottom:1px solid var(--line);
+  font-size:12px; color:var(--gray-500); flex-wrap:wrap;}
+.d-meta .who{display:inline-flex; align-items:center; gap:6px; font-weight:700; color:var(--gray-700);}
+.d-meta .who .av{width:22px; height:22px; border-radius:50%; background:var(--navy-600); color:#fff;
+  display:grid; place-items:center; font-size:10px; font-weight:700;}
+.d-meta .v{display:inline-flex; align-items:center; gap:3px;}
+.d-meta .dot{width:2px; height:2px; border-radius:50%; background:var(--gray-300);}
+.d-meta svg{width:13px; height:13px;}
+.d-content{padding:16px 0; font-size:15px; line-height:1.8; color:var(--gray-700);}
+/* 갤러리 = 가로 스와이프 */
+.mgallery{display:flex; gap:8px; overflow-x:auto; padding-bottom:16px; scroll-snap-type:x mandatory; scrollbar-width:none;}
+.mgallery::-webkit-scrollbar{display:none;}
+.mgallery .g{flex:none; width:78%; aspect-ratio:4/3; border-radius:var(--r-lg); background:var(--gray-100);
+  border:1px solid var(--line); display:grid; place-items:center; color:var(--gray-300); scroll-snap-align:start;}
+.mgallery .g svg{width:26px; height:26px;}
+.d-actions{display:flex; gap:8px; padding:8px 0 4px;}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:5px; height:38px; padding:0 14px;
+  border:1px solid transparent; border-radius:var(--r-lg); font-size:13px; font-weight:700;}
+.btn svg{width:15px; height:15px;}
+.btn--cta{background:var(--orange); color:#fff;}
+.btn--outline{background:var(--surface); color:var(--gray-600); border-color:var(--line);}
+.btn--danger{background:var(--surface); color:var(--danger); border-color:var(--danger-subtle);}
+.btn--sm{height:32px; padding:0 10px; font-size:12px;}
+.btn--block{width:100%;}
+/* 댓글 */
+.cmt-head{margin-top:16px; padding-top:16px; border-top:1px solid var(--line); font-size:15px; font-weight:800;}
+.cmt-head .n{color:var(--orange-deep);}
+.cmt{display:flex; gap:9px; padding:12px 0; border-bottom:1px solid var(--line);}
+.cmt .av{width:30px; height:30px; flex:none; border-radius:50%; background:var(--gray-200); color:var(--gray-600);
+  display:grid; place-items:center; font-weight:700; font-size:12px;}
+.cmt .cb{flex:1; min-width:0;}
+.cmt .cm{display:flex; align-items:center; gap:7px; font-size:12px;}
+.cmt .cm b{color:var(--gray-900); font-weight:700;}
+.cmt .cm .t{color:var(--gray-400); font-size:11px;}
+.cmt .ct{margin-top:4px; font-size:13px; color:var(--gray-700); line-height:1.6;}
+/* 하단 고정 댓글 입력 (상세에서 bottomnav 대신) */
+.cmt-bar{position:absolute; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--line);
+  padding:10px 12px; display:flex; gap:8px; align-items:center; z-index:25;}
+.cmt-bar input{flex:1; height:38px; border:1px solid var(--line); border-radius:var(--r-full);
+  background:var(--surface-sunken); padding:0 14px; font:inherit; outline:none;}
+.cmt-bar .send{width:38px; height:38px; flex:none; border-radius:50%; background:var(--orange); color:#fff;
+  border:0; display:grid; place-items:center;}
+.cmt-bar .send svg{width:18px; height:18px;}
+.comments-off{margin-top:16px; padding:16px; text-align:center; color:var(--gray-400); font-size:12px;
+  background:var(--surface-sunken); border-radius:var(--r-lg);}
+
+/* 작성 폼 */
+.fg{margin-bottom:16px;}
+.fg label{display:block; font-size:12px; font-weight:700; color:var(--gray-700); margin-bottom:6px;}
+.fg label .req{color:var(--orange-deep);}
+.input{width:100%; height:42px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r-lg);
+  background:var(--surface); font:inherit; color:var(--gray-800); outline:none;}
+textarea.input{height:auto; min-height:160px; padding:10px 12px; resize:vertical; line-height:1.7;}
+.fg .hint{text-align:right; margin-top:5px; font-size:11px; color:var(--gray-400);}
+.dropzone{border:1.5px dashed var(--gray-300); border-radius:var(--r-xl); background:var(--surface-sunken);
+  padding:18px; text-align:center; color:var(--gray-500); font-size:12px;}
+.dropzone .ic{width:38px; height:38px; margin:0 auto 6px; border-radius:10px; background:var(--surface);
+  border:1px solid var(--line); display:grid; place-items:center; color:var(--gray-400);}
+.dropzone .ic svg{width:18px; height:18px;}
+.dropzone b{color:var(--navy);}
+.thumbs{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+.thumbs .th{position:relative; aspect-ratio:1; border-radius:var(--r-lg); background:var(--gray-100);
+  border:1px solid var(--line); display:grid; place-items:center; color:var(--gray-300);}
+.thumbs .th svg{width:18px; height:18px;}
+.thumbs .th .x{position:absolute; top:4px; right:4px; width:18px; height:18px; border-radius:50%;
+  background:rgba(23,26,32,.7); color:#fff; display:grid; place-items:center; font-size:11px; border:0;}
+.thumbs .add{border:1.5px dashed var(--gray-300); background:var(--surface); color:var(--gray-400);}
+.write-note{display:flex; gap:8px; padding:11px 12px; background:var(--surface-sunken); border-radius:var(--r-lg);
+  font-size:12px; color:var(--gray-600); margin-bottom:16px; align-items:flex-start;}
+.write-note svg{width:15px; height:15px; color:var(--navy); flex:none; margin-top:2px;}
+
+.mock-note{max-width:375px; margin-top:2px; padding:12px 14px; border:1px dashed var(--gray-300); border-radius:var(--r-lg);
+  background:#fffef7; font-size:12px; color:var(--gray-600); line-height:1.7;}
+.mock-note b{color:var(--gray-900);}
+.mock-note code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; background:var(--gray-100);
+  padding:1px 4px; border-radius:4px; color:var(--navy);}
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="doc-head">
+    <h1>장터 · 게시판 — 디자인 게이트 목업 (모바일)</h1>
+    <p>FC-202. 웹과 배치를 별도 설계: 상단 탭 스크롤 · 전폭 카드 리스트 · 하단 탭바 · 플로팅 글쓰기(FAB) · 갤러리 가로 스와이프 · 상세 하단 고정 댓글바.</p>
+  </div>
+
+  <div class="strip">
+
+    <!-- A. 허브 -->
+    <div class="dev-col">
+      <div class="dev-label">A · 게시판 허브<span>/boards</span></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div><h1>게시판</h1><div class="r"></div></div>
+        <div class="screen-body">
+          <div class="hub">
+            <a class="hubc notice"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l14-6v14L3 13zM17 8a3 3 0 0 1 0 8"/></svg></div>
+              <div class="t"><h3>공지사항 <span class="badge badge--notice" style="vertical-align:middle">관리자</span></h3><p>운영 소식과 업데이트</p></div>
+              <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a class="hubc general"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+              <div class="t"><h3>커뮤니티</h3><p>거래 후기·정보 나눔</p></div>
+              <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a class="hubc event"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM4 9h16M8 3v4M16 3v4"/></svg></div>
+              <div class="t"><h3>이벤트 <span class="badge badge--event" style="vertical-align:middle">2</span></h3><p>진행 중인 혜택</p></div>
+              <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span></a>
+          </div>
+        </div>
+        <nav class="bottomnav">
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M6 8l1 11h10l1-11"/></svg>마켓</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg>경매</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>홈</a>
+          <a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>게시판</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>MY</a>
+        </nav>
+      </div>
+      <div class="mock-note"><b>진입:</b> 하단 탭바에 "게시판" 신설. 허브에서 게시판 선택 → 목록. <b>대안:</b> 허브 생략하고 목록 상단 탭으로 바로 진입.</div>
+    </div>
+
+    <!-- B. 커뮤니티 목록 -->
+    <div class="dev-col">
+      <div class="dev-label">B · 글 목록 (커뮤니티)<span>/boards/community</span></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><h1>커뮤니티</h1><div class="ic"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg></div></div>
+        <div class="screen-body">
+          <div class="mtabs">
+            <a>공지사항</a><a class="on">커뮤니티</a><a>이벤트</a>
+          </div>
+          <div class="plist">
+            <a class="pcard pinned">
+              <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              <div class="b"><div class="tl"><span class="badge badge--pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 3h10l-2-3V4M12 16v4"/></svg>고정</span></div>
+                <div class="title">거래 사기 예방 가이드 — 꼭 읽어주세요</div>
+                <div class="sub"><span>운영자</span><span class="dot"></span><span>3일 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>1,204</span><span class="dot"></span><span class="cc">댓글 42</span></div></div>
+            </a>
+            <a class="pcard">
+              <div class="thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              <div class="b"><div class="title">불의 대검 +7 낙찰 후기 (사진 첨부)</div>
+                <div class="sub"><span>달빛상인</span><span class="dot"></span><span>2시간 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>328</span><span class="dot"></span><span class="cc">댓글 17</span></div></div>
+            </a>
+            <a class="pcard">
+              <div class="thumb" style="background:transparent"></div>
+              <div class="b"><div class="title">요즘 물속성 활 시세 어떤가요?</div>
+                <div class="sub"><span>서리한</span><span class="dot"></span><span>5시간 전</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>96</span><span class="dot"></span><span class="cc">댓글 8</span></div></div>
+            </a>
+            <a class="pcard">
+              <div class="thumb" style="background:transparent"></div>
+              <div class="b"><div class="title">골드포스 만료 전에 파는 게 이득일까요</div>
+                <div class="sub"><span>바람의검객</span><span class="dot"></span><span>어제</span><span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>211</span></div></div>
+            </a>
+            <div class="sentinel">더 불러오는 중…</div>
+          </div>
+        </div>
+        <!-- write_policy=AUTHENTICATED → FAB 노출 -->
+        <button class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></button>
+        <nav class="bottomnav">
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M6 8l1 11h10l1-11"/></svg>마켓</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg>경매</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>홈</a>
+          <a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>게시판</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>MY</a>
+        </nav>
+      </div>
+      <div class="mock-note"><b>목록:</b> 상단 탭 가로스크롤로 게시판 전환 · 전폭 카드(썸네일+제목+메타) · 고정글 골드 배경·핀 · 커서 무한스크롤. <b>인가:</b> 글쓰기 FAB 는 커뮤니티(로그인)·이벤트/공지(관리자)에서만.</div>
+    </div>
+
+    <!-- B2. 이벤트 목록 -->
+    <div class="dev-col">
+      <div class="dev-label">B2 · 이벤트 목록 (배너)<span>/boards/event</span></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><h1>이벤트</h1><div class="r"></div></div>
+        <div class="screen-body">
+          <div class="mtabs"><a>공지사항</a><a>커뮤니티</a><a class="on">이벤트</a></div>
+          <div class="plist">
+            <a class="ecard">
+              <div class="banner"><span class="pin"><span class="badge badge--pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 3h10l-2-3V4M12 16v4"/></svg>진행중</span></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              <div class="eb"><h3>여름맞이 수수료 0% 이벤트</h3><div class="sub"><span class="badge badge--event">D-5</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 63</span></div></div>
+            </a>
+            <a class="ecard">
+              <div class="banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+              <div class="eb"><h3>첫 거래 축하 골드 지급</h3><div class="sub"><span class="badge badge--event">진행중</span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>댓글 28</span></div></div>
+            </a>
+          </div>
+        </div>
+        <nav class="bottomnav">
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M6 8l1 11h10l1-11"/></svg>마켓</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M6 8l1 11h10l1-11M9 8V6a3 3 0 0 1 6 0v2"/></svg>경매</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>홈</a>
+          <a class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>게시판</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>MY</a>
+        </nav>
+      </div>
+      <div class="mock-note"><b>이벤트 변주:</b> 배너 카드 세로 스택 · 댓글 참여 · 작성 관리자만(FAB 미노출). 공지 목록은 배너 없이 커뮤니티와 같은 리스트 + 댓글수 미표시.</div>
+    </div>
+
+    <!-- C. 상세 -->
+    <div class="dev-col">
+      <div class="dev-label">C · 글 상세 (커뮤니티)<span>/boards/community/:id</span></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><h1>글 보기</h1><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></div></div>
+        <div class="screen-body" style="padding-bottom:70px">
+          <h2 class="d-title">불의 대검 +7 낙찰 후기 (사진 첨부)</h2>
+          <div class="d-meta">
+            <span class="who"><span class="av">달</span>달빛상인</span><span class="dot"></span><span>2시간 전</span>
+            <span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>328</span>
+            <span class="dot"></span><span class="v"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>17</span>
+          </div>
+          <!-- editable=true 일 때만 -->
+          <div class="d-actions"><button class="btn btn--outline btn--sm">수정</button><button class="btn btn--danger btn--sm">삭제</button></div>
+          <div class="d-content">지난 주 마감 30초 전 입찰로 겨우 낙찰받은 불의 대검 +7 후기입니다. 배송까지 문제없이 잘 받았어요. 아래는 인증 사진입니다.</div>
+          <div class="mgallery">
+            <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/><circle cx="9" cy="9" r="1.6"/></svg></div>
+            <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+            <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg></div>
+          </div>
+          <div class="cmt-head">댓글 <span class="n">17</span></div>
+          <div class="cmt"><div class="av">서</div><div class="cb"><div class="cm"><b>서리한</b><span class="t">1시간 전</span></div><div class="ct">축하드려요! 시세 정보 감사합니다.</div></div></div>
+          <div class="cmt"><div class="av">달</div><div class="cb"><div class="cm"><b>달빛상인</b><span class="t">50분 전</span></div><div class="ct">@서리한 화이팅입니다 :)</div></div></div>
+        </div>
+        <!-- 하단 고정 댓글 입력 (allowComments=true) -->
+        <div class="cmt-bar">
+          <input placeholder="댓글을 입력하세요">
+          <button class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
+        </div>
+      </div>
+      <div class="mock-note"><b>상세:</b> 갤러리 가로 스와이프(스냅) · 조회수 자동 증가 · presigned 이미지(응답마다 갱신). 하단 고정 댓글바로 즉시 작성. 수정/삭제는 editable 시에만. <b>공지 상세</b>는 댓글바 대신 "댓글 미허용" 안내.</div>
+    </div>
+
+    <!-- D. 작성 -->
+    <div class="dev-col">
+      <div class="dev-label">D · 글 작성 / 수정<span>/boards/community/write</span></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="appbar"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div><h1>글쓰기</h1><div class="r"></div></div>
+        <div class="screen-body">
+          <div class="write-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>커뮤니티</b>에 글을 올립니다. 서로 존중하는 글을 남겨주세요.</span></div>
+          <div class="fg"><label>제목 <span class="req">*</span></label><input class="input" placeholder="제목을 입력하세요"><div class="hint">0 / 200</div></div>
+          <div class="fg"><label>내용 <span class="req">*</span></label><textarea class="input" placeholder="내용을 입력하세요"></textarea><div class="hint">0 / 10,000</div></div>
+          <div class="fg"><label>이미지 <span style="color:var(--gray-400); font-weight:500">(최대 10장 · 5MB)</span></label>
+            <div class="dropzone"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>탭해서 사진 <b>업로드</b></div>
+            <div class="thumbs">
+              <div class="th"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg><button class="x">✕</button></div>
+              <div class="th"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l5-5 4 4 3-3 4 4M4 5h16v14H4z"/></svg><button class="x">✕</button></div>
+              <div class="th add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <div class="cmt-bar" style="gap:10px">
+          <button class="btn btn--outline" style="flex:1">취소</button>
+          <button class="btn btn--cta" style="flex:2">등록</button>
+        </div>
+      </div>
+      <div class="mock-note"><b>작성:</b> 풀스크린 폼 · 2단계 업로드(먼저 올려 <code>imagePublicId</code> 받고 등록 시 귀속) · 하단 고정 액션바(취소/등록). 수정도 동일 폼(프리필).</div>
+    </div>
+
+  </div>
+</div>
+</body></html>
