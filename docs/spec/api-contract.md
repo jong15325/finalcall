@@ -1,12 +1,13 @@
 # FinalCall API Contract (계약서)
 
-상태: v1.19 — G3 확정(2026-07-14) + 6절 계약 변경 다수(D-070, D-073, 엣지 오류 명세/057, 회원 리소스 공백 보완/069, 게이트2 탈퇴 주체 401/COMMON_005, EPIC-ITEM ITEM_003 등재, EPIC-AUCTION 게이트2 AUCTION_001 403단일·취소 SCHEDULED|ACTIVE 정밀화, §3.3 item 블록 타입 명세, **§3.3.1 아이템 코드 사전 정본화**, **§4.3 주문 수수료 근거 fee-policy-spec 연결/EPIC-CLOSING**, **EPIC-PURCHASE 즉시구매 동작·orders 역할별 노출/FC-088**, **EPIC-EMAIL-VERIFY 이메일 인증/§2 signup email 선택·set-email·verification 2건·§2.5 GET /me emailVerified·§5 EMAIL_***). 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.26 — FC-221 댓글·답글 응답 `ownedByMe` 가법 추가(2026-08-07, 게이트2 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.26 | 2026-08-07 | **FC-221 — 댓글·답글 응답에 `ownedByMe: boolean` 가법 추가(게이트2 사용자 승인).** `SecurityContext.userId == comment.authorId`일 때만 `true`; 비로그인·관리자가 작성하지 않은 타인 댓글·tombstone은 `false`. 판정은 닉네임 스냅샷과 무관하므로 닉네임 변경·재사용에도 안정적이며 `authorId`는 외부에 노출하지 않는다. 기존 `editable`(작성자 또는 관리자에게 수정·삭제 UI 허용)과 의미를 분리하고, 자기 댓글 반응은 계속 서버가 `authorId`로 차단해 `COMMENT_003`(422)을 반환한다. **직접 구현 파급 = FC-222(backend)·FC-223(frontend). 기존 완료 티켓 FC-207~FC-212의 댓글 응답 생산·소비 계약에는 가법 파급만 있으며 재개하지 않고 FC-222·FC-223이 흡수한다.** 엔드포인트·요청·스키마·에러코드 무변경. 정본 = `board-domain-spec.md` v1.3 §13.2. |
 | v0 | 2026-07-13 | 골격 착수 — 공통 규약 + auth 섹션 |
 | v0.1 | 2026-07-13 | 전 섹션 초안 완성 — §3 경매·고정가·입찰, §4 아이템·인벤토리·주문·화폐, §5 에러코드. G3 검수 대기 |
 | v0.2 | 2026-07-14 | 보안 게이트 1 findings 반영 — SEC-001·002(충전 confirm 인증·서버검증·pg_tx_id 멱등), SEC-003(자기구매 차단), SEC-004(교환 멱등키), SEC-006(토큰 회전), SEC-007(열거 완화), SEC-009(시간 검증) + item_template 식별자 typeCode 통일(035). 보안 델타 재확인 대기 |
@@ -843,18 +844,19 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 
 > **형상 교체(게이트2 (c) 확정)**: v1.0 `CommentResponse{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable }` → v1.24로 **하위호환 없이 교체**한다(FC-199/203 방금 배포·외부 소비자 없음·형상보존 예외 사용자 승인 2026-08-06). 아래가 신 계약이다.
 
-`CommentResponse`(루트 목록·답글 공통 코어) = `{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable, likeCount, dislikeCount, myReaction, deleted }`
-- `likeCount`·`dislikeCount`(int) = 비정규화 카운트. `myReaction` ∈ `LIKE`|`DISLIKE`|`null`(뷰어 종속 — 인증 시 뷰어의 반응, 비인증·미반응 `null`). `editable`·`myReaction`은 optional-auth(토큰 있으면 부여, `getItemInstance` 선례).
-- `deleted`(bool) = tombstone 여부(board-spec §13.4). `true`면 `content`·`authorNickname`=`null`, `likeCount/dislikeCount`=0, `editable`=false, `myReaction`=null(마스킹).
+`CommentResponse`(루트 목록·답글 공통 코어) = `{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable, ownedByMe, likeCount, dislikeCount, myReaction, deleted }`
+- `likeCount`·`dislikeCount`(int) = 비정규화 카운트. `myReaction` ∈ `LIKE`|`DISLIKE`|`null`(뷰어 종속 — 인증 시 뷰어의 반응, 비인증·미반응 `null`). `editable`·`ownedByMe`·`myReaction`은 optional-auth(토큰 있으면 부여, `getItemInstance` 선례).
+- `editable`(bool) = 요청 주체가 작성자이거나 `ROLE_ADMIN`이면 `true`(수정·삭제 UI 제어; 인가 권위는 서버). `ownedByMe`(bool) = **인증 주체의 회원 ID와 저장된 `comment.authorId`가 같을 때만** `true`; 비로그인·관리자가 작성하지 않은 타인 댓글은 `false`. 닉네임 표시 스냅샷을 비교하지 않으므로 닉네임 변경·재사용과 무관하며, 판정 근거인 `authorId` 자체는 응답에 노출하지 않는다. 따라서 관리자의 타인 댓글은 `editable=true`, `ownedByMe=false`일 수 있다.
+- `deleted`(bool) = tombstone 여부(board-spec §13.4). `true`면 `content`·`authorNickname`=`null`, `likeCount/dislikeCount`=0, `editable=false`, `ownedByMe=false`, `myReaction`=null(마스킹).
 
 #### GET /api/v1/posts/{postPublicId}/comments — 루트 댓글 목록(offset)
-- 인증: 불요(인증 시 `myReaction`·`editable` 부여). 요청(query): `?page=<n>&size=<n>`(기본 size 20·상한 100), `?sort=<LATEST|OLDEST|LIKES>`(기본 `LATEST`)
+- 인증: 불요(인증 시 `myReaction`·`editable`·`ownedByMe` 부여). 요청(query): `?page=<n>&size=<n>`(기본 size 20·상한 100), `?sort=<LATEST|OLDEST|LIKES>`(기본 `LATEST`)
 - `sort`: `LATEST` 최신순(`id DESC`·**기본**, 게이트2 확정) · `OLDEST` 과거순(`id ASC`) · `LIKES` 순공감순(`like_count DESC, id DESC`). 화이트리스트 외 400. `LATEST`/`OLDEST`는 `(post_id, parent_comment_id, id)` 인덱스가 정·역방향 커버, `LIKES`는 `(post_id, parent_comment_id, like_count)` 커버(erd §5).
 - 응답 200: offset 페이지 `{ content: [ CommentResponse + { replyCount } ... ], page, size, totalElements, totalPages }` — `post_id=글 AND parent_comment_id IS NULL AND (is_deleted=false OR reply_count>0)`(tombstone 포함, board-spec §13.4). `replyCount`(int)=이 루트의 활성 답글 수(네이버 "답글 N개").
 - 에러: `POST_001` 글 없음(404)
 
 #### GET /api/v1/posts/{postPublicId}/comments/{commentPublicId}/replies — 답글 목록(offset)
-- 인증: 불요(인증 시 `myReaction`·`editable` 부여). 요청(query): `?page=<n>&size=<n>`(기본 20·상한 100). 정렬은 `id asc` 고정(시간순, param 없음).
+- 인증: 불요(인증 시 `myReaction`·`editable`·`ownedByMe` 부여). 요청(query): `?page=<n>&size=<n>`(기본 20·상한 100). 정렬은 `id asc` 고정(시간순, param 없음).
 - 응답 200: offset 페이지 `{ content: [ ReplyResponse... ], page, size, totalElements, totalPages }` — `parent_comment_id=대상댓글 AND is_deleted=false`.
 - `ReplyResponse` = `CommentResponse` + `{ mentionedNickname }`(string|null — 답글의 답글이면 @멘션 대상 닉 스냅샷, 직접 답글이면 null). 답글은 `replyCount` 없음(1단계).
 - 에러: `COMMENT_001` 대상 댓글 없음·삭제(404), `POST_001` 글 없음(404)

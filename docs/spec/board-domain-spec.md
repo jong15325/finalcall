@@ -1,12 +1,13 @@
 # FinalCall 게시판 도메인 스펙 (board · post · comment · image)
 
-상태: **v1.2 — FC-217 BEST 댓글 기능 제거(2026-08-07, 사용자 요청). 정렬 순공감순(`LIKES`)은 유지.** (v1.1 EPIC-COMMENT-V2 댓글 확장 계약(FC-206)·게이트2 3건(§14) 사용자 승인 완료 2026-08-06. v1.0 EPIC-BOARD 계약 확정·게이트2 3건(§11) 승인 완료 2026-08-06.) 이후 변경은 계약 변경 절차(`common/rules.md [6]`) + 영향 티켓 산출 경유.
+상태: **v1.3 — FC-221 댓글·답글 응답 `ownedByMe` 가법 추가(2026-08-07, 게이트2 사용자 승인).** (v1.2 FC-217 BEST 댓글 제거. v1.1 EPIC-COMMENT-V2 댓글 확장 계약. v1.0 EPIC-BOARD 계약 확정.) 이후 변경은 계약 변경 절차(`common/rules.md [6]`) + 영향 티켓 산출 경유.
 소유: 기획/설계(architect).
-근거: EPIC-BOARD 게이트1 4결정(2026-08-06) — (1) 게시판=시드 정의 우선(관리자 UI 다음 에픽) (2) 댓글 포함 (3) 이미지 포함 (4) 공지(notice) 흡수. 게이트2 3건 승인(2026-08-06). CLAUDE.md §5(도메인 컨벤션)·§9.7~§9.10(V2 어휘·배치). 기존 `notice` 참조 구현(단순 CRUD). erd v1.8·api-contract v1.23.
+근거: EPIC-BOARD 게이트1 4결정(2026-08-06) — (1) 게시판=시드 정의 우선(관리자 UI 다음 에픽) (2) 댓글 포함 (3) 이미지 포함 (4) 공지(notice) 흡수. 게이트2 3건 승인(2026-08-06). CLAUDE.md §5(도메인 컨벤션)·§9.7~§9.10(V2 어휘·배치). 기존 `notice` 참조 구현(단순 CRUD). erd v1.9·api-contract v1.26.
 정본 매핑: 스키마 = `erd.md` §4.5, API 계약 = `api-contract.md` §6.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.3 | 2026-08-07 | **FC-221 — 댓글·답글 응답에 `ownedByMe: boolean` 가법 추가(게이트2 사용자 승인).** 인증 주체 회원 ID와 `comment.authorId`가 같을 때만 true이며, 비로그인·관리자의 타인 댓글·tombstone은 false. 닉네임 스냅샷과 무관하고 `authorId`는 외부 미노출. 기존 `editable`(작성자 또는 관리자)과 의미를 분리하며 자기 반응 `COMMENT_003` 서버 방어를 유지한다. 직접 파급 = FC-222·FC-223. 기존 완료 FC-207~FC-212에는 댓글 응답 생산·소비 계약의 가법 파급만 있고 재개하지 않으며 후속 두 티켓이 흡수한다. 스키마·에러코드 무변경, API = api-contract v1.26 §6.3. |
 | v1.2 | 2026-08-07 | **FC-217 — BEST 댓글 기능 제거(사용자 요청).** §13.3에서 BEST 규칙(선정 임계 `min-likes`·상위 N `max-count`·별도 엔드포인트 `GET …/comments/best`·순공감 고정 랭킹)을 전면 삭제하고 절 제목을 "정렬 · BEST 댓글" → "정렬"로 변경. **정렬 param(순공감순 `LIKES` 포함)·`like_count` 비정규화·`ix_comment_likes` 인덱스는 유지**(정렬은 BEST와 별개 기능). §13 헤더·§4 인가표·§2.3 요약의 "BEST" 문언 정리. 백엔드 `CommentController.best`·`getBestComments`·`findBestRootComments`·`BoardCommentBestProperties`·`BestCommentsResponse`·`board.comment.best.*` 동반 제거(api §6.3 v1.25). 스키마 무변경(BEST는 컬럼 추가 없음). |
 | v1.1 | 2026-08-06 | **EPIC-COMMENT-V2 — 네이버식 댓글 확장 계약 확정(FC-206, 게이트2 3건 §14 사용자 승인 2026-08-06).** 결정: (a) 답글 = A1(1단계 평탄화 + 닉 스냅샷 @멘션) · (b) 반응 = B1(comment_reaction 유저당 1행 UK + 원자 카운트 비정규화) · (c) 기존 댓글 API = C1(하위호환 없이 형상 교체·형상보존 예외 승인) · **★기본 정렬 = 최신순(LATEST)**(초안 LIKES에서 변경) · 삭제 tombstone 확정 · 자기 반응 금지 COMMENT_003 확정 · comment_count 루트+답글 총계 확정. 평면 댓글(FC-199/203)을 대댓글(1단계)·공감/비공감·정렬(최신/과거/순공감)·BEST로 확장. **§2.3 Comment 확장**(parent_comment_id 활성·mentioned_nickname·like/dislike/reply_count), **§13 신설**(대댓글 1단계 모델·comment_reaction·정렬·BEST·삭제 tombstone·인가 불변식), **§14 신설**(게이트2 3건 — 답글 모델·반응 스키마·기존 API 형상 교체). §4 인가·§5 불변식·§6 카운터 갱신. 스키마 = erd v1.9(comment_reaction·comment 확장 V24), API = api-contract §6.3(v1.24). 구현 = FC-207~209(backend)·FC-210~212(frontend) |
 | v1.0 | 2026-08-06 | **게이트2 3건 사용자 승인 확정** — (a) 이미지 저장 = **오브젝트 스토리지(MinIO 로컬·S3 운영)** + `StoragePort`(S3 호환 단일 구현)·presigned GET 서빙(§7 전면 재작성) (b) 공지 흡수=이전+정리·notice 제거·board 참조구현 승계·CLAUDE.md §1 갱신(FC-201 포함) (c) 옵션 표준 3축. Board·Post·Comment·PostImage 도메인 모델·인가 불변식·공지 흡수 순서 정본화. FC-196 계약 확정 |
@@ -132,7 +133,7 @@ Board는 이번 에픽에서 **시드로만 생성**하나(§9), 컬럼·제약�
 
 | 동작 | 인가 규칙 | 위반 시 |
 |---|---|---|
-| 게시판 목록·글 목록·글 상세·댓글 목록·답글 목록·이미지 조회 | **공개**(인증 불요, 인증 시 뷰어종속 `myReaction`·`editable` 부여) | — |
+| 게시판 목록·글 목록·글 상세·댓글 목록·답글 목록·이미지 조회 | **공개**(인증 불요, 인증 시 뷰어종속 `myReaction`·`editable`·`ownedByMe` 부여) | — |
 | 게시글 작성 | 인증 필요 + `board.isActive` + `writePolicy` 충족: `ADMIN_ONLY`→`ROLE_ADMIN` 필요 / `AUTHENTICATED`→임의 인증 | 미인증 401 · 정책 위반 `BOARD_002`(403) · 비활성 `BOARD_001`(404) |
 | 게시글 수정·삭제 | 인증 필요 + (**작성자 본인** `authorId==subject`) **OR** `ROLE_ADMIN` | `POST_002`(403) |
 | 댓글 작성 | 인증 필요 + `board.allowComments==true` + 글 존재(미삭제) | 비허용 `BOARD_003`(422) · 글 없음 `POST_001`(404) |
@@ -340,6 +341,9 @@ EPIC-COMMENT-V2 하위 티켓(§13·§14):
 | FC-210 | 네이버식 댓글 UI — 대댓글·답글 펼치기·답글 폼·@멘션(디자인 게이트) | §13.1·api §6.3 |
 | FC-211 | 공감/비공감 버튼·카운트 | §13.2·api §6.3 |
 | FC-212 | 정렬 드롭다운 + BEST 표시 | §13.3·api §6.3 |
+| FC-221 | 댓글 본인 판정 `ownedByMe` 계약 확정 | §13.2·api §6.3 |
+| FC-222 | 댓글·답글 응답 `ownedByMe` 서버 계산·테스트 | §13.2·api §6.3 |
+| FC-223 | 댓글 반응 UI의 본인 판정을 `ownedByMe`로 전환 | §13.2·api §6.3 |
 
 ---
 
@@ -374,7 +378,8 @@ EPIC-COMMENT-V2 하위 티켓(§13·§14):
 - **카운트 비정규화(R-2)**: 위 델타는 `comment.like_count`/`dislike_count`에 **동일 TX 원자 UPDATE**로 반영(§6.4). in-memory 증감 금지. 반응 행과 카운트가 한 TX라 손실 증분 없음.
 - **동시성**: UK가 중복 INSERT를 DB에서 차단(경합 시 한쪽 UK 위반 → 재조회·전환 경로). 카운트 UPDATE는 원자 증감이라 동시 반응에서 손실 없음.
 - **자기 반응 금지(R-3)**: 대상 댓글 `authorId == 주체`면 `COMMENT_003`(422).
-- **myReaction 노출**: 목록·답글·BEST 응답의 `myReaction`은 뷰어 종속(`LIKE`|`DISLIKE`|`null`)이다 — 인증 시 뷰어의 반응 행을 배치 조회(`comment_id IN (…) AND user_id=주체`, UK 커버)해 채우고, 비인증은 `null`. `editable`(§1.0)과 같은 optional-auth 패턴(토큰 있으면 붙임, `getComments` 선례).
+- **myReaction 노출**: 목록·답글 응답의 `myReaction`은 뷰어 종속(`LIKE`|`DISLIKE`|`null`)이다 — 인증 시 뷰어의 반응 행을 배치 조회(`comment_id IN (…) AND user_id=주체`, UK 커버)해 채우고, 비인증은 `null`. `editable`·`ownedByMe`와 같은 optional-auth 패턴(토큰 있으면 붙임, `getComments` 선례).
+- **소유 판정(`ownedByMe`, FC-221)**: 댓글·답글 응답은 `ownedByMe: boolean`을 싣는다. 오직 `SecurityContext.userId == comment.authorId`일 때만 `true`; 비로그인·관리자가 작성하지 않은 타인 댓글은 `false`. 닉네임은 작성 시점 표시 스냅샷이므로 소유 판정에 사용하지 않으며, 닉네임 변경·재사용과 무관하다. 내부 판정키 `authorId`는 외부에 노출하지 않는다. `editable`은 작성자 **또는 관리자**의 수정·삭제 UI 제어라 별도 의미이며, 관리자 타인 댓글은 `editable=true`·`ownedByMe=false`가 정상이다. 자기 반응 금지 R-3은 클라이언트 제어와 별개로 서버가 같은 `authorId` 비교를 수행하고 `COMMENT_003`(422)으로 방어한다.
 
 ### 13.3 정렬
 
@@ -395,7 +400,7 @@ EPIC-COMMENT-V2 하위 티켓(§13·§14):
 - **답글 삭제** → 목록에서 완전 배제(활성 필터). 루트 `reply_count` −1(동일 TX).
 - **루트 삭제**:
   - 활성 답글 **없음**(`reply_count == 0`) → 완전 배제(v1.0 동작).
-  - 활성 답글 **있음**(`reply_count > 0`) → **tombstone 잔류**: 목록에 남되 본문·작성자·반응을 마스킹한다(응답 `deleted: true`·`content: null`·`authorNickname: null`·`likeCount/dislikeCount: 0`·`editable: false`·`myReaction: null`). `replyCount`·`createdAt`은 유지해 답글 접근을 보존한다. 삭제 루트에는 신규 답글·반응 불가(`COMMENT_001`).
+  - 활성 답글 **있음**(`reply_count > 0`) → **tombstone 잔류**: 목록에 남되 본문·작성자·반응을 마스킹한다(응답 `deleted: true`·`content: null`·`authorNickname: null`·`likeCount/dislikeCount: 0`·`editable: false`·`ownedByMe:false`·`myReaction: null`). `replyCount`·`createdAt`은 유지해 답글 접근을 보존한다. 삭제 루트에는 신규 답글·반응 불가(`COMMENT_001`).
 - **루트 목록 쿼리**: `post_id=? AND parent_comment_id IS NULL AND (is_deleted=false OR reply_count>0)`. tombstone 판정은 인출 후 매핑에서 수행(글당 소규모, erd §5 인덱스 주). `post.comment_count`는 삭제 시점에 이미 −1 됐으므로 tombstone은 헤더 총계에 포함하지 않는다(본문이 사라진 자리표시일 뿐).
 
 ### 13.5 서비스 구조 (V2 §9.10)
