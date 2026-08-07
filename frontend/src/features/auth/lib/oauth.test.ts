@@ -21,6 +21,9 @@ import {
 const assign = vi.fn()
 
 beforeEach(() => {
+    vi.stubEnv('VITE_OAUTH_KAKAO_CLIENT_ID', '')
+    vi.stubEnv('VITE_OAUTH_NAVER_CLIENT_ID', '')
+
     // jsdom 의 location.assign 은 미구현이라 스파이로 대체하고 오리진을 고정한다.
     Object.defineProperty(window, 'location', {
         value: { origin: 'http://localhost:5173', assign },
