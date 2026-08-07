@@ -1,14 +1,16 @@
 ---
 id: EPIC-QUALITY-CLEANUP
 type: epic
-jira_key: null
+jira_key: KAN-246
 title: 댓글 정확도·접근성 및 테스트 환경 품질 정리
-state: doing
+state: review
 owner: main
 children: [FC-220, FC-221, FC-222, FC-223, FC-224, FC-194]
 gate: null
-review_status: pending
-artifacts: []
+review_status: passed
+artifacts:
+  - docs/board/reviews/EPIC-QUALITY-CLEANUP-review.md
+  - docs/board/reviews/EPIC-QUALITY-CLEANUP-security-review.md
 ---
 
 ## 목표
