@@ -1,6 +1,8 @@
 package com.finalcall.domain.search.service;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.finalcall.domain.search.config.ListingSearchProperties;
+import com.finalcall.domain.search.config.SearchReindexProperties;
 import com.finalcall.domain.search.entity.ListingType;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -26,9 +29,11 @@ import lombok.extern.slf4j.Slf4j;
 public class SearchIndexManager {
 
     private static final String INDEX_PREFIX = "listings_v";
+    private static final String RETIRED_ALIAS_PREFIX = "listings_retired_";
 
     private final ElasticsearchClient elasticsearchClient;
     private final ListingSearchProperties properties;
+    private final SearchReindexProperties reindexProperties;
 
     public String createNextIndex() {
         try {
@@ -103,9 +108,16 @@ public class SearchIndexManager {
     public void switchAlias(String targetIndex) {
         try {
             Set<String> oldTargets = aliasTargets();
+            Map<String, Set<String>> staleRetiredAliases = retiredAliases(oldTargets);
+            String retiredAlias = RETIRED_ALIAS_PREFIX + Instant.now().toEpochMilli();
             elasticsearchClient.indices().updateAliases(update -> {
-                oldTargets.forEach(old -> update.actions(action -> action.remove(remove -> remove
-                    .index(old).alias(properties.indexAlias()))));
+                oldTargets.forEach(old -> {
+                    update.actions(action -> action.remove(remove -> remove
+                        .index(old).alias(properties.indexAlias())));
+                    staleRetiredAliases.getOrDefault(old, Set.of()).forEach(
+                        stale -> update.actions(action -> action.remove(remove -> remove.index(old).alias(stale))));
+                    update.actions(action -> action.add(add -> add.index(old).alias(retiredAlias)));
+                });
                 update.actions(action -> action.add(add -> add.index(targetIndex).alias(properties.indexAlias())));
                 return update;
             });
@@ -113,6 +125,62 @@ public class SearchIndexManager {
                 properties.indexAlias(), oldTargets, targetIndex);
         } catch (IOException ex) {
             throw new IllegalStateException("검색 alias 전환 실패", ex);
+        }
+    }
+
+    private Map<String, Set<String>> retiredAliases(Set<String> indices) throws IOException {
+        if (indices.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, IndexAliases> aliases = elasticsearchClient.indices()
+            .getAlias(get -> get.index(indices.stream().toList()))
+            .result();
+        return aliases.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+            entry -> entry.getValue().aliases().keySet().stream()
+                .filter(alias -> alias.startsWith(RETIRED_ALIAS_PREFIX))
+                .collect(Collectors.toUnmodifiableSet())));
+    }
+
+    /** 보존 기한이 지난 구 인덱스를 현재 읽기 alias 대상과 대조한 뒤 안전하게 정리한다. */
+    public int cleanupExpiredOldIndices(Instant now) {
+        try {
+            if (!elasticsearchClient.indices().existsAlias(exists -> exists.name(RETIRED_ALIAS_PREFIX + "*")).value()) {
+                return 0;
+            }
+            Set<String> activeTargets = aliasTargets();
+            Map<String, IndexAliases> retired = elasticsearchClient.indices()
+                .getAlias(get -> get.name(RETIRED_ALIAS_PREFIX + "*"))
+                .result();
+            int deleted = 0;
+            for (Map.Entry<String, IndexAliases> entry : retired.entrySet()) {
+                if (activeTargets.contains(entry.getKey()) || !expired(entry.getValue().aliases().keySet(), now)) {
+                    continue;
+                }
+                elasticsearchClient.indices().delete(delete -> delete.index(entry.getKey()));
+                deleted++;
+                log.info("검색 재색인 구 물리 인덱스 정리 index={}", entry.getKey());
+            }
+            return deleted;
+        } catch (IOException ex) {
+            throw new IllegalStateException("구 검색 인덱스 정리 실패", ex);
+        }
+    }
+
+    private boolean expired(Set<String> aliases, Instant now) {
+        Duration retention = Duration.ofMinutes(reindexProperties.retainOldIndexMinutes());
+        return aliases.stream()
+            .filter(alias -> alias.startsWith(RETIRED_ALIAS_PREFIX))
+            .map(alias -> alias.substring(RETIRED_ALIAS_PREFIX.length()))
+            .mapToLong(this::parseTimestamp)
+            .filter(timestamp -> timestamp >= 0)
+            .anyMatch(timestamp -> Instant.ofEpochMilli(timestamp).plus(retention).compareTo(now) <= 0);
+    }
+
+    private long parseTimestamp(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ignored) {
+            return -1L;
         }
     }
 

@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import com.finalcall.domain.search.config.ListingSearchProperties;
+import com.finalcall.domain.search.config.SearchReindexProperties;
 import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingType;
 
@@ -60,7 +61,8 @@ class SearchIndexManagerIntegrationTest {
         putTemplate();
         client.indices().create(create -> create.index(OLD).aliases(ALIAS, alias -> alias));
         client.indices().create(create -> create.index(TARGET));
-        manager = new SearchIndexManager(client, new ListingSearchProperties(ALIAS, 2, 64, false));
+        manager = new SearchIndexManager(client, new ListingSearchProperties(ALIAS, 2, 64, false),
+            new SearchReindexProperties(60));
     }
 
     @AfterEach
@@ -82,6 +84,45 @@ class SearchIndexManagerIntegrationTest {
 
         assertThat(manager.aliasTargets()).containsExactly(TARGET);
         assertThat(client.indices().exists(exists -> exists.index(OLD)).value()).isTrue();
+    }
+
+    @Test
+    void 구_인덱스는_보존기간_전에는_유지하고_만료_후에만_정리한다() throws IOException {
+        manager.switchAlias(TARGET);
+        java.time.Instant switchedAt = java.time.Instant.now();
+
+        assertThat(manager.cleanupExpiredOldIndices(switchedAt.plusSeconds(59 * 60))).isZero();
+        assertThat(client.indices().exists(exists -> exists.index(OLD)).value()).isTrue();
+
+        assertThat(manager.cleanupExpiredOldIndices(switchedAt.plusSeconds(61 * 60))).isEqualTo(1);
+        assertThat(client.indices().exists(exists -> exists.index(OLD)).value()).isFalse();
+        assertThat(manager.aliasTargets()).containsExactly(TARGET);
+    }
+
+    @Test
+    void 재활성화된_인덱스를_다시_retire하면_최신_시각부터_보존하고_현재_대상은_삭제하지_않는다() throws Exception {
+        manager.switchAlias(TARGET); // v1 -> v2, v1 최초 retire
+        Thread.sleep(5L);
+        manager.switchAlias(OLD); // rollback v2 -> v1
+        client.indices().create(create -> create.index(NEXT));
+        java.time.Instant beforeLatestRetire = java.time.Instant.now();
+        Thread.sleep(5L);
+        manager.switchAlias(NEXT); // v1 -> v3, v1 재-retire
+
+        var oldAliases = client.indices().getAlias(get -> get.index(OLD)).result().get(OLD).aliases().keySet();
+        assertThat(oldAliases.stream().filter(alias -> alias.startsWith("listings_retired_")).toList())
+            .hasSize(1);
+
+        SearchIndexManager zeroRetention = new SearchIndexManager(client,
+            new ListingSearchProperties(ALIAS, 2, 64, false), new SearchReindexProperties(0));
+        assertThat(zeroRetention.cleanupExpiredOldIndices(beforeLatestRetire)).isEqualTo(1); // v2만 만료
+        assertThat(client.indices().exists(exists -> exists.index(OLD)).value()).isTrue();
+        assertThat(zeroRetention.aliasTargets()).containsExactly(NEXT);
+
+        zeroRetention.cleanupExpiredOldIndices(java.time.Instant.now().plusSeconds(1));
+        assertThat(client.indices().exists(exists -> exists.index(OLD)).value()).isFalse();
+        assertThat(client.indices().exists(exists -> exists.index(NEXT)).value()).isTrue();
+        assertThat(zeroRetention.aliasTargets()).containsExactly(NEXT);
     }
 
     @Test

@@ -17,11 +17,7 @@ import lombok.RequiredArgsConstructor;
 public enum SearchErrorCode implements ErrorCode {
 
     /** 검색엔진 질의 실패(ES 미가용·타임아웃). ES 는 파생 read-model 이라 503 으로 일시 실패를 알린다. */
-    SEARCH_ENGINE_UNAVAILABLE("SEARCH_001", HttpStatus.SERVICE_UNAVAILABLE, "검색 기능이 일시적으로 불가합니다. 잠시 후 다시 시도해주세요."),
-
-    SEARCH_REINDEX_IN_PROGRESS("SEARCH_002", HttpStatus.CONFLICT, "검색 재색인이 이미 진행 중입니다."),
-
-    SEARCH_REINDEX_JOB_NOT_FOUND("SEARCH_003", HttpStatus.NOT_FOUND, "검색 재색인 작업을 찾을 수 없습니다.");
+    SEARCH_ENGINE_UNAVAILABLE("SEARCH_001", HttpStatus.SERVICE_UNAVAILABLE, "검색 기능이 일시적으로 불가합니다. 잠시 후 다시 시도해주세요.");
 
     private final String code;
     private final HttpStatus status;

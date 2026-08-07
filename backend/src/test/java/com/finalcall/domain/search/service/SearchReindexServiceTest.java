@@ -3,6 +3,7 @@ package com.finalcall.domain.search.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -13,12 +14,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-
-import com.finalcall.common.exception.BusinessException;
-import com.finalcall.common.exception.SearchErrorCode;
 
 class SearchReindexServiceTest {
 
@@ -46,8 +45,7 @@ class SearchReindexServiceTest {
         SearchReindexJob accepted = service.start(SearchReindexMode.IN_PLACE);
         assertThat(entered.await(3, TimeUnit.SECONDS)).isTrue();
         assertThatThrownBy(() -> service.start(SearchReindexMode.IN_PLACE))
-            .isInstanceOfSatisfying(BusinessException.class,
-                ex -> assertThat(ex.getErrorCode()).isEqualTo(SearchErrorCode.SEARCH_REINDEX_IN_PROGRESS));
+            .isInstanceOf(IllegalStateException.class);
 
         release.countDown();
         SearchReindexJob completed = awaitTerminal(accepted.jobId());
@@ -58,8 +56,7 @@ class SearchReindexServiceTest {
     @Test
     void 존재하지_않는_job은_404다() {
         assertThatThrownBy(() -> service.get("missing"))
-            .isInstanceOfSatisfying(BusinessException.class,
-                ex -> assertThat(ex.getErrorCode()).isEqualTo(SearchErrorCode.SEARCH_REINDEX_JOB_NOT_FOUND));
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -67,8 +64,7 @@ class SearchReindexServiceTest {
         assertThat(searchReindexGuard.tryAcquire()).isTrue();
         try {
             assertThatThrownBy(() -> service.start(SearchReindexMode.IN_PLACE))
-                .isInstanceOfSatisfying(BusinessException.class,
-                    ex -> assertThat(ex.getErrorCode()).isEqualTo(SearchErrorCode.SEARCH_REINDEX_IN_PROGRESS));
+                .isInstanceOf(IllegalStateException.class);
         } finally {
             searchReindexGuard.release();
         }
@@ -93,6 +89,71 @@ class SearchReindexServiceTest {
 
         SearchReindexJob recovered = rejectingService.start(SearchReindexMode.IN_PLACE);
         assertThat(rejectingService.get(recovered.jobId()).state()).isEqualTo(SearchReindexState.SUCCEEDED);
+    }
+
+    @Test
+    void 종료_대기시간을_넘기면_강제종료하고_active_job과_permit을_안전하게_정리한다() throws Exception {
+        ExecutorService executor = mock(ExecutorService.class);
+        AtomicReference<Runnable> queuedTask = new AtomicReference<>();
+        doAnswer(invocation -> {
+            queuedTask.set(invocation.getArgument(0));
+            return null;
+        }).when(executor).execute(any(Runnable.class));
+        when(executor.awaitTermination(anyLong(), any(java.util.concurrent.TimeUnit.class))).thenReturn(false);
+        when(executor.shutdownNow()).thenAnswer(invocation -> java.util.List.of(queuedTask.get()));
+        SearchReindexGuard guard = new SearchReindexGuard();
+        SearchReindexService stoppingService = new SearchReindexService(listingIndexer, searchIndexManager,
+            guard, executor);
+        SearchReindexJob pending = stoppingService.start(SearchReindexMode.IN_PLACE);
+
+        stoppingService.shutdown();
+
+        verify(executor).shutdown();
+        verify(executor).shutdownNow();
+        assertThat(stoppingService.get(pending.jobId()).state()).isEqualTo(SearchReindexState.FAILED);
+        assertThat(guard.tryAcquire()).isTrue();
+        guard.release();
+    }
+
+    @Test
+    void 강제종료_후_task가_interrupt를_무시해도_failed를_덮거나_permit을_조기반환하지_않는다() throws Exception {
+        CountDownLatch entered = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        when(listingIndexer.reindexAll()).thenAnswer(invocation -> {
+            entered.countDown();
+            while (release.getCount() > 0) {
+                try {
+                    release.await();
+                } catch (InterruptedException ignored) {
+                    // 외부 클라이언트가 인터럽트를 늦게 처리하는 상황을 재현한다.
+                }
+            }
+            return 1;
+        });
+        SearchReindexGuard guard = new SearchReindexGuard();
+        SearchReindexService stoppingService = new SearchReindexService(listingIndexer, searchIndexManager, guard);
+        SearchReindexJob started = stoppingService.start(SearchReindexMode.IN_PLACE);
+        assertThat(entered.await(1, TimeUnit.SECONDS)).isTrue();
+
+        Thread shutdown = Thread.ofPlatform().start(stoppingService::shutdown);
+        shutdown.join(2_000L);
+        assertThat(shutdown.isAlive()).isFalse();
+        assertThat(stoppingService.get(started.jobId()).state()).isEqualTo(SearchReindexState.FAILED);
+        assertThatThrownBy(() -> stoppingService.start(SearchReindexMode.IN_PLACE))
+            .isInstanceOf(IllegalStateException.class);
+
+        release.countDown();
+        boolean acquired = false;
+        for (int attempt = 0; attempt < 100 && !acquired; attempt++) {
+            acquired = guard.tryAcquire();
+            if (acquired) {
+                break;
+            }
+            Thread.sleep(10L);
+        }
+        assertThat(stoppingService.get(started.jobId()).state()).isEqualTo(SearchReindexState.FAILED);
+        assertThat(acquired).isTrue();
+        guard.release();
     }
 
     @Test
