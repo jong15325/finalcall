@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import userEvent from '@testing-library/user-event'
+import { renderWithProviders, signInForTest } from '@/test/renderWithProviders'
 import type { RootCommentResponse } from '@/lib/api/comments'
 import CommentItem from './CommentItem'
 
 const useReplies = vi.fn()
+const toggleReaction = vi.fn()
+const createReply = vi.fn()
 
 vi.mock('@/lib/queries/comments', () => ({
     useReplies: (...args: unknown[]) => useReplies(...args),
@@ -25,13 +28,13 @@ vi.mock('@/lib/queries/comments', () => ({
         isPending: false,
         isError: false,
         error: null,
-        mutate: vi.fn(),
+        mutate: createReply,
     }),
     useToggleReaction: () => ({
         isPending: false,
         isError: false,
         error: null,
-        mutate: vi.fn(),
+        mutate: toggleReaction,
     }),
 }))
 
@@ -49,8 +52,10 @@ const comment: RootCommentResponse = {
     replyCount: 1,
 }
 
-function renderComment() {
-    useReplies.mockReturnValue({
+function renderComment(
+    replyQuery: Partial<ReturnType<typeof useReplies>> = {},
+) {
+    const query = {
         data: {
             pages: [
                 {
@@ -78,7 +83,9 @@ function renderComment() {
         fetchNextPage: vi.fn(),
         hasNextPage: false,
         isFetchingNextPage: false,
-    })
+        ...replyQuery,
+    }
+    useReplies.mockReturnValue(query)
 
     return renderWithProviders(
         <ul>
@@ -94,9 +101,16 @@ describe('<CommentItem> FC-219 댓글 UI 정리', () => {
         expect(
             screen.queryByRole('button', { name: '비공감' }),
         ).not.toBeInTheDocument()
-        const likeButtons = screen.getAllByRole('button', { name: '공감' })
-        expect(likeButtons).toHaveLength(2)
-        expect(likeButtons[0]).toHaveTextContent('7')
+        expect(
+            screen.getByRole('button', {
+                name: '루트작성자의 댓글 공감, 현재 7개',
+            }),
+        ).toHaveTextContent('7')
+        expect(
+            screen.getByRole('button', {
+                name: '답글작성자의 댓글 공감, 현재 2개',
+            }),
+        ).toBeInTheDocument()
     })
 
     it('작성 시간을 작성자와 같은 행에 두고 PC의 수정됨 표시를 유지한다', () => {
@@ -117,5 +131,78 @@ describe('<CommentItem> FC-219 댓글 UI 정리', () => {
         ).not.toBeInTheDocument()
         expect(screen.getByText('항상 보이는 답글')).toBeInTheDocument()
         expect(useReplies).toHaveBeenCalledWith('P-1', 'C-ROOT', true)
+    })
+
+    it('공감 클릭 시 LIKE payload를 전달한다', async () => {
+        const user = userEvent.setup()
+        signInForTest({ nickname: '다른사용자' })
+        renderComment()
+
+        await user.click(
+            screen.getByRole('button', {
+                name: '루트작성자의 댓글 공감, 현재 7개',
+            }),
+        )
+
+        expect(toggleReaction).toHaveBeenCalledWith({
+            commentPublicId: 'C-ROOT',
+            type: 'LIKE',
+        })
+    })
+
+    it('답글 오류 재시도와 다음 페이지 로드를 실행한다', async () => {
+        const user = userEvent.setup()
+        const refetch = vi.fn()
+        const fetchNextPage = vi.fn()
+        renderComment({
+            data: undefined,
+            isError: true,
+            refetch,
+            hasNextPage: true,
+            fetchNextPage,
+        })
+
+        await user.click(screen.getByRole('button', { name: '다시 시도' }))
+        await user.click(screen.getByRole('button', { name: '답글 더 보기' }))
+
+        expect(refetch).toHaveBeenCalledOnce()
+        expect(fetchNextPage).toHaveBeenCalledOnce()
+    })
+
+    it('답글 작성 시 대상과 내용을 전달한다', async () => {
+        const user = userEvent.setup()
+        signInForTest({ nickname: '다른사용자' })
+        renderComment()
+
+        await user.click(screen.getAllByRole('button', { name: '답글' })[0])
+        await user.type(
+            screen.getByRole('textbox', { name: '답글 내용' }),
+            '  새 답글  ',
+        )
+        await user.click(screen.getByRole('button', { name: '답글 등록' }))
+
+        expect(createReply).toHaveBeenCalledWith(
+            { targetCommentPublicId: 'C-ROOT', content: '새 답글' },
+            expect.objectContaining({ onSuccess: expect.any(Function) }),
+        )
+    })
+
+    it('답글 작성자에게 답글을 열면 멘션과 대상 payload를 유지한다', async () => {
+        const user = userEvent.setup()
+        signInForTest({ nickname: '다른사용자' })
+        renderComment()
+
+        await user.click(screen.getAllByRole('button', { name: '답글' })[1])
+        expect(screen.getByText('@답글작성자')).toBeInTheDocument()
+        await user.type(
+            screen.getByRole('textbox', { name: '답글 내용' }),
+            '멘션 답글',
+        )
+        await user.click(screen.getByRole('button', { name: '답글 등록' }))
+
+        expect(createReply).toHaveBeenCalledWith(
+            { targetCommentPublicId: 'C-REPLY', content: '멘션 답글' },
+            expect.objectContaining({ onSuccess: expect.any(Function) }),
+        )
     })
 })

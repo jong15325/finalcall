@@ -491,6 +491,10 @@ function CommentBody({
                     {!comment.deleted && (
                         <>
                             <ReactionButton
+                                authorNickname={
+                                    comment.authorNickname ??
+                                    '알 수 없는 작성자'
+                                }
                                 count={comment.likeCount}
                                 active={comment.myReaction === 'LIKE'}
                                 disabled={isOwnComment}
@@ -528,12 +532,14 @@ function CommentBody({
  * ★ `active`(myReaction 강조)는 낙관 반영 + 서버 권위로 갱신되고, 토글 진행 중엔 연타를 막는다.
  */
 function ReactionButton({
+    authorNickname,
     count,
     active,
     disabled,
     pending,
     onToggle,
 }: {
+    authorNickname: string
     count: number
     active: boolean
     disabled: boolean
@@ -542,6 +548,7 @@ function ReactionButton({
 }) {
     // 비활성 사유를 hover title뿐 아니라 접근성 이름에도 실어 SR 사용자에게 전달(MINOR-4).
     const reason = disabled ? '본인 댓글에는 공감할 수 없어요' : undefined
+    const accessibleName = `${authorNickname}의 댓글 공감, 현재 ${count}개`
 
     return (
         <button
@@ -549,7 +556,9 @@ function ReactionButton({
             disabled={disabled || pending}
             title={reason}
             aria-pressed={active}
-            aria-label={reason ? `공감 — ${reason}` : '공감'}
+            aria-label={
+                reason ? `${accessibleName} — ${reason}` : accessibleName
+            }
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 active
                     ? 'border-orange bg-orange-subtle text-orange-deep'
