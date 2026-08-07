@@ -5,7 +5,6 @@ import {
     TbTrash,
     TbAlertTriangle,
     TbThumbUp,
-    TbThumbDown,
     TbChevronDown,
     TbArrowBackUp,
     TbMessageOff,
@@ -23,11 +22,7 @@ import {
 import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
 import { avatarInitial, formatPostTime } from '@/features/board/lib/postView'
 import { commentErrorMessage } from '@/features/board/lib/boardErrors'
-import type {
-    CommentResponse,
-    ReactionType,
-    RootCommentResponse,
-} from '@/lib/api/comments'
+import type { CommentResponse, RootCommentResponse } from '@/lib/api/comments'
 
 /**
  * 댓글 1건 — 네이버식 대댓글 (계약 v1.24 §6.3, §13) — FC-210·FC-211.
@@ -35,9 +30,9 @@ import type {
  * ★ 이 파일의 default export `CommentItem` 은 **루트 댓글**을 그린다 — "답글 N개" 펼치기,
  *   답글 지연 로딩(`useReplies`), 답글 폼(@멘션 프리필), tombstone 마스킹을 관장한다.
  * ★ 답글(대댓글)은 `ReplyItem` 이 그리며 루트·답글 공통 몸통은 `CommentBody` 로 공유한다
- *   (수정/삭제 인라인·공감/비공감 토글·본문/tombstone 분기).
- * ★ **공감/비공감(FC-211)** — 낙관적 토글. 비로그인 클릭은 로그인 유도, 본인 댓글은 비활성
- *   (COMMENT_003 서버 방어). 인가 권위는 서버(§1.2).
+ *   (수정/삭제 인라인·공감 토글·본문/tombstone 분기).
+ * ★ **공감(FC-211·FC-219)** — 계약의 비공감 처리는 유지하되 UI에는 공감만 노출한다.
+ *   비로그인 클릭은 로그인 유도, 본인 댓글은 비활성(COMMENT_003 서버 방어). 인가 권위는 서버(§1.2).
  * ★ **인라인 답글(FC-216)** — "답글" 클릭 시 폼이 그 댓글/답글 **바로 아래**에 뜬다. 동시에
  *   하나만 열리며(`replyingTo.targetPublicId`가 열린 노드), 다른 대상 클릭 시 이전이 닫히고 이동한다.
  */
@@ -61,13 +56,9 @@ export default function CommentItem({
     comment,
 }: CommentItemProps) {
     const hasReplies = comment.replyCount > 0
-    // 상세 로드 시 답글이 있으면 기본 펼침(지연 로딩 대신 초기부터 조회). 토글로 접기 가능.
-    const [expanded, setExpanded] = useState(hasReplies)
     const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null)
 
-    // 답글 폼을 열면 스레드도 함께 펼친다(폼이 스레드 하단에 붙으므로).
     const openReplyForm = (target: ReplyTarget) => {
-        setExpanded(true)
         setReplyingTo(target)
     }
 
@@ -87,22 +78,6 @@ export default function CommentItem({
                 >
                     <TbArrowBackUp aria-hidden className="size-3.5" />
                     답글
-                </button>
-            )}
-            {hasReplies && (
-                <button
-                    type="button"
-                    className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-navy-500 hover:bg-gray-100 hover:text-navy"
-                    onClick={() => setExpanded((v) => !v)}
-                >
-                    <TbChevronDown
-                        aria-hidden
-                        className={`size-3.5 transition-transform ${
-                            expanded ? 'rotate-180' : ''
-                        }`}
-                    />
-                    답글 {comment.replyCount}
-                    {expanded ? ' 접기' : ''}
                 </button>
             )}
         </>
@@ -134,7 +109,7 @@ export default function CommentItem({
                 </div>
             )}
 
-            {expanded && (
+            {hasReplies && (
                 <ReplyThread
                     slug={slug}
                     postPublicId={postPublicId}
@@ -289,7 +264,7 @@ function ReplyItem({
     )
 }
 
-/* ── 공용 몸통 (루트·답글 공통: 표시 + 인라인 수정/삭제 + 공감/비공감) ──── */
+/* ── 공용 몸통 (루트·답글 공통: 표시 + 인라인 수정/삭제 + 공감) ───────── */
 function CommentBody({
     slug,
     postPublicId,
@@ -334,7 +309,7 @@ function CommentBody({
         myNickname !== undefined &&
         comment.authorNickname === myNickname
 
-    const handleReact = (type: ReactionType) => {
+    const handleReact = () => {
         // 비로그인 → 로그인 유도(returnUrl 보존). 본인 댓글은 버튼이 이미 비활성(서버도 방어).
         if (!isAuthenticated) {
             void navigate(`${paths.login}${buildReturnUrlQuery(location)}`)
@@ -343,7 +318,7 @@ function CommentBody({
         if (isOwnComment) return
         reactionMutation.mutate({
             commentPublicId: comment.commentPublicId,
-            type,
+            type: 'LIKE',
         })
     }
 
@@ -398,30 +373,22 @@ function CommentBody({
                     </div>
                 ) : (
                     <>
-                        {/* 상단 행 — 웹: 닉·시간·⋮ / 모바일: 닉·⋮(시간은 아래 메타 별행) */}
+                        {/* 상단 행 — 모바일·웹 모두 닉네임 우측에 작성 시간 표시 */}
                         <div className="flex items-center gap-2">
                             <b className="min-w-0 truncate text-sm font-bold text-gray-900">
                                 {comment.authorNickname}
                             </b>
-                            <span className="hidden shrink-0 whitespace-nowrap text-xs text-gray-400 sm:inline">
+                            <span className="shrink-0 whitespace-nowrap text-xs text-gray-400">
                                 {formatPostTime(comment.createdAt)}
                                 {edited && ' · 수정됨'}
                             </span>
 
-                            {comment.editable &&
-                                !editing &&
-                                !confirmDelete && (
-                                    <CommentEditMenu
-                                        onEdit={startEdit}
-                                        onDelete={() => setConfirmDelete(true)}
-                                    />
-                                )}
-                        </div>
-
-                        {/* 모바일 전용 메타 별행 — 헤더 혼잡·자간 깨짐 방지 */}
-                        <div className="mt-0.5 text-xs text-gray-400 sm:hidden">
-                            {formatPostTime(comment.createdAt)}
-                            {edited && ' · 수정됨'}
+                            {comment.editable && !editing && !confirmDelete && (
+                                <CommentEditMenu
+                                    onEdit={startEdit}
+                                    onDelete={() => setConfirmDelete(true)}
+                                />
+                            )}
                         </div>
 
                         {editing ? (
@@ -519,25 +486,16 @@ function CommentBody({
                     </>
                 )}
 
-                {/* 액션 바 — 공감/비공감(맨 앞) · 구분선 · 답글·답글토글. tombstone은 슬롯만. */}
+                {/* 액션 바 — 공감(맨 앞) · 구분선 · 답글. tombstone은 슬롯만. */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     {!comment.deleted && (
                         <>
                             <ReactionButton
-                                kind="like"
                                 count={comment.likeCount}
                                 active={comment.myReaction === 'LIKE'}
                                 disabled={isOwnComment}
                                 pending={reactionMutation.isPending}
-                                onToggle={() => handleReact('LIKE')}
-                            />
-                            <ReactionButton
-                                kind="dislike"
-                                count={comment.dislikeCount}
-                                active={comment.myReaction === 'DISLIKE'}
-                                disabled={isOwnComment}
-                                pending={reactionMutation.isPending}
-                                onToggle={() => handleReact('DISLIKE')}
+                                onToggle={handleReact}
                             />
                             <span
                                 aria-hidden
@@ -562,36 +520,28 @@ function CommentBody({
     )
 }
 
-/* ── 공감/비공감 버튼 (낙관적 토글, FC-211) ─────────────────────────────── */
+/* ── 공감 버튼 (낙관적 토글, FC-211) ───────────────────────────────────── */
 /**
- * 승인 디자인: 공감 활성 = 오렌지 필("따뜻한 댓글" 톤), 비공감 활성 = 중립 회색 필.
+ * 승인 디자인: 공감 활성 = 오렌지 필("따뜻한 댓글" 톤).
  * ★ 클릭 → `handleReact`가 낙관적 토글을 낸다(등록·전환·취소). 본인 댓글은 `disabled`
  *   (COMMENT_003 UI 힌트, 서버가 최종 방어). 비로그인 클릭은 상위에서 로그인 유도.
  * ★ `active`(myReaction 강조)는 낙관 반영 + 서버 권위로 갱신되고, 토글 진행 중엔 연타를 막는다.
  */
 function ReactionButton({
-    kind,
     count,
     active,
     disabled,
     pending,
     onToggle,
 }: {
-    kind: 'like' | 'dislike'
     count: number
     active: boolean
     disabled: boolean
     pending: boolean
     onToggle: () => void
 }) {
-    const Icon = kind === 'like' ? TbThumbUp : TbThumbDown
-    const activeClass =
-        kind === 'like'
-            ? 'border-orange bg-orange-subtle text-orange-deep'
-            : 'border-gray-400 bg-gray-100 text-gray-700'
-    const baseLabel = kind === 'like' ? '공감' : '비공감'
     // 비활성 사유를 hover title뿐 아니라 접근성 이름에도 실어 SR 사용자에게 전달(MINOR-4).
-    const reason = disabled ? '본인 댓글에는 공감·비공감할 수 없어요' : undefined
+    const reason = disabled ? '본인 댓글에는 공감할 수 없어요' : undefined
 
     return (
         <button
@@ -599,15 +549,15 @@ function ReactionButton({
             disabled={disabled || pending}
             title={reason}
             aria-pressed={active}
-            aria-label={reason ? `${baseLabel} — ${reason}` : baseLabel}
+            aria-label={reason ? `공감 — ${reason}` : '공감'}
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 active
-                    ? activeClass
+                    ? 'border-orange bg-orange-subtle text-orange-deep'
                     : 'border-line bg-surface text-gray-500 hover:border-gray-300 hover:bg-gray-50'
             }`}
             onClick={onToggle}
         >
-            <Icon aria-hidden className="size-[15px]" />
+            <TbThumbUp aria-hidden className="size-[15px]" />
             <span className="tabular-nums">{count}</span>
         </button>
     )
