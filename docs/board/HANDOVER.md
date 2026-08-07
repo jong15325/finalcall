@@ -1,5 +1,16 @@
 # 총괄(메인 세션) 핸드오버
 
+> **재시작 스냅샷 — 2026-08-07 / EPIC-QUALITY-CLEANUP 진행 중**
+>
+> - 사용자가 Codex에 Atlassian Rovo MCP를 등록하기 위해 세션을 재시작한다. 등록: `codex mcp add atlassian --url https://mcp.atlassian.com/v1/mcp/authv2` → `codex mcp login atlassian`. 새 세션에서 `/mcp verbose`로 확인한다.
+> - Jira는 파일→KAN 단방향 읽기 미러다. 파일 보드가 정본이며 Jira를 읽어 판단하지 않는다. 현재 세션에는 Jira 도구가 없었다.
+> - Jira 백필: `EPIC-QUALITY-CLEANUP`, `FC-218`, `FC-219`, `FC-220`, `FC-221`은 `state != todo`·`jira_key: null`. FC-194는 기존 `KAN-220`을 검토 중으로 갱신한다. 새 세션 첫 작업은 Atlassian 도구 확인 후 멱등 백필하고 파일의 `jira_key`를 채우는 것이다.
+> - 에픽 게이트1·게이트2 승인 완료. `ownedByMe:boolean` 가법 계약 승인.
+> - FC-220·FC-221·FC-194는 구현/계약 작업과 reviewer PASS(critical/major/minor 0) 완료, 상태 `review`, `review_status: passed`. 사용자가 현재 변경 커밋을 승인했다.
+> - 남은 순서: Jira 백필 → FC-222 backend → FC-223 frontend → FC-224 OAuth 테스트 격리 → reviewer → 에픽 게이트3.
+> - Git HEAD `90d53b0`, `origin/master`보다 1커밋 앞(FC-219 미push). 워킹트리에는 이번 에픽 변경과 사용자 미추적 `docs/AI-KICKOFF-PROMPT.md`가 있다. 사용자 파일은 커밋에서 제외한다.
+> - 백엔드 8080·프론트 5173을 기동했으나 재시작 후 포트를 다시 확인한다.
+
 목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
 갱신: **2026-08-07** (EPIC-BOARD·EPIC-COMMENT-V2 **두 에픽 완료·push**. 이후 게시판/댓글 UI 다듬기 라운드(FC-205·213~217) 전건 완료·push. **다음 수 = 신규 에픽 선택**(유력: 관리자 게시판 CRUD UI).)
 
