@@ -98,8 +98,19 @@ function CommentSortControl({
     onChange: (next: CommentSort) => void
 }) {
     const [open, setOpen] = useState(false)
+    const [activeIndex, setActiveIndex] = useState(0)
     const rootRef = useRef<HTMLDivElement>(null)
-    const current = SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0]
+    const triggerRef = useRef<HTMLButtonElement>(null)
+    const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+    const current =
+        SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0]
+    const currentIndex = SORT_OPTIONS.findIndex(
+        (o) => o.value === current.value,
+    )
+
+    useEffect(() => {
+        if (open) itemRefs.current[activeIndex]?.focus()
+    }, [activeIndex, open])
 
     useEffect(() => {
         if (!open) return
@@ -107,7 +118,11 @@ function CommentSortControl({
             if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
         }
         const onKey = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setOpen(false)
+            if (event.key === 'Escape') {
+                event.preventDefault()
+                setOpen(false)
+                triggerRef.current?.focus()
+            }
         }
         document.addEventListener('mousedown', onPointer)
         document.addEventListener('keydown', onKey)
@@ -120,16 +135,42 @@ function CommentSortControl({
     const select = (next: CommentSort) => {
         onChange(next)
         setOpen(false)
+        triggerRef.current?.focus()
+    }
+
+    const moveFocus = (index: number) => {
+        setActiveIndex((index + SORT_OPTIONS.length) % SORT_OPTIONS.length)
+    }
+
+    const handleMenuKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            moveFocus(activeIndex + 1)
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault()
+            moveFocus(activeIndex - 1)
+        } else if (event.key === 'Home') {
+            event.preventDefault()
+            moveFocus(0)
+        } else if (event.key === 'End') {
+            event.preventDefault()
+            moveFocus(SORT_OPTIONS.length - 1)
+        }
     }
 
     return (
         <div ref={rootRef} className="relative">
             <button
+                ref={triggerRef}
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={open}
+                aria-controls={open ? 'comment-sort-menu' : undefined}
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-bold text-gray-600 hover:border-navy"
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => {
+                    setActiveIndex(currentIndex)
+                    setOpen((v) => !v)
+                }}
             >
                 <TbArrowsSort aria-hidden className="size-3.5 text-gray-400" />
                 {current.label}
@@ -145,20 +186,27 @@ function CommentSortControl({
                         onClick={() => setOpen(false)}
                     />
                     <div
+                        id="comment-sort-menu"
                         role="menu"
+                        aria-label="댓글 정렬"
                         className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-line bg-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-40 sm:rounded-xl sm:border sm:p-1.5 sm:shadow-lg"
+                        onKeyDown={handleMenuKeyDown}
                     >
                         <p className="px-3 pb-1.5 pt-1 text-xs font-bold text-gray-400 sm:hidden">
                             정렬
                         </p>
-                        {SORT_OPTIONS.map((option) => {
+                        {SORT_OPTIONS.map((option, index) => {
                             const selected = option.value === sort
                             return (
                                 <button
                                     key={option.value}
+                                    ref={(node) => {
+                                        itemRefs.current[index] = node
+                                    }}
                                     type="button"
                                     role="menuitemradio"
                                     aria-checked={selected}
+                                    tabIndex={activeIndex === index ? 0 : -1}
                                     className={`flex h-12 w-full items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-gray-100 sm:h-9 ${
                                         selected
                                             ? 'font-bold text-navy'
