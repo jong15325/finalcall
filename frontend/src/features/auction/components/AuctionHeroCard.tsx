@@ -9,7 +9,8 @@ import {
 } from '@/features/item/components/skillSlots'
 import { elementLabelOf } from '@/features/item/lib/element'
 import { itemArt } from '@/features/item/lib/itemArt'
-import { kindLabelOf, subGroupLabelOf } from '@/features/item/lib/itemCode'
+import { subGroupLabelOf } from '@/features/item/lib/itemCode'
+import { channelLimitOf } from '@/features/item/lib/channelLimit'
 import {
     auctionPhaseLabelOf,
     type AuctionPhase,
@@ -27,7 +28,7 @@ import type { AuctionDetail } from '@/lib/api/auctions'
  *   이름이 없으면 `스킬 #{code}` 중립 표기로 폴백한다. 슬롯 번호는 `resolveSkillSlots` 가 먼저
  *   매기고 걸러 마법(subGroup 3, skill1 부재)이 "스킬 1" 로 오표기되지 않는다(FC-064 함정 4).
  *   퍼센트는 원본 슬롯 2에만 병기한다.
- * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만) — 활성일 때만 배지. 색은 브랜드 골드 토큰.
+ * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만)해 속성표에 표시한다.
  * ★ 색은 브랜드 팔레트(navy/gold) — 목업 Vuexy 잔재색은 쓰지 않는다(§2.9).
  */
 
@@ -67,6 +68,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
         now,
     )
     const typeLine = `${frameType === 'GOLDFORCE' ? '골드' : '블랙'} - ${subGroupLabelOf(item.subGroup)}`
+    const channelLimit = channelLimitOf(item.level)
 
     return (
         <section className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
@@ -93,15 +95,13 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     >
                         {auctionPhaseLabelOf(phase)}
                     </span>
-                    {goldforceDays !== null && (
-                        <span className="rounded-full bg-gold-subtle px-2.5 py-1 text-[11px] font-bold text-gold-deep">
-                            골드포스 {goldforceDays}일 남음
-                        </span>
-                    )}
                 </div>
 
                 <h2 className="mt-4 text-xl font-bold leading-tight text-gray-900 lg:text-2xl">
-                    카드정보
+                    카드정보{' '}
+                    <small className="text-[10px] font-bold tracking-[0.12em] text-gray-400">
+                        CARD INFO
+                    </small>
                 </h2>
 
                 <dl className="mt-4 border-t border-line">
@@ -123,6 +123,14 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     </div>
                     <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
                         <dt className="shrink-0 font-medium text-gray-500">
+                            채널제한
+                        </dt>
+                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                            {channelLimit}
+                        </dd>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
                             속성
                         </dt>
                         <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
@@ -131,28 +139,12 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     </div>
                     <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
                         <dt className="shrink-0 font-medium text-gray-500">
-                            종류
-                        </dt>
-                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
-                            {kindLabelOf(item.subGroup, item.kind)}
-                        </dd>
-                    </div>
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
-                            레벨
-                        </dt>
-                        <dd className="font-semibold tabular-nums text-gray-900">
-                            Lv.{item.level}
-                        </dd>
-                    </div>
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
-                            골드포스
+                            남은 골드 포스
                         </dt>
                         <dd className="font-semibold tabular-nums text-gray-900">
                             {goldforceDays === null
                                 ? '없음'
-                                : `활성 · ${goldforceDays}일`}
+                                : `${goldforceDays}일`}
                         </dd>
                     </div>
                 </dl>
@@ -162,25 +154,31 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                         특수 스킬
                     </h3>
                     {skills.length > 0 ? (
-                        <dl className="mt-2">
+                        <ul
+                            className="mt-2 flex flex-col gap-2"
+                            aria-label="특수 스킬"
+                        >
                             {skills.map((skill) => (
-                                <div
+                                <li
                                     key={skill.slot}
-                                    className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm last:border-b-0"
+                                    className="flex min-w-0 items-start gap-2 py-1 text-sm"
                                 >
-                                    <dt className="shrink-0 font-medium text-gray-500">
-                                        스킬 {skill.slot}
-                                    </dt>
-                                    <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                                    <span
+                                        aria-hidden="true"
+                                        className="grid size-5 shrink-0 place-items-center rounded border border-line bg-surface text-xs font-bold text-navy"
+                                    >
+                                        {skill.slot}
+                                    </span>
+                                    <span className="min-w-0 break-words font-semibold text-gray-900">
                                         {skillLabelOf(skill)}
                                         {skill.slot === 2 &&
                                         item.skillPercent > 0
                                             ? ` (${item.skillPercent}%)`
                                             : ''}
-                                    </dd>
-                                </div>
+                                    </span>
+                                </li>
                             ))}
-                        </dl>
+                        </ul>
                     ) : (
                         <p className="mt-2 py-2.5 text-sm text-gray-500">
                             보유한 특수 스킬이 없습니다.

@@ -64,14 +64,22 @@ describe('<AuctionHeroCard>', () => {
     it('활성 골드포스와 카드 기본 정보를 의미 구조로 표시한다', () => {
         renderHero()
 
-        expect(screen.getByRole('heading', { name: '카드정보' })).toBeVisible()
+        expect(
+            screen.getByRole('heading', { name: '카드정보 CARD INFO' }),
+        ).toBeVisible()
+        expect(screen.getByText('진행 중')).toBeVisible()
+        expect(
+            screen.getAllByRole('term').map((term) => term.textContent),
+        ).toEqual(['타입', '명칭', '채널제한', '속성', '남은 골드 포스'])
         expect(valueOf('타입')).toHaveTextContent('골드 - 무기')
         expect(valueOf('명칭')).toHaveTextContent('불의 전투도끼')
+        expect(valueOf('채널제한')).toHaveTextContent('고수채널 이상')
         // CardInfoDialog와 동일한 elementLabelOf 의미론: 축 이름은 dt, 값은 순수 라벨이다.
         expect(valueOf('속성')).toHaveTextContent('불')
-        expect(valueOf('종류')).toHaveTextContent('도끼')
-        expect(valueOf('레벨')).toHaveTextContent('Lv.5')
-        expect(valueOf('골드포스')).toHaveTextContent('활성 · 2일')
+        expect(valueOf('남은 골드 포스')).toHaveTextContent('2일')
+        expect(screen.queryByText('종류', { selector: 'dt' })).toBeNull()
+        expect(screen.queryByText('레벨', { selector: 'dt' })).toBeNull()
+        expect(screen.queryByText('골드포스 2일 남음')).toBeNull()
         expect(
             screen.queryByText('화면에서 제거되어야 하는 설명'),
         ).not.toBeInTheDocument()
@@ -84,14 +92,25 @@ describe('<AuctionHeroCard>', () => {
         renderHero({ goldforceExpireAt: expireAt })
 
         expect(valueOf('타입')).toHaveTextContent('블랙 - 무기')
-        expect(valueOf('골드포스')).toHaveTextContent('없음')
+        expect(valueOf('남은 골드 포스')).toHaveTextContent('없음')
     })
 
     it('원본 슬롯과 이름, 슬롯 2 퍼센트를 보존한다', () => {
         renderHero()
 
-        expect(valueOf('스킬 1')).toHaveTextContent('긴 이름의 화염 강타')
-        expect(valueOf('스킬 2')).toHaveTextContent('연속 폭발 (18%)')
+        const list = screen.getByRole('list', { name: '특수 스킬' })
+        const items = within(list).getAllByRole('listitem')
+        expect(items).toHaveLength(2)
+        expect(items[0]).toHaveTextContent('1긴 이름의 화염 강타')
+        expect(items[1]).toHaveTextContent('2연속 폭발 (18%)')
+        expect(within(items[0]).getByText('1')).toHaveAttribute(
+            'aria-hidden',
+            'true',
+        )
+        expect(within(items[1]).getByText('2')).toHaveAttribute(
+            'aria-hidden',
+            'true',
+        )
         expect(screen.queryByText('발동 확률')).not.toBeInTheDocument()
     })
 
@@ -107,23 +126,34 @@ describe('<AuctionHeroCard>', () => {
         })
 
         expect(valueOf('타입')).toHaveTextContent('골드 - 마법')
-        expect(valueOf('종류')).toHaveTextContent('특수')
-        expect(screen.queryByText('스킬 1')).not.toBeInTheDocument()
-        expect(valueOf('스킬 2')).toHaveTextContent('스킬 #999 (7%)')
+        const list = screen.getByRole('list', { name: '특수 스킬' })
+        const item = within(list).getByRole('listitem')
+        expect(item).toHaveTextContent('2스킬 #999 (7%)')
+        expect(within(list).queryByText('1')).not.toBeInTheDocument()
     })
 
     it('스킬이 없으면 명시적인 빈 상태를 표시한다', () => {
         renderHero({ skill1: null, skill2: null, skillPercent: 20 })
 
         expect(screen.getByText('보유한 특수 스킬이 없습니다.')).toBeVisible()
-        expect(screen.queryByText(/스킬 [12]/)).not.toBeInTheDocument()
+        expect(
+            screen.queryByRole('list', { name: '특수 스킬' }),
+        ).not.toBeInTheDocument()
     })
 
     it('미등록 코드는 축 이름과 원본 코드로 안전하게 폴백한다', () => {
         renderHero({ subGroup: 9, kind: 8, element: 7 })
 
         expect(valueOf('타입')).toHaveTextContent('골드 - 대분류 9')
-        expect(valueOf('종류')).toHaveTextContent('종류 8')
         expect(valueOf('속성')).toHaveTextContent('속성 7')
+    })
+
+    it.each([
+        [3, '초보채널 이상'],
+        [8, '마스터채널 이상'],
+    ])('레벨 %i의 공용 채널 제한을 표시한다', (level, expected) => {
+        renderHero({ level })
+
+        expect(valueOf('채널제한')).toHaveTextContent(expected)
     })
 })
