@@ -1,12 +1,15 @@
 import ItemFrame from '@/features/item/components/ItemFrame'
-import { goldforceRemainingDays } from '@/features/item/components/frame'
+import {
+    goldforceRemainingDays,
+    resolveFrameType,
+} from '@/features/item/components/frame'
 import {
     resolveSkillSlots,
     skillLabelOf,
 } from '@/features/item/components/skillSlots'
-import { elementBadgeLabelOf } from '@/features/item/lib/element'
+import { elementLabelOf } from '@/features/item/lib/element'
 import { itemArt } from '@/features/item/lib/itemArt'
-import { itemTypeLabel } from '@/features/item/lib/itemCode'
+import { kindLabelOf, subGroupLabelOf } from '@/features/item/lib/itemCode'
 import {
     auctionPhaseLabelOf,
     type AuctionPhase,
@@ -17,12 +20,13 @@ import type { AuctionDetail } from '@/lib/api/auctions'
  * 경매 상세 히어로 카드 (FC-072 — 목업 `.auction-hero-card` 1:1 · design-brief B-3).
  *
  * 목업 구조: `245px 아트 | 1fr copy` 그리드(모바일 118px). 좌측 어두운 스테이지 + 공용 `ItemFrame`,
- * 우측 copy(상태배지·골드포스배지·이름·타입줄·`.spec-box`·`.skill-list`).
+ * 우측 copy(상태 배지·카드정보 속성표·특수 스킬). 아이템 마켓 `CardInfoDialog` 의 정보 구조와
+ * 앱 navy/gold/orange 팔레트를 따르되 모달 셸·초점 트랩은 재사용하지 않는다.
  *
  * ★ **스킬명은 item 블록의 skill1Name/skill2Name 으로 표시**(계약 §3.3 델타 — EPIC-MARKET-DATA).
  *   이름이 없으면 `스킬 #{code}` 중립 표기로 폴백한다. 슬롯 번호는 `resolveSkillSlots` 가 먼저
  *   매기고 걸러 마법(subGroup 3, skill1 부재)이 "스킬 1" 로 오표기되지 않는다(FC-064 함정 4).
- *   발동확률은 상세 dl 의 **전용 "발동 확률" 행**으로 낸다(승인된 목업 1:1 레이아웃 유지).
+ *   퍼센트는 원본 슬롯 2에만 병기한다.
  * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만) — 활성일 때만 배지. 색은 브랜드 골드 토큰.
  * ★ 색은 브랜드 팔레트(navy/gold) — 목업 Vuexy 잔재색은 쓰지 않는다(§2.9).
  */
@@ -58,6 +62,11 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
     })
     const hasSkill = skills.length > 0
     const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
+    const frameType = resolveFrameType(
+        { goldforceExpireAt: item.goldforceExpireAt },
+        now,
+    )
+    const typeLine = `${frameType === 'GOLDFORCE' ? '골드' : '블랙'} - ${subGroupLabelOf(item.subGroup)}`
 
     return (
         <section className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
@@ -92,47 +101,92 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                 </div>
 
                 <h2 className="mt-4 text-xl font-bold leading-tight text-gray-900 lg:text-2xl">
-                    {item.nameSnapshot}
+                    카드정보
                 </h2>
-                <p className="mt-2 text-sm text-gray-500">
-                    {itemTypeLabel(item.subGroup, item.kind)} ·{' '}
-                    {elementBadgeLabelOf(item.element)} · Lv.{item.level}
-                </p>
 
-                <p className="my-5 rounded-lg bg-surface-sunken p-3.5 text-sm text-gray-600">
-                    {item.specSnapshot}
-                </p>
-
-                <dl className="mt-auto">
-                    {skills.map((skill) => (
-                        <div
-                            key={skill.slot}
-                            className="flex items-center justify-between border-b border-line py-2.5 text-sm"
-                        >
-                            <dt className="font-medium text-gray-500">
-                                스킬 {skill.slot}
-                            </dt>
-                            <dd className="font-semibold text-gray-900">
-                                {skillLabelOf(skill)}
-                            </dd>
-                        </div>
-                    ))}
-                    {item.skillPercent > 0 && (
-                        <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                            <dt className="font-medium text-gray-500">
-                                발동 확률
-                            </dt>
-                            <dd className="font-semibold text-gray-900">
-                                +{item.skillPercent}%
-                            </dd>
-                        </div>
-                    )}
-                    {skills.length === 0 && item.skillPercent <= 0 && (
-                        <div className="py-2.5 text-sm text-gray-400">
-                            스킬 없음
-                        </div>
-                    )}
+                <dl className="mt-4 border-t border-line">
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
+                            타입
+                        </dt>
+                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                            {typeLine}
+                        </dd>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
+                            명칭
+                        </dt>
+                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                            {item.nameSnapshot}
+                        </dd>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
+                            속성
+                        </dt>
+                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                            {elementLabelOf(item.element)}
+                        </dd>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
+                            종류
+                        </dt>
+                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                            {kindLabelOf(item.subGroup, item.kind)}
+                        </dd>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
+                            레벨
+                        </dt>
+                        <dd className="font-semibold tabular-nums text-gray-900">
+                            Lv.{item.level}
+                        </dd>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-gray-500">
+                            골드포스
+                        </dt>
+                        <dd className="font-semibold tabular-nums text-gray-900">
+                            {goldforceDays === null
+                                ? '없음'
+                                : `활성 · ${goldforceDays}일`}
+                        </dd>
+                    </div>
                 </dl>
+
+                <div className="mt-5 rounded-lg bg-surface-sunken p-4">
+                    <h3 className="text-sm font-bold text-gray-700">
+                        특수 스킬
+                    </h3>
+                    {skills.length > 0 ? (
+                        <dl className="mt-2">
+                            {skills.map((skill) => (
+                                <div
+                                    key={skill.slot}
+                                    className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm last:border-b-0"
+                                >
+                                    <dt className="shrink-0 font-medium text-gray-500">
+                                        스킬 {skill.slot}
+                                    </dt>
+                                    <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                                        {skillLabelOf(skill)}
+                                        {skill.slot === 2 &&
+                                        item.skillPercent > 0
+                                            ? ` (${item.skillPercent}%)`
+                                            : ''}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    ) : (
+                        <p className="mt-2 py-2.5 text-sm text-gray-500">
+                            보유한 특수 스킬이 없습니다.
+                        </p>
+                    )}
+                </div>
             </div>
         </section>
     )

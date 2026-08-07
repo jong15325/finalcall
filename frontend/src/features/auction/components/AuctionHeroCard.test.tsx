@@ -1,0 +1,129 @@
+import { describe, expect, it } from 'vitest'
+import { screen, within } from '@testing-library/react'
+import { renderWithProviders } from '@/test/renderWithProviders'
+import AuctionHeroCard from './AuctionHeroCard'
+import type { AuctionDetail } from '@/lib/api/auctions'
+
+const NOW = Date.parse('2026-08-08T00:00:00Z')
+
+const baseAuction: AuctionDetail = {
+    auctionPublicId: '01J3AUCTION0001',
+    status: 'ACTIVE',
+    item: {
+        typeCode: 1121,
+        mainCategory: 1,
+        subGroup: 1,
+        element: 2,
+        kind: 1,
+        level: 5,
+        skill1: 104,
+        skill2: 207,
+        skill1Name: '긴 이름의 화염 강타',
+        skill2Name: '연속 폭발',
+        skillPercent: 18,
+        goldforceExpireAt: '2026-08-10T00:00:00Z',
+        nameSnapshot: '불의 전투도끼',
+        specSnapshot: '화면에서 제거되어야 하는 설명',
+    },
+    startPrice: 1_000_000,
+    buyNowPrice: null,
+    highestBidAmount: null,
+    bidCount: 0,
+    startAt: null,
+    endAt: '2026-08-09T00:00:00Z',
+    sellerNickname: '토르',
+    resultType: null,
+    highestBidderMasked: null,
+    extensionCount: 0,
+    maxEndAt: '2026-08-09T01:00:00Z',
+    createdAt: '2026-08-07T00:00:00Z',
+    minNextBidAmount: 1_100_000,
+}
+
+function renderHero(item: Partial<AuctionDetail['item']> = {}) {
+    return renderWithProviders(
+        <AuctionHeroCard
+            auction={{
+                ...baseAuction,
+                item: { ...baseAuction.item, ...item },
+            }}
+            phase="live"
+            now={NOW}
+        />,
+    )
+}
+
+function valueOf(label: string) {
+    const term = screen.getByText(label, { selector: 'dt' })
+    const row = term.closest('div')
+    expect(row).not.toBeNull()
+    return within(row as HTMLElement).getByRole('definition')
+}
+
+describe('<AuctionHeroCard>', () => {
+    it('활성 골드포스와 카드 기본 정보를 의미 구조로 표시한다', () => {
+        renderHero()
+
+        expect(screen.getByRole('heading', { name: '카드정보' })).toBeVisible()
+        expect(valueOf('타입')).toHaveTextContent('골드 - 무기')
+        expect(valueOf('명칭')).toHaveTextContent('불의 전투도끼')
+        // CardInfoDialog와 동일한 elementLabelOf 의미론: 축 이름은 dt, 값은 순수 라벨이다.
+        expect(valueOf('속성')).toHaveTextContent('불')
+        expect(valueOf('종류')).toHaveTextContent('도끼')
+        expect(valueOf('레벨')).toHaveTextContent('Lv.5')
+        expect(valueOf('골드포스')).toHaveTextContent('활성 · 2일')
+        expect(
+            screen.queryByText('화면에서 제거되어야 하는 설명'),
+        ).not.toBeInTheDocument()
+    })
+
+    it.each([
+        ['만료', '2026-08-07T00:00:00Z'],
+        ['미적용', null],
+    ])('%s 골드포스는 블랙 타입과 없음 상태를 표시한다', (_, expireAt) => {
+        renderHero({ goldforceExpireAt: expireAt })
+
+        expect(valueOf('타입')).toHaveTextContent('블랙 - 무기')
+        expect(valueOf('골드포스')).toHaveTextContent('없음')
+    })
+
+    it('원본 슬롯과 이름, 슬롯 2 퍼센트를 보존한다', () => {
+        renderHero()
+
+        expect(valueOf('스킬 1')).toHaveTextContent('긴 이름의 화염 강타')
+        expect(valueOf('스킬 2')).toHaveTextContent('연속 폭발 (18%)')
+        expect(screen.queryByText('발동 확률')).not.toBeInTheDocument()
+    })
+
+    it('슬롯 2만 있어도 재번호하지 않고 이름이 없으면 코드로 폴백한다', () => {
+        renderHero({
+            subGroup: 3,
+            kind: 2,
+            skill1: null,
+            skill1Name: null,
+            skill2: 999,
+            skill2Name: null,
+            skillPercent: 7,
+        })
+
+        expect(valueOf('타입')).toHaveTextContent('골드 - 마법')
+        expect(valueOf('종류')).toHaveTextContent('특수')
+        expect(screen.queryByText('스킬 1')).not.toBeInTheDocument()
+        expect(valueOf('스킬 2')).toHaveTextContent('스킬 #999 (7%)')
+    })
+
+    it('스킬이 없으면 명시적인 빈 상태를 표시한다', () => {
+        renderHero({ skill1: null, skill2: null, skillPercent: 20 })
+
+        expect(screen.getByText('보유한 특수 스킬이 없습니다.')).toBeVisible()
+        expect(screen.queryByText(/스킬 [12]/)).not.toBeInTheDocument()
+    })
+
+    it('미등록 코드는 축 이름과 원본 코드로 안전하게 폴백한다', () => {
+        renderHero({ subGroup: 9, kind: 8, element: 7 })
+
+        expect(valueOf('타입')).toHaveTextContent('골드 - 대분류 9')
+        expect(valueOf('종류')).toHaveTextContent('종류 8')
+        expect(valueOf('속성')).toHaveTextContent('속성 7')
+    })
+})
