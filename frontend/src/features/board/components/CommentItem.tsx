@@ -19,7 +19,7 @@ import {
     useCreateReply,
     useToggleReaction,
 } from '@/lib/queries/comments'
-import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
+import { useIsAuthenticated } from '@/store/authStore'
 import { avatarInitial, formatPostTime } from '@/features/board/lib/postView'
 import { commentErrorMessage } from '@/features/board/lib/boardErrors'
 import type { CommentResponse, RootCommentResponse } from '@/lib/api/comments'
@@ -287,7 +287,6 @@ function CommentBody({
     const [draft, setDraft] = useState(comment.content ?? '')
 
     const isAuthenticated = useIsAuthenticated()
-    const myNickname = useAuthStore((state) => state.user?.nickname)
     const location = useLocation()
     const navigate = useNavigate()
 
@@ -302,12 +301,9 @@ function CommentBody({
     )
     const reactionMutation = useToggleReaction(postPublicId)
 
-    // 본인 댓글 판정 = 작성자 닉 스냅샷 == 로그인 닉(유니크). 자기 반응 금지(COMMENT_003)의 UI 힌트일
-    // 뿐 권위는 서버다 — admin은 editable=true지만 남의 댓글이라 반응 가능(닉 비교라 오판하지 않음).
-    const isOwnComment =
-        isAuthenticated &&
-        myNickname !== undefined &&
-        comment.authorNickname === myNickname
+    // 본인 댓글 판정은 서버가 작성자 ID로 계산한 ownedByMe가 권위다. editable은 관리자에게도 true라
+    // 자기 반응 금지(COMMENT_003) 판정에 사용할 수 없다.
+    const isOwnComment = comment.ownedByMe
 
     const handleReact = () => {
         // 비로그인 → 로그인 유도(returnUrl 보존). 본인 댓글은 버튼이 이미 비활성(서버도 방어).

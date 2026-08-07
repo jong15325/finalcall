@@ -26,7 +26,8 @@ export type ReactionType = 'LIKE' | 'DISLIKE'
  * CommentResponse — 루트 목록·답글 공통 코어(계약 §6.3).
  *
  * ★ `deleted=true`(tombstone, §13.4)면 `content`·`authorNickname`=null, 카운트 0,
- *   `editable=false`, `myReaction=null`으로 마스킹돼 온다. 렌더는 이 플래그로 분기한다.
+ *   `editable=false`, `ownedByMe=false`, `myReaction=null`으로 마스킹돼 온다. 렌더는 이 플래그로
+ *   분기한다.
  */
 export interface CommentResponse {
     commentPublicId: string
@@ -35,6 +36,7 @@ export interface CommentResponse {
     createdAt: string
     updatedAt: string
     editable: boolean
+    ownedByMe: boolean
     likeCount: number
     dislikeCount: number
     myReaction: ReactionType | null
