@@ -72,8 +72,10 @@ class AuctionRegisterConcurrencyIntegrationTest extends IntegrationTest {
     @BeforeEach
     @AfterEach
     void clean() {
-        // auction 은 item_instance·user 를 FK 참조하므로 먼저 지운다(시드는 auction 을 만들지 않아 전량 삭제 안전).
-        auctionRepository.deleteAllInBatch();
+        // Flyway 시드 경매는 bid·money_hold 가 참조하므로 보존하고, 이 테스트가 만든 경매만 지운다.
+        auctionRepository.deleteAllInBatch(auctionRepository.findAll().stream()
+            .filter(auction -> !auction.getPublicId().startsWith("SEEDAUCT"))
+            .toList());
         SeedTestSupport.deleteNonSeedItemData(
             itemInstanceRepository, tempStorageRepository, userRepository, userBalanceRepository);
     }
@@ -134,7 +136,9 @@ class AuctionRegisterConcurrencyIntegrationTest extends IntegrationTest {
         // DB 최종 상태: item 은 LISTED, auction 정확히 1건.
         assertThat(itemInstanceRepository.findById(item.getId()).orElseThrow().getLocation())
             .isEqualTo(ItemLocation.LISTED);
-        assertThat(auctionRepository.count()).isEqualTo(1);
+        assertThat(auctionRepository.findAll().stream()
+            .filter(auction -> !auction.getPublicId().startsWith("SEEDAUCT")))
+            .hasSize(1);
     }
 
     private void authenticateAs(Long userId) {

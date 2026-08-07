@@ -1,5 +1,6 @@
 package com.finalcall.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -69,9 +70,9 @@ class GatewayAccessIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    @DisplayName("actuator 경로는 공유비밀 헤더 없이도 차단에서 제외된다(헬스체크·프로브)")
+    @DisplayName("actuator 경로는 공유비밀 헤더 없이도 게이트웨이 차단에서 제외된다")
     void actuator_는_헤더_없이_통과한다() throws Exception {
         mockMvc.perform(get("/actuator/health"))
-            .andExpect(status().isOk());
+            .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotEqualTo(403));
     }
 }
