@@ -158,26 +158,35 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             className="mt-2 flex flex-col gap-2"
                             aria-label="특수 스킬"
                         >
-                            {skills.map((skill) => (
-                                <li
-                                    key={skill.slot}
-                                    className="flex min-w-0 items-start gap-2 py-1 text-sm"
-                                >
-                                    <span
-                                        aria-hidden="true"
-                                        className="grid size-5 shrink-0 place-items-center rounded border border-line bg-surface text-xs font-bold text-navy"
+                            {skills.map((skill) => {
+                                const showPercent =
+                                    skill.slot === 2 &&
+                                    Number.isFinite(item.skillPercent) &&
+                                    item.skillPercent > 0
+
+                                return (
+                                    <li
+                                        key={skill.slot}
+                                        className="flex min-w-0 items-start gap-2 py-1 text-sm"
                                     >
-                                        {skill.slot}
-                                    </span>
-                                    <span className="min-w-0 break-words font-semibold text-gray-900">
-                                        {skillLabelOf(skill)}
-                                        {skill.slot === 2 &&
-                                        item.skillPercent > 0
-                                            ? ` (${item.skillPercent}%)`
-                                            : ''}
-                                    </span>
-                                </li>
-                            ))}
+                                        <span
+                                            aria-hidden="true"
+                                            className="grid size-5 shrink-0 place-items-center rounded border border-line bg-surface text-xs font-bold text-navy"
+                                        >
+                                            {skill.slot}
+                                        </span>
+                                        <span className="min-w-0 break-words font-semibold text-gray-900">
+                                            {skillLabelOf(skill)}
+                                            {showPercent && (
+                                                <span className="whitespace-nowrap font-extrabold text-gold-deep">
+                                                    {' '}
+                                                    ({item.skillPercent}%)
+                                                </span>
+                                            )}
+                                        </span>
+                                    </li>
+                                )
+                            })}
                         </ul>
                     ) : (
                         <p className="mt-2 py-2.5 text-sm text-gray-500">
