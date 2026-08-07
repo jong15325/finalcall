@@ -54,6 +54,7 @@ public class SearchReconciliationWorker {
     private final AuctionRepository auctionRepository;
     private final ShopRepository shopRepository;
     private final ListingIndexer listingIndexer;
+    private final SearchReindexGuard searchReindexGuard;
     private final ListingSearchProperties searchProperties;
     private final SearchReconciliationProperties properties;
     private final MeterRegistry meterRegistry;
@@ -89,8 +90,16 @@ public class SearchReconciliationWorker {
                 shopRepository.countGroupByPriceBucket(properties.priceBucketSize()));
             boolean drift = auctionDrift || shopDrift;
             if (drift && properties.correctOnDrift()) {
-                int reindexed = listingIndexer.reindexAll();
-                log.warn("검색 화해: 드리프트 보정 재색인 완료 count={}", reindexed);
+                if (!searchReindexGuard.tryAcquire()) {
+                    log.info("검색 화해: 관리자 재색인 진행 중이므로 드리프트 보정을 건너뜁니다.");
+                    return true;
+                }
+                try {
+                    int reindexed = listingIndexer.reindexAll();
+                    log.warn("검색 화해: 드리프트 보정 재색인 완료 count={}", reindexed);
+                } finally {
+                    searchReindexGuard.release();
+                }
             }
             return drift;
         } catch (RuntimeException ex) {

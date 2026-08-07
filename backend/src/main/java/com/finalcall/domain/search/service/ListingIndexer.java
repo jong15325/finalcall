@@ -19,6 +19,8 @@ import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.repository.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,47 +48,79 @@ public class ListingIndexer {
     /** 경매+고정가 전건을 MySQL 에서 읽어 ES 로 재색인한다(화해 보정·수동 백필). 반환 = 색인한 문서 수. */
     @Transactional(readOnly = true)
     public int reindexAll() {
-        return reindexAuctions() + reindexShops();
+        return reindexAll(properties.indexAlias());
+    }
+
+    /** 지정한 물리 인덱스에 경매+고정가 전건을 직접 색인한다. REBUILD 백필 전용 strict 경로다. */
+    @Transactional(readOnly = true)
+    public int reindexAll(String targetIndex) {
+        return reindexAuctions(targetIndex) + reindexShops(targetIndex);
+    }
+
+    /** 현재 MySQL SoT에서 색인할 listingType별 정확한 문서 수를 반환한다. */
+    @Transactional(readOnly = true)
+    public SearchIndexCounts sourceCounts() {
+        return new SearchIndexCounts(auctionRepository.findAllForIndexing().size(),
+            shopRepository.findAllForIndexing().size());
     }
 
     /** 경매 전건을 문서로 매핑해 bulk upsert 한다(itemInstance·template·skill fetch join). */
     @Transactional(readOnly = true)
     public int reindexAuctions() {
+        return reindexAuctions(properties.indexAlias());
+    }
+
+    private int reindexAuctions(String targetIndex) {
         List<ListingDocument> documents = auctionRepository.findAllForIndexing().stream()
             .map(this::toDocument)
             .toList();
-        return bulkUpsert(documents);
+        return bulkUpsert(documents, targetIndex);
     }
 
     /** 고정가 전건을 문서로 매핑해 bulk upsert 한다. */
     @Transactional(readOnly = true)
     public int reindexShops() {
+        return reindexShops(properties.indexAlias());
+    }
+
+    private int reindexShops(String targetIndex) {
         List<ListingDocument> documents = shopRepository.findAllForIndexing().stream()
             .map(this::toDocument)
             .toList();
-        return bulkUpsert(documents);
+        return bulkUpsert(documents, targetIndex);
     }
 
     /** 문서 목록을 alias 에 bulk upsert 한다(_id=publicId, 전체 문서 replace = 멱등). 빈 목록은 no-op. */
     public int bulkUpsert(List<ListingDocument> documents) {
+        return bulkUpsert(documents, properties.indexAlias());
+    }
+
+    private int bulkUpsert(List<ListingDocument> documents, String targetIndex) {
         if (documents.isEmpty()) {
             return 0;
         }
         try {
-            elasticsearchClient.bulk(bulk -> {
+            BulkResponse response = elasticsearchClient.bulk(bulk -> {
                 for (ListingDocument document : documents) {
                     bulk.operations(operation -> operation.index(index -> index
-                        .index(properties.indexAlias())
+                        .index(targetIndex)
                         .id(document.publicId())
                         .document(document)));
                 }
                 return bulk;
             });
+            if (response.errors()) {
+                String reason = response.items().stream()
+                    .filter(item -> item.error() != null)
+                    .map(BulkResponseItem::error)
+                    .map(error -> error.reason())
+                    .findFirst()
+                    .orElse("알 수 없는 bulk 부분 실패");
+                throw new IllegalStateException("리스팅 bulk upsert 부분 실패: " + reason);
+            }
             return documents.size();
         } catch (Exception ex) {
-            // 재색인/보정 실패는 배경 작업이라 목록·검색을 죽이지 않는다 — 로깅 후 다음 tick 이 재시도한다(화해 백스톱).
-            log.error("리스팅 재색인 bulk upsert 실패 count={}", documents.size(), ex);
-            return 0;
+            throw new IllegalStateException("리스팅 bulk upsert 실패 target=" + targetIndex, ex);
         }
     }
 

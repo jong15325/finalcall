@@ -28,6 +28,7 @@ import com.finalcall.domain.search.entity.ListingDocument;
 import com.finalcall.domain.search.entity.ListingType;
 import com.finalcall.domain.search.service.ListingIndexer;
 import com.finalcall.domain.search.service.SearchReconciliationWorker;
+import com.finalcall.domain.search.service.SearchReindexGuard;
 import com.finalcall.domain.shop.repository.ShopRepository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -86,13 +87,14 @@ class SearchReconciliationWorkerIntegrationTest {
         auctionRepository = mock(AuctionRepository.class);
         shopRepository = mock(ShopRepository.class);
         ListingIndexer listingIndexer = mock(ListingIndexer.class);
+        SearchReindexGuard searchReindexGuard = new SearchReindexGuard();
         meterRegistry = new SimpleMeterRegistry();
 
         // enabled 는 sweepOnce 직접 호출과 무관, correctOnDrift=false 로 보정 재색인은 끈다(탐지·계측만 검증).
         SearchReconciliationProperties properties = new SearchReconciliationProperties(false, 300_000L, false, BUCKET);
         ListingSearchProperties searchProperties = new ListingSearchProperties(ALIAS, 2, 64, false);
         worker = new SearchReconciliationWorker(client, auctionRepository, shopRepository,
-            listingIndexer, searchProperties, properties, meterRegistry);
+            listingIndexer, searchReindexGuard, searchProperties, properties, meterRegistry);
 
         // SHOP 은 이 테스트들에서 관심 밖 — MySQL·ES 모두 비어 정합(드리프트 노이즈 제거).
         when(shopRepository.count()).thenReturn(0L);

@@ -51,6 +51,7 @@ public class SecurityConfig {
                 // 데모/참조(sample)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
                 //   (notice 참조 구현은 board 로 흡수·제거됨 — FC-201. 게시판 공개 경로는 아래 /api/v1/boards 참조.)
                 .requestMatchers("/sample/**").permitAll()
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 아이템 카탈로그·인스턴스 상세는 공개(계약 §4.1 인증 불요 / items 상세는 인증 optional).
                 //   me/** 인벤토리는 아래 anyRequest().authenticated() 로 인증을 강제한다(계약 §4.2).
                 .requestMatchers(HttpMethod.GET, "/api/v1/item-templates", "/api/v1/items/**").permitAll()
