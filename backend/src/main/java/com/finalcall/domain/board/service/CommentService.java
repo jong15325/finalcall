@@ -102,7 +102,7 @@ public class CommentService {
         Map<Long, ReactionType> myReactions = viewerReactions(page.getContent(), viewerId);
         return CommentPageResponse.from(page,
             comment -> CommentResponse.fromRoot(comment, isEditable(comment, viewerId, admin),
-                myReactionOf(myReactions, comment)));
+                comment.isOwnedBy(viewerId), myReactionOf(myReactions, comment)));
     }
 
     /**
@@ -128,7 +128,7 @@ public class CommentService {
         Map<Long, ReactionType> myReactions = viewerReactions(page.getContent(), viewerId);
         return ReplyPageResponse.from(page,
             reply -> ReplyResponse.from(reply, isEditable(reply, viewerId, admin),
-                myReactionOf(myReactions, reply)));
+                reply.isOwnedBy(viewerId), myReactionOf(myReactions, reply)));
     }
 
     /**

@@ -25,6 +25,7 @@ public record ReplyResponse(
     Instant createdAt,
     Instant updatedAt,
     boolean editable,
+    boolean ownedByMe,
     int likeCount,
     int dislikeCount,
     String myReaction,
@@ -37,7 +38,8 @@ public record ReplyResponse(
      * @param editable   요청 주체가 작성자이거나 관리자인지(프론트 버튼 제어)
      * @param myReaction 뷰어의 반응(LIKE|DISLIKE|null) — FC-207 은 항상 null, FC-208 이 채운다
      */
-    public static ReplyResponse from(Comment comment, boolean editable, String myReaction) {
+    public static ReplyResponse from(
+        Comment comment, boolean editable, boolean ownedByMe, String myReaction) {
         return ReplyResponse.builder()
             .commentPublicId(comment.getPublicId())
             .authorNickname(comment.getAuthorNickname())
@@ -45,6 +47,7 @@ public record ReplyResponse(
             .createdAt(comment.getCreatedAt())
             .updatedAt(comment.getUpdatedAt())
             .editable(editable)
+            .ownedByMe(ownedByMe)
             .likeCount(comment.getLikeCount())
             .dislikeCount(comment.getDislikeCount())
             .myReaction(myReaction)

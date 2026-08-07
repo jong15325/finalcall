@@ -250,6 +250,27 @@ class CommentReactionApiIntegrationTest extends IntegrationTest {
             .andExpect(jsonPath("$.data.content[0].myReaction").value("DISLIKE"));
     }
 
+    @Test
+    void 답글_목록_ownedByMe는_답글_작성자에게만_true다() throws Exception {
+        User author = persistUser("rx_owner_a", "글쓴이");
+        User replier = persistUser("rx_owner_r", "답글러");
+        User other = persistUser("rx_owner_o", "타인");
+        Post post = persistPost(boardId("community"), author, "글");
+        Comment root = persistComment(post, author, "루트");
+        persistReply(post, replier, "답글", root);
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments/{c}/replies", post.getPublicId(), root.getPublicId())
+            .with(user(String.valueOf(replier.getId()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(true));
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments/{c}/replies", post.getPublicId(), root.getPublicId())
+            .with(user(String.valueOf(other.getId()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(false));
+    }
+
     // ---------------- UK 중복 차단 ----------------
 
     @Test

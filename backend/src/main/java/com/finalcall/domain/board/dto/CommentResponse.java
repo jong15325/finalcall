@@ -26,6 +26,7 @@ public record CommentResponse(
     Instant createdAt,
     Instant updatedAt,
     boolean editable,
+    boolean ownedByMe,
     int likeCount,
     int dislikeCount,
     String myReaction,
@@ -39,7 +40,8 @@ public record CommentResponse(
      * @param editable   요청 주체가 작성자이거나 관리자인지(프론트 버튼 제어)
      * @param myReaction 뷰어의 반응(LIKE|DISLIKE|null) — FC-207 은 항상 null, FC-208 이 채운다
      */
-    public static CommentResponse fromRoot(Comment comment, boolean editable, String myReaction) {
+    public static CommentResponse fromRoot(
+        Comment comment, boolean editable, boolean ownedByMe, String myReaction) {
         if (comment.isTombstone()) {
             return CommentResponse.builder()
                 .commentPublicId(comment.getPublicId())
@@ -48,6 +50,7 @@ public record CommentResponse(
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .editable(false)
+                .ownedByMe(false)
                 .likeCount(0)
                 .dislikeCount(0)
                 .myReaction(null)
@@ -62,6 +65,7 @@ public record CommentResponse(
             .createdAt(comment.getCreatedAt())
             .updatedAt(comment.getUpdatedAt())
             .editable(editable)
+            .ownedByMe(ownedByMe)
             .likeCount(comment.getLikeCount())
             .dislikeCount(comment.getDislikeCount())
             .myReaction(myReaction)

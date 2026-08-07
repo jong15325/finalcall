@@ -82,6 +82,7 @@ class CommentApiIntegrationTest extends IntegrationTest {
             // 루트 댓글은 replyCount(답글 없으면 0)를 싣는다(FC-207). 비로그인 조회는 editable=false·myReaction=null(필드 present).
             .andExpect(jsonPath("$.data.content[0].replyCount").value(0))
             .andExpect(jsonPath("$.data.content[0].editable").value(false))
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(false))
             .andExpect(jsonPath("$.data.content[0].myReaction").value(nullValue()));
     }
 
@@ -144,7 +145,7 @@ class CommentApiIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void 목록_작성자_조회는_editable_true() throws Exception {
+    void 목록_작성자_조회는_editable과_ownedByMe가_true다() throws Exception {
         User author = persistUser("cmt_list2", "목록작성자2");
         Post post = persistPost(boardId("community"), author, "글", false);
         persistComment(post, author, "내 댓글");
@@ -153,7 +154,37 @@ class CommentApiIntegrationTest extends IntegrationTest {
         mockMvc.perform(get("/api/v1/posts/{p}/comments", post.getPublicId())
             .with(user(String.valueOf(author.getId()))))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content[0].editable").value(true));
+            .andExpect(jsonPath("$.data.content[0].editable").value(true))
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(true));
+    }
+
+    @Test
+    void 목록_관리자가_타인_댓글을_조회하면_editable_true_ownedByMe_false다() throws Exception {
+        User author = persistUser("cmt_owner_admin_author", "원작성자");
+        User admin = persistUser("cmt_owner_admin", "관리자");
+        Post post = persistPost(boardId("community"), author, "글", false);
+        persistComment(post, author, "타인 댓글");
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments", post.getPublicId()).with(adminUser(admin)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].editable").value(true))
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(false));
+    }
+
+    @Test
+    void 목록_ownedByMe는_닉네임_변경과_무관하게_작성자_ID로_true다() throws Exception {
+        User author = persistUser("cmt_owner_rename", "변경전닉");
+        Post post = persistPost(boardId("community"), author, "글", false);
+        persistComment(post, author, "닉네임 스냅샷 댓글");
+        author.changeNickname("변경후닉");
+        flushClear();
+
+        mockMvc.perform(get("/api/v1/posts/{p}/comments", post.getPublicId())
+            .with(user(String.valueOf(author.getId()))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].authorNickname").value("변경전닉"))
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(true));
     }
 
     // ---------------- 작성(allow_comments 게이팅·인증·카운터) ----------------

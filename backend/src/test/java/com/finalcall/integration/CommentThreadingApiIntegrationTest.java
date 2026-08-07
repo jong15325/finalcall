@@ -233,7 +233,8 @@ class CommentThreadingApiIntegrationTest extends IntegrationTest {
             .andExpect(jsonPath("$.data.content[0].content").value(org.hamcrest.Matchers.nullValue()))
             .andExpect(jsonPath("$.data.content[0].authorNickname").value(org.hamcrest.Matchers.nullValue()))
             .andExpect(jsonPath("$.data.content[0].likeCount").value(0))
-            .andExpect(jsonPath("$.data.content[0].replyCount").value(1));
+            .andExpect(jsonPath("$.data.content[0].replyCount").value(1))
+            .andExpect(jsonPath("$.data.content[0].ownedByMe").value(false));
 
         // 답글은 여전히 접근 가능(tombstone 루트 하위).
         mockMvc.perform(get("/api/v1/posts/{p}/comments/{c}/replies", post.getPublicId(), root.getPublicId()))
