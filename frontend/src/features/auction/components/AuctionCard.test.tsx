@@ -46,6 +46,52 @@ const baseAuction: AuctionSummary = {
 }
 
 describe('<AuctionCard>', () => {
+    it('specSnapshot은 숨기고 레벨과 256px 최소 높이를 유지한다', () => {
+        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+
+        expect(
+            screen.queryByText(baseAuction.item.specSnapshot),
+        ).not.toBeInTheDocument()
+        expect(screen.getByText('Lv.3')).toBeInTheDocument()
+
+        const link = screen.getByRole('link')
+        expect(link).toHaveClass('min-h-[256px]')
+        expect(link.parentElement).toHaveClass('min-h-[256px]')
+    })
+
+    it('긴 한글 스킬도 슬롯 라벨과 카드 전용 가시성 스타일로 자연스럽게 확장한다', () => {
+        const longSkill =
+            '공격 성공 시 일정 확률로 상대의 방어력을 오랫동안 감소시킨다'
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        skill1Name: longSkill,
+                        skill2Name:
+                            '연속 공격이 적중하면 추가 피해량이 크게 증가한다',
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+
+        const skillList = screen.getByRole('list', { name: '스킬' })
+        expect(skillList).toHaveClass(
+            '[&_li]:bg-navy/5',
+            '[&_li]:text-navy-700',
+            '[&_li]:!whitespace-normal',
+            '[&_li]:!overflow-visible',
+            '[&_.item-skill-summary__slot]:mr-1.5',
+            '[&_.item-skill-summary__slot]:inline',
+        )
+        expect(screen.getByText(longSkill).closest('li')).toHaveTextContent(
+            `스킬 1 ${longSkill}`,
+        )
+        expect(screen.getByText('스킬 2')).toBeInTheDocument()
+    })
+
     it('진행 중(now < endAt)이면 "진행 중" 배지 + 카운트다운', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
         expect(screen.getByText('진행 중')).toBeInTheDocument()
@@ -211,8 +257,7 @@ describe('<AuctionCard>', () => {
             useCompareStore
                 .getState()
                 .items.some(
-                    (item) =>
-                        item.listingId === baseAuction.auctionPublicId,
+                    (item) => item.listingId === baseAuction.auctionPublicId,
                 ),
         ).toBe(true)
         expect(screen.getByRole('link')).toHaveAttribute(

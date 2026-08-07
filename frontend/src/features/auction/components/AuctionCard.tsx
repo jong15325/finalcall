@@ -72,11 +72,11 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
     const hasSkill = item.skill1 !== null || item.skill2 !== null
 
     return (
-        <div className="group relative min-h-[286px] rounded-xl transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)]">
+        <div className="group relative min-h-[256px] rounded-xl transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)]">
             <Link
                 to={auctionDetailPath(auction.auctionPublicId)}
                 aria-label={`${item.nameSnapshot} 경매 상세 보기`}
-                className="grid min-h-[286px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
+                className="grid min-h-[256px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
             >
                 {/* 아트 열 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
                 <ItemFrame
@@ -111,8 +111,8 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                     <span className="mb-1 mt-3.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-tight text-gray-900">
                         {item.nameSnapshot}
                     </span>
-                    <span className="truncate text-xs text-gray-500">
-                        {item.specSnapshot} · Lv.{item.level}
+                    <span className="text-xs text-gray-500">
+                        Lv.{item.level}
                     </span>
 
                     <ItemSkillSummary
@@ -122,7 +122,7 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                         skill1Name={item.skill1Name}
                         skill2Name={item.skill2Name}
                         skillPercent={item.skillPercent}
-                        className="mt-3 min-h-[54px] justify-center"
+                        className="mt-2 min-h-[48px] justify-center gap-1 [&_li]:!overflow-visible [&_li]:!whitespace-normal [&_li]:!text-clip [&_li]:rounded-md [&_li]:bg-navy/5 [&_li]:px-2 [&_li]:py-1 [&_li]:leading-snug [&_li]:text-navy-700 [&_.item-skill-summary__slot]:mr-1.5 [&_.item-skill-summary__slot]:inline [&_.item-skill-summary__slot]:text-navy-500 [&_.item-skill-summary__slot]:opacity-100"
                     />
 
                     <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-line py-3">

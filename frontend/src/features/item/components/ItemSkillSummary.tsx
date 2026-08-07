@@ -73,6 +73,7 @@ function ItemSkillSummary({
                                 스킬 {skill.slot}
                             </span>
                         )}
+                        {showSlotLabels && ' '}
                         {skillLabelOf(skill)}
                         {showPercent && (
                             <span className="ml-1 font-bold text-orange-deep">

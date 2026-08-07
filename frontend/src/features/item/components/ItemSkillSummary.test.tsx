@@ -41,6 +41,21 @@ describe('resolveSkillSlots', () => {
 })
 
 describe('<ItemSkillSummary>', () => {
+    it('슬롯 라벨과 스킬 이름 사이에 접근 가능한 공백을 둔다', () => {
+        render(
+            <ItemSkillSummary
+                showSlotLabels
+                skill1={11}
+                skill2={null}
+                skill1Name="공격시간 3 감소"
+            />,
+        )
+
+        expect(screen.getByRole('listitem')).toHaveTextContent(
+            '스킬 1 공격시간 3 감소',
+        )
+    })
+
     it('경매 맥락(이름 없음)은 스킬 #{code} 중립 표기', () => {
         render(<ItemSkillSummary skill1={11} skill2={22} />)
         expect(screen.getByText('스킬 #11')).toBeInTheDocument()
