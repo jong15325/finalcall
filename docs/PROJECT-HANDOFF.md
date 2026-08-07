@@ -1,7 +1,7 @@
 # FinalCall(장터) 완전 인수인계 문서 (AI 이관용)
 
 > **목적**: 이 프로젝트를 처음 이어받는 AI/개발자가 **이 문서 하나 + 레포**만으로 전체 맥락(제품·코드·아키텍처·이력·규칙·에이전트 운영·Jira·환경·운영 교훈)을 파악하고 작업을 재개할 수 있게 한다.
-> **작성 기준**: 2026-08-07 · origin/master=`37089df`(+미푸시 문서 커밋 `10b0575`) · 커밋 821개 · 에픽 33개 전건 done/superseded.
+> **작성 기준**: 2026-08-08 · origin/master=HEAD=`634f02f` · 경매 카드/상세 UI 보강과 검색 재색인 코어 분리까지 push 완료 · 워킹트리는 사용자 미추적 문서 1개만 존재.
 > **정본 관계**: 이 문서는 요약·지도다. 충돌 시 정본은 각 원본 파일(`CLAUDE.md`·`docs/common/rules.md`·`docs/spec/*`·`docs/board/*`).
 > ⚠️ **자동 메모리 주의**: 원 작업 AI(Claude Code)는 `~/.claude/.../memory/`에 25개 운영 교훈 메모리를 갖고 있었다. 이 메모리는 **레포와 함께 이동하지 않으므로** 그 핵심을 이 문서 섹션 12에 전부 흡수했다. 새 환경에서는 이 문서가 그 메모리를 대체한다.
 
@@ -14,7 +14,7 @@
 - **스택**: 백엔드 Spring Boot 3.5 / Java 21 / MySQL·Redis·Elasticsearch·Kafka·MinIO, 엣지 SCG 게이트웨이. 프론트 React 19 + Vite + TS + Tailwind + react-query.
 - **상태**: 스켈레톤(Stage 0~G) + 33개 에픽(회원·인증·OAuth·아이템·경매·입찰·마감정산·화폐·마켓·검색·배송·메모·게시판·댓글·디자인·구조개편) **전건 완료**. 워킹트리 clean.
 - **개발 방식**: **1인(사용자) + AI 오케스트레이션**. 메인세션(총괄)이 서브에이전트(architect/backend-impl/frontend-impl/reviewer/portfolio-writer/consultant)를 지휘. 파일 티켓 보드(`docs/board/`) + Jira 미러(KAN).
-- **다음 수**: 신규 에픽 선택 대기(유력: **관리자 게시판 CRUD UI**).
+- **다음 수**: 경매 상세 배경 목업 FC-232 디자인 게이트 선택 대기. 관리자 시스템은 서버 분리·레포 구조·인증 경계·포함 도메인·감사 정책을 먼저 계획하기 전까지 전역 보류.
 
 ---
 
@@ -385,22 +385,31 @@ npm --prefix frontend run dev
 ## 14. 현재 상태 & 다음 수
 
 ### Git
-- **origin/master = `37089df`**. 로컬 HEAD = `10b0575`(세션 마감 HANDOVER 문서 커밋, **미push** — 코드 아님). 워킹트리 clean.
+- **origin/master = 로컬 HEAD = `634f02f`**. 사용자가 `git push`를 직접 실행해 `6285e5a..634f02f`가 원격에 반영됐다.
+- 워킹트리에는 사용자 소유 미추적 `docs/AI-KICKOFF-PROMPT.md`만 남아 있다. 커밋·삭제·수정하지 않는다.
+- Windows LF/CRLF 변환으로 다수 프론트 파일이 수정처럼 표시됐으나 `git diff`와 인덱스 해시는 동일했다. 사용자의 명시적 요청으로 해당 추적 파일만 `git restore --worktree`해 표시를 정리했다.
 - 브랜치: master 단일(1인 개발). Dependabot 브랜치 다수(origin). 향후 도메인은 `feature/<도메인>` → PR → Squash 권장.
 
-### 완료 (전건)
-- 스켈레톤 0~G + 33개 에픽. 최근 = EPIC-BOARD(게시판) + EPIC-COMMENT-V2(댓글) + UI 라운드(FC-205·213~217, BEST 제거).
+### 이번 인수 구간 완료
+- **EPIC-QUALITY-CLEANUP**: 댓글 `ownedByMe` 서버 판정과 프론트 닉네임 비교 제거, COMMENT_003 서버 방어 유지. 백엔드·프론트·보안 리뷰 통과.
+- **검색 재색인**: FC-116 관리자 HTTP API를 구현했다가 사용자 범위 재확인 후 전부 롤백. 관리자 Controller/DTO/Security matcher/외부 ErrorCode는 제거하고, strict bulk·원자 alias 전환·스키마 검증·single-flight·구 인덱스 retention/cleanup 코어만 FC-225로 유지. 전체 backend 테스트 통과.
+- **관리자 원칙**: 관리자 기능은 별도 서버 여부, 모노레포/멀티레포, 인증·감사 경계, 포함 도메인을 먼저 설계하는 큰 에픽이다. 기존 `ROLE_ADMIN` 자산은 유지하지만 신규 관리자 API·UI·계정 프로비저닝은 선행 계획 전 착수 금지.
+- **경매 목록 UI FC-226~228**: 공용 스킬 1·2/확률/골드포스 표시, 카드 밀도·가시성·44px 비교 버튼·스켈레톤 정합, 제목을 마켓과 같은 `골드/블랙 - 대분류`로 통일.
+- **경매 상세 UI FC-229~231**: 카드정보를 마켓 모달과 같은 `타입 → 명칭 → 채널제한 → 속성 → 남은 골드 포스 → 특수 스킬`로 재구성. 스킬 2 확률은 WCAG AA 5.06:1의 `gold-deep` 강조. 전체 frontend 738 테스트·typecheck·lint·build 통과.
+- **배경 목업 FC-232**: A restrained halo, B market grid, C section spotlight 비교 HTML을 작성·리뷰 통과. 실제 앱에는 아직 미적용.
 
 ### 다음 수 (재개 지점)
-1. **⭐ 신규 에픽 선택 → 게이트1**. 유력 후보:
-   - **관리자 시스템**: 별도 서버 여부·레포 구조·인증 경계·포함 도메인·감사 정책을 먼저 설계한 뒤 에픽으로 착수한다. 게시판 CRUD UI와 FC-116 검색 재색인 관리자 API는 서로 다른 후속 범위이며, FC-116은 관리자 계획 전까지 백로그로 유지한다.
-   - 그 외: 게임 지급 phase-2 재개(보류 중)·다른 경매 도메인·이월 minor.
-2. **이월 minor**(비차단): FC-211 반응 연타 가드·정렬 메뉴 키보드 roving focus·본인판정 닉 스냅샷 엣지. FC-194 테스트 위생. 백엔드 커넥션 누수 근본수정(섹션 12).
-3. **백엔드 재기동 필요**: 직전 세션에서 FC-217(BEST 제거) 이후 백엔드 미재기동 → 실행 인스턴스에 폐지된 `/comments/best`가 아직 살아있음(프론트 미호출이라 무해). 재기동하면 완전 반영.
+1. **⭐ FC-232 디자인 게이트**: [배경 비교 목업](ux/mockups/auction-detail-background-options.html)에서 A/B/C와 적용 범위를 사용자에게 확인한다.
+   - 추천: **A restrained navy·gold halo + 경매 상세 경로 한정**.
+   - 승인 전 실제 `AuctionDetailPage`/`AppShell`에는 배경을 적용하지 않는다.
+   - A/B/C 선택과 `경매 상세만`/`모든 메인 콘텐츠` 범위가 확정되면 frontend-impl → reviewer → FC-232 완료/Jira 반영.
+2. **사용자 화면 우선 완성**: 사용자는 관리자보다 사용자 기능·디자인을 먼저 마무리한다. 추천 마켓 아이템·AI 통계 아이디어 목록은 보유만 하고 현재 UI 수정이 우선이다.
+3. **관리자 시스템은 계속 보류**: 별도 서버 여부·레포 구조·인증 경계·포함 도메인·감사 정책을 게이트1/2로 먼저 설계한다. 검색 코어를 관리자 API로 다시 노출하거나 `/api/v1/admin/**`를 추가하지 않는다.
+4. **이월 minor**(비차단): FC-211 반응 연타 가드·정렬 메뉴 키보드 roving focus·본인판정 닉 스냅샷 엣지, FC-194 테스트 위생, 백엔드 커넥션 누수 근본수정.
 
 ### 상세 인수 지점
 - `docs/board/HANDOVER.md`(세션 간 상태 스냅샷 — 사용자 "출근" 시 여기부터).
-- 미러 패리티: KAN-222~245 done, KAN-220(FC-194) backlog. 드리프트 없음.
+- 최근 Jira: KAN-255(FC-225)·KAN-256~261(FC-226~231) 완료, **KAN-262(FC-232) 검토중 + `gate:design`**. 파일 보드가 정본이다.
 
 ---
 

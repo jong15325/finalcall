@@ -1,5 +1,26 @@
 # 총괄(메인 세션) 핸드오버
 
+> **최신 재시작 스냅샷 — 2026-08-08 / FC-232 디자인 게이트 대기**
+>
+> - Git: `origin/master = HEAD = 634f02f`. 사용자가 `6285e5a..634f02f`를 직접 push했다.
+> - 워킹트리: 사용자 미추적 `docs/AI-KICKOFF-PROMPT.md`만 존재한다. 건드리지 않는다. LF/CRLF 때문에 가짜 수정으로 보이던 추적 파일들은 사용자 요청으로 worktree 복원해 정리했다.
+> - 완료: 댓글 `ownedByMe` 품질 정리, 관리자 검색 API 롤백과 재색인 코어/retention 완성(FC-225), 경매 목록·상세 카드 UI FC-226~231. 최근 frontend 전체 89 files/738 tests, typecheck, lint, build 통과.
+> - 관리자: 전역 보류. 별도 서버 여부·레포 구조·인증 경계·포함 도메인·감사 정책부터 에픽으로 설계하기 전 신규 관리자 API/UI/프로비저닝 착수 금지. 기존 ROLE_ADMIN 자산은 유지.
+> - 현재 게이트: FC-232/KAN-262 `review`, `review_status: passed`, `gate: design`. [배경 비교 목업](../ux/mockups/auction-detail-background-options.html)에서 A/B/C와 적용 범위를 사용자에게 확인한다.
+> - 추천: A restrained navy·gold halo를 **경매 상세 경로에만** 적용. 승인 전 실제 앱에는 배경 효과를 적용하지 않는다.
+> - Jira: KAN-255~261 완료, KAN-262 검토중. 파일 `docs/board/`가 정본이며 상태 전이 때 즉시 미러한다.
+> - 서비스 실행 상태는 새 세션에서 포트 8080/5173을 다시 확인한다. 이전 프로세스가 살아 있다고 가정하지 않는다.
+
+## 최신 재개 순서
+
+1. `CLAUDE.md`/`AGENTS.md` 섹션 8~13, `docs/PROJECT-HANDOFF.md`, 이 파일을 읽는다.
+2. `git status`에서 사용자 미추적 문서 외 변경이 없는지 확인하고 `git log --oneline -12`에서 HEAD `634f02f`를 확인한다.
+3. 사용자에게 FC-232 배경안 **A/B/C**와 범위 **경매 상세만/모든 메인 콘텐츠**를 확인한다.
+4. 승인되면 architect 영향 확인 → frontend-impl 실제 적용 → reviewer → 파일/Jira 상태 전이. 승인 전 구현 금지.
+5. 이후에도 사용자 화면·디자인을 먼저 마무리하며 관리자는 별도 기획 승인 전 보류한다.
+
+> 아래 2026-08-07 EPIC-QUALITY-CLEANUP/게시판 스냅샷은 역사 기록이다. 재개 상태는 위 최신 블록을 우선한다.
+
 > **재시작 스냅샷 — 2026-08-07 / EPIC-QUALITY-CLEANUP 진행 중**
 >
 > - 사용자가 Codex에 Atlassian Rovo MCP를 등록하기 위해 세션을 재시작한다. 등록: `codex mcp add atlassian --url https://mcp.atlassian.com/v1/mcp/authv2` → `codex mcp login atlassian`. 새 세션에서 `/mcp verbose`로 확인한다.
