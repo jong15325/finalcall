@@ -4,7 +4,9 @@ import CodeAmount from '@/components/common/CodeAmount'
 import ItemFrame from '@/features/item/components/ItemFrame'
 import ItemSkillSummary from '@/features/item/components/ItemSkillSummary'
 import { elementLabelOf } from '@/features/item/lib/element'
+import { isGoldforceActive } from '@/features/item/lib/goldforce'
 import { itemArt } from '@/features/item/lib/itemArt'
+import { subGroupLabelOf } from '@/features/item/lib/itemCode'
 import {
     auctionPhaseOf,
     type AuctionPhase,
@@ -70,6 +72,10 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
         1,
     )
     const hasSkill = item.skill1 !== null || item.skill2 !== null
+    const frameLabel = isGoldforceActive(item.goldforceExpireAt, now)
+        ? '골드'
+        : '블랙'
+    const itemTypeTitle = `${frameLabel} - ${subGroupLabelOf(item.subGroup)}`
 
     return (
         <div className="group relative min-h-[256px] rounded-xl transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)]">
@@ -109,10 +115,7 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                     </span>
 
                     <span className="mb-1 mt-3.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-tight text-gray-900">
-                        {item.nameSnapshot}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                        Lv.{item.level}
+                        {itemTypeTitle}
                     </span>
 
                     <ItemSkillSummary

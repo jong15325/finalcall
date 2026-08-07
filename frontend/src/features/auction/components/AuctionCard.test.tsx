@@ -46,17 +46,81 @@ const baseAuction: AuctionSummary = {
 }
 
 describe('<AuctionCard>', () => {
-    it('specSnapshot은 숨기고 레벨과 256px 최소 높이를 유지한다', () => {
+    it('블랙 타입 제목만 표시하고 레벨·시각 이름은 숨긴 채 256px 높이를 유지한다', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
 
+        expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
+        expect(screen.queryByText('Lv.3')).not.toBeInTheDocument()
         expect(
-            screen.queryByText(baseAuction.item.specSnapshot),
+            screen.queryByText(baseAuction.item.nameSnapshot),
         ).not.toBeInTheDocument()
-        expect(screen.getByText('Lv.3')).toBeInTheDocument()
 
         const link = screen.getByRole('link')
         expect(link).toHaveClass('min-h-[256px]')
         expect(link.parentElement).toHaveClass('min-h-[256px]')
+    })
+
+    it('만료 골드포스는 블랙, 활성 골드포스는 골드 타입 제목을 표시한다', () => {
+        const { unmount } = renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        goldforceExpireAt: '2026-07-20T00:00:00Z',
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+        expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
+        unmount()
+
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        goldforceExpireAt: '2026-07-24T00:00:00Z',
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+        expect(screen.getByText('골드 - 무기')).toBeInTheDocument()
+    })
+
+    it('미등록 대분류 코드는 타입 제목에서 안전하게 대체 표시한다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: { ...baseAuction.item, subGroup: 99 },
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.getByText('블랙 - 대분류 99')).toBeInTheDocument()
+    })
+
+    it('시각 제목에서 숨긴 아이템 이름은 링크·이미지·비교 식별에 유지한다', () => {
+        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+
+        expect(
+            screen.getByRole('link', {
+                name: `${baseAuction.item.nameSnapshot} 경매 상세 보기`,
+            }),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('img', { name: baseAuction.item.nameSnapshot }),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('button', {
+                name: `${baseAuction.item.nameSnapshot} 비교에 담기`,
+            }),
+        ).toBeInTheDocument()
     })
 
     it('긴 한글 스킬도 슬롯 라벨과 카드 전용 가시성 스타일로 자연스럽게 확장한다', () => {
