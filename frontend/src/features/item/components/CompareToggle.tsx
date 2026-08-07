@@ -6,8 +6,8 @@
  * ★ 선택/비활성은 **DOM 속성**으로 표현한다 — `aria-pressed`·`disabled`. opacity 만으로 상태를
  *   표시하지 않는다(보조기술에 활성으로 새는 WCAG 4.1.2 회귀 방지). 선택은 테두리·배경·체크로 알린다.
  * ★ 카드 위 오버레이로 얹히되 이미지 크기를 바꾸지 않는다(ItemFrame `overlay` 층에 렌더).
- * ★ **아이콘 전용 소형 배지**(목업 `.compare-toggle` 축소형: 30px 정사각·다크 반투명·backdrop blur).
- *   아이템 이미지를 가리지 않도록 모서리에 작게 얹는다(FC-085 #2). 의미는 `aria-label` 로 전달.
+ * ★ **아이콘 전용 배지** — 포인터 hit area 는 WCAG 권고에 맞춘 44px, 아이콘은 15px를 유지한다.
+ *   아이템 이미지 모서리에 얹으며 의미는 `aria-label` 로 전달한다.
  */
 import { TbColumns3 } from 'react-icons/tb'
 
@@ -40,7 +40,7 @@ function CompareToggle({
             aria-pressed={pressed}
             aria-label={label}
             disabled={disabled}
-            className={`inline-grid size-[30px] place-items-center rounded-[9px] border shadow-[0_4px_12px_rgba(13,22,38,0.16)] backdrop-blur-sm transition-colors disabled:cursor-not-allowed disabled:border-line disabled:bg-gray-100 disabled:text-gray-400 ${stateClass} ${className}`.trim()}
+            className={`inline-grid size-11 place-items-center rounded-[9px] border shadow-[0_4px_12px_rgba(13,22,38,0.16)] backdrop-blur-sm transition-colors disabled:cursor-not-allowed disabled:border-line disabled:bg-gray-100 disabled:text-gray-400 ${stateClass} ${className}`.trim()}
             onClick={() => onToggle(!pressed)}
         >
             <TbColumns3 aria-hidden="true" className="size-[15px]" />

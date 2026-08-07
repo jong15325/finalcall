@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { auctionDetailPath } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
 import ItemFrame from '@/features/item/components/ItemFrame'
+import ItemSkillSummary from '@/features/item/components/ItemSkillSummary'
 import { elementLabelOf } from '@/features/item/lib/element'
 import { itemArt } from '@/features/item/lib/itemArt'
 import {
@@ -71,81 +72,95 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
     const hasSkill = item.skill1 !== null || item.skill2 !== null
 
     return (
-        <Link
-            to={auctionDetailPath(auction.auctionPublicId)}
-            aria-label={`${item.nameSnapshot} 경매 상세 보기`}
-            className="grid min-h-[218px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
-        >
-            {/* 아트 열 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
-            <ItemFrame
-                fill
-                imageUrl={art?.src}
-                spriteUrl={art?.src}
-                name={item.nameSnapshot}
-                visual={{ goldforceExpireAt: item.goldforceExpireAt }}
-                hasSkill={hasSkill}
-                size="stage"
-                now={now}
-                overlay={
-                    <CardCompareOverlay
-                        listingId={auction.auctionPublicId}
-                        name={item.nameSnapshot}
+        <div className="group relative min-h-[286px] rounded-xl transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)]">
+            <Link
+                to={auctionDetailPath(auction.auctionPublicId)}
+                aria-label={`${item.nameSnapshot} 경매 상세 보기`}
+                className="grid min-h-[286px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
+            >
+                {/* 아트 열 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
+                <ItemFrame
+                    fill
+                    imageUrl={art?.src}
+                    spriteUrl={art?.src}
+                    name={item.nameSnapshot}
+                    visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+                    hasSkill={hasSkill}
+                    size="stage"
+                    now={now}
+                />
+
+                {/* copy 열 */}
+                <span className="flex min-w-0 flex-col px-3 py-3.5 xs:p-[17px]">
+                    <span className="flex items-start justify-between gap-2">
+                        <span className="flex items-center gap-1.5">
+                            <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${PHASE_BADGE_CLASS[phase]}`}
+                            >
+                                {PHASE_LABEL[phase]}
+                            </span>
+                            <span className="text-[10px] font-semibold uppercase text-gray-500">
+                                {elementLabelOf(item.element)}
+                            </span>
+                        </span>
+                        <span className="shrink-0 text-[10px] text-gray-400">
+                            #{auction.auctionPublicId.slice(-4)}
+                        </span>
+                    </span>
+
+                    <span className="mb-1 mt-3.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-tight text-gray-900">
+                        {item.nameSnapshot}
+                    </span>
+                    <span className="truncate text-xs text-gray-500">
+                        {item.specSnapshot} · Lv.{item.level}
+                    </span>
+
+                    <ItemSkillSummary
+                        showSlotLabels
+                        skill1={item.skill1}
+                        skill2={item.skill2}
+                        skill1Name={item.skill1Name}
+                        skill2Name={item.skill2Name}
+                        skillPercent={item.skillPercent}
+                        className="mt-3 min-h-[54px] justify-center"
                     />
-                }
-            />
 
-            {/* copy 열 */}
-            <span className="flex min-w-0 flex-col px-3 py-3.5 xs:p-[17px]">
-                <span className="flex items-start justify-between gap-2">
-                    <span className="flex items-center gap-1.5">
-                        <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${PHASE_BADGE_CLASS[phase]}`}
-                        >
-                            {PHASE_LABEL[phase]}
+                    <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-line py-3">
+                        <span className="grid gap-0.5">
+                            <span className="text-[10px] text-gray-500">
+                                {price.label}
+                            </span>
+                            <CodeAmount
+                                value={price.amount}
+                                mode="compact"
+                                className="whitespace-nowrap text-[13px] font-bold text-gray-900"
+                            />
                         </span>
-                        <span className="text-[10px] font-semibold uppercase text-gray-500">
-                            {elementLabelOf(item.element)}
+                        <span className="grid justify-items-end gap-0.5">
+                            <span className="text-[10px] text-gray-500">
+                                입찰
+                            </span>
+                            <strong className="text-[13px] font-bold text-gray-900">
+                                {auction.bidCount}회
+                            </strong>
                         </span>
                     </span>
-                    <span className="shrink-0 text-[10px] text-gray-400">
-                        #{auction.auctionPublicId.slice(-4)}
-                    </span>
-                </span>
 
-                <span className="mb-1 mt-3.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-tight text-gray-900">
-                    {item.nameSnapshot}
-                </span>
-                <span className="truncate text-xs text-gray-500">
-                    {item.specSnapshot} · Lv.{item.level}
-                </span>
-
-                <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-line py-3">
-                    <span className="grid gap-0.5">
-                        <span className="text-[10px] text-gray-500">
-                            {price.label}
+                    <span className="mt-auto flex items-center justify-between gap-2 text-[11px] text-gray-500">
+                        <Countdown endAt={auction.endAt} now={now} />
+                        <span className="min-w-0 truncate">
+                            판매자 {auction.sellerNickname}
                         </span>
-                        <CodeAmount
-                            value={price.amount}
-                            mode="compact"
-                            className="whitespace-nowrap text-[13px] font-bold text-gray-900"
-                        />
-                    </span>
-                    <span className="grid justify-items-end gap-0.5">
-                        <span className="text-[10px] text-gray-500">입찰</span>
-                        <strong className="text-[13px] font-bold text-gray-900">
-                            {auction.bidCount}회
-                        </strong>
                     </span>
                 </span>
-
-                <span className="mt-auto flex items-center justify-between gap-2 text-[11px] text-gray-500">
-                    <Countdown endAt={auction.endAt} now={now} />
-                    <span className="min-w-0 truncate">
-                        판매자 {auction.sellerNickname}
-                    </span>
-                </span>
+            </Link>
+            <span className="absolute left-[58px] top-0.5 z-20 xs:left-[68px]">
+                <CardCompareOverlay
+                    listingId={auction.auctionPublicId}
+                    name={item.nameSnapshot}
+                />
             </span>
-        </Link>
+        </div>
     )
 }
 

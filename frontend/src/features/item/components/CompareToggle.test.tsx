@@ -55,4 +55,12 @@ describe('<CompareToggle>', () => {
             screen.getByRole('button', { name: '비교에서 빼기' }),
         ).toBeInTheDocument()
     })
+
+    it('아이콘 크기를 유지하면서 44px hit area를 제공한다', () => {
+        render(<CompareToggle pressed={false} onToggle={() => {}} />)
+
+        const button = screen.getByRole('button')
+        expect(button).toHaveClass('size-11')
+        expect(button.querySelector('svg')).toHaveClass('size-[15px]')
+    })
 })

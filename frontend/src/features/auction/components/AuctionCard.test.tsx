@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test/renderWithProviders'
+import { useCompareStore } from '@/store/compareStore'
 import AuctionCard from './AuctionCard'
 import type { AuctionSummary } from '@/lib/api/auctions'
 
@@ -26,8 +28,10 @@ const baseAuction: AuctionSummary = {
         kind: 1,
         level: 3,
         skill1: 11,
-        skill2: null,
-        skillPercent: 10,
+        skill2: 22,
+        skill1Name: '공격시간 3 감소',
+        skill2Name: '트리플샷',
+        skillPercent: 33,
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 한손 도끼',
@@ -82,11 +86,139 @@ describe('<AuctionCard>', () => {
         expect(screen.getByText('불')).toBeInTheDocument()
     })
 
+    it('두 스킬의 슬롯 라벨과 슬롯2 발동확률을 표시한다', () => {
+        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+
+        expect(screen.getByText('스킬 1')).toBeInTheDocument()
+        expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
+        expect(screen.getByText('스킬 2')).toBeInTheDocument()
+        expect(screen.getByText('트리플샷')).toBeInTheDocument()
+        expect(screen.getByText('33%')).toBeInTheDocument()
+    })
+
+    it('skill1이 없어도 skill2를 슬롯 2로 유지한다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        skill1: null,
+                        skill1Name: null,
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.queryByText('스킬 1')).not.toBeInTheDocument()
+        expect(screen.getByText('스킬 2')).toBeInTheDocument()
+        expect(screen.getByText('33%')).toBeInTheDocument()
+    })
+
+    it('스킬명이 없으면 코드로 중립 표기한다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        skill1Name: null,
+                        skill2Name: null,
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.getByText('스킬 #11')).toBeInTheDocument()
+        expect(screen.getByText('스킬 #22')).toBeInTheDocument()
+    })
+
+    it('스킬이 없으면 빈 상태를 표시한다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        skill1: null,
+                        skill2: null,
+                        skill1Name: null,
+                        skill2Name: null,
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.getByText('스킬 없음')).toBeInTheDocument()
+    })
+
+    it('활성 골드포스 잔여일을 카드 접근성 트리에 포함한다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        goldforceExpireAt: '2026-07-24T00:00:00Z',
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.getByLabelText('골드포스 잔여 3일')).toBeInTheDocument()
+    })
+
     it('카드 전체가 auctionPublicId 상세 링크다', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
         const link = screen.getByRole('link', {
             name: '불의 전투도끼 경매 상세 보기',
         })
         expect(link).toHaveAttribute('href', '/auctions/01J3AUCTION0001')
+    })
+
+    it('상세 링크와 비교 버튼을 형제 인터랙션으로 분리한다', () => {
+        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+
+        const link = screen.getByRole('link', {
+            name: '불의 전투도끼 경매 상세 보기',
+        })
+        const compareButton = screen.getByRole('button', {
+            name: '불의 전투도끼 비교에 담기',
+        })
+
+        expect(link).not.toContainElement(compareButton)
+        expect(link.parentElement).toBe(
+            compareButton.parentElement?.parentElement?.parentElement,
+        )
+    })
+
+    it('비교 버튼 클릭은 링크 이동 없이 비교 상태만 토글한다', async () => {
+        const user = userEvent.setup()
+        useCompareStore.getState().clear()
+        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+
+        const compareButton = screen.getByRole('button', {
+            name: '불의 전투도끼 비교에 담기',
+        })
+        await user.click(compareButton)
+
+        expect(compareButton).toHaveAttribute('aria-pressed', 'true')
+        expect(
+            useCompareStore
+                .getState()
+                .items.some(
+                    (item) =>
+                        item.listingId === baseAuction.auctionPublicId,
+                ),
+        ).toBe(true)
+        expect(screen.getByRole('link')).toHaveAttribute(
+            'href',
+            '/auctions/01J3AUCTION0001',
+        )
+        useCompareStore.getState().clear()
     })
 })

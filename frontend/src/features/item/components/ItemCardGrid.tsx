@@ -71,7 +71,7 @@ export function ItemCardGridSkeleton({
 function SkeletonCard({ variant }: { variant: ItemCardGridVariant }) {
     if (variant === 'auction') {
         return (
-            <div className="grid min-h-[218px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface xs:grid-cols-[112px_minmax(0,1fr)]">
+            <div className="grid min-h-[286px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface xs:grid-cols-[112px_minmax(0,1fr)]">
                 <div className="animate-pulse bg-gray-100" />
                 <div className="flex flex-col gap-2 p-[17px]">
                     <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />

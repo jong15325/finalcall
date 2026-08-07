@@ -98,5 +98,6 @@ describe('<ItemCardGridSkeleton>', () => {
         expect(grid.className).toContain('grid-cols-1')
         expect(grid.className).toContain('gap-4')
         expect(grid.children).toHaveLength(2)
+        expect(grid.firstElementChild).toHaveClass('min-h-[286px]')
     })
 })
