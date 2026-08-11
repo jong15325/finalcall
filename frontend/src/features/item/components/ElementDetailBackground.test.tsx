@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { stubMatchMedia } from '@/test/renderWithProviders'
 import ElementDetailBackground from './ElementDetailBackground'
 
 class MockImage {
@@ -84,5 +85,69 @@ describe('ElementDetailBackground', () => {
             backgroundImage:
                 'url(/img/backgrounds/item-elements/water-detail-v3.jpg)',
         })
+    })
+
+    it('런타임 모션과 visibility 변경에 RAF를 중단하고 정리한다', () => {
+        vi.useFakeTimers()
+        const media = stubMatchMedia()
+        const context = {
+            beginPath: vi.fn(),
+            clearRect: vi.fn(),
+            lineTo: vi.fn(),
+            moveTo: vi.fn(),
+            setTransform: vi.fn(),
+            stroke: vi.fn(),
+            strokeStyle: '',
+            lineWidth: 0,
+        } as unknown as CanvasRenderingContext2D
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            context,
+        )
+        const raf = vi.fn(() => 41)
+        const cancel = vi.fn()
+        vi.stubGlobal('requestAnimationFrame', raf)
+        vi.stubGlobal('cancelAnimationFrame', cancel)
+        Object.defineProperty(document, 'hidden', {
+            configurable: true,
+            value: false,
+        })
+
+        const { unmount } = render(
+            <ElementDetailBackground element={1}>내용</ElementDetailBackground>,
+        )
+        expect(raf).toHaveBeenCalledTimes(1)
+
+        media.setMatches('(prefers-reduced-motion: reduce)', true)
+        expect(cancel).toHaveBeenCalledWith(41)
+        expect(context.clearRect).toHaveBeenCalled()
+
+        media.setMatches('(prefers-reduced-motion: reduce)', false)
+        expect(raf).toHaveBeenCalledTimes(2)
+
+        window.dispatchEvent(new Event('resize'))
+        window.dispatchEvent(new Event('resize'))
+        expect(context.setTransform).toHaveBeenCalledTimes(1)
+        act(() => vi.advanceTimersByTime(120))
+        expect(context.setTransform).toHaveBeenCalledTimes(2)
+
+        Object.defineProperty(document, 'hidden', {
+            configurable: true,
+            value: true,
+        })
+        document.dispatchEvent(new Event('visibilitychange'))
+        expect(cancel).toHaveBeenCalledWith(41)
+
+        window.dispatchEvent(new Event('resize'))
+        unmount()
+        const callsAfterUnmount = raf.mock.calls.length
+        const resizeCallsAfterUnmount = context.setTransform.mock.calls.length
+        act(() => vi.advanceTimersByTime(120))
+        media.setMatches('(prefers-reduced-motion: reduce)', false)
+        document.dispatchEvent(new Event('visibilitychange'))
+        expect(raf).toHaveBeenCalledTimes(callsAfterUnmount)
+        expect(context.setTransform).toHaveBeenCalledTimes(
+            resizeCallsAfterUnmount,
+        )
+        vi.useRealTimers()
     })
 })

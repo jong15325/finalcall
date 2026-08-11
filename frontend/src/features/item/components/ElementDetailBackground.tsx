@@ -86,13 +86,12 @@ function WaterDrops() {
             '(prefers-reduced-motion: reduce)',
         )
         const coarsePointer = window.matchMedia('(pointer: coarse)')
-        if (reducedMotion.matches || coarsePointer.matches) return
-
         let frame = 0
         let visible = !document.hidden
         let previous = 0
         let width = 0
         let height = 0
+        let resizeTimer: ReturnType<typeof setTimeout> | null = null
         const drops = Array.from({ length: 18 }, (_, index) => ({
             x: ((index * 47) % 97) / 100,
             y: -((index * 31) % 100) / 100,
@@ -126,26 +125,50 @@ function WaterDrops() {
                 context.lineTo(x, y)
                 context.stroke()
             }
-            if (visible) frame = requestAnimationFrame(draw)
-        }
-
-        const onVisibilityChange = () => {
-            visible = !document.hidden
-            cancelAnimationFrame(frame)
-            if (visible) {
-                previous = 0
+            if (visible && !reducedMotion.matches) {
                 frame = requestAnimationFrame(draw)
             }
         }
 
-        resize()
-        frame = requestAnimationFrame(draw)
-        window.addEventListener('resize', resize, { passive: true })
-        document.addEventListener('visibilitychange', onVisibilityChange)
-        return () => {
+        const stop = () => {
             cancelAnimationFrame(frame)
-            window.removeEventListener('resize', resize)
+            frame = 0
+        }
+
+        const start = () => {
+            stop()
+            if (!visible || reducedMotion.matches || coarsePointer.matches) {
+                context.clearRect(0, 0, width, height)
+                return
+            }
+            previous = 0
+            frame = requestAnimationFrame(draw)
+        }
+
+        const onVisibilityChange = () => {
+            visible = !document.hidden
+            start()
+        }
+
+        const onResize = () => {
+            if (resizeTimer !== null) clearTimeout(resizeTimer)
+            resizeTimer = setTimeout(() => {
+                resizeTimer = null
+                resize()
+            }, 120)
+        }
+
+        resize()
+        start()
+        window.addEventListener('resize', onResize, { passive: true })
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        reducedMotion.addEventListener('change', start)
+        return () => {
+            stop()
+            if (resizeTimer !== null) clearTimeout(resizeTimer)
+            window.removeEventListener('resize', onResize)
             document.removeEventListener('visibilitychange', onVisibilityChange)
+            reducedMotion.removeEventListener('change', start)
         }
     }, [])
 
