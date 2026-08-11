@@ -1,6 +1,6 @@
-# 수평 AppShell·공통 콘텐츠 평면 계약 v1.1
+# 수평 AppShell·공통 콘텐츠 평면 계약 v1.2
 
-- 상태: **DECIDED — 공통 콘텐츠 평면 geometry 변경 승인 2026-08-11**
+- 상태: **DECIDED — 경매 상세 불투명 page region 예외 승인 2026-08-11**
 - 적용 범위: `AppShell` 아래 모든 공개·보호·404 route
 - 제외: `AuthLayout`의 로그인·회원가입·OAuth callback, API·백엔드·DB
 - 선행 계약: `element-detail-background-contract.md` v2.0 및 FC-244
@@ -30,12 +30,23 @@ AppShell
 - white content plane은 AppShell이 한 번만 소유한다. 각 페이지가 별도 page shell을 중복 생성하지 않는다.
   최대 폭은 1440px이며 mobile부터 white·`rounded-xl`·border·`shadow-sm`, `xl`부터 `rounded-2xl`을 쓴다.
   내부 responsive padding은 기존 AppShell 공통 padding을 유지한다.
+- **경매 상세 `/auctions/:id`만 예외**로 `ElementDetailBackground`의 children 전체를 감싸는 불투명 white
+  page-level content region을 하나 더 둔다. 이는 사용자가 배경 장면과 거래 콘텐츠를 명확히 분리하도록 승인한
+  시각 경계이며, 뒤로가기·상태 알림·Hero·입찰 패널·입찰 이력 전부가 region 안에 있어야 한다.
+- 위 예외는 `/items/:id`와 다른 route에 확장하지 않는다. 아이템 상세는 AppShell single plane과 기존
+  detail theme을 유지하고, 일반 route도 중첩 page wrapper를 만들지 않는다.
 - 320px에서도 gutter 안의 usable width를 보장하고 input·주요 CTA가 잘리거나 가로 스크롤을 만들지 않는다.
   loading·error·404도 동일 plane geometry 안에서 렌더해 상태 전환 layout jump를 막는다.
 - content plane에는 `overflow`, `transform`, `filter`, z-index stacking context를 만들지 않는다. full-width가
   필요한 하위 콘텐츠도 plane 안에서 처리하며 AppShell 밖으로 탈출하지 않는다.
 - 상세 두 route의 fixed viewport 이미지·particle은 plane 바깥 gutter에서 계속 보여야 한다. plane을 배경
   component 안에 중첩하거나 별도 흰 veil로 viewport를 덮지 않는다.
+- 앞 조항의 중첩 금지는 경매 상세의 승인된 content region에 한해 번복한다. region은 viewport veil이 아니라
+  AppShell plane 안쪽의 유한한 content boundary이며 outer gutter의 이미지·particle을 가리지 않는다.
+- 경매 content region은 `bg-surface`/`#fff`, responsive padding, mobile부터 radius·border·shadow를 사용한다.
+  정확한 padding은 기존 AppShell plane 내부 여백과 합쳐 320px usable width를 해치지 않도록 구현하되,
+  desktop에서 region과 AppShell plane 사이의 여백이 육안으로 구분돼야 한다.
+- region에도 `overflow`, `transform`, `filter`, z-index stacking context를 만들지 않는다.
 - footer·CompareBar는 background 위, modal·drawer·dropdown은 모든 shell layer 위에 있어야 한다.
 
 ## 2. 반응형 내비게이션
@@ -94,6 +105,10 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
   sticky panel, modal focus/stacking과 body scroll-lock을 동일하게 보존한다.
 - 상세 route에서 header·horizontal nav·footer·CompareBar는 기존 `detail-chrome` semantic theme을 소비한다.
   일반 route에서는 상세 selector·이미지·Canvas·네트워크 요청·RAF가 0이어야 한다.
+- 경매 content region 안의 `AuctionHeroCard`·`BidPanel`·`BidHistory`는 기존 dark/glass
+  `.detail-surface` 색 재정의를 소비하지 않는다. 밝은 `bg-surface`, 기본 text/line, 가벼운 border·shadow로
+  region 위 정보 계층을 만든다. 기존 컴포넌트 구조·정보·CTA는 보존하고 주요 CTA는 FinalCall orange를 쓴다.
+- `/items/:id`의 `.detail-surface`와 AppShell chrome theme은 변경하지 않는다.
 - route 이탈 시 상세 theme·dropdown·mobile drawer 임시 상태를 cleanup한다.
 
 ## 6. 검증 계약
@@ -102,8 +117,12 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - 메뉴: 단일 source, active leaf/ancestor, disabled, 인증 유무, keyboard/Escape/outside click.
 - 배경: 일반 route surface-sunken, 상세 두 route만 viewport 이미지/particle, 전 route single white content
   plane과 `px-3 py-4 → sm:px-5 py-5 → xl:px-8 py-7` outer gutter.
+- 경매 상세: `ElementDetailBackground` 내부 opaque page region 1개, 뒤로가기·상태·Hero·Bid·History 포함,
+  viewport background/particle outer 유지. 아이템 상세·다른 route에는 이 region 0개.
 - 평면: mobile `rounded-xl border shadow-sm`, xl `rounded-2xl`, max 1440px. plane의
   overflow/transform/filter/z-index stacking context 0개.
+- 경매 region: overflow/transform/filter/z-index context 0개, 밝은 카드 surface와 orange CTA, loading·error·404도
+  동일한 시각 boundary와 폭·padding을 사용한다.
 - 공개 route: 홈·경매·마켓·비교·게시판·충전·404의 layout/overflow/active nav.
 - 보호 route: 판매·마이·주문·쪽지·인벤토리·보관·지갑·아이템상세·게시글 작성/수정과 route guard.
 - 회귀: sticky, modal, dropdown, drawer, CompareBar, footer, scroll-lock, 320px·1280px·200% 확대.
@@ -122,3 +141,5 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - FC-252: final integrated review
 - FC-253: common outer gutter·mobile white frame geometry change
 - FC-254: geometry·sticky·modal·scroll final re-review
+- FC-255: auction detail opaque page-level content region
+- FC-256: auction region·surface·stacking final re-review
