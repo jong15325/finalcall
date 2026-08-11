@@ -111,8 +111,13 @@ function GroupMenu({ group }: { group: NavGroup }) {
                         : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => {
-                    if (hoverOpen && !explicitOpen) setExplicitOpen(true)
-                    else setExplicitOpen((value) => !value)
+                    clearCloseTimer()
+                    if (open) {
+                        setExplicitOpen(false)
+                        setHoverOpen(false)
+                    } else {
+                        setExplicitOpen(true)
+                    }
                 }}
                 onKeyDown={(event) => {
                     if (event.key === 'ArrowDown') {

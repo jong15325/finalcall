@@ -10,7 +10,7 @@ describe('HorizontalNav', () => {
         vi.unstubAllGlobals()
     })
 
-    it('fine pointer hover는 grace close와 재진입을 지원하고 click으로 고정한다', () => {
+    it('fine pointer hover는 grace/reentry를 지원하고 click은 보이는 상태를 toggle한다', () => {
         vi.useFakeTimers()
         const removeMediaListener = vi.fn()
         vi.stubGlobal('matchMedia', () => ({
@@ -33,14 +33,68 @@ describe('HorizontalNav', () => {
         act(() => vi.advanceTimersByTime(100))
         expect(trigger).toHaveAttribute('aria-expanded', 'true')
         fireEvent.click(trigger)
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        fireEvent.click(trigger)
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        fireEvent.click(trigger)
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
         fireEvent.mouseLeave(boundary)
-        act(() => vi.advanceTimersByTime(150))
+        fireEvent.mouseEnter(boundary)
         expect(trigger).toHaveAttribute('aria-expanded', 'true')
         fireEvent.click(trigger)
         expect(trigger).toHaveAttribute('aria-expanded', 'false')
         view.unmount()
         expect(vi.getTimerCount()).toBe(0)
         expect(removeMediaListener).toHaveBeenCalled()
+    })
+
+    it('fine에서 coarse로 바뀌면 hover와 grace timer를 즉시 정리한다', () => {
+        vi.useFakeTimers()
+        let fine = true
+        const changes: Array<() => void> = []
+        const removeMediaListener = vi.fn()
+        vi.stubGlobal('matchMedia', () => ({
+            get matches() {
+                return fine
+            },
+            addEventListener: (_type: string, listener: () => void) => {
+                changes.push(listener)
+            },
+            removeEventListener: removeMediaListener,
+        }))
+        const view = render(
+            <MemoryRouter>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        const trigger = screen.getByRole('button', { name: /마켓/ })
+        const boundary = trigger.closest('li') as HTMLElement
+        fireEvent.mouseEnter(boundary)
+        fireEvent.mouseLeave(boundary)
+        expect(vi.getTimerCount()).toBeGreaterThan(0)
+        act(() => {
+            fine = false
+            changes.forEach((listener) => listener())
+        })
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        expect(vi.getTimerCount()).toBe(0)
+        view.unmount()
+        expect(removeMediaListener).toHaveBeenCalled()
+    })
+
+    it('Enter와 Space도 현재 open 상태를 일관되게 toggle한다', async () => {
+        const user = userEvent.setup()
+        render(
+            <MemoryRouter>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        const trigger = screen.getByRole('button', { name: /마켓/ })
+        trigger.focus()
+        await user.keyboard('{Enter}')
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        await user.keyboard(' ')
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
     })
 
     it('coarse pointer에서는 hover로 열리지 않는다', () => {
