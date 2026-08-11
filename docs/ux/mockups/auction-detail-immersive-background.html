@@ -193,11 +193,12 @@
 
       body[data-element="water"][data-effect="c"] .scene::before {
         background:
-          conic-gradient(from 24deg at 62% 67%, transparent 0 12%, rgb(210 252 255 / 10%) 16%, transparent 23% 46%, rgb(153 228 247 / 8%) 51%, transparent 58% 80%, rgb(235 255 255 / 9%) 84%, transparent 91%),
-          repeating-linear-gradient(108deg, transparent 0 78px, rgb(230 255 255 / 6%) 82px, transparent 88px 146px);
-        filter: blur(2px);
-        mask-image: radial-gradient(ellipse at 62% 67%, #000 0 48%, transparent 76%);
-        animation: water-vortex 11s linear infinite;
+          repeating-radial-gradient(ellipse at 58% 112%, transparent 0 46px, rgb(226 255 255 / 13%) 49px, rgb(142 224 244 / 7%) 52px, transparent 58px 92px),
+          repeating-radial-gradient(ellipse at 76% -8%, transparent 0 68px, rgb(236 255 255 / 8%) 71px, transparent 77px 126px),
+          linear-gradient(104deg, transparent 22%, rgb(177 239 252 / 7%) 48%, transparent 72%);
+        filter: blur(1.2px);
+        mask-image: linear-gradient(90deg, transparent 0, #000 13% 92%, transparent 100%);
+        animation: water-waves 8s ease-in-out infinite alternate;
       }
 
       @keyframes wind-sweep {
@@ -236,8 +237,8 @@
         to { opacity: 0.48; filter: saturate(1.4); }
       }
 
-      @keyframes water-vortex {
-        to { transform: rotate(-6deg) scale(1.05); }
+      @keyframes water-waves {
+        to { transform: translate3d(-1.8%, -1%, 0) scale(1.035, 1.02); opacity: 0.72; }
       }
 
       body[data-veil="soft"] .scene {
@@ -1041,7 +1042,7 @@
         water: {
           a: ["맑은 기포", "천천히 상승하는 기포와 작은 수면 고리"],
           b: ["수면 윤슬", "교차하는 햇빛 무늬와 잔잔한 반사광"],
-          c: ["잔잔한 소용돌이", "회전 유선과 윤슬 파편, 얇은 포말"],
+          c: ["잔잔한 파도", "수면에 붙어 흐르는 넓은 파면과 잔물결"],
         },
       };
       const selectedEffects = { wind: "b", fire: "c", earth: "c", water: "c" };
@@ -1263,19 +1264,7 @@
         const element = document.body.dataset.element;
         const effect = document.body.dataset.effect;
 
-        if (element === "water") {
-          context.save();
-          context.beginPath();
-          context.moveTo(width * 0.35, 0);
-          context.lineTo(width, 0);
-          context.lineTo(width, height);
-          context.lineTo(width * 0.34, height);
-          context.bezierCurveTo(width * 0.4, height * 0.78, width * 0.42, height * 0.5, width * 0.38, height * 0.32);
-          context.closePath();
-          context.clip();
-        }
-
-        particles.forEach((particle) => {
+        if (element !== "water") particles.forEach((particle) => {
           if (!reducedMotion.matches) {
             if (element === "wind") {
               if (effect === "b") {
@@ -1295,17 +1284,6 @@
             } else if (element === "earth") {
               particle.x += (effect === "b" ? particle.speed * 0.35 : particle.drift) * delta;
               particle.y += Math.sin(time * 0.0007 + particle.phase) * delta * (effect === "c" ? 0.009 : 0.004);
-            } else {
-              if (effect === "c") {
-                const dx = particle.x - 0.62;
-                const dy = (particle.y - 0.67) * 1.35;
-                const current = particle.speed * delta * 0.42;
-                particle.x += -dy * current;
-                particle.y += dx * current * 0.74;
-              } else {
-                particle.y -= particle.speed * delta * (effect === "b" ? 0.28 : 0.8);
-                particle.x += Math.sin(time * 0.001 + particle.phase) * delta * 0.003;
-              }
             }
             if (particle.y < -0.04) particle.y = 1.04;
             if (particle.y > 1.04) particle.y = -0.04;
@@ -1314,8 +1292,6 @@
           }
           drawParticle(particle, time, element, effect);
         });
-
-        if (element === "water") context.restore();
 
         if (!reducedMotion.matches) requestAnimationFrame(drawEffects);
       }
