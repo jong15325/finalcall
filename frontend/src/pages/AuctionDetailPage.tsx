@@ -23,6 +23,7 @@ import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
 import { buildReturnUrlQuery } from '@/lib/returnUrl'
 import { hasErrorCode } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 
 /**
  * 경매 상세·입찰 (FC-072 — 목업 `#auction-detail` · design-brief B-3/B-4 · rebuild-contract-map §2).
@@ -162,83 +163,85 @@ export default function AuctionDetailPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <Link
-                to={paths.auctions}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
-            >
-                <TbArrowLeft aria-hidden className="size-4" />
-                경매 목록
-            </Link>
-
-            {toast && (
-                <p
-                    role="status"
-                    className="rounded-lg bg-success-subtle px-4 py-2.5 text-sm font-medium text-success"
+        <ElementDetailBackground element={auction.item.element}>
+            <div className="flex flex-col gap-6">
+                <Link
+                    to={paths.auctions}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
                 >
-                    {toast}
-                </p>
-            )}
+                    <TbArrowLeft aria-hidden className="size-4" />
+                    경매 목록
+                </Link>
 
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
-                {/* 모바일: bid-panel 을 먼저(입찰 즉시 진입, design-brief C-7) */}
-                <div className="order-2 lg:order-1">
-                    <AuctionHeroCard
-                        auction={auction}
-                        phase={phase}
-                        now={now}
-                    />
+                {toast && (
+                    <p
+                        role="status"
+                        className="rounded-lg bg-success-subtle px-4 py-2.5 text-sm font-medium text-success"
+                    >
+                        {toast}
+                    </p>
+                )}
+
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
+                    {/* 모바일: bid-panel 을 먼저(입찰 즉시 진입, design-brief C-7) */}
+                    <div className="order-2 lg:order-1">
+                        <AuctionHeroCard
+                            auction={auction}
+                            phase={phase}
+                            now={now}
+                        />
+                    </div>
+                    <div className="order-1 lg:order-2">
+                        <BidPanel
+                            auction={auction}
+                            phase={phase}
+                            now={now}
+                            balance={balanceQuery.data}
+                            isAuthed={isAuthed}
+                            isOwn={isOwn}
+                            loginHref={loginHref}
+                            cancelPending={cancelMutation.isPending}
+                            cancelError={cancelMutation.error}
+                            onBid={openBid}
+                            onBuyNow={openPurchase}
+                            onCancel={handleCancel}
+                        />
+                    </div>
                 </div>
-                <div className="order-1 lg:order-2">
-                    <BidPanel
-                        auction={auction}
-                        phase={phase}
-                        now={now}
-                        balance={balanceQuery.data}
-                        isAuthed={isAuthed}
-                        isOwn={isOwn}
-                        loginHref={loginHref}
-                        cancelPending={cancelMutation.isPending}
-                        cancelError={cancelMutation.error}
-                        onBid={openBid}
-                        onBuyNow={openPurchase}
-                        onCancel={handleCancel}
-                    />
-                </div>
-            </div>
 
-            <BidHistory auctionPublicId={id} />
+                <BidHistory auctionPublicId={id} />
 
-            <BidDialog
-                open={bidOpen}
-                auctionName={auction.item.nameSnapshot}
-                currentHighestAmount={auction.highestBidAmount}
-                minNextBidAmount={auction.minNextBidAmount}
-                buyNowPrice={auction.buyNowPrice}
-                gameMoneyAvailable={
-                    balanceQuery.data?.gameMoneyAvailable ?? null
-                }
-                isSubmitting={bidMutation.isPending}
-                submitError={bidMutation.error}
-                onClose={() => setBidOpen(false)}
-                onSubmit={handleBidSubmit}
-            />
-
-            {auction.buyNowPrice !== null && (
-                <PurchaseDialog
-                    open={purchaseOpen}
+                <BidDialog
+                    open={bidOpen}
                     auctionName={auction.item.nameSnapshot}
+                    currentHighestAmount={auction.highestBidAmount}
+                    minNextBidAmount={auction.minNextBidAmount}
                     buyNowPrice={auction.buyNowPrice}
                     gameMoneyAvailable={
                         balanceQuery.data?.gameMoneyAvailable ?? null
                     }
-                    isSubmitting={purchaseMutation.isPending}
-                    submitError={purchaseMutation.error}
-                    onClose={() => setPurchaseOpen(false)}
-                    onConfirm={handlePurchase}
+                    isSubmitting={bidMutation.isPending}
+                    submitError={bidMutation.error}
+                    onClose={() => setBidOpen(false)}
+                    onSubmit={handleBidSubmit}
                 />
-            )}
-        </div>
+
+                {auction.buyNowPrice !== null && (
+                    <PurchaseDialog
+                        open={purchaseOpen}
+                        auctionName={auction.item.nameSnapshot}
+                        buyNowPrice={auction.buyNowPrice}
+                        gameMoneyAvailable={
+                            balanceQuery.data?.gameMoneyAvailable ?? null
+                        }
+                        isSubmitting={purchaseMutation.isPending}
+                        submitError={purchaseMutation.error}
+                        onClose={() => setPurchaseOpen(false)}
+                        onConfirm={handlePurchase}
+                    />
+                )}
+            </div>
+        </ElementDetailBackground>
     )
 }
 

@@ -5,6 +5,7 @@ import ItemInstanceDetail from '@/features/item/components/ItemInstanceDetail'
 import { hasErrorCode } from '@/lib/api/errors'
 import { useItemInstance } from '@/lib/queries/items'
 import { ERROR_CODES } from '@/types/errorCodes'
+import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 
 /**
  * 보유 아이템 인스턴스 상세 `/items/{id}` (FC-077 — 목업 `itemDetail()` · design-brief B-11).
@@ -77,7 +78,11 @@ export default function ItemDetailPage() {
         )
     }
 
-    return <ItemInstanceDetail item={detailQuery.data} />
+    return (
+        <ElementDetailBackground element={detailQuery.data.template.element}>
+            <ItemInstanceDetail item={detailQuery.data} />
+        </ElementDetailBackground>
+    )
 }
 
 /** 로딩 스켈레톤 — 아트 + 스펙 카드 자리를 비워 CLS 를 막는다(상세 그리드와 동형). */
