@@ -94,7 +94,7 @@ function ThemedAppShell() {
 
                 <main
                     id="view"
-                    className="min-w-0 flex-1 px-3 py-4 pb-16 sm:px-5 sm:py-5 xl:px-8 xl:py-7 xl:pb-7"
+                    className="min-w-0 flex-1 px-3 py-4 pb-16 sm:px-5 sm:py-5 sm:pb-16 xl:px-8 xl:py-7 xl:pb-7"
                 >
                     <div
                         data-testid="app-content-plane"

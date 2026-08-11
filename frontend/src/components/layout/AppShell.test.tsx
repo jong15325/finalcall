@@ -105,10 +105,20 @@ describe('AppShell route-scoped 상세 배경', () => {
             'pb-16',
             'sm:px-5',
             'sm:py-5',
+            'sm:pb-16',
             'xl:px-8',
             'xl:py-7',
             'xl:pb-7',
         )
+        const classes = view.container.querySelector('#view')?.className ?? ''
+        const resolvedBottomPadding = (width: number) => {
+            if (width >= 1280 && classes.includes('xl:pb-7')) return 28
+            if (width >= 640 && classes.includes('sm:pb-16')) return 64
+            return classes.includes('pb-16') ? 64 : 0
+        }
+        expect([320, 640, 1279, 1280].map(resolvedBottomPadding)).toEqual([
+            64, 64, 64, 28,
+        ])
 
         const focusFrame = vi
             .spyOn(window, 'requestAnimationFrame')

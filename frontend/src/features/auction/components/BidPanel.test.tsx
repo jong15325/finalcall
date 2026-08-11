@@ -70,6 +70,14 @@ function renderPanel(overrides: Partial<Parameters<typeof BidPanel>[0]> = {}) {
 }
 
 describe('<BidPanel>', () => {
+    it('desktop sticky offset은 64px + 48px 두 단 header 아래다', () => {
+        const { container } = renderPanel()
+        const sticky = container.querySelector('.lg\\:sticky')
+        expect(sticky).toHaveClass('lg:top-28')
+        const stickyTop = 28 * 4
+        expect(stickyTop).toBeGreaterThanOrEqual(64 + 48)
+    })
+
     it('진행 + 로그인 + 타인 경매 → "입찰하기" 버튼', () => {
         const onBid = vi.fn()
         renderPanel({ onBid })
