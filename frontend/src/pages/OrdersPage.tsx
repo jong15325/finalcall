@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { TbAlertTriangle, TbReceipt, TbReceiptOff } from 'react-icons/tb'
 import OrderCard from '@/features/order/components/OrderCard'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyOrders } from '@/lib/queries/orders'
 import { useDeliveryLookup } from '@/lib/queries/deliveries'
@@ -83,6 +84,9 @@ export default function OrdersPage() {
     const orders = useMemo(
         () => data?.pages.flatMap((page) => page.content) ?? [],
         [data],
+    )
+    useAppFooterVariant(
+        !isPending && orders.length === 0 ? 'compact' : 'default',
     )
 
     // 배송 상태 교차 조회(계약 §4.6). 실패해도 주문은 그대로 뜬다(배지만 빠짐, best-effort).

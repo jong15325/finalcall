@@ -1,10 +1,13 @@
 import { Link } from 'react-router'
 import { paths } from '@/app/paths'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /** 404 — 없는 경로. 준비 중 화면과 구분되는 진짜 404. */
 export default function NotFoundPage() {
+    useAppFooterVariant('compact')
+
     return (
-        <section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <section className="flex flex-col items-center justify-center py-10 text-center sm:py-14">
             <p className="text-6xl font-black text-navy">404</p>
             <h1 className="mt-4 text-xl font-bold text-gray-900">
                 페이지를 찾을 수 없습니다

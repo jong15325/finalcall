@@ -6,6 +6,12 @@ import BidDialog from '@/features/auction/components/BidDialog'
 import PurchaseDialog from '@/features/auction/components/PurchaseDialog'
 import { useCompareStore } from '@/store/compareStore'
 import AppShell from './AppShell'
+import { useAppFooterVariant } from './AppFooterContext'
+
+function CompactPage() {
+    useAppFooterVariant('compact')
+    return <main>짧은 상태</main>
+}
 
 vi.mock('@/lib/queries/balance', () => ({
     useMyBalance: () => ({ data: undefined }),
@@ -52,6 +58,11 @@ function renderShell(route: string) {
                         }
                     />
                     <Route path="/market" element={<main>아이템 목록</main>} />
+                    <Route path="/short" element={<CompactPage />} />
+                    <Route
+                        path="/long"
+                        element={<main className="h-[1200px]">긴 콘텐츠</main>}
+                    />
                     <Route
                         path="/layer-test"
                         element={
@@ -94,7 +105,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         const scene = view.container.querySelector('.world-map-background')
 
         expect(shell).toHaveClass('isolate')
-        expect(shell).toHaveClass('min-h-screen')
+        expect(shell).toHaveClass('min-h-screen', 'min-h-[100dvh]')
         expect(shell).toHaveAttribute('data-detail-theme', 'fire')
         expect(shell).toHaveStyle({
             '--detail-accent': '#ff5500',
@@ -147,24 +158,15 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.container.querySelector('#view')).toHaveClass(
             'px-3',
-            'py-2',
-            'pb-20',
+            'py-4',
             'sm:px-5',
             'sm:py-5',
-            'sm:pb-20',
             'xl:px-8',
             'xl:py-7',
-            'xl:pb-7',
         )
-        const classes = view.container.querySelector('#view')?.className ?? ''
-        const resolvedBottomPadding = (width: number) => {
-            if (width >= 1280 && classes.includes('xl:pb-7')) return 28
-            if (width >= 640 && classes.includes('sm:pb-20')) return 80
-            return classes.includes('pb-20') ? 80 : 0
-        }
-        expect([320, 390, 1280, 1440].map(resolvedBottomPadding)).toEqual([
-            80, 80, 28, 28,
-        ])
+        expect(
+            view.container.querySelector('#view')?.parentElement,
+        ).toHaveClass('pb-[calc(4rem+env(safe-area-inset-bottom))]', 'xl:pb-0')
 
         const contentPlane = view.getByTestId('app-content-plane')
         expect(contentPlane).toHaveClass('w-full', 'min-w-0', 'px-3')
@@ -213,7 +215,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         const footerInner = footer?.firstElementChild
 
         expect(footer).toBeVisible()
-        expect(footerInner).toHaveClass('max-w-[1440px]', 'pb-24', 'xl:pb-12')
+        expect(footerInner).toHaveClass('max-w-[1440px]', 'py-10', 'sm:py-12')
         expect(
             view.getByRole('navigation', { name: '하단 서비스 메뉴' }),
         ).toBeVisible()
@@ -231,6 +233,34 @@ describe('AppShell route-scoped 상세 배경', () => {
             view.getByText('© 2026 장터. All rights reserved.'),
         ).toBeVisible()
         expect(view.queryByText(/© 2026 FinalCall/)).toBeNull()
+    })
+
+    it('짧은 상태는 링크를 유지한 compact footer를 쓰고 긴 route는 기본 footer를 쓴다', () => {
+        const shortView = renderShell('/short')
+        const shortFooter = shortView.container.querySelector('footer')
+
+        expect(shortFooter).toHaveAttribute('data-variant', 'compact')
+        expect(shortFooter?.firstElementChild).toHaveClass('py-5', 'sm:py-6')
+        expect(
+            shortView.getByRole('navigation', { name: '하단 서비스 메뉴' }),
+        ).toBeVisible()
+        expect(
+            shortView.getByRole('navigation', { name: '정책 안내' }),
+        ).toBeVisible()
+        expect(shortView.getByTestId('app-content-plane')).not.toHaveClass(
+            'min-h-full',
+        )
+        shortView.unmount()
+
+        const longView = renderShell('/long')
+        expect(longView.container.querySelector('footer')).toHaveAttribute(
+            'data-variant',
+            'default',
+        )
+        expect(longView.container.querySelector('#view')).not.toHaveClass(
+            'overflow-auto',
+            'overflow-y-auto',
+        )
     })
 
     it('경매 목록 exact route는 ambient-only water scene 하나만 사용한다', () => {

@@ -9,6 +9,10 @@ import useDesktopLayout from './useDesktopLayout'
 import WorldMapBackground from './WorldMapBackground'
 import AppFooter from './AppFooter'
 import {
+    AppFooterVariantProvider,
+    type AppFooterVariant,
+} from './AppFooterContext'
+import {
     RouteVisualThemeProvider,
     routeThemeStyle,
     useRouteVisualTheme,
@@ -42,6 +46,8 @@ function ThemedAppShell() {
     const { theme } = useRouteVisualTheme()
     // 기본 미고정(localStorage 없으면 false = 레일 + hover). 명세: 버튼 OFF 일 때 hover 가 기본 동작.
     const [mobileOpen, setMobileOpen] = useState(false)
+    const [footerVariant, setFooterVariant] =
+        useState<AppFooterVariant>('default')
     const desktop = useDesktopLayout()
     const { pathname } = useLocation()
     const menuButtonRef = useRef<HTMLButtonElement>(null)
@@ -79,7 +85,7 @@ function ThemedAppShell() {
 
     return (
         <div
-            className="relative isolate flex min-h-screen bg-transparent"
+            className="relative isolate flex min-h-screen min-h-[100dvh] bg-transparent"
             data-detail-theme={theme ?? undefined}
             style={theme ? routeThemeStyle(theme) : undefined}
         >
@@ -88,7 +94,7 @@ function ThemedAppShell() {
                 <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
 
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0">
                 <TopNavbar
                     menuButtonRef={menuButtonRef}
                     onOpenMobile={() => setMobileOpen(true)}
@@ -97,17 +103,19 @@ function ThemedAppShell() {
 
                 <main
                     id="view"
-                    className="min-w-0 flex-1 px-3 py-2 pb-20 sm:px-5 sm:py-5 sm:pb-20 xl:px-8 xl:py-7 xl:pb-7"
+                    className="min-w-0 flex-1 px-3 py-4 sm:px-5 sm:py-5 xl:px-8 xl:py-7"
                 >
                     <div
                         data-testid="app-content-plane"
-                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] bg-surface px-3 py-4 sm:rounded-xl sm:border sm:border-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl"
+                        className="mx-auto w-full min-w-0 max-w-[1440px] bg-surface px-3 py-4 sm:rounded-xl sm:border sm:border-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl"
                     >
-                        <Outlet />
+                        <AppFooterVariantProvider value={setFooterVariant}>
+                            <Outlet />
+                        </AppFooterVariantProvider>
                     </div>
                 </main>
 
-                <AppFooter />
+                <AppFooter variant={footerVariant} />
             </div>
 
             <CompareBar />

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { paths } from '@/app/paths'
 import BrandLogo from '@/components/brand/BrandLogo'
+import type { AppFooterVariant } from './AppFooterContext'
 
 const serviceLinks = [
     { label: '경매', to: paths.auctions },
@@ -9,18 +10,31 @@ const serviceLinks = [
 ] as const
 
 /** AppShell 전역 서비스 정보. AuthLayout에는 포함하지 않는다. */
-function AppFooter() {
+function AppFooter({ variant = 'default' }: { variant?: AppFooterVariant }) {
+    const compact = variant === 'compact'
+
     return (
-        <footer className="detail-chrome relative z-10 border-t border-line bg-navy-900 text-gray-300">
-            <div className="mx-auto w-full max-w-[1440px] px-5 pb-24 pt-10 sm:px-8 sm:pt-12 xl:px-10 xl:pb-12">
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
+        <footer
+            data-variant={variant}
+            className="detail-chrome relative z-10 border-t border-line bg-navy-900 text-gray-300"
+        >
+            <div
+                className={`mx-auto w-full max-w-[1440px] px-5 sm:px-8 xl:px-10 ${compact ? 'py-5 sm:py-6' : 'py-10 sm:py-12'}`}
+            >
+                <div
+                    className={`flex flex-col lg:flex-row lg:items-start lg:justify-between ${compact ? 'gap-4 lg:gap-10' : 'gap-8 lg:gap-16'}`}
+                >
                     <div className="max-w-xl">
                         <BrandLogo className="brightness-0 invert" />
-                        <p className="mt-5 text-sm leading-6 text-gray-300">
+                        <p
+                            className={`${compact ? 'mt-3' : 'mt-5'} text-sm leading-6 text-gray-300`}
+                        >
                             마감 순간에도 정확한 가격과 거래 흐름을 지키는 게임
                             아이템 거래 플랫폼입니다.
                         </p>
-                        <p className="mt-4 text-sm leading-6">
+                        <p
+                            className={`${compact ? 'mt-2' : 'mt-4'} text-sm leading-6`}
+                        >
                             <span className="font-semibold text-white">
                                 서비스 문의
                             </span>{' '}
@@ -46,9 +60,13 @@ function AppFooter() {
                     </nav>
                 </div>
 
-                <div className="mt-10 border-t border-navy-700 pt-7 text-xs leading-5 text-gray-400">
+                <div
+                    className={`${compact ? 'mt-4 pt-4' : 'mt-10 pt-7'} border-t border-navy-700 text-xs leading-5 text-gray-400`}
+                >
                     <p>© 2026 장터. All rights reserved.</p>
-                    <div className="mt-4 max-w-[75ch] space-y-1.5">
+                    <div
+                        className={`${compact ? 'mt-2' : 'mt-4'} max-w-[75ch] space-y-1.5`}
+                    >
                         <p>
                             장터는 게임 아이템 거래를 위한 중개 플랫폼이며, 거래
                             당사자가 등록한 정보의 정확성을 보증하지 않습니다.
@@ -65,7 +83,10 @@ function AppFooter() {
                         </p>
                     </div>
 
-                    <nav className="mt-6" aria-label="정책 안내">
+                    <nav
+                        className={compact ? 'mt-3' : 'mt-6'}
+                        aria-label="정책 안내"
+                    >
                         <ul className="flex flex-wrap gap-x-5 gap-y-2">
                             <li>
                                 <span>이용약관 준비 중</span>

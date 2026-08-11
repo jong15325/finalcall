@@ -1,5 +1,6 @@
 import { TbCreditCard } from 'react-icons/tb'
 import ComingSoonScaffold from '@/components/common/ComingSoonScaffold'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 코드 충전 `/wallet/charge` — [준비 중] 결제(`/charges`·Toss) 미구현(rebuild-contract-map §5).
@@ -8,6 +9,8 @@ import ComingSoonScaffold from '@/components/common/ComingSoonScaffold'
  *   `/charges`·Toss 승인을 호출하지 않고 결제창을 띄우지 않는다(정직성·FC-048).
  */
 export default function WalletChargePage() {
+    useAppFooterVariant('compact')
+
     return (
         <ComingSoonScaffold
             icon={TbCreditCard}

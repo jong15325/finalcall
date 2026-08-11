@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { TbAlertTriangle, TbGavel, TbSearchOff, TbWallet } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 import ItemCardGrid, {
     ItemCardGridSkeleton,
 } from '@/features/item/components/ItemCardGrid'
@@ -79,6 +80,9 @@ export default function AuctionListPage() {
         isError,
         itemCount: auctions.length,
     })
+    useAppFooterVariant(
+        status === 'error' || status === 'empty' ? 'compact' : 'default',
+    )
 
     const sentinelRef = useInfiniteScroll({
         hasNext: Boolean(hasNextPage),

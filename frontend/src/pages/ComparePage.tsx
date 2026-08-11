@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { TbAlertTriangle, TbColumns3, TbX } from 'react-icons/tb'
 import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 import Countdown from '@/features/auction/components/Countdown'
 import {
     auctionPhaseLabelOf,
@@ -169,6 +170,8 @@ export default function ComparePage() {
             tradeLabel: '상품 보기',
         }
     })
+
+    useAppFooterVariant(columns.length === 0 ? 'compact' : 'default')
 
     if (columns.length === 0) return <CompareEmpty />
 

@@ -8,6 +8,7 @@ import {
 } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 import ItemCardGrid, {
     ItemCardGridSkeleton,
 } from '@/features/item/components/ItemCardGrid'
@@ -105,6 +106,9 @@ export default function MarketPage() {
           : shops.length === 0
             ? 'empty'
             : 'ready'
+    useAppFooterVariant(
+        status === 'error' || status === 'empty' ? 'compact' : 'default',
+    )
 
     const sentinelRef = useInfiniteScroll({
         hasNext: Boolean(hasNextPage),
