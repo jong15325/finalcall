@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
 import CompareBar from '@/features/item/components/CompareBar'
 import Sidebar from './Sidebar'
 import TopNavbar from './TopNavbar'
 import MobileBottomNav from './MobileBottomNav'
+import HorizontalNav from './HorizontalNav'
+import useDesktopLayout from './useDesktopLayout'
 import {
     RouteVisualThemeProvider,
     routeThemeStyle,
@@ -26,8 +28,6 @@ import {
  * ★ 모바일 드로어는 햄버거(상단바)로 열고 백드롭·Escape 로 닫는다.
  */
 
-const PIN_KEY = 'jangteo.sidebar.pinned'
-
 function AppShell() {
     return (
         <RouteVisualThemeProvider>
@@ -39,14 +39,15 @@ function AppShell() {
 function ThemedAppShell() {
     const { theme } = useRouteVisualTheme()
     // 기본 미고정(localStorage 없으면 false = 레일 + hover). 명세: 버튼 OFF 일 때 hover 가 기본 동작.
-    const [pinned, setPinned] = useState(
-        () => localStorage.getItem(PIN_KEY) === '1',
-    )
     const [mobileOpen, setMobileOpen] = useState(false)
+    const desktop = useDesktopLayout()
+    const { pathname } = useLocation()
 
     useEffect(() => {
-        localStorage.setItem(PIN_KEY, pinned ? '1' : '0')
-    }, [pinned])
+        if (desktop) setMobileOpen(false)
+    }, [desktop])
+
+    useEffect(() => setMobileOpen(false), [pathname])
 
     // 모바일 드로어 열림 중 Escape 로 닫는다(접근성).
     useEffect(() => {
@@ -64,18 +65,22 @@ function ThemedAppShell() {
             data-detail-theme={theme ?? undefined}
             style={theme ? routeThemeStyle(theme) : undefined}
         >
-            <Sidebar
-                pinned={pinned}
-                mobileOpen={mobileOpen}
-                onTogglePin={() => setPinned((v) => !v)}
-                onCloseMobile={() => setMobileOpen(false)}
-            />
+            {!desktop && (
+                <Sidebar
+                    mobileOpen={mobileOpen}
+                    onCloseMobile={() => setMobileOpen(false)}
+                />
+            )}
 
             <div className="flex min-w-0 flex-1 flex-col">
                 <TopNavbar onOpenMobile={() => setMobileOpen(true)} />
+                {desktop && <HorizontalNav />}
 
                 <main id="view" className="min-w-0 flex-1 pb-16 xl:pb-0">
-                    <div className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-6 sm:px-6">
+                    <div
+                        data-testid="app-content-plane"
+                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] bg-surface px-4 py-6 sm:px-6"
+                    >
                         <Outlet />
                     </div>
                 </main>

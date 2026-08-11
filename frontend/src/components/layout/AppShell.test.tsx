@@ -60,7 +60,10 @@ describe('AppShell route-scoped 상세 배경', () => {
             'z-0',
         )
         expect(scene).not.toHaveClass('w-screen')
-        expect(view.getByRole('complementary')).toHaveClass('z-50')
+        expect(view.container.querySelector('aside')).toHaveClass('xl:hidden')
+        expect(
+            view.queryByRole('navigation', { name: '주요 메뉴' }),
+        ).toBeNull()
         expect(view.container.querySelector('header')).toHaveClass(
             'sticky',
             'z-30',
@@ -80,6 +83,16 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.container.querySelector('#view')).not.toHaveClass(
             'overflow-auto',
             'overflow-hidden',
+        )
+        expect(view.getByTestId('app-content-plane')).toHaveClass(
+            'max-w-[1440px]',
+            'bg-surface',
+        )
+        expect(view.getByTestId('app-content-plane')).not.toHaveClass(
+            'overflow-hidden',
+            'transform',
+            'filter',
+            'z-0',
         )
 
         fireEvent.click(view.getByRole('link', { name: '목록으로' }))
@@ -114,7 +127,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         ).toBeNull()
         expect(imageConstructor).not.toHaveBeenCalled()
         expect(requestFrame).not.toHaveBeenCalled()
-        expect(addMediaListener).not.toHaveBeenCalled()
+        expect(addMediaListener).toHaveBeenCalledTimes(1)
         vi.unstubAllGlobals()
     })
 
@@ -128,5 +141,29 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.container.firstElementChild).toHaveStyle({
             '--detail-accent': '#19b2ff',
         })
+    })
+
+    it('xl PC는 Sidebar DOM 없이 수평 메뉴와 content plane을 렌더한다', () => {
+        vi.stubGlobal('matchMedia', (query: string) => ({
+            matches: query === '(min-width: 1280px)',
+            media: query,
+            onchange: null,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        }))
+        const view = renderShell('/auctions')
+        expect(view.container.querySelector('aside')).toBeNull()
+        expect(view.getByRole('navigation', { name: '주요 메뉴' })).toHaveClass(
+            'h-12',
+            'sticky',
+        )
+        expect(view.getByTestId('app-content-plane')).toHaveClass(
+            'max-w-[1440px]',
+            'bg-surface',
+        )
+        vi.unstubAllGlobals()
     })
 })
