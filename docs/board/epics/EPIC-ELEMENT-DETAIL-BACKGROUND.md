@@ -3,7 +3,7 @@ id: EPIC-ELEMENT-DETAIL-BACKGROUND
 type: epic
 jira_key: null
 title: 속성별 상세 몰입 배경 적용
-state: review
+state: doing
 children: [FC-233, FC-234, FC-235, FC-236, FC-237, FC-238]
 gate: null
 ---
