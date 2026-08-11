@@ -141,6 +141,7 @@
           radial-gradient(ellipse at 64% 72%, transparent 0 8%, rgb(205 251 255 / 12%) 8.5%, transparent 10% 18%, rgb(171 239 255 / 8%) 18.5%, transparent 20%),
           repeating-linear-gradient(112deg, transparent 0 54px, rgb(228 255 255 / 7%) 58px, transparent 64px 112px);
         mix-blend-mode: screen;
+        clip-path: polygon(35% 0, 100% 0, 100% 100%, 34% 100%, 40% 62%, 38% 32%);
         animation: caustic-drift 9s ease-in-out infinite alternate;
       }
 
@@ -1262,6 +1263,18 @@
         const element = document.body.dataset.element;
         const effect = document.body.dataset.effect;
 
+        if (element === "water") {
+          context.save();
+          context.beginPath();
+          context.moveTo(width * 0.35, 0);
+          context.lineTo(width, 0);
+          context.lineTo(width, height);
+          context.lineTo(width * 0.34, height);
+          context.bezierCurveTo(width * 0.4, height * 0.78, width * 0.42, height * 0.5, width * 0.38, height * 0.32);
+          context.closePath();
+          context.clip();
+        }
+
         particles.forEach((particle) => {
           if (!reducedMotion.matches) {
             if (element === "wind") {
@@ -1301,6 +1314,8 @@
           }
           drawParticle(particle, time, element, effect);
         });
+
+        if (element === "water") context.restore();
 
         if (!reducedMotion.matches) requestAnimationFrame(drawEffects);
       }
