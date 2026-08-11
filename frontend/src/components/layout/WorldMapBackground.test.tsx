@@ -51,6 +51,7 @@ describe('WorldMapBackground', () => {
         expect(view.container.firstElementChild).toHaveClass(
             'absolute',
             'inset-0',
+            '-z-10',
             'sm:fixed',
         )
 

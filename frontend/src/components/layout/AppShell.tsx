@@ -87,7 +87,7 @@ function ThemedAppShell() {
                 <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
 
-            <div className="relative z-10 flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col">
                 <TopNavbar
                     menuButtonRef={menuButtonRef}
                     onOpenMobile={() => setMobileOpen(true)}

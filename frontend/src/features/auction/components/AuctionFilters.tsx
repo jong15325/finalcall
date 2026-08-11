@@ -38,7 +38,7 @@ interface AuctionFiltersProps {
 }
 
 const SELECT_CLASS =
-    'w-full min-w-[125px] rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-gray-900 focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30'
+    'w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-gray-900 focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30'
 
 function AuctionFilters({
     filters,
@@ -94,8 +94,8 @@ function AuctionFilters({
                     </div>
 
                     {/* 속성·상태·정렬 — 목업 filter-secondary */}
-                    <div className="grid grid-cols-1 gap-2 xs:grid-cols-3">
-                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                    <div className="grid min-w-0 grid-cols-1 gap-2 xs:grid-cols-3">
+                        <label className="grid min-w-0 gap-1 text-[11px] font-bold text-gray-500">
                             <span>속성</span>
                             <select
                                 className={SELECT_CLASS}
@@ -120,7 +120,7 @@ function AuctionFilters({
                             </select>
                         </label>
 
-                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                        <label className="grid min-w-0 gap-1 text-[11px] font-bold text-gray-500">
                             <span>상태</span>
                             <select
                                 className={SELECT_CLASS}
@@ -142,7 +142,7 @@ function AuctionFilters({
                             </select>
                         </label>
 
-                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                        <label className="grid min-w-0 gap-1 text-[11px] font-bold text-gray-500">
                             <span>정렬</span>
                             <select
                                 className={SELECT_CLASS}

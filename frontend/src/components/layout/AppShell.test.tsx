@@ -2,6 +2,9 @@ import { act, fireEvent, render } from '@testing-library/react'
 import { Link, MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
+import BidDialog from '@/features/auction/components/BidDialog'
+import PurchaseDialog from '@/features/auction/components/PurchaseDialog'
+import { useCompareStore } from '@/store/compareStore'
 import AppShell from './AppShell'
 
 vi.mock('@/lib/queries/balance', () => ({
@@ -13,6 +16,7 @@ vi.mock('@/lib/queries/memos', () => ({
 
 beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    useCompareStore.setState({ items: [] })
 })
 
 function renderShell(route: string) {
@@ -48,6 +52,35 @@ function renderShell(route: string) {
                         }
                     />
                     <Route path="/market" element={<main>아이템 목록</main>} />
+                    <Route
+                        path="/layer-test"
+                        element={
+                            <>
+                                <BidDialog
+                                    open
+                                    auctionName="test"
+                                    currentHighestAmount={100}
+                                    minNextBidAmount={110}
+                                    buyNowPrice={200}
+                                    gameMoneyAvailable={300}
+                                    isSubmitting={false}
+                                    submitError={null}
+                                    onClose={vi.fn()}
+                                    onSubmit={vi.fn()}
+                                />
+                                <PurchaseDialog
+                                    open
+                                    auctionName="test"
+                                    buyNowPrice={200}
+                                    gameMoneyAvailable={300}
+                                    isSubmitting={false}
+                                    submitError={null}
+                                    onClose={vi.fn()}
+                                    onConfirm={vi.fn()}
+                                />
+                            </>
+                        }
+                    />
                 </Route>
             </Routes>
         </MemoryRouter>,
@@ -71,7 +104,7 @@ describe('AppShell route-scoped 상세 배경', () => {
             'world-map-background',
             'absolute',
             'inset-0',
-            'z-0',
+            '-z-10',
             'sm:fixed',
         )
         expect(scene).not.toHaveClass('w-screen')
@@ -140,7 +173,7 @@ describe('AppShell route-scoped 상세 배경', () => {
             'rounded-xl',
             'shadow-sm',
         )
-        expect(scene?.nextElementSibling).toHaveClass('relative', 'z-10')
+        expect(scene?.nextElementSibling).not.toHaveClass('relative', 'z-10')
 
         const mobileContentWidth = (viewportWidth: number) =>
             viewportWidth - 24 - 24
@@ -312,5 +345,23 @@ describe('AppShell route-scoped 상세 배경', () => {
             view.getByRole('navigation', { name: '주요 메뉴' }),
         ).toBeVisible()
         vi.unstubAllGlobals()
+    })
+
+    it('fixed dialogs remain above the mobile nav and compare bar', () => {
+        useCompareStore.setState({
+            items: [{ source: 'AUCTION', listingId: 'A-1' }],
+        })
+        const view = renderShell('/layer-test')
+        const dialogs = view.getAllByRole('dialog')
+        const contentWrapper =
+            view.container.querySelector('#view')?.parentElement
+
+        expect(dialogs).toHaveLength(2)
+        dialogs.forEach((dialog) => {
+            expect(dialog.parentElement).toHaveClass('fixed', 'z-50')
+        })
+        expect(contentWrapper).not.toHaveClass('relative', 'z-10')
+        expect(view.container.querySelector('nav.fixed')).toHaveClass('z-30')
+        expect(view.container.querySelector('aside.fixed')).toHaveClass('z-40')
     })
 })

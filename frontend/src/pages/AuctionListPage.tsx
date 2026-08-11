@@ -91,8 +91,8 @@ export default function AuctionListPage() {
             data-testid="auction-list-region"
             className="auction-list-region flex min-w-0 flex-col gap-5"
         >
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+            <header className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
                     <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                         <TbGavel aria-hidden className="size-6 text-navy" />
                         실시간 경매
@@ -103,7 +103,7 @@ export default function AuctionListPage() {
                 </div>
                 <Link
                     to={paths.sell}
-                    className="rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
+                    className="shrink-0 rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
                 >
                     경매 등록
                 </Link>
