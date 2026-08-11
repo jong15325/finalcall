@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FinalCall 세계지도 공통 배경 움직임 비교</title>
+  <style>
+    :root{color-scheme:dark;--speed:1;--energy:.55;font-family:system-ui,sans-serif}*{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#081526;color:#fff;overflow:hidden}.map{position:fixed;inset:0;background:url('./assets/common-background-variants/world-map-v1.png') center/cover no-repeat;isolation:isolate}
+    .map:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,18,33,.06),rgba(4,18,33,.32));pointer-events:none}
+    .mist{position:absolute;left:23%;top:30%;width:56%;height:50%;background:radial-gradient(ellipse,rgba(255,255,255,.72),transparent 67%);filter:blur(20px);animation:drift calc(18s/var(--speed)) ease-in-out infinite alternate}
+    .spot{position:absolute;pointer-events:none;transform:translate(-50%,-50%)}.mountain{left:12%;top:20%;width:26%;height:32%;background:radial-gradient(circle,rgba(210,245,255,var(--energy)),transparent 58%);animation:pulse calc(7s/var(--speed)) ease-in-out infinite}
+    .forest{left:17%;top:65%;width:30%;height:42%;background:radial-gradient(circle,rgba(166,255,92,var(--energy)),transparent 62%);animation:orbit calc(13s/var(--speed)) linear infinite}
+    .village{left:75%;top:22%;width:30%;height:30%;background:radial-gradient(circle,rgba(255,191,73,var(--energy)),transparent 60%);animation:pulse calc(5s/var(--speed)) ease-in-out infinite reverse}
+    .sanctuary{left:84%;top:73%;width:28%;height:38%;border:3px solid rgba(77,255,232,var(--energy));border-radius:50%;box-shadow:0 0 28px rgba(42,237,255,var(--energy)),inset 0 0 36px rgba(42,237,255,.34);animation:rune calc(10s/var(--speed)) linear infinite}
+    .spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#eaffb8;box-shadow:0 0 12px 4px #8cff66;animation:rise calc(var(--d)/var(--speed)) ease-in infinite;left:calc(5% * var(--x));top:calc(42% + 4% * var(--y))}
+    .ui{position:relative;z-index:3;margin:18px auto;width:min(1120px,calc(100% - 28px));display:grid;gap:12px}.toolbar,.card{border:1px solid rgba(255,255,255,.25);border-radius:16px;background:rgba(7,23,42,.88);box-shadow:0 18px 50px rgba(0,0,0,.28);backdrop-filter:blur(12px)}.toolbar{padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.toolbar strong{margin-right:auto}.toolbar button{border:1px solid #8ea1b5;border-radius:999px;background:#162b45;color:#fff;padding:9px 14px;cursor:pointer}.toolbar button[aria-pressed=true]{background:#ff8a24;border-color:#ffd69a;color:#101820}.card{margin-top:20vh;padding:24px;max-width:620px}.card p{color:#d9e3ed}.labels span{position:fixed;z-index:2;padding:5px 8px;border-radius:8px;background:rgba(3,16,29,.76);font-size:12px}.labels span:nth-child(1){left:8%;top:8%}.labels span:nth-child(2){left:8%;top:80%}.labels span:nth-child(3){right:16%;top:9%}.labels span:nth-child(4){right:7%;bottom:9%}
+    body[data-mode=A]{--speed:.65;--energy:.25}body[data-mode=B]{--speed:1;--energy:.48}body[data-mode=C]{--speed:1.65;--energy:.72}body[data-mode=A] .spark:nth-child(n+7){display:none}body[data-mode=C] .map{animation:quake 8s ease-in-out infinite}
+    @keyframes drift{to{transform:translate(8%,-4%) scale(1.12)}}@keyframes pulse{50%{opacity:.38;transform:translate(-50%,-50%) scale(1.16)}}@keyframes orbit{50%{filter:hue-rotate(22deg);transform:translate(-50%,-50%) rotate(5deg) scale(1.08)}}@keyframes rune{to{transform:translate(-50%,-50%) rotate(360deg)}}@keyframes rise{0%{opacity:0;transform:translateY(20px)}35%{opacity:1}100%{opacity:0;transform:translateY(-160px)}}@keyframes quake{48%,52%{filter:brightness(1.06)}50%{transform:scale(1.004)}}
+    @media(max-width:600px){.map{background-position:62% center}.card{margin-top:28vh;padding:18px}.labels{display:none}}
+    @media(prefers-reduced-motion:reduce),(update:slow){*{animation:none!important}.spark{display:none}.mist{opacity:.55}}
+    @media(forced-colors:active){.map>*{display:none}.map{background:none}.toolbar,.card{background:Canvas;color:CanvasText}}
+  </style>
+</head>
+<body data-mode="B">
+  <div class="map" aria-hidden="true"><div class="mist"></div><div class="spot mountain"></div><div class="spot forest"></div><div class="spot village"></div><div class="spot sanctuary"></div><i class="spark" style="--x:2;--y:3;--d:6s"></i><i class="spark" style="--x:3;--y:5;--d:8s"></i><i class="spark" style="--x:4;--y:1;--d:7s"></i><i class="spark" style="--x:5;--y:6;--d:9s"></i><i class="spark" style="--x:14;--y:2;--d:6s"></i><i class="spark" style="--x:16;--y:5;--d:8s"></i><i class="spark" style="--x:17;--y:1;--d:5s"></i><i class="spark" style="--x:18;--y:6;--d:7s"></i></div>
+  <div class="labels" aria-hidden="true"><span>산악·폭포</span><span>숲 미궁</span><span>마을</span><span>성소</span></div>
+  <main class="ui"><div class="toolbar"><strong>세계지도 공통 배경 효과 비교</strong><button data-mode="A" aria-pressed="false">A 잔잔한 생태</button><button data-mode="B" aria-pressed="true">B 모험의 맥동 · 추천</button><button data-mode="C" aria-pressed="false">C 원소 대격변</button></div><section class="card"><small>APP SHELL CONTENT PLANE</small><h1>모험가의 거래 광장</h1><p>실제 제품에서는 이 불투명 콘텐츠 평면이 정보와 조작의 대비를 책임집니다. 배경 효과는 장식이며 거래 흐름과 포커스 순서를 바꾸지 않습니다.</p></section></main>
+  <script>const buttons=[...document.querySelectorAll('button[data-mode]')];buttons.forEach(button=>button.addEventListener('click',()=>{document.body.dataset.mode=button.dataset.mode;buttons.forEach(item=>item.setAttribute('aria-pressed',String(item===button)))}))</script>
+</body>
+</html>
