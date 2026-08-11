@@ -1,11 +1,15 @@
 # 세계지도 공통 배경 승인 효과 이식 변경안 v0.1
 
-- 상태: **PROPOSED — 영향 확인·게이트2·디자인 게이트 대기**
+- 상태: **ACCEPTED — `world-map-common-background-contract.md` v1.0으로 반영 2026-08-12**
 - 변경 대상 계약: `docs/spec/world-map-common-background-contract.md` v0.1
 - 시각 정본: `docs/ux/mockups/auction-detail-immersive-background.html`
   (`wind=b`, `fire=c`, `earth=c`, `water=c`)
-- 기반 자산: `docs/ux/mockups/assets/common-background-variants/world-map-v1.png`
-- 구현 금지: 이 제안서는 `frontend/**` 수정 권한을 부여하지 않는다.
+- 승인 자산: `docs/ux/mockups/assets/common-background-variants/world-map-game-sources-a-v2.png`
+- 후속 정본: `docs/spec/world-map-common-background-contract.md` v1.0
+
+> 사용자 최종 결정: 추천 B의 물 권역 파생 방향을 실제 게임 소스 기반 A-v2 자산으로 승인하고, 모든
+> AppShell route의 단일 scene owner 및 승인 효과 `wind=b`, `fire=c`, `earth=c`, `water=c` 이식을 확정했다.
+> AuthLayout 제외는 유지한다. 이 제안서의 미확정 좌표·티켓 서술보다 후속 정본 v1.0이 우선한다.
 
 ## 1. 사용자 피드백과 변경 결론
 
@@ -102,5 +106,5 @@ API 계약, ERD, 백엔드, item element wire 값, 거래 동작은 바뀌지 �
 | **B (추천)** | 기존 구도를 보존한 파생 이미지에 물 권역을 추가하고 승인 효과 4종 이식 | 피드백 충족, 상세/공통 시각 언어 통일 | 자산·crop 재검증 필요 |
 | C | `world-map-water-v1` 등 다중 지역 이미지를 새 공통 배경으로 교체 | 물 지형이 분명 | 기존 승인 구도·중앙 안전영역·다른 권역 연속성 상실 |
 
-추천은 **B + 모든 AppShell route 단일 owner**다. 사용자 확인 전에는 기존 spec, 보드 상태, 프런트 코드를
-수정하지 않는다. 확인 후 architect가 계약을 DECIDED로 갱신하고 디자인 게이트용 목업·자산 티켓을 연다.
+추천 **B + 모든 AppShell route 단일 owner**는 2026-08-12 사용자 승인으로 확정됐다. 계약 반영과 신규
+에픽·티켓 생성 결과는 `world-map-common-background-contract.md` v1.0 및 EPIC-WORLD-MAP-BACKGROUND가 정본이다.

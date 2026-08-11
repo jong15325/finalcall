@@ -6,6 +6,10 @@
 - 범위: 경매 상세 `/auctions/:id`, 아이템 인스턴스 상세 `/items/:id`, 정적 water 경매 목록 `/auctions`
 - 범위 밖: 경매 외 목록·홈·마켓 목록 등 다른 라우트의 배경, 영속 AppShell 전역 배경, API·DB 스키마 변경
 
+> **후속 대체(2026-08-12):** route별 전체화면 이미지·Canvas·RAF 소유권과 `/auctions` static scene은
+> `world-map-common-background-contract.md` v1.0이 대체한다. 상세 응답 element 검증과 content/chrome theme은
+> 유지하되, 효과는 AppShell 단일 세계지도 scene의 대응 권역 accent로 합성한다.
+
 ## 1. 데이터 연결 계약
 
 새 필드를 만들지 않는다. 상세 조회 성공 뒤 아래 기존 정수 코드를

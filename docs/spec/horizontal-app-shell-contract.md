@@ -5,6 +5,11 @@
 - 제외: `AuthLayout`의 로그인·회원가입·OAuth callback, API·백엔드·DB
 - 선행 계약: `element-detail-background-contract.md` v2.1 및 FC-244
 
+> **후속 대체(2026-08-12):** 배경 관련 §1·§5.1·§6은
+> `world-map-common-background-contract.md` v1.0이 우선한다. 모든 AppShell route는 단일 세계지도 scene을
+> 공유하고 `/auctions` water는 별도 scene이 아니라 water 권역 accent다. AuthLayout 제외, 내비게이션과
+> single content plane 계약은 유지한다.
+
 ## 1. 셸 구조
 
 모든 AppShell route는 아래 구조를 공유한다.
