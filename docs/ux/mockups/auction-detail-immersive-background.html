@@ -145,8 +145,11 @@
       }
 
       body[data-element="wind"][data-effect="b"] .scene::before {
-        background: repeating-radial-gradient(ellipse at 54% 58%, transparent 0 8%, rgb(223 255 247 / 11%) 8.5%, transparent 10% 16%);
-        filter: blur(1px);
+        background:
+          conic-gradient(from 18deg at 58% 52%, transparent 0 10%, rgb(224 255 248 / 10%) 13%, transparent 18% 40%, rgb(188 247 232 / 8%) 44%, transparent 50% 74%, rgb(244 255 252 / 8%) 78%, transparent 84%),
+          radial-gradient(ellipse at 58% 52%, transparent 0 22%, rgb(210 255 242 / 8%) 31%, transparent 48%);
+        filter: blur(3px);
+        mask-image: radial-gradient(ellipse at 58% 52%, transparent 0 12%, #000 30%, transparent 72%);
         animation: wind-vortex 9s linear infinite;
       }
 
@@ -188,7 +191,11 @@
       }
 
       body[data-element="water"][data-effect="c"] .scene::before {
-        background: repeating-radial-gradient(ellipse at 62% 67%, transparent 0 6%, rgb(196 249 255 / 10%) 6.5%, transparent 8% 13%);
+        background:
+          conic-gradient(from 24deg at 62% 67%, transparent 0 12%, rgb(210 252 255 / 10%) 16%, transparent 23% 46%, rgb(153 228 247 / 8%) 51%, transparent 58% 80%, rgb(235 255 255 / 9%) 84%, transparent 91%),
+          repeating-linear-gradient(108deg, transparent 0 78px, rgb(230 255 255 / 6%) 82px, transparent 88px 146px);
+        filter: blur(2px);
+        mask-image: radial-gradient(ellipse at 62% 67%, #000 0 48%, transparent 76%);
         animation: water-vortex 11s linear infinite;
       }
 
@@ -864,7 +871,7 @@
       }
     </style>
   </head>
-  <body data-veil="soft" data-element="wind" data-effect="a">
+  <body data-veil="soft" data-element="wind" data-effect="b">
     <div class="scene" aria-hidden="true"></div>
 
     <header class="topbar">
@@ -911,12 +918,12 @@
 
         <div class="effect-lab" aria-label="환경 효과 디자인 비교">
           <div class="effect-copy" aria-live="polite">
-            <strong id="effectName">산들바람</strong>
-            <span id="effectDescription">잎사귀와 완만한 횡방향 기류</span>
+            <strong id="effectName">나선 돌풍</strong>
+            <span id="effectDescription">제단을 감싸는 공기 리본과 미세 부유물</span>
           </div>
           <div class="effect-options">
-            <button type="button" data-effect="a" aria-pressed="true" aria-label="효과 디자인 A">A</button>
-            <button type="button" data-effect="b" aria-pressed="false" aria-label="효과 디자인 B">B</button>
+            <button type="button" data-effect="a" aria-pressed="false" aria-label="효과 디자인 A">A</button>
+            <button type="button" data-effect="b" aria-pressed="true" aria-label="효과 디자인 B">B</button>
             <button type="button" data-effect="c" aria-pressed="false" aria-label="효과 디자인 C">C</button>
           </div>
         </div>
@@ -1017,7 +1024,7 @@
       const effectDesigns = {
         wind: {
           a: ["산들바람", "잎사귀와 완만한 횡방향 기류"],
-          b: ["나선 돌풍", "제단을 감싸 도는 잎과 원형 바람띠"],
+          b: ["나선 돌풍", "제단을 감싸는 공기 리본과 미세 부유물"],
           c: ["상공 기류", "빠른 사선 기류와 작고 가벼운 잎"],
         },
         fire: {
@@ -1033,9 +1040,10 @@
         water: {
           a: ["맑은 기포", "천천히 상승하는 기포와 작은 수면 고리"],
           b: ["수면 윤슬", "교차하는 햇빛 무늬와 잔잔한 반사광"],
-          c: ["잔잔한 소용돌이", "넓은 회전 흐름과 곡선형 물방울 궤적"],
+          c: ["잔잔한 소용돌이", "회전 유선과 윤슬 파편, 얇은 포말"],
         },
       };
+      const selectedEffects = { wind: "b", fire: "c", earth: "c", water: "c" };
 
       function updateEffectCopy() {
         const design = effectDesigns[document.body.dataset.element][document.body.dataset.effect];
@@ -1049,8 +1057,12 @@
           scene.classList.add("is-changing");
           window.setTimeout(() => {
             document.body.dataset.element = button.dataset.element;
+            document.body.dataset.effect = selectedEffects[button.dataset.element];
             elementButtons.forEach((candidate) => {
               candidate.setAttribute("aria-pressed", String(candidate === button));
+            });
+            effectButtons.forEach((candidate) => {
+              candidate.setAttribute("aria-pressed", String(candidate.dataset.effect === document.body.dataset.effect));
             });
             updateEffectCopy();
             requestAnimationFrame(() => scene.classList.remove("is-changing"));
@@ -1061,6 +1073,7 @@
       effectButtons.forEach((button) => {
         button.addEventListener("click", () => {
           document.body.dataset.effect = button.dataset.effect;
+          selectedEffects[document.body.dataset.element] = button.dataset.effect;
           effectButtons.forEach((candidate) => {
             candidate.setAttribute("aria-pressed", String(candidate === button));
           });
@@ -1102,11 +1115,34 @@
         context.globalAlpha = particle.alpha;
 
         if (element === "wind") {
-          const leafScale = effect === "c" ? 0.62 : effect === "b" ? 1.15 : 1;
+          if (effect === "b") {
+            const trailLength = particle.size * (12 + (particle.phase % 4) * 3);
+            const bend = Math.sin(time * 0.001 + particle.phase) * particle.size * 5;
+            const ribbon = context.createLinearGradient(x - trailLength, y, x + trailLength * 0.3, y);
+            ribbon.addColorStop(0, "rgb(199 255 240 / 0)");
+            ribbon.addColorStop(0.45, "rgb(220 255 247 / 0.5)");
+            ribbon.addColorStop(1, "rgb(255 255 255 / 0)");
+            context.strokeStyle = ribbon;
+            context.lineWidth = 0.8 + (particle.phase % 3) * 0.65;
+            context.beginPath();
+            context.moveTo(x - trailLength, y + bend);
+            context.bezierCurveTo(x - trailLength * 0.42, y - bend, x + trailLength * 0.12, y + bend * 0.45, x + trailLength * 0.35, y);
+            context.stroke();
+            if (particle.phase % 4 > 3) {
+              context.fillStyle = "rgb(233 255 249 / 0.58)";
+              context.beginPath();
+              context.ellipse(x, y, particle.size * 0.7, particle.size * 0.24, particle.phase, 0, Math.PI * 2);
+              context.fill();
+            }
+            context.globalAlpha = 1;
+            return;
+          }
+
+          const leafScale = effect === "c" ? 0.62 : 1;
           const angle = time * (effect === "c" ? 0.0024 : 0.0012) + particle.phase;
-          if (effect !== "a" && particle.phase % 3 > 1.8) {
-            context.strokeStyle = effect === "b" ? "rgb(219 255 246 / 0.35)" : "rgb(238 255 252 / 0.42)";
-            context.lineWidth = effect === "c" ? 1 : 1.6;
+          if (effect === "c" && particle.phase % 3 > 1.8) {
+            context.strokeStyle = "rgb(238 255 252 / 0.42)";
+            context.lineWidth = 1;
             context.beginPath();
             context.moveTo(x - particle.size * 9, y + particle.size * 2);
             context.quadraticCurveTo(x, y - particle.size * 3, x + particle.size * 8, y);
@@ -1172,6 +1208,31 @@
             context.fill();
           }
         } else {
+          if (effect === "c") {
+            const centerX = width * 0.62;
+            const centerY = height * 0.67;
+            const radius = Math.hypot(x - centerX, y - centerY);
+            const angle = Math.atan2(y - centerY, x - centerX);
+            const arcSpan = 0.34 + (particle.phase % 4) * 0.09;
+            const shimmer = context.createLinearGradient(x - particle.size * 8, y, x + particle.size * 8, y);
+            shimmer.addColorStop(0, "rgb(164 240 255 / 0)");
+            shimmer.addColorStop(0.5, "rgb(235 255 255 / 0.62)");
+            shimmer.addColorStop(1, "rgb(164 240 255 / 0)");
+            context.strokeStyle = shimmer;
+            context.lineWidth = 0.7 + (particle.phase % 3) * 0.55;
+            context.beginPath();
+            context.arc(centerX, centerY, Math.max(34, radius), angle - arcSpan, angle + arcSpan);
+            context.stroke();
+            if (particle.phase % 5 > 4) {
+              context.fillStyle = "rgb(241 255 255 / 0.62)";
+              context.beginPath();
+              context.ellipse(x, y, particle.size * 1.7, particle.size * 0.34, angle + Math.PI / 2, 0, Math.PI * 2);
+              context.fill();
+            }
+            context.globalAlpha = 1;
+            return;
+          }
+
           if (effect === "b" && particle.phase % 3 < 2) {
             context.globalAlpha = particle.alpha * 0.28;
           }
@@ -1190,13 +1251,6 @@
             context.ellipse(x, y + particle.size * 3, particle.size * 4.5, particle.size * 1.25, 0, 0, Math.PI * 2);
             context.stroke();
           }
-          if (effect === "c") {
-            context.strokeStyle = "rgb(181 244 255 / 0.36)";
-            context.lineWidth = 1;
-            context.beginPath();
-            context.arc(width * 0.62, height * 0.67, Math.max(28, particle.size * 14 + (particle.phase % 5) * 18), particle.phase, particle.phase + 0.65);
-            context.stroke();
-          }
         }
         context.globalAlpha = 1;
       }
@@ -1211,9 +1265,17 @@
         particles.forEach((particle) => {
           if (!reducedMotion.matches) {
             if (element === "wind") {
-              const windSpeed = effect === "c" ? 4.1 : effect === "b" ? 1.6 : 2.4;
-              particle.x += particle.speed * delta * windSpeed;
-              particle.y += (effect === "b" ? Math.sin(time * 0.001 + particle.phase) * 0.008 : -particle.speed * 0.65) * delta;
+              if (effect === "b") {
+                const dx = particle.x - 0.58;
+                const dy = particle.y - 0.52;
+                const force = particle.speed * delta * 0.72;
+                particle.x += -dy * force;
+                particle.y += dx * force;
+              } else {
+                const windSpeed = effect === "c" ? 4.1 : 2.4;
+                particle.x += particle.speed * delta * windSpeed;
+                particle.y -= particle.speed * 0.65 * delta;
+              }
             } else if (element === "fire") {
               particle.y -= particle.speed * delta * (effect === "b" ? 2.8 : effect === "c" ? 0.9 : 1.7);
               particle.x += Math.sin(time * 0.0015 + particle.phase) * delta * 0.006;
@@ -1221,8 +1283,16 @@
               particle.x += (effect === "b" ? particle.speed * 0.35 : particle.drift) * delta;
               particle.y += Math.sin(time * 0.0007 + particle.phase) * delta * (effect === "c" ? 0.009 : 0.004);
             } else {
-              particle.y -= particle.speed * delta * (effect === "b" ? 0.28 : effect === "c" ? 0.48 : 0.8);
-              particle.x += Math.sin(time * (effect === "c" ? 0.0018 : 0.001) + particle.phase) * delta * (effect === "c" ? 0.012 : 0.003);
+              if (effect === "c") {
+                const dx = particle.x - 0.62;
+                const dy = (particle.y - 0.67) * 1.35;
+                const current = particle.speed * delta * 0.42;
+                particle.x += -dy * current;
+                particle.y += dx * current * 0.74;
+              } else {
+                particle.y -= particle.speed * delta * (effect === "b" ? 0.28 : 0.8);
+                particle.x += Math.sin(time * 0.001 + particle.phase) * delta * 0.003;
+              }
             }
             if (particle.y < -0.04) particle.y = 1.04;
             if (particle.y > 1.04) particle.y = -0.04;
