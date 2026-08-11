@@ -207,7 +207,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.getByText('경매 목록')).toBeVisible()
     })
 
-    it('모든 AppShell route에 모바일 안전 여백과 유효한 하단 안내를 제공한다', () => {
+    it('마켓 route의 AppShell에 모바일 안전 여백과 유효한 하단 안내를 제공한다', () => {
         const view = renderShell('/market')
         const footer = view.container.querySelector('footer')
         const footerInner = footer?.firstElementChild
@@ -227,6 +227,8 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.getByText('이용약관 준비 중')).not.toHaveAttribute('href')
         expect(view.getByText('공식 문의 채널 준비 중')).toBeVisible()
+        expect(view.getByText('© 2026 장터. All rights reserved.')).toBeVisible()
+        expect(view.queryByText(/© 2026 FinalCall/)).toBeNull()
     })
 
     it('경매 목록 exact route는 ambient-only water scene 하나만 사용한다', () => {

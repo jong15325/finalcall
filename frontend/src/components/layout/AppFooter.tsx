@@ -47,16 +47,16 @@ function AppFooter() {
                 </div>
 
                 <div className="mt-10 border-t border-navy-700 pt-7 text-xs leading-5 text-gray-400">
-                    <p>© 2026 FinalCall. All rights reserved.</p>
+                    <p>© 2026 장터. All rights reserved.</p>
                     <div className="mt-4 max-w-[75ch] space-y-1.5">
                         <p>
-                            FinalCall은 게임 아이템 거래를 위한 중개 플랫폼이며,
+                            장터는 게임 아이템 거래를 위한 중개 플랫폼이며,
                             거래 당사자가 등록한 정보의 정확성을 보증하지
                             않습니다.
                         </p>
                         <p>
                             게임명·상표·아이템 등 각 지식재산권은 해당
-                            권리자에게 있으며, FinalCall은 관련 게임사의 공식
+                            권리자에게 있으며, 장터는 관련 게임사의 공식
                             서비스가 아닙니다.
                         </p>
                         <p>
