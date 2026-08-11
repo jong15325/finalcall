@@ -1034,7 +1034,7 @@
         water: {
           a: ["맑은 기포", "천천히 상승하는 기포와 작은 수면 고리"],
           b: ["수면 윤슬", "교차하는 햇빛 무늬와 잔잔한 반사광"],
-          c: ["낙수 물방울", "굵은 낙수와 왕관형 물 튐, 두 겹의 수면 고리"],
+          c: ["자연 낙수", "둥근 물방울과 비대칭 미세 비산, 낮은 잔물결"],
         },
       };
       const selectedEffects = { wind: "b", fire: "c", earth: "c", water: "c" };
@@ -1254,64 +1254,70 @@
         const impactY = (0.58 + (particle.phase % 4) * 0.07) * height;
         const y = particle.y * height;
         const distanceToImpact = impactY - y;
-        const dropSize = particle.size * 1.45;
-        context.globalAlpha = Math.min(0.9, particle.alpha * 1.28);
+        const dropSize = 2 + (particle.phase % 3) * 0.85;
+        context.globalAlpha = 0.36 + (particle.phase % 4) * 0.07;
 
         if (distanceToImpact > 0) {
-          const streak = Math.min(30, 11 + particle.speed * 430);
-          const gradient = context.createLinearGradient(x, y - streak, x, y + dropSize * 2.5);
-          gradient.addColorStop(0, "rgb(214 249 255 / 0)");
-          gradient.addColorStop(0.52, "rgb(178 237 255 / 0.72)");
-          gradient.addColorStop(1, "rgb(255 255 255 / 0.9)");
-          context.strokeStyle = gradient;
-          context.lineWidth = Math.max(1.5, dropSize * 0.62);
+          const blurLength = 3 + particle.speed * 190;
+          context.strokeStyle = "rgb(181 231 244 / 0.22)";
+          context.lineWidth = dropSize * 0.58;
           context.beginPath();
-          context.moveTo(x, y - streak);
-          context.quadraticCurveTo(x + particle.drift * 240, y, x, y + dropSize * 2.5);
+          context.moveTo(x - particle.drift * 60, y - blurLength);
+          context.lineTo(x, y - dropSize * 0.4);
           context.stroke();
 
-          const headGlow = context.createRadialGradient(x, y + dropSize * 1.8, 0, x, y + dropSize * 1.8, dropSize * 3.2);
-          headGlow.addColorStop(0, "rgb(255 255 255 / 0.9)");
-          headGlow.addColorStop(0.35, "rgb(125 224 255 / 0.5)");
-          headGlow.addColorStop(1, "rgb(67 190 235 / 0)");
-          context.fillStyle = headGlow;
+          const body = context.createRadialGradient(x - dropSize * 0.35, y - dropSize * 0.45, 0, x, y, dropSize * 1.45);
+          body.addColorStop(0, "rgb(255 255 255 / 0.86)");
+          body.addColorStop(0.22, "rgb(199 241 250 / 0.68)");
+          body.addColorStop(0.7, "rgb(62 157 191 / 0.5)");
+          body.addColorStop(1, "rgb(14 96 137 / 0.08)");
+          context.fillStyle = body;
           context.beginPath();
-          context.ellipse(x, y + dropSize * 1.8, dropSize * 1.2, dropSize * 2.1, 0, 0, Math.PI * 2);
+          context.ellipse(x, y, dropSize, dropSize * 1.16, particle.drift * 6, 0, Math.PI * 2);
           context.fill();
-        } else if (distanceToImpact > -height * 0.08) {
-          const progress = Math.abs(distanceToImpact) / (height * 0.08);
+        } else if (distanceToImpact > -height * 0.055) {
+          const progress = Math.abs(distanceToImpact) / (height * 0.055);
           const fade = 1 - progress;
-          context.strokeStyle = `rgb(226 254 255 / ${0.8 * fade})`;
-          context.lineWidth = 1.8;
-          context.beginPath();
-          context.ellipse(x, impactY, dropSize * (2.5 + progress * 8), dropSize * (0.65 + progress * 1.65), 0, 0, Math.PI * 2);
-          context.stroke();
 
-          context.strokeStyle = `rgb(111 221 255 / ${0.48 * fade})`;
-          context.lineWidth = 1;
-          context.beginPath();
-          context.ellipse(x, impactY, dropSize * (1.2 + progress * 5.2), dropSize * (0.3 + progress), 0, 0, Math.PI * 2);
-          context.stroke();
-
-          context.strokeStyle = `rgb(242 255 255 / ${0.78 * fade})`;
-          context.lineWidth = Math.max(1, dropSize * 0.3);
-          [-1, 0, 1].forEach((direction) => {
+          if (progress < 0.28) {
+            const craterProgress = progress / 0.28;
+            context.fillStyle = `rgb(12 102 145 / ${0.16 * (1 - craterProgress)})`;
             context.beginPath();
-            context.moveTo(x + direction * dropSize * 0.8, impactY);
-            context.quadraticCurveTo(
-              x + direction * dropSize * 2.1,
-              impactY - dropSize * (4.8 - progress * 3),
-              x + direction * dropSize * 3.2,
-              impactY - dropSize * (1.2 - progress),
-            );
-            context.stroke();
-          });
+            context.ellipse(x, impactY, dropSize * (1.2 + craterProgress * 1.8), dropSize * (0.34 + craterProgress * 0.42), particle.drift * 2, 0, Math.PI * 2);
+            context.fill();
+          }
 
-          context.fillStyle = `rgb(242 255 255 / ${0.68 * fade})`;
+          const rippleProgress = Math.max(0, (progress - 0.12) / 0.88);
+          context.strokeStyle = `rgb(207 247 252 / ${0.38 * fade})`;
+          context.lineWidth = 0.75 + fade * 0.35;
           context.beginPath();
-          context.arc(x - dropSize * 2.2, impactY - dropSize * (1 - progress) * 3.8, dropSize * 0.48, 0, Math.PI * 2);
-          context.arc(x + dropSize * 2, impactY - dropSize * (1 - progress) * 3.2, dropSize * 0.4, 0, Math.PI * 2);
-          context.fill();
+          context.ellipse(
+            x + particle.drift * 90,
+            impactY,
+            dropSize * (1.8 + rippleProgress * 6.8),
+            dropSize * (0.42 + rippleProgress * 1.15),
+            particle.drift * 3,
+            0,
+            Math.PI * 2,
+          );
+          context.stroke();
+
+          if (progress < 0.42 && particle.phase % 4 > 2.4) {
+            const jetProgress = progress / 0.42;
+            const direction = particle.drift < 0 ? -1 : 1;
+            context.fillStyle = `rgb(225 250 253 / ${0.44 * (1 - jetProgress)})`;
+            context.beginPath();
+            context.ellipse(
+              x + direction * dropSize * (1.1 + jetProgress * 1.6),
+              impactY - dropSize * Math.sin(jetProgress * Math.PI) * 2.2,
+              dropSize * 0.28,
+              dropSize * 0.38,
+              direction * 0.35,
+              0,
+              Math.PI * 2,
+            );
+            context.fill();
+          }
         }
         context.globalAlpha = 1;
       }
@@ -1325,9 +1331,10 @@
 
         if (element === "water") {
           particles.forEach((particle) => {
-            if (particle.phase % 3 < 1) return;
+            if (particle.phase % 2 < 1) return;
             if (!reducedMotion.matches) {
-              particle.y += particle.speed * delta * 2.6;
+              const gravity = 1.65 + Math.max(0, particle.y) * 1.35;
+              particle.y += particle.speed * delta * gravity;
               if (particle.y > 0.96) particle.y = -0.08 - (particle.phase % 5) * 0.025;
             }
             drawWaterDrop(particle);
