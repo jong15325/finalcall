@@ -98,8 +98,8 @@ v3는 원본 PNG를 직접 배경으로 확대하지 않고, 지형의 형태·�
 
 ### 선택안과 정교화
 
-- 선택안: 바람 B `나선 돌풍`, 불 C `용암 맥동`, 흙 C `고대 수호`, 물 C `잔잔한 파도`.
+- 선택안: 바람 B `나선 돌풍`, 불 C `용암 맥동`, 흙 C `고대 수호`, 물 C `낙수 물방울`.
 - 바람 B는 나뭇잎 아이콘의 반복을 제거하고, 회전 벡터장에 반응하는 굵기가 다른 공기 리본과 미세 부유물로 변경했다.
-- 물 C는 Canvas 파티클을 완전히 제거하고, 배를 피한 수면 마스크 안에서 서로 다른 중심과 간격을 가진 파면이 이동하는 재질형 효과로 변경했다.
+- 물 C는 파도 레이어를 제거하고, 배 오른쪽 수면으로만 물방울이 낙하해 작은 튐과 타원형 수면 고리를 만드는 효과로 변경했다.
 - 참고: Unity VFX Graph Vector Field Force https://docs.unity3d.com/Packages/com.unity.visualeffectgraph@10.5/manual/Block-VectorForceField.html
 - 참고: Unity Water 셰이더의 서로 다른 방향·크기·속도 파형 합성 https://docs.unity3d.com/2018.3/Documentation/Manual/HOWTO-Water.html

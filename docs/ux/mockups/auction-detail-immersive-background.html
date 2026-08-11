@@ -192,13 +192,8 @@
       }
 
       body[data-element="water"][data-effect="c"] .scene::before {
-        background:
-          repeating-radial-gradient(ellipse at 58% 112%, transparent 0 46px, rgb(226 255 255 / 13%) 49px, rgb(142 224 244 / 7%) 52px, transparent 58px 92px),
-          repeating-radial-gradient(ellipse at 76% -8%, transparent 0 68px, rgb(236 255 255 / 8%) 71px, transparent 77px 126px),
-          linear-gradient(104deg, transparent 22%, rgb(177 239 252 / 7%) 48%, transparent 72%);
-        filter: blur(1.2px);
-        mask-image: linear-gradient(90deg, transparent 0, #000 13% 92%, transparent 100%);
-        animation: water-waves 8s ease-in-out infinite alternate;
+        background: none;
+        animation: none;
       }
 
       @keyframes wind-sweep {
@@ -237,9 +232,6 @@
         to { opacity: 0.48; filter: saturate(1.4); }
       }
 
-      @keyframes water-waves {
-        to { transform: translate3d(-1.8%, -1%, 0) scale(1.035, 1.02); opacity: 0.72; }
-      }
 
       body[data-veil="soft"] .scene {
         filter: saturate(0.92) brightness(0.96);
@@ -1042,7 +1034,7 @@
         water: {
           a: ["맑은 기포", "천천히 상승하는 기포와 작은 수면 고리"],
           b: ["수면 윤슬", "교차하는 햇빛 무늬와 잔잔한 반사광"],
-          c: ["잔잔한 파도", "수면에 붙어 흐르는 넓은 파면과 잔물결"],
+          c: ["낙수 물방울", "수면으로 떨어져 작은 튐과 고리를 만드는 물방울"],
         },
       };
       const selectedEffects = { wind: "b", fire: "c", earth: "c", water: "c" };
@@ -1257,6 +1249,41 @@
         context.globalAlpha = 1;
       }
 
+      function drawWaterDrop(particle) {
+        const x = (0.4 + particle.x * 0.58) * width;
+        const impactY = (0.58 + (particle.phase % 4) * 0.07) * height;
+        const y = particle.y * height;
+        const distanceToImpact = impactY - y;
+        context.globalAlpha = particle.alpha * 0.72;
+
+        if (distanceToImpact > 0) {
+          const streak = Math.min(16, 5 + particle.speed * 240);
+          const gradient = context.createLinearGradient(x, y - streak, x, y + particle.size * 2);
+          gradient.addColorStop(0, "rgb(214 249 255 / 0)");
+          gradient.addColorStop(0.62, "rgb(231 253 255 / 0.58)");
+          gradient.addColorStop(1, "rgb(255 255 255 / 0.9)");
+          context.strokeStyle = gradient;
+          context.lineWidth = Math.max(0.8, particle.size * 0.42);
+          context.beginPath();
+          context.moveTo(x, y - streak);
+          context.quadraticCurveTo(x + particle.drift * 180, y, x, y + particle.size * 2);
+          context.stroke();
+        } else if (distanceToImpact > -height * 0.08) {
+          const progress = Math.abs(distanceToImpact) / (height * 0.08);
+          context.strokeStyle = `rgb(224 253 255 / ${0.55 * (1 - progress)})`;
+          context.lineWidth = 1.2;
+          context.beginPath();
+          context.ellipse(x, impactY, particle.size * (2 + progress * 7), particle.size * (0.55 + progress * 1.2), 0, 0, Math.PI * 2);
+          context.stroke();
+          context.fillStyle = `rgb(242 255 255 / ${0.45 * (1 - progress)})`;
+          context.beginPath();
+          context.arc(x - particle.size * 1.2, impactY - particle.size * (1 - progress) * 3, particle.size * 0.38, 0, Math.PI * 2);
+          context.arc(x + particle.size * 1.1, impactY - particle.size * (1 - progress) * 2.4, particle.size * 0.3, 0, Math.PI * 2);
+          context.fill();
+        }
+        context.globalAlpha = 1;
+      }
+
       function drawEffects(time = 0) {
         const delta = Math.min((time - previousTime) / 1000 || 0, 0.04);
         previousTime = time;
@@ -1264,7 +1291,16 @@
         const element = document.body.dataset.element;
         const effect = document.body.dataset.effect;
 
-        if (element !== "water") particles.forEach((particle) => {
+        if (element === "water") {
+          particles.forEach((particle) => {
+            if (particle.phase % 2 < 1) return;
+            if (!reducedMotion.matches) {
+              particle.y += particle.speed * delta * 2.6;
+              if (particle.y > 0.96) particle.y = -0.08 - (particle.phase % 5) * 0.025;
+            }
+            drawWaterDrop(particle);
+          });
+        } else particles.forEach((particle) => {
           if (!reducedMotion.matches) {
             if (element === "wind") {
               if (effect === "b") {
