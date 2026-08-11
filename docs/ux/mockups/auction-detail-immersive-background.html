@@ -66,6 +66,36 @@
         background:
           linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(17 43 78 / 18%)),
           url("./assets/finalcall-survival-sky-bg-v3.png") center / cover no-repeat;
+        opacity: 1;
+        transition: opacity 120ms ease-out;
+      }
+
+      .scene.is-changing {
+        opacity: 0.18;
+      }
+
+      body[data-element="wind"] .scene {
+        background-image:
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(17 43 78 / 14%)),
+          url("./assets/finalcall-element-wind-bg-v1.png");
+      }
+
+      body[data-element="fire"] .scene {
+        background-image:
+          linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(92 38 9 / 16%)),
+          url("./assets/finalcall-element-fire-bg-v1.png");
+      }
+
+      body[data-element="earth"] .scene {
+        background-image:
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(43 61 18 / 14%)),
+          url("./assets/finalcall-element-earth-bg-v1.png");
+      }
+
+      body[data-element="water"] .scene {
+        background-image:
+          linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(9 69 96 / 13%)),
+          url("./assets/finalcall-element-water-bg-v1.png");
       }
 
       .scene::after {
@@ -221,6 +251,48 @@
       .veil-picker button[aria-pressed="true"] {
         color: var(--navy);
         background: #fff;
+      }
+
+      .element-switcher {
+        display: flex;
+        width: max-content;
+        max-width: 100%;
+        margin: 0 0 14px auto;
+        padding: 5px;
+        gap: 4px;
+        overflow-x: auto;
+        border: 1px solid rgb(255 255 255 / 28%);
+        border-radius: 8px;
+        background: rgb(16 36 65 / 78%);
+      }
+
+      .element-switcher button {
+        display: inline-flex;
+        min-height: 36px;
+        padding: 0 12px;
+        flex: none;
+        align-items: center;
+        gap: 7px;
+        border: 0;
+        border-radius: 5px;
+        color: rgb(255 255 255 / 82%);
+        background: transparent;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .element-switcher button[aria-pressed="true"] {
+        color: var(--navy);
+        background: #fff;
+      }
+
+      .element-dot {
+        width: 9px;
+        height: 9px;
+        border: 1px solid rgb(255 255 255 / 72%);
+        border-radius: 50%;
+        background: var(--dot);
       }
 
       .content-frame {
@@ -586,7 +658,7 @@
       }
     </style>
   </head>
-  <body data-veil="soft">
+  <body data-veil="soft" data-element="wind">
     <div class="scene" aria-hidden="true"></div>
 
     <header class="topbar">
@@ -614,6 +686,24 @@
             <button type="button" data-veil="soft" aria-pressed="true">권장</button>
             <button type="button" data-veil="deep" aria-pressed="false">집중</button>
           </div>
+        </div>
+
+        <div class="element-switcher" aria-label="아이템 속성 배경 비교">
+          <button type="button" data-element="common" aria-pressed="false">
+            <span class="element-dot" style="--dot: #c8a028"></span>공통
+          </button>
+          <button type="button" data-element="wind" aria-pressed="true">
+            <span class="element-dot" style="--dot: #66cccc"></span>바람
+          </button>
+          <button type="button" data-element="fire" aria-pressed="false">
+            <span class="element-dot" style="--dot: #ff5500"></span>불
+          </button>
+          <button type="button" data-element="earth" aria-pressed="false">
+            <span class="element-dot" style="--dot: #95b259"></span>흙
+          </button>
+          <button type="button" data-element="water" aria-pressed="false">
+            <span class="element-dot" style="--dot: #19b2ff"></span>물
+          </button>
         </div>
 
         <section class="content-frame" aria-labelledby="auctionTitle">
@@ -686,7 +776,7 @@
         </section>
 
         <p class="design-note">
-          밝은 탐험 세계는 뷰포트에 고정되고, 별빛을 닮은 입자는 배경에서만 천천히 흐릅니다. 거래 콘텐츠는 독립된 고대비 셸에서 스크롤되며 “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
+          공통 목록용 배경과 바람·불·흙·물 상세 배경을 전환해 비교할 수 있습니다. 속성 표현은 바깥 환경에만 적용하고 거래 셸·금액·입찰 조작은 모든 속성에서 동일하게 유지합니다.
         </p>
       </div>
     </main>
@@ -701,6 +791,22 @@
           buttons.forEach((candidate) => {
             candidate.setAttribute("aria-pressed", String(candidate === button));
           });
+        });
+      });
+
+      const scene = document.querySelector(".scene");
+      const elementButtons = document.querySelectorAll(".element-switcher [data-element]");
+      elementButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          if (button.dataset.element === document.body.dataset.element) return;
+          scene.classList.add("is-changing");
+          window.setTimeout(() => {
+            document.body.dataset.element = button.dataset.element;
+            elementButtons.forEach((candidate) => {
+              candidate.setAttribute("aria-pressed", String(candidate === button));
+            });
+            requestAnimationFrame(() => scene.classList.remove("is-changing"));
+          }, 120);
         });
       });
 

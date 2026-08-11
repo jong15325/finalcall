@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FinalCall 공통 경매 목록 배경 목업</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --navy: #16213a;
+        --gold: #c8a028;
+        --orange: #ef8a2c;
+        --ink: #171a20;
+        --muted: #596273;
+        --line: #dce1e9;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body { min-width: 320px; min-height: 100vh; margin: 0; color: var(--ink); background: #dff7ff; }
+      button, input, select { font: inherit; }
+      :focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+
+      .world {
+        position: fixed;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(24 65 100 / 14%)),
+          url("./assets/finalcall-survival-sky-bg-v3.png") center / cover no-repeat;
+      }
+
+      .world::before,
+      .world::after {
+        position: absolute;
+        inset: -20%;
+        background-image:
+          radial-gradient(circle, rgb(255 255 255 / 78%) 0 1px, transparent 1.8px),
+          radial-gradient(circle, rgb(223 196 71 / 46%) 0 1px, transparent 2px);
+        background-position: 0 0, 43px 61px;
+        background-size: 92px 92px, 137px 137px;
+        content: "";
+        opacity: 0.34;
+        animation: drift 32s linear infinite;
+      }
+
+      .world::after { opacity: 0.2; animation-duration: 48s; animation-direction: reverse; transform: scale(0.8); }
+
+      @keyframes drift { to { transform: translate3d(60px, -90px, 0); } }
+
+      .topbar { position: relative; z-index: 2; border-bottom: 1px solid rgb(255 255 255 / 14%); color: #fff; background: rgb(12 25 46 / 88%); }
+      .topbar-inner { display: flex; width: min(1180px, calc(100% - 40px)); min-height: 68px; margin: auto; align-items: center; gap: 30px; }
+      .brand { color: #fff; font-size: 22px; font-weight: 900; letter-spacing: -0.035em; text-decoration: none; }
+      .brand span { color: #dfc447; }
+      nav { display: flex; gap: 24px; }
+      nav a { color: rgb(255 255 255 / 78%); font-size: 14px; font-weight: 750; text-decoration: none; }
+      nav a[aria-current="page"] { color: #fff; }
+      .balance { margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 800; }
+
+      main { position: relative; z-index: 1; padding: 30px 20px 64px; }
+      .shell { width: min(1180px, 100%); margin: auto; padding: clamp(20px, 3vw, 34px); border: 1px solid rgb(255 255 255 / 55%); border-radius: 10px; background: rgb(250 251 253 / 94%); box-shadow: 0 24px 72px rgb(20 61 96 / 28%); backdrop-filter: blur(6px); }
+      .heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+      h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: -0.035em; }
+      .lede { max-width: 65ch; margin: 0; color: var(--muted); line-height: 1.55; }
+      .register { min-height: 42px; padding: 0 16px; border: 1px solid #101a2e; border-radius: 6px; color: #fff; background: var(--navy); cursor: pointer; font-weight: 850; }
+
+      .filters { display: grid; grid-template-columns: minmax(220px, 1fr) 160px 160px auto; gap: 8px; margin-bottom: 22px; padding: 14px; border: 1px solid var(--line); border-radius: 7px; background: #f4f5f8; }
+      .filters input, .filters select { min-width: 0; height: 42px; padding: 0 12px; border: 1px solid #8b93a1; border-radius: 6px; color: var(--ink); background: #fff; }
+      .search { min-width: 92px; border: 0; border-radius: 6px; color: #fff; background: var(--navy); font-weight: 800; }
+
+      .summary { display: flex; justify-content: space-between; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+      .summary strong { color: var(--ink); }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 3px 12px rgb(15 23 42 / 7%); }
+      .art { position: relative; display: grid; height: 174px; place-items: center; color: #fff; background: linear-gradient(145deg, #172641, #070d17); font-size: 58px; }
+      .element { position: absolute; top: 10px; left: 10px; display: inline-flex; padding: 5px 8px; align-items: center; gap: 6px; border-radius: 5px; color: #171a20; background: rgb(255 255 255 / 90%); font-size: 11px; font-weight: 850; }
+      .element::before { width: 8px; height: 8px; border-radius: 50%; background: var(--element); content: ""; }
+      .card-body { padding: 14px; }
+      .card h2 { overflow: hidden; margin: 0 0 12px; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+      .price { margin: 0; color: var(--navy); font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 900; }
+      .meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 9px; color: var(--muted); font-size: 12px; }
+      .time { color: #a33a20; font-variant-numeric: tabular-nums; font-weight: 800; }
+
+      @media (max-width: 820px) {
+        nav { display: none; }
+        .filters { grid-template-columns: 1fr 1fr; }
+        .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+
+      @media (max-width: 560px) {
+        .topbar-inner { width: calc(100% - 28px); }
+        .balance { font-size: 0; }
+        .balance::after { font-size: 13px; content: "1,250,000 C"; }
+        main { padding: 14px 10px 40px; }
+        .shell { padding: 18px 14px 22px; }
+        .heading { align-items: stretch; flex-direction: column; }
+        .register { width: 100%; }
+        .filters { grid-template-columns: 1fr; }
+        .grid { grid-template-columns: 1fr; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .world::before, .world::after { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="world" aria-hidden="true"></div>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#">FINAL<span>CALL</span></a>
+        <nav aria-label="주요 메뉴">
+          <a href="#" aria-current="page">경매장</a><a href="#">아이템 등록</a><a href="#">거래 내역</a><a href="#">커뮤니티</a>
+        </nav>
+        <span class="balance">보유 캐시 1,250,000 C</span>
+      </div>
+    </header>
+    <main>
+      <section class="shell" aria-labelledby="pageTitle">
+        <div class="heading">
+          <div><h1 id="pageTitle">경매장</h1><p class="lede">모든 속성의 아이템을 한곳에서 비교합니다. 목록은 특정 속성에 치우치지 않는 공통 세계 배경을 사용합니다.</p></div>
+          <button class="register" type="button">아이템 등록</button>
+        </div>
+        <form class="filters">
+          <input aria-label="아이템 검색" placeholder="아이템 이름 검색" />
+          <select aria-label="속성"><option>전체 속성</option><option>바람</option><option>불</option><option>흙</option><option>물</option></select>
+          <select aria-label="정렬"><option>마감 임박순</option><option>최신 등록순</option><option>현재가 낮은순</option></select>
+          <button class="search" type="button">검색</button>
+        </form>
+        <div class="summary"><span>진행 중인 경매 <strong>248개</strong></span><span>실시간 갱신</span></div>
+        <div class="grid">
+          <article class="card"><div class="art"><span class="element" style="--element:#66cccc">바람</span>⚔</div><div class="card-body"><h2>바람을 가르는 검</h2><p class="price">840,000 C</p><div class="meta"><span>입찰 24회</span><span class="time">00:14:27</span></div></div></article>
+          <article class="card"><div class="art"><span class="element" style="--element:#ff5500">불</span>🔥</div><div class="card-body"><h2>홍염의 마법 구체</h2><p class="price">625,000 C</p><div class="meta"><span>입찰 18회</span><span class="time">01:08:04</span></div></div></article>
+          <article class="card"><div class="art"><span class="element" style="--element:#19b2ff">물</span>💧</div><div class="card-body"><h2>푸른 파도의 펜던트</h2><p class="price">510,000 C</p><div class="meta"><span>입찰 11회</span><span class="time">02:41:32</span></div></div></article>
+          <article class="card"><div class="art"><span class="element" style="--element:#95b259">흙</span>🛡</div><div class="card-body"><h2>대지 수호자의 방패</h2><p class="price">1,120,000 C</p><div class="meta"><span>입찰 31회</span><span class="time">03:20:18</span></div></div></article>
+          <article class="card"><div class="art"><span class="element" style="--element:#66cccc">바람</span>🏹</div><div class="card-body"><h2>질풍의 장궁</h2><p class="price">770,000 C</p><div class="meta"><span>입찰 16회</span><span class="time">04:12:05</span></div></div></article>
+          <article class="card"><div class="art"><span class="element" style="--element:#ff5500">불</span>👢</div><div class="card-body"><h2>화염 보행자의 장화</h2><p class="price">390,000 C</p><div class="meta"><span>입찰 7회</span><span class="time">05:38:49</span></div></div></article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
