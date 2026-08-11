@@ -92,6 +92,7 @@
         width: 100%;
         height: 100%;
         pointer-events: none;
+        mix-blend-mode: screen;
       }
 
       .topbar {
@@ -685,7 +686,7 @@
         </section>
 
         <p class="design-note">
-          레이아웃 방식만 참고한 FinalCall 전용 시안입니다. 밝은 탐험 세계는 뷰포트에 고정되고, 별빛을 닮은 입자는 배경에서만 천천히 흐릅니다. 거래 콘텐츠는 독립된 고대비 셸에서 스크롤되며 “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
+          밝은 탐험 세계는 뷰포트에 고정됩니다. 별빛 입자와 함께 실제 게임의 magic9/wind PNG 아틀라스를 SPR 좌표 10프레임으로 재생하며, 거래 콘텐츠는 독립된 고대비 셸에서 스크롤됩니다. “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
         </p>
       </div>
     </main>
@@ -706,6 +707,26 @@
       const canvas = document.querySelector(".sky-motes");
       const context = canvas.getContext("2d");
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const windAtlas = new Image();
+      windAtlas.src = "./assets/game/magic9-wind-atlas.png";
+      // magic9/wind.spr에서 읽은 원본 프레임 좌표. 끝 좌표를 포함한다.
+      const windFrames = [
+        [0, 0, 136, 149],
+        [136, 0, 266, 151],
+        [266, 0, 387, 147],
+        [387, 0, 510, 129],
+        [510, 0, 648, 129],
+        [0, 151, 146, 280],
+        [146, 151, 305, 280],
+        [305, 147, 444, 276],
+        [444, 129, 569, 258],
+        [569, 129, 698, 262],
+      ];
+      const windEffects = [
+        { x: 0.075, y: 0.26, size: 112, phase: 0, alpha: 0.46 },
+        { x: 0.91, y: 0.34, size: 92, phase: 4, alpha: 0.38 },
+        { x: 0.12, y: 0.78, size: 76, phase: 7, alpha: 0.28 },
+      ];
       const motes = Array.from({ length: 42 }, (_, index) => ({
         x: ((index * 47) % 101) / 100,
         y: ((index * 73) % 103) / 102,
@@ -734,6 +755,35 @@
         const delta = Math.min((time - previousTime) / 1000 || 0, 0.04);
         previousTime = time;
         context.clearRect(0, 0, width, height);
+
+        if (windAtlas.complete && windAtlas.naturalWidth) {
+          const baseFrame = reducedMotion.matches ? 3 : Math.floor(time / 90);
+          context.save();
+          context.globalCompositeOperation = "screen";
+          windEffects.forEach((effect) => {
+            const frame = windFrames[(baseFrame + effect.phase) % windFrames.length];
+            const sourceWidth = frame[2] - frame[0] + 1;
+            const sourceHeight = frame[3] - frame[1] + 1;
+            const ratio = effect.size / Math.max(sourceWidth, sourceHeight);
+            const drawWidth = sourceWidth * ratio;
+            const drawHeight = sourceHeight * ratio;
+            const drift = reducedMotion.matches ? 0 : Math.sin(time / 2400 + effect.phase) * 13;
+            const lift = reducedMotion.matches ? 0 : Math.cos(time / 3100 + effect.phase) * 8;
+            context.globalAlpha = effect.alpha;
+            context.drawImage(
+              windAtlas,
+              frame[0],
+              frame[1],
+              sourceWidth,
+              sourceHeight,
+              effect.x * width - drawWidth / 2 + drift,
+              effect.y * height - drawHeight / 2 + lift,
+              drawWidth,
+              drawHeight,
+            );
+          });
+          context.restore();
+        }
 
         motes.forEach((mote) => {
           if (!reducedMotion.matches) {
