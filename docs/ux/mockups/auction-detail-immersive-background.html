@@ -64,25 +64,34 @@
         inset: 0;
         z-index: var(--z-bg);
         background:
-          linear-gradient(180deg, rgb(7 14 27 / 34%), rgb(7 14 27 / 68%)),
-          url("./assets/finalcall-auction-hall-bg-v1.png") center / cover no-repeat;
+          linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(17 43 78 / 18%)),
+          url("./assets/finalcall-sky-islands-bg-v2.png") center / cover no-repeat;
       }
 
       .scene::after {
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(circle at 50% 38%, transparent 0 25%, rgb(5 12 24 / 20%) 68%),
-          linear-gradient(90deg, rgb(5 12 24 / 22%), transparent 24% 76%, rgb(5 12 24 / 22%));
+          radial-gradient(circle at 50% 34%, rgb(255 255 255 / 7%), transparent 38%),
+          linear-gradient(90deg, rgb(15 48 79 / 15%), transparent 24% 76%, rgb(15 48 79 / 15%));
         content: "";
       }
 
       body[data-veil="soft"] .scene {
-        filter: saturate(0.84) brightness(0.82);
+        filter: saturate(0.92) brightness(0.96);
       }
 
       body[data-veil="deep"] .scene {
-        filter: saturate(0.72) brightness(0.64);
+        filter: saturate(0.82) brightness(0.78);
+      }
+
+      .sky-motes {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
       }
 
       .topbar {
@@ -166,7 +175,12 @@
         justify-content: space-between;
         gap: 16px;
         margin-bottom: 20px;
+        padding: 10px 12px;
+        border: 1px solid rgb(255 255 255 / 28%);
+        border-radius: 8px;
         color: #fff;
+        background: rgb(16 36 65 / 74%);
+        box-shadow: 0 8px 24px rgb(19 56 91 / 14%);
       }
 
       .breadcrumb {
@@ -671,10 +685,12 @@
         </section>
 
         <p class="design-note">
-          레이아웃 방식만 참고한 FinalCall 전용 시안입니다. 배경은 뷰포트에 고정되고, 거래 콘텐츠는 독립된 고대비 셸에서 스크롤됩니다. “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
+          레이아웃 방식만 참고한 FinalCall 전용 시안입니다. 밝은 탐험 세계는 뷰포트에 고정되고, 별빛을 닮은 입자는 배경에서만 천천히 흐릅니다. 거래 콘텐츠는 독립된 고대비 셸에서 스크롤되며 “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
         </p>
       </div>
     </main>
+
+    <canvas class="sky-motes" aria-hidden="true"></canvas>
 
     <script>
       const buttons = document.querySelectorAll("[data-veil]");
@@ -686,6 +702,70 @@
           });
         });
       });
+
+      const canvas = document.querySelector(".sky-motes");
+      const context = canvas.getContext("2d");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const motes = Array.from({ length: 42 }, (_, index) => ({
+        x: ((index * 47) % 101) / 100,
+        y: ((index * 73) % 103) / 102,
+        radius: 0.8 + (index % 4) * 0.45,
+        speed: 0.018 + (index % 5) * 0.004,
+        drift: ((index % 3) - 1) * 0.006,
+        alpha: 0.22 + (index % 5) * 0.08,
+      }));
+
+      let width = 0;
+      let height = 0;
+      let previousTime = 0;
+
+      function resizeCanvas() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function drawMotes(time = 0) {
+        const delta = Math.min((time - previousTime) / 1000 || 0, 0.04);
+        previousTime = time;
+        context.clearRect(0, 0, width, height);
+
+        motes.forEach((mote) => {
+          if (!reducedMotion.matches) {
+            mote.y -= mote.speed * delta;
+            mote.x += mote.drift * delta;
+            if (mote.y < -0.03) mote.y = 1.03;
+            if (mote.x < -0.03) mote.x = 1.03;
+            if (mote.x > 1.03) mote.x = -0.03;
+          }
+
+          const x = mote.x * width;
+          const y = mote.y * height;
+          const glow = context.createRadialGradient(x, y, 0, x, y, mote.radius * 5);
+          glow.addColorStop(0, `rgb(255 255 255 / ${mote.alpha})`);
+          glow.addColorStop(0.3, `rgb(223 196 71 / ${mote.alpha * 0.52})`);
+          glow.addColorStop(1, "rgb(255 255 255 / 0)");
+          context.fillStyle = glow;
+          context.beginPath();
+          context.arc(x, y, mote.radius * 5, 0, Math.PI * 2);
+          context.fill();
+        });
+
+        if (!reducedMotion.matches) requestAnimationFrame(drawMotes);
+      }
+
+      window.addEventListener("resize", resizeCanvas, { passive: true });
+      reducedMotion.addEventListener("change", () => {
+        previousTime = 0;
+        drawMotes();
+      });
+      resizeCanvas();
+      drawMotes();
     </script>
   </body>
 </html>
