@@ -116,7 +116,10 @@
       }
 
       body[data-element="wind"] .scene::before {
-        background: repeating-radial-gradient(ellipse at 18% 72%, transparent 0 9%, rgb(222 255 244 / 12%) 9.5%, transparent 10.5% 16%);
+        background:
+          linear-gradient(162deg, transparent 18%, rgb(224 255 244 / 11%) 18.4%, transparent 19.2% 42%, rgb(202 249 235 / 9%) 42.4%, transparent 43.1%),
+          linear-gradient(170deg, transparent 54%, rgb(255 255 255 / 8%) 54.4%, transparent 55.2%);
+        filter: blur(2px);
         animation: wind-sweep 12s linear infinite;
       }
 
@@ -134,7 +137,9 @@
       }
 
       body[data-element="water"] .scene::before {
-        background: repeating-radial-gradient(ellipse at 65% 70%, transparent 0 4%, rgb(205 251 255 / 11%) 4.5%, transparent 5.5% 10%);
+        background:
+          radial-gradient(ellipse at 64% 72%, transparent 0 8%, rgb(205 251 255 / 12%) 8.5%, transparent 10% 18%, rgb(171 239 255 / 8%) 18.5%, transparent 20%),
+          repeating-linear-gradient(112deg, transparent 0 54px, rgb(228 255 255 / 7%) 58px, transparent 64px 112px);
         mix-blend-mode: screen;
         animation: caustic-drift 9s ease-in-out infinite alternate;
       }
@@ -171,6 +176,11 @@
         height: 100%;
         pointer-events: none;
         mix-blend-mode: screen;
+      }
+
+      body[data-element="earth"] .sky-motes {
+        mix-blend-mode: normal;
+        opacity: 0.72;
       }
 
       .topbar {
@@ -891,12 +901,23 @@
         context.globalAlpha = particle.alpha;
 
         if (element === "wind") {
-          context.strokeStyle = particle.phase % 2 > 1 ? "#e8fff2" : "#a8f0d0";
-          context.lineWidth = Math.max(1, particle.size * 0.35);
+          const angle = time * 0.0012 + particle.phase;
+          context.save();
+          context.translate(x, y);
+          context.rotate(angle);
+          context.fillStyle = particle.phase % 2 > 1 ? "#d9f28d" : "#82d27b";
           context.beginPath();
-          context.moveTo(x - particle.size * 5, y + particle.size * 2);
-          context.quadraticCurveTo(x, y - particle.size * 2, x + particle.size * 6, y);
+          context.moveTo(-particle.size * 2.8, 0);
+          context.quadraticCurveTo(0, -particle.size * 2.2, particle.size * 3.1, 0);
+          context.quadraticCurveTo(0, particle.size * 1.7, -particle.size * 2.8, 0);
+          context.fill();
+          context.strokeStyle = "rgb(255 255 255 / 0.7)";
+          context.lineWidth = 0.7;
+          context.beginPath();
+          context.moveTo(-particle.size * 2.2, 0);
+          context.lineTo(particle.size * 2.4, 0);
           context.stroke();
+          context.restore();
         } else if (element === "fire") {
           const glow = context.createRadialGradient(x, y, 0, x, y, particle.size * 4);
           glow.addColorStop(0, "#fff5a8");
@@ -907,10 +928,20 @@
           context.arc(x, y, particle.size * 4, 0, Math.PI * 2);
           context.fill();
         } else if (element === "earth") {
-          context.fillStyle = particle.phase % 2 > 1 ? "#f0d49b" : "#b98c51";
-          context.beginPath();
-          context.ellipse(x, y, particle.size * 1.8, particle.size * 0.7, time * 0.0002 + particle.phase, 0, Math.PI * 2);
-          context.fill();
+          if (particle.phase % 3 > 2) {
+            context.fillStyle = "#8d683f";
+            context.beginPath();
+            context.ellipse(x, y, particle.size * 1.4, particle.size * 0.75, particle.phase, 0, Math.PI * 2);
+            context.fill();
+          } else {
+            const dust = context.createRadialGradient(x, y, 0, x, y, particle.size * 5);
+            dust.addColorStop(0, "rgb(245 219 164 / 0.65)");
+            dust.addColorStop(1, "rgb(185 140 81 / 0)");
+            context.fillStyle = dust;
+            context.beginPath();
+            context.arc(x, y, particle.size * 5, 0, Math.PI * 2);
+            context.fill();
+          }
         } else {
           context.strokeStyle = "#d9fbff";
           context.lineWidth = 1.2;
@@ -921,6 +952,12 @@
           context.beginPath();
           context.arc(x - particle.size * 0.35, y - particle.size * 0.35, particle.size * 0.22, 0, Math.PI * 2);
           context.fill();
+          if (particle.phase % 4 > 3) {
+            context.strokeStyle = "rgb(213 252 255 / 0.45)";
+            context.beginPath();
+            context.ellipse(x, y + particle.size * 3, particle.size * 4.5, particle.size * 1.25, 0, 0, Math.PI * 2);
+            context.stroke();
+          }
         }
         context.globalAlpha = 1;
       }
