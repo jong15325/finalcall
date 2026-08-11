@@ -46,6 +46,12 @@ describe('ElementDetailBackground', () => {
         act(() => MockImage.instances[0].onload?.())
 
         expect(container.querySelector('.element-detail__image')).not.toBeNull()
+        expect(
+            container.querySelectorAll('.element-detail__ambient-canvas'),
+        ).toHaveLength(1)
+        expect(
+            container.querySelector('.element-detail__ambient-canvas'),
+        ).toHaveAttribute('data-particle-limit', '48')
         expect(screen.getByRole('button', { name: '입찰하기' })).toBeVisible()
         unmount()
         expect(document.body).toHaveClass('existing-shell-class')
@@ -128,6 +134,7 @@ describe('ElementDetailBackground', () => {
         const { unmount } = render(
             <ElementDetailBackground element={1}>내용</ElementDetailBackground>,
         )
+        act(() => MockImage.instances[0].onload?.())
         expect(raf).toHaveBeenCalledTimes(1)
 
         media.setMatches('(prefers-reduced-motion: reduce)', true)
@@ -136,6 +143,11 @@ describe('ElementDetailBackground', () => {
 
         media.setMatches('(prefers-reduced-motion: reduce)', false)
         expect(raf).toHaveBeenCalledTimes(2)
+
+        media.setMatches('(forced-colors: active)', true)
+        expect(cancel).toHaveBeenCalledWith(41)
+        media.setMatches('(forced-colors: active)', false)
+        expect(raf).toHaveBeenCalledTimes(3)
 
         window.dispatchEvent(new Event('resize'))
         window.dispatchEvent(new Event('resize'))

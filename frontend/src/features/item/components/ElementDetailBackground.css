@@ -10,7 +10,7 @@
 
 .element-detail__image,
 .element-detail__effect,
-.element-detail__water-drops {
+.element-detail__ambient-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -20,15 +20,8 @@
 .element-detail__image {
     background-position: center;
     background-size: cover;
-    filter: saturate(0.88) contrast(0.94);
+    filter: saturate(1.04) contrast(1.02);
     animation: element-image-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.element-detail__scene::after {
-    position: absolute;
-    inset: 0;
-    content: '';
-    background: rgba(244, 245, 248, 0.3);
 }
 
 .element-detail__effect {
@@ -78,13 +71,64 @@
     animation: element-earth-guard 7s ease-in-out infinite;
 }
 
-.element-detail__water-drops {
+.element-detail__ambient-canvas {
     z-index: 2;
 }
 
 .element-detail__content {
     position: relative;
     min-width: 0;
+}
+
+.element-detail__content > div > a {
+    color: var(--detail-text);
+    text-shadow: 0 1px 8px rgb(2 6 23 / 0.72);
+}
+
+[data-detail-theme] .detail-chrome {
+    border-color: var(--detail-chrome-border);
+    background: var(--detail-chrome-surface);
+    color: var(--detail-text);
+}
+
+[data-detail-theme] .detail-chrome :is([class*='text-gray-'], strong) {
+    color: var(--detail-text);
+}
+
+[data-detail-theme] .detail-chrome :is(.bg-surface, [class*='bg-surface\/']) {
+    background: rgb(15 23 42 / 0.98);
+}
+
+.element-detail .detail-surface {
+    border-color: var(--detail-content-border);
+    background: var(--detail-content-surface);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--detail-accent) 28%, transparent),
+        0 18px 48px rgb(2 6 23 / 0.28);
+    color: var(--detail-text);
+}
+
+.element-detail
+    .detail-surface
+    :is([class*='text-gray-9'], [class*='text-gray-7']) {
+    color: var(--detail-text);
+}
+
+.element-detail
+    .detail-surface
+    :is([class*='text-gray-5'], [class*='text-gray-4']) {
+    color: var(--detail-muted);
+}
+
+.element-detail .detail-surface :is([class*='border-line']) {
+    border-color: var(--detail-content-border);
+}
+
+.element-detail a:focus-visible,
+.element-detail button:focus-visible,
+[data-detail-theme] .detail-chrome :is(a, button):focus-visible {
+    outline: 2px solid var(--detail-focus-ring);
+    outline-offset: 2px;
 }
 
 @keyframes element-image-enter {
@@ -131,7 +175,7 @@
     .element-detail__effect {
         animation: none;
     }
-    .element-detail__water-drops {
+    .element-detail__ambient-canvas {
         display: none;
     }
 }

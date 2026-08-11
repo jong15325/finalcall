@@ -67,7 +67,7 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
     })
 
     return (
-        <section className="rounded-2xl border border-line bg-surface">
+        <section className="detail-surface rounded-2xl border border-line bg-surface">
             <div className="border-b border-line px-5 py-4">
                 <h3 className="text-base font-bold text-gray-900">입찰 이력</h3>
             </div>

@@ -73,7 +73,7 @@ function BidPanel({
     })
 
     return (
-        <aside className="rounded-2xl border border-line bg-surface">
+        <aside className="detail-surface rounded-2xl border border-line bg-surface">
             <div className="flex flex-col p-5 lg:sticky lg:top-24">
                 <div className="flex items-center justify-between">
                     <Countdown endAt={auction.endAt} now={now} />

@@ -71,7 +71,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
     const channelLimit = channelLimitOf(item.level)
 
     return (
-        <section className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
+        <section className="detail-surface grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
             {/* 아트 열 — 스프라이트 스테이지가 열 전체를 채우고 프레임을 가운데. lg 에서 2배 확대(§3·§5). */}
             <div className="relative min-h-[220px] lg:min-h-[390px]">
                 <ItemFrame

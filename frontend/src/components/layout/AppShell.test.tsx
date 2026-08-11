@@ -25,6 +25,14 @@ function renderShell(route: string) {
                             </ElementDetailBackground>
                         }
                     />
+                    <Route
+                        path="/items/:id"
+                        element={
+                            <ElementDetailBackground element={1}>
+                                <main>아이템 상세 콘텐츠</main>
+                            </ElementDetailBackground>
+                        }
+                    />
                     <Route path="/auctions" element={<main>경매 목록</main>} />
                 </Route>
             </Routes>
@@ -40,6 +48,11 @@ describe('AppShell route-scoped 상세 배경', () => {
 
         expect(shell).toHaveClass('isolate')
         expect(shell).toHaveClass('min-h-screen')
+        expect(shell).toHaveAttribute('data-detail-theme', 'fire')
+        expect(shell).toHaveStyle({
+            '--detail-accent': '#ff5500',
+            '--detail-cta-bg': '#f59e0b',
+        })
         expect(scene).toHaveClass(
             'element-detail__scene',
             'fixed',
@@ -73,6 +86,9 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(
             view.container.querySelector('.element-detail__scene'),
         ).toBeNull()
+        expect(view.container.firstElementChild).not.toHaveAttribute(
+            'data-detail-theme',
+        )
         expect(view.getByText('경매 목록')).toBeVisible()
     })
 
@@ -81,5 +97,17 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(
             view.container.querySelector('.element-detail__scene'),
         ).toBeNull()
+    })
+
+    it('아이템 상세도 응답 속성으로 theme을 등록한다', () => {
+        const view = renderShell('/items/I-1')
+
+        expect(view.container.firstElementChild).toHaveAttribute(
+            'data-detail-theme',
+            'water',
+        )
+        expect(view.container.firstElementChild).toHaveStyle({
+            '--detail-accent': '#19b2ff',
+        })
     })
 })

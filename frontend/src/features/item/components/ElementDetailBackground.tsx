@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { toElementKey } from '@/features/item/lib/element'
 import type { ElementKey } from '@/features/item/lib/element'
+import { useRouteVisualTheme } from '@/components/layout/RouteVisualThemeContext'
 import './ElementDetailBackground.css'
 
 const BACKGROUND_ROOT = '/img/backgrounds/item-elements'
@@ -15,6 +16,12 @@ export default function ElementDetailBackground({
     const key = toElementKey(element)
     const [loadedKey, setLoadedKey] = useState<ElementKey | null>(null)
     const [lowPower] = useState(isLowPowerDevice)
+    const { registerTheme } = useRouteVisualTheme()
+
+    useEffect(() => {
+        registerTheme(key)
+        return () => registerTheme(null)
+    }, [key, registerTheme])
 
     useEffect(() => {
         setLoadedKey(null)
@@ -57,7 +64,9 @@ export default function ElementDetailBackground({
                     />
                 )}
                 <div className="element-detail__effect" />
-                {key === 'water' && !lowPower && <WaterDrops />}
+                {loadedKey === key && key && !lowPower && (
+                    <AmbientCanvas element={key} />
+                )}
             </div>
             <div className="element-detail__content">{children}</div>
         </div>
@@ -77,7 +86,7 @@ function isLowPowerDevice() {
     )
 }
 
-function WaterDrops() {
+function AmbientCanvas({ element }: { element: ElementKey }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
@@ -89,13 +98,15 @@ function WaterDrops() {
             '(prefers-reduced-motion: reduce)',
         )
         const coarsePointer = window.matchMedia('(pointer: coarse)')
+        const forcedColors = window.matchMedia('(forced-colors: active)')
         let frame = 0
         let visible = !document.hidden
         let previous = 0
         let width = 0
         let height = 0
         let resizeTimer: ReturnType<typeof setTimeout> | null = null
-        const drops = Array.from({ length: 18 }, (_, index) => ({
+        const particleCount = coarsePointer.matches ? 24 : 48
+        const particles = Array.from({ length: particleCount }, (_, index) => ({
             x: ((index * 47) % 97) / 100,
             y: -((index * 31) % 100) / 100,
             speed: 0.16 + (index % 5) * 0.025,
@@ -115,18 +126,32 @@ function WaterDrops() {
             const delta = Math.min((time - previous) / 1000 || 0, 0.04)
             previous = time
             context.clearRect(0, 0, width, height)
-            context.strokeStyle = 'rgba(220, 250, 255, .5)'
+            const color = {
+                water: 'rgba(220, 250, 255, .5)',
+                fire: 'rgba(255, 170, 80, .42)',
+                earth: 'rgba(210, 230, 170, .38)',
+                wind: 'rgba(220, 255, 248, .46)',
+            }[element]
+            context.strokeStyle = color
+            context.fillStyle = color
             context.lineWidth = 1
 
-            for (const drop of drops) {
-                drop.y += drop.speed * delta
-                if (drop.y > 0.9) drop.y = -0.08
-                const x = width * (0.42 + drop.x * 0.55)
-                const y = height * drop.y
+            for (const particle of particles) {
+                const direction = element === 'fire' ? -1 : 1
+                particle.y += particle.speed * delta * direction
+                if (particle.y > 0.95) particle.y = -0.08
+                if (particle.y < -0.1) particle.y = 0.92
+                const x = width * (0.08 + particle.x * 0.84)
+                const y = height * particle.y
                 context.beginPath()
-                context.moveTo(x, y - drop.size * 5)
-                context.lineTo(x, y)
-                context.stroke()
+                if (element === 'water') {
+                    context.moveTo(x, y - particle.size * 5)
+                    context.lineTo(x, y)
+                    context.stroke()
+                } else {
+                    context.arc(x, y, particle.size, 0, Math.PI * 2)
+                    context.fill()
+                }
             }
             if (visible && !reducedMotion.matches) {
                 frame = requestAnimationFrame(draw)
@@ -140,7 +165,12 @@ function WaterDrops() {
 
         const start = () => {
             stop()
-            if (!visible || reducedMotion.matches || coarsePointer.matches) {
+            if (
+                !visible ||
+                reducedMotion.matches ||
+                coarsePointer.matches ||
+                forcedColors.matches
+            ) {
                 context.clearRect(0, 0, width, height)
                 return
             }
@@ -166,19 +196,22 @@ function WaterDrops() {
         window.addEventListener('resize', onResize, { passive: true })
         document.addEventListener('visibilitychange', onVisibilityChange)
         reducedMotion.addEventListener('change', start)
+        forcedColors.addEventListener('change', start)
         return () => {
             stop()
             if (resizeTimer !== null) clearTimeout(resizeTimer)
             window.removeEventListener('resize', onResize)
             document.removeEventListener('visibilitychange', onVisibilityChange)
             reducedMotion.removeEventListener('change', start)
+            forcedColors.removeEventListener('change', start)
         }
-    }, [])
+    }, [element])
 
     return (
         <canvas
             ref={canvasRef}
-            className="element-detail__water-drops"
+            className="element-detail__ambient-canvas"
+            data-particle-limit="48"
             aria-hidden="true"
         />
     )

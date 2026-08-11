@@ -108,7 +108,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                 </section>
 
                 {/* 스펙 카드 */}
-                <section className="rounded-2xl border border-line bg-surface p-6">
+                <section className="detail-surface rounded-2xl border border-line bg-surface p-6">
                     {/* 배지: 위치 + (활성 시) 골드포스 */}
                     <div className="flex flex-wrap gap-2">
                         <span className="rounded-md bg-navy/5 px-2.5 py-1 text-xs font-semibold text-navy-700">
@@ -172,7 +172,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                         <div className="mt-6 flex flex-wrap gap-2">
                             <Link
                                 to={paths.sell}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2.5 text-sm font-bold text-white hover:bg-navy-800"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
                             >
                                 <TbTag aria-hidden className="size-4" />
                                 경매에 등록

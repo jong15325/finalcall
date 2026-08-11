@@ -50,7 +50,7 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
     }
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur">
+        <header className="detail-chrome sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur">
             {/* 모바일 햄버거 — 사이드바 드로어 열기(데스크톱 접기/펼치기는 사이드바 헤더 토글) */}
             <button
                 type="button"

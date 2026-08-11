@@ -293,7 +293,7 @@ function Sidebar({
             <aside
                 aria-label="주 메뉴"
                 className={[
-                    'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-line bg-surface',
+                    'detail-chrome fixed inset-y-0 left-0 z-50 flex flex-col border-r border-line bg-surface',
                     'w-[260px] transition-[transform,width] duration-200',
                     mobileOpen ? 'translate-x-0' : '-translate-x-full',
                     'xl:translate-x-0',

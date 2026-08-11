@@ -18,7 +18,7 @@ function MobileBottomNav() {
     return (
         <nav
             aria-label="모바일 주요 메뉴"
-            className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] xl:hidden"
+            className="detail-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] xl:hidden"
         >
             {mobileNav.map((item) => {
                 const Icon = item.icon
@@ -39,8 +39,7 @@ function MobileBottomNav() {
                         </button>
                     )
                 }
-                const showBadge =
-                    item.to === paths.messages && unreadCount > 0
+                const showBadge = item.to === paths.messages && unreadCount > 0
                 return (
                     <NavLink
                         key={item.label}

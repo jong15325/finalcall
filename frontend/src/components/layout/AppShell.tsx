@@ -4,6 +4,11 @@ import CompareBar from '@/features/item/components/CompareBar'
 import Sidebar from './Sidebar'
 import TopNavbar from './TopNavbar'
 import MobileBottomNav from './MobileBottomNav'
+import {
+    RouteVisualThemeProvider,
+    routeThemeStyle,
+    useRouteVisualTheme,
+} from './RouteVisualThemeContext'
 
 /**
  * 앱 셸 (FC-067 — HANDOVER §5·§20).
@@ -24,6 +29,15 @@ import MobileBottomNav from './MobileBottomNav'
 const PIN_KEY = 'jangteo.sidebar.pinned'
 
 function AppShell() {
+    return (
+        <RouteVisualThemeProvider>
+            <ThemedAppShell />
+        </RouteVisualThemeProvider>
+    )
+}
+
+function ThemedAppShell() {
+    const { theme } = useRouteVisualTheme()
     // 기본 미고정(localStorage 없으면 false = 레일 + hover). 명세: 버튼 OFF 일 때 hover 가 기본 동작.
     const [pinned, setPinned] = useState(
         () => localStorage.getItem(PIN_KEY) === '1',
@@ -45,7 +59,11 @@ function AppShell() {
     }, [mobileOpen])
 
     return (
-        <div className="relative isolate flex min-h-screen bg-surface-sunken">
+        <div
+            className="relative isolate flex min-h-screen bg-surface-sunken data-[detail-theme]:bg-transparent"
+            data-detail-theme={theme ?? undefined}
+            style={theme ? routeThemeStyle(theme) : undefined}
+        >
             <Sidebar
                 pinned={pinned}
                 mobileOpen={mobileOpen}
@@ -62,7 +80,7 @@ function AppShell() {
                     </div>
                 </main>
 
-                <footer className="relative z-10 hidden border-t border-line bg-surface px-6 py-4 text-xs text-gray-600 xl:block">
+                <footer className="detail-chrome relative z-10 hidden border-t border-line bg-surface px-6 py-4 text-xs text-gray-600 xl:block">
                     © 2026 장터 · 안전한 게임 아이템 거래
                 </footer>
             </div>
