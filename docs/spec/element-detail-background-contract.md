@@ -1,9 +1,9 @@
-# 속성별 상세 배경·효과 적용 계약 v1.0
+# 속성별 상세 배경·효과 적용 계약 v1.1
 
-- 상태: **DECIDED — 게이트2 승인 2026-08-11**
+- 상태: **DECIDED — 게이트2 변경 승인 2026-08-11**
 - 디자인 기준: `docs/ux/mockups/auction-detail-immersive-background.html`의 v3 속성 배경과 효과 B
 - 범위: 경매 상세 `/auctions/:id`, 아이템 인스턴스 상세 `/items/:id`
-- 범위 밖: 경매 목록·홈·마켓 목록 등 공통 목록 배경, AppShell 전역 배경, API·DB 스키마 변경
+- 범위 밖: 경매 목록·홈·마켓 목록 등 다른 라우트의 배경, 영속 AppShell 전역 배경, API·DB 스키마 변경
 
 ## 1. 데이터 연결 계약
 
@@ -22,10 +22,18 @@
 ## 2. 프론트 적용 경계
 
 - 상세 페이지가 속성 키를 계산하고, 표현 전용 배경 컴포넌트에 전달한다.
-- 배경은 해당 라우트 콘텐츠 영역에만 존재한다. `body` 전역 속성 변경과 AppShell 전역 상태를 사용하지
-  않아 라우트 이탈·동시 렌더에서 스타일이 누출되지 않게 한다.
+- 배경은 두 상세 라우트가 마운트된 동안에만 **전체 뷰포트/AppShell 시각 영역**을 채운다. 상세 페이지가
+  수명을 소유하고 라우트 이탈 시 배경 DOM·RAF·listener를 즉시 제거한다.
+- AppShell은 route-scoped 장식 레이어의 stacking 기반만 제공할 수 있다. `body` dataset/class와 라우트
+  이탈 후 남는 AppShell 상태는 사용하지 않으며, 다른 라우트에는 배경 DOM이 존재하지 않아야 한다.
+- 장식 레이어는 `position: fixed; inset: 0`을 기준으로 하되 `100vw`로 scrollbar 폭을 침범하지 않는다.
+  AppShell root의 격리된 stacking context 안에서 배경은 최하위, 내비·콘텐츠·footer는 그 위에 둔다.
+- 콘텐츠 래퍼에는 다이얼로그를 가두는 z-index stacking context를 만들지 않는다. 기존 fixed 다이얼로그
+  `z-50`, TopNavbar `z-30`, Sidebar·모바일 drawer·CompareBar·MobileBottomNav의 상대 순서를 보존한다.
+- `main`이나 route wrapper에 새 overflow/scroll container를 만들지 않아 `BidPanel` sticky와 body 스크롤,
+  다이얼로그의 body scroll-lock 및 `scrollbar-gutter: stable`을 보존한다.
 - 로딩·에러·404에는 중립 배경을 사용한다. 이전 성공 응답의 속성 배경을 남기지 않는다.
-- 기존 상세 콘텐츠, 입찰·구매·판매 액션, 포커스 순서, 모달 z-index를 변경하지 않는다.
+- 기존 상세 콘텐츠와 내비 surface가 대비를 책임지며, 입찰·구매·판매 액션과 포커스 순서를 변경하지 않는다.
 - 목업의 속성 전환기·명암 선택기·효과 선택기는 비교 도구이므로 실제 제품 UI에 넣지 않는다.
 
 ## 3. 자산 계약
@@ -47,6 +55,7 @@
 - 텍스트·컨트롤 대비는 배경 이미지가 아니라 불투명/반투명 콘텐츠 surface가 책임진다. WCAG AA
   (일반 텍스트 4.5:1, 큰 텍스트와 UI 경계 3:1)를 각 4속성에서 검증한다.
 - 320px부터 가로 스크롤이 없어야 하며 확대 200%에서도 주요 액션과 오류 문구가 가려지지 않아야 한다.
+- 전체 뷰포트 배경은 landmark·접근 가능한 이름을 추가하지 않으며 내비와 콘텐츠 읽기 순서에 관여하지 않는다.
 
 ## 5. 성능 계약과 게이트2 결정
 
@@ -76,9 +85,11 @@ DPR 상한, 입자 수 상한, Page Visibility 정지, resize debounce와 지속
 
 - 단위: 코드 1~4 매핑, 미등록 코드 중립 폴백, 경매/아이템 응답 경로 연결.
 - 컴포넌트: 로딩→성공·성공→다른 id·에러 전환에서 이전 배경 잔류 없음.
+- 라우트: 두 상세→목록/다른 route 이탈 즉시 배경 DOM·RAF·listener 0개, 다른 route 직접 진입 시 배경 0개.
 - 접근성: 키보드/스크린리더 회귀 없음, reduced-motion/forced-colors, 320px·200% 확대.
 - 성능: 4종 최적화 파일 상한, 현재 속성 1종만 요청, 이미지 실패 시 기능 유지.
-- 회귀: 경매 입찰·입찰 이력·아이템 상세·모달의 z-index와 포커스 동작 유지.
+- 회귀: 경매 sticky 입찰·입찰 이력·아이템 상세, AppShell 내비·footer, body scroll-lock, 모달의 z-index와
+  포커스 동작 유지.
 
 ## 7. 영향 티켓
 
@@ -89,5 +100,7 @@ DPR 상한, 입자 수 상한, Page Visibility 정지, resize debounce와 지속
 3. `FC-234` — `/auctions/:id` 연결과 입찰·레이어링 회귀 테스트.
 4. `FC-235` — `/items/:id` 연결과 인증 보호 라우트·상태 전환 회귀 테스트.
 5. `FC-236` — 4속성 대비, 감소 모션, 네트워크 요청/자산 크기, 모바일 성능 통합 리뷰.
+6. `FC-237` — route-scoped 전체 뷰포트/AppShell 시각 영역으로 적용 경계 변경.
+7. `FC-238` — stacking·scroll·modal·접근성·성능 재리뷰.
 
 백엔드·DB·API 계약 티켓은 영향받지 않는다. 공통 목록 배경 티켓도 만들지 않는다.
