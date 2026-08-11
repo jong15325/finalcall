@@ -4,17 +4,11 @@ import { describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 import AppShell from './AppShell'
 
-vi.mock('./Sidebar', () => ({
-    default: () => <aside data-testid="shell-sidebar" className="z-20" />,
+vi.mock('@/lib/queries/balance', () => ({
+    useMyBalance: () => ({ data: undefined }),
 }))
-vi.mock('./TopNavbar', () => ({
-    default: () => <header data-testid="shell-navbar" className="z-30" />,
-}))
-vi.mock('./MobileBottomNav', () => ({
-    default: () => <nav data-testid="shell-mobile-nav" className="z-30" />,
-}))
-vi.mock('@/features/item/components/CompareBar', () => ({
-    default: () => <div data-testid="shell-compare" className="z-40" />,
+vi.mock('@/lib/queries/memos', () => ({
+    useUnreadMemoCount: () => ({ data: { count: 0 } }),
 }))
 
 function renderShell(route: string) {
@@ -45,16 +39,35 @@ describe('AppShell route-scoped 상세 배경', () => {
         const scene = view.container.querySelector('.element-detail__scene')
 
         expect(shell).toHaveClass('isolate')
+        expect(shell).toHaveClass('min-h-screen')
         expect(scene).toHaveClass(
             'element-detail__scene',
             'fixed',
             'inset-0',
             'z-0',
         )
-        expect(view.getByTestId('shell-sidebar')).toHaveClass('z-20')
-        expect(view.getByTestId('shell-navbar')).toHaveClass('z-30')
-        expect(view.getByTestId('shell-compare')).toHaveClass('z-40')
-        expect(view.container.querySelector('footer')).toHaveClass('z-10')
+        expect(scene).not.toHaveClass('w-screen')
+        expect(view.getByRole('complementary')).toHaveClass('z-50')
+        expect(view.container.querySelector('header')).toHaveClass(
+            'sticky',
+            'z-30',
+            'bg-surface/95',
+        )
+        expect(
+            view.getByRole('navigation', { name: '모바일 주요 메뉴' }),
+        ).toHaveClass('fixed', 'z-30')
+        expect(
+            view.queryByRole('complementary', { name: '아이템 비교 선택' }),
+        ).toBeNull()
+        expect(view.container.querySelector('footer')).toHaveClass(
+            'z-10',
+            'bg-surface',
+            'text-gray-600',
+        )
+        expect(view.container.querySelector('#view')).not.toHaveClass(
+            'overflow-auto',
+            'overflow-hidden',
+        )
 
         fireEvent.click(view.getByRole('link', { name: '목록으로' }))
         expect(

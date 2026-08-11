@@ -62,7 +62,7 @@ function AppShell() {
                     </div>
                 </main>
 
-                <footer className="relative z-10 hidden border-t border-line px-6 py-4 text-xs text-gray-400 xl:block">
+                <footer className="relative z-10 hidden border-t border-line bg-surface px-6 py-4 text-xs text-gray-600 xl:block">
                     © 2026 장터 · 안전한 게임 아이템 거래
                 </footer>
             </div>

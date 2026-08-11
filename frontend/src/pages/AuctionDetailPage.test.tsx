@@ -144,6 +144,7 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         fireEvent.click(screen.getByRole('button', { name: '입찰 열기' }))
         const dialog = screen.getByRole('dialog')
         expect(dialog.parentElement).toHaveClass('fixed', 'z-50')
+        expect(document.body.style.overflow).toBe('hidden')
         expect(screen.getByRole('complementary')).toHaveClass('z-10')
         const backgroundRoot = dialog.closest('.element-detail')
         expect(backgroundRoot).not.toBeNull()
@@ -155,17 +156,20 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         )
         expect(screen.getByTestId('global-navigation')).toHaveClass('z-30')
         successView.unmount()
+        expect(document.body.style.overflow).toBe('')
 
         const purchaseView = renderPage()
         fireEvent.click(screen.getByTestId('open-purchase'))
         const purchaseDialog = screen.getByRole('dialog')
         expect(purchaseDialog.parentElement).toHaveClass('fixed', 'z-50')
+        expect(document.body.style.overflow).toBe('hidden')
         expect(
             getComputedStyle(
                 purchaseDialog.closest('.element-detail') as Element,
             ).isolation,
         ).not.toBe('isolate')
         purchaseView.unmount()
+        expect(document.body.style.overflow).toBe('')
 
         mocks.detail.mockReturnValue({
             error: new ApiError({
