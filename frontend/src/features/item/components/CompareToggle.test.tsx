@@ -18,9 +18,14 @@ describe('<CompareToggle>', () => {
         ).toHaveAttribute('aria-pressed', 'false')
 
         rerender(<CompareToggle pressed onToggle={() => {}} />)
-        expect(
-            screen.getByRole('button', { name: '비교 담기' }),
-        ).toHaveAttribute('aria-pressed', 'true')
+        const selected = screen.getByRole('button', { name: '비교 담기' })
+        expect(selected).toHaveAttribute('aria-pressed', 'true')
+        expect(selected).toHaveClass(
+            'border-gray-900',
+            'bg-orange',
+            'text-gray-900',
+        )
+        expect(selected).not.toHaveClass('text-white')
     })
 
     it('클릭하면 반대값을 콜백으로 올린다(controlled)', async () => {

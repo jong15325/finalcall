@@ -18,6 +18,7 @@ import CodeAmount from '@/components/common/CodeAmount'
 import Dropdown from '@/components/common/Dropdown'
 import { paths } from '@/app/paths'
 import { usePageContext } from './pageContext'
+import { UNREAD_BADGE_CLASS } from './unreadBadge'
 
 /**
  * 상단 네비게이션 (FC-067 — HANDOVER §5.2). 검색바 없음.
@@ -141,7 +142,9 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                     >
                         <TbMail aria-hidden className="size-5" />
                         {unreadCount > 0 && (
-                            <span className="absolute -right-0.5 -top-0.5 grid min-w-[16px] place-items-center rounded-full bg-orange px-1 text-[10px] font-bold leading-4 text-white ring-2 ring-surface tabular-nums">
+                            <span
+                                className={`absolute -right-0.5 -top-0.5 grid min-w-[16px] place-items-center rounded-full px-1 text-[10px] leading-4 ring-2 ring-surface ${UNREAD_BADGE_CLASS}`}
+                            >
                                 {unreadCount > 99 ? '99+' : unreadCount}
                             </span>
                         )}

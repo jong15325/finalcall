@@ -2,6 +2,7 @@ import { NavLink } from 'react-router'
 import { paths } from '@/app/paths'
 import { useUnreadMemoCount } from '@/lib/queries/memos'
 import { mobileNav } from './navItems'
+import { UNREAD_BADGE_CLASS } from './unreadBadge'
 
 /**
  * 모바일 하단 네비게이션 (FC-067 — HANDOVER §5.3).
@@ -54,7 +55,9 @@ function MobileBottomNav() {
                         <span className="relative">
                             {Icon && <Icon aria-hidden className="size-6" />}
                             {showBadge && (
-                                <span className="absolute -right-2 -top-1 grid min-w-[15px] place-items-center rounded-full bg-orange px-1 text-[9px] font-bold leading-[15px] text-white tabular-nums">
+                                <span
+                                    className={`absolute -right-2 -top-1 grid min-w-[15px] place-items-center rounded-full px-1 text-[9px] leading-[15px] ${UNREAD_BADGE_CLASS}`}
+                                >
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                             )}
