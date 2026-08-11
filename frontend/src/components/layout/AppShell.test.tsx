@@ -87,6 +87,11 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.getByTestId('app-content-plane')).toHaveClass(
             'max-w-[1440px]',
             'bg-surface',
+            'border',
+            'border-line',
+            'rounded-xl',
+            'shadow-sm',
+            'xl:rounded-2xl',
         )
         expect(view.getByTestId('app-content-plane')).not.toHaveClass(
             'overflow-hidden',
@@ -94,11 +99,15 @@ describe('AppShell route-scoped 상세 배경', () => {
             'filter',
             'z-0',
         )
-        expect(view.getByTestId('app-content-plane')).toHaveClass(
-            'xl:border',
-            'xl:border-line',
-            'xl:rounded-xl',
-            'xl:shadow-sm',
+        expect(view.container.querySelector('#view')).toHaveClass(
+            'px-3',
+            'py-4',
+            'pb-16',
+            'sm:px-5',
+            'sm:py-5',
+            'xl:px-8',
+            'xl:py-7',
+            'xl:pb-7',
         )
 
         const focusFrame = vi

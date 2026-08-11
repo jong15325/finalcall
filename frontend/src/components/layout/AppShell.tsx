@@ -92,10 +92,13 @@ function ThemedAppShell() {
                 />
                 {desktop && <HorizontalNav />}
 
-                <main id="view" className="min-w-0 flex-1 pb-16 xl:pb-0">
+                <main
+                    id="view"
+                    className="min-w-0 flex-1 px-3 py-4 pb-16 sm:px-5 sm:py-5 xl:px-8 xl:py-7 xl:pb-7"
+                >
                     <div
                         data-testid="app-content-plane"
-                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] bg-surface px-4 py-6 sm:px-6 xl:rounded-xl xl:border xl:border-line xl:shadow-sm"
+                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] rounded-xl border border-line bg-surface px-4 py-6 shadow-sm sm:px-6 xl:rounded-2xl"
                     >
                         <Outlet />
                     </div>
