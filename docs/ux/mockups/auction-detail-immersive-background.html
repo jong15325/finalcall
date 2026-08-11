@@ -77,25 +77,25 @@
       body[data-element="wind"] .scene {
         background-image:
           linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(17 43 78 / 14%)),
-          url("./assets/finalcall-element-wind-bg-v2.png");
+          url("./assets/finalcall-element-wind-bg-v3.png");
       }
 
       body[data-element="fire"] .scene {
         background-image:
           linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(92 38 9 / 16%)),
-          url("./assets/finalcall-element-fire-bg-v2.png");
+          url("./assets/finalcall-element-fire-bg-v3.png");
       }
 
       body[data-element="earth"] .scene {
         background-image:
           linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(43 61 18 / 14%)),
-          url("./assets/finalcall-element-earth-bg-v2.png");
+          url("./assets/finalcall-element-earth-bg-v3.png");
       }
 
       body[data-element="water"] .scene {
         background-image:
           linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(9 69 96 / 13%)),
-          url("./assets/finalcall-element-water-bg-v2.png");
+          url("./assets/finalcall-element-water-bg-v3.png");
       }
 
       .scene::after {
@@ -105,6 +105,54 @@
           radial-gradient(circle at 50% 34%, rgb(255 255 255 / 7%), transparent 38%),
           linear-gradient(90deg, rgb(15 48 79 / 15%), transparent 24% 76%, rgb(15 48 79 / 15%));
         content: "";
+      }
+
+      .scene::before {
+        position: absolute;
+        inset: -8%;
+        z-index: 1;
+        pointer-events: none;
+        content: "";
+      }
+
+      body[data-element="wind"] .scene::before {
+        background: repeating-radial-gradient(ellipse at 18% 72%, transparent 0 9%, rgb(222 255 244 / 12%) 9.5%, transparent 10.5% 16%);
+        animation: wind-sweep 12s linear infinite;
+      }
+
+      body[data-element="fire"] .scene::before {
+        background: linear-gradient(90deg, transparent 8%, rgb(255 201 91 / 8%) 24%, transparent 40% 64%, rgb(255 114 41 / 8%) 82%, transparent 96%);
+        filter: blur(10px);
+        animation: heat-rise 3.6s ease-in-out infinite alternate;
+      }
+
+      body[data-element="earth"] .scene::before {
+        background: radial-gradient(ellipse at 18% 12%, rgb(67 100 29 / 13%) 0 3%, transparent 4% 9%, rgb(81 117 36 / 9%) 10% 13%, transparent 14%);
+        background-size: 190px 160px;
+        mix-blend-mode: multiply;
+        animation: leaf-shadow 18s ease-in-out infinite alternate;
+      }
+
+      body[data-element="water"] .scene::before {
+        background: repeating-radial-gradient(ellipse at 65% 70%, transparent 0 4%, rgb(205 251 255 / 11%) 4.5%, transparent 5.5% 10%);
+        mix-blend-mode: screen;
+        animation: caustic-drift 9s ease-in-out infinite alternate;
+      }
+
+      @keyframes wind-sweep {
+        to { transform: translate3d(7%, -4%, 0) rotate(2deg); }
+      }
+
+      @keyframes heat-rise {
+        to { transform: translate3d(0, -2.5%, 0) scaleX(1.025); }
+      }
+
+      @keyframes leaf-shadow {
+        to { transform: translate3d(2%, 1%, 0) rotate(1deg); }
+      }
+
+      @keyframes caustic-drift {
+        to { transform: translate3d(-2%, 1.5%, 0) scale(1.035); }
       }
 
       body[data-veil="soft"] .scene {
@@ -654,6 +702,8 @@
         *::after {
           scroll-behavior: auto !important;
           transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
         }
       }
     </style>
@@ -689,9 +739,6 @@
         </div>
 
         <div class="element-switcher" aria-label="아이템 속성 배경 비교">
-          <button type="button" data-element="common" aria-pressed="false">
-            <span class="element-dot" style="--dot: #c8a028"></span>공통
-          </button>
           <button type="button" data-element="wind" aria-pressed="true">
             <span class="element-dot" style="--dot: #66cccc"></span>바람
           </button>
@@ -776,7 +823,7 @@
         </section>
 
         <p class="design-note">
-          v2는 색상 변형이 아니라 실제 PNG의 공간·형태 문법을 리이미징했습니다. 바람은 부유 통로와 바람문, 불은 원형 화염 경기장, 흙은 뿌리 숲의 석조 성소, 물은 곡선 수로 제단으로 장면 구조부터 달라집니다. 거래 셸·금액·입찰 조작은 모든 속성에서 동일합니다.
+          지정 맵을 기반으로 공간 구성부터 다시 리이미징한 v3입니다. 바람은 잎과 공기 궤적, 불은 불씨와 열기, 흙은 먼지와 낙엽 그림자, 물은 기포와 수면 광택이 각각 독립적으로 움직입니다. 공통 배경은 이번 비교에서 제외했습니다.
         </p>
       </div>
     </main>
@@ -813,13 +860,14 @@
       const canvas = document.querySelector(".sky-motes");
       const context = canvas.getContext("2d");
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-      const motes = Array.from({ length: 42 }, (_, index) => ({
+      const particles = Array.from({ length: 48 }, (_, index) => ({
         x: ((index * 47) % 101) / 100,
         y: ((index * 73) % 103) / 102,
-        radius: 0.8 + (index % 4) * 0.45,
-        speed: 0.018 + (index % 5) * 0.004,
-        drift: ((index % 3) - 1) * 0.006,
+        size: 1.5 + (index % 5) * 0.8,
+        speed: 0.012 + (index % 7) * 0.004,
+        drift: ((index % 5) - 2) * 0.004,
         alpha: 0.22 + (index % 5) * 0.08,
+        phase: index * 0.73,
       }));
 
       let width = 0;
@@ -837,42 +885,85 @@
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
       }
 
-      function drawMotes(time = 0) {
+      function drawParticle(particle, time, element) {
+        const x = particle.x * width;
+        const y = particle.y * height;
+        context.globalAlpha = particle.alpha;
+
+        if (element === "wind") {
+          context.strokeStyle = particle.phase % 2 > 1 ? "#e8fff2" : "#a8f0d0";
+          context.lineWidth = Math.max(1, particle.size * 0.35);
+          context.beginPath();
+          context.moveTo(x - particle.size * 5, y + particle.size * 2);
+          context.quadraticCurveTo(x, y - particle.size * 2, x + particle.size * 6, y);
+          context.stroke();
+        } else if (element === "fire") {
+          const glow = context.createRadialGradient(x, y, 0, x, y, particle.size * 4);
+          glow.addColorStop(0, "#fff5a8");
+          glow.addColorStop(0.35, "#ff9a32");
+          glow.addColorStop(1, "rgb(255 70 0 / 0)");
+          context.fillStyle = glow;
+          context.beginPath();
+          context.arc(x, y, particle.size * 4, 0, Math.PI * 2);
+          context.fill();
+        } else if (element === "earth") {
+          context.fillStyle = particle.phase % 2 > 1 ? "#f0d49b" : "#b98c51";
+          context.beginPath();
+          context.ellipse(x, y, particle.size * 1.8, particle.size * 0.7, time * 0.0002 + particle.phase, 0, Math.PI * 2);
+          context.fill();
+        } else {
+          context.strokeStyle = "#d9fbff";
+          context.lineWidth = 1.2;
+          context.beginPath();
+          context.arc(x, y, particle.size * 1.25, 0, Math.PI * 2);
+          context.stroke();
+          context.fillStyle = "rgb(255 255 255 / 0.35)";
+          context.beginPath();
+          context.arc(x - particle.size * 0.35, y - particle.size * 0.35, particle.size * 0.22, 0, Math.PI * 2);
+          context.fill();
+        }
+        context.globalAlpha = 1;
+      }
+
+      function drawEffects(time = 0) {
         const delta = Math.min((time - previousTime) / 1000 || 0, 0.04);
         previousTime = time;
         context.clearRect(0, 0, width, height);
+        const element = document.body.dataset.element;
 
-        motes.forEach((mote) => {
+        particles.forEach((particle) => {
           if (!reducedMotion.matches) {
-            mote.y -= mote.speed * delta;
-            mote.x += mote.drift * delta;
-            if (mote.y < -0.03) mote.y = 1.03;
-            if (mote.x < -0.03) mote.x = 1.03;
-            if (mote.x > 1.03) mote.x = -0.03;
+            if (element === "wind") {
+              particle.x += particle.speed * delta * 2.4;
+              particle.y -= particle.speed * delta * 0.65;
+            } else if (element === "fire") {
+              particle.y -= particle.speed * delta * 1.7;
+              particle.x += Math.sin(time * 0.0015 + particle.phase) * delta * 0.006;
+            } else if (element === "earth") {
+              particle.x += particle.drift * delta;
+              particle.y += Math.sin(time * 0.0007 + particle.phase) * delta * 0.004;
+            } else {
+              particle.y -= particle.speed * delta * 0.8;
+              particle.x += Math.sin(time * 0.001 + particle.phase) * delta * 0.003;
+            }
+            if (particle.y < -0.04) particle.y = 1.04;
+            if (particle.y > 1.04) particle.y = -0.04;
+            if (particle.x < -0.04) particle.x = 1.04;
+            if (particle.x > 1.04) particle.x = -0.04;
           }
-
-          const x = mote.x * width;
-          const y = mote.y * height;
-          const glow = context.createRadialGradient(x, y, 0, x, y, mote.radius * 5);
-          glow.addColorStop(0, `rgb(255 255 255 / ${mote.alpha})`);
-          glow.addColorStop(0.3, `rgb(223 196 71 / ${mote.alpha * 0.52})`);
-          glow.addColorStop(1, "rgb(255 255 255 / 0)");
-          context.fillStyle = glow;
-          context.beginPath();
-          context.arc(x, y, mote.radius * 5, 0, Math.PI * 2);
-          context.fill();
+          drawParticle(particle, time, element);
         });
 
-        if (!reducedMotion.matches) requestAnimationFrame(drawMotes);
+        if (!reducedMotion.matches) requestAnimationFrame(drawEffects);
       }
 
       window.addEventListener("resize", resizeCanvas, { passive: true });
       reducedMotion.addEventListener("change", () => {
         previousTime = 0;
-        drawMotes();
+        drawEffects();
       });
       resizeCanvas();
-      drawMotes();
+      drawEffects();
     </script>
   </body>
 </html>
