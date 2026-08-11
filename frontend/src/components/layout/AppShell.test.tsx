@@ -227,7 +227,9 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.getByText('이용약관 준비 중')).not.toHaveAttribute('href')
         expect(view.getByText('공식 문의 채널 준비 중')).toBeVisible()
-        expect(view.getByText('© 2026 장터. All rights reserved.')).toBeVisible()
+        expect(
+            view.getByText('© 2026 장터. All rights reserved.'),
+        ).toBeVisible()
         expect(view.queryByText(/© 2026 FinalCall/)).toBeNull()
     })
 
