@@ -257,7 +257,7 @@ function AuctionPageRegion({ children }: { children: React.ReactNode }) {
     return (
         <section
             data-testid="auction-page-region"
-            className="auction-detail-region min-w-0 rounded-xl border border-line bg-surface p-3 shadow-sm sm:p-5 lg:p-6 xl:rounded-2xl"
+            className="auction-detail-region min-w-0"
         >
             {children}
         </section>

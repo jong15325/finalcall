@@ -89,7 +89,7 @@ export default function AuctionListPage() {
     return (
         <div
             data-testid="auction-list-region"
-            className="auction-list-region flex min-w-0 flex-col gap-5 rounded-xl border border-line bg-surface p-3 shadow-sm sm:p-5 lg:p-6 xl:rounded-2xl"
+            className="auction-list-region flex min-w-0 flex-col gap-5"
         >
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div>

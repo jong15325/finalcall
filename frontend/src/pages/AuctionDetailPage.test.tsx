@@ -102,11 +102,13 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         mocks.detail.mockReturnValueOnce({ isPending: true })
         const view = renderPage()
         expect(view.container.querySelector('.element-detail')).toBeNull()
-        expect(screen.getByTestId('auction-page-region')).toHaveClass(
+        expect(screen.getByTestId('auction-page-region')).toHaveClass('min-w-0')
+        expect(screen.getByTestId('auction-page-region')).not.toHaveClass(
             'bg-surface',
-            'border-line',
+            'border',
             'rounded-xl',
             'shadow-sm',
+            'p-3',
         )
 
         mocks.detail.mockReturnValue({
@@ -220,8 +222,9 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         })
         const errorView = renderPage('/auctions/NOPE')
         expect(errorView.container.querySelector('.element-detail')).toBeNull()
-        expect(screen.getByTestId('auction-page-region')).toHaveClass(
+        expect(screen.getByTestId('auction-page-region')).not.toHaveClass(
             'bg-surface',
+            'border',
             'rounded-xl',
         )
     })

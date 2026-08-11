@@ -48,6 +48,12 @@ describe('WorldMapBackground', () => {
         )
         const view = render(<WorldMapBackground accent="water" />)
 
+        expect(view.container.firstElementChild).toHaveClass(
+            'absolute',
+            'inset-0',
+            'sm:fixed',
+        )
+
         expect(
             view.container.querySelector(
                 'source[type="image/avif"][media="(max-width: 639px)"]',

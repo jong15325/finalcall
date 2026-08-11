@@ -78,7 +78,7 @@ function ThemedAppShell() {
 
     return (
         <div
-            className="relative isolate flex min-h-screen bg-surface-sunken data-[detail-theme]:bg-transparent"
+            className="relative isolate flex min-h-screen bg-transparent"
             data-detail-theme={theme ?? undefined}
             style={theme ? routeThemeStyle(theme) : undefined}
         >
@@ -87,7 +87,7 @@ function ThemedAppShell() {
                 <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
 
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="relative z-10 flex min-w-0 flex-1 flex-col">
                 <TopNavbar
                     menuButtonRef={menuButtonRef}
                     onOpenMobile={() => setMobileOpen(true)}
@@ -96,11 +96,11 @@ function ThemedAppShell() {
 
                 <main
                     id="view"
-                    className="min-w-0 flex-1 px-3 py-4 pb-16 sm:px-5 sm:py-5 sm:pb-16 xl:px-8 xl:py-7 xl:pb-7"
+                    className="min-w-0 flex-1 px-3 py-2 pb-20 sm:px-5 sm:py-5 sm:pb-20 xl:px-8 xl:py-7 xl:pb-7"
                 >
                     <div
                         data-testid="app-content-plane"
-                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] rounded-xl border border-line bg-surface px-4 py-6 shadow-sm sm:px-6 xl:rounded-2xl"
+                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] bg-surface px-3 py-4 sm:rounded-xl sm:border sm:border-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl"
                     >
                         <Outlet />
                     </div>

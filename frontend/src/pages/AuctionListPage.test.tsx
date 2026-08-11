@@ -97,17 +97,13 @@ describe('AuctionListPage 밝은 region', () => {
         const view = renderPage(true)
         const scene = view.container.querySelector('.element-detail__scene')
         const region = screen.getByTestId('auction-list-region')
-        expect(region).toHaveClass(
-            'bg-surface',
-            'p-3',
-            'sm:p-5',
-            'lg:p-6',
-            'rounded-xl',
-            'xl:rounded-2xl',
-            'border-line',
-            'shadow-sm',
-        )
+        expect(region).toHaveClass('min-w-0', 'flex', 'gap-5')
         expect(region).not.toHaveClass(
+            'bg-surface',
+            'border',
+            'rounded-xl',
+            'shadow-sm',
+            'p-3',
             'overflow-hidden',
             'transform',
             'filter',

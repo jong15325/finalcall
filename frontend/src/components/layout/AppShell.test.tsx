@@ -69,9 +69,10 @@ describe('AppShell route-scoped 상세 배경', () => {
         })
         expect(scene).toHaveClass(
             'world-map-background',
-            'fixed',
+            'absolute',
             'inset-0',
             'z-0',
+            'sm:fixed',
         )
         expect(scene).not.toHaveClass('w-screen')
         expect(view.container.querySelector('aside')).toBeNull()
@@ -99,10 +100,10 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.getByTestId('app-content-plane')).toHaveClass(
             'max-w-[1440px]',
             'bg-surface',
-            'border',
-            'border-line',
-            'rounded-xl',
-            'shadow-sm',
+            'sm:border',
+            'sm:border-line',
+            'sm:rounded-xl',
+            'sm:shadow-sm',
             'xl:rounded-2xl',
         )
         expect(view.getByTestId('app-content-plane')).not.toHaveClass(
@@ -113,11 +114,11 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.container.querySelector('#view')).toHaveClass(
             'px-3',
-            'py-4',
-            'pb-16',
+            'py-2',
+            'pb-20',
             'sm:px-5',
             'sm:py-5',
-            'sm:pb-16',
+            'sm:pb-20',
             'xl:px-8',
             'xl:py-7',
             'xl:pb-7',
@@ -125,12 +126,28 @@ describe('AppShell route-scoped 상세 배경', () => {
         const classes = view.container.querySelector('#view')?.className ?? ''
         const resolvedBottomPadding = (width: number) => {
             if (width >= 1280 && classes.includes('xl:pb-7')) return 28
-            if (width >= 640 && classes.includes('sm:pb-16')) return 64
-            return classes.includes('pb-16') ? 64 : 0
+            if (width >= 640 && classes.includes('sm:pb-20')) return 80
+            return classes.includes('pb-20') ? 80 : 0
         }
-        expect([320, 640, 1279, 1280].map(resolvedBottomPadding)).toEqual([
-            64, 64, 64, 28,
+        expect([320, 390, 1280, 1440].map(resolvedBottomPadding)).toEqual([
+            80, 80, 28, 28,
         ])
+
+        const contentPlane = view.getByTestId('app-content-plane')
+        expect(contentPlane).toHaveClass('w-full', 'min-w-0', 'px-3')
+        expect(contentPlane).not.toHaveClass(
+            'border',
+            'rounded-xl',
+            'shadow-sm',
+        )
+        expect(scene?.nextElementSibling).toHaveClass('relative', 'z-10')
+
+        const mobileContentWidth = (viewportWidth: number) =>
+            viewportWidth - 24 - 24
+        expect([320, 390].map(mobileContentWidth)).toEqual([272, 342])
+        expect([320, 390].every((width) => mobileContentWidth(width) > 0)).toBe(
+            true,
+        )
 
         const focusFrame = vi
             .spyOn(window, 'requestAnimationFrame')
