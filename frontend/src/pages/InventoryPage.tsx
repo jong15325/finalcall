@@ -10,6 +10,7 @@ import { isArrived } from '@/features/delivery/lib/deliveryView'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useDeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 인벤토리 `/me/inventory` (FC-076 → FC-177 개편 → FC-178 마켓 카드 이식).
@@ -29,6 +30,14 @@ export default function InventoryPage() {
     const deliveryQuery = useDeliveryLookup()
     const deliveries = deliveryQuery.data
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
+    useAppFooterVariant(
+        !inventoryQuery.isPending &&
+            (inventoryQuery.isError ||
+                !inventoryQuery.data ||
+                inventoryQuery.data.items.length === 0)
+            ? 'compact'
+            : 'default',
+    )
 
     // 게임 도착(APPLIED) 배송 — 상단 배너로 세션 1회 알린다. APPLIED 아이템은 IN_GAME 으로 빠져
     // 인벤 목록엔 없으므로 배송 lookup 에서 직접 뽑는다.
@@ -121,4 +130,3 @@ export default function InventoryPage() {
         </div>
     )
 }
-

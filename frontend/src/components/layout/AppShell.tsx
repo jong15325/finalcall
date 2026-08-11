@@ -85,7 +85,7 @@ function ThemedAppShell() {
 
     return (
         <div
-            className="relative isolate flex min-h-screen min-h-[100dvh] bg-transparent"
+            className="app-shell-height relative isolate flex bg-transparent"
             data-detail-theme={theme ?? undefined}
             style={theme ? routeThemeStyle(theme) : undefined}
         >

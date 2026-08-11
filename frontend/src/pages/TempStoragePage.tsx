@@ -7,6 +7,7 @@ import { relocateErrorMessage } from '@/features/member/lib/relocateErrors'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useMyTempStorage, useRelocateItem } from '@/lib/queries/tempStorage'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 임시 보관함 `/me/temp-storage` (FC-076 — 목업 `.storage-list` · design-brief B-10).
@@ -26,6 +27,11 @@ export default function TempStoragePage() {
     const [activeId, setActiveId] = useState<string | null>(null)
 
     const items = tempQuery.data?.pages.flatMap((page) => page.content) ?? []
+    useAppFooterVariant(
+        !tempQuery.isPending && (tempQuery.isError || items.length === 0)
+            ? 'compact'
+            : 'default',
+    )
 
     // 스크롤 무한 누적(FC-087 · 목업 §17) — cursor 페이지를 감시점으로 이어 로드.
     const sentinelRef = useInfiniteScroll({

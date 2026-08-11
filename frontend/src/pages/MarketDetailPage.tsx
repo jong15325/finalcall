@@ -12,6 +12,7 @@ import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
 import { buildReturnUrlQuery } from '@/lib/returnUrl'
 import { hasErrorCode } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 고정가 마켓 상세·구매 `/market/:id` (FC-094 게이트 — 경매 상세를 고정가로 변형).
@@ -51,6 +52,11 @@ export default function MarketDetailPage() {
     }, [toast])
 
     const shop = detailQuery.data
+    useAppFooterVariant(
+        !detailQuery.isPending && (detailQuery.isError || !shop)
+            ? 'compact'
+            : 'default',
+    )
 
     // ── 로딩 ────────────────────────────────────────────────────────────────
     if (detailQuery.isPending) {

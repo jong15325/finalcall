@@ -21,6 +21,7 @@ import CommentSection from '@/features/board/components/CommentSection'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시글 상세 `/boards/:slug/:postId` (FC-202 — 승인 화면 C).
@@ -108,6 +109,9 @@ export default function PostDetailPage() {
     // 글 없음(삭제·미존재) — 상세 대신 안내.
     const notFound =
         isError && isApiError(error) && error.code === ERROR_CODES.POST_001
+    useAppFooterVariant(
+        !isPending && (notFound || isError || !post) ? 'compact' : 'default',
+    )
 
     if (notFound) {
         return (

@@ -15,6 +15,7 @@ import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
 import type { BoardResponse } from '@/lib/api/boards'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시글 작성/수정 (FC-202 — 승인 화면 D). `/boards/:slug/write`(작성)·`/boards/:slug/:postId/edit`(수정).
@@ -76,6 +77,15 @@ function CreatePostView({ slug }: { slug: string }) {
     const boardQuery = useBoard(slug)
     const isAdmin = useIsAdmin()
     const createMutation = useCreatePost(slug)
+    const writeDenied =
+        boardQuery.data !== undefined &&
+        !canWriteBoard(boardQuery.data, true, isAdmin)
+    useAppFooterVariant(
+        !boardQuery.isPending &&
+            (boardQuery.isError || !boardQuery.data || writeDenied)
+            ? 'compact'
+            : 'default',
+    )
 
     if (boardQuery.isPending) return <FormSkeleton />
 
@@ -146,6 +156,18 @@ function EditPostView({ slug, postId }: { slug: string; postId: string }) {
     const boardQuery = useBoard(slug)
     const postQuery = usePostDetail(slug, postId)
     const updateMutation = useUpdatePost(slug, postId)
+    const editDenied = postQuery.data !== undefined && !postQuery.data.editable
+    useAppFooterVariant(
+        !boardQuery.isPending &&
+            !postQuery.isPending &&
+            (boardQuery.isError ||
+                !boardQuery.data ||
+                postQuery.isError ||
+                !postQuery.data ||
+                editDenied)
+            ? 'compact'
+            : 'default',
+    )
 
     if (boardQuery.isPending || postQuery.isPending) return <FormSkeleton />
 

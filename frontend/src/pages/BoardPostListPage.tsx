@@ -21,6 +21,7 @@ import EventPostCard from '@/features/board/components/EventPostCard'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시판 글 목록 `/boards/:slug` (FC-202 — 승인 화면 B).
@@ -72,6 +73,11 @@ export default function BoardPostListPage() {
         boardQuery.isError &&
         isApiError(boardQuery.error) &&
         boardQuery.error.code === ERROR_CODES.BOARD_001
+    useAppFooterVariant(
+        boardNotFound || (!isPending && posts.length === 0)
+            ? 'compact'
+            : 'default',
+    )
 
     if (boardNotFound) {
         return (

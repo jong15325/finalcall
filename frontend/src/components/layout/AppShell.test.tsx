@@ -1,4 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
 import { Link, MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
@@ -10,7 +11,11 @@ import { useAppFooterVariant } from './AppFooterContext'
 
 function CompactPage() {
     useAppFooterVariant('compact')
-    return <main>짧은 상태</main>
+    return (
+        <main>
+            짧은 상태 <Link to="/market">정상 route로</Link>
+        </main>
+    )
 }
 
 vi.mock('@/lib/queries/balance', () => ({
@@ -99,13 +104,21 @@ function renderShell(route: string) {
 }
 
 describe('AppShell route-scoped 상세 배경', () => {
+    it('production 입력 CSS에서 100vh fallback 뒤에 100dvh를 선언한다', () => {
+        const appCss = readFileSync(`${process.cwd()}/src/index.css`, 'utf8')
+        expect(appCss.indexOf('min-height: 100vh')).toBeLessThan(
+            appCss.indexOf('@supports (min-height: 100dvh)'),
+        )
+        expect(appCss).toContain('min-height: 100dvh')
+    })
+
     it('상세 route에서 fixed 배경을 chrome 아래에 둔다', () => {
         const view = renderShell('/auctions/A-1')
         const shell = view.container.firstElementChild
         const scene = view.container.querySelector('.world-map-background')
 
         expect(shell).toHaveClass('isolate')
-        expect(shell).toHaveClass('min-h-screen', 'min-h-[100dvh]')
+        expect(shell).toHaveClass('app-shell-height')
         expect(shell).toHaveAttribute('data-detail-theme', 'fire')
         expect(shell).toHaveStyle({
             '--detail-accent': '#ff5500',
@@ -249,6 +262,11 @@ describe('AppShell route-scoped 상세 배경', () => {
         ).toBeVisible()
         expect(shortView.getByTestId('app-content-plane')).not.toHaveClass(
             'min-h-full',
+        )
+        fireEvent.click(shortView.getByRole('link', { name: '정상 route로' }))
+        expect(shortView.container.querySelector('footer')).toHaveAttribute(
+            'data-variant',
+            'default',
         )
         shortView.unmount()
 

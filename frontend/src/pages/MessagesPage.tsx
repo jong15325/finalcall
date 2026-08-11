@@ -17,6 +17,7 @@ import {
 } from '@/lib/queries/memos'
 import type { MemoBox } from '@/features/memo/lib/memoView'
 import type { MemoSummary, SendMemoRequest } from '@/lib/api/memos'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 쪽지 `/me/messages` (FC-172 · 계약 §2.6).
@@ -45,6 +46,9 @@ export default function MessagesPage() {
     const memos = useMemo(
         () => active.data?.pages.flatMap((page) => page.content) ?? [],
         [active.data],
+    )
+    useAppFooterVariant(
+        !active.isPending && memos.length === 0 ? 'compact' : 'default',
     )
 
     const detail = useMemoDetail(selectedId)

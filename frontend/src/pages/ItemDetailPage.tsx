@@ -6,6 +6,7 @@ import { hasErrorCode } from '@/lib/api/errors'
 import { useItemInstance } from '@/lib/queries/items'
 import { ERROR_CODES } from '@/types/errorCodes'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 보유 아이템 인스턴스 상세 `/items/{id}` (FC-077 — 목업 `itemDetail()` · design-brief B-11).
@@ -17,6 +18,11 @@ import ElementDetailBackground from '@/features/item/components/ElementDetailBac
 export default function ItemDetailPage() {
     const { id = '' } = useParams()
     const detailQuery = useItemInstance(id)
+    useAppFooterVariant(
+        !detailQuery.isPending && (detailQuery.isError || !detailQuery.data)
+            ? 'compact'
+            : 'default',
+    )
 
     if (detailQuery.isPending) {
         return <DetailSkeleton />

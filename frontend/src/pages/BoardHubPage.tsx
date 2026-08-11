@@ -2,6 +2,7 @@ import { TbMessageCircle, TbAlertTriangle } from 'react-icons/tb'
 import { useBoards } from '@/lib/queries/boards'
 import BoardHubCard from '@/features/board/components/BoardHubCard'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시판 허브 `/boards` (FC-202 — 디자인 게이트 승인 화면 A).
@@ -12,6 +13,11 @@ import BoardStateBlock from '@/features/board/components/BoardStateBlock'
  */
 export default function BoardHubPage() {
     const { data: boards, isPending, isError, refetch } = useBoards()
+    useAppFooterVariant(
+        !isPending && (isError || !boards || boards.length === 0)
+            ? 'compact'
+            : 'default',
+    )
 
     return (
         <div className="flex flex-col gap-5">

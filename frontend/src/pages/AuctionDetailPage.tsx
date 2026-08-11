@@ -24,6 +24,7 @@ import { buildReturnUrlQuery } from '@/lib/returnUrl'
 import { hasErrorCode } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 경매 상세·입찰 (FC-072 — 목업 `#auction-detail` · design-brief B-3/B-4 · rebuild-contract-map §2).
@@ -66,6 +67,11 @@ export default function AuctionDetailPage() {
     }, [toast])
 
     const auction = detailQuery.data
+    useAppFooterVariant(
+        !detailQuery.isPending && (detailQuery.isError || !auction)
+            ? 'compact'
+            : 'default',
+    )
 
     // ── 로딩 ────────────────────────────────────────────────────────────────
     if (detailQuery.isPending) {

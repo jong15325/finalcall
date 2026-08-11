@@ -11,6 +11,7 @@ import MyShopsSection from '@/features/shop/components/MyShopsSection'
 import { useMe, useUpdateNickname, useWithdraw } from '@/lib/queries/me'
 import { useMyBalance } from '@/lib/queries/balance'
 import { resetSessionState } from '@/lib/api/session'
+import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 마이페이지 통합 홈 `/me` (FC-074 — 목업 accountHub('profile')=accountOverview · design-brief B-7).
@@ -28,6 +29,11 @@ export default function MePage() {
     const balanceQuery = useMyBalance()
     const nicknameMutation = useUpdateNickname()
     const withdrawMutation = useWithdraw()
+    useAppFooterVariant(
+        !meQuery.isPending && (meQuery.isError || !meQuery.data)
+            ? 'compact'
+            : 'default',
+    )
 
     const [withdrawOpen, setWithdrawOpen] = useState(false)
 
