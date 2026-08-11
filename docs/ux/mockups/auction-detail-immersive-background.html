@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FinalCall 몰입형 배경 레이아웃 목업</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --navy: #16213a;
+        --navy-900: #101a2e;
+        --gold: #c8a028;
+        --gold-bright: #dfc447;
+        --orange: #ef8a2c;
+        --surface: #fff;
+        --surface-soft: #f4f5f8;
+        --ink: #171a20;
+        --muted: #596273;
+        --line: #dde1e8;
+        --line-strong: #8b93a1;
+        --success: #14742f;
+        --danger: #c81e1e;
+        --z-bg: 0;
+        --z-content: 10;
+        --z-header: 20;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-width: 320px;
+        background: var(--navy-900);
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background: var(--navy-900);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 3px solid var(--orange);
+        outline-offset: 3px;
+      }
+
+      .scene {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-bg);
+        background:
+          linear-gradient(180deg, rgb(7 14 27 / 34%), rgb(7 14 27 / 68%)),
+          url("./assets/finalcall-auction-hall-bg-v1.png") center / cover no-repeat;
+      }
+
+      .scene::after {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 50% 38%, transparent 0 25%, rgb(5 12 24 / 20%) 68%),
+          linear-gradient(90deg, rgb(5 12 24 / 22%), transparent 24% 76%, rgb(5 12 24 / 22%));
+        content: "";
+      }
+
+      body[data-veil="soft"] .scene {
+        filter: saturate(0.84) brightness(0.82);
+      }
+
+      body[data-veil="deep"] .scene {
+        filter: saturate(0.72) brightness(0.64);
+      }
+
+      .topbar {
+        position: relative;
+        z-index: var(--z-header);
+        min-height: 68px;
+        border-bottom: 1px solid rgb(255 255 255 / 13%);
+        color: #fff;
+        background: rgb(10 20 37 / 88%);
+        box-shadow: 0 10px 28px rgb(3 8 18 / 18%);
+      }
+
+      .topbar-inner {
+        display: flex;
+        width: min(1180px, calc(100% - 40px));
+        min-height: 68px;
+        margin-inline: auto;
+        align-items: center;
+        gap: 28px;
+      }
+
+      .brand {
+        color: #fff;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.035em;
+        text-decoration: none;
+      }
+
+      .brand span {
+        color: var(--gold-bright);
+      }
+
+      nav {
+        display: flex;
+        gap: 24px;
+        margin-left: 18px;
+      }
+
+      nav a {
+        color: rgb(255 255 255 / 82%);
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      nav a[aria-current="page"] {
+        color: #fff;
+      }
+
+      .account {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
+        color: rgb(255 255 255 / 78%);
+        font-size: 13px;
+      }
+
+      .balance {
+        color: #fff;
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+
+      .stage {
+        position: relative;
+        z-index: var(--z-content);
+        min-height: calc(100vh - 68px);
+        padding: 28px 20px 64px;
+      }
+
+      .shell {
+        width: min(1180px, 100%);
+        margin-inline: auto;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        color: #fff;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0;
+        color: rgb(255 255 255 / 76%);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .breadcrumb strong {
+        color: #fff;
+      }
+
+      .veil-picker {
+        display: flex;
+        padding: 4px;
+        border: 1px solid rgb(255 255 255 / 22%);
+        border-radius: 7px;
+        background: rgb(8 17 32 / 74%);
+      }
+
+      .veil-picker button {
+        min-height: 34px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 5px;
+        color: rgb(255 255 255 / 76%);
+        background: transparent;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .veil-picker button[aria-pressed="true"] {
+        color: var(--navy);
+        background: #fff;
+      }
+
+      .content-frame {
+        padding: clamp(20px, 3vw, 34px);
+        border: 1px solid rgb(255 255 255 / 44%);
+        border-radius: 10px;
+        background: rgb(250 251 253 / 94%);
+        box-shadow:
+          0 26px 80px rgb(3 9 19 / 34%),
+          0 2px 8px rgb(3 9 19 / 18%);
+        backdrop-filter: blur(6px);
+      }
+
+      .title-row {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 24px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .status {
+        display: inline-flex;
+        min-height: 26px;
+        padding: 4px 8px;
+        align-items: center;
+        border: 1px solid #aab2bf;
+        border-radius: 5px;
+        color: var(--navy);
+        background: #fff;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 9px 0 6px;
+        font-size: clamp(24px, 3.4vw, 36px);
+        line-height: 1.18;
+        letter-spacing: -0.035em;
+        text-wrap: balance;
+      }
+
+      .seller {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .watch {
+        min-width: 120px;
+        min-height: 42px;
+        padding: 0 15px;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        color: var(--navy);
+        background: #fff;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      .auction-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
+        gap: clamp(22px, 4vw, 46px);
+        padding-top: clamp(22px, 3vw, 34px);
+      }
+
+      .item-window {
+        position: relative;
+        display: grid;
+        min-height: 420px;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid #0c1424;
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 50% 40%, rgb(200 160 40 / 15%), transparent 28%),
+          linear-gradient(145deg, #111b30, #060b14 70%);
+      }
+
+      .item-window::before {
+        position: absolute;
+        inset: 18px;
+        border: 1px solid rgb(200 160 40 / 22%);
+        border-radius: 5px;
+        content: "";
+      }
+
+      .item-art {
+        position: relative;
+        display: grid;
+        width: min(220px, 52%);
+        aspect-ratio: 1;
+        place-items: center;
+        border: 1px solid rgb(223 196 71 / 42%);
+        border-radius: 50%;
+        color: var(--gold-bright);
+        background: radial-gradient(circle, rgb(200 160 40 / 14%), transparent 67%);
+        box-shadow: 0 0 80px rgb(200 160 40 / 12%);
+        font-size: clamp(64px, 9vw, 104px);
+      }
+
+      .item-caption {
+        position: absolute;
+        right: 22px;
+        bottom: 19px;
+        left: 22px;
+        display: flex;
+        justify-content: space-between;
+        color: rgb(255 255 255 / 68%);
+        font-size: 12px;
+      }
+
+      .item-caption strong {
+        color: #fff;
+      }
+
+      .bid-panel {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+      }
+
+      .time-box {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .countdown {
+        color: var(--danger);
+        font-size: 27px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--success);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .live::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--success);
+        content: "";
+      }
+
+      .price-block {
+        padding: 24px 0 20px;
+      }
+
+      .price {
+        margin: 0;
+        color: var(--navy);
+        font-size: clamp(29px, 4vw, 42px);
+        font-variant-numeric: tabular-nums;
+        font-weight: 900;
+        letter-spacing: -0.035em;
+      }
+
+      .price small {
+        margin-left: 4px;
+        font-size: 17px;
+      }
+
+      .price-note {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .bid-form {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--surface-soft);
+      }
+
+      .bid-form label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .input-wrap {
+        position: relative;
+        min-width: 0;
+        flex: 1;
+      }
+
+      .input-wrap input {
+        width: 100%;
+        height: 48px;
+        padding: 0 52px 0 13px;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        color: var(--ink);
+        background: #fff;
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+
+      .input-wrap span {
+        position: absolute;
+        top: 50%;
+        right: 13px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        transform: translateY(-50%);
+      }
+
+      .bid-button {
+        min-width: 112px;
+        height: 48px;
+        border: 1px solid var(--navy-900);
+        border-radius: 6px;
+        color: #fff;
+        background: var(--navy);
+        cursor: pointer;
+        font-weight: 850;
+      }
+
+      .bid-button:hover {
+        background: #223458;
+      }
+
+      .quick-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 18px 0 0;
+      }
+
+      .quick-info div {
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .quick-info dd,
+      .quick-info dt {
+        margin: 0;
+      }
+
+      .quick-info dt {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .quick-info dd {
+        margin-top: 4px;
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+
+      .design-note {
+        width: min(1180px, 100%);
+        margin: 16px auto 0;
+        padding: 13px 16px;
+        border: 1px solid rgb(255 255 255 / 18%);
+        border-radius: 7px;
+        color: rgb(255 255 255 / 82%);
+        background: rgb(8 17 32 / 72%);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 820px) {
+        nav {
+          display: none;
+        }
+
+        .auction-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .item-window {
+          min-height: 330px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .topbar-inner {
+          width: calc(100% - 28px);
+        }
+
+        .account > span:first-child {
+          display: none;
+        }
+
+        .stage {
+          padding: 16px 10px 40px;
+        }
+
+        .toolbar {
+          align-items: start;
+          flex-direction: column;
+        }
+
+        .content-frame {
+          padding: 18px 14px 22px;
+          border-radius: 8px;
+        }
+
+        .title-row {
+          flex-direction: column;
+        }
+
+        .watch {
+          width: 100%;
+        }
+
+        .item-window {
+          min-height: 270px;
+        }
+
+        .input-row {
+          flex-direction: column;
+        }
+
+        .bid-button {
+          width: 100%;
+        }
+
+        .scene {
+          background-position: 62% center;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body data-veil="soft">
+    <div class="scene" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#" aria-label="FinalCall 홈">FINAL<span>CALL</span></a>
+        <nav aria-label="주요 메뉴">
+          <a href="#" aria-current="page">경매장</a>
+          <a href="#">아이템 등록</a>
+          <a href="#">거래 내역</a>
+          <a href="#">커뮤니티</a>
+        </nav>
+        <div class="account">
+          <span>보유 캐시</span>
+          <span class="balance">1,250,000 C</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div class="shell">
+        <div class="toolbar">
+          <p class="breadcrumb"><span>경매장</span><span>›</span><strong>아이템 상세</strong></p>
+          <div class="veil-picker" aria-label="배경 명암 비교">
+            <button type="button" data-veil="clear" aria-pressed="false">원본</button>
+            <button type="button" data-veil="soft" aria-pressed="true">권장</button>
+            <button type="button" data-veil="deep" aria-pressed="false">집중</button>
+          </div>
+        </div>
+
+        <section class="content-frame" aria-labelledby="auctionTitle">
+          <div class="title-row">
+            <div>
+              <span class="status">진행 중</span>
+              <h1 id="auctionTitle">바람을 가르는 검</h1>
+              <p class="seller">판매자 blacksmith77 · 등록번호 A-20260723</p>
+            </div>
+            <button class="watch" type="button">☆ 관심 등록</button>
+          </div>
+
+          <div class="auction-grid">
+            <section aria-label="아이템 미리보기">
+              <div class="item-window">
+                <div class="item-art" aria-label="검 아이템 예시">⚔</div>
+                <div class="item-caption">
+                  <span>장비 · 검</span>
+                  <strong>희귀도 ★★★★☆</strong>
+                </div>
+              </div>
+            </section>
+
+            <aside class="bid-panel" aria-label="입찰 정보">
+              <div class="time-box">
+                <div>
+                  <span class="label">남은 시간</span>
+                  <strong class="countdown">00:14:27</strong>
+                </div>
+                <span class="live">실시간 갱신</span>
+              </div>
+
+              <div class="price-block">
+                <span class="label">현재 최고가</span>
+                <p class="price">840,000<small>C</small></p>
+                <p class="price-note">입찰 24회 · 다음 최소 입찰가 850,000 C</p>
+              </div>
+
+              <form class="bid-form">
+                <label for="bidAmount">입찰 금액</label>
+                <div class="input-row">
+                  <div class="input-wrap">
+                    <input id="bidAmount" value="850,000" inputmode="numeric" />
+                    <span>캐시</span>
+                  </div>
+                  <button class="bid-button" type="button">입찰하기</button>
+                </div>
+              </form>
+
+              <dl class="quick-info">
+                <div>
+                  <dt>즉시 구매가</dt>
+                  <dd>1,200,000 C</dd>
+                </div>
+                <div>
+                  <dt>내 보유 캐시</dt>
+                  <dd>1,250,000 C</dd>
+                </div>
+                <div>
+                  <dt>시작가</dt>
+                  <dd>500,000 C</dd>
+                </div>
+                <div>
+                  <dt>마감 일시</dt>
+                  <dd>오늘 23:30</dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
+        </section>
+
+        <p class="design-note">
+          레이아웃 방식만 참고한 FinalCall 전용 시안입니다. 배경은 뷰포트에 고정되고, 거래 콘텐츠는 독립된 고대비 셸에서 스크롤됩니다. “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
+        </p>
+      </div>
+    </main>
+
+    <script>
+      const buttons = document.querySelectorAll("[data-veil]");
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          document.body.dataset.veil = button.dataset.veil;
+          buttons.forEach((candidate) => {
+            candidate.setAttribute("aria-pressed", String(candidate === button));
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
