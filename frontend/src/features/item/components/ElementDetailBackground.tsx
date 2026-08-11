@@ -9,9 +9,11 @@ const BACKGROUND_ROOT = '/img/backgrounds/item-elements'
 export default function ElementDetailBackground({
     element,
     children,
+    ambientOnly = false,
 }: {
     element: number
     children: React.ReactNode
+    ambientOnly?: boolean
 }) {
     const key = toElementKey(element)
     const [loadedKey, setLoadedKey] = useState<ElementKey | null>(null)
@@ -46,7 +48,7 @@ export default function ElementDetailBackground({
 
     return (
         <div
-            className="element-detail"
+            className={`element-detail ${ambientOnly ? 'element-detail--ambient-only' : ''}`}
             data-element={key ?? 'neutral'}
             data-background-loaded={loadedKey === key ? 'true' : 'false'}
             data-performance={lowPower ? 'reduced' : 'full'}

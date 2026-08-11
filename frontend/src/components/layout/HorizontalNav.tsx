@@ -11,16 +11,43 @@ function pathIsActive(pathname: string, target: string) {
 
 function GroupMenu({ group }: { group: NavGroup }) {
     const { pathname } = useLocation()
-    const [open, setOpen] = useState(false)
+    const [explicitOpen, setExplicitOpen] = useState(false)
+    const [hoverOpen, setHoverOpen] = useState(false)
+    const [finePointer, setFinePointer] = useState(false)
     const rootRef = useRef<HTMLLIElement>(null)
     const triggerRef = useRef<HTMLButtonElement>(null)
     const focusFirstOnOpenRef = useRef(false)
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const panelId = useId()
+    const open = explicitOpen || hoverOpen
     const active = group.children.some((child) =>
         pathIsActive(pathname, child.to),
     )
 
-    useEffect(() => setOpen(false), [pathname])
+    const clearCloseTimer = () => {
+        if (closeTimerRef.current !== null) clearTimeout(closeTimerRef.current)
+        closeTimerRef.current = null
+    }
+
+    useEffect(() => {
+        const media = window.matchMedia('(hover: hover) and (pointer: fine)')
+        const update = () => {
+            setFinePointer(media.matches)
+            if (!media.matches) {
+                clearCloseTimer()
+                setHoverOpen(false)
+            }
+        }
+        update()
+        media.addEventListener('change', update)
+        return () => media.removeEventListener('change', update)
+    }, [])
+    useEffect(() => {
+        clearCloseTimer()
+        setExplicitOpen(false)
+        setHoverOpen(false)
+    }, [pathname])
+    useEffect(() => () => clearCloseTimer(), [])
     useEffect(() => {
         if (!open || !focusFirstOnOpenRef.current) return
         focusFirstOnOpenRef.current = false
@@ -29,7 +56,10 @@ function GroupMenu({ group }: { group: NavGroup }) {
     useEffect(() => {
         if (!open) return
         const onPointer = (event: MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+            if (!rootRef.current?.contains(event.target as Node)) {
+                setExplicitOpen(false)
+                setHoverOpen(false)
+            }
         }
         document.addEventListener('mousedown', onPointer)
         return () => document.removeEventListener('mousedown', onPointer)
@@ -48,8 +78,25 @@ function GroupMenu({ group }: { group: NavGroup }) {
             className="relative flex"
             onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget)) {
-                    setOpen(false)
+                    setExplicitOpen(false)
+                    setHoverOpen(false)
                 }
+            }}
+            onMouseEnter={() => {
+                clearCloseTimer()
+                if (finePointer) setHoverOpen(true)
+            }}
+            onMouseLeave={() => {
+                if (
+                    !finePointer ||
+                    rootRef.current?.contains(document.activeElement)
+                )
+                    return
+                clearCloseTimer()
+                closeTimerRef.current = setTimeout(() => {
+                    setHoverOpen(false)
+                    closeTimerRef.current = null
+                }, 150)
             }}
         >
             <button
@@ -63,14 +110,20 @@ function GroupMenu({ group }: { group: NavGroup }) {
                         ? 'border-orange text-gray-900'
                         : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
-                onClick={() => setOpen((value) => !value)}
+                onClick={() => {
+                    if (hoverOpen && !explicitOpen) setExplicitOpen(true)
+                    else setExplicitOpen((value) => !value)
+                }}
                 onKeyDown={(event) => {
                     if (event.key === 'ArrowDown') {
                         event.preventDefault()
                         focusFirstOnOpenRef.current = true
-                        setOpen(true)
+                        setExplicitOpen(true)
                     }
-                    if (event.key === 'Escape') setOpen(false)
+                    if (event.key === 'Escape') {
+                        setExplicitOpen(false)
+                        setHoverOpen(false)
+                    }
                 }}
             >
                 <group.icon aria-hidden className="size-[18px]" />
@@ -103,7 +156,8 @@ function GroupMenu({ group }: { group: NavGroup }) {
                             ]?.focus()
                         } else if (event.key === 'Escape') {
                             event.preventDefault()
-                            setOpen(false)
+                            setExplicitOpen(false)
+                            setHoverOpen(false)
                             triggerRef.current?.focus()
                         }
                     }}

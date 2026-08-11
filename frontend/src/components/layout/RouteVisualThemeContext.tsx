@@ -57,6 +57,8 @@ const RouteVisualThemeContext = createContext<RouteVisualThemeValue>({
 
 function isDetailPath(pathname: string) {
     return Boolean(
+        pathname === '/auctions' ||
+        pathname === '/auctions/' ||
         matchPath('/auctions/:id', pathname) ||
         matchPath('/items/:id', pathname),
     )

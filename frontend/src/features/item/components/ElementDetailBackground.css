@@ -80,7 +80,10 @@
     min-width: 0;
 }
 
-.element-detail__content > div > a {
+.element-detail:not(.element-detail--ambient-only)
+    .element-detail__content
+    > div
+    > a {
     color: var(--detail-text);
     text-shadow: 0 1px 8px rgb(2 6 23 / 0.72);
 }
@@ -99,7 +102,7 @@
     background: rgb(15 23 42 / 0.98);
 }
 
-.element-detail .detail-surface {
+.element-detail:not(.element-detail--ambient-only) .detail-surface {
     border-color: var(--detail-content-border);
     background: var(--detail-content-surface);
     box-shadow:
@@ -108,21 +111,23 @@
     color: var(--detail-text);
 }
 
-.element-detail .auction-detail-region .detail-surface {
+.element-detail:not(.element-detail--ambient-only)
+    .auction-detail-region
+    .detail-surface {
     border-color: var(--line);
     background: var(--surface);
     box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
     color: var(--gray-900);
 }
 
-.element-detail
+.element-detail:not(.element-detail--ambient-only)
     .auction-detail-region
     .detail-surface
     :is([class*='text-gray-9'], [class*='text-gray-7']) {
     color: var(--gray-900);
 }
 
-.element-detail
+.element-detail:not(.element-detail--ambient-only)
     .auction-detail-region
     .detail-surface
     :is([class*='text-gray-5'], [class*='text-gray-4']) {
@@ -145,49 +150,52 @@
     text-shadow: none;
 }
 
-.element-detail
+.element-detail:not(.element-detail--ambient-only)
     .detail-surface
     :is([class*='text-gray-9'], [class*='text-gray-7']) {
     color: var(--detail-text);
 }
 
-.element-detail
+.element-detail:not(.element-detail--ambient-only)
     .detail-surface
     :is([class*='text-gray-5'], [class*='text-gray-4']) {
     color: var(--detail-muted);
 }
 
-.element-detail .detail-surface :is([class*='border-line']) {
+.element-detail:not(.element-detail--ambient-only)
+    .detail-surface
+    :is([class*='border-line']) {
     border-color: var(--detail-content-border);
 }
 
-.element-detail .detail-surface .detail-meta,
-.element-detail
+.element-detail:not(.element-detail--ambient-only) .detail-surface .detail-meta,
+.element-detail:not(.element-detail--ambient-only)
     .detail-surface
     :is([class~='text-navy'], [class~='text-navy-700']) {
     color: var(--detail-meta-text);
 }
 
-.element-detail
+.element-detail:not(.element-detail--ambient-only)
     .detail-surface
     :is([class~='bg-navy/5'], [class~='bg-navy/10']) {
     background: var(--detail-meta-surface);
 }
 
-.element-detail .detail-cta:not(:disabled),
+.element-detail:not(.element-detail--ambient-only) .detail-cta:not(:disabled),
 [data-detail-theme] .detail-chrome .detail-cta:not(:disabled) {
     background: var(--detail-cta-bg);
     color: var(--detail-cta-text);
 }
 
-.element-detail .detail-cta:not(:disabled):hover,
+.element-detail:not(.element-detail--ambient-only)
+    .detail-cta:not(:disabled):hover,
 [data-detail-theme] .detail-chrome .detail-cta:not(:disabled):hover {
     background: var(--detail-cta-hover);
     color: var(--detail-cta-text);
 }
 
-.element-detail a:focus-visible,
-.element-detail button:focus-visible,
+.element-detail:not(.element-detail--ambient-only) a:focus-visible,
+.element-detail:not(.element-detail--ambient-only) button:focus-visible,
 [data-detail-theme] .detail-chrome :is(a, button):focus-visible {
     outline: 2px solid var(--detail-focus-ring);
     outline-offset: 2px;

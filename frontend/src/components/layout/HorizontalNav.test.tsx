@@ -1,24 +1,95 @@
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import HorizontalNav from './HorizontalNav'
 
 describe('HorizontalNav', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+        vi.unstubAllGlobals()
+    })
+
+    it('fine pointer hover는 grace close와 재진입을 지원하고 click으로 고정한다', () => {
+        vi.useFakeTimers()
+        const removeMediaListener = vi.fn()
+        vi.stubGlobal('matchMedia', () => ({
+            matches: true,
+            addEventListener: vi.fn(),
+            removeEventListener: removeMediaListener,
+        }))
+        const view = render(
+            <MemoryRouter>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        const trigger = screen.getByRole('button', { name: /마켓/ })
+        const boundary = trigger.closest('li') as HTMLElement
+        fireEvent.mouseEnter(boundary)
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        fireEvent.mouseLeave(boundary)
+        act(() => vi.advanceTimersByTime(100))
+        fireEvent.mouseEnter(boundary)
+        act(() => vi.advanceTimersByTime(100))
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        fireEvent.click(trigger)
+        fireEvent.mouseLeave(boundary)
+        act(() => vi.advanceTimersByTime(150))
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        fireEvent.click(trigger)
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        view.unmount()
+        expect(vi.getTimerCount()).toBe(0)
+        expect(removeMediaListener).toHaveBeenCalled()
+    })
+
+    it('coarse pointer에서는 hover로 열리지 않는다', () => {
+        vi.stubGlobal('matchMedia', () => ({
+            matches: false,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+        }))
+        render(
+            <MemoryRouter>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        const trigger = screen.getByRole('button', { name: /마켓/ })
+        fireEvent.mouseEnter(trigger.closest('li') as HTMLElement)
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    })
     it('현재 하위 경로의 그룹을 활성 표시한다', () => {
-        render(<MemoryRouter initialEntries={['/auctions/A-1']}><HorizontalNav /></MemoryRouter>)
-        expect(screen.getByRole('button', { name: /마켓/ }).className).toContain('border-orange')
+        render(
+            <MemoryRouter initialEntries={['/auctions/A-1']}>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        expect(
+            screen.getByRole('button', { name: /마켓/ }).className,
+        ).toContain('border-orange')
     })
 
     it('/items/:id는 마켓 그룹의 명시적 상세 경로로 활성 표시한다', () => {
-        render(<MemoryRouter initialEntries={['/items/I-1']}><HorizontalNav /></MemoryRouter>)
-        expect(screen.getByRole('button', { name: /마켓/ }).className).toContain('border-orange')
+        render(
+            <MemoryRouter initialEntries={['/items/I-1']}>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        expect(
+            screen.getByRole('button', { name: /마켓/ }).className,
+        ).toContain('border-orange')
     })
 
     it('좌우 방향키로 최상위 항목을 순환 탐색한다', async () => {
         const user = userEvent.setup()
-        render(<MemoryRouter><HorizontalNav /></MemoryRouter>)
-        const roots = document.querySelectorAll<HTMLElement>('[data-horizontal-root]')
+        render(
+            <MemoryRouter>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
+        const roots = document.querySelectorAll<HTMLElement>(
+            '[data-horizontal-root]',
+        )
         roots[0]?.focus()
         await user.keyboard('{ArrowRight}')
         expect(roots[1]).toHaveFocus()
@@ -30,11 +101,17 @@ describe('HorizontalNav', () => {
 
     it('방향키와 Escape로 하위 메뉴를 탐색하고 닫는다', async () => {
         const user = userEvent.setup()
-        render(<MemoryRouter><HorizontalNav /></MemoryRouter>)
+        render(
+            <MemoryRouter>
+                <HorizontalNav />
+            </MemoryRouter>,
+        )
         const trigger = screen.getByRole('button', { name: /마켓/ })
         trigger.focus()
         await user.keyboard('{ArrowDown}')
-        expect(await screen.findByRole('link', { name: '아이템 마켓' })).toHaveFocus()
+        expect(
+            await screen.findByRole('link', { name: '아이템 마켓' }),
+        ).toHaveFocus()
         await user.keyboard('{ArrowDown}')
         expect(screen.getByRole('link', { name: '실시간 경매' })).toHaveFocus()
         await user.keyboard('{Escape}')
@@ -44,7 +121,12 @@ describe('HorizontalNav', () => {
 
     it('외부 포커스로 이동하면 열린 메뉴를 닫는다', async () => {
         const user = userEvent.setup()
-        render(<MemoryRouter><HorizontalNav /><button type="button">외부</button></MemoryRouter>)
+        render(
+            <MemoryRouter>
+                <HorizontalNav />
+                <button type="button">외부</button>
+            </MemoryRouter>,
+        )
         const trigger = screen.getByRole('button', { name: /마켓/ })
         await user.click(trigger)
         await user.click(screen.getByRole('button', { name: '외부' }))

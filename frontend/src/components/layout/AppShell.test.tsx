@@ -33,7 +33,17 @@ function renderShell(route: string) {
                             </ElementDetailBackground>
                         }
                     />
-                    <Route path="/auctions" element={<main>경매 목록</main>} />
+                    <Route
+                        path="/auctions"
+                        element={
+                            <main>
+                                경매 목록
+                                <Link to="/auctions/A-1">상세로</Link>
+                                <Link to="/market">마켓으로</Link>
+                            </main>
+                        }
+                    />
+                    <Route path="/market" element={<main>아이템 목록</main>} />
                 </Route>
             </Routes>
         </MemoryRouter>,
@@ -61,9 +71,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(scene).not.toHaveClass('w-screen')
         expect(view.container.querySelector('aside')).toBeNull()
-        expect(
-            view.queryByRole('navigation', { name: '주요 메뉴' }),
-        ).toBeNull()
+        expect(view.queryByRole('navigation', { name: '주요 메뉴' })).toBeNull()
         expect(view.container.querySelector('header')).toHaveClass(
             'sticky',
             'z-30',
@@ -128,9 +136,7 @@ describe('AppShell route-scoped 상세 배경', () => {
             })
         const hamburger = view.getByRole('button', { name: '메뉴 열기' })
         fireEvent.click(hamburger)
-        expect(
-            view.container.querySelector('aside nav a[href]'),
-        ).toHaveFocus()
+        expect(view.container.querySelector('aside nav a[href]')).toHaveFocus()
         fireEvent.keyDown(window, { key: 'Escape' })
         expect(view.container.querySelector('aside')).toBeNull()
         expect(hamburger).toHaveFocus()
@@ -138,15 +144,16 @@ describe('AppShell route-scoped 상세 배경', () => {
 
         fireEvent.click(view.getByRole('link', { name: '목록으로' }))
         expect(
-            view.container.querySelector('.element-detail__scene'),
-        ).toBeNull()
-        expect(view.container.firstElementChild).not.toHaveAttribute(
+            view.container.querySelectorAll('.element-detail__scene'),
+        ).toHaveLength(1)
+        expect(view.container.firstElementChild).toHaveAttribute(
             'data-detail-theme',
+            'water',
         )
         expect(view.getByText('경매 목록')).toBeVisible()
     })
 
-    it('목록 route 직접 진입에는 배경 DOM이 없다', () => {
+    it('경매 목록 exact route는 ambient-only water scene 하나만 사용한다', () => {
         const imageConstructor = vi.fn()
         const requestFrame = vi.fn()
         const addMediaListener = vi.fn()
@@ -164,12 +171,59 @@ describe('AppShell route-scoped 상세 배경', () => {
         }))
         const view = renderShell('/auctions')
         expect(
+            view.container.querySelectorAll('.element-detail__scene'),
+        ).toHaveLength(1)
+        expect(view.container.querySelector('.element-detail')).toHaveClass(
+            'element-detail--ambient-only',
+        )
+        expect(view.container.firstElementChild).toHaveAttribute(
+            'data-detail-theme',
+            'water',
+        )
+        expect(imageConstructor).toHaveBeenCalledTimes(1)
+        expect(requestFrame).not.toHaveBeenCalled()
+        expect(addMediaListener).toHaveBeenCalledTimes(1)
+        vi.unstubAllGlobals()
+    })
+
+    it('다른 목록 route는 scene·image·RAF가 0이다', () => {
+        const imageConstructor = vi.fn()
+        const requestFrame = vi.fn()
+        vi.stubGlobal('Image', imageConstructor)
+        vi.stubGlobal('requestAnimationFrame', requestFrame)
+        const view = renderShell('/market')
+        expect(
             view.container.querySelector('.element-detail__scene'),
         ).toBeNull()
         expect(imageConstructor).not.toHaveBeenCalled()
         expect(requestFrame).not.toHaveBeenCalled()
-        expect(addMediaListener).toHaveBeenCalledTimes(1)
         vi.unstubAllGlobals()
+    })
+
+    it('목록→상세는 water를 응답 element로 교체하고 목록→다른 route는 정리한다', () => {
+        const detailView = renderShell('/auctions')
+        expect(detailView.container.firstElementChild).toHaveAttribute(
+            'data-detail-theme',
+            'water',
+        )
+        fireEvent.click(detailView.getByRole('link', { name: '상세로' }))
+        expect(
+            detailView.container.querySelectorAll('.element-detail__scene'),
+        ).toHaveLength(1)
+        expect(detailView.container.firstElementChild).toHaveAttribute(
+            'data-detail-theme',
+            'fire',
+        )
+        detailView.unmount()
+
+        const leaveView = renderShell('/auctions')
+        fireEvent.click(leaveView.getByRole('link', { name: '마켓으로' }))
+        expect(
+            leaveView.container.querySelector('.element-detail__scene'),
+        ).toBeNull()
+        expect(leaveView.container.firstElementChild).not.toHaveAttribute(
+            'data-detail-theme',
+        )
     })
 
     it('아이템 상세도 응답 속성으로 theme을 등록한다', () => {
@@ -233,7 +287,9 @@ describe('AppShell route-scoped 상세 배경', () => {
             change?.()
         })
         expect(view.container.querySelector('aside')).toBeNull()
-        expect(view.getByRole('navigation', { name: '주요 메뉴' })).toBeVisible()
+        expect(
+            view.getByRole('navigation', { name: '주요 메뉴' }),
+        ).toBeVisible()
         vi.unstubAllGlobals()
     })
 })
