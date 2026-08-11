@@ -69,6 +69,7 @@ export default function SellPage() {
     const inventoryQuery = useMyInventory()
     const createMutation = useCreateAuction()
     const createShopMutation = useCreateShop()
+
     const [sellMethod, setSellMethod] = useState<SellMethod>('auction')
 
     const [startPrice, setStartPrice] = useState('')
@@ -92,9 +93,7 @@ export default function SellPage() {
     const [shopConfirmOpen, setShopConfirmOpen] = useState(false)
     const [pendingRequest, setPendingRequest] =
         useState<CreateAuctionRequest | null>(null)
-    const [pendingShopPrice, setPendingShopPrice] = useState<number | null>(
-        null,
-    )
+    const [pendingShopPrice, setPendingShopPrice] = useState<number | null>(null)
 
     const items = useMemo(
         () => inventoryQuery.data?.items ?? [],
@@ -170,9 +169,7 @@ export default function SellPage() {
     /** 고정가 등록 — 아이템 + 가격(>0)만 검증한다(기한은 서버 자동, §3.1). */
     const handleOpenShopConfirm = () => {
         if (!selectedId) {
-            setErrors([
-                { field: 'item', message: '출품할 아이템을 선택해 주세요.' },
-            ])
+            setErrors([{ field: 'item', message: '출품할 아이템을 선택해 주세요.' }])
             document.getElementById(FIELD_INPUT_ID.item)?.focus()
             return
         }
@@ -402,8 +399,8 @@ export default function SellPage() {
                                     />
                                 </div>
                                 <p className="mt-3 text-xs leading-relaxed text-gray-400">
-                                    판매 기한은 서버가 자동으로 정합니다.
-                                    판매되기 전에는 언제든 취소할 수 있어요.
+                                    판매 기한은 서버가 자동으로 정합니다. 판매되기
+                                    전에는 언제든 취소할 수 있어요.
                                 </p>
                             </>
                         )}
@@ -578,9 +575,7 @@ function PreemptedItemCard({ item }: { item: InventoryItem }) {
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
                     name={item.summary.displayName}
-                    visual={{
-                        goldforceExpireAt: item.summary.goldforceExpireAt,
-                    }}
+                    visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
                     hasSkill={hasSkill}
                     size="frame"
                 />
