@@ -1,6 +1,6 @@
-# FC-236 리뷰 — 속성별 상세 배경 접근성·성능 통합 리뷰
+# FC-236 재리뷰 — 속성별 상세 배경 접근성·성능 통합 리뷰
 
-대상: FC-233, FC-234, FC-235, FC-236 · 커밋 `b644bbc` · reviewer 읽기 전용 판정
+대상: 최초 구현 `b644bbc`, 재작업 `3ce00ec` · reviewer 읽기 전용 최종 판정
 
 ## 심각도별 발견
 
@@ -10,42 +10,45 @@
 
 ### Major
 
-- **감소 모션을 실행 중 켜면 숨겨진 Canvas의 RAF 루프가 계속 실행된다.**
-  - 위치: `frontend/src/features/item/components/ElementDetailBackground.tsx:80-90,129-150`, `frontend/src/features/item/components/ElementDetailBackground.css:144-151`
-  - 재현 시나리오: 물 속성 상세을 일반 모션 설정으로 연 뒤 OS/브라우저의 `prefers-reduced-motion`을 `reduce`로 변경한다. CSS는 Canvas를 `display:none`으로 숨기지만 JS는 마운트 시점의 `matches`만 읽고 변경 이벤트를 구독하지 않아 `requestAnimationFrame(draw)`가 계속 돈다. 개발자 도구 Performance에서 지속 프레임 작업으로 확인할 수 있다.
-  - 기대 vs 실제: 계약 §4·§5와 FC-233 DoD는 감소 모션 환경에서 Canvas/입자와 지속 애니메이션을 제거하고 정적 배경으로 강등할 것을 요구한다. 실제 구현은 시각적으로만 숨기고 이미 시작된 Canvas 작업을 중단하지 않아 접근성 설정 변경과 저전력·배터리 요구를 충족하지 못한다.
+- **상세 배경의 stacking context가 실제 입찰·구매 모달을 AppShell 고정 크롬 아래에 가둘 수 있으며, 신규 테스트는 이를 검증하지 않는다.**
+  - 위치: `frontend/src/features/item/components/ElementDetailBackground.css:1-4`, `frontend/src/pages/AuctionDetailPage.tsx:165-244`, `frontend/src/features/auction/components/BidDialog.tsx:195`, `frontend/src/features/auction/components/PurchaseDialog.tsx:124`, `frontend/src/components/layout/TopNavbar.tsx:53`, `frontend/src/components/layout/MobileBottomNav.tsx:21`, `frontend/src/pages/AuctionDetailPage.test.tsx:25-77,163-172`
+  - 재현 시나리오: 경매 상세에서 입찰 또는 즉시구매 모달을 연다. `ElementDetailBackground` 루트의 `isolation:isolate`가 새 stacking context를 만들고 실제 `fixed z-50` 모달은 그 내부 자식이다. 형제 stacking context인 상단 내비게이션(`z-30`)과 모바일 하단 내비게이션(`z-30`)보다 부모 상세 context 자체가 위로 승격되지 않으므로 모달의 `z-50`만으로 전역 크롬을 덮는다고 보장할 수 없다. 신규 테스트는 배경 래퍼를 평범한 mock `<section>`으로, 모달도 직접 만든 `className="z-50"` div로 교체한 뒤 문자열 클래스만 비교하므로 실제 stacking context와 fixed overlay를 전혀 실행하지 않는다.
+  - 기대 vs 실제: 계약 §2·§6과 FC-234 DoD는 기존 모달 z-index·포커스 동작 보존을 요구한다. 실제 구조는 전역 overlay 계층을 변경했고 테스트는 mock에 작성한 `z-50`이 mock의 `z-10`보다 크다는 사실만 검증한다. 실제 컴포넌트를 렌더하거나 portal/stacking context 구조를 검증해야 한다.
 
-- **두 상세 라우트의 상태 전환·격리·핵심 상호작용 회귀가 테스트로 증명되지 않는다.**
-  - 위치: `frontend/src/pages/AuctionDetailPage.tsx:68-114,165-245`, `frontend/src/pages/ItemDetailPage.tsx:21-85`; 관련 페이지 테스트 파일 없음. `frontend/src/features/item/components/ElementDetailBackground.test.tsx:16-88`은 공용 컴포넌트 3건만 검증한다.
-  - 재현 시나리오: `/auctions/:id`와 `/items/:id`에서 로딩→성공, 성공→다른 id, 에러/404 전환을 수행하거나 입찰·구매 다이얼로그와 보호 라우트를 조작한다. 현재 자동 테스트는 실제 응답 경로(`auction.item.element`, `item.template.element`) 연결, 중립 전환, 모달 포커스/z-index, 다른 목록/AppShell로의 격리를 실행하지 않는다. Canvas 테스트도 `getContext()`를 항상 `null`로 만들어 Visibility 정지·정리·실패 폴백 경로를 전혀 통과하지 않는다.
-  - 기대 vs 실제: 계약 §6 및 FC-234·FC-235·FC-236 DoD는 위 전환과 두 라우트의 핵심 회귀를 컴포넌트/통합 테스트로 검증하도록 요구한다. 실제 테스트는 자산 1종 요청·미등록 코드·stale 이미지 콜백만 보장하므로 구현 회귀가 통과할 수 있다.
+- **재작업 커밋의 신규 Canvas 테스트가 TypeScript 검사에 실패한다.**
+  - 위치: `frontend/src/features/item/components/ElementDetailBackground.test.tsx:143`
+  - 재현 시나리오: `frontend`에서 `npm.cmd run typecheck`를 실행한다. `context.setTransform.mock.calls` 접근에 대해 `TS2339: Property 'mock' does not exist`가 발생한다. 테스트 내 mock 객체를 `CanvasRenderingContext2D`로 단언한 뒤 DOM 메서드 타입으로 접근한 것이 원인이다.
+  - 기대 vs 실제: 재작업은 기존 major를 테스트로 고정하고 정상 빌드 검증을 통과해야 한다. 런타임 테스트는 통과하지만 정적 검사 단계가 실패해 현재 커밋은 릴리스 가능한 상태가 아니다.
 
 ### Minor
 
-- **Canvas resize가 디바운스 없이 매 이벤트마다 고비용 버퍼 재할당을 수행한다.**
-  - 위치: `frontend/src/features/item/components/ElementDetailBackground.tsx:103-110,143-148`
-  - 재현 시나리오: 물 속성 상세에서 브라우저 창을 연속 리사이즈하거나 모바일 주소창/뷰포트 변화가 반복되면 매 `resize`마다 Canvas 크기 변경과 컨텍스트 초기화가 실행된다.
-  - 기대 vs 실제: 제한 효과라도 입찰 상호작용과 모바일 배터리에 영향을 최소화해야 한다. 실제는 RAF 자체는 제한했지만 resize 호출 빈도 상한이 없어 순간적인 메인 스레드 부하를 만들 수 있다.
+- 없음.
+
+## 기존 발견 해결 여부
+
+- **런타임 reduced-motion RAF 잔류 — 해결.** MediaQueryList `change`를 구독해 즉시 `cancelAnimationFrame`하고 Canvas를 지우며, 모션 허용 복귀 시에만 재시작한다.
+- **visibility·unmount 정리 — 해결.** 비가시 전환 시 RAF를 중단하고, unmount에서 RAF·resize timer·세 이벤트 리스너를 모두 정리한다.
+- **resize 디바운스 부재 — 해결.** 120ms trailing debounce와 unmount 시 timer 취소가 추가됐다.
+- **두 상세 페이지 상태·응답 경로 테스트 부재 — 부분 해결.** 로딩/성공/404·일반 오류, `item.element`/`template.element` 전달과 id별 속성 교체는 추가 테스트로 확인된다. 다만 id 전환은 동일 라우터 인스턴스 navigation이 아니라 unmount 후 새 render이고, 경매 모달 계층 테스트는 전부 mock이라 실제 회귀를 검증하지 못한다.
 
 ## 확인된 적합 사항
 
-- 속성 선택은 공용 `toElementKey`를 사용하고 미등록 코드는 네트워크 요청 없이 `neutral`로 폴백한다.
-- 이미지 요청은 현재 속성 1종만 생성하며 stale `onload` 결과를 무시한다. 배경 실패도 자식 콘텐츠를 차단하지 않는다.
-- 장식 scene/Canvas는 `aria-hidden`, `pointer-events:none`이며 전역 `body`·AppShell 상태를 변경하지 않아 두 라우트 밖으로 스타일 상태가 누출되지 않는다.
-- `forced-colors: active`에서 장식 scene을 제거하고, 상세 콘텐츠 카드들은 기존 불투명 surface를 유지한다.
-- 배포 JPG 4종은 308,985~430,526바이트(1672×941)로 파일당 500KB 목표 및 800KB 상한을 모두 충족한다.
-- 변경 파일과 라인은 계약의 공용 배경·두 상세 연결·테스트·자산 범위에 직접 추적되며 무관한 리팩터링은 확인되지 않았다.
-- 보안 관점에서 URL 쿼리나 사용자 입력으로 자산 경로를 구성하지 않고 검증된 정수→고정 키 매핑만 사용하므로 경로 주입·인가 경계 변경은 확인되지 않았다.
+- Canvas 테스트는 runtime reduced-motion, visibility, unmount, resize debounce 경로를 실제 effect listener 수준에서 실행한다.
+- 미등록 코드 중립 폴백, 현재 속성 1종 요청, stale 이미지 결과 무시와 자산 실패 비차단은 기존 테스트로 유지된다.
+- 아이템 상세 테스트는 성공 응답의 `template.element` 연결과 오류 화면에서 배경 미렌더를 확인한다.
+- 경매 상세 테스트는 성공 응답의 `item.element` 연결과 오류 화면에서 배경 미렌더를 확인한다.
+- 재작업 4개 파일은 기존 리뷰 발견과 해당 회귀 테스트에 직접 추적되며 무관한 변경은 없다.
+- 보안·인가·사용자 입력 기반 자산 경로 관련 신규 회귀는 확인되지 않았다.
 
 ## 검증 결과
 
-- `npm.cmd test -- --run src/features/item/components/ElementDetailBackground.test.tsx`: 통과(1파일, 3테스트).
-- `npm.cmd run typecheck`: 통과.
-- `npm.cmd run lint -- --max-warnings=0`: 실패. 대상 변경과 무관한 기존 `InventoryItemCard.test.tsx`의 `react/jsx-sort-props` 경고 2건 때문이며 본 리뷰 발견으로 승격하지 않았다.
-- 접근성/UX 기술 감사 점수: 접근성 3/4, 성능 2/4, 반응형 3/4, 테마 3/4, 안티패턴 4/4 — 합계 15/20(Good). AI 생성형 UI 안티패턴은 확인되지 않았다.
+- `npm.cmd test -- --run src/features/item/components/ElementDetailBackground.test.tsx src/pages/AuctionDetailPage.test.tsx src/pages/ItemDetailPage.test.tsx src/features/auction/components/BidDialog.test.tsx`: 통과(4파일, 19테스트).
+- `npm.cmd run typecheck`: 실패 — `ElementDetailBackground.test.tsx:143` TS2339.
+- 대상 4개 변경 파일 ESLint(`--max-warnings=0`): 통과.
+- 접근성/UX 기술 감사 점수: 접근성 4/4, 성능 4/4, 반응형 3/4, 테마 3/4, 안티패턴 4/4 — 합계 18/20(Excellent). 단, 기능 회귀·품질 게이트 major는 점수와 별도로 차단한다.
 
 ## 판정
 
 `review_status: changes-requested`
 
-Critical은 없으나 Major 2건이 있어 통과 아님. 메인세션은 FC-233~FC-236을 Done으로 전이하면 안 된다.
+최초 major 1건과 minor 1건은 해결됐고 페이지 상태 테스트도 상당 부분 보강됐다. 그러나 실제 모달 stacking context 회귀 미해결 및 typecheck 실패라는 Major 2건이 남아 통과 아님. 메인세션은 FC-233~FC-236을 Done으로 전이하면 안 된다.
