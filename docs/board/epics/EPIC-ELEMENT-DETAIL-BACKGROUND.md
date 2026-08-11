@@ -3,9 +3,9 @@ id: EPIC-ELEMENT-DETAIL-BACKGROUND
 type: epic
 jira_key: null
 title: 속성별 상세 몰입 배경 적용
-state: todo
+state: review
 children: [FC-233, FC-234, FC-235, FC-236]
-gate: null
+gate: gate3
 ---
 
 ## 목표
@@ -23,4 +23,3 @@ gate: null
 
 - 게이트2: 2026-08-11 사용자 승인 완료.
 - 게이트3: 전체 reviewer 통과 뒤 사용자 Done·push 승인 필요.
-
