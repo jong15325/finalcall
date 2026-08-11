@@ -44,7 +44,10 @@ export default function ElementDetailBackground({
             data-background-loaded={loadedKey === key ? 'true' : 'false'}
             data-performance={lowPower ? 'reduced' : 'full'}
         >
-            <div className="element-detail__scene" aria-hidden="true">
+            <div
+                className="element-detail__scene fixed inset-0 z-0"
+                aria-hidden="true"
+            >
                 {loadedKey === key && key && (
                     <div
                         className="element-detail__image"

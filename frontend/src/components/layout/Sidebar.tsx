@@ -299,7 +299,7 @@ function Sidebar({
                     'xl:translate-x-0',
                     // 핀 OFF: 콘텐츠 위 오버레이(레일 위치). 핀 ON: 인-플로우 레일.
                     pinned
-                        ? 'xl:static xl:z-auto'
+                        ? 'xl:relative xl:z-20'
                         : 'xl:absolute xl:inset-y-0 xl:left-0 xl:z-40',
                     railCollapsed ? 'xl:w-[70px]' : 'xl:w-[260px]',
                     flyout ? 'xl:shadow-2xl' : '',

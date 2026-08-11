@@ -28,13 +28,18 @@ describe('ElementDetailBackground', () => {
     })
 
     it('현재 속성 자산 하나만 요청하고 성공 후에만 배경을 표시한다', () => {
-        const { container } = render(
+        document.body.className = 'existing-shell-class'
+        document.body.dataset.owner = 'app'
+        const { container, unmount } = render(
             <ElementDetailBackground element={2}>
                 <button type="button">입찰하기</button>
             </ElementDetailBackground>,
         )
 
         expect(MockImage.instances).toHaveLength(1)
+        expect(container.querySelector('.element-detail__scene')).toHaveClass(
+            'element-detail__scene',
+        )
         expect(MockImage.instances[0].src).toContain('fire-detail-v3.jpg')
         expect(container.querySelector('.element-detail__image')).toBeNull()
 
@@ -42,6 +47,13 @@ describe('ElementDetailBackground', () => {
 
         expect(container.querySelector('.element-detail__image')).not.toBeNull()
         expect(screen.getByRole('button', { name: '입찰하기' })).toBeVisible()
+        unmount()
+        expect(document.body).toHaveClass('existing-shell-class')
+        expect(document.body.dataset).toEqual(
+            expect.objectContaining({ owner: 'app' }),
+        )
+        document.body.className = ''
+        delete document.body.dataset.owner
     })
 
     it('미등록 코드와 자산 실패는 중립 배경으로 비차단 처리한다', () => {

@@ -1,15 +1,9 @@
 .element-detail {
-    position: relative;
     min-width: 0;
-    border-radius: 1rem;
 }
 
 .element-detail__scene {
-    position: absolute;
-    inset: -1.5rem;
-    z-index: 0;
     overflow: hidden;
-    border-radius: 1.5rem;
     pointer-events: none;
     background: linear-gradient(145deg, #eef1f5, #f8f9fb 58%, #e8ebf0);
 }
@@ -129,13 +123,6 @@
     50% {
         opacity: 0.74;
         transform: translateY(-1.5%);
-    }
-}
-
-@media (max-width: 640px) {
-    .element-detail__scene {
-        inset: -1rem;
-        border-radius: 1.25rem;
     }
 }
 

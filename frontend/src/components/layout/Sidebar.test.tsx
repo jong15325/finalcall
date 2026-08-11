@@ -37,6 +37,8 @@ describe('<Sidebar> 핀 토글 · hover', () => {
         renderSidebar({ pinned: true })
         const aside = screen.getByRole('complementary', { name: '주 메뉴' })
         expect(aside.className).toContain('xl:w-[260px]')
+        expect(aside.className).toContain('xl:relative')
+        expect(aside.className).toContain('xl:z-20')
 
         // hover 해도 폭이 바뀌지 않는다(핀 ON 은 hover 무시).
         fireEvent.mouseEnter(aside)

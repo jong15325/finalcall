@@ -45,7 +45,7 @@ function AppShell() {
     }, [mobileOpen])
 
     return (
-        <div className="relative flex min-h-screen bg-surface-sunken">
+        <div className="relative isolate flex min-h-screen bg-surface-sunken">
             <Sidebar
                 pinned={pinned}
                 mobileOpen={mobileOpen}
@@ -62,7 +62,7 @@ function AppShell() {
                     </div>
                 </main>
 
-                <footer className="hidden border-t border-line px-6 py-4 text-xs text-gray-400 xl:block">
+                <footer className="relative z-10 hidden border-t border-line px-6 py-4 text-xs text-gray-400 xl:block">
                     © 2026 장터 · 안전한 게임 아이템 거래
                 </footer>
             </div>
