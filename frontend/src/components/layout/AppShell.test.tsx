@@ -1,6 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react'
 import { Link, MemoryRouter, Route, Routes } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 import AppShell from './AppShell'
 
@@ -10,6 +10,10 @@ vi.mock('@/lib/queries/balance', () => ({
 vi.mock('@/lib/queries/memos', () => ({
     useUnreadMemoCount: () => ({ data: { count: 0 } }),
 }))
+
+beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+})
 
 function renderShell(route: string) {
     return render(
@@ -54,7 +58,7 @@ describe('AppShell route-scoped 상세 배경', () => {
     it('상세 route에서 fixed 배경을 chrome 아래에 둔다', () => {
         const view = renderShell('/auctions/A-1')
         const shell = view.container.firstElementChild
-        const scene = view.container.querySelector('.element-detail__scene')
+        const scene = view.container.querySelector('.world-map-background')
 
         expect(shell).toHaveClass('isolate')
         expect(shell).toHaveClass('min-h-screen')
@@ -64,7 +68,7 @@ describe('AppShell route-scoped 상세 배경', () => {
             '--detail-cta-bg': '#f59e0b',
         })
         expect(scene).toHaveClass(
-            'element-detail__scene',
+            'world-map-background',
             'fixed',
             'inset-0',
             'z-0',
@@ -144,7 +148,7 @@ describe('AppShell route-scoped 상세 배경', () => {
 
         fireEvent.click(view.getByRole('link', { name: '목록으로' }))
         expect(
-            view.container.querySelectorAll('.element-detail__scene'),
+            view.container.querySelectorAll('.world-map-background'),
         ).toHaveLength(1)
         expect(view.container.firstElementChild).toHaveAttribute(
             'data-detail-theme',
@@ -171,30 +175,30 @@ describe('AppShell route-scoped 상세 배경', () => {
         }))
         const view = renderShell('/auctions')
         expect(
-            view.container.querySelectorAll('.element-detail__scene'),
+            view.container.querySelectorAll('.world-map-background'),
         ).toHaveLength(1)
-        expect(view.container.querySelector('.element-detail')).toHaveClass(
-            'element-detail--ambient-only',
-        )
+        expect(
+            view.container.querySelector('.world-map-background'),
+        ).toHaveAttribute('data-accent', 'water')
         expect(view.container.firstElementChild).toHaveAttribute(
             'data-detail-theme',
             'water',
         )
-        expect(imageConstructor).toHaveBeenCalledTimes(1)
+        expect(imageConstructor).not.toHaveBeenCalled()
         expect(requestFrame).not.toHaveBeenCalled()
         expect(addMediaListener).toHaveBeenCalledTimes(1)
         vi.unstubAllGlobals()
     })
 
-    it('다른 목록 route는 scene·image·RAF가 0이다', () => {
+    it('다른 AppShell route도 공통 scene 하나를 유지한다', () => {
         const imageConstructor = vi.fn()
         const requestFrame = vi.fn()
         vi.stubGlobal('Image', imageConstructor)
         vi.stubGlobal('requestAnimationFrame', requestFrame)
         const view = renderShell('/market')
         expect(
-            view.container.querySelector('.element-detail__scene'),
-        ).toBeNull()
+            view.container.querySelectorAll('.world-map-background'),
+        ).toHaveLength(1)
         expect(imageConstructor).not.toHaveBeenCalled()
         expect(requestFrame).not.toHaveBeenCalled()
         vi.unstubAllGlobals()
@@ -208,7 +212,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         fireEvent.click(detailView.getByRole('link', { name: '상세로' }))
         expect(
-            detailView.container.querySelectorAll('.element-detail__scene'),
+            detailView.container.querySelectorAll('.world-map-background'),
         ).toHaveLength(1)
         expect(detailView.container.firstElementChild).toHaveAttribute(
             'data-detail-theme',
@@ -219,8 +223,8 @@ describe('AppShell route-scoped 상세 배경', () => {
         const leaveView = renderShell('/auctions')
         fireEvent.click(leaveView.getByRole('link', { name: '마켓으로' }))
         expect(
-            leaveView.container.querySelector('.element-detail__scene'),
-        ).toBeNull()
+            leaveView.container.querySelectorAll('.world-map-background'),
+        ).toHaveLength(1)
         expect(leaveView.container.firstElementChild).not.toHaveAttribute(
             'data-detail-theme',
         )

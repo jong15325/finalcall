@@ -146,12 +146,9 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
             'bg-surface',
             'text-gray-900',
         )
-        const scene = view.container.querySelector('.element-detail__scene')
-        expect(scene).not.toBeNull()
-        expect(scene?.contains(region)).toBe(false)
-        expect(scene?.compareDocumentPosition(region) ?? 0).toBe(
-            Node.DOCUMENT_POSITION_FOLLOWING,
-        )
+        expect(
+            view.container.querySelector('.element-detail__scene'),
+        ).toBeNull()
     })
 
     it('id 전환 시 새 응답 속성으로 교체하고 이전 배경을 남기지 않는다', () => {

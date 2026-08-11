@@ -6,7 +6,7 @@ import TopNavbar from './TopNavbar'
 import MobileBottomNav from './MobileBottomNav'
 import HorizontalNav from './HorizontalNav'
 import useDesktopLayout from './useDesktopLayout'
-import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
+import WorldMapBackground from './WorldMapBackground'
 import {
     RouteVisualThemeProvider,
     routeThemeStyle,
@@ -82,6 +82,7 @@ function ThemedAppShell() {
             data-detail-theme={theme ?? undefined}
             style={theme ? routeThemeStyle(theme) : undefined}
         >
+            <WorldMapBackground accent={theme} />
             {!desktop && mobileOpen && (
                 <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
@@ -101,14 +102,7 @@ function ThemedAppShell() {
                         data-testid="app-content-plane"
                         className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] rounded-xl border border-line bg-surface px-4 py-6 shadow-sm sm:px-6 xl:rounded-2xl"
                     >
-                        {pathname === '/auctions' ||
-                        pathname === '/auctions/' ? (
-                            <ElementDetailBackground ambientOnly element={1}>
-                                <Outlet />
-                            </ElementDetailBackground>
-                        ) : (
-                            <Outlet />
-                        )}
+                        <Outlet />
                     </div>
                 </main>
 

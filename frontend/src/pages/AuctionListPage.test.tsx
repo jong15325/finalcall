@@ -113,12 +113,7 @@ describe('AuctionListPage 밝은 region', () => {
             'filter',
             'z-0',
         )
-        expect(scene?.contains(region)).toBe(false)
-        expect(scene?.compareDocumentPosition(region)).toBe(
-            Node.DOCUMENT_POSITION_FOLLOWING,
-        )
-        expect(region.closest('.element-detail')).toHaveClass(
-            'element-detail--ambient-only',
-        )
+        expect(scene).toBeNull()
+        expect(region.closest('.element-detail')).toHaveClass('element-detail')
     })
 })

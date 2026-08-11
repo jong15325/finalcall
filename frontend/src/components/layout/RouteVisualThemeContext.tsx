@@ -81,10 +81,13 @@ export function RouteVisualThemeProvider({
             setRegistration({ pathname, theme: eligible ? theme : null }),
         [eligible, pathname],
     )
-    const theme =
+    const dynamicTheme =
         eligible && registration.pathname === pathname
             ? registration.theme
             : null
+    const theme =
+        dynamicTheme ??
+        (pathname.replace(/\/$/, '') === '/auctions' ? 'water' : null)
     const value = useMemo(
         () => ({ theme, registerTheme }),
         [registerTheme, theme],

@@ -1,0 +1,106 @@
+.world-map-background {
+    background: var(--surface-sunken);
+}
+
+.world-map-background picture,
+.world-map-background__image,
+.world-map-background__glow,
+.world-map-background .element-detail__ambient-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.world-map-background__image {
+    object-fit: cover;
+    object-position: center;
+    filter: saturate(1.04) contrast(1.02);
+}
+
+.world-map-background__glow {
+    opacity: 0.58;
+    transition: opacity 180ms ease;
+}
+
+.world-map-background__glow--earth {
+    background: radial-gradient(
+        circle at 22% 22%,
+        rgb(210 242 150 / 0.34),
+        transparent 18%
+    );
+}
+
+.world-map-background__glow--wind {
+    background: conic-gradient(
+        from 25deg at 20% 69%,
+        transparent,
+        rgb(220 255 248 / 0.32),
+        transparent 28%
+    );
+    animation: world-map-wind 9s linear infinite;
+}
+
+.world-map-background__glow--fire {
+    background: radial-gradient(
+        circle at 76% 23%,
+        rgb(255 100 22 / 0.42),
+        transparent 20%
+    );
+    animation: world-map-fire 3.8s ease-in-out infinite;
+}
+
+.world-map-background__glow--water {
+    background: radial-gradient(
+        ellipse at 77% 72%,
+        rgb(100 220 255 / 0.38),
+        transparent 22%
+    );
+}
+
+.world-map-background[data-accent]:not([data-accent='neutral'])
+    .world-map-background__glow {
+    opacity: 0.35;
+}
+
+.world-map-background[data-accent='earth'] .world-map-background__glow--earth,
+.world-map-background[data-accent='wind'] .world-map-background__glow--wind,
+.world-map-background[data-accent='fire'] .world-map-background__glow--fire,
+.world-map-background[data-accent='water'] .world-map-background__glow--water {
+    opacity: 0.82;
+}
+
+@keyframes world-map-wind {
+    to {
+        transform: rotate(1turn) scale(1.05);
+    }
+}
+
+@keyframes world-map-fire {
+    50% {
+        opacity: 0.82;
+        transform: scale(1.04);
+    }
+}
+
+@media (max-width: 639px) {
+    .world-map-background__image {
+        object-position: 56% center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce), (update: slow) {
+    .world-map-background__glow {
+        animation: none;
+        transition: none;
+    }
+    .world-map-background .element-detail__ambient-canvas {
+        display: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .world-map-background {
+        display: none;
+    }
+}
