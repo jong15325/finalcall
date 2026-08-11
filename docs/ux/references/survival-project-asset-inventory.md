@@ -79,3 +79,19 @@ PNG 8,319개는 모두 이미지 헤더를 읽을 수 있음을 확인했다.
 | 물 | `map3`, `map2` | 황금 목선, 청록 수면, 푸른 수정 동굴 | 상승 기포, 이동하는 수면 광택 |
 
 v3는 원본 PNG를 직접 배경으로 확대하지 않고, 지형의 형태·재질·구도를 참고해 16:9 상세 화면용 장면으로 재구성했다. 공통 목록 배경은 이 단계의 범위에서 제외한다.
+
+## 환경 효과 비교안
+
+| 속성 | A | B | C |
+|---|---|---|---|
+| 바람 | 산들바람 | 나선 돌풍 | 상공 기류 |
+| 불 | 잔불 숨결 | 불꽃 상승 | 용암 맥동 |
+| 흙 | 햇빛 먼지 | 지면 파동 | 고대 수호 |
+| 물 | 맑은 기포 | 수면 윤슬 | 잔잔한 소용돌이 |
+
+환경 효과는 입자의 속도·수명·회전·힘 방향을 조합하는 게임 파티클 시스템의 원리를 참고하되, 웹 목업에서는 Canvas와 CSS 합성 레이어로 가볍게 재현한다. Canvas 갱신은 `requestAnimationFrame`과 프레임 시간 차이를 사용하고, 고해상도 화면에서는 DPR을 최대 2로 제한한다. 모션 감소 환경에서는 애니메이션을 정지한다.
+
+- MDN Canvas 기본 애니메이션: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Basic_animations
+- MDN Canvas 최적화: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
+- Unity Particle System 개요: https://docs.unity3d.com/2018.3/Documentation/Manual/PartSysWhatIs.html
+- Unity VFX 학습 경로: https://learn.unity.com/pathway/creative-core/unit/creative-core-vfx
