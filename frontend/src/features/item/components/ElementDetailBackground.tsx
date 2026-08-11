@@ -39,6 +39,7 @@ export function AmbientCanvas() {
             '(prefers-reduced-motion: reduce)',
         )
         const coarsePointer = window.matchMedia('(pointer: coarse)')
+        const mobileViewport = window.matchMedia('(max-width: 639px)')
         const slowUpdates = window.matchMedia('(update: slow)')
         const forcedColors = window.matchMedia('(forced-colors: active)')
         let frame = 0
@@ -47,23 +48,34 @@ export function AmbientCanvas() {
         let width = 0
         let height = 0
         let resizeTimer: ReturnType<typeof setTimeout> | null = null
-        const particleCount = coarsePointer.matches ? 24 : 48
         const elements: ElementKey[] = ['earth', 'fire', 'wind', 'water']
-        const bounds = {
+        const desktopBounds = {
             earth: [0, 0.43, 0, 0.43],
             wind: [0, 0.43, 0.35, 1],
             fire: [0.55, 1, 0, 0.47],
             water: [0.52, 1, 0.39, 1],
         } as const
-        const particles = Array.from({ length: particleCount }, (_, index) => ({
-            element: elements[index % elements.length],
-            x: ((index * 47) % 97) / 100,
-            y: ((index * 37) % 97) / 100,
-            speed: 0.16 + (index % 5) * 0.025,
-            size: 1.2 + (index % 4) * 0.45,
-            phase: index * 0.73,
-            drift: ((index % 7) - 3) * 0.008,
-        }))
+        const mobileBounds = {
+            earth: [0, 0.43, 0.37, 0.482],
+            wind: [0, 0.43, 0.461, 0.63],
+            fire: [0.55, 1, 0.37, 0.492],
+            water: [0.52, 1, 0.471, 0.63],
+        } as const
+        let particles: AmbientParticle[] = []
+
+        const seedParticles = () => {
+            const particleCount = coarsePointer.matches ? 24 : 48
+            particles = Array.from({ length: particleCount }, (_, index) => ({
+                element: elements[index % elements.length],
+                x: ((index * 47) % 97) / 100,
+                y: ((index * 37) % 97) / 100,
+                speed: 0.16 + (index % 5) * 0.025,
+                size: 1.2 + (index % 4) * 0.45,
+                phase: index * 0.73,
+                drift: ((index % 7) - 3) * 0.008,
+            }))
+            canvas.dataset.particleLimit = String(particleCount)
+        }
 
         const resize = () => {
             const ratio = Math.min(window.devicePixelRatio || 1, 1.5)
@@ -79,6 +91,9 @@ export function AmbientCanvas() {
             previous = time
             context.clearRect(0, 0, width, height)
             for (const particle of particles) {
+                const bounds = mobileViewport.matches
+                    ? mobileBounds
+                    : desktopBounds
                 const [minX, maxX, minY, maxY] = bounds[particle.element]
                 const drawParticle = {
                     ...particle,
@@ -149,6 +164,11 @@ export function AmbientCanvas() {
             start()
         }
 
+        const onCoarsePointerChange = () => {
+            seedParticles()
+            start()
+        }
+
         const onResize = () => {
             if (resizeTimer !== null) clearTimeout(resizeTimer)
             resizeTimer = setTimeout(() => {
@@ -157,12 +177,14 @@ export function AmbientCanvas() {
             }, 120)
         }
 
+        seedParticles()
         resize()
         start()
         window.addEventListener('resize', onResize, { passive: true })
         document.addEventListener('visibilitychange', onVisibilityChange)
         reducedMotion.addEventListener('change', start)
-        coarsePointer.addEventListener('change', start)
+        coarsePointer.addEventListener('change', onCoarsePointerChange)
+        mobileViewport.addEventListener('change', start)
         slowUpdates.addEventListener('change', start)
         forcedColors.addEventListener('change', start)
         return () => {
@@ -171,7 +193,8 @@ export function AmbientCanvas() {
             window.removeEventListener('resize', onResize)
             document.removeEventListener('visibilitychange', onVisibilityChange)
             reducedMotion.removeEventListener('change', start)
-            coarsePointer.removeEventListener('change', start)
+            coarsePointer.removeEventListener('change', onCoarsePointerChange)
+            mobileViewport.removeEventListener('change', start)
             slowUpdates.removeEventListener('change', start)
             forcedColors.removeEventListener('change', start)
         }
@@ -188,7 +211,7 @@ export function AmbientCanvas() {
 }
 
 interface AmbientParticle {
-    element?: ElementKey
+    element: ElementKey
     x: number
     y: number
     speed: number

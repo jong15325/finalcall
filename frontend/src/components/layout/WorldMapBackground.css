@@ -85,7 +85,40 @@
 
 @media (max-width: 639px) {
     .world-map-background__image {
-        object-position: 56% center;
+        object-position: center;
+    }
+
+    .world-map-background__glow--earth {
+        background: radial-gradient(
+            circle at 22% 42.7%,
+            rgb(210 242 150 / 0.34),
+            transparent 10%
+        );
+    }
+
+    .world-map-background__glow--wind {
+        background: conic-gradient(
+            from 25deg at 20% 55%,
+            transparent,
+            rgb(220 255 248 / 0.32),
+            transparent 28%
+        );
+    }
+
+    .world-map-background__glow--fire {
+        background: radial-gradient(
+            circle at 76% 43%,
+            rgb(255 100 22 / 0.42),
+            transparent 11%
+        );
+    }
+
+    .world-map-background__glow--water {
+        background: radial-gradient(
+            ellipse at 77% 56%,
+            rgb(100 220 255 / 0.38),
+            transparent 12%
+        );
     }
 }
 
