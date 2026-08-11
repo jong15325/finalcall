@@ -3,7 +3,7 @@ id: EPIC-HORIZONTAL-APP-SHELL
 type: epic
 jira_key: null
 title: Vuexy 수평 내비게이션과 공통 AppShell 재구성
-state: todo
+state: doing
 children: [FC-245, FC-246, FC-247, FC-248, FC-249, FC-250, FC-251, FC-252]
 gate: null
 ---
@@ -33,4 +33,3 @@ gate: null
 
 - 게이트1·게이트2·디자인 게이트: 2026-08-11 사용자 승인 완료.
 - 게이트3: FC-252 reviewer 통과 뒤 사용자 Done·push 승인 필요.
-
