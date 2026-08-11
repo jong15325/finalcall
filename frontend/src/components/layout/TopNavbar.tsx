@@ -225,7 +225,7 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                         </NavLink>
                         <NavLink
                             to={paths.signup}
-                            className="rounded-lg bg-orange px-3 py-2 text-sm font-bold text-white hover:bg-orange-deep"
+                            className="detail-cta rounded-lg bg-orange px-3 py-2 text-sm font-bold text-white hover:bg-orange-deep"
                         >
                             회원가입
                         </NavLink>

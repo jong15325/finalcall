@@ -34,7 +34,7 @@ import type { AuctionDetail } from '@/lib/api/auctions'
 
 const PHASE_BADGE_CLASS: Record<AuctionPhase, string> = {
     live: 'bg-success-subtle text-success',
-    scheduled: 'bg-navy/10 text-navy-700',
+    scheduled: 'detail-meta bg-navy/10 text-navy-700',
     ended: 'bg-gray-100 text-gray-500',
 }
 

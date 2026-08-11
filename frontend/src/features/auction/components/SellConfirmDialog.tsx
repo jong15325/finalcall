@@ -248,7 +248,7 @@ function SellConfirmDialog({
                             ref={confirmRef}
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                            className="detail-cta rounded-lg bg-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '등록 중…' : '경매 등록 확정'}
                         </button>

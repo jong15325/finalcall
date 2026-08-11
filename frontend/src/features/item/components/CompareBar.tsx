@@ -95,7 +95,7 @@ function CompareBar() {
                 {canCompare ? (
                     <Link
                         to={paths.compare}
-                        className="whitespace-nowrap rounded-lg bg-orange px-4 py-2 text-xs font-bold text-white hover:bg-orange-deep"
+                        className="detail-cta whitespace-nowrap rounded-lg bg-orange px-4 py-2 text-xs font-bold text-white hover:bg-orange-deep"
                     >
                         비교하기
                     </Link>

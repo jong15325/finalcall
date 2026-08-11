@@ -25,7 +25,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_CLASS: Record<string, string> = {
     ACTIVE: 'bg-success-subtle text-success',
     OUTBID: 'bg-gray-100 text-gray-500',
-    WON: 'bg-navy/10 text-navy-700',
+    WON: 'detail-meta bg-navy/10 text-navy-700',
 }
 
 const dateTime = new Intl.DateTimeFormat('ko-KR', {

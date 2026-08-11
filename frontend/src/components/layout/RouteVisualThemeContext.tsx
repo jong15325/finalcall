@@ -39,6 +39,9 @@ const SHARED_TOKENS = {
     '--detail-muted': '#cbd5e1',
     '--detail-cta-bg': '#f59e0b',
     '--detail-cta-text': '#18181b',
+    '--detail-cta-hover': '#fbbf24',
+    '--detail-meta-surface': 'rgba(255, 255, 255, .12)',
+    '--detail-meta-text': '#f8fafc',
     '--detail-focus-ring': '#fbbf24',
 } as ThemeStyle
 

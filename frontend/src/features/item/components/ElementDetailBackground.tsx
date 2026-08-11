@@ -81,8 +81,7 @@ function isLowPowerDevice() {
         (navigator.hardwareConcurrency > 0 &&
             navigator.hardwareConcurrency <= 4) ||
         (navigatorWithMemory.deviceMemory !== undefined &&
-            navigatorWithMemory.deviceMemory <= 4) ||
-        window.matchMedia('(update: slow)').matches
+            navigatorWithMemory.deviceMemory <= 4)
     )
 }
 
@@ -98,6 +97,7 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
             '(prefers-reduced-motion: reduce)',
         )
         const coarsePointer = window.matchMedia('(pointer: coarse)')
+        const slowUpdates = window.matchMedia('(update: slow)')
         const forcedColors = window.matchMedia('(forced-colors: active)')
         let frame = 0
         let visible = !document.hidden
@@ -108,9 +108,11 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
         const particleCount = coarsePointer.matches ? 24 : 48
         const particles = Array.from({ length: particleCount }, (_, index) => ({
             x: ((index * 47) % 97) / 100,
-            y: -((index * 31) % 100) / 100,
+            y: ((index * 37) % 120) / 100 - 0.08,
             speed: 0.16 + (index % 5) * 0.025,
             size: 1.2 + (index % 4) * 0.45,
+            phase: index * 0.73,
+            drift: ((index % 7) - 3) * 0.008,
         }))
 
         const resize = () => {
@@ -126,34 +128,43 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
             const delta = Math.min((time - previous) / 1000 || 0, 0.04)
             previous = time
             context.clearRect(0, 0, width, height)
-            const color = {
-                water: 'rgba(220, 250, 255, .5)',
-                fire: 'rgba(255, 170, 80, .42)',
-                earth: 'rgba(210, 230, 170, .38)',
-                wind: 'rgba(220, 255, 248, .46)',
-            }[element]
-            context.strokeStyle = color
-            context.fillStyle = color
-            context.lineWidth = 1
-
             for (const particle of particles) {
-                const direction = element === 'fire' ? -1 : 1
-                particle.y += particle.speed * delta * direction
-                if (particle.y > 0.95) particle.y = -0.08
-                if (particle.y < -0.1) particle.y = 0.92
-                const x = width * (0.08 + particle.x * 0.84)
-                const y = height * particle.y
-                context.beginPath()
-                if (element === 'water') {
-                    context.moveTo(x, y - particle.size * 5)
-                    context.lineTo(x, y)
-                    context.stroke()
+                if (element === 'wind') {
+                    const dx = particle.x - 0.58
+                    const dy = particle.y - 0.52
+                    const force = particle.speed * delta * 0.72
+                    particle.x += -dy * force
+                    particle.y += dx * force
+                    drawWind(context, particle, width, height, time)
+                } else if (element === 'fire') {
+                    particle.y -= particle.speed * delta * 0.9
+                    particle.x +=
+                        Math.sin(time * 0.0015 + particle.phase) * delta * 0.006
+                    drawFire(context, particle, width, height, time)
+                } else if (element === 'earth') {
+                    particle.x += particle.drift * delta
+                    particle.y +=
+                        Math.sin(time * 0.0007 + particle.phase) * delta * 0.009
+                    drawEarth(context, particle, width, height, time)
                 } else {
-                    context.arc(x, y, particle.size, 0, Math.PI * 2)
-                    context.fill()
+                    particle.y +=
+                        particle.speed *
+                        delta *
+                        (1.65 + Math.max(0, particle.y) * 1.35)
+                    drawWater(context, particle, width, height)
                 }
+                if (particle.y < -0.1) particle.y = 1.02
+                if (particle.y > 1.02) particle.y = -0.08
+                if (particle.x < -0.1) particle.x = 1.02
+                if (particle.x > 1.02) particle.x = -0.08
             }
-            if (visible && !reducedMotion.matches) {
+            if (
+                visible &&
+                !reducedMotion.matches &&
+                !coarsePointer.matches &&
+                !slowUpdates.matches &&
+                !forcedColors.matches
+            ) {
                 frame = requestAnimationFrame(draw)
             }
         }
@@ -169,6 +180,7 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
                 !visible ||
                 reducedMotion.matches ||
                 coarsePointer.matches ||
+                slowUpdates.matches ||
                 forcedColors.matches
             ) {
                 context.clearRect(0, 0, width, height)
@@ -196,6 +208,8 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
         window.addEventListener('resize', onResize, { passive: true })
         document.addEventListener('visibilitychange', onVisibilityChange)
         reducedMotion.addEventListener('change', start)
+        coarsePointer.addEventListener('change', start)
+        slowUpdates.addEventListener('change', start)
         forcedColors.addEventListener('change', start)
         return () => {
             stop()
@@ -203,6 +217,8 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
             window.removeEventListener('resize', onResize)
             document.removeEventListener('visibilitychange', onVisibilityChange)
             reducedMotion.removeEventListener('change', start)
+            coarsePointer.removeEventListener('change', start)
+            slowUpdates.removeEventListener('change', start)
             forcedColors.removeEventListener('change', start)
         }
     }, [element])
@@ -215,4 +231,152 @@ function AmbientCanvas({ element }: { element: ElementKey }) {
             aria-hidden="true"
         />
     )
+}
+
+interface AmbientParticle {
+    x: number
+    y: number
+    speed: number
+    size: number
+    phase: number
+    drift: number
+}
+
+function drawWind(
+    context: CanvasRenderingContext2D,
+    particle: AmbientParticle,
+    width: number,
+    height: number,
+    time: number,
+) {
+    const x = particle.x * width
+    const y = particle.y * height
+    const bend = Math.sin(time * 0.001 + particle.phase) * particle.size * 5
+    context.beginPath()
+    context.moveTo(x - particle.size * 10, y + bend)
+    context.quadraticCurveTo(x, y - particle.size * 3, x + particle.size * 9, y)
+    context.strokeStyle = 'rgba(220, 255, 248, .5)'
+    context.lineWidth = 0.8 + (particle.phase % 3) * 0.45
+    context.stroke()
+}
+
+function drawFire(
+    context: CanvasRenderingContext2D,
+    particle: AmbientParticle,
+    width: number,
+    height: number,
+    time: number,
+) {
+    const x = particle.x * width
+    const y = particle.y * height
+    const pulse = 2.8 + Math.sin(time * 0.004 + particle.phase) * 1.2
+    const glow = context.createRadialGradient(
+        x,
+        y,
+        0,
+        x,
+        y,
+        particle.size * pulse,
+    )
+    glow.addColorStop(0, 'rgba(255, 220, 120, .72)')
+    glow.addColorStop(1, 'rgba(255, 70, 20, 0)')
+    context.fillStyle = glow
+    context.beginPath()
+    context.arc(x, y, particle.size * pulse, 0, Math.PI * 2)
+    context.fill()
+    context.beginPath()
+    context.moveTo(x, y - particle.size * 4)
+    context.quadraticCurveTo(x + particle.size * 2, y, x, y + particle.size)
+    context.quadraticCurveTo(x - particle.size * 2, y, x, y - particle.size * 4)
+    context.fillStyle = 'rgba(255, 155, 48, .58)'
+    context.fill()
+}
+
+function drawEarth(
+    context: CanvasRenderingContext2D,
+    particle: AmbientParticle,
+    width: number,
+    height: number,
+    time: number,
+) {
+    const x = particle.x * width
+    const y = particle.y * height
+    const glow = context.createRadialGradient(x, y, 0, x, y, particle.size * 5)
+    glow.addColorStop(0, 'rgba(210, 242, 150, .5)')
+    glow.addColorStop(1, 'rgba(110, 145, 70, 0)')
+    context.fillStyle = glow
+    context.beginPath()
+    context.arc(x, y, particle.size * 5, 0, Math.PI * 2)
+    context.fill()
+    context.save()
+    context.translate(x, y)
+    context.rotate(time * 0.0002 + particle.phase)
+    context.strokeStyle = 'rgba(220, 240, 175, .54)'
+    context.beginPath()
+    context.moveTo(-particle.size * 2.5, 0)
+    context.lineTo(0, -particle.size * 2.5)
+    context.lineTo(particle.size * 2.5, 0)
+    context.lineTo(0, particle.size * 2.5)
+    context.closePath()
+    context.stroke()
+    context.restore()
+}
+
+function drawWater(
+    context: CanvasRenderingContext2D,
+    particle: AmbientParticle,
+    width: number,
+    height: number,
+) {
+    const x = (0.4 + particle.x * 0.58) * width
+    const impactY = (0.58 + (particle.phase % 4) * 0.07) * height
+    const y = particle.y * height
+    const size = particle.size + 0.8
+    if (y < impactY) {
+        context.strokeStyle = 'rgba(225, 250, 253, .62)'
+        context.beginPath()
+        context.moveTo(x - particle.drift * 60, y - size * 5)
+        context.lineTo(x, y)
+        context.stroke()
+        context.beginPath()
+        context.ellipse(
+            x,
+            y,
+            size,
+            size * 1.16,
+            particle.drift * 6,
+            0,
+            Math.PI * 2,
+        )
+        context.fillStyle = 'rgba(220, 250, 255, .46)'
+        context.fill()
+        return
+    }
+    const progress = Math.min(1, (y - impactY) / Math.max(1, height - impactY))
+    context.strokeStyle = `rgba(220, 250, 255, ${0.55 * (1 - progress)})`
+    context.beginPath()
+    context.ellipse(
+        x,
+        impactY,
+        size * (2 + progress * 7),
+        size * (0.5 + progress),
+        0,
+        0,
+        Math.PI * 2,
+    )
+    context.stroke()
+    if (progress < 0.42 && particle.phase % 4 > 2.4) {
+        context.beginPath()
+        context.ellipse(
+            x + size,
+            impactY - size * Math.sin(progress * Math.PI) * 2.2,
+            size * 0.5,
+            size,
+            0,
+            0,
+            Math.PI * 2,
+        )
+        context.fillStyle = 'rgba(225, 250, 253, .44)'
+        context.fill()
+    }
 }

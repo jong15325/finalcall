@@ -149,6 +149,16 @@ describe('ElementDetailBackground', () => {
         media.setMatches('(forced-colors: active)', false)
         expect(raf).toHaveBeenCalledTimes(3)
 
+        media.setMatches('(pointer: coarse)', true)
+        expect(cancel).toHaveBeenCalledWith(41)
+        media.setMatches('(pointer: coarse)', false)
+        expect(raf).toHaveBeenCalledTimes(4)
+
+        media.setMatches('(update: slow)', true)
+        expect(cancel).toHaveBeenCalledWith(41)
+        media.setMatches('(update: slow)', false)
+        expect(raf).toHaveBeenCalledTimes(5)
+
         window.dispatchEvent(new Event('resize'))
         window.dispatchEvent(new Event('resize'))
         expect(setTransform).toHaveBeenCalledTimes(1)
@@ -168,9 +178,76 @@ describe('ElementDetailBackground', () => {
         const resizeCallsAfterUnmount = setTransform.mock.calls.length
         act(() => vi.advanceTimersByTime(120))
         media.setMatches('(prefers-reduced-motion: reduce)', false)
+        media.setMatches('(pointer: coarse)', true)
+        media.setMatches('(pointer: coarse)', false)
+        media.setMatches('(update: slow)', true)
+        media.setMatches('(update: slow)', false)
         document.dispatchEvent(new Event('visibilitychange'))
         expect(raf).toHaveBeenCalledTimes(callsAfterUnmount)
         expect(setTransform).toHaveBeenCalledTimes(resizeCallsAfterUnmount)
         vi.useRealTimers()
     })
+
+    it.each([
+        [4, 'wind', 'quadraticCurveTo'],
+        [2, 'fire', 'createRadialGradient'],
+        [3, 'earth', 'rotate'],
+        [1, 'water', 'ellipse'],
+    ] as const)(
+        '%s 속성은 %s 고유 Canvas motif를 그린다',
+        (code, _name, primitive) => {
+            Object.defineProperty(document, 'hidden', {
+                configurable: true,
+                value: false,
+            })
+            const callbacks: FrameRequestCallback[] = []
+            const gradient = { addColorStop: vi.fn() }
+            const context = {
+                arc: vi.fn(),
+                beginPath: vi.fn(),
+                clearRect: vi.fn(),
+                closePath: vi.fn(),
+                createRadialGradient: vi.fn(() => gradient),
+                ellipse: vi.fn(),
+                fill: vi.fn(),
+                fillStyle: '',
+                lineTo: vi.fn(),
+                moveTo: vi.fn(),
+                quadraticCurveTo: vi.fn(),
+                restore: vi.fn(),
+                rotate: vi.fn(),
+                save: vi.fn(),
+                setTransform: vi.fn(),
+                stroke: vi.fn(),
+                strokeStyle: '',
+                translate: vi.fn(),
+                lineWidth: 0,
+            }
+            vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+                context as unknown as CanvasRenderingContext2D,
+            )
+            vi.stubGlobal(
+                'requestAnimationFrame',
+                (callback: FrameRequestCallback) => {
+                    callbacks.push(callback)
+                    return callbacks.length
+                },
+            )
+            vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+            const view = render(
+                <ElementDetailBackground element={code}>
+                    효과
+                </ElementDetailBackground>,
+            )
+            act(() => MockImage.instances.at(-1)?.onload?.())
+            act(() => callbacks[0]?.(1000))
+
+            expect(context[primitive]).toHaveBeenCalled()
+            if (code === 1) {
+                expect(context.ellipse.mock.calls.length).toBeGreaterThan(48)
+            }
+            view.unmount()
+        },
+    )
 })

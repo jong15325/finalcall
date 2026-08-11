@@ -174,14 +174,14 @@ function BidPanel({
                 ) : !isAuthed ? (
                     <Link
                         to={loginHref}
-                        className="block w-full rounded-lg bg-orange px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-orange-deep"
+                        className="detail-cta block w-full rounded-lg bg-orange px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-orange-deep"
                     >
                         로그인하고 입찰
                     </Link>
                 ) : (
                     <button
                         type="button"
-                        className="w-full rounded-lg bg-orange px-5 py-3.5 text-sm font-bold text-white hover:bg-orange-deep"
+                        className="detail-cta w-full rounded-lg bg-orange px-5 py-3.5 text-sm font-bold text-white hover:bg-orange-deep"
                         onClick={onBid}
                     >
                         입찰하기

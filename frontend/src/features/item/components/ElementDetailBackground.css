@@ -124,6 +124,31 @@
     border-color: var(--detail-content-border);
 }
 
+.element-detail .detail-surface .detail-meta,
+.element-detail
+    .detail-surface
+    :is([class~='text-navy'], [class~='text-navy-700']) {
+    color: var(--detail-meta-text);
+}
+
+.element-detail
+    .detail-surface
+    :is([class~='bg-navy/5'], [class~='bg-navy/10']) {
+    background: var(--detail-meta-surface);
+}
+
+.element-detail .detail-cta:not(:disabled),
+[data-detail-theme] .detail-chrome .detail-cta:not(:disabled) {
+    background: var(--detail-cta-bg);
+    color: var(--detail-cta-text);
+}
+
+.element-detail .detail-cta:not(:disabled):hover,
+[data-detail-theme] .detail-chrome .detail-cta:not(:disabled):hover {
+    background: var(--detail-cta-hover);
+    color: var(--detail-cta-text);
+}
+
 .element-detail a:focus-visible,
 .element-detail button:focus-visible,
 [data-detail-theme] .detail-chrome :is(a, button):focus-visible {

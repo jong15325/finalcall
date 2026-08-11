@@ -93,10 +93,29 @@ describe('AppShell route-scoped 상세 배경', () => {
     })
 
     it('목록 route 직접 진입에는 배경 DOM이 없다', () => {
+        const imageConstructor = vi.fn()
+        const requestFrame = vi.fn()
+        const addMediaListener = vi.fn()
+        vi.stubGlobal('Image', imageConstructor)
+        vi.stubGlobal('requestAnimationFrame', requestFrame)
+        vi.stubGlobal('matchMedia', () => ({
+            matches: false,
+            media: '',
+            onchange: null,
+            addEventListener: addMediaListener,
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        }))
         const view = renderShell('/auctions')
         expect(
             view.container.querySelector('.element-detail__scene'),
         ).toBeNull()
+        expect(imageConstructor).not.toHaveBeenCalled()
+        expect(requestFrame).not.toHaveBeenCalled()
+        expect(addMediaListener).not.toHaveBeenCalled()
+        vi.unstubAllGlobals()
     })
 
     it('아이템 상세도 응답 속성으로 theme을 등록한다', () => {
