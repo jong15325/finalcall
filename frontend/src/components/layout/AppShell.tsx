@@ -7,6 +7,7 @@ import MobileBottomNav from './MobileBottomNav'
 import HorizontalNav from './HorizontalNav'
 import useDesktopLayout from './useDesktopLayout'
 import WorldMapBackground from './WorldMapBackground'
+import AppFooter from './AppFooter'
 import {
     RouteVisualThemeProvider,
     routeThemeStyle,
@@ -106,9 +107,7 @@ function ThemedAppShell() {
                     </div>
                 </main>
 
-                <footer className="detail-chrome relative z-10 hidden border-t border-line bg-surface px-6 py-4 text-xs text-gray-600 xl:block">
-                    © 2026 장터 · 안전한 게임 아이템 거래
-                </footer>
+                <AppFooter />
             </div>
 
             <CompareBar />

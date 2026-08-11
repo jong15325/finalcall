@@ -1,0 +1,93 @@
+import { Link } from 'react-router'
+import { paths } from '@/app/paths'
+import BrandLogo from '@/components/brand/BrandLogo'
+
+const serviceLinks = [
+    { label: '경매', to: paths.auctions },
+    { label: '마켓', to: paths.market },
+    { label: '커뮤니티', to: paths.boards },
+] as const
+
+/** AppShell 전역 서비스 정보. AuthLayout에는 포함하지 않는다. */
+function AppFooter() {
+    return (
+        <footer className="detail-chrome relative z-10 border-t border-line bg-navy-900 text-gray-300">
+            <div className="mx-auto w-full max-w-[1440px] px-5 pb-24 pt-10 sm:px-8 sm:pt-12 xl:px-10 xl:pb-12">
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-16">
+                    <div className="max-w-xl">
+                        <BrandLogo className="brightness-0 invert" />
+                        <p className="mt-5 text-sm leading-6 text-gray-300">
+                            마감 순간에도 정확한 가격과 거래 흐름을 지키는 게임
+                            아이템 거래 플랫폼입니다.
+                        </p>
+                        <p className="mt-4 text-sm leading-6">
+                            <span className="font-semibold text-white">
+                                서비스 문의
+                            </span>{' '}
+                            <span className="text-gray-400">
+                                공식 문의 채널 준비 중
+                            </span>
+                        </p>
+                    </div>
+
+                    <nav aria-label="하단 서비스 메뉴">
+                        <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white">
+                            {serviceLinks.map((link) => (
+                                <li key={link.to}>
+                                    <Link
+                                        className="rounded-sm underline-offset-4 hover:text-gold-bright hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-bright"
+                                        to={link.to}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </div>
+
+                <div className="mt-10 border-t border-navy-700 pt-7 text-xs leading-5 text-gray-400">
+                    <p>© 2026 FinalCall. All rights reserved.</p>
+                    <div className="mt-4 max-w-[75ch] space-y-1.5">
+                        <p>
+                            FinalCall은 게임 아이템 거래를 위한 중개 플랫폼이며,
+                            거래 당사자가 등록한 정보의 정확성을 보증하지
+                            않습니다.
+                        </p>
+                        <p>
+                            게임명·상표·아이템 등 각 지식재산권은 해당
+                            권리자에게 있으며, FinalCall은 관련 게임사의 공식
+                            서비스가 아닙니다.
+                        </p>
+                        <p>
+                            안전한 거래를 위해 플랫폼에서 안내하는 결제·인도
+                            절차를 이용하고, 계정 정보나 인증 수단을 타인과
+                            공유하지 마세요.
+                        </p>
+                    </div>
+
+                    <nav className="mt-6" aria-label="정책 안내">
+                        <ul className="flex flex-wrap gap-x-5 gap-y-2">
+                            <li>
+                                <span>이용약관 준비 중</span>
+                            </li>
+                            <li>
+                                <span>개인정보처리방침 준비 중</span>
+                            </li>
+                            <li>
+                                <Link
+                                    className="rounded-sm font-semibold text-gray-300 underline-offset-4 hover:text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-bright"
+                                    to="/boards/notice"
+                                >
+                                    공지사항
+                                </Link>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </footer>
+    )
+}
+
+export default AppFooter

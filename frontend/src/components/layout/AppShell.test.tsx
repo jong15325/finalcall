@@ -123,8 +123,8 @@ describe('AppShell route-scoped 상세 배경', () => {
         ).toBeNull()
         expect(view.container.querySelector('footer')).toHaveClass(
             'z-10',
-            'bg-surface',
-            'text-gray-600',
+            'bg-navy-900',
+            'text-gray-300',
         )
         expect(view.container.querySelector('#view')).not.toHaveClass(
             'overflow-auto',
@@ -205,6 +205,28 @@ describe('AppShell route-scoped 상세 배경', () => {
             'water',
         )
         expect(view.getByText('경매 목록')).toBeVisible()
+    })
+
+    it('모든 AppShell route에 모바일 안전 여백과 유효한 하단 안내를 제공한다', () => {
+        const view = renderShell('/market')
+        const footer = view.container.querySelector('footer')
+        const footerInner = footer?.firstElementChild
+
+        expect(footer).toBeVisible()
+        expect(footerInner).toHaveClass('max-w-[1440px]', 'pb-24', 'xl:pb-12')
+        expect(
+            view.getByRole('navigation', { name: '하단 서비스 메뉴' }),
+        ).toBeVisible()
+        expect(view.getByRole('link', { name: '경매' })).toHaveAttribute(
+            'href',
+            '/auctions',
+        )
+        expect(view.getByRole('link', { name: '공지사항' })).toHaveAttribute(
+            'href',
+            '/boards/notice',
+        )
+        expect(view.getByText('이용약관 준비 중')).not.toHaveAttribute('href')
+        expect(view.getByText('공식 문의 채널 준비 중')).toBeVisible()
     })
 
     it('경매 목록 exact route는 ambient-only water scene 하나만 사용한다', () => {
