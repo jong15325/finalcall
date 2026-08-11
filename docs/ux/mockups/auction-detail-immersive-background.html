@@ -418,61 +418,6 @@
         background: #fff;
       }
 
-      .effect-lab {
-        display: flex;
-        margin: 0 0 18px auto;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 10px;
-        color: #fff;
-      }
-
-      .effect-copy {
-        min-width: 190px;
-        text-align: right;
-      }
-
-      .effect-copy strong,
-      .effect-copy span {
-        display: block;
-      }
-
-      .effect-copy strong {
-        font-size: 13px;
-      }
-
-      .effect-copy span {
-        margin-top: 2px;
-        color: rgb(255 255 255 / 70%);
-        font-size: 11px;
-      }
-
-      .effect-options {
-        display: flex;
-        padding: 4px;
-        gap: 4px;
-        border: 1px solid rgb(255 255 255 / 25%);
-        border-radius: 999px;
-        background: rgb(8 17 32 / 76%);
-      }
-
-      .effect-options button {
-        min-width: 42px;
-        min-height: 34px;
-        border: 0;
-        border-radius: 999px;
-        color: rgb(255 255 255 / 72%);
-        background: transparent;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 850;
-      }
-
-      .effect-options button[aria-pressed="true"] {
-        color: var(--navy);
-        background: #fff;
-        box-shadow: 0 3px 12px rgb(0 0 0 / 18%);
-      }
 
       .element-dot {
         width: 9px;
@@ -788,24 +733,6 @@
       }
 
       @media (max-width: 560px) {
-        .effect-lab {
-          align-items: stretch;
-          flex-direction: column;
-        }
-
-        .effect-copy {
-          min-width: 0;
-          text-align: left;
-        }
-
-        .effect-options {
-          width: 100%;
-        }
-
-        .effect-options button {
-          flex: 1;
-        }
-
         .topbar-inner {
           width: calc(100% - 28px);
         }
@@ -910,18 +837,6 @@
           </button>
         </div>
 
-        <div class="effect-lab" aria-label="환경 효과 디자인 비교">
-          <div class="effect-copy" aria-live="polite">
-            <strong id="effectName">나선 돌풍</strong>
-            <span id="effectDescription">제단을 감싸는 공기 리본과 미세 부유물</span>
-          </div>
-          <div class="effect-options">
-            <button type="button" data-effect="a" aria-pressed="false" aria-label="효과 디자인 A">A</button>
-            <button type="button" data-effect="b" aria-pressed="true" aria-label="효과 디자인 B">B</button>
-            <button type="button" data-effect="c" aria-pressed="false" aria-label="효과 디자인 C">C</button>
-          </div>
-        </div>
-
         <section class="content-frame" aria-labelledby="auctionTitle">
           <div class="title-row">
             <div>
@@ -992,7 +907,7 @@
         </section>
 
         <p class="design-note">
-          배경 디자인은 v3로 고정하고 환경 효과만 비교합니다. 속성마다 A·B·C 세 가지 디자인을 제공하며, 이름과 설명은 선택한 속성에 맞춰 바뀝니다. 공통 배경은 이번 비교에서 제외했습니다.
+          최종 확정안입니다. 바람은 나선 돌풍, 불은 용암 맥동, 흙은 고대 수호, 물은 자연 낙수를 적용합니다. 속성을 전환하면 해당 효과가 자동으로 함께 변경되며 공통 배경은 추후 별도로 진행합니다.
         </p>
       </div>
     </main>
@@ -1012,38 +927,7 @@
 
       const scene = document.querySelector(".scene");
       const elementButtons = document.querySelectorAll(".element-switcher [data-element]");
-      const effectButtons = document.querySelectorAll(".effect-options [data-effect]");
-      const effectName = document.querySelector("#effectName");
-      const effectDescription = document.querySelector("#effectDescription");
-      const effectDesigns = {
-        wind: {
-          a: ["산들바람", "잎사귀와 완만한 횡방향 기류"],
-          b: ["나선 돌풍", "제단을 감싸는 공기 리본과 미세 부유물"],
-          c: ["상공 기류", "빠른 사선 기류와 작고 가벼운 잎"],
-        },
-        fire: {
-          a: ["잔불 숨결", "느리게 떠오르는 부드러운 불씨"],
-          b: ["불꽃 상승", "지면에서 솟는 불꽃과 빠른 불티"],
-          c: ["용암 맥동", "바닥 발광과 둥글게 퍼지는 열파"],
-        },
-        earth: {
-          a: ["햇빛 먼지", "지면 가까이 흐르는 먼지와 작은 토편"],
-          b: ["지면 파동", "석재 광장에서 낮게 확산되는 흙의 결"],
-          c: ["고대 수호", "룬 주변을 맴도는 청금빛 광물 가루"],
-        },
-        water: {
-          a: ["맑은 기포", "천천히 상승하는 기포와 작은 수면 고리"],
-          b: ["수면 윤슬", "교차하는 햇빛 무늬와 잔잔한 반사광"],
-          c: ["자연 낙수", "둥근 물방울과 비대칭 미세 비산, 낮은 잔물결"],
-        },
-      };
       const selectedEffects = { wind: "b", fire: "c", earth: "c", water: "c" };
-
-      function updateEffectCopy() {
-        const design = effectDesigns[document.body.dataset.element][document.body.dataset.effect];
-        effectName.textContent = design[0];
-        effectDescription.textContent = design[1];
-      }
 
       elementButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -1055,23 +939,8 @@
             elementButtons.forEach((candidate) => {
               candidate.setAttribute("aria-pressed", String(candidate === button));
             });
-            effectButtons.forEach((candidate) => {
-              candidate.setAttribute("aria-pressed", String(candidate.dataset.effect === document.body.dataset.effect));
-            });
-            updateEffectCopy();
             requestAnimationFrame(() => scene.classList.remove("is-changing"));
           }, 120);
-        });
-      });
-
-      effectButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          document.body.dataset.effect = button.dataset.effect;
-          selectedEffects[document.body.dataset.element] = button.dataset.effect;
-          effectButtons.forEach((candidate) => {
-            candidate.setAttribute("aria-pressed", String(candidate === button));
-          });
-          updateEffectCopy();
         });
       });
 
