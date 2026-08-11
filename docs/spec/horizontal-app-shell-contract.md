@@ -1,6 +1,6 @@
-# 수평 AppShell·공통 콘텐츠 평면 계약 v1.3
+# 수평 AppShell·공통 콘텐츠 평면 계약 v1.4
 
-- 상태: **DECIDED — PC hover 메뉴·경매 목록 water scene 승인 2026-08-11**
+- 상태: **DECIDED — 경매 목록 불투명 page region 예외 승인 2026-08-11**
 - 적용 범위: `AppShell` 아래 모든 공개·보호·404 route
 - 제외: `AuthLayout`의 로그인·회원가입·OAuth callback, API·백엔드·DB
 - 선행 계약: `element-detail-background-contract.md` v2.1 및 FC-244
@@ -36,6 +36,10 @@ AppShell
   시각 경계이며, 뒤로가기·상태 알림·Hero·입찰 패널·입찰 이력 전부가 region 안에 있어야 한다.
 - 위 예외는 `/items/:id`와 다른 route에 확장하지 않는다. 아이템 상세는 AppShell single plane과 기존
   detail theme을 유지하고, 일반 route도 중첩 page wrapper를 만들지 않는다.
+- **경매 목록 `/auctions`도 별도 승인 예외**로 AppShell plane 안에 불투명 white page-level
+  `auction-list-region` 하나를 둔다. 페이지 제목·설명, 필터, 정렬·결과 수, loading·error·empty, 카드 grid,
+  pagination을 포함한 목록의 모든 상태와 제어가 region 안에 있어야 한다.
+- `/auctions`와 `/auctions/:id` 외 route에는 page-level 중첩 region을 추가하지 않는다.
 - 320px에서도 gutter 안의 usable width를 보장하고 input·주요 CTA가 잘리거나 가로 스크롤을 만들지 않는다.
   loading·error·404도 동일 plane geometry 안에서 렌더해 상태 전환 layout jump를 막는다.
 - content plane에는 `overflow`, `transform`, `filter`, z-index stacking context를 만들지 않는다. full-width가
@@ -44,10 +48,14 @@ AppShell
   component 안에 중첩하거나 별도 흰 veil로 viewport를 덮지 않는다.
 - 앞 조항의 중첩 금지는 경매 상세의 승인된 content region에 한해 번복한다. region은 viewport veil이 아니라
   AppShell plane 안쪽의 유한한 content boundary이며 outer gutter의 이미지·particle을 가리지 않는다.
+- 중첩 금지는 `auction-list-region`에도 동일하게 번복한다. 목록 region도 viewport veil이 아니며 water scene과
+  outer gutter를 가리지 않는 유한한 경계다.
 - 경매 content region은 `bg-surface`/`#fff`, responsive padding, mobile부터 radius·border·shadow를 사용한다.
   정확한 padding은 기존 AppShell plane 내부 여백과 합쳐 320px usable width를 해치지 않도록 구현하되,
   desktop에서 region과 AppShell plane 사이의 여백이 육안으로 구분돼야 한다.
 - region에도 `overflow`, `transform`, `filter`, z-index stacking context를 만들지 않는다.
+- `auction-list-region`은 opaque `bg-surface`/`#fff`, responsive padding, mobile부터 radius·border·shadow를
+  사용한다. 내부 카드·필터·form은 기존 light baseline과 정보 구조를 유지한다.
 - footer·CompareBar는 background 위, modal·drawer·dropdown은 모든 shell layer 위에 있어야 한다.
 
 ## 2. 반응형 내비게이션
@@ -141,7 +149,8 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - static theme source는 theme token만 결정하고 이미지/Canvas를 별도로 로드하지 않는다. route별 scene owner는
   하나뿐이며 image request·Canvas·RAF loop를 중복 생성하지 않는다.
 - `/auctions` 목록 콘텐츠는 기존 opaque AppShell white plane 안에 유지한다. 목록 카드·필터를 투명/glass로
-  바꾸지 않으며 background/particle은 plane 바깥 gutter에서 보인다.
+  바꾸지 않으며 그 안의 `auction-list-region`에 전체 목록을 수용한다. water background/particle은 region과
+  plane 바깥 gutter에서 보인다.
 - 목록 이탈 시 static theme·scene DOM·image lifecycle·RAF·resize/visibility listener를 즉시 cleanup한다.
   다른 목록·route에는 water token·DOM·요청·RAF가 0이어야 한다.
 
@@ -161,6 +170,8 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
   동일한 시각 boundary와 폭·padding을 사용한다.
 - 경매 목록: exact `/auctions` water theme·scene 1개, opaque AppShell plane 유지, 상세 dynamic precedence,
   route 이탈 및 다른 route token/DOM/request/RAF 누출 0개.
+- 경매 목록 region: 제목·설명·필터·정렬/결과수·모든 데이터 상태·grid·pagination 포함, 밝은 card/form baseline,
+  overflow/transform/filter/z-index context 0개, 320px·200% 확대와 sticky/pagination 동작 보존.
 - 공개 route: 홈·경매·마켓·비교·게시판·충전·404의 layout/overflow/active nav.
 - 보호 route: 판매·마이·주문·쪽지·인벤토리·보관·지갑·아이템상세·게시글 작성/수정과 route guard.
 - 회귀: sticky, modal, dropdown, drawer, CompareBar, footer, scroll-lock, 320px·1280px·200% 확대.
@@ -183,3 +194,5 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - FC-256: auction region·surface·stacking final re-review
 - FC-257: horizontal hover arbitration·auction list water scene
 - FC-258: hover a11y·theme precedence·scene cleanup final re-review
+- FC-259: auction list opaque page-level region
+- FC-260: auction list region·scene·responsive final re-review
