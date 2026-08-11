@@ -80,3 +80,18 @@
 - `world-map-five-regions-d.png`: 광산·관측소·수중 던전 등 실제 플레이 시설을 강조한 던전형
 
 불은 검은 화산암·용암 강·제련 성채, 물은 산호·청록 수로·다단 폭포, 흙은 거대 수호상·암반 고원·황금 광산, 바람은 풍차·비공정·곡선 기류로 구분한다. 중립 마을은 상단 중앙에서 네 지역을 잇는 퀘스트·이동 허브 역할을 한다.
+
+## 실제 게임 맵 소스 기반 시리즈
+
+`world-map-water-region-v2.png` 구도를 기준으로 실제 게임 맵 PNG의 재질과 구조를 권역 디자인에 직접 반영했다.
+
+- 바람: `game/map/map1/ground.png`의 청록·파랑 수목, 거목 뿌리, 흰 경계석, 유기적인 흙길
+- 불: `game/map/flame/tile`, `game/map/map8/tile`의 갈라진 용암석과 `game/map/map5/ground.png`의 발광 룬 타일
+- 흙: `game/map/map4/ground.png`의 반복 원형 석조 포장, 목조 건물, 화단, 중앙 단상
+- 물: `game/map/map3/ground.png`의 목조 선박·밧줄·통·해수면과 `game/map/map2/ground.png`의 푸른 결정 바닥·검은 광택 암석
+
+시안:
+
+- `world-map-game-sources-a.png`: 원본 v2 구도를 가장 많이 유지하면서 네 소스의 대표 오브젝트를 균형 있게 배치
+- `world-map-game-sources-b.png`: 거목 바람 지형과 푸른 결정 수중 던전, 불 성채의 대비를 강화
+- `world-map-game-sources-c.png`: 실제 맵의 던전·선박·거목 랜드마크를 크게 사용한 고밀도 월드맵
