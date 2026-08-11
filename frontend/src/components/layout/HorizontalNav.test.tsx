@@ -10,6 +10,24 @@ describe('HorizontalNav', () => {
         expect(screen.getByRole('button', { name: /마켓/ }).className).toContain('border-orange')
     })
 
+    it('/items/:id는 마켓 그룹의 명시적 상세 경로로 활성 표시한다', () => {
+        render(<MemoryRouter initialEntries={['/items/I-1']}><HorizontalNav /></MemoryRouter>)
+        expect(screen.getByRole('button', { name: /마켓/ }).className).toContain('border-orange')
+    })
+
+    it('좌우 방향키로 최상위 항목을 순환 탐색한다', async () => {
+        const user = userEvent.setup()
+        render(<MemoryRouter><HorizontalNav /></MemoryRouter>)
+        const roots = document.querySelectorAll<HTMLElement>('[data-horizontal-root]')
+        roots[0]?.focus()
+        await user.keyboard('{ArrowRight}')
+        expect(roots[1]).toHaveFocus()
+        await user.keyboard('{ArrowLeft}')
+        expect(roots[0]).toHaveFocus()
+        await user.keyboard('{ArrowLeft}')
+        expect(roots[roots.length - 1]).toHaveFocus()
+    })
+
     it('방향키와 Escape로 하위 메뉴를 탐색하고 닫는다', async () => {
         const user = userEvent.setup()
         render(<MemoryRouter><HorizontalNav /></MemoryRouter>)

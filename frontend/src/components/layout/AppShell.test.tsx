@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { Link, MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
@@ -60,7 +60,7 @@ describe('AppShell route-scoped 상세 배경', () => {
             'z-0',
         )
         expect(scene).not.toHaveClass('w-screen')
-        expect(view.container.querySelector('aside')).toHaveClass('xl:hidden')
+        expect(view.container.querySelector('aside')).toBeNull()
         expect(
             view.queryByRole('navigation', { name: '주요 메뉴' }),
         ).toBeNull()
@@ -94,6 +94,28 @@ describe('AppShell route-scoped 상세 배경', () => {
             'filter',
             'z-0',
         )
+        expect(view.getByTestId('app-content-plane')).toHaveClass(
+            'xl:border',
+            'xl:border-line',
+            'xl:rounded-xl',
+            'xl:shadow-sm',
+        )
+
+        const focusFrame = vi
+            .spyOn(window, 'requestAnimationFrame')
+            .mockImplementation((callback) => {
+                callback(0)
+                return 1
+            })
+        const hamburger = view.getByRole('button', { name: '메뉴 열기' })
+        fireEvent.click(hamburger)
+        expect(
+            view.container.querySelector('aside nav a[href]'),
+        ).toHaveFocus()
+        fireEvent.keyDown(window, { key: 'Escape' })
+        expect(view.container.querySelector('aside')).toBeNull()
+        expect(hamburger).toHaveFocus()
+        focusFrame.mockRestore()
 
         fireEvent.click(view.getByRole('link', { name: '목록으로' }))
         expect(
@@ -164,6 +186,35 @@ describe('AppShell route-scoped 상세 배경', () => {
             'max-w-[1440px]',
             'bg-surface',
         )
+        vi.unstubAllGlobals()
+    })
+
+    it('runtime breakpoint가 desktop으로 바뀌면 열린 drawer를 제거한다', () => {
+        let desktop = false
+        let change: (() => void) | undefined
+        vi.stubGlobal('matchMedia', (query: string) => ({
+            get matches() {
+                return query === '(min-width: 1280px)' && desktop
+            },
+            media: query,
+            onchange: null,
+            addEventListener: (_type: string, listener: () => void) => {
+                if (query === '(min-width: 1280px)') change = listener
+            },
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        }))
+        const view = renderShell('/auctions')
+        fireEvent.click(view.getByRole('button', { name: '메뉴 열기' }))
+        expect(view.container.querySelector('aside')).not.toBeNull()
+        act(() => {
+            desktop = true
+            change?.()
+        })
+        expect(view.container.querySelector('aside')).toBeNull()
+        expect(view.getByRole('navigation', { name: '주요 메뉴' })).toBeVisible()
         vi.unstubAllGlobals()
     })
 })

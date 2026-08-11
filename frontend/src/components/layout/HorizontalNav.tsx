@@ -5,6 +5,7 @@ import { sidebarNav } from './navItems'
 import type { NavGroup } from './navItems'
 
 function pathIsActive(pathname: string, target: string) {
+    if (target === '/market' && pathname.startsWith('/items/')) return true
     return target === '/' ? pathname === '/' : pathname.startsWith(target)
 }
 
@@ -53,6 +54,7 @@ function GroupMenu({ group }: { group: NavGroup }) {
         >
             <button
                 ref={triggerRef}
+                data-horizontal-root
                 type="button"
                 aria-expanded={open}
                 aria-controls={panelId}
@@ -96,7 +98,9 @@ function GroupMenu({ group }: { group: NavGroup }) {
                             links[(index + 1) % links.length]?.focus()
                         } else if (event.key === 'ArrowUp') {
                             event.preventDefault()
-                            links[(index - 1 + links.length) % links.length]?.focus()
+                            links[
+                                (index - 1 + links.length) % links.length
+                            ]?.focus()
                         } else if (event.key === 'Escape') {
                             event.preventDefault()
                             setOpen(false)
@@ -142,6 +146,22 @@ export default function HorizontalNav() {
         <nav
             aria-label="주요 메뉴"
             className="detail-chrome sticky top-16 z-20 hidden h-12 border-b border-line bg-surface xl:block"
+            onKeyDown={(event) => {
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
+                    return
+                const items = Array.from(
+                    event.currentTarget.querySelectorAll<HTMLElement>(
+                        '[data-horizontal-root]:not([disabled])',
+                    ),
+                )
+                const index = items.indexOf(
+                    document.activeElement as HTMLElement,
+                )
+                if (index < 0) return
+                event.preventDefault()
+                const offset = event.key === 'ArrowRight' ? 1 : -1
+                items[(index + offset + items.length) % items.length]?.focus()
+            }}
         >
             <ul className="mx-auto flex h-full w-full max-w-[1440px] px-6">
                 {sidebarNav.map((entry) =>
@@ -150,6 +170,7 @@ export default function HorizontalNav() {
                     ) : entry.ready ? (
                         <li key={entry.to} className="flex">
                             <NavLink
+                                data-horizontal-root
                                 to={entry.to}
                                 end={entry.to === '/'}
                                 className={({ isActive }) =>
@@ -160,7 +181,10 @@ export default function HorizontalNav() {
                                     }`
                                 }
                             >
-                                <entry.icon aria-hidden className="size-[18px]" />
+                                <entry.icon
+                                    aria-hidden
+                                    className="size-[18px]"
+                                />
                                 {entry.label}
                             </NavLink>
                         </li>
@@ -171,7 +195,10 @@ export default function HorizontalNav() {
                                 type="button"
                                 className="flex items-center gap-2 px-4 text-sm font-semibold text-gray-400"
                             >
-                                <entry.icon aria-hidden className="size-[18px]" />
+                                <entry.icon
+                                    aria-hidden
+                                    className="size-[18px]"
+                                />
                                 {entry.label}
                             </button>
                         </li>

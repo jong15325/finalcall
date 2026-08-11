@@ -20,6 +20,7 @@ describe('Sidebar 모바일 drawer', () => {
         const aside = screen.getByRole('complementary', { name: '모바일 메뉴' })
         expect(aside).toHaveAttribute('aria-hidden', 'false')
         expect(aside.className).toContain('translate-x-0')
+        expect(screen.getByRole('link', { name: '홈' })).toHaveFocus()
         await userEvent.click(screen.getByRole('link', { name: '홈' }))
         expect(close).toHaveBeenCalled()
     })

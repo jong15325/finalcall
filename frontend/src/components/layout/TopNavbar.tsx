@@ -20,6 +20,7 @@ import { paths } from '@/app/paths'
 import { usePageContext } from './pageContext'
 import { UNREAD_BADGE_CLASS } from './unreadBadge'
 import BrandLogo from '@/components/brand/BrandLogo'
+import type { RefObject } from 'react'
 
 /**
  * 상단 네비게이션 (FC-067 — HANDOVER §5.2). 검색바 없음.
@@ -35,9 +36,10 @@ import BrandLogo from '@/components/brand/BrandLogo'
 interface TopNavbarProps {
     /** 모바일 사이드바 드로어 열기 */
     onOpenMobile: () => void
+    menuButtonRef?: RefObject<HTMLButtonElement | null>
 }
 
-function TopNavbar({ onOpenMobile }: TopNavbarProps) {
+function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
     const { authenticated, user, signOut } = useAuth()
     const { data: balance } = useMyBalance()
     const { data: unreadMemo } = useUnreadMemoCount()
@@ -63,6 +65,7 @@ function TopNavbar({ onOpenMobile }: TopNavbarProps) {
                 </NavLink>
                 {/* 모바일 햄버거 — 사이드바 드로어 열기(데스크톱 접기/펼치기는 사이드바 헤더 토글) */}
                 <button
+                    ref={menuButtonRef}
                     type="button"
                     aria-label="메뉴 열기"
                     className="flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 xl:hidden"

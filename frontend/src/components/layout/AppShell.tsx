@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import CompareBar from '@/features/item/components/CompareBar'
 import Sidebar from './Sidebar'
@@ -42,22 +42,38 @@ function ThemedAppShell() {
     const [mobileOpen, setMobileOpen] = useState(false)
     const desktop = useDesktopLayout()
     const { pathname } = useLocation()
+    const menuButtonRef = useRef<HTMLButtonElement>(null)
+    const previousPathRef = useRef(pathname)
+
+    const closeMobile = useCallback(
+        (restoreFocus = true) => {
+            setMobileOpen(false)
+            if (restoreFocus && !desktop) {
+                requestAnimationFrame(() => menuButtonRef.current?.focus())
+            }
+        },
+        [desktop],
+    )
 
     useEffect(() => {
-        if (desktop) setMobileOpen(false)
-    }, [desktop])
+        if (desktop) closeMobile(false)
+    }, [closeMobile, desktop])
 
-    useEffect(() => setMobileOpen(false), [pathname])
+    useEffect(() => {
+        if (previousPathRef.current === pathname) return
+        previousPathRef.current = pathname
+        closeMobile()
+    }, [closeMobile, pathname])
 
     // 모바일 드로어 열림 중 Escape 로 닫는다(접근성).
     useEffect(() => {
         if (!mobileOpen) return
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setMobileOpen(false)
+            if (event.key === 'Escape') closeMobile()
         }
         window.addEventListener('keydown', onKeyDown)
         return () => window.removeEventListener('keydown', onKeyDown)
-    }, [mobileOpen])
+    }, [closeMobile, mobileOpen])
 
     return (
         <div
@@ -65,21 +81,21 @@ function ThemedAppShell() {
             data-detail-theme={theme ?? undefined}
             style={theme ? routeThemeStyle(theme) : undefined}
         >
-            {!desktop && (
-                <Sidebar
-                    mobileOpen={mobileOpen}
-                    onCloseMobile={() => setMobileOpen(false)}
-                />
+            {!desktop && mobileOpen && (
+                <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <TopNavbar onOpenMobile={() => setMobileOpen(true)} />
+                <TopNavbar
+                    menuButtonRef={menuButtonRef}
+                    onOpenMobile={() => setMobileOpen(true)}
+                />
                 {desktop && <HorizontalNav />}
 
                 <main id="view" className="min-w-0 flex-1 pb-16 xl:pb-0">
                     <div
                         data-testid="app-content-plane"
-                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] bg-surface px-4 py-6 sm:px-6"
+                        className="mx-auto min-h-full w-full min-w-0 max-w-[1440px] bg-surface px-4 py-6 sm:px-6 xl:rounded-xl xl:border xl:border-line xl:shadow-sm"
                     >
                         <Outlet />
                     </div>
