@@ -90,12 +90,13 @@ describe('ElementDetailBackground', () => {
     it('런타임 모션과 visibility 변경에 RAF를 중단하고 정리한다', () => {
         vi.useFakeTimers()
         const media = stubMatchMedia()
+        const setTransform = vi.fn()
         const context = {
             beginPath: vi.fn(),
             clearRect: vi.fn(),
             lineTo: vi.fn(),
             moveTo: vi.fn(),
-            setTransform: vi.fn(),
+            setTransform,
             stroke: vi.fn(),
             strokeStyle: '',
             lineWidth: 0,
@@ -126,9 +127,9 @@ describe('ElementDetailBackground', () => {
 
         window.dispatchEvent(new Event('resize'))
         window.dispatchEvent(new Event('resize'))
-        expect(context.setTransform).toHaveBeenCalledTimes(1)
+        expect(setTransform).toHaveBeenCalledTimes(1)
         act(() => vi.advanceTimersByTime(120))
-        expect(context.setTransform).toHaveBeenCalledTimes(2)
+        expect(setTransform).toHaveBeenCalledTimes(2)
 
         Object.defineProperty(document, 'hidden', {
             configurable: true,
@@ -140,14 +141,12 @@ describe('ElementDetailBackground', () => {
         window.dispatchEvent(new Event('resize'))
         unmount()
         const callsAfterUnmount = raf.mock.calls.length
-        const resizeCallsAfterUnmount = context.setTransform.mock.calls.length
+        const resizeCallsAfterUnmount = setTransform.mock.calls.length
         act(() => vi.advanceTimersByTime(120))
         media.setMatches('(prefers-reduced-motion: reduce)', false)
         document.dispatchEvent(new Event('visibilitychange'))
         expect(raf).toHaveBeenCalledTimes(callsAfterUnmount)
-        expect(context.setTransform).toHaveBeenCalledTimes(
-            resizeCallsAfterUnmount,
-        )
+        expect(setTransform).toHaveBeenCalledTimes(resizeCallsAfterUnmount)
         vi.useRealTimers()
     })
 })

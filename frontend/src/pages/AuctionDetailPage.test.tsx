@@ -22,19 +22,6 @@ vi.mock('@/lib/queries/balance', () => ({
 vi.mock('@/features/auction/lib/useNow', () => ({
     useNow: () => new Date('2026-08-11T00:00:00Z'),
 }))
-vi.mock('@/features/item/components/ElementDetailBackground', () => ({
-    default: ({
-        element,
-        children,
-    }: {
-        element: number
-        children: React.ReactNode
-    }) => (
-        <section data-testid="element-background" data-element={element}>
-            {children}
-        </section>
-    ),
-}))
 vi.mock('@/features/auction/components/AuctionHeroCard', () => ({
     default: () => <div>경매 상품</div>,
 }))
@@ -52,30 +39,18 @@ vi.mock('@/features/auction/components/BidPanel', () => ({
         onBuyNow: () => void
     }) => (
         <aside className="sticky z-10">
-            <button type="button" onClick={onBid}>
+            <button data-testid="open-bid" type="button" onClick={onBid}>
                 입찰 열기
             </button>
-            <button type="button" onClick={onBuyNow}>
+            <button
+                data-testid="open-purchase"
+                type="button"
+                onClick={onBuyNow}
+            >
                 구매 열기
             </button>
         </aside>
     ),
-}))
-vi.mock('@/features/auction/components/BidDialog', () => ({
-    default: ({ open }: { open: boolean }) =>
-        open ? (
-            <div role="dialog" className="z-50">
-                입찰 모달
-            </div>
-        ) : null,
-}))
-vi.mock('@/features/auction/components/PurchaseDialog', () => ({
-    default: ({ open }: { open: boolean }) =>
-        open ? (
-            <div role="dialog" className="z-50">
-                구매 모달
-            </div>
-        ) : null,
 }))
 
 const auction = {
@@ -93,6 +68,7 @@ const auction = {
 function renderPage(route = '/auctions/A-1') {
     return render(
         <MemoryRouter initialEntries={[route]}>
+            <header data-testid="global-navigation" className="fixed z-30" />
             <Routes>
                 <Route path="/auctions/:id" element={<AuctionDetailPage />} />
             </Routes>
@@ -113,7 +89,7 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
     it('로딩에는 배경이 없고 성공 응답 item.element만 배경에 전달한다', () => {
         mocks.detail.mockReturnValueOnce({ isPending: true })
         const view = renderPage()
-        expect(screen.queryByTestId('element-background')).toBeNull()
+        expect(view.container.querySelector('.element-detail')).toBeNull()
 
         mocks.detail.mockReturnValue({
             data: auction,
@@ -130,9 +106,9 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
                 </Routes>
             </MemoryRouter>,
         )
-        expect(screen.getByTestId('element-background')).toHaveAttribute(
+        expect(view.container.querySelector('.element-detail')).toHaveAttribute(
             'data-element',
-            '2',
+            'fire',
         )
         expect(screen.getByTestId('bid-history')).toHaveTextContent('A-1')
     })
@@ -148,16 +124,14 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
             isError: false,
         }))
         const first = renderPage('/auctions/A-1')
-        expect(screen.getByTestId('element-background')).toHaveAttribute(
-            'data-element',
-            '2',
-        )
+        expect(
+            first.container.querySelector('.element-detail'),
+        ).toHaveAttribute('data-element', 'fire')
         first.unmount()
-        renderPage('/auctions/A-2')
-        expect(screen.getByTestId('element-background')).toHaveAttribute(
-            'data-element',
-            '4',
-        )
+        const second = renderPage('/auctions/A-2')
+        expect(
+            second.container.querySelector('.element-detail'),
+        ).toHaveAttribute('data-element', 'wind')
     })
 
     it('404에서는 배경을 격리하고 입찰 모달이 sticky 패널보다 높은 계층으로 열린다', () => {
@@ -168,9 +142,30 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         })
         const successView = renderPage()
         fireEvent.click(screen.getByRole('button', { name: '입찰 열기' }))
-        expect(screen.getByRole('dialog')).toHaveClass('z-50')
+        const dialog = screen.getByRole('dialog')
+        expect(dialog.parentElement).toHaveClass('fixed', 'z-50')
         expect(screen.getByRole('complementary')).toHaveClass('z-10')
+        const backgroundRoot = dialog.closest('.element-detail')
+        expect(backgroundRoot).not.toBeNull()
+        expect(getComputedStyle(backgroundRoot as Element).isolation).not.toBe(
+            'isolate',
+        )
+        expect(getComputedStyle(backgroundRoot as Element).zIndex).toMatch(
+            /^(|auto)$/,
+        )
+        expect(screen.getByTestId('global-navigation')).toHaveClass('z-30')
         successView.unmount()
+
+        const purchaseView = renderPage()
+        fireEvent.click(screen.getByTestId('open-purchase'))
+        const purchaseDialog = screen.getByRole('dialog')
+        expect(purchaseDialog.parentElement).toHaveClass('fixed', 'z-50')
+        expect(
+            getComputedStyle(
+                purchaseDialog.closest('.element-detail') as Element,
+            ).isolation,
+        ).not.toBe('isolate')
+        purchaseView.unmount()
 
         mocks.detail.mockReturnValue({
             error: new ApiError({
@@ -182,10 +177,6 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
             isError: true,
         })
         const errorView = renderPage('/auctions/NOPE')
-        expect(
-            errorView.container.querySelector(
-                '[data-testid="element-background"]',
-            ),
-        ).toBeNull()
+        expect(errorView.container.querySelector('.element-detail')).toBeNull()
     })
 })
