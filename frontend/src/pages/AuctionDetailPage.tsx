@@ -69,7 +69,11 @@ export default function AuctionDetailPage() {
 
     // ── 로딩 ────────────────────────────────────────────────────────────────
     if (detailQuery.isPending) {
-        return <DetailSkeleton />
+        return (
+            <AuctionPageRegion>
+                <DetailSkeleton />
+            </AuctionPageRegion>
+        )
     }
 
     // ── 에러(없음·전송 실패) ──────────────────────────────────────────────────
@@ -79,37 +83,39 @@ export default function AuctionDetailPage() {
             ERROR_CODES.AUCTION_004,
         )
         return (
-            <StateBlock
-                icon={notFound ? TbSearchOff : TbAlertTriangle}
-                title={
-                    notFound
-                        ? '경매를 찾을 수 없습니다'
-                        : '경매를 불러오지 못했습니다'
-                }
-                description={
-                    notFound
-                        ? '이미 삭제되었거나 주소가 잘못되었습니다.'
-                        : '잠시 후 다시 시도해 주세요.'
-                }
-                action={
-                    notFound ? (
-                        <Link
-                            to={paths.auctions}
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
-                        >
-                            경매 목록으로
-                        </Link>
-                    ) : (
-                        <button
-                            type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
-                            onClick={() => void detailQuery.refetch()}
-                        >
-                            다시 시도
-                        </button>
-                    )
-                }
-            />
+            <AuctionPageRegion>
+                <StateBlock
+                    icon={notFound ? TbSearchOff : TbAlertTriangle}
+                    title={
+                        notFound
+                            ? '경매를 찾을 수 없습니다'
+                            : '경매를 불러오지 못했습니다'
+                    }
+                    description={
+                        notFound
+                            ? '이미 삭제되었거나 주소가 잘못되었습니다.'
+                            : '잠시 후 다시 시도해 주세요.'
+                    }
+                    action={
+                        notFound ? (
+                            <Link
+                                to={paths.auctions}
+                                className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            >
+                                경매 목록으로
+                            </Link>
+                        ) : (
+                            <button
+                                type="button"
+                                className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                                onClick={() => void detailQuery.refetch()}
+                            >
+                                다시 시도
+                            </button>
+                        )
+                    }
+                />
+            </AuctionPageRegion>
         )
     }
 
@@ -164,84 +170,97 @@ export default function AuctionDetailPage() {
 
     return (
         <ElementDetailBackground element={auction.item.element}>
-            <div className="flex flex-col gap-6">
-                <Link
-                    to={paths.auctions}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
-                >
-                    <TbArrowLeft aria-hidden className="size-4" />
-                    경매 목록
-                </Link>
-
-                {toast && (
-                    <p
-                        role="status"
-                        className="rounded-lg bg-success-subtle px-4 py-2.5 text-sm font-medium text-success"
+            <AuctionPageRegion>
+                <div className="flex flex-col gap-6">
+                    <Link
+                        to={paths.auctions}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
                     >
-                        {toast}
-                    </p>
-                )}
+                        <TbArrowLeft aria-hidden className="size-4" />
+                        경매 목록
+                    </Link>
 
-                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
-                    {/* 모바일: bid-panel 을 먼저(입찰 즉시 진입, design-brief C-7) */}
-                    <div className="order-2 lg:order-1">
-                        <AuctionHeroCard
-                            auction={auction}
-                            phase={phase}
-                            now={now}
-                        />
+                    {toast && (
+                        <p
+                            role="status"
+                            className="rounded-lg bg-success-subtle px-4 py-2.5 text-sm font-medium text-success"
+                        >
+                            {toast}
+                        </p>
+                    )}
+
+                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
+                        {/* 모바일: bid-panel 을 먼저(입찰 즉시 진입, design-brief C-7) */}
+                        <div className="order-2 lg:order-1">
+                            <AuctionHeroCard
+                                auction={auction}
+                                phase={phase}
+                                now={now}
+                            />
+                        </div>
+                        <div className="order-1 lg:order-2">
+                            <BidPanel
+                                auction={auction}
+                                phase={phase}
+                                now={now}
+                                balance={balanceQuery.data}
+                                isAuthed={isAuthed}
+                                isOwn={isOwn}
+                                loginHref={loginHref}
+                                cancelPending={cancelMutation.isPending}
+                                cancelError={cancelMutation.error}
+                                onBid={openBid}
+                                onBuyNow={openPurchase}
+                                onCancel={handleCancel}
+                            />
+                        </div>
                     </div>
-                    <div className="order-1 lg:order-2">
-                        <BidPanel
-                            auction={auction}
-                            phase={phase}
-                            now={now}
-                            balance={balanceQuery.data}
-                            isAuthed={isAuthed}
-                            isOwn={isOwn}
-                            loginHref={loginHref}
-                            cancelPending={cancelMutation.isPending}
-                            cancelError={cancelMutation.error}
-                            onBid={openBid}
-                            onBuyNow={openPurchase}
-                            onCancel={handleCancel}
-                        />
-                    </div>
-                </div>
 
-                <BidHistory auctionPublicId={id} />
+                    <BidHistory auctionPublicId={id} />
 
-                <BidDialog
-                    open={bidOpen}
-                    auctionName={auction.item.nameSnapshot}
-                    currentHighestAmount={auction.highestBidAmount}
-                    minNextBidAmount={auction.minNextBidAmount}
-                    buyNowPrice={auction.buyNowPrice}
-                    gameMoneyAvailable={
-                        balanceQuery.data?.gameMoneyAvailable ?? null
-                    }
-                    isSubmitting={bidMutation.isPending}
-                    submitError={bidMutation.error}
-                    onClose={() => setBidOpen(false)}
-                    onSubmit={handleBidSubmit}
-                />
-
-                {auction.buyNowPrice !== null && (
-                    <PurchaseDialog
-                        open={purchaseOpen}
+                    <BidDialog
+                        open={bidOpen}
                         auctionName={auction.item.nameSnapshot}
+                        currentHighestAmount={auction.highestBidAmount}
+                        minNextBidAmount={auction.minNextBidAmount}
                         buyNowPrice={auction.buyNowPrice}
                         gameMoneyAvailable={
                             balanceQuery.data?.gameMoneyAvailable ?? null
                         }
-                        isSubmitting={purchaseMutation.isPending}
-                        submitError={purchaseMutation.error}
-                        onClose={() => setPurchaseOpen(false)}
-                        onConfirm={handlePurchase}
+                        isSubmitting={bidMutation.isPending}
+                        submitError={bidMutation.error}
+                        onClose={() => setBidOpen(false)}
+                        onSubmit={handleBidSubmit}
                     />
-                )}
-            </div>
+
+                    {auction.buyNowPrice !== null && (
+                        <PurchaseDialog
+                            open={purchaseOpen}
+                            auctionName={auction.item.nameSnapshot}
+                            buyNowPrice={auction.buyNowPrice}
+                            gameMoneyAvailable={
+                                balanceQuery.data?.gameMoneyAvailable ?? null
+                            }
+                            isSubmitting={purchaseMutation.isPending}
+                            submitError={purchaseMutation.error}
+                            onClose={() => setPurchaseOpen(false)}
+                            onConfirm={handlePurchase}
+                        />
+                    )}
+                </div>
+            </AuctionPageRegion>
         </ElementDetailBackground>
+    )
+}
+
+function AuctionPageRegion({ children }: { children: React.ReactNode }) {
+    return (
+        <section
+            data-testid="auction-page-region"
+            className="auction-detail-region min-w-0 rounded-xl border border-line bg-surface p-3 shadow-sm sm:p-5 lg:p-6 xl:rounded-2xl"
+        >
+            {children}
+        </section>
     )
 }
 

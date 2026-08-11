@@ -108,6 +108,43 @@
     color: var(--detail-text);
 }
 
+.element-detail .auction-detail-region .detail-surface {
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+    color: var(--gray-900);
+}
+
+.element-detail
+    .auction-detail-region
+    .detail-surface
+    :is([class*='text-gray-9'], [class*='text-gray-7']) {
+    color: var(--gray-900);
+}
+
+.element-detail
+    .auction-detail-region
+    .detail-surface
+    :is([class*='text-gray-5'], [class*='text-gray-4']) {
+    color: var(--gray-500);
+}
+
+.element-detail .auction-detail-region .detail-surface [class*='border-line'] {
+    border-color: var(--line);
+}
+
+.element-detail
+    .auction-detail-region
+    .detail-surface
+    :is(.detail-meta, [class~='text-navy'], [class~='text-navy-700']) {
+    color: var(--navy);
+}
+
+.element-detail .auction-detail-region > div > a {
+    color: var(--gray-500);
+    text-shadow: none;
+}
+
 .element-detail
     .detail-surface
     :is([class*='text-gray-9'], [class*='text-gray-7']) {

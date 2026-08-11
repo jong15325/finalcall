@@ -23,11 +23,20 @@ vi.mock('@/features/auction/lib/useNow', () => ({
     useNow: () => new Date('2026-08-11T00:00:00Z'),
 }))
 vi.mock('@/features/auction/components/AuctionHeroCard', () => ({
-    default: () => <div>경매 상품</div>,
+    default: () => (
+        <div
+            data-testid="auction-hero"
+            className="detail-surface bg-surface text-gray-900"
+        >
+            경매 상품
+        </div>
+    ),
 }))
 vi.mock('@/features/auction/components/BidHistory', () => ({
     default: ({ auctionPublicId }: { auctionPublicId: string }) => (
-        <div data-testid="bid-history">{auctionPublicId}</div>
+        <div data-testid="bid-history" className="detail-surface bg-surface">
+            {auctionPublicId}
+        </div>
     ),
 }))
 vi.mock('@/features/auction/components/BidPanel', () => ({
@@ -38,7 +47,10 @@ vi.mock('@/features/auction/components/BidPanel', () => ({
         onBid: () => void
         onBuyNow: () => void
     }) => (
-        <aside className="sticky z-10">
+        <aside
+            data-testid="bid-panel"
+            className="detail-surface sticky z-10 bg-surface"
+        >
             <button data-testid="open-bid" type="button" onClick={onBid}>
                 입찰 열기
             </button>
@@ -90,6 +102,12 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         mocks.detail.mockReturnValueOnce({ isPending: true })
         const view = renderPage()
         expect(view.container.querySelector('.element-detail')).toBeNull()
+        expect(screen.getByTestId('auction-page-region')).toHaveClass(
+            'bg-surface',
+            'border-line',
+            'rounded-xl',
+            'shadow-sm',
+        )
 
         mocks.detail.mockReturnValue({
             data: auction,
@@ -111,6 +129,29 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
             'fire',
         )
         expect(screen.getByTestId('bid-history')).toHaveTextContent('A-1')
+        const region = screen.getByTestId('auction-page-region')
+        expect(region).toContainElement(
+            screen.getByRole('link', { name: /경매 목록/ }),
+        )
+        expect(region).toContainElement(screen.getByTestId('auction-hero'))
+        expect(region).toContainElement(screen.getByTestId('bid-panel'))
+        expect(region).toContainElement(screen.getByTestId('bid-history'))
+        expect(region).not.toHaveClass(
+            'overflow-hidden',
+            'transform',
+            'filter',
+            'z-0',
+        )
+        expect(screen.getByTestId('auction-hero')).toHaveClass(
+            'bg-surface',
+            'text-gray-900',
+        )
+        const scene = view.container.querySelector('.element-detail__scene')
+        expect(scene).not.toBeNull()
+        expect(scene?.contains(region)).toBe(false)
+        expect(scene?.compareDocumentPosition(region) ?? 0).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        )
     })
 
     it('id 전환 시 새 응답 속성으로 교체하고 이전 배경을 남기지 않는다', () => {
@@ -182,5 +223,9 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         })
         const errorView = renderPage('/auctions/NOPE')
         expect(errorView.container.querySelector('.element-detail')).toBeNull()
+        expect(screen.getByTestId('auction-page-region')).toHaveClass(
+            'bg-surface',
+            'rounded-xl',
+        )
     })
 })
