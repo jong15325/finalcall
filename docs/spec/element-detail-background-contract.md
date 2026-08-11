@@ -1,10 +1,10 @@
-# 속성별 상세 몰입형 글래스 셸 계약 v2.0
+# 속성별 상세 몰입형 글래스 셸 계약 v2.1
 
-- 상태: **DECIDED — 게이트1·게이트2·디자인 게이트 승인 2026-08-11**
+- 상태: **DECIDED — `/auctions` 정적 water scene 예외 승인 2026-08-11**
 - 디자인 기준: `docs/ux/mockups/auction-detail-immersive-background.html`의 v3 배경과 확정 효과
   (`wind=b`, `fire=c`, `earth=c`, `water=c`)
-- 범위: 경매 상세 `/auctions/:id`, 아이템 인스턴스 상세 `/items/:id`
-- 범위 밖: 경매 목록·홈·마켓 목록 등 다른 라우트의 배경, 영속 AppShell 전역 배경, API·DB 스키마 변경
+- 범위: 경매 상세 `/auctions/:id`, 아이템 인스턴스 상세 `/items/:id`, 정적 water 경매 목록 `/auctions`
+- 범위 밖: 경매 외 목록·홈·마켓 목록 등 다른 라우트의 배경, 영속 AppShell 전역 배경, API·DB 스키마 변경
 
 ## 1. 데이터 연결 계약
 
@@ -33,6 +33,9 @@
   기본값으로 방어 초기화한다.
 - `body`·`html` dataset/class/style, localStorage 및 라우트 이탈 후 남는 전역 상태로 테마를 전달하지 않는다.
   다른 라우트에는 배경·Canvas DOM, 속성 테마 selector, 이미지 요청, RAF·listener가 없어야 한다.
+- 정확한 `/auctions`는 API 없이 정적 water source를 사용한다. 상세 dynamic registration이 현재 pathname과
+  일치하면 그것이 우선하며, static source는 별도 scene을 만들지 않는다. 상세·목록 모두 scene·Canvas·RAF는
+  화면당 하나다. 세부 우선순위와 cleanup은 `horizontal-app-shell-contract.md` v1.3 §5.1이 정본이다.
 - 장식 레이어는 `position: fixed; inset: 0`을 기준으로 하되 `100vw`로 scrollbar 폭을 침범하지 않는다.
   AppShell root의 격리된 stacking context 안에서 배경은 최하위, 내비·콘텐츠·footer는 그 위에 둔다.
 - 콘텐츠 래퍼에는 다이얼로그를 가두는 z-index stacking context를 만들지 않는다. 기존 fixed 다이얼로그
@@ -143,5 +146,7 @@ DPR 상한, 입자 수 상한, Page Visibility 정지, resize debounce와 지속
 11. `FC-242` — 아이템 상세 몰입형 글래스 셸 재디자인.
 12. `FC-243` — route 격리·다른 route baseline·성능 통합 검증.
 13. `FC-244` — 접근성·stacking·modal·성능 최종 리뷰.
+14. `FC-257` — PC hover arbitration과 `/auctions` 정적 water scene.
+15. `FC-258` — hover 접근성·theme 우선순위·scene cleanup 재리뷰.
 
 백엔드·DB·API 계약 티켓은 영향받지 않는다. 공통 목록 배경 티켓도 만들지 않는다.

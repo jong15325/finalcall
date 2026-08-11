@@ -1,9 +1,9 @@
-# 수평 AppShell·공통 콘텐츠 평면 계약 v1.2
+# 수평 AppShell·공통 콘텐츠 평면 계약 v1.3
 
-- 상태: **DECIDED — 경매 상세 불투명 page region 예외 승인 2026-08-11**
+- 상태: **DECIDED — PC hover 메뉴·경매 목록 water scene 승인 2026-08-11**
 - 적용 범위: `AppShell` 아래 모든 공개·보호·404 route
 - 제외: `AuthLayout`의 로그인·회원가입·OAuth callback, API·백엔드·DB
-- 선행 계약: `element-detail-background-contract.md` v2.0 및 FC-244
+- 선행 계약: `element-detail-background-contract.md` v2.1 및 FC-244
 
 ## 1. 셸 구조
 
@@ -23,8 +23,9 @@ AppShell
 ```
 
 - 일반 route background layer는 기존 `surface-sunken` 정적 배경이다. 새 이미지·Canvas·RAF를 만들지 않는다.
-- `/auctions/:id`, `/items/:id`만 기존 속성 이미지·particle background를 유지한다. 이 두 route도 동일한
-  white content plane을 사용하며 `RouteVisualThemeProvider`의 검증·cleanup 계약을 그대로 따른다.
+- `/auctions/:id`, `/items/:id`는 기존 동적 속성 이미지·particle background를 유지하고, 정확한
+  `/auctions`는 승인된 정적 water background 예외를 사용한다. 세 route 모두 동일한 white content plane과
+  `RouteVisualThemeProvider`의 검증·cleanup 계약을 따른다. 그 밖의 route에는 이미지·particle이 없다.
 - `main`은 모든 AppShell route에 동일한 outer gutter를 제공한다: 기본 `px-3 py-4`, `sm`에서
   `px-5 py-5`, `xl`에서 `px-8 py-7`이다. route별 임의 gutter 재정의는 금지한다.
 - white content plane은 AppShell이 한 번만 소유한다. 각 페이지가 별도 page shell을 중복 생성하지 않는다.
@@ -71,6 +72,22 @@ AppShell
 - MobileBottomNav는 같은 파일의 기존 `mobileNav` source를 유지한다. 컴포넌트별 메뉴 복제는 금지한다.
 - 경로 조립은 `paths.ts`를 사용하고 문자열 route를 새로 하드코딩하지 않는다.
 
+### 2.4 PC hover·명시 조작 병행
+
+- `xl` horizontal group은 기존 click·keyboard 동작을 유지하면서 fine pointer의 `pointerenter`로 연다.
+- hover 기능은 `(hover: hover) and (pointer: fine)` 환경에서만 활성화한다. coarse/touch pointer는 hover 상태를
+  만들지 않고 click·keyboard만 사용한다.
+- trigger와 panel을 하나의 hover boundary로 취급한다. pointer가 전체 boundary를 떠난 뒤 150ms grace 후
+  닫아 trigger-panel bridge gap과 미세한 포인터 이탈에 따른 깜빡임을 막는다. 재진입 시 timer를 취소한다.
+- 상태 원인은 `hover`와 `explicit`으로 구분한다. pointerenter는 hover-open이다. click은 기존 toggle을
+  유지해 closed면 explicit-open, hover/explicit-open이면 close한다. Enter/Space·ArrowDown으로 연 상태는
+  explicit-open이다. pointerleave timer는 hover-open만 닫고, explicit-open은 재클릭·Escape·바깥 클릭·
+  route 변경으로 닫는다.
+- focus가 trigger/panel 안에 있으면 pointerleave로 닫지 않는다. keyboard 사용자가 panel을 탐색하는 동안
+  DOM을 제거하지 않으며, focus가 root 밖으로 이동하면 기존 명시 close 규칙을 적용한다.
+- timer와 pointer/media-query listener는 unmount·route 변경에서 cleanup한다. 여러 group panel이 영구적으로
+  동시에 열린 상태가 남지 않아야 한다.
+
 ## 3. Vuexy 활용 계약
 
 Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않는다. 현재 React 19·Tailwind 4 스택을
@@ -111,10 +128,29 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - `/items/:id`의 `.detail-surface`와 AppShell chrome theme은 변경하지 않는다.
 - route 이탈 시 상세 theme·dropdown·mobile drawer 임시 상태를 cleanup한다.
 
+## 5.1 `/auctions` 고정 water scene 예외
+
+- 정확한 pathname `/auctions`는 API 응답과 무관한 정적 `water` route theme을 사용하고, 상세와 동일한
+  `ElementDetailBackground` 이미지·CSS·단일 Canvas particle engine을 한 번만 렌더한다.
+- 매칭은 `pathname === paths.auctions`와 동등한 exact 규칙이다. `/auctions/:id`·다른 prefix route에는
+  정적 water source가 적용되지 않는다.
+- `RouteVisualThemeProvider`는 theme source를 분리한다: 상세 성공 응답의 dynamic registration과 exact
+  static route map. 해석 우선순위는 **현재 pathname과 일치하는 detail dynamic → exact static → null**이다.
+- `/auctions/:id`에서는 상세 성공 응답 element가 water 정적값보다 항상 우선한다. 목록→상세 전환 중 목록
+  water가 한 frame이라도 상세 theme으로 오인되지 않도록 pathname 일치를 동기 검증한다.
+- static theme source는 theme token만 결정하고 이미지/Canvas를 별도로 로드하지 않는다. route별 scene owner는
+  하나뿐이며 image request·Canvas·RAF loop를 중복 생성하지 않는다.
+- `/auctions` 목록 콘텐츠는 기존 opaque AppShell white plane 안에 유지한다. 목록 카드·필터를 투명/glass로
+  바꾸지 않으며 background/particle은 plane 바깥 gutter에서 보인다.
+- 목록 이탈 시 static theme·scene DOM·image lifecycle·RAF·resize/visibility listener를 즉시 cleanup한다.
+  다른 목록·route에는 water token·DOM·요청·RAF가 0이어야 한다.
+
 ## 6. 검증 계약
 
 - 구조: xl 이상 Sidebar DOM 0, 2단 header 높이 64+48px, xl 미만 mobile drawer/BottomNav 유지.
 - 메뉴: 단일 source, active leaf/ancestor, disabled, 인증 유무, keyboard/Escape/outside click.
+- hover: fine pointer enter open, trigger+panel boundary leave 150ms grace close, bridge 재진입 cancel, explicit
+  click/keyboard 우선, coarse pointer hover 0, timer/listener cleanup.
 - 배경: 일반 route surface-sunken, 상세 두 route만 viewport 이미지/particle, 전 route single white content
   plane과 `px-3 py-4 → sm:px-5 py-5 → xl:px-8 py-7` outer gutter.
 - 경매 상세: `ElementDetailBackground` 내부 opaque page region 1개, 뒤로가기·상태·Hero·Bid·History 포함,
@@ -123,6 +159,8 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
   overflow/transform/filter/z-index stacking context 0개.
 - 경매 region: overflow/transform/filter/z-index context 0개, 밝은 카드 surface와 orange CTA, loading·error·404도
   동일한 시각 boundary와 폭·padding을 사용한다.
+- 경매 목록: exact `/auctions` water theme·scene 1개, opaque AppShell plane 유지, 상세 dynamic precedence,
+  route 이탈 및 다른 route token/DOM/request/RAF 누출 0개.
 - 공개 route: 홈·경매·마켓·비교·게시판·충전·404의 layout/overflow/active nav.
 - 보호 route: 판매·마이·주문·쪽지·인벤토리·보관·지갑·아이템상세·게시글 작성/수정과 route guard.
 - 회귀: sticky, modal, dropdown, drawer, CompareBar, footer, scroll-lock, 320px·1280px·200% 확대.
@@ -143,3 +181,5 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - FC-254: geometry·sticky·modal·scroll final re-review
 - FC-255: auction detail opaque page-level content region
 - FC-256: auction region·surface·stacking final re-review
+- FC-257: horizontal hover arbitration·auction list water scene
+- FC-258: hover a11y·theme precedence·scene cleanup final re-review
