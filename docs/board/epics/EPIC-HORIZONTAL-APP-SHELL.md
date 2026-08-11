@@ -4,8 +4,8 @@ type: epic
 jira_key: null
 title: Vuexy 수평 내비게이션과 공통 AppShell 재구성
 state: review
-children: [FC-245, FC-246, FC-247, FC-248, FC-249, FC-250, FC-251, FC-252]
-gate: gate3
+children: [FC-245, FC-246, FC-247, FC-248, FC-249, FC-250, FC-251, FC-252, FC-253, FC-254]
+gate: null
 ---
 
 ## 목표
@@ -26,10 +26,20 @@ gate: gate3
 - FC-248: common background/content plane
 - FC-249 ∥ FC-250 ∥ FC-251: 공개 ∥ 보호 ∥ 상세 route 회귀
 - FC-252: 최종 reviewer
+- FC-253: 공통 outer gutter·mobile white frame geometry 변경
+- FC-254: geometry 변경 최종 재리뷰
 
-흐름: `FC-245 → FC-246 → FC-247 → FC-248 → (FC-249 ∥ FC-250 ∥ FC-251) → FC-252`.
+기존 흐름은 감사 이력으로 보존한다. 변경 흐름은 `FC-252 → FC-253 → FC-254`다.
 
 ## 게이트
 
 - 게이트1·게이트2·디자인 게이트: 2026-08-11 사용자 승인 완료.
-- 게이트3: FC-252 reviewer 통과 뒤 사용자 Done·push 승인 필요.
+- 공통 plane geometry 변경: 2026-08-11 사용자 승인 완료.
+- 게이트3: FC-254 reviewer 통과 뒤 사용자 Done·push 승인 필요.
+
+## 감사 이력과 상태 전이
+
+- FC-245~FC-252는 v1.0 구현·리뷰 이력으로 수정하지 않는다.
+- v1.1 geometry 변경은 FC-253~FC-254에서만 추적한다.
+- 총괄이 FC-253을 위임할 때 에픽 롤업을 `review → doing`으로 전이한다. FC-254 통과 전에는
+  `gate: null`을 유지하고, 통과 후 총괄이 `gate: gate3`로 갱신한다.
