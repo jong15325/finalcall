@@ -686,7 +686,7 @@
         </section>
 
         <p class="design-note">
-          밝은 탐험 세계는 뷰포트에 고정됩니다. 별빛 입자와 함께 실제 게임의 magic9/wind PNG 아틀라스를 SPR 좌표 10프레임으로 재생하며, 거래 콘텐츠는 독립된 고대비 셸에서 스크롤됩니다. “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
+          밝은 탐험 세계는 뷰포트에 고정됩니다. 실제 게임의 magic9/wind가 화면 가장자리를 비행한 뒤 도착점에서 windcollision으로 전환되며, 거래 콘텐츠는 독립된 고대비 셸에서 스크롤됩니다. “권장”은 배경 존재감과 금액 가독성의 균형안입니다.
         </p>
       </div>
     </main>
@@ -709,6 +709,8 @@
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
       const windAtlas = new Image();
       windAtlas.src = "./assets/game/magic9-wind-atlas.png";
+      const windCollisionAtlas = new Image();
+      windCollisionAtlas.src = "./assets/game/magic9-windcollision-atlas.png";
       // magic9/wind.spr에서 읽은 원본 프레임 좌표. 끝 좌표를 포함한다.
       const windFrames = [
         [0, 0, 136, 149],
@@ -722,10 +724,21 @@
         [444, 129, 569, 258],
         [569, 129, 698, 262],
       ];
-      const windEffects = [
-        { x: 0.075, y: 0.26, size: 112, phase: 0, alpha: 0.46 },
-        { x: 0.91, y: 0.34, size: 92, phase: 4, alpha: 0.38 },
-        { x: 0.12, y: 0.78, size: 76, phase: 7, alpha: 0.28 },
+      const windCollisionFrames = [
+        [0, 0, 188, 187],
+        [188, 0, 347, 156],
+        [347, 0, 482, 131],
+        [482, 0, 606, 113],
+        [606, 0, 708, 100],
+        [0, 187, 125, 308],
+        [188, 156, 323, 287],
+        [323, 156, 461, 290],
+        [461, 131, 598, 265],
+        [598, 113, 735, 247],
+      ];
+      const windPaths = [
+        { fromX: -0.05, fromY: 0.73, toX: 0.145, toY: 0.62, size: 86 },
+        { fromX: 1.05, fromY: 0.28, toX: 0.87, toY: 0.38, size: 78 },
       ];
       const motes = Array.from({ length: 42 }, (_, index) => ({
         x: ((index * 47) % 101) / 100,
@@ -756,32 +769,70 @@
         previousTime = time;
         context.clearRect(0, 0, width, height);
 
-        if (windAtlas.complete && windAtlas.naturalWidth) {
-          const baseFrame = reducedMotion.matches ? 3 : Math.floor(time / 90);
+        if (
+          windAtlas.complete &&
+          windAtlas.naturalWidth &&
+          windCollisionAtlas.complete &&
+          windCollisionAtlas.naturalWidth
+        ) {
+          const cycleDuration = 5600;
+          const launchDuration = 2300;
+          const collisionDuration = 900;
+          const cycleIndex = reducedMotion.matches ? 0 : Math.floor(time / cycleDuration);
+          const cycleTime = reducedMotion.matches ? launchDuration + 360 : time % cycleDuration;
+          const path = windPaths[cycleIndex % windPaths.length];
           context.save();
           context.globalCompositeOperation = "screen";
-          windEffects.forEach((effect) => {
-            const frame = windFrames[(baseFrame + effect.phase) % windFrames.length];
+
+          if (cycleTime < launchDuration) {
+            const progress = cycleTime / launchDuration;
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const frame = windFrames[Math.floor(cycleTime / 90) % windFrames.length];
             const sourceWidth = frame[2] - frame[0] + 1;
             const sourceHeight = frame[3] - frame[1] + 1;
-            const ratio = effect.size / Math.max(sourceWidth, sourceHeight);
+            const ratio = path.size / Math.max(sourceWidth, sourceHeight);
             const drawWidth = sourceWidth * ratio;
             const drawHeight = sourceHeight * ratio;
-            const drift = reducedMotion.matches ? 0 : Math.sin(time / 2400 + effect.phase) * 13;
-            const lift = reducedMotion.matches ? 0 : Math.cos(time / 3100 + effect.phase) * 8;
-            context.globalAlpha = effect.alpha;
+            const x = (path.fromX + (path.toX - path.fromX) * eased) * width;
+            const y = (path.fromY + (path.toY - path.fromY) * eased) * height;
+            context.globalAlpha = 0.42;
             context.drawImage(
               windAtlas,
               frame[0],
               frame[1],
               sourceWidth,
               sourceHeight,
-              effect.x * width - drawWidth / 2 + drift,
-              effect.y * height - drawHeight / 2 + lift,
+              x - drawWidth / 2,
+              y - drawHeight / 2,
               drawWidth,
               drawHeight,
             );
-          });
+          } else if (cycleTime < launchDuration + collisionDuration) {
+            const collisionTime = cycleTime - launchDuration;
+            const frameIndex = Math.min(
+              windCollisionFrames.length - 1,
+              Math.floor((collisionTime / collisionDuration) * windCollisionFrames.length),
+            );
+            const frame = windCollisionFrames[frameIndex];
+            const sourceWidth = frame[2] - frame[0] + 1;
+            const sourceHeight = frame[3] - frame[1] + 1;
+            const collisionSize = path.size * 1.28;
+            const ratio = collisionSize / Math.max(sourceWidth, sourceHeight);
+            const drawWidth = sourceWidth * ratio;
+            const drawHeight = sourceHeight * ratio;
+            context.globalAlpha = 0.48;
+            context.drawImage(
+              windCollisionAtlas,
+              frame[0],
+              frame[1],
+              sourceWidth,
+              sourceHeight,
+              path.toX * width - drawWidth / 2,
+              path.toY * height - drawHeight / 2,
+              drawWidth,
+              drawHeight,
+            );
+          }
           context.restore();
         }
 
