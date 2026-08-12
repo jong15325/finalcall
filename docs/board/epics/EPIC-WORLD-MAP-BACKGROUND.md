@@ -1,9 +1,9 @@
 ---
 id: EPIC-WORLD-MAP-BACKGROUND
 type: epic
-jira_key: null
+jira_key: KAN-265
 title: 실제 게임 소스 세계지도 공통 배경 통합
-state: review
+state: done
 children: [FC-261, FC-262, FC-263, FC-264, FC-265, FC-266]
 gate: null
 ---

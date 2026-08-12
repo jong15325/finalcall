@@ -1,11 +1,11 @@
 ---
 id: EPIC-ELEMENT-DETAIL-BACKGROUND
 type: epic
-jira_key: null
+jira_key: KAN-263
 title: 속성별 상세 몰입 배경 적용
-state: review
+state: done
 children: [FC-233, FC-234, FC-235, FC-236, FC-237, FC-238, FC-239, FC-240, FC-241, FC-242, FC-243, FC-244]
-gate: gate3
+gate: null
 ---
 
 ## 목표

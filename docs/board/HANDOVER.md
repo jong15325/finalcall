@@ -1,98 +1,96 @@
-# 총괄(메인 세션) 핸드오버
+# 총괄 세션 핸드오버
 
-> **최신 재시작 스냅샷 — 2026-08-08 / FC-232 디자인 게이트 대기**
->
-> - Git: `origin/master = HEAD = 634f02f`. 사용자가 `6285e5a..634f02f`를 직접 push했다.
-> - 워킹트리: 사용자 미추적 `docs/AI-KICKOFF-PROMPT.md`만 존재한다. 건드리지 않는다. LF/CRLF 때문에 가짜 수정으로 보이던 추적 파일들은 사용자 요청으로 worktree 복원해 정리했다.
-> - 완료: 댓글 `ownedByMe` 품질 정리, 관리자 검색 API 롤백과 재색인 코어/retention 완성(FC-225), 경매 목록·상세 카드 UI FC-226~231. 최근 frontend 전체 89 files/738 tests, typecheck, lint, build 통과.
-> - 관리자: 전역 보류. 별도 서버 여부·레포 구조·인증 경계·포함 도메인·감사 정책부터 에픽으로 설계하기 전 신규 관리자 API/UI/프로비저닝 착수 금지. 기존 ROLE_ADMIN 자산은 유지.
-> - 현재 게이트: FC-232/KAN-262 `review`, `review_status: passed`, `gate: design`. [배경 비교 목업](../ux/mockups/auction-detail-background-options.html)에서 A/B/C와 적용 범위를 사용자에게 확인한다.
-> - 추천: A restrained navy·gold halo를 **경매 상세 경로에만** 적용. 승인 전 실제 앱에는 배경 효과를 적용하지 않는다.
-> - Jira: KAN-255~261 완료, KAN-262 검토중. 파일 `docs/board/`가 정본이며 상태 전이 때 즉시 미러한다.
-> - 서비스 실행 상태는 새 세션에서 포트 8080/5173을 다시 확인한다. 이전 프로세스가 살아 있다고 가정하지 않는다.
+> 갱신: 2026-08-12 / 월드맵 AppShell·푸터·짧은 페이지 sticky footer 작업 완료
 
-## 최신 재개 순서
+## 현재 결론
 
-1. `CLAUDE.md`/`AGENTS.md` 섹션 8~13, `docs/PROJECT-HANDOFF.md`, 이 파일을 읽는다.
-2. `git status`에서 사용자 미추적 문서 외 변경이 없는지 확인하고 `git log --oneline -12`에서 HEAD `634f02f`를 확인한다.
-3. 사용자에게 FC-232 배경안 **A/B/C**와 범위 **경매 상세만/모든 메인 콘텐츠**를 확인한다.
-4. 승인되면 architect 영향 확인 → frontend-impl 실제 적용 → reviewer → 파일/Jira 상태 전이. 승인 전 구현 금지.
-5. 이후에도 사용자 화면·디자인을 먼저 마무리하며 관리자는 별도 기획 승인 전 보류한다.
+- 모든 AppShell 페이지에 `world-map-game-sources-a-v2` 기반 공통 월드맵 배경과 단일 Canvas 효과가 적용돼 있다.
+- PC는 2단 수평 내비게이션, 모바일은 drawer + 하단 내비게이션을 유지한다.
+- 공통 흰 콘텐츠 plane의 stacking 깨짐, 모바일 가로 overflow, 비-portal 모달 계층 문제를 수정했다.
+- Maple Planet 하단 정보 구조를 참고한 장터 공통 푸터를 적용했다.
+- 짧은 오류·빈 상태·404 화면은 compact footer, 정상 목록·상세는 default footer를 사용한다.
+- AppShell은 `100vh` fallback 뒤 `100dvh`가 우선되는 sticky-footer 구조다. main이 남은 높이를 채우며 content plane에는 전역 `min-h-full`이 없다.
+- 최신 독립 리뷰 결과: critical 0 / major 0 / minor 0.
 
-> 아래 2026-08-07 EPIC-QUALITY-CLEANUP/게시판 스냅샷은 역사 기록이다. 재개 상태는 위 최신 블록을 우선한다.
+## 최근 핵심 커밋
 
-> **재시작 스냅샷 — 2026-08-07 / EPIC-QUALITY-CLEANUP 진행 중**
->
-> - 사용자가 Codex에 Atlassian Rovo MCP를 등록하기 위해 세션을 재시작한다. 등록: `codex mcp add atlassian --url https://mcp.atlassian.com/v1/mcp/authv2` → `codex mcp login atlassian`. 새 세션에서 `/mcp verbose`로 확인한다.
-> - Jira는 파일→KAN 단방향 읽기 미러다. 파일 보드가 정본이며 Jira를 읽어 판단하지 않는다. 현재 세션에는 Jira 도구가 없었다.
-> - Jira 백필: `EPIC-QUALITY-CLEANUP`, `FC-218`, `FC-219`, `FC-220`, `FC-221`은 `state != todo`·`jira_key: null`. FC-194는 기존 `KAN-220`을 검토 중으로 갱신한다. 새 세션 첫 작업은 Atlassian 도구 확인 후 멱등 백필하고 파일의 `jira_key`를 채우는 것이다.
-> - 에픽 게이트1·게이트2 승인 완료. `ownedByMe:boolean` 가법 계약 승인.
-> - FC-220·FC-221·FC-194는 구현/계약 작업과 reviewer PASS(critical/major/minor 0) 완료, 상태 `review`, `review_status: passed`. 사용자가 현재 변경 커밋을 승인했다.
-> - 남은 순서: Jira 백필 → FC-222 backend → FC-223 frontend → FC-224 OAuth 테스트 격리 → reviewer → 에픽 게이트3.
-> - Git HEAD `90d53b0`, `origin/master`보다 1커밋 앞(FC-219 미push). 워킹트리에는 이번 에픽 변경과 사용자 미추적 `docs/AI-KICKOFF-PROMPT.md`가 있다. 사용자 파일은 커밋에서 제외한다.
-> - 백엔드 8080·프론트 5173을 기동했으나 재시작 후 포트를 다시 확인한다.
+- `607672f` 월드맵 공통 배경 scene 통합
+- `76bc0bc` 월드맵 모바일 parity와 Canvas 강등 보완
+- `5f0bf6d` 월드맵 셸 레이어와 반응형 프레임 복구
+- `b1c0cc2` 모바일 경매 폭과 모달 계층 복구
+- `4c4c8a9` 공통 서비스 푸터 추가
+- `7e17b6a` 푸터 브랜드 표기 통일
+- `40cdd32` 푸터 변경 파일 포맷 정렬
+- `ce9a8e9` 짧은 페이지 footer 높이 배분 정리
+- `4e564a0` 짧은 상태 footer 적용 범위 보완
+- `59103c8` 판매 화면 무관 formatting diff 정리
 
-목적: 총괄 세션 교체용 상태 스냅샷. 새 세션은 **이 파일 + `docs/board/` + `git log` + CLAUDE.md 섹션 8~13**으로 이어받는다.
-갱신: **2026-08-07** (EPIC-BOARD·EPIC-COMMENT-V2 **두 에픽 완료·push**. 이후 게시판/댓글 UI 다듬기 라운드(FC-205·213~217) 전건 완료·push. **다음 수 = 신규 에픽 선택**(유력: 관리자 게시판 CRUD UI).)
+현재 HEAD는 `59103c8`, `origin/master`는 `29cf296`이며 로컬은 origin보다 98커밋 앞서 있다. push는 수행하지 않았다.
 
-**재개 규약**: 사용자가 **"출근"** 명령을 주면 이 파일을 읽고 "다음 수"부터 진행한다.
+## 검증 상태
 
-> ★ **이 세션 경위**: (1) 출근 — 직전 배송 에픽 마감 상태에서 신규 에픽 방향 = **커스텀 게시판 시스템** 선택. (2) **EPIC-BOARD**(FC-196~204) — 계약(architect)→백엔드(레지스트리·게시글·댓글·이미지 MinIO/presigned·공지 흡수)∥프론트(허브·목록·상세·작성·댓글·이미지)→reviewer(백 PASS·프론트 MAJOR-1 editable auth 수정)→E2E 그린→security clean→게이트3 커밋4·push(`0be676d`…`7da7802`). notice 도메인 흡수·제거. (3) **EPIC-COMMENT-V2**(FC-206~212) — 평면 댓글을 네이버식으로: 대댓글 1단계·@멘션·공감/비공감(comment_reaction)·정렬(최신 기본)·BEST·tombstone. reviewer(백 M-1 same-user 반응 UK 500→비관적 직렬화+잠금read 수렴·프론트 MAJOR-1 BEST 캐시 무효화)→E2E 7시나리오 그린→security clean→게이트3 커밋5·push(`4ad84f9`). (4) 라이브 사용 중 사용자 피드백 다수 반영 — FC-205(모바일 인벤탭 제거)·FC-213(허브 링크)·FC-214(입력 전폭·대댓글 모바일·자동펼침)·FC-215(액션 배치 재설계 ⋮메뉴·디자인 게이트)·FC-216(인라인 답글폼)·FC-217(**BEST 제거** — 방금 만든 걸 사용자 요청으로 다시 제거). 전건 커밋·push(`37089df`).
+- 프론트 전체 테스트: 98 files / 774 tests 통과
+- TypeScript typecheck 통과
+- production build 통과
+- 변경 파일 ESLint 오류 0
+- 전체 lint의 `InventoryItemCard.test.tsx` jsx-sort-props 경고 2건은 사용자/기존 변경으로 범위 밖
+- 짧은 페이지 최종 reviewer PASS: findings 0
+- 서비스: backend 8080, frontend 5173 listen 상태를 2026-08-12에 확인
 
----
+## 파일 보드 상태
 
-## 지금 어디인가 — 한 문단
+- `EPIC-ELEMENT-DETAIL-BACKGROUND`: review
+- `EPIC-WORLD-MAP-BACKGROUND`: review
+- `EPIC-HORIZONTAL-APP-SHELL`: review, gate3
+- 최신 델타: FC-267(계약) → FC-268(구현) → FC-269(리뷰)
+- FC-267/268/269는 모두 review이며 FC-268/269 `review_status: passed`.
+- 사용자가 게이트3/Done 전이를 아직 명시적으로 승인한 것으로 처리하지 않았다. 다음 세션은 상태를 임의로 done으로 만들지 말고 확인한다.
 
-**게시판(EPIC-BOARD) + 네이버식 댓글(EPIC-COMMENT-V2) 완성·배포됨(origin=`37089df`).** 게시판을 DB 레코드로 정의(시드 커뮤니티·공지·이벤트)·게시글·이미지 첨부(MinIO/S3 presigned)·대댓글·공감/비공감·정렬까지 실동작. notice 도메인은 board로 흡수·제거됨(board가 참조 구현 승계, CLAUDE.md §1 갱신). 이후 라이브 피드백으로 UI 다수 조정(네비·입력폼·모바일·액션 ⋮메뉴·인라인 답글). **BEST 댓글은 만들었다가 사용자 요청으로 제거**(정렬 순공감순은 유지). **워킹트리 clean·전건 push 완료.**
+## Jira 미러 — 최우선 복구
 
----
+사용자는 Jira 연결을 승인했다. 그러나 직전 메인 세션의 `ALL_TOOLS`에는 Jira/Atlassian 도구가 0개로 노출되어 실제 upsert를 호출할 수 없었다. 이는 승인 거절이 아니라 **현재 세션에 커넥터 도구가 주입되지 않은 상태**다.
 
-## A. 이번 세션 완료 (전건 push)
+- 파일 보드에서 `jira_key: null` 총 42개를 확인했다.
+- 그중 todo가 아닌 미러 누락은 직전 스캔 기준 31개였다(최근 보드 갱신 후 다시 전수 스캔할 것).
+- Jira는 읽어서 정본을 판단하지 않는다. 파일 보드가 canonical이며 Jira는 단방향 미러다.
 
-| 에픽/티켓 | 내용 | Jira |
-|---|---|---|
-| **EPIC-BOARD** (FC-196~204) | 커스텀 게시판 — 레지스트리·게시글·댓글·이미지(MinIO presigned)·공지 흡수 + 프론트 화면 | KAN-222~231 done |
-| **EPIC-COMMENT-V2** (FC-206~212) | 네이버식 댓글 — 대댓글 1단계·@멘션·공감/비공감·정렬·(BEST 후에 제거)·tombstone | KAN-233~240 done |
-| FC-205 | 모바일 하단탭 인벤토리 제거(→ MY 프로필카드 진입) | KAN-232 done |
-| FC-213 | 게시판 목록 상단 허브(← 게시판) 복귀 링크 | KAN-241 done |
-| FC-214 | 상세 하단 "목록으로"·댓글 입력 전폭·대댓글 border 제거·모바일 여백/자간·자동펼침 | KAN-242 done |
-| FC-215 | 댓글 액션 배치 재설계 — ⋮ 메뉴(수정삭제)·액션바 좌측(공감/비공감/답글)·모바일 메타 별행 (디자인 게이트) | KAN-243 done |
-| FC-216 | 인라인 답글폼(클릭한 댓글 하단·단일 오픈) | KAN-244 done |
-| FC-217 | **BEST 댓글 기능 제거**(프론트+백엔드+spec, 정렬 LIKES 유지) | KAN-245 done |
+다음 세션 첫 작업:
 
-- 백로그(에픽 밖): FC-194(환경 테스트 위생 2건, KAN-220) — 미착수.
+1. 사용 가능한 도구에서 `jira`/`atlassian`을 직접 검색한다.
+2. 도구가 없으면 사용자에게 커넥터가 새 세션에 노출되지 않았음을 즉시 보고한다. 생략하지 않는다.
+3. 도구가 있으면 `jira_key: null` 전수 스캔 후 에픽부터 멱등 upsert한다.
+4. task 생성/갱신, Epic Link, state→status, `agent:<owner>`, `gate:*`, depends_on/blocks 링크를 반영한다.
+5. 발급된 키를 각 파일의 `jira_key`에 기록하고 불변으로 유지한다.
+6. `state != todo && jira_key == null`이 0인지 재검사한다.
+7. Jira 완료 상태와 파일 상태의 패리티를 메인세션이 수동 대조한다.
 
-## B. 다음 수 (재개)
+## 작업 트리 주의
 
-1. **⭐ 신규 에픽 선택 → 게이트1**. 유력 후보:
-   - **관리자 시스템**: 별도 서버 여부·레포 구조·인증 경계·포함 도메인·감사 정책을 먼저 설계한 뒤 에픽으로 착수한다. 게시판 CRUD UI와 FC-116 검색 재색인 관리자 API는 서로 다른 후속 범위이며, FC-116은 관리자 계획 전까지 백로그로 유지한다.
-   - 그 외: 게임 지급 phase-2 재개(보류 중)·다른 경매 도메인·이월 minor 처리.
-2. **이월 minor**(차기 처리 후보, 비차단):
-   - FC-211 중복렌더(중복 노출 없어진 지금은 영향↓) 반응 연타 가드·정렬 메뉴 키보드 roving focus·본인판정 닉 스냅샷 엣지(FC-211 리뷰).
-   - FC-194 테스트 위생.
+현재 의도된 미커밋 문서:
 
-## C. Git 상태
-- **origin/master=`37089df`**(전건 push 완료). 워킹트리 clean. 오늘 커밋 다수(EPIC-BOARD 4 + EPIC-COMMENT-V2 5 + UI 라운드 5).
+- `docs/spec/horizontal-app-shell-contract.md`
+- `docs/board/epics/EPIC-HORIZONTAL-APP-SHELL.md`
+- `docs/board/tickets/FC-267.md`
+- `docs/board/tickets/FC-268.md`
+- `docs/board/tickets/FC-269.md`
+- 이 `docs/board/HANDOVER.md`
 
-## 환경 기동·상태
-- **백엔드 8080 · 프론트 5173 = 기동 중**(이 세션에서 띄움). ★**주의**: 백엔드는 V24 적용 상태로 기동됐으나 **FC-217 BEST 제거 이후 재기동 안 함** → 실행 인스턴스에 폐지된 `/comments/best` 엔드포인트가 아직 살아있다(프론트 미호출이라 무해). **다음 세션에서 백엔드 재기동하면 완전 반영**. 기동법: env CRLF-safe 주입(`backend/.env`) + `./gradlew :backend:bootRun --args='--spring.profiles.active=local'`(JAVA_HOME=`C:\Users\howee\.jdks\ms-21.0.11`) · `npm --prefix frontend run dev`. [[env-verify-windows-crlf]].
-- **Docker 스택** finalcall-mysql(3306)·redis·es·**minio(9000/9001)**·kafka healthy. 게이트웨이 토큰=`finalcall-local-gateway-shared-secret-change-me`(backend/.env GATEWAY_INTERNAL_SECRET=프론트 vite 기본과 일치). 직접 curl 시 `X-Gateway-Token` 필요.
-- 데모 계정 demo1~demo10 / `demo1234!`. 관리자 테스트는 demo10 등 `is_admin=1` 승격(검증 후 원복).
+사용자/비소유 변경이므로 건드리지 말 것:
 
-## 게시판/댓글 시스템 참고 (다음 에픽용)
-- **게시판**: `com.finalcall.domain.board`. Board 레지스트리(slug·write_policy ADMIN_ONLY/AUTHENTICATED·allow_comments·board_type). 시드 3(notice·community·event) = Flyway. Post·Comment·PostImage. 이미지=`infra/storage` StoragePort(S3 호환·MinIO 로컬/S3 운영·presigned GET·비공개 버킷). 계약 = `docs/spec/{board-domain-spec v1.2, api-contract v1.25, erd v1.9}`.
-- **댓글 v2**: 대댓글 1단계 평탄화(parent=루트·mentioned_nickname 스냅샷)·comment_reaction(UK 유저당1행·원자 카운트·comment FOR UPDATE+잠금read 수렴)·정렬 LATEST(기본)/OLDEST/LIKES·tombstone(답글 보유 루트 마스킹). BEST 제거됨. [[game-db-integration-model]] 무관.
-- **관리자 기반**: `User.isAdmin` JWT 클레임·ROLE_ADMIN. 게시판/게시글/댓글 인가에 이미 사용.
+- `frontend/src/features/member/components/InventoryItemCard.test.tsx`
+- `backend/logs/`
+- `docs/AI-KICKOFF-PROMPT.md`
 
-## 이어받는 법 (새 세션)
-1. CLAUDE.md 섹션 8~13(오케스트레이션·게이트·티켓·커밋).
-2. 이 파일 + `git status`(clean 예상) + `git log --oneline -12`(HEAD=origin=`37089df`).
-3. **신규 에픽 확정**(B.1) → 게이트1.
-4. 메모리 상시: `commit-needs-approval`·`commit-consolidation-preference`·`gate2-plain-language`·`jira-mirror-discipline`·`main-session-no-direct-verify`·`git-push-headless-resolver-fail`·`shared-card-components`·`design-mockup-first`·`options-need-html-mockup`·`responsive-separate-design`·`palette-source-of-truth`·`env-verify-windows-crlf`.
-5. **미러 패리티**: KAN-222~245 done·KAN-220(FC-194) backlog. 드리프트 없음.
+## 새 세션 이어받는 순서
 
-## 교훈 (이 세션)
-1. **큰 UI 변경 전 목업이 값지다** — 게시판·댓글·댓글액션 모두 HTML 목업으로 방향 먼저 승인받아 재작업 최소화(design-mockup-first).
-2. **동시성은 라이브/테스트로만 드러난다** — 댓글 반응 same-user 더블서브밋 UK 500은 리뷰가 잡고, 수정도 "comment 락만으론 부족(post 비잠금 read가 스냅샷 고정)→반응 조회를 잠금 read로"라는 2차 진단이 핵심이었다. E2E 병렬 부하로 최종 확인.
-3. **만든 것도 사용자가 빼라면 뺀다** — BEST 댓글을 구현 직후 제거(정렬 LIKES는 유지). 계약·spec까지 함께 되돌려 드리프트 방지.
-4. **라이브 피드백 루프가 빠르다** — dev 서버 hot-reload로 UI 조정을 즉시 반영·확인하는 사이클이 효율적이었다.
+1. `AGENTS.md` 섹션 8~13, `docs/PROJECT-HANDOFF.md`, 이 파일을 읽는다.
+2. `git status --short`, `git log --oneline -12`, `git rev-list --count origin/master..HEAD`를 확인한다.
+3. Jira/Atlassian 도구 노출 여부를 메인세션이 직접 검사하고 위 미러 복구 절차를 수행한다.
+4. 보드 문서 변경을 검증하고 atomic docs 커밋한다. 사용자/비소유 파일은 커밋하지 않는다.
+5. 사용자에게 Jira 패리티 결과와 게이트3 승인 대상 에픽 3개의 상태를 보고한다.
+6. 사용자가 Done/push를 승인할 때만 에픽·하위 티켓 done 전이 후 사용자가 직접 push한다.
+
+## 다음 사용자 결정
+
+- Jira 미러 복구 후 `EPIC-ELEMENT-DETAIL-BACKGROUND`, `EPIC-WORLD-MAP-BACKGROUND`, `EPIC-HORIZONTAL-APP-SHELL`을 gate3 Done으로 전환할지 확인.
+- push는 사용자가 직접 수행한다.

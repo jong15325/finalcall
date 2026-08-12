@@ -1,6 +1,6 @@
-# 수평 AppShell·공통 콘텐츠 평면 계약 v1.4
+# 수평 AppShell·공통 콘텐츠 평면 계약 v1.5
 
-- 상태: **DECIDED — 경매 목록 불투명 page region 예외 승인 2026-08-11**
+- 상태: **DECIDED — 100dvh sticky footer·짧은 페이지 compact footer 승인 2026-08-12**
 - 적용 범위: `AppShell` 아래 모든 공개·보호·404 route
 - 제외: `AuthLayout`의 로그인·회원가입·OAuth callback, API·백엔드·DB
 - 선행 계약: `element-detail-background-contract.md` v2.1 및 FC-244
@@ -159,8 +159,33 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - 목록 이탈 시 static theme·scene DOM·image lifecycle·RAF·resize/visibility listener를 즉시 cleanup한다.
   다른 목록·route에는 water token·DOM·요청·RAF가 0이어야 한다.
 
+## 5.2 viewport·sticky footer·짧은 페이지 계약
+
+- `AppShell`은 동적 viewport 기준 `min-height: 100dvh`의 세로 grid/flex 셸이며, header·footer는 콘텐츠 높이만큼,
+  `main`은 남은 높이를 차지하는 `1fr`/`flex: 1`이다. 구형 브라우저 fallback은 `100vh`를 먼저 선언하되
+  최종 계산은 `100dvh`가 우선한다.
+- footer는 fixed가 아니라 정상 문서 흐름에 있다. 긴 페이지 뒤로 밀리고 콘텐츠가 짧을 때만 viewport 아래에 붙는다.
+  AppShell·`main`·content plane에 별도 세로 scroll container를 만들지 않는다.
+- AppShell이 남은 높이를 배분하므로 전역 single white content plane의 `min-height: 100%`/`min-h-full`을 제거한다.
+  route 자체의 `min-h-screen`·`min-h-dvh`도 금지하며 실제 콘텐츠 높이가 plane 높이를 결정한다.
+- **짧은 페이지**는 404, route/API 오류, 준비 중·빈 상태, 제출/결제/가입 등의 완료 확인처럼 주 콘텐츠가 한 화면보다
+  짧은 상태다. single content plane과 outer gutter는 유지하되 footer 앞 최소 높이·고정 높이·빈 spacer를 추가하지 않고
+  compact footer를 사용한다.
+- compact footer는 동일한 `<footer>` landmark와 핵심 링크·법적/저작권 정보를 유지하고 세로 padding·링크 군 간격만
+  축소한다. 별도 footer DOM을 복제하거나 접근 가능한 링크를 숨기지 않는다.
+- compact 판정은 route/상태가 명시적으로 전달하는 의미 기반 variant로 한다. 렌더 후 높이 측정이나 viewport 추정,
+  DOM observer로 자동 전환하지 않는다. loading→success의 variant 전환은 허용하되 layout shift를 테스트한다.
+- `MobileBottomNav`의 하단 여유는 `bottom-nav 실제 높이 + env(safe-area-inset-bottom)`을 한 번만 예약한다.
+  footer·content plane·개별 짧은 페이지가 같은 값을 중복 가산하지 않으며 compact footer도 nav 뒤에 가려지지 않는다.
+- `CompareBar`가 표시되면 기존 stacking/offset 계약을 유지하고 footer 여유 계산에 중복 padding을 만들지 않는다.
+  world-map background scene의 AppShell 최하단 단일 owner 계약은 그대로 유지한다.
+
 ## 6. 검증 계약
 
+- viewport/footer: `100dvh` shell과 `main 1fr`, content plane `min-h-full` 0건, 짧은 route의 compact footer,
+  긴 route의 body 단일 scroll을 검증한다.
+- mobile bottom: MobileBottomNav 높이와 `safe-area-inset-bottom` 예약이 한 번뿐이며 compact/default footer와
+  CompareBar가 가려지거나 중복 여백·불필요한 scroll을 만들지 않는지 검증한다.
 - 구조: xl 이상 Sidebar DOM 0, 2단 header 높이 64+48px, xl 미만 mobile drawer/BottomNav 유지.
 - 메뉴: 단일 source, active leaf/ancestor, disabled, 인증 유무, keyboard/Escape/outside click.
 - hover: fine pointer enter open, trigger+panel boundary leave 150ms grace close, bridge 재진입 cancel, explicit
@@ -201,3 +226,16 @@ Vuexy·Bootstrap 패키지, SCSS, JS runtime과 외부 CSS는 추가하지 않�
 - FC-258: hover a11y·theme precedence·scene cleanup final re-review
 - FC-259: auction list opaque page-level region
 - FC-260: auction list region·scene·responsive final re-review
+- FC-267: 100dvh sticky footer·compact footer 계약 확정
+- FC-268: AppShell 높이 배분·content plane 최소 높이 제거·compact footer 구현
+- FC-269: 짧은 페이지·mobile safe-area·scroll 통합 리뷰
+
+### v1.5 변경 영향 분석
+
+- 직접 영향 이력: FC-248(content plane), FC-249~250(공개·보호 route), FC-252·FC-254·FC-256·FC-260(통합 리뷰),
+  FC-262(AppShell 공통 scene 기반). 완료 이력은 수정하지 않고 FC-267~269 델타 티켓으로 추적한다.
+- 비영향: horizontal navigation/hover, world-map scene·accent·Canvas ownership, 상세/list 불투명 region, API 계약,
+  ERD, 백엔드, AuthLayout.
+- 게이트2: viewport 높이·전역 plane geometry·footer 동작 변경은 UI 계약과 성능/되돌리기 영향이 있으나,
+  사용자가 `100dvh + main 1fr + plane min-h-full 제거 + 짧은 페이지 compact footer + mobile safe-area 단일 예약`을
+  2026-08-12 승인했으므로 **DECIDED**다. 추가 선택은 없다.

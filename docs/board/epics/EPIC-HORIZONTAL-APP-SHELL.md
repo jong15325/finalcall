@@ -1,11 +1,11 @@
 ---
 id: EPIC-HORIZONTAL-APP-SHELL
 type: epic
-jira_key: null
+jira_key: KAN-264
 title: Vuexy 수평 내비게이션과 공통 AppShell 재구성
-state: review
-children: [FC-245, FC-246, FC-247, FC-248, FC-249, FC-250, FC-251, FC-252, FC-253, FC-254, FC-255, FC-256, FC-257, FC-258, FC-259, FC-260]
-gate: gate3
+state: done
+children: [FC-245, FC-246, FC-247, FC-248, FC-249, FC-250, FC-251, FC-252, FC-253, FC-254, FC-255, FC-256, FC-257, FC-258, FC-259, FC-260, FC-267, FC-268, FC-269]
+gate: null
 ---
 
 ## 목표
@@ -34,8 +34,11 @@ gate: gate3
 - FC-258: hover 접근성·theme 우선순위·scene cleanup 최종 재리뷰
 - FC-259: 경매 목록 불투명 page-level region
 - FC-260: 목록 region·water scene·responsive 최종 재리뷰
+- FC-267: 100dvh sticky footer·compact footer 계약 확정
+- FC-268: AppShell 높이 배분·compact footer 구현
+- FC-269: 짧은 페이지·mobile safe-area·scroll 통합 리뷰
 
-기존 흐름은 감사 이력으로 보존한다. 최신 변경 흐름은 `FC-258 → FC-259 → FC-260`이다.
+기존 흐름은 감사 이력으로 보존한다. 최신 변경 흐름은 `FC-267 → FC-268 → FC-269`다.
 
 ## 게이트
 
@@ -44,7 +47,8 @@ gate: gate3
 - 경매 상세 page-level white region 예외: 2026-08-11 사용자 승인 완료.
 - PC hover 메뉴·경매 목록 water scene 예외: 2026-08-11 사용자 승인 완료.
 - 경매 목록 page-level white region 예외: 2026-08-11 사용자 승인 완료.
-- 게이트3: FC-260 reviewer 통과 뒤 사용자 Done·push 승인 필요.
+- sticky footer·짧은 페이지 compact footer·mobile safe-area 단일 예약: 2026-08-12 사용자 승인 완료(게이트2 DECIDED).
+- 게이트3: FC-269 reviewer 통과 뒤 사용자 Done·push 승인 필요.
 
 ## 감사 이력과 상태 전이
 
@@ -53,5 +57,6 @@ gate: gate3
 - v1.2 경매 상세 예외는 FC-255~FC-256에서만 추적한다.
 - v1.3 hover·경매 목록 water scene은 FC-257~FC-258에서만 추적한다.
 - v1.4 경매 목록 region은 FC-259~FC-260에서만 추적한다.
-- 총괄이 FC-259를 위임할 때 에픽 롤업을 `review → doing`으로 전이한다. FC-260 통과 전에는
+- v1.5 sticky footer·짧은 페이지 compact footer는 FC-267~FC-269에서만 추적한다.
+- 총괄이 FC-268을 위임할 때 에픽 롤업을 `review → doing`으로 전이한다. FC-269 통과 전에는
   `gate: null`을 유지하고, 통과 후 총괄이 `gate: gate3`로 갱신한다.
