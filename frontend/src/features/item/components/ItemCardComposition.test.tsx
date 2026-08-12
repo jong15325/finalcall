@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import ItemCardActionSurface from './ItemCardActionSurface'
 import ItemCardFlip from './ItemCardFlip'
-import ItemCardView from './ItemCardView'
+import ItemCardView, { ItemCardArtwork } from './ItemCardView'
 import type { ItemCardViewModel } from './ItemCardView'
 
 const item: ItemCardViewModel = {
@@ -29,6 +29,43 @@ describe('아이템 카드 composition', () => {
         ).toBeInTheDocument()
         expect(screen.getByText('248만')).toBeInTheDocument()
         expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
+    })
+
+    it('서로 다른 art fixture도 공통 stage 폭 안에 72×134 frame을 보존한다', () => {
+        const fixtures = [
+            item,
+            {
+                ...item,
+                name: '대지의 검',
+                artUrl: '/art/items/level7/l/earth/sword.png',
+                skills: [],
+            },
+        ]
+        const { container } = render(
+            <>
+                {fixtures.map((fixture) => (
+                    <ItemCardArtwork key={fixture.name} item={fixture} />
+                ))}
+            </>,
+        )
+
+        const frames = container.querySelectorAll(
+            '.item-frame--stage.item-card__artwork-frame',
+        )
+        expect(frames).toHaveLength(2)
+        frames.forEach((frame) => {
+            expect(frame.querySelector('.item-frame__stage')).not.toBeNull()
+            expect(frame.querySelector('.card-art')).not.toBeNull()
+            expect(frame.querySelector('.item-art')).not.toBeNull()
+        })
+        expect(screen.getByRole('img', { name: item.name })).toHaveAttribute(
+            'src',
+            item.artUrl,
+        )
+        expect(screen.getByRole('img', { name: '대지의 검' })).toHaveAttribute(
+            'src',
+            '/art/items/level7/l/earth/sword.png',
+        )
     })
 
     it('controlled flip은 자기 focus 범위의 Escape만 처리한다', () => {

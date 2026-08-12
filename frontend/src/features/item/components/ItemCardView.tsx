@@ -176,6 +176,7 @@ export function ItemCardArtwork({
         <ItemFrame
             showGoldforceDays
             fill={mode === 'preview'}
+            className="item-card__artwork-frame"
             imageUrl={item.artUrl}
             spriteUrl={item.artUrl}
             name={item.name}

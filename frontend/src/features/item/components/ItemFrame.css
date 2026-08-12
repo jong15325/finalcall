@@ -27,6 +27,16 @@
     width: 100%;
     height: 100%;
 }
+
+/* 카드 composition에서는 무스킬·기본 카드도 stage 폭을 소유한다. 높이·72×134 frame 비율은 유지한다. */
+.item-frame.item-card__artwork-frame {
+    width: 100%;
+    min-width: 0;
+}
+
+.item-frame.item-card__artwork-frame:not(.item-frame--fill) {
+    display: block;
+}
 /* 두 클래스로 특이도를 높여 아래 `.item-frame--stage` 의 min-height 를 확실히 덮는다. */
 .item-frame--fill.item-frame--stage .item-frame__stage {
     flex: 1 1 auto;
