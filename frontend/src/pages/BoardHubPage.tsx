@@ -2,7 +2,6 @@ import { TbMessageCircle, TbAlertTriangle } from 'react-icons/tb'
 import { useBoards } from '@/lib/queries/boards'
 import BoardHubCard from '@/features/board/components/BoardHubCard'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시판 허브 `/boards` (FC-202 — 디자인 게이트 승인 화면 A).
@@ -13,20 +12,14 @@ import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
  */
 export default function BoardHubPage() {
     const { data: boards, isPending, isError, refetch } = useBoards()
-    useAppFooterVariant(
-        !isPending && (isError || !boards || boards.length === 0)
-            ? 'compact'
-            : 'default',
-    )
-
     return (
         <div className="flex flex-col gap-5">
             <header>
-                <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                    <TbMessageCircle aria-hidden className="size-6 text-navy" />
+                <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
+                    <TbMessageCircle aria-hidden className="size-6 text-brand-structure" />
                     게시판
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-content-subtle">
                     공지·커뮤니티·이벤트 소식을 확인하고 이야기를 나눠보세요.
                 </p>
             </header>
@@ -36,7 +29,7 @@ export default function BoardHubPage() {
                     {Array.from({ length: 3 }).map((_, index) => (
                         <div
                             key={index}
-                            className="h-48 animate-pulse rounded-2xl border border-line bg-surface"
+                            className="h-48 animate-pulse rounded-2xl border border-content-line bg-content-surface"
                         />
                     ))}
                 </div>
@@ -50,7 +43,7 @@ export default function BoardHubPage() {
                     action={
                         <button
                             type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                             onClick={() => void refetch()}
                         >
                             다시 시도

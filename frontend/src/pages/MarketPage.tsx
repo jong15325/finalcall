@@ -1,17 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
-import {
-    TbAlertTriangle,
-    TbBuildingStore,
-    TbSearchOff,
-    TbWallet,
-} from 'react-icons/tb'
+import { TbBuildingStore, TbWallet } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
-import ItemCardGrid, {
-    ItemCardGridSkeleton,
-} from '@/features/item/components/ItemCardGrid'
+import ListFrame from '@/components/common/ListFrame'
+import type { ListFrameState } from '@/components/common/ListFrame'
+import CursorPagination from '@/components/common/CursorPagination'
+import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import ShopCard from '@/features/shop/components/ShopCard'
 import ShopCardInfoDialog from '@/features/shop/components/ShopCardInfoDialog'
 import ShopFilters from '@/features/shop/components/ShopFilters'
@@ -106,10 +101,35 @@ export default function MarketPage() {
           : shops.length === 0
             ? 'empty'
             : 'ready'
-    useAppFooterVariant(
-        status === 'error' || status === 'empty' ? 'compact' : 'default',
-    )
-
+    const listState: ListFrameState =
+        status === 'loading'
+            ? { kind: 'loading', count: 12 }
+            : status === 'error'
+              ? {
+                    kind: 'error',
+                    message: '잠시 후 다시 시도해 주세요.',
+                    onRetry: () => void refetch(),
+                }
+              : status === 'empty'
+                ? {
+                      kind: 'empty',
+                      title: filters.q
+                          ? `'${filters.q}' 검색 결과가 없어요`
+                          : '조건에 맞는 상품이 없어요',
+                      description: filters.q
+                          ? '다른 검색어를 입력하거나 검색을 지워 보세요.'
+                          : '필터를 바꾸거나 초기화해 보세요.',
+                      action: (
+                          <button
+                              type="button"
+                              className="rounded-md border border-content-line px-4 py-2 text-body font-bold text-content-muted hover:bg-content-soft"
+                              onClick={filters.q ? clearSearch : resetFilters}
+                          >
+                              {filters.q ? '검색 지우기' : '필터 초기화'}
+                          </button>
+                      ),
+                  }
+                : { kind: 'ready' }
     const sentinelRef = useInfiniteScroll({
         hasNext: Boolean(hasNextPage),
         isFetching,
@@ -117,154 +137,106 @@ export default function MarketPage() {
     })
 
     return (
-        <div className="flex flex-col gap-5">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                        <TbBuildingStore
-                            aria-hidden
-                            className="size-6 text-navy"
-                        />
-                        아이템 마켓
-                    </h1>
-                    <p className="mt-1 text-sm text-gray-500">
-                        검증된 판매자의 아이템을 고정가로 안전하게 구매하세요.
-                    </p>
-                </div>
-                <Link
-                    to={paths.sell}
-                    className="rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
-                >
-                    아이템 판매
-                </Link>
-            </header>
-
-            <ShopFilters
-                filters={filters}
-                templates={templates}
-                onChange={applyPatch}
-                onReset={resetFilters}
-            />
-
-            <div className="flex items-center justify-between gap-3">
-                {/* ★ 검색·필터 결과 수는 aria-live 로 알린다(스크린리더 결과 안내) */}
-                <p aria-live="polite" className="text-xs text-gray-500">
-                    {status === 'ready'
-                        ? filters.q
-                            ? `'${filters.q}' 검색 결과 ${shops.length}건`
-                            : `${shops.length}건 표시 중`
-                        : '검증된 판매자의 고정가 상품'}
-                </p>
-                {balanceQuery.data && (
-                    <Link
-                        to={paths.wallet}
-                        className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-navy"
-                    >
-                        <TbWallet aria-hidden className="size-4 text-navy" />
-                        사용 가능
-                        <CodeAmount
-                            value={balanceQuery.data.gameMoneyAvailable}
-                            mode="compact"
-                            className="font-bold text-gray-900"
-                        />
-                    </Link>
-                )}
-            </div>
-
-            {/* 부분 실패 — 이미 받은 카드는 두고 배너만 얹는다 */}
-            {status === 'ready' && isError && (
-                <p
-                    role="alert"
-                    className="rounded-lg bg-danger-subtle px-4 py-2.5 text-sm text-danger"
-                >
-                    최신 목록을 불러오지 못했습니다. 표시된 상품은 이전
-                    결과입니다.
-                </p>
-            )}
-
-            {status === 'loading' && (
-                <ItemCardGridSkeleton variant="market" count={12} />
-            )}
-
-            {status === 'error' && (
-                <StateBlock
-                    icon={TbAlertTriangle}
-                    title="마켓을 불러오지 못했습니다"
-                    description="잠시 후 다시 시도해 주세요."
-                    action={
-                        <button
-                            type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
-                            onClick={() => void refetch()}
+        <div>
+            <ListFrame
+                state={listState}
+                layout="catalog"
+                label="마켓 상품 목록"
+                heading={
+                    <header className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
+                                <TbBuildingStore
+                                    aria-hidden
+                                    className="size-6 text-brand-structure"
+                                />
+                                아이템 마켓
+                            </h1>
+                            <p className="mt-1 text-sm text-content-muted">
+                                검증된 판매자의 아이템을 고정가로 안전하게
+                                구매하세요.
+                            </p>
+                        </div>
+                        <Link
+                            to={paths.sell}
+                            className="rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-content-fg hover:bg-control-action-hover"
                         >
-                            다시 시도
-                        </button>
-                    }
-                />
-            )}
-
-            {status === 'empty' && (
-                <StateBlock
-                    icon={TbSearchOff}
-                    title={
-                        filters.q
-                            ? `'${filters.q}' 검색 결과가 없어요`
-                            : '조건에 맞는 상품이 없어요'
-                    }
-                    description={
-                        filters.q
-                            ? '다른 검색어를 입력하거나 검색을 지워 보세요.'
-                            : '필터를 바꾸거나 초기화해 보세요.'
-                    }
-                    action={
-                        filters.q ? (
-                            <button
-                                type="button"
-                                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
-                                onClick={clearSearch}
+                            아이템 판매
+                        </Link>
+                    </header>
+                }
+                filters={
+                    <ShopFilters
+                        filters={filters}
+                        templates={templates}
+                        onChange={applyPatch}
+                        onReset={resetFilters}
+                    />
+                }
+                resultBar={
+                    <>
+                        <div className="flex items-center justify-between gap-3">
+                            {/* ★ 검색·필터 결과 수는 aria-live 로 알린다(스크린리더 결과 안내) */}
+                            <p
+                                aria-live="polite"
+                                className="text-xs text-content-muted"
                             >
-                                검색 지우기
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
-                                onClick={resetFilters}
+                                {status === 'ready'
+                                    ? filters.q
+                                        ? `'${filters.q}' 검색 결과 ${shops.length}건`
+                                        : `${shops.length}건 표시 중`
+                                    : '검증된 판매자의 고정가 상품'}
+                            </p>
+                            {balanceQuery.data && (
+                                <Link
+                                    to={paths.wallet}
+                                    className="flex items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-medium text-content-muted hover:border-brand-structure"
+                                >
+                                    <TbWallet
+                                        aria-hidden
+                                        className="size-4 text-brand-structure"
+                                    />
+                                    사용 가능
+                                    <CodeAmount
+                                        value={
+                                            balanceQuery.data.gameMoneyAvailable
+                                        }
+                                        mode="compact"
+                                        className="font-bold text-content-fg"
+                                    />
+                                </Link>
+                            )}
+                        </div>
+                        {status === 'ready' && isError && (
+                            <p
+                                role="alert"
+                                className="mt-3 rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger-ink"
                             >
-                                필터 초기화
-                            </button>
-                        )
-                    }
-                />
-            )}
-
-            {status === 'ready' && (
-                <>
-                    {/* 목업 §9 — PC 6열 / 태블릿 3열 / 모바일 2열(ItemCardGrid market) */}
-                    <ItemCardGrid variant="market" ariaLabel="마켓 상품 목록">
-                        {shops.map((shop) => (
-                            <ShopCard
-                                key={shop.shopPublicId}
-                                shop={shop}
-                                now={now}
-                                onOpen={openCardInfo}
-                            />
-                        ))}
-                    </ItemCardGrid>
-
-                    {/* 무한스크롤 감시점 — 목록 끝 문구는 두지 않는다(목업 §17) */}
-                    <div ref={sentinelRef} aria-hidden className="h-px" />
-
-                    {isFetchingNextPage && (
-                        <p
-                            role="status"
-                            className="py-2 text-center text-xs text-gray-400"
-                        >
-                            더 불러오는 중…
-                        </p>
-                    )}
-                </>
-            )}
+                                최신 목록을 불러오지 못했습니다. 표시된 상품은
+                                이전 결과입니다.
+                            </p>
+                        )}
+                    </>
+                }
+                pagination={
+                    <CursorPagination
+                        sentinelRef={sentinelRef}
+                        hasNext={Boolean(hasNextPage)}
+                        isFetchingNextPage={isFetchingNextPage}
+                        onLoadMore={() => void fetchNextPage()}
+                    />
+                }
+                renderSkeleton={() => <ItemListSkeleton layout="catalog" />}
+            >
+                {shops.map((shop) => (
+                    <ShopCard
+                        key={shop.shopPublicId}
+                        shop={shop}
+                        now={now}
+                        onOpen={openCardInfo}
+                    />
+                ))}
+            </ListFrame>
 
             {selectedShop && (
                 <ShopCardInfoDialog
@@ -281,28 +253,5 @@ export default function MarketPage() {
                 />
             )}
         </div>
-    )
-}
-
-function StateBlock({
-    icon: Icon,
-    title,
-    description,
-    action,
-}: {
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
-    title: string
-    description: string
-    action?: React.ReactNode
-}) {
-    return (
-        <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
-                <Icon aria-hidden className="size-7" />
-            </span>
-            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
-            {action && <div className="mt-5">{action}</div>}
-        </section>
     )
 }

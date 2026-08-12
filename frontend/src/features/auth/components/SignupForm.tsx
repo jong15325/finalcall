@@ -72,7 +72,7 @@ function AvailabilityCheckButton({
             type="button"
             aria-label={ariaLabel}
             disabled={disabled || checking}
-            className="flex h-11 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-3 text-xs font-bold text-gray-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-11 shrink-0 items-center justify-center rounded-lg border border-content-line bg-content-surface px-3 text-xs font-bold text-content-fg transition hover:border-control-action hover:text-control-action disabled:cursor-not-allowed disabled:opacity-60"
             onClick={onClick}
         >
             {checking ? '확인 중…' : '중복 확인'}
@@ -243,7 +243,7 @@ export default function SignupForm({
 
     return (
         <div>
-            <h1 className="text-center text-2xl font-bold text-gray-900">
+            <h1 className="text-center text-2xl font-bold text-content-fg">
                 회원가입
             </h1>
 
@@ -281,8 +281,8 @@ export default function SignupForm({
                         aria-live="polite"
                         className={`mt-1.5 text-xs ${
                             loginIdFeedback?.tone === 'ok'
-                                ? 'text-success'
-                                : 'text-danger'
+                                ? 'text-success-ink'
+                                : 'text-danger-ink'
                         }`}
                     >
                         {loginIdFeedback?.text ?? ''}
@@ -318,7 +318,7 @@ export default function SignupForm({
                         <p
                             id="passwordConfirmError"
                             role="alert"
-                            className="mt-1.5 text-xs text-danger"
+                            className="mt-1.5 text-xs text-danger-ink"
                         >
                             비밀번호가 일치하지 않습니다.
                         </p>
@@ -346,12 +346,12 @@ export default function SignupForm({
                         <p
                             id="signupEmailError"
                             role="alert"
-                            className="mt-1.5 text-xs text-danger"
+                            className="mt-1.5 text-xs text-danger-ink"
                         >
                             {emailFieldError}
                         </p>
                     ) : (
-                        <p className="mt-1.5 text-xs text-gray-400">
+                        <p className="mt-1.5 text-xs text-content-subtle">
                             선택 항목입니다. 입력하면 가입 후 이메일 인증에 쓸
                             수 있어요.
                         </p>
@@ -387,8 +387,8 @@ export default function SignupForm({
                         aria-live="polite"
                         className={`mt-1.5 text-xs ${
                             nicknameFeedback?.tone === 'ok'
-                                ? 'text-success'
-                                : 'text-danger'
+                                ? 'text-success-ink'
+                                : 'text-danger-ink'
                         }`}
                     >
                         {nicknameFeedback?.text ?? ''}
@@ -398,7 +398,7 @@ export default function SignupForm({
                 {serverError && (
                     <p
                         role="alert"
-                        className="text-sm text-danger sm:col-span-2"
+                        className="text-sm text-danger-ink sm:col-span-2"
                     >
                         {serverError}
                     </p>
@@ -407,17 +407,17 @@ export default function SignupForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="mt-1 h-11 rounded-lg bg-orange px-4 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+                    className="mt-1 h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
                 >
                     {isSubmitting ? '가입 중…' : '회원가입'}
                 </button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-gray-500">
+            <p className="mt-6 text-center text-xs text-content-subtle">
                 이미 계정이 있으신가요?{' '}
                 <Link
                     to={paths.login}
-                    className="font-bold text-orange-deep hover:underline"
+                    className="font-bold text-control-action-hover hover:underline"
                 >
                     로그인
                 </Link>

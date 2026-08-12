@@ -35,10 +35,10 @@ function MemoRow({ memo, box, active, onSelect }: MemoRowProps) {
         <button
             type="button"
             aria-current={active}
-            className={`flex w-full items-start gap-3 border-b border-line px-4 py-3.5 text-left transition-colors ${
+            className={`flex w-full items-start gap-3 border-b border-content-line px-4 py-3.5 text-left transition-colors ${
                 active
-                    ? 'bg-orange-subtle'
-                    : 'bg-surface hover:bg-surface-sunken'
+                    ? 'bg-control-action-soft'
+                    : 'bg-content-surface hover:bg-content-soft'
             }`}
             onClick={onSelect}
         >
@@ -54,14 +54,14 @@ function MemoRow({ memo, box, active, onSelect }: MemoRowProps) {
                         <span
                             className={`truncate text-sm ${
                                 unread
-                                    ? 'font-bold text-gray-900'
-                                    : 'font-semibold text-gray-700'
+                                    ? 'font-bold text-content-fg'
+                                    : 'font-semibold text-content-fg'
                             }`}
                         >
                             {name}
                         </span>
                         {system ? (
-                            <span className="flex-none rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-bold text-navy-700">
+                            <span className="flex-none rounded-full bg-brand-structure/10 px-1.5 py-0.5 text-[10px] font-bold text-chrome-selected">
                                 시스템
                             </span>
                         ) : (
@@ -74,12 +74,12 @@ function MemoRow({ memo, box, active, onSelect }: MemoRowProps) {
                         )}
                     </span>
                     <span className="flex flex-none items-center gap-1.5">
-                        <span className="text-[11px] text-gray-400">
+                        <span className="text-[11px] text-content-subtle">
                             {formatMemoTimeRelative(memo.createdAt)}
                         </span>
                         {unread && (
                             <span
-                                className="size-2 rounded-full bg-orange"
+                                className="size-2 rounded-full bg-control-action"
                                 aria-label="안 읽음"
                             />
                         )}
@@ -87,7 +87,7 @@ function MemoRow({ memo, box, active, onSelect }: MemoRowProps) {
                 </span>
                 <span
                     className={`mt-1 block truncate text-[13px] ${
-                        unread ? 'text-gray-700' : 'text-gray-400'
+                        unread ? 'text-content-fg' : 'text-content-subtle'
                     }`}
                 >
                     {memo.bodyPreview}

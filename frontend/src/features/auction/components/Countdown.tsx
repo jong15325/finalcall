@@ -13,10 +13,10 @@ import { countdownFrom, urgencyLabelOf } from '@/features/auction/lib/countdown'
  */
 
 const URGENCY_CLASS: Record<string, string> = {
-    ended: 'text-gray-400',
-    critical: 'text-danger',
-    urgent: 'text-orange-deep',
-    normal: 'text-gray-600',
+    ended: 'text-content-subtle',
+    critical: 'text-danger-ink',
+    urgent: 'text-control-action-hover',
+    normal: 'text-content-muted',
 }
 
 interface CountdownProps {

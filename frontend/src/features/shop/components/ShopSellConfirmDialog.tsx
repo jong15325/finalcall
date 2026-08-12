@@ -107,7 +107,7 @@ function ShopSellConfirmDialog({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-navy-900/60 px-4 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose()
@@ -118,18 +118,18 @@ function ShopSellConfirmDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="shopSellConfirmTitle"
-                className="max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-2xl bg-surface shadow-[0_30px_80px_rgba(17,26,44,0.33)]"
+                className="max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <form noValidate onSubmit={handleSubmit}>
-                    <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
                         <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wide text-orange-deep">
+                            <span className="text-[11px] font-bold uppercase tracking-wide text-control-action-hover">
                                 등록 확인
                             </span>
                             <h4
                                 id="shopSellConfirmTitle"
-                                className="mt-0.5 text-lg font-bold text-gray-900"
+                                className="mt-0.5 text-lg font-bold text-content-fg"
                             >
                                 {itemName}
                             </h4>
@@ -137,7 +137,7 @@ function ShopSellConfirmDialog({
                         <button
                             type="button"
                             aria-label="닫기"
-                            className="flex size-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
                             onClick={onClose}
                         >
                             <TbX aria-hidden className="size-5" />
@@ -145,20 +145,20 @@ function ShopSellConfirmDialog({
                     </div>
 
                     <div className="px-5 py-5">
-                        <dl className="rounded-lg bg-surface-sunken p-3.5 text-sm">
+                        <dl className="rounded-lg bg-content-soft p-3.5 text-sm">
                             <div className="flex items-center justify-between">
-                                <dt className="text-gray-500">판매 방식</dt>
-                                <dd className="font-semibold text-gray-900">
+                                <dt className="text-content-subtle">판매 방식</dt>
+                                <dd className="font-semibold text-content-fg">
                                     고정가
                                 </dd>
                             </div>
                             <div className="mt-2 flex items-center justify-between">
-                                <dt className="text-gray-500">판매가</dt>
+                                <dt className="text-content-subtle">판매가</dt>
                                 <dd>
                                     <CodeAmount
                                         value={price}
                                         mode="full"
-                                        className="font-semibold text-gray-900"
+                                        className="font-semibold text-content-fg"
                                     />
                                 </dd>
                             </div>
@@ -166,7 +166,7 @@ function ShopSellConfirmDialog({
 
                         <SellFeeEstimate startPrice={price} />
 
-                        <ul className="mt-4 flex flex-col gap-1.5 rounded-lg bg-orange-subtle px-4 py-3 text-xs text-orange-deep">
+                        <ul className="mt-4 flex flex-col gap-1.5 rounded-lg bg-control-action-soft px-4 py-3 text-xs text-control-action-hover">
                             <li>등록 즉시 마켓에 고정가로 노출됩니다.</li>
                             <li>판매되기 전에는 언제든 취소할 수 있습니다.</li>
                             <li>
@@ -178,13 +178,13 @@ function ShopSellConfirmDialog({
                         {errorView && (
                             <div
                                 role="alert"
-                                className="mt-4 rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                                className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                             >
                                 <strong className="font-bold">
                                     {errorView.title}
                                 </strong>
                                 {errorView.description && (
-                                    <span className="mt-0.5 block text-danger/90">
+                                    <span className="mt-0.5 block text-danger-ink/90">
                                         {errorView.description}
                                     </span>
                                 )}
@@ -192,10 +192,10 @@ function ShopSellConfirmDialog({
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-2 border-t border-line bg-surface-sunken px-5 py-4">
+                    <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
                         <button
                             type="button"
-                            className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                            className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                             onClick={onClose}
                         >
                             다시 확인
@@ -204,7 +204,7 @@ function ShopSellConfirmDialog({
                             ref={confirmRef}
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '등록 중…' : '고정가 등록 확정'}
                         </button>

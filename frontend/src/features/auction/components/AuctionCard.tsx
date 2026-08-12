@@ -33,9 +33,9 @@ import type { AuctionSummary } from '@/lib/api/auctions'
  */
 
 const PHASE_BADGE_CLASS: Record<AuctionPhase, string> = {
-    live: 'bg-success-subtle text-success',
-    scheduled: 'bg-navy/10 text-navy-700',
-    ended: 'bg-gray-100 text-gray-500',
+    live: 'bg-success-soft text-success-ink',
+    scheduled: 'bg-brand-structure/10 text-chrome-selected',
+    ended: 'bg-content-soft text-content-subtle',
 }
 
 const PHASE_LABEL: Record<AuctionPhase, string> = {
@@ -78,11 +78,11 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
     const itemTypeTitle = `${frameLabel} - ${subGroupLabelOf(item.subGroup)}`
 
     return (
-        <div className="group relative min-h-[256px] rounded-xl transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)]">
+        <div className="group relative min-h-[256px] rounded-xl transition-transform hover:-translate-y-[3px] hover:shadow-[var(--shadow-card-hover)]">
             <Link
                 to={auctionDetailPath(auction.auctionPublicId)}
                 aria-label={`${item.nameSnapshot} 경매 상세 보기`}
-                className="grid min-h-[256px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
+                className="grid min-h-[256px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-content-line bg-content-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-control-action focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
             >
                 {/* 아트 열 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
                 <ItemFrame
@@ -105,16 +105,16 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                             >
                                 {PHASE_LABEL[phase]}
                             </span>
-                            <span className="text-[10px] font-semibold uppercase text-gray-500">
+                            <span className="text-[10px] font-semibold uppercase text-content-subtle">
                                 {elementLabelOf(item.element)}
                             </span>
                         </span>
-                        <span className="shrink-0 text-[10px] text-gray-400">
+                        <span className="shrink-0 text-[10px] text-content-subtle">
                             #{auction.auctionPublicId.slice(-4)}
                         </span>
                     </span>
 
-                    <span className="mb-1 mt-3.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-tight text-gray-900">
+                    <span className="mb-1 mt-3.5 line-clamp-2 min-h-[2.6em] text-[15px] font-bold leading-tight text-content-fg">
                         {itemTypeTitle}
                     </span>
 
@@ -125,31 +125,31 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                         skill1Name={item.skill1Name}
                         skill2Name={item.skill2Name}
                         skillPercent={item.skillPercent}
-                        className="mt-2 min-h-[48px] justify-center gap-1 [&_li]:!overflow-visible [&_li]:!whitespace-normal [&_li]:!text-clip [&_li]:rounded-md [&_li]:bg-navy/5 [&_li]:px-2 [&_li]:py-1 [&_li]:leading-snug [&_li]:text-navy-700 [&_.item-skill-summary__slot]:mr-1.5 [&_.item-skill-summary__slot]:inline [&_.item-skill-summary__slot]:text-navy-500 [&_.item-skill-summary__slot]:opacity-100"
+                        className="mt-2 min-h-[48px] justify-center gap-1 [&_li]:!overflow-visible [&_li]:!whitespace-normal [&_li]:!text-clip [&_li]:rounded-md [&_li]:bg-brand-structure/5 [&_li]:px-2 [&_li]:py-1 [&_li]:leading-snug [&_li]:text-chrome-selected [&_.item-skill-summary__slot]:mr-1.5 [&_.item-skill-summary__slot]:inline [&_.item-skill-summary__slot]:text-brand-structure [&_.item-skill-summary__slot]:opacity-100"
                     />
 
-                    <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-line py-3">
+                    <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-content-line py-3">
                         <span className="grid gap-0.5">
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-content-subtle">
                                 {price.label}
                             </span>
                             <CodeAmount
                                 value={price.amount}
                                 mode="compact"
-                                className="whitespace-nowrap text-[13px] font-bold text-gray-900"
+                                className="whitespace-nowrap text-[13px] font-bold text-content-fg"
                             />
                         </span>
                         <span className="grid justify-items-end gap-0.5">
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-content-subtle">
                                 입찰
                             </span>
-                            <strong className="text-[13px] font-bold text-gray-900">
+                            <strong className="text-[13px] font-bold text-content-fg">
                                 {auction.bidCount}회
                             </strong>
                         </span>
                     </span>
 
-                    <span className="mt-auto flex items-center justify-between gap-2 text-[11px] text-gray-500">
+                    <span className="mt-auto flex items-center justify-between gap-2 text-[11px] text-content-subtle">
                         <Countdown endAt={auction.endAt} now={now} />
                         <span className="min-w-0 truncate">
                             판매자 {auction.sellerNickname}

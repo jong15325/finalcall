@@ -1,164 +1,47 @@
 ---
 theme: light
-base:
-  bg: "#FFFFFF"
-  surface: "#FFFFFF"
-  surface-sunken: "#F4F4F5"
-  slot: "#000000"
+register: product
+contract: docs/spec/frontend-ui-system-contract.md
+brand:
+  navy: "#16213A"
+  navy-strong: "#101A2E"
+  gold: "#C8A028"
+  action: "#EF8A2C"
+surface:
+  content: "#FFFFFF"
+  canvas: "#F4F5F8"
 text:
-  text: "#18181B"
-  text-muted: "#52525B"
-  text-subtle: "#71717A"
-border:
-  border: "#E4E4E7"
-  border-muted: "#F1F1F3"
-  border-strong: "#8A8A8F"
-primary:
-  primary: "#6E2A9F"
-  primary-hover: "#5C2185"
-  primary-pressed: "#491A6C"
-  primary-soft: "#F1EAF5"
-  primary-fg: "#FFFFFF"
-  ink: "#18181B"
-semantic:
-  success: "#14742F"
-  warning: "#A0510A"
-  danger: "#C81E1E"
-  info: "#1D4ED8"
-element:
-  water: "#19B2FF"
-  fire: "#FF5500"
-  earth: "#95B259"
-  wind: "#66CCCC"
-radius:
-  sm: "4px"
-  md: "6px"
-  lg: "8px"
+  fg: "#171A20"
+  muted: "#4D5461"
+  subtle: "#6B7484"
 ---
 
-# FinalCall Design (웹 클라이언트)
+# FinalCall Design
 
-게임 아이템 경매 플랫폼의 프론트엔드 비주얼 시스템. **무신사(미니멀 에디토리얼 커머스)와 마켓컬리(화이트 베이스 + 프리미엄 퍼플)를 참조**하되 값·형태는 FinalCall 고유로 창작한다(자산·hex 복제 금지). 게임 감성은 **아이템 표시(카드·속성 배지)에만** 부분 차용한다. 정본은 `docs/ux/design-system.md`이며 이 파일은 impeccable용 요약이다. (개정 제안 단계 — 4개 열린 질문 확정 시 갱신)
+구현 정본은 `docs/spec/frontend-ui-system-contract.md` v1.0이다. 이 파일은 impeccable용 제품 디자인 요약이며 토큰 값을 별도로 결정하지 않는다.
 
-## Overview
+## 방향
 
-**Creative North Star: "신뢰가 먼저 보이는 커머스, 게임은 아이템에서만 드러난다"**
+FinalCall은 돈이 오가는 게임 아이템 거래처다. 고정 commerce chrome은 navy로 신뢰와 구조를 만들고, gold는 브랜드 강조와 dark chrome의 focus 보조, orange는 주요 CTA와 활성 조작에만 쓴다. 퍼플 브랜드 역할과 블랙 CTA 역할은 폐기됐다. 본문 near-black은 중립 전경이므로 계속 허용한다.
 
-**Key Characteristics:**
-- 라이트 커머스 베이스 — 순백(#FFFFFF) 배경, near-black 텍스트, 얇은 그레이 선(무신사식 각진·절제)
-- 고유 딥퍼플 브랜드 액센트(컬리 무드 참조, 컬리색 미복제)
-- 이원 구조 — 계정·거래 화면엔 게임색 전무, 아이템 카드가 게임이 드러나는 유일한 창
-- 강한 타입 위계 + 넉넉한 여백, 낮은 반경(4~8px)
-- WCAG 2.1 AA 전건 계산 검증
+route element accent는 AppShell의 단일 world-map 장식과 route가 명시한 `RouteAccentScope` 콘텐츠에만 도달한다. header, desktop/mobile navigation, drawer, footer, CompareBar는 route나 API 응답에 따라 재색되지 않는다.
 
-자금(캐시·게임머니)을 다루는 거래 플랫폼이라 화면의 첫인상은 신뢰감이어야 한다. 무신사식 미니멀 에디토리얼로 크롬을 조용히 두고, 컬리계 퍼플을 브랜드 포인트로 절제해 쓴다. 게임 팔레트(원게임 아트 실측 element 4색·검정 슬롯)는 아이템 카드·속성 배지로 격리해, 커머스 신뢰감과 게임 감성이 한 화면에서 충돌하지 않게 한다.
+## 시스템 규칙
 
-## Colors
+- 런타임 토큰 registry는 `frontend/src/styles/tokens.css` 하나다.
+- 컴포넌트는 `chrome-*`, `content-*`, `control-*`, `brand-*` 역할형 utility를 소비한다.
+- 금액·잔액·카운트다운·수량은 tabular 숫자로 안정적으로 표시한다.
+- 목록은 `ListFrame`이 heading, filter, result, loading/error/empty/ready, pagination 순서를 소유한다.
+- 아이템 카드는 `ItemCardView`, controlled `ItemCardFlip`, `ItemCardActionSurface`로 표시와 상호작용을 분리한다.
+- element 색은 아이템 표시와 route 장식에서만 쓰고, 색에는 항상 라벨이나 아이콘을 병기한다.
 
-라이트 베이스(#FAFAFA/#FFFFFF) 위 전 토큰 대비를 sRGB 상대휘도로 계산 검증했다. 조작색(primary)·의미색·아이템색(element)은 계층으로 분리하며 한 컴포넌트 안에서 섞지 않는다.
+## 접근성
 
-### Base
-- **bg** (#FFFFFF): 페이지 배경(순백, 확정). 카드는 색이 아니라 **얇은 선(border)·그림자로 분리**(무신사식).
-- **surface** (#FFFFFF): 카드·패널·인풋 표면(bg와 동색 — 경계는 border/shadow).
-- **surface-sunken** (#F4F4F5): 함몰 존·비활성 인풋.
-- **slot** (#000000): 아이템 아트 슬롯 배경 — 아이템 표시 전용.
+WCAG 2.1 AA를 기준으로 본문 4.5:1, 대형 텍스트와 UI 경계 3:1을 만족한다. 모든 주 행동은 native link 또는 button이며, flip은 `aria-expanded`와 `aria-controls`, dialog trigger는 `aria-haspopup="dialog"`를 제공한다. focus는 `control-focus` 2px ring과 offset을 쓴다.
 
-### Neutral
-- **text** (#18181B): 본문 near-black · 17.7:1.
-- **text-muted** (#52525B): 보조 텍스트 · 7.7:1.
-- **text-subtle** (#71717A): 캡션·placeholder · 4.8:1.
-- **border** (#E4E4E7): 카드·구분선(장식선).
-- **border-strong** (#8A8A8F): 인풋·컨트롤 경계 · 3.4:1(WCAG 1.4.11 충족).
+## 금지
 
-### Primary
-- **Ink** (#18181B): **주 CTA·주요 액션 버튼 채움**(무신사식 블랙, 확정) · 흰 글자 17.7:1. 로그인·가입하기·저장 등.
-- **Primary** (#6E2A9F): **브랜드 액센트**(고유 딥퍼플) — 링크·포커스 링·선택 상태·소소한 포인트. **CTA 채움 아님**(블랙이 CTA).
-- **Primary hover** (#5C2185): 퍼플 요소 hover.
-- **Primary soft** (#F1EAF5): 선택·ghost hover 배경.
-
-### Social (OAuth — 외부 브랜드 규격, 팔레트 예외)
-- **Kakao** (#FEE500): 카카오 로그인 버튼 배경 + 검정 라벨. 공식 브랜드 규격 준수(재색 금지).
-- **Naver** (#03C75A): 네이버 로그인 버튼 배경 + 흰 라벨. 공식 브랜드 규격 준수.
-
-### Semantic
-- **Success** (#14742F): 완료·충분 · 5.9:1.
-- **Warning** (#A0510A): 임박·주의 · 5.7:1.
-- **Danger** (#C81E1E): 실패·부족·파괴적 액션 · 5.7:1.
-- **Info** (#1D4ED8): 안내·중립 · 6.7:1.
-
-### Element (아이템 표시 전용 · 아트 실측 불변)
-- **Water** (#19B2FF): 물 속성 — 흰 위 텍스트 2.4:1로 무너지므로 소프트 틴트 배경 + near-black 라벨 + solid 도트로 사용.
-- **Fire** (#FF5500): 불 속성 — 동일 패턴.
-- **Earth** (#95B259): 흙 속성(올리브/연두, 아트 실측) — 동일 패턴.
-- **Wind** (#66CCCC): 바람 속성(청록, 아트 실측) — 동일 패턴.
-
-**The Game-Color Containment Rule.** element 4색과 검정 슬롯은 아이템 카드·속성 배지·아이템 필터 칩에만 쓴다. 버튼·탭·인풋·크롬·페이지 배경·본문·링크·내비에는 절대 쓰지 않는다 — 게임색이 조작/크롬으로 새면 이원 구조가 무너지고 커머스 신뢰감이 흐려진다.
-
-**The Element-On-Light Rule.** element색은 라이트 배경에서 텍스트/선으로 쓰면 대비가 무너진다(water 2.37:1). 반드시 소프트 틴트 배경 + near-black 라벨 + solid 도트로 역할을 반전해 쓴다. 아트 hex는 불변, 전경만 뒤집는다.
-
-## Typography
-
-**Display Font:** system-ui (with -apple-system, "Pretendard", "Segoe UI", Roboto, sans-serif)
-**Body Font:** system-ui (with -apple-system, "Pretendard", "Segoe UI", Roboto, sans-serif)
-
-**Character:** 무신사식 강한 위계 — 굵기·크기 대비를 크게 두고 자간을 절제한다. 금액·수량·카운트다운은 tabular-nums로 폭을 고정해 갱신 시 레이아웃 점프를 막는다. 외부 웹폰트 CDN 의존 없이 시스템 폰트 스택으로 한글·라틴을 함께 처리한다.
-
-### Hierarchy
-- **Display** (system-ui, weight 800, letter-spacing -0.03em): 로고·페이지 히어로.
-- **Heading** (system-ui, weight 700, letter-spacing -0.01em): 섹션·카드 제목.
-- **Body** (system-ui, weight 400-500, line-height 1.5): 본문 기본.
-- **Label** (system-ui, weight 700, uppercase, letter-spacing 0.14em): eyebrow·구분 라벨.
-- **Numeric** (system-ui, tabular-nums, weight 700-800): 금액·잔액·카운트다운.
-
-## Elevation
-
-다크가 아니라 라이트 베이스라 그림자가 실제 부양(elevation)에 쓰인다. 게임스킨식 "표면 밝기차"가 아니라 은은한 드롭섀도로 카드를 띄운다.
-
-- **Card** (`box-shadow: 0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.06)`): 인증 카드 등 부양 표면.
-- **Item hover** (`box-shadow: 0 8px 24px rgba(15,23,42,.10)`): 아이템 카드 hover 부양.
-
-## Components
-
-### Button
-- **Primary (CTA):** ink(#18181B) 블랙 채움 + 흰 글자. 로그인·가입하기·저장 등 주 액션. hover 살짝 밝힘, active 순검정. 높이 44px, 반경 6px.
-- **Outline:** surface 배경 + border-strong 경계 + text. 보조 액션(취소 등).
-- **Ghost:** 투명 + primary(퍼플) 텍스트, hover는 primary-soft 배경. 최소 강조.
-- **Danger:** danger(#C81E1E) 채움 — 탈퇴 등 파괴적 액션.
-- **주: 퍼플은 버튼 채움에 쓰지 않는다** — 액센트(링크·포커스·선택)로만. CTA 강조는 색이 아니라 블랙+크기·배치.
-
-### Social login (OAuth)
-- **Kakao:** #FEE500 배경 + 검정 라벨/로고. 공식 버튼 규격 준수. "카카오로 계속하기".
-- **Naver:** #03C75A 배경 + 흰 라벨/로고. 공식 버튼 규격 준수. "네이버로 계속하기".
-- 로그인·회원가입에 "또는" 구분선 아래 소셜 버튼 배치. **자리 확보 — 기능(OAuth 백엔드)은 별도 미래 에픽**(현 계약 §2는 loginId/password만). 지금 화면 레이아웃만 소셜을 수용해 추후 붙여도 재설계 불요.
-
-### Field
-- **Default:** border-strong 경계(1.4.11 대비), 높이 44px, 반경 6px, 라벨 항상 가시.
-- **Focus:** primary 경계 + primary-soft 링(box-shadow 3px).
-- **Error:** danger 경계 + danger-soft 링 + aria-describedby 에러 메시지. 서버 에러코드(AUTH/MEMBER_001)→필드 에러 매핑.
-- **Checkbox:** 미체크 시 제출 disabled + 비활성 사유 병기(탈퇴 동의 D-080). 게임 자산에 없어 CSS 재현.
-
-### ItemCard
-- **Art slot:** 검정(#000000) 배경 아이템 아트 슬롯 — 게임이 드러나는 유일한 창. 실물 아트는 `docs/game_ui/item_info/card_image/**`(typeCode 매핑, l=상세 s=목록).
-- **Element badge:** element 소프트 틴트 배경 + near-black 라벨 + solid 도트(색만 전달 금지).
-- **Commerce info:** 이름·가격(tabular-nums)·카운트다운·판매자·상태 칩은 전부 커머스 토큰(near-black·의미색).
-- **게임 자산 소스:** `docs/game_ui/`(사용자 제공·통지) — `common/`(게임 버튼·lock), `item_info/card_image/`(아이템 아트), `item_register/`. 아이템 화면 착수 시 매핑.
-
-## Do's and Don'ts
-
-### Do
-- Do 주 CTA·주요 버튼은 블랙(ink) 채움. 퍼플은 링크·포커스·선택 액센트로만.
-- Do 로그인·회원가입에 소셜 로그인(카카오·네이버) 자리 확보("또는" 구분선 + 브랜드 규격 버튼).
-- Do 계정·거래 화면은 순수 커머스 크롬으로(near-black 텍스트, 얇은 그레이 선, 퍼플 포인트).
-- Do element색·검정 슬롯은 아이템 카드·속성 배지·아이템 필터 칩에만.
-- Do 금액·잔액·카운트다운에 tabular-nums로 폭 고정.
-- Do 색만으로 정보 전달 금지 — 의미색/element색은 아이콘·라벨 병기.
-- Do 무신사·컬리는 감각/무드만 참조하고 값·형태는 FinalCall 고유로 창작.
-
-### Don't
-- Don't 퍼플을 버튼 채움(CTA)에 사용 — CTA는 블랙. 퍼플은 액센트만.
-- Don't 카카오·네이버 브랜드색(#FEE500·#03C75A)을 임의 변경 — 공식 규격 준수.
-- Don't element색이나 검정 슬롯을 버튼·탭·인풋·내비·페이지 배경·본문·링크에 사용.
-- Don't 퍼플→블루 그라디언트 히어로(전형적 AI 티) — 브랜드 퍼플은 단색 액센트로만.
-- Don't 무신사·마켓컬리의 로고·자산·실제 hex를 복제(상표·저작권).
-- Don't 제네릭 SaaS/부트스트랩 룩, 근거 없는 중첩 카드·과도한 둥근 모서리.
-- Don't 라이트 값이 확정되기 전 다크 값을 지어내기(U-005 대기 — 단일 라이트 스킨 유지).
+- route selector로 chrome 후손의 text/background/border를 포괄 재색하지 않는다.
+- 퍼플을 브랜드/선택/focus에, 블랙을 CTA 채움에 재도입하지 않는다.
+- 전체 카드 absolute overlay가 flip·compare·footer action을 덮지 않는다.
+- 페이지별 loading grid, empty wrapper, footer 상태 effect를 다시 만들지 않는다.

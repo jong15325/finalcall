@@ -68,7 +68,7 @@ export default function CommentItem({
             {!comment.deleted && (
                 <button
                     type="button"
-                    className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-content-subtle hover:bg-content-soft hover:text-content-fg"
                     onClick={() =>
                         openReplyForm({
                             targetPublicId: comment.commentPublicId,
@@ -86,7 +86,7 @@ export default function CommentItem({
     const closeReplyForm = () => setReplyingTo(null)
 
     return (
-        <li className="border-t border-line first:border-t-0">
+        <li className="border-t border-content-line first:border-t-0">
             <CommentBody
                 slug={slug}
                 postPublicId={postPublicId}
@@ -155,18 +155,18 @@ function ReplyThread({
         <div className="ml-4 pl-2 sm:ml-11 sm:pl-4">
             {isPending ? (
                 <div aria-hidden className="flex gap-3 py-3.5">
-                    <div className="size-8 shrink-0 animate-pulse rounded-full bg-gray-100" />
+                    <div className="size-8 shrink-0 animate-pulse rounded-full bg-content-soft" />
                     <div className="flex-1 space-y-2">
-                        <div className="h-3 w-1/4 animate-pulse rounded bg-gray-100" />
-                        <div className="h-3 w-2/3 animate-pulse rounded bg-gray-100" />
+                        <div className="h-3 w-1/4 animate-pulse rounded bg-content-soft" />
+                        <div className="h-3 w-2/3 animate-pulse rounded bg-content-soft" />
                     </div>
                 </div>
             ) : isError ? (
-                <div className="flex items-center gap-2 py-3 text-xs text-gray-500">
+                <div className="flex items-center gap-2 py-3 text-xs text-content-subtle">
                     답글을 불러오지 못했어요.
                     <button
                         type="button"
-                        className="rounded-lg border border-line px-2 py-1 font-bold text-gray-600 hover:border-navy"
+                        className="rounded-lg border border-content-line px-2 py-1 font-bold text-content-muted hover:border-brand-structure"
                         onClick={() => void refetch()}
                     >
                         다시 시도
@@ -192,7 +192,7 @@ function ReplyThread({
             {hasNextPage && (
                 <button
                     type="button"
-                    className="mt-1 inline-flex items-center gap-1 py-1.5 text-xs font-bold text-navy-500 hover:text-navy disabled:opacity-50"
+                    className="mt-1 inline-flex items-center gap-1 py-1.5 text-xs font-bold text-brand-structure hover:text-brand-structure disabled:opacity-50"
                     disabled={isFetchingNextPage}
                     onClick={() => void fetchNextPage()}
                 >
@@ -226,7 +226,7 @@ function ReplyItem({
     const actions = (
         <button
             type="button"
-            className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-content-subtle hover:bg-content-soft hover:text-content-fg"
             onClick={() =>
                 onReply({
                     targetPublicId: reply.commentPublicId,
@@ -240,7 +240,7 @@ function ReplyItem({
     )
 
     return (
-        <li className="border-t border-gray-100 first:border-t-0">
+        <li className="border-t border-content-soft first:border-t-0">
             <CommentBody
                 slug={slug}
                 postPublicId={postPublicId}
@@ -347,14 +347,14 @@ function CommentBody({
             {comment.deleted ? (
                 <span
                     aria-hidden
-                    className={`grid ${avatarSize} shrink-0 place-items-center rounded-full bg-gray-100 text-gray-300`}
+                    className={`grid ${avatarSize} shrink-0 place-items-center rounded-full bg-content-soft text-content-line`}
                 >
                     <TbTrash className="size-4" />
                 </span>
             ) : (
                 <span
                     aria-hidden
-                    className={`grid ${avatarSize} shrink-0 place-items-center rounded-full bg-gray-200 font-bold text-gray-600`}
+                    className={`grid ${avatarSize} shrink-0 place-items-center rounded-full bg-content-line font-bold text-content-muted`}
                 >
                     {avatarInitial(comment.authorNickname ?? undefined)}
                 </span>
@@ -363,7 +363,7 @@ function CommentBody({
             <div className="min-w-0 flex-1">
                 {comment.deleted ? (
                     /* tombstone — 본문·작성자 마스킹(§13.4), 답글 접근은 actions(토글)로 보존 */
-                    <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                    <div className="flex items-center gap-1.5 text-sm text-content-subtle">
                         <TbMessageOff aria-hidden className="size-4" />
                         삭제된 댓글입니다.
                     </div>
@@ -371,10 +371,10 @@ function CommentBody({
                     <>
                         {/* 상단 행 — 모바일·웹 모두 닉네임 우측에 작성 시간 표시 */}
                         <div className="flex items-center gap-2">
-                            <b className="min-w-0 truncate text-sm font-bold text-gray-900">
+                            <b className="min-w-0 truncate text-sm font-bold text-content-fg">
                                 {comment.authorNickname}
                             </b>
-                            <span className="shrink-0 whitespace-nowrap text-xs text-gray-400">
+                            <span className="shrink-0 whitespace-nowrap text-xs text-content-subtle">
                                 {formatPostTime(comment.createdAt)}
                                 {edited && ' · 수정됨'}
                             </span>
@@ -393,7 +393,7 @@ function CommentBody({
                                     value={draft}
                                     maxLength={CONTENT_MAX}
                                     rows={3}
-                                    className="w-full resize-y rounded-lg border border-line bg-surface px-3 py-2 text-sm text-gray-800 outline-none focus:border-orange focus:ring-2 focus:ring-orange-subtle"
+                                    className="w-full resize-y rounded-lg border border-content-line bg-content-surface px-3 py-2 text-sm text-content-fg outline-none focus:border-control-action focus:ring-2 focus:ring-control-action-soft"
                                     onChange={(event) =>
                                         setDraft(event.target.value)
                                     }
@@ -401,7 +401,7 @@ function CommentBody({
                                 {updateMutation.isError && (
                                     <p
                                         role="alert"
-                                        className="mt-1.5 flex items-center gap-1.5 text-xs text-danger"
+                                        className="mt-1.5 flex items-center gap-1.5 text-xs text-danger-ink"
                                     >
                                         <TbAlertTriangle
                                             aria-hidden
@@ -413,12 +413,12 @@ function CommentBody({
                                     </p>
                                 )}
                                 <div className="mt-2 flex items-center justify-end gap-2">
-                                    <span className="mr-auto text-xs text-gray-400 tabular-nums">
+                                    <span className="mr-auto text-xs text-content-subtle tabular-nums">
                                         {draft.length} / {CONTENT_MAX}
                                     </span>
                                     <button
                                         type="button"
-                                        className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-bold text-gray-600 hover:border-navy"
+                                        className="rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-bold text-content-muted hover:border-brand-structure"
                                         onClick={() => setEditing(false)}
                                     >
                                         취소
@@ -426,7 +426,7 @@ function CommentBody({
                                     <button
                                         type="button"
                                         disabled={!canSave}
-                                        className="rounded-lg bg-orange px-3 py-1.5 text-xs font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg bg-control-action px-3 py-1.5 text-xs font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                                         onClick={handleSave}
                                     >
                                         {updateMutation.isPending
@@ -436,9 +436,9 @@ function CommentBody({
                                 </div>
                             </div>
                         ) : (
-                            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-content-fg">
                                 {mention && (
-                                    <span className="mr-1 inline-flex h-5 items-center rounded-full bg-navy px-2 align-[1px] text-xs font-bold text-white">
+                                    <span className="mr-1 inline-flex h-5 items-center rounded-full bg-brand-structure px-2 align-[1px] text-xs font-bold text-on-strong">
                                         @{mention}
                                     </span>
                                 )}
@@ -447,12 +447,12 @@ function CommentBody({
                         )}
 
                         {confirmDelete && (
-                            <div className="mt-2 flex items-center gap-2 rounded-lg bg-danger-subtle px-3 py-2">
-                                <span className="text-xs font-semibold text-danger">
+                            <div className="mt-2 flex items-center gap-2 rounded-lg bg-danger-soft px-3 py-2">
+                                <span className="text-xs font-semibold text-danger-ink">
                                     이 댓글을 삭제할까요?
                                 </span>
                                 {deleteMutation.isError && (
-                                    <span className="text-xs text-danger">
+                                    <span className="text-xs text-danger-ink">
                                         {commentErrorMessage(
                                             deleteMutation.error,
                                         )}
@@ -461,7 +461,7 @@ function CommentBody({
                                 <span className="ml-auto flex gap-1.5">
                                     <button
                                         type="button"
-                                        className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-bold text-gray-600 hover:border-navy"
+                                        className="rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-bold text-content-muted hover:border-brand-structure"
                                         onClick={() => setConfirmDelete(false)}
                                     >
                                         취소
@@ -469,7 +469,7 @@ function CommentBody({
                                     <button
                                         type="button"
                                         disabled={deleteMutation.isPending}
-                                        className="rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                         onClick={() => deleteMutation.mutate()}
                                     >
                                         {deleteMutation.isPending
@@ -499,7 +499,7 @@ function CommentBody({
                             />
                             <span
                                 aria-hidden
-                                className="mx-0.5 h-4 w-px bg-line"
+                                className="mx-0.5 h-4 w-px bg-content-line"
                             />
                         </>
                     )}
@@ -509,7 +509,7 @@ function CommentBody({
                 {!comment.deleted && reactionMutation.isError && (
                     <p
                         role="alert"
-                        className="mt-1.5 flex items-center gap-1.5 text-xs text-danger"
+                        className="mt-1.5 flex items-center gap-1.5 text-xs text-danger-ink"
                     >
                         <TbAlertTriangle aria-hidden className="size-3.5 shrink-0" />
                         {commentErrorMessage(reactionMutation.error)}
@@ -557,8 +557,8 @@ function ReactionButton({
             }
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 active
-                    ? 'border-orange bg-orange-subtle text-orange-deep'
-                    : 'border-line bg-surface text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-control-action bg-control-action-soft text-control-action-hover'
+                    : 'border-content-line bg-content-surface text-content-subtle hover:border-content-line hover:bg-content-soft'
             }`}
             onClick={onToggle}
         >
@@ -612,7 +612,7 @@ function CommentEditMenu({
                 aria-haspopup="menu"
                 aria-expanded={open}
                 aria-label="댓글 관리 메뉴"
-                className="-mr-1 grid size-8 place-items-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                className="-mr-1 grid size-8 place-items-center rounded-full text-content-subtle hover:bg-content-soft hover:text-content-fg"
                 onClick={() => setOpen((v) => !v)}
             >
                 <TbDotsVertical aria-hidden className="size-[18px]" />
@@ -623,17 +623,17 @@ function CommentEditMenu({
                     {/* 모바일 스크림 — 시트 뒤 어둡게 + 바깥 탭 닫기 */}
                     <div
                         aria-hidden
-                        className="fixed inset-0 z-40 bg-navy-900/35 sm:hidden"
+                        className="fixed inset-0 z-40 bg-chrome-strong/35 sm:hidden"
                         onClick={() => setOpen(false)}
                     />
                     <div
                         role="menu"
-                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-line bg-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-1 sm:w-32 sm:rounded-xl sm:border sm:p-1.5"
+                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-content-line bg-content-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-1 sm:w-32 sm:rounded-xl sm:border sm:p-1.5"
                     >
                         <button
                             type="button"
                             role="menuitem"
-                            className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-gray-600 hover:bg-gray-100 sm:h-9 sm:text-xs"
+                            className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-content-muted hover:bg-content-soft sm:h-9 sm:text-xs"
                             onClick={() => choose(onEdit)}
                         >
                             <TbPencil aria-hidden className="size-4 sm:size-3.5" />
@@ -642,7 +642,7 @@ function CommentEditMenu({
                         <button
                             type="button"
                             role="menuitem"
-                            className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-danger hover:bg-danger-subtle sm:h-9 sm:text-xs"
+                            className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-danger-ink hover:bg-danger-soft sm:h-9 sm:text-xs"
                             onClick={() => choose(onDelete)}
                         >
                             <TbTrash aria-hidden className="size-4 sm:size-3.5" />
@@ -650,7 +650,7 @@ function CommentEditMenu({
                         </button>
                         <button
                             type="button"
-                            className="mt-1 flex h-12 w-full items-center justify-center rounded-lg bg-surface-sunken text-sm font-bold text-gray-600 sm:hidden"
+                            className="mt-1 flex h-12 w-full items-center justify-center rounded-lg bg-content-soft text-sm font-bold text-content-muted sm:hidden"
                             onClick={() => setOpen(false)}
                         >
                             닫기
@@ -687,12 +687,12 @@ function ReplyComposer({
 
     if (!isAuthenticated) {
         return (
-            <div className="my-2 flex items-center justify-between gap-2 rounded-lg border border-dashed border-line bg-surface px-3 py-3 text-xs text-gray-500">
+            <div className="my-2 flex items-center justify-between gap-2 rounded-lg border border-dashed border-content-line bg-content-surface px-3 py-3 text-xs text-content-subtle">
                 <span>
                     답글을 작성하려면{' '}
                     <Link
                         to={`${paths.login}${buildReturnUrlQuery(location)}`}
-                        className="font-bold text-navy hover:text-orange-deep"
+                        className="font-bold text-brand-structure hover:text-control-action-hover"
                     >
                         로그인
                     </Link>
@@ -700,7 +700,7 @@ function ReplyComposer({
                 </span>
                 <button
                     type="button"
-                    className="font-bold text-gray-400 hover:text-gray-700"
+                    className="font-bold text-content-subtle hover:text-content-fg"
                     onClick={onDone}
                 >
                     닫기
@@ -731,10 +731,10 @@ function ReplyComposer({
 
     return (
         <form className="my-2" onSubmit={handleSubmit}>
-            <div className="rounded-lg border border-line bg-surface-sunken px-3 py-2.5 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange-subtle">
+            <div className="rounded-lg border border-content-line bg-content-soft px-3 py-2.5 focus-within:border-control-action focus-within:ring-2 focus-within:ring-control-action-soft">
                 {target.mentionLabel && (
-                    <div className="mb-1.5 text-xs text-gray-500">
-                        <span className="mr-1 inline-flex h-5 items-center rounded-full bg-navy px-2 text-xs font-bold text-white">
+                    <div className="mb-1.5 text-xs text-content-subtle">
+                        <span className="mr-1 inline-flex h-5 items-center rounded-full bg-brand-structure px-2 text-xs font-bold text-on-strong">
                             @{target.mentionLabel}
                         </span>
                         님에게 답글
@@ -750,13 +750,13 @@ function ReplyComposer({
                     maxLength={CONTENT_MAX}
                     rows={2}
                     placeholder="답글을 남겨보세요."
-                    className="w-full resize-none bg-transparent text-sm text-gray-700 outline-none"
+                    className="w-full resize-none bg-transparent text-sm text-content-fg outline-none"
                     onChange={(event) => setContent(event.target.value)}
                 />
                 {createReplyMutation.isError && (
                     <p
                         role="alert"
-                        className="mt-1 flex items-center gap-1.5 text-xs text-danger"
+                        className="mt-1 flex items-center gap-1.5 text-xs text-danger-ink"
                     >
                         <TbAlertTriangle
                             aria-hidden
@@ -766,13 +766,13 @@ function ReplyComposer({
                     </p>
                 )}
                 <div className="mt-1.5 flex items-center justify-between">
-                    <span className="text-xs text-gray-400 tabular-nums">
+                    <span className="text-xs text-content-subtle tabular-nums">
                         {content.length} / {CONTENT_MAX}
                     </span>
                     <span className="flex gap-2">
                         <button
                             type="button"
-                            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-bold text-gray-600 hover:border-navy"
+                            className="rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-bold text-content-muted hover:border-brand-structure"
                             onClick={onDone}
                         >
                             취소
@@ -780,7 +780,7 @@ function ReplyComposer({
                         <button
                             type="submit"
                             disabled={!canSubmit}
-                            className="rounded-lg bg-orange px-4 py-1.5 text-xs font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg bg-control-action px-4 py-1.5 text-xs font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {createReplyMutation.isPending
                                 ? '등록 중…'

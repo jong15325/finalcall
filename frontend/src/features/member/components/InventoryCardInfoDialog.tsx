@@ -50,7 +50,7 @@ function InventoryCardInfoDialog({
     // 하단 액션: 안내 + '판매 등록'(판매자·판매가·구매확인 없음). 배송 진행 중이면 잠금.
     const footer = (
         <>
-            <p className="min-w-0 text-[13px] font-medium leading-snug text-gray-500">
+            <p className="min-w-0 text-[13px] font-medium leading-snug text-content-subtle">
                 {shipping
                     ? '게임으로 배송 중인 아이템입니다. 배송이 끝나면 게임에서 사용할 수 있어요.'
                     : failed

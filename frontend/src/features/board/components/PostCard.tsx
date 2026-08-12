@@ -24,20 +24,20 @@ export default function PostCard({ slug, post, showComments }: PostCardProps) {
             to={boardPostPath(slug, post.postPublicId)}
             className={`flex items-center gap-3.5 px-4 py-3.5 transition-colors ${
                 post.isPinned
-                    ? 'bg-gold-subtle hover:bg-[#f2e7bf]'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-brand-highlight-soft hover:bg-brand-highlight-soft'
+                    : 'hover:bg-content-soft'
             }`}
         >
             {post.thumbnailUrl ? (
                 <img
                     src={post.thumbnailUrl}
                     alt=""
-                    className="size-14 shrink-0 rounded-lg border border-line object-cover"
+                    className="size-14 shrink-0 rounded-lg border border-content-line object-cover"
                 />
             ) : (
                 <span
                     aria-hidden
-                    className="grid size-14 shrink-0 place-items-center rounded-lg bg-gray-100 text-gray-300"
+                    className="grid size-14 shrink-0 place-items-center rounded-lg bg-content-soft text-content-line"
                 >
                     <TbPhoto className="size-5" />
                 </span>
@@ -46,30 +46,30 @@ export default function PostCard({ slug, post, showComments }: PostCardProps) {
             <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                     {post.isPinned && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gold-subtle px-2 py-0.5 text-[11px] font-bold text-gold-deep ring-1 ring-gold/30">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-highlight-soft px-2 py-0.5 text-[11px] font-bold text-brand-highlight-deep ring-1 ring-brand-highlight/30">
                             <TbPin aria-hidden className="size-3" />
                             고정
                         </span>
                     )}
-                    <span className="truncate text-[15px] font-bold text-gray-900">
+                    <span className="truncate text-[15px] font-bold text-content-fg">
                         {post.title}
                     </span>
                     {showComments && post.commentCount > 0 && (
-                        <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-bold text-orange-deep">
+                        <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-bold text-control-action-hover">
                             <TbMessage aria-hidden className="size-3.5" />
                             {post.commentCount}
                         </span>
                     )}
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
+                <div className="mt-1 flex items-center gap-2 text-xs text-content-subtle">
                     <span className="truncate">{post.authorNickname}</span>
-                    <span aria-hidden className="text-gray-300">
+                    <span aria-hidden className="text-content-line">
                         ·
                     </span>
                     <span className="shrink-0">
                         {formatPostTime(post.createdAt)}
                     </span>
-                    <span aria-hidden className="text-gray-300">
+                    <span aria-hidden className="text-content-line">
                         ·
                     </span>
                     <span className="inline-flex shrink-0 items-center gap-0.5">

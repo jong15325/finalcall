@@ -109,7 +109,7 @@ describe('<AuctionHeroCard>', () => {
         expect(percent).toHaveClass(
             'whitespace-nowrap',
             'font-extrabold',
-            'text-gold-deep',
+            'text-brand-highlight-deep',
         )
         expect(percent).not.toHaveAttribute('aria-hidden')
         expect(within(items[0]).queryByText(/%/)).not.toBeInTheDocument()
@@ -142,7 +142,7 @@ describe('<AuctionHeroCard>', () => {
         expect(within(item).getByText('(7%)')).toHaveClass(
             'whitespace-nowrap',
             'font-extrabold',
-            'text-gold-deep',
+            'text-brand-highlight-deep',
         )
         expect(within(list).queryByText('1')).not.toBeInTheDocument()
     })

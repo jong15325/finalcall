@@ -17,12 +17,12 @@ export default function SocialLoginSection() {
     return (
         <>
             <div
-                className="my-5 flex items-center gap-3 text-xs font-bold tracking-wide text-gray-400"
+                className="my-5 flex items-center gap-3 text-xs font-bold tracking-wide text-content-subtle"
                 role="separator"
             >
-                <span className="h-px flex-1 bg-line" />
+                <span className="h-px flex-1 bg-content-line" />
                 또는
-                <span className="h-px flex-1 bg-line" />
+                <span className="h-px flex-1 bg-content-line" />
             </div>
 
             <div className="flex flex-col gap-2.5">
@@ -39,7 +39,7 @@ export default function SocialLoginSection() {
             </div>
 
             {anyUnready && (
-                <p className="mt-3 text-center text-xs text-gray-400">
+                <p className="mt-3 text-center text-xs text-content-subtle">
                     소셜 로그인은 준비 중입니다.
                 </p>
             )}

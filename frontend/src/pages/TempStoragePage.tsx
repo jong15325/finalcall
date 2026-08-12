@@ -7,7 +7,6 @@ import { relocateErrorMessage } from '@/features/member/lib/relocateErrors'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useMyTempStorage, useRelocateItem } from '@/lib/queries/tempStorage'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 임시 보관함 `/me/temp-storage` (FC-076 — 목업 `.storage-list` · design-brief B-10).
@@ -27,12 +26,6 @@ export default function TempStoragePage() {
     const [activeId, setActiveId] = useState<string | null>(null)
 
     const items = tempQuery.data?.pages.flatMap((page) => page.content) ?? []
-    useAppFooterVariant(
-        !tempQuery.isPending && (tempQuery.isError || items.length === 0)
-            ? 'compact'
-            : 'default',
-    )
-
     // 스크롤 무한 누적(FC-087 · 목업 §17) — cursor 페이지를 감시점으로 이어 로드.
     const sentinelRef = useInfiniteScroll({
         hasNext: Boolean(tempQuery.hasNextPage),
@@ -55,16 +48,16 @@ export default function TempStoragePage() {
         <div className="flex flex-col gap-4">
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-2xl font-bold text-content-fg">
                         임시 보관함
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         인벤토리 초과 아이템을 빈 슬롯으로 이동하세요.
                     </p>
                 </div>
                 <Link
                     to={paths.inventory}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-fg hover:bg-content-soft"
                 >
                     <TbBackpack aria-hidden className="size-4" />
                     인벤토리
@@ -73,7 +66,7 @@ export default function TempStoragePage() {
 
             {/* 만실 안내 — 인벤토리에 여유가 없으면. 서버가 최종 판정(선제 차단 아님) */}
             {isFull && (
-                <p className="rounded-xl border border-warning-subtle bg-warning-subtle/40 px-4 py-3 text-sm font-semibold text-warning">
+                <p className="rounded-xl border border-warning-soft bg-warning-soft/40 px-4 py-3 text-sm font-semibold text-warning">
                     인벤토리가 가득 찼습니다. 정규 슬롯을 비워야 이동할 수
                     있습니다.
                 </p>
@@ -83,7 +76,7 @@ export default function TempStoragePage() {
             {relocate.isSuccess && (
                 <p
                     role="status"
-                    className="rounded-xl border border-success-subtle bg-success-subtle/50 px-4 py-3 text-sm font-semibold text-success"
+                    className="rounded-xl border border-success-soft bg-success-soft/50 px-4 py-3 text-sm font-semibold text-success-ink"
                 >
                     {relocate.data.slotNo}번 슬롯으로 이동했습니다.
                 </p>
@@ -91,7 +84,7 @@ export default function TempStoragePage() {
             {relocate.isError && (
                 <p
                     role="alert"
-                    className="rounded-xl border border-danger-subtle bg-danger-subtle/50 px-4 py-3 text-sm font-semibold text-danger"
+                    className="rounded-xl border border-danger-soft bg-danger-soft/50 px-4 py-3 text-sm font-semibold text-danger-ink"
                 >
                     {relocateErrorMessage(relocate.error)}
                 </p>
@@ -102,21 +95,21 @@ export default function TempStoragePage() {
                     {[0, 1, 2].map((key) => (
                         <div
                             key={key}
-                            className="h-28 w-full animate-pulse rounded-2xl bg-gray-100"
+                            className="h-28 w-full animate-pulse rounded-2xl bg-content-soft"
                         />
                     ))}
                 </div>
             ) : tempQuery.isError ? (
-                <p className="rounded-2xl border border-line bg-surface px-5 py-16 text-center text-sm text-gray-500">
+                <p className="rounded-2xl border border-content-line bg-content-surface px-5 py-16 text-center text-sm text-content-subtle">
                     임시 보관함을 불러오지 못했습니다. 잠시 후 다시 시도해
                     주세요.
                 </p>
             ) : items.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-line bg-surface px-5 py-16 text-center">
-                    <p className="text-sm font-semibold text-gray-700">
+                <div className="rounded-2xl border border-dashed border-content-line bg-content-surface px-5 py-16 text-center">
+                    <p className="text-sm font-semibold text-content-fg">
                         임시 보관함이 비어 있습니다.
                     </p>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         인벤토리가 가득 차 초과된 아이템이 여기에 보관됩니다.
                     </p>
                 </div>
@@ -134,7 +127,7 @@ export default function TempStoragePage() {
                     {tempQuery.isFetchingNextPage && (
                         <p
                             role="status"
-                            className="py-2 text-center text-xs text-gray-400"
+                            className="py-2 text-center text-xs text-content-subtle"
                         >
                             더 불러오는 중…
                         </p>

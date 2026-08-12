@@ -192,7 +192,7 @@ function BidDialog({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-navy-900/60 px-4 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
             role="presentation"
             onMouseDown={(event) => {
                 // 배경 클릭으로 닫기(다이얼로그 내부 클릭은 전파되지 않게 아래 stopPropagation).
@@ -204,18 +204,18 @@ function BidDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="bidDialogTitle"
-                className="w-full max-w-[520px] overflow-hidden rounded-2xl bg-surface shadow-[0_30px_80px_rgba(17,26,44,0.33)]"
+                className="w-full max-w-[520px] overflow-hidden rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <form noValidate onSubmit={handleSubmit}>
-                    <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
                         <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wide text-orange-deep">
+                            <span className="text-[11px] font-bold uppercase tracking-wide text-control-action-hover">
                                 안전 입찰
                             </span>
                             <h4
                                 id="bidDialogTitle"
-                                className="mt-0.5 text-lg font-bold text-gray-900"
+                                className="mt-0.5 text-lg font-bold text-content-fg"
                             >
                                 {auctionName}
                             </h4>
@@ -223,7 +223,7 @@ function BidDialog({
                         <button
                             type="button"
                             aria-label="닫기"
-                            className="flex size-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
                             onClick={onClose}
                         >
                             <TbX aria-hidden className="size-5" />
@@ -231,13 +231,13 @@ function BidDialog({
                     </div>
 
                     <div className="px-5 py-5">
-                        <div className="mb-5 flex flex-col gap-2 rounded-lg bg-surface-sunken p-3.5 text-xs text-gray-600 xs:flex-row xs:justify-between">
+                        <div className="mb-5 flex flex-col gap-2 rounded-lg bg-content-soft p-3.5 text-xs text-content-muted xs:flex-row xs:justify-between">
                             <span className="flex items-center gap-1.5">
                                 현재 최고가
                                 <CodeAmount
                                     value={currentHighestAmount}
                                     mode="full"
-                                    className="font-bold text-gray-900"
+                                    className="font-bold text-content-fg"
                                 />
                             </span>
                             <span className="flex items-center gap-1.5">
@@ -245,14 +245,14 @@ function BidDialog({
                                 <CodeAmount
                                     value={minNextBidAmount}
                                     mode="full"
-                                    className="font-bold text-gray-900"
+                                    className="font-bold text-content-fg"
                                 />
                             </span>
                         </div>
 
                         <label
                             htmlFor="bidAmount"
-                            className="text-sm font-semibold text-gray-700"
+                            className="text-sm font-semibold text-content-fg"
                         >
                             입찰 금액
                         </label>
@@ -260,10 +260,10 @@ function BidDialog({
                             ref={inputRef}
                             id="bidAmount"
                             name="bidAmount"
-                            className={`mt-1.5 w-full rounded-lg border bg-surface px-3.5 py-3 text-lg font-bold tabular-nums text-gray-900 focus:outline-none focus:ring-2 ${
+                            className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3.5 py-3 text-lg font-bold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
                                 amountInvalid
                                     ? 'border-danger focus:ring-danger/30'
-                                    : 'border-line focus:border-orange focus:ring-orange/30'
+                                    : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                             }`}
                             inputMode="numeric"
                             autoComplete="off"
@@ -276,18 +276,18 @@ function BidDialog({
                                 setAmount(event.target.value)
                             }}
                         />
-                        <p id="bidHelp" className="mt-1.5 text-xs text-gray-500">
+                        <p id="bidHelp" className="mt-1.5 text-xs text-content-subtle">
                             최소 입찰가 이상으로 입력하세요.
                             {buyNowPrice !== null &&
                                 ' 즉시구매 참고가 미만까지 입찰할 수 있습니다.'}
                         </p>
 
-                        <p className="mt-3 flex items-center gap-1.5 text-sm text-gray-600">
+                        <p className="mt-3 flex items-center gap-1.5 text-sm text-content-muted">
                             입찰 가능 잔액
                             <CodeAmount
                                 value={gameMoneyAvailable}
                                 mode="full"
-                                className="font-bold text-gray-900"
+                                className="font-bold text-content-fg"
                             />
                         </p>
 
@@ -295,7 +295,7 @@ function BidDialog({
                         {raisedNotice && (
                             <p
                                 role="status"
-                                className="mt-3 rounded-lg bg-orange-subtle px-3 py-2 text-xs font-medium text-orange-deep"
+                                className="mt-3 rounded-lg bg-control-action-soft px-3 py-2 text-xs font-medium text-control-action-hover"
                             >
                                 {raisedNotice}
                             </p>
@@ -305,7 +305,7 @@ function BidDialog({
                         {localError && (
                             <p
                                 role="alert"
-                                className="mt-3 rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                                className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                             >
                                 {localError}
                             </p>
@@ -315,13 +315,13 @@ function BidDialog({
                         {errorView && !localError && (
                             <div
                                 role="alert"
-                                className="mt-3 rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                                className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                             >
                                 <strong className="font-bold">
                                     {errorView.title}
                                 </strong>
                                 {errorView.description && (
-                                    <span className="mt-0.5 block text-danger/90">
+                                    <span className="mt-0.5 block text-danger-ink/90">
                                         {errorView.description}
                                     </span>
                                 )}
@@ -329,10 +329,10 @@ function BidDialog({
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-2 border-t border-line bg-surface-sunken px-5 py-4">
+                    <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
                         <button
                             type="button"
-                            className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                            className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                             onClick={onClose}
                         >
                             취소
@@ -340,7 +340,7 @@ function BidDialog({
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="detail-cta rounded-lg bg-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                            className="detail-cta rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '전송 중…' : '입찰 확정'}
                         </button>

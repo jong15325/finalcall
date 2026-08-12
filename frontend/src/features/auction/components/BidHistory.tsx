@@ -23,9 +23,9 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_CLASS: Record<string, string> = {
-    ACTIVE: 'bg-success-subtle text-success',
-    OUTBID: 'bg-gray-100 text-gray-500',
-    WON: 'detail-meta bg-navy/10 text-navy-700',
+    ACTIVE: 'bg-success-soft text-success-ink',
+    OUTBID: 'bg-content-soft text-content-subtle',
+    WON: 'detail-meta bg-brand-structure/10 text-chrome-selected',
 }
 
 const dateTime = new Intl.DateTimeFormat('ko-KR', {
@@ -67,9 +67,9 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
     })
 
     return (
-        <section className="detail-surface rounded-2xl border border-line bg-surface">
-            <div className="border-b border-line px-5 py-4">
-                <h3 className="text-base font-bold text-gray-900">입찰 이력</h3>
+        <section className="detail-surface rounded-2xl border border-content-line bg-content-surface">
+            <div className="border-b border-content-line px-5 py-4">
+                <h3 className="text-base font-bold text-content-fg">입찰 이력</h3>
             </div>
 
             {isPending ? (
@@ -77,16 +77,16 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                     {Array.from({ length: 3 }).map((_, index) => (
                         <div
                             key={index}
-                            className="h-9 animate-pulse rounded bg-gray-100"
+                            className="h-9 animate-pulse rounded bg-content-soft"
                         />
                     ))}
                 </div>
             ) : isError ? (
-                <p className="px-5 py-8 text-center text-sm text-gray-500">
+                <p className="px-5 py-8 text-center text-sm text-content-subtle">
                     입찰 이력을 불러오지 못했습니다.
                 </p>
             ) : bids.length === 0 ? (
-                <p className="px-5 py-8 text-center text-sm text-gray-500">
+                <p className="px-5 py-8 text-center text-sm text-content-subtle">
                     아직 입찰이 없습니다. 첫 입찰의 주인공이 되어 보세요.
                 </p>
             ) : (
@@ -94,7 +94,7 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-line text-left text-xs text-gray-500">
+                                <tr className="border-b border-content-line text-left text-xs text-content-subtle">
                                     <th className="px-5 py-2.5 font-medium">
                                         입찰자
                                     </th>
@@ -113,29 +113,29 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                                 {bids.map((bid) => (
                                     <tr
                                         key={bid.bidPublicId}
-                                        className="border-b border-line last:border-0"
+                                        className="border-b border-content-line last:border-0"
                                     >
-                                        <td className="px-5 py-3 text-gray-700">
+                                        <td className="px-5 py-3 text-content-fg">
                                             {bid.bidderMasked}
                                         </td>
                                         <td className="px-5 py-3">
                                             <CodeAmount
                                                 value={bid.amount}
                                                 mode="full"
-                                                className="font-semibold text-gray-900"
+                                                className="font-semibold text-content-fg"
                                             />
                                         </td>
                                         <td className="px-5 py-3">
                                             <span
                                                 className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
                                                     STATUS_CLASS[bid.status] ??
-                                                    'bg-gray-100 text-gray-500'
+                                                    'bg-content-soft text-content-subtle'
                                                 }`}
                                             >
                                                 {bidStatusLabel(bid.status)}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3 text-right text-gray-500">
+                                        <td className="px-5 py-3 text-right text-content-subtle">
                                             {formatBidTime(bid.createdAt)}
                                         </td>
                                     </tr>
@@ -150,7 +150,7 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                     {isFetchingNextPage && (
                         <p
                             role="status"
-                            className="py-3 text-center text-xs text-gray-400"
+                            className="py-3 text-center text-xs text-content-subtle"
                         >
                             더 불러오는 중…
                         </p>

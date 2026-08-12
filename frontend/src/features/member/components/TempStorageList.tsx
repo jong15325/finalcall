@@ -43,19 +43,19 @@ const EXPIRY_BADGE: Record<
 > = {
     expired: {
         label: '만료됨',
-        className: 'bg-danger-subtle text-danger',
+        className: 'bg-danger-soft text-danger-ink',
     },
     imminent: {
         label: '만료 임박',
-        className: 'bg-warning-subtle text-warning',
+        className: 'bg-warning-soft text-warning',
     },
     safe: {
         label: '보관 중',
-        className: 'bg-surface-sunken text-gray-500',
+        className: 'bg-content-soft text-content-subtle',
     },
     none: {
         label: '보관 중',
-        className: 'bg-surface-sunken text-gray-500',
+        className: 'bg-content-soft text-content-subtle',
     },
 }
 
@@ -84,7 +84,7 @@ function TempStorageList({
             {showAlert && (
                 <div
                     role="status"
-                    className="flex items-center gap-2 rounded-xl border border-warning-subtle bg-warning-subtle/40 px-4 py-3 text-sm font-semibold text-warning"
+                    className="flex items-center gap-2 rounded-xl border border-warning-soft bg-warning-soft/40 px-4 py-3 text-sm font-semibold text-warning"
                 >
                     <TbAlertTriangle aria-hidden className="size-5 shrink-0" />
                     만료가 임박한 아이템은 우선 이동하는 것을 권장합니다.
@@ -124,7 +124,7 @@ function TempStorageItemRow({
     const badge = EXPIRY_BADGE[expiryStateOf(item.expireAt, now)]
 
     return (
-        <li className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-2xl border border-line bg-surface p-4 sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:gap-5">
+        <li className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-2xl border border-content-line bg-content-surface p-4 sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:gap-5">
             {/* 아트 — 인스턴스 상세로 실제 이미지 파생(없으면 플레이스홀더). 상세로 링크 */}
             <Link
                 to={detailTo}
@@ -145,11 +145,11 @@ function TempStorageItemRow({
                 )}
                 <Link
                     to={detailTo}
-                    className="mt-1.5 block truncate text-base font-bold text-gray-900 hover:text-navy"
+                    className="mt-1.5 block truncate text-base font-bold text-content-fg hover:text-brand-structure"
                 >
                     보관 아이템 {shortId}
                 </Link>
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-content-subtle">
                     <TbClockHour4 aria-hidden className="size-3.5 shrink-0" />
                     {formatStoredAt(item.storedAt)} 보관 · 상세는 아이템
                     페이지에서
@@ -160,7 +160,7 @@ function TempStorageItemRow({
             <button
                 type="button"
                 disabled={pending}
-                className="col-span-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-navy bg-surface px-4 py-2.5 text-sm font-bold text-navy hover:bg-navy hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-1"
+                className="col-span-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-structure bg-content-surface px-4 py-2.5 text-sm font-bold text-brand-structure hover:bg-brand-structure hover:text-on-strong disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-1"
                 onClick={() => onRelocate(id)}
             >
                 <TbArrowRight aria-hidden className="size-4" />
@@ -199,7 +199,7 @@ function TempStorageArt({
 
     return (
         <span
-            className="item-sprite-stage flex h-[150px] w-full items-center justify-center rounded-xl border border-[#31445e]"
+            className="item-sprite-stage flex h-[150px] w-full items-center justify-center rounded-xl border border-[var(--item-stage-line)]"
             style={
                 art?.src
                     ? ({ '--item-sprite': `url("${art.src}")` } as CSSProperties)

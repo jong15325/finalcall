@@ -88,16 +88,16 @@ export default function OAuthCallbackPage() {
     if (error) {
         return (
             <div className="text-center">
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-content-fg">
                     로그인하지 못했습니다
                 </h1>
-                <p role="alert" className="mt-3 text-sm text-danger">
+                <p role="alert" className="mt-3 text-sm text-danger-ink">
                     {error}
                 </p>
                 <Link
                     replace
                     to={paths.login}
-                    className="mt-6 inline-block text-sm font-bold text-orange-deep hover:underline"
+                    className="mt-6 inline-block text-sm font-bold text-control-action-hover hover:underline"
                 >
                     로그인으로 돌아가기
                 </Link>
@@ -112,9 +112,9 @@ export default function OAuthCallbackPage() {
         >
             <span
                 aria-hidden
-                className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-orange"
+                className="h-8 w-8 animate-spin rounded-full border-2 border-content-line border-t-control-action"
             />
-            <p className="text-sm font-semibold text-gray-600">
+            <p className="text-sm font-semibold text-content-muted">
                 소셜 로그인 처리 중…
             </p>
         </div>

@@ -71,11 +71,11 @@ function ExchangeForm({
     const errorMessage = localError ?? serverError
 
     return (
-        <section className="flex flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6">
-            <h2 className="text-base font-bold text-gray-900">
+        <section className="flex flex-col rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+            <h2 className="text-base font-bold text-content-fg">
                 캐시 → 게임머니 교환
             </h2>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-content-subtle">
                 현재 지원되는 방향(캐시 → 게임머니)으로만 교환할 수 있습니다.
             </p>
 
@@ -87,7 +87,7 @@ function ExchangeForm({
                 <div>
                     <label
                         htmlFor="exchangeCash"
-                        className="text-sm font-semibold text-gray-700"
+                        className="text-sm font-semibold text-content-fg"
                     >
                         교환할 캐시
                     </label>
@@ -101,10 +101,10 @@ function ExchangeForm({
                         aria-describedby={
                             errorMessage ? 'exchangeCashError' : undefined
                         }
-                        className={`mt-1.5 w-full rounded-lg border bg-surface px-3.5 py-2.5 text-base font-semibold tabular-nums text-gray-900 focus:outline-none focus:ring-2 ${
+                        className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3.5 py-2.5 text-base font-semibold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
                             errorMessage
                                 ? 'border-danger focus:ring-danger/30'
-                                : 'border-line focus:border-orange focus:ring-orange/30'
+                                : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                         }`}
                         value={raw}
                         onChange={(event) => {
@@ -113,24 +113,24 @@ function ExchangeForm({
                             setRaw(event.target.value.replace(/[^\d]/g, ''))
                         }}
                     />
-                    <p className="mt-1.5 flex items-center gap-1 text-xs text-gray-400">
+                    <p className="mt-1.5 flex items-center gap-1 text-xs text-content-subtle">
                         보유 캐시
                         <CodeAmount
                             value={cashBalance ?? null}
                             mode="full"
-                            className="font-semibold text-gray-500"
+                            className="font-semibold text-content-subtle"
                         />
                     </p>
                 </div>
 
                 {/* 지급 결과 — 성공 응답에서만(환율은 서버 소유) */}
-                <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-4">
+                <div className="flex items-center gap-3 rounded-xl bg-content-soft p-4">
                     <TbArrowRight
                         aria-hidden
-                        className="size-5 shrink-0 text-gray-400"
+                        className="size-5 shrink-0 text-content-subtle"
                     />
                     <div className="min-w-0">
-                        <span className="text-xs font-semibold text-gray-500">
+                        <span className="text-xs font-semibold text-content-subtle">
                             받은 게임머니
                         </span>
                         {result ? (
@@ -138,14 +138,14 @@ function ExchangeForm({
                                 <CodeAmount
                                     value={result.gameMoneyAmount}
                                     mode="full"
-                                    className="mt-0.5 text-lg font-bold text-gray-900"
+                                    className="mt-0.5 text-lg font-bold text-content-fg"
                                 />
-                                <p className="mt-0.5 text-xs text-gray-400">
+                                <p className="mt-0.5 text-xs text-content-subtle">
                                     적용 환율 1 : {result.appliedRate}
                                 </p>
                             </>
                         ) : (
-                            <p className="mt-0.5 text-sm text-gray-400">
+                            <p className="mt-0.5 text-sm text-content-subtle">
                                 교환 후 지급액이 여기에 표시됩니다.
                             </p>
                         )}
@@ -156,13 +156,13 @@ function ExchangeForm({
                     <p
                         id="exchangeCashError"
                         role="alert"
-                        className="text-sm text-danger"
+                        className="text-sm text-danger-ink"
                     >
                         {errorMessage}
                     </p>
                 )}
                 {result && !errorMessage && (
-                    <p role="status" className="text-sm text-success">
+                    <p role="status" className="text-sm text-success-ink">
                         교환이 완료되었습니다.
                     </p>
                 )}
@@ -170,7 +170,7 @@ function ExchangeForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {isSubmitting ? '교환 중…' : '교환하기'}
                 </button>

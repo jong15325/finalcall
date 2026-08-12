@@ -1,5 +1,11 @@
-import { memo } from 'react'
-import ItemCardTile from '@/features/item/components/ItemCardTile'
+import { memo, useState } from 'react'
+import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
+import ItemCardFlip from '@/features/item/components/ItemCardFlip'
+import ItemCardView, {
+    ItemCardArtwork,
+    ItemCardBackView,
+} from '@/features/item/components/ItemCardView'
+import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import CardCompareOverlay from '@/features/item/components/CardCompareOverlay'
 import type { ShopSummary } from '@/lib/api/shop'
 
@@ -7,7 +13,7 @@ import type { ShopSummary } from '@/lib/api/shop'
  * 고정가 마켓 카드 — **세로형 + 카드정보 구매 모달**(FC-146 · 목업 §9 공통 카드).
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★ **정본 `ItemCardTile` 의 얇은 어댑터**(EPIC-CARD-SYSTEM T5 · 제안 §2.2·§3 단계3). 카드 조립
+ * ★ **정본 카드 composition의 얇은 어댑터**. 카드 조립
  *   (`.shop-card` 래퍼·전면 오버레이 열기 버튼·비교 오버레이 층)은 타일이 소유하고, 이 어댑터는
  *   `ShopSummary` → 타일 props 매핑(가격·판매자·비교 슬롯)만 한다. FC-146 의 "카드 클릭 → 카드정보
  *   구매 모달" 은 `onOpen` 으로 타일에 전달된다(상세 네비게이션을 모달로 대체).
@@ -36,23 +42,52 @@ interface ShopCardProps {
 //    props(shop=react-query 캐시 안정 참조·now=마운트 고정·onOpen=useCallback)가 안정적이라
 //    얕은 비교로 충분하다.
 function ShopCard({ shop, now, onOpen }: ShopCardProps) {
-    return (
-        <ItemCardTile
-            variant="market"
-            item={shop.item}
-            price={{ amount: shop.price }}
-            now={now}
-            sellerNickname={shop.sellerNickname}
-            openLabel={shop.item.nameSnapshot}
-            compare={
-                <CardCompareOverlay
-                    source="MARKET"
-                    listingId={shop.shopPublicId}
-                    name={shop.item.nameSnapshot}
-                />
-            }
-            onOpen={() => onOpen(shop)}
+    const [flipped, setFlipped] = useState(false)
+    const item = toItemCardViewModel(shop.item, now, {
+        price: { amount: shop.price },
+        seller: shop.sellerNickname,
+    })
+    const compare = (
+        <CardCompareOverlay
+            source="MARKET"
+            listingId={shop.shopPublicId}
+            name={shop.item.nameSnapshot}
         />
+    )
+
+    return (
+        <div className="shop-card group h-full rounded-xl transition-transform hover:-translate-y-[3px]">
+            <ItemCardView
+                density="compact"
+                item={item}
+                artwork={
+                    item.skills.length > 0 ? (
+                        <ItemCardFlip
+                            back={<ItemCardBackView item={item} />}
+                            flipped={flipped}
+                            front={<ItemCardArtwork item={item} />}
+                            label={item.name}
+                            overlay={compare}
+                            onFlippedChange={setFlipped}
+                        />
+                    ) : (
+                        <div className="item-card__skill-flip is-market">
+                            <ItemCardArtwork item={item} overlay={compare} />
+                        </div>
+                    )
+                }
+                footer={
+                    <ItemCardActionSurface
+                        opensDialog
+                        action={{
+                            kind: 'button',
+                            label: `${item.name} 카드정보 보기`,
+                            onPress: () => onOpen(shop),
+                        }}
+                    />
+                }
+            />
+        </div>
     )
 }
 

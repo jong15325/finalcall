@@ -68,10 +68,10 @@ function ListSearchBar({
 
     return (
         <div className="mb-3">
-            <div className="flex items-center gap-2 rounded-lg border border-line bg-surface-sunken px-3 py-2 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange/30">
+            <div className="flex items-center gap-2 rounded-lg border border-content-line bg-content-soft px-3 py-2 focus-within:border-control-action focus-within:ring-2 focus-within:ring-control-action/30">
                 <TbSearch
                     aria-hidden
-                    className="size-4 shrink-0 text-gray-400"
+                    className="size-4 shrink-0 text-content-subtle"
                 />
                 <input
                     type="search"
@@ -80,14 +80,14 @@ function ListSearchBar({
                     maxLength={MAX_LENGTH}
                     value={text}
                     placeholder={placeholder}
-                    className="w-full min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400 [&::-webkit-search-cancel-button]:appearance-none"
+                    className="w-full min-w-0 flex-1 bg-transparent text-sm text-content-fg outline-none placeholder:text-content-subtle [&::-webkit-search-cancel-button]:appearance-none"
                     onChange={(event) => setText(event.target.value)}
                 />
                 {text && (
                     <button
                         type="button"
                         aria-label="검색어 지우기"
-                        className="shrink-0 rounded-full p-0.5 text-gray-400 hover:text-gray-700"
+                        className="shrink-0 rounded-full p-0.5 text-content-subtle hover:text-content-fg"
                         onClick={() => {
                             setText('')
                             onChangeRef.current('')
@@ -101,7 +101,7 @@ function ListSearchBar({
                 <p
                     id={hintId}
                     role="status"
-                    className="mt-1 px-1 text-[11px] text-gray-400"
+                    className="mt-1 px-1 text-[11px] text-content-subtle"
                 >
                     검색어는 2자 이상 입력하세요.
                 </p>

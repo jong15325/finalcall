@@ -19,8 +19,8 @@ function MemoAvatar({
             aria-hidden
             className={`grid flex-none place-items-center rounded-full border text-sm font-extrabold ${
                 system
-                    ? 'border-navy bg-navy text-gold-bright'
-                    : 'border-line bg-surface-sunken text-gray-500'
+                    ? 'border-brand-structure bg-brand-structure text-brand-highlight-bright'
+                    : 'border-content-line bg-content-soft text-content-subtle'
             } ${className}`}
         >
             {initial}

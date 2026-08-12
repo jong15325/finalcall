@@ -121,7 +121,7 @@ function PurchaseDialog({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-navy-900/60 px-4 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose()
@@ -132,18 +132,18 @@ function PurchaseDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="purchaseDialogTitle"
-                className="w-full max-w-[480px] overflow-hidden rounded-2xl bg-surface shadow-[0_30px_80px_rgba(17,26,44,0.33)]"
+                className="w-full max-w-[480px] overflow-hidden rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <form noValidate onSubmit={handleSubmit}>
-                    <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
                         <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wide text-navy">
+                            <span className="text-[11px] font-bold uppercase tracking-wide text-brand-structure">
                                 즉시구매
                             </span>
                             <h4
                                 id="purchaseDialogTitle"
-                                className="mt-0.5 text-lg font-bold text-gray-900"
+                                className="mt-0.5 text-lg font-bold text-content-fg"
                             >
                                 {auctionName}
                             </h4>
@@ -151,7 +151,7 @@ function PurchaseDialog({
                         <button
                             type="button"
                             aria-label="닫기"
-                            className="flex size-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
                             onClick={onClose}
                         >
                             <TbX aria-hidden className="size-5" />
@@ -159,13 +159,13 @@ function PurchaseDialog({
                     </div>
 
                     <div className="px-5 py-5">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-content-muted">
                             아래 금액으로 즉시 낙찰됩니다. 게임머니가 바로
                             차감되고 아이템은 인벤토리로 들어옵니다.
                         </p>
 
-                        <div className="my-4 grid gap-1 rounded-xl bg-navy p-5 text-white">
-                            <span className="text-xs text-white/70">
+                        <div className="my-4 grid gap-1 rounded-xl bg-brand-structure p-5 text-on-strong">
+                            <span className="text-xs text-on-strong/70">
                                 즉시구매가
                             </span>
                             <CodeAmount
@@ -175,12 +175,12 @@ function PurchaseDialog({
                             />
                         </div>
 
-                        <p className="flex items-center justify-between gap-1.5 text-sm text-gray-600">
+                        <p className="flex items-center justify-between gap-1.5 text-sm text-content-muted">
                             <span>구매 후 사용 가능 잔액</span>
                             <CodeAmount
                                 value={gameMoneyAvailable}
                                 mode="full"
-                                className="font-bold text-gray-900"
+                                className="font-bold text-content-fg"
                             />
                         </p>
 
@@ -188,13 +188,13 @@ function PurchaseDialog({
                         {errorView && (
                             <div
                                 role="alert"
-                                className="mt-4 rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                                className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                             >
                                 <strong className="font-bold">
                                     {errorView.title}
                                 </strong>
                                 {errorView.description && (
-                                    <span className="mt-0.5 block text-danger/90">
+                                    <span className="mt-0.5 block text-danger-ink/90">
                                         {errorView.description}
                                     </span>
                                 )}
@@ -202,10 +202,10 @@ function PurchaseDialog({
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-2 border-t border-line bg-surface-sunken px-5 py-4">
+                    <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
                         <button
                             type="button"
-                            className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                            className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                             onClick={onClose}
                         >
                             취소
@@ -214,7 +214,7 @@ function PurchaseDialog({
                             ref={confirmRef}
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-navy px-5 py-2.5 text-sm font-bold text-white hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-lg bg-brand-structure px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-chrome-raised disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '전송 중…' : '즉시구매 확정'}
                         </button>

@@ -28,33 +28,33 @@ function PlaceholderView({
 }: PlaceholderViewProps) {
     const comingSoon = variant === 'coming-soon'
     return (
-        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
+        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
             <span
                 className={`flex size-14 items-center justify-center rounded-2xl ${
                     comingSoon
-                        ? 'bg-gold-subtle text-gold-deep'
-                        : 'bg-navy text-gold-bright'
+                        ? 'bg-brand-highlight-soft text-brand-highlight-deep'
+                        : 'bg-brand-structure text-brand-highlight-bright'
                 }`}
             >
                 <Icon aria-hidden className="size-7" />
             </span>
 
             {comingSoon && (
-                <span className="mt-4 rounded-full bg-gold-subtle px-3 py-1 text-xs font-bold text-gold-deep">
+                <span className="mt-4 rounded-full bg-brand-highlight-soft px-3 py-1 text-xs font-bold text-brand-highlight-deep">
                     준비 중
                 </span>
             )}
 
-            <h2 className="mt-4 text-xl font-bold text-gray-900">{title}</h2>
+            <h2 className="mt-4 text-xl font-bold text-content-fg">{title}</h2>
 
             {description && (
-                <p className="mt-2 max-w-md text-sm text-gray-500">
+                <p className="mt-2 max-w-md text-sm text-content-subtle">
                     {description}
                 </p>
             )}
 
             {ticket && (
-                <p className="mt-4 text-xs font-medium text-gray-300">
+                <p className="mt-4 text-xs font-medium text-content-line">
                     {ticket}
                 </p>
             )}

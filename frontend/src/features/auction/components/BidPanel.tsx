@@ -73,20 +73,20 @@ function BidPanel({
     })
 
     return (
-        <aside className="detail-surface rounded-2xl border border-line bg-surface">
+        <aside className="detail-surface rounded-2xl border border-content-line bg-content-surface">
             <div className="flex flex-col p-5 lg:sticky lg:top-28">
                 <div className="flex items-center justify-between">
                     <Countdown endAt={auction.endAt} now={now} />
                     {auction.extensionCount > 0 && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-content-subtle">
                             연장 {auction.extensionCount}회
                         </span>
                     )}
                 </div>
 
                 {/* 현재 최고가 — 브랜드 navy 블록 */}
-                <div className="my-5 grid gap-1 rounded-xl bg-navy p-5 text-white">
-                    <span className="text-xs text-white/70">
+                <div className="my-5 grid gap-1 rounded-xl bg-brand-structure p-5 text-on-strong">
+                    <span className="text-xs text-on-strong/70">
                         {hasBids ? '현재 최고가' : '시작가'}
                     </span>
                     <CodeAmount
@@ -98,7 +98,7 @@ function BidPanel({
                         mode="full"
                         className="text-2xl font-bold"
                     />
-                    <span className="text-xs text-white/60">
+                    <span className="text-xs text-on-strong/60">
                         {hasBids && auction.highestBidderMasked
                             ? `최고 입찰자 ${auction.highestBidderMasked}`
                             : '아직 입찰이 없습니다'}
@@ -106,11 +106,11 @@ function BidPanel({
                 </div>
 
                 <dl className="mb-5">
-                    <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                        <dt className="font-medium text-gray-500">
+                    <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
+                        <dt className="font-medium text-content-subtle">
                             다음 최소 입찰가
                         </dt>
-                        <dd className="font-semibold text-gray-900">
+                        <dd className="font-semibold text-content-fg">
                             {/* 종료면 서버가 null 을 내린다 → "-" */}
                             <CodeAmount
                                 value={auction.minNextBidAmount}
@@ -119,11 +119,11 @@ function BidPanel({
                         </dd>
                     </div>
                     {isAuthed && (
-                        <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                            <dt className="font-medium text-gray-500">
+                        <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
+                            <dt className="font-medium text-content-subtle">
                                 사용 가능 게임머니
                             </dt>
-                            <dd className="font-semibold text-gray-900">
+                            <dd className="font-semibold text-content-fg">
                                 <CodeAmount
                                     value={balance?.gameMoneyAvailable ?? null}
                                     mode="full"
@@ -132,11 +132,11 @@ function BidPanel({
                         </div>
                     )}
                     {auction.buyNowPrice !== null && (
-                        <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                            <dt className="font-medium text-gray-500">
+                        <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
+                            <dt className="font-medium text-content-subtle">
                                 즉시구매가
                             </dt>
-                            <dd className="font-semibold text-gray-900">
+                            <dd className="font-semibold text-content-fg">
                                 <CodeAmount
                                     value={auction.buyNowPrice}
                                     mode="full"
@@ -151,7 +151,7 @@ function BidPanel({
                     <button
                         disabled
                         type="button"
-                        className="w-full rounded-lg bg-gray-200 px-5 py-3.5 text-sm font-bold text-gray-500 disabled:cursor-not-allowed"
+                        className="w-full rounded-lg bg-content-line px-5 py-3.5 text-sm font-bold text-content-subtle disabled:cursor-not-allowed"
                     >
                         입찰 마감
                     </button>
@@ -160,12 +160,12 @@ function BidPanel({
                         <button
                             type="button"
                             disabled={!cancellable || cancelPending}
-                            className="w-full rounded-lg border border-danger bg-surface px-5 py-3.5 text-sm font-bold text-danger hover:bg-danger-subtle disabled:cursor-not-allowed disabled:border-line disabled:text-gray-400 disabled:hover:bg-surface"
+                            className="w-full rounded-lg border border-danger bg-content-surface px-5 py-3.5 text-sm font-bold text-danger-ink hover:bg-danger-soft disabled:cursor-not-allowed disabled:border-content-line disabled:text-content-subtle disabled:hover:bg-content-surface"
                             onClick={onCancel}
                         >
                             {cancelPending ? '취소 중…' : '경매 취소'}
                         </button>
-                        <p className="mt-3 text-center text-xs text-gray-500">
+                        <p className="mt-3 text-center text-xs text-content-subtle">
                             {cancellable
                                 ? '내가 등록한 경매입니다. 입찰이 붙기 전에만 취소할 수 있습니다.'
                                 : '입찰이 있어 취소할 수 없습니다.'}
@@ -174,14 +174,14 @@ function BidPanel({
                 ) : !isAuthed ? (
                     <Link
                         to={loginHref}
-                        className="detail-cta block w-full rounded-lg bg-orange px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-orange-deep"
+                        className="detail-cta block w-full rounded-lg bg-control-action px-5 py-3.5 text-center text-sm font-bold text-on-strong hover:bg-control-action-hover"
                     >
                         로그인하고 입찰
                     </Link>
                 ) : (
                     <button
                         type="button"
-                        className="detail-cta w-full rounded-lg bg-orange px-5 py-3.5 text-sm font-bold text-white hover:bg-orange-deep"
+                        className="detail-cta w-full rounded-lg bg-control-action px-5 py-3.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                         onClick={onBid}
                     >
                         입찰하기
@@ -193,7 +193,7 @@ function BidPanel({
                     auction.buyNowPrice !== null && (
                         <button
                             type="button"
-                            className="mt-2.5 w-full rounded-lg border border-navy bg-surface px-5 py-3.5 text-sm font-bold text-navy hover:bg-navy hover:text-white"
+                            className="mt-2.5 w-full rounded-lg border border-brand-structure bg-content-surface px-5 py-3.5 text-sm font-bold text-brand-structure hover:bg-brand-structure hover:text-on-strong"
                             onClick={onBuyNow}
                         >
                             {formatGameMoney(auction.buyNowPrice)} 코드에
@@ -203,7 +203,7 @@ function BidPanel({
                 {buyNowState === 'login' && (
                     <Link
                         to={loginHref}
-                        className="mt-2.5 block w-full rounded-lg border border-navy bg-surface px-5 py-3.5 text-center text-sm font-bold text-navy hover:bg-navy hover:text-white"
+                        className="mt-2.5 block w-full rounded-lg border border-brand-structure bg-content-surface px-5 py-3.5 text-center text-sm font-bold text-brand-structure hover:bg-brand-structure hover:text-on-strong"
                     >
                         로그인하고 즉시구매
                     </Link>
@@ -213,13 +213,13 @@ function BidPanel({
                 {isOwn && cancelErrorView && (
                     <p
                         role="alert"
-                        className="mt-3 rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                        className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                     >
                         {cancelErrorView.title}
                     </p>
                 )}
 
-                <p className="mt-3 text-center text-xs text-gray-500">
+                <p className="mt-3 text-center text-xs text-content-subtle">
                     {isEnded
                         ? endedResultNoteOf(auction.status, auction.resultType)
                         : buyNowState === 'hidden' &&
@@ -227,7 +227,7 @@ function BidPanel({
                           ? '이 경매는 입찰로만 거래됩니다.'
                           : '즉시구매하면 입찰 없이 바로 낙찰됩니다.'}
                 </p>
-                <p className="mt-2 text-center text-[11px] text-gray-400">
+                <p className="mt-2 text-center text-[11px] text-content-subtle">
                     구매자 수수료 없음. 판매자는 낙찰가 구간별 수수료 차감 후
                     정산.
                 </p>

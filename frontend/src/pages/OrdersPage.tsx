@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
-import { TbAlertTriangle, TbReceipt, TbReceiptOff } from 'react-icons/tb'
+import { TbReceipt } from 'react-icons/tb'
+import CursorPagination from '@/components/common/CursorPagination'
+import ListFrame from '@/components/common/ListFrame'
+import type { ListFrameState } from '@/components/common/ListFrame'
+import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import OrderCard from '@/features/order/components/OrderCard'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyOrders } from '@/lib/queries/orders'
 import { useDeliveryLookup } from '@/lib/queries/deliveries'
@@ -85,10 +88,6 @@ export default function OrdersPage() {
         () => data?.pages.flatMap((page) => page.content) ?? [],
         [data],
     )
-    useAppFooterVariant(
-        !isPending && orders.length === 0 ? 'compact' : 'default',
-    )
-
     // 배송 상태 교차 조회(계약 §4.6). 실패해도 주문은 그대로 뜬다(배지만 빠짐, best-effort).
     const deliveries = useDeliveryLookup().data
 
@@ -97,199 +96,133 @@ export default function OrdersPage() {
         isFetching,
         onLoadMore: () => void fetchNextPage(),
     })
+    const listState: ListFrameState = isPending
+        ? { kind: 'loading', count: 4 }
+        : isError && orders.length === 0
+          ? {
+                kind: 'error',
+                message: '잠시 후 다시 시도해 주세요.',
+                onRetry: () => void refetch(),
+            }
+          : orders.length === 0
+            ? {
+                  kind: 'empty',
+                  title: '아직 거래 내역이 없어요',
+                  description:
+                      '경매에서 낙찰받거나 즉시구매하면 여기에 쌓입니다.',
+              }
+            : { kind: 'ready' }
 
     return (
-        <div className="flex flex-col gap-5">
-            <header>
-                <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                    <TbReceipt aria-hidden className="size-6 text-navy" />
-                    거래 내역
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
-                    구매·판매한 거래를 한 곳에서 확인하세요.
-                </p>
-            </header>
-
-            {/* 역할·출처 필터 — 세그먼트 컨트롤 2축 */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-400">
-                        역할
-                    </span>
-                    <div
-                        role="tablist"
-                        aria-label="거래 역할 필터"
-                        className="inline-flex w-fit gap-1 rounded-lg border border-line bg-surface p-1"
-                    >
-                        {ROLE_TABS.map((tab) => {
-                            const active = role === tab.value
-                            return (
-                                <button
-                                    key={tab.value}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={active}
-                                    className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
-                                        active
-                                            ? 'bg-navy text-white'
-                                            : 'text-gray-500 hover:text-navy'
-                                    }`}
-                                    onClick={() => setRole(tab.value)}
-                                >
-                                    {tab.label}
-                                </button>
-                            )
-                        })}
-                    </div>
+        <ListFrame
+            heading={
+                <header>
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
+                        <TbReceipt
+                            aria-hidden
+                            className="size-6 text-brand-structure"
+                        />
+                        거래 내역
+                    </h1>
+                    <p className="mt-1 text-sm text-content-subtle">
+                        구매·판매한 거래를 한 곳에서 확인하세요.
+                    </p>
+                </header>
+            }
+            filters={
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <OrderFilterTabs
+                        label="거래 역할 필터"
+                        title="역할"
+                        tabs={ROLE_TABS}
+                        value={role}
+                        onChange={setRole}
+                    />
+                    <OrderFilterTabs
+                        label="거래 출처 필터"
+                        title="출처"
+                        tabs={SOURCE_TABS}
+                        value={source}
+                        onChange={setSource}
+                    />
                 </div>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-400">
-                        출처
-                    </span>
-                    <div
-                        role="tablist"
-                        aria-label="거래 출처 필터"
-                        className="inline-flex w-fit gap-1 rounded-lg border border-line bg-surface p-1"
-                    >
-                        {SOURCE_TABS.map((tab) => {
-                            const active = source === tab.value
-                            return (
-                                <button
-                                    key={tab.value}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={active}
-                                    className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
-                                        active
-                                            ? 'bg-navy text-white'
-                                            : 'text-gray-500 hover:text-navy'
-                                    }`}
-                                    onClick={() => setSource(tab.value)}
-                                >
-                                    {tab.label}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-            </div>
-
-            {/* 부분 실패 — 이미 받은 카드는 두고 배너만 얹는다 */}
-            {orders.length > 0 && isError && (
-                <p
-                    role="alert"
-                    className="rounded-lg bg-danger-subtle px-4 py-2.5 text-sm text-danger"
-                >
-                    최신 내역을 불러오지 못했습니다. 표시된 거래는 이전
-                    결과입니다.
-                </p>
-            )}
-
-            {isPending && <OrderListSkeleton />}
-
-            {!isPending && isError && orders.length === 0 && (
-                <StateBlock
-                    icon={TbAlertTriangle}
-                    title="거래 내역을 불러오지 못했습니다"
-                    description="잠시 후 다시 시도해 주세요."
-                    action={
-                        <button
-                            type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
-                            onClick={() => void refetch()}
-                        >
-                            다시 시도
-                        </button>
-                    }
-                />
-            )}
-
-            {!isPending && !isError && orders.length === 0 && (
-                <StateBlock
-                    icon={TbReceiptOff}
-                    title="아직 거래 내역이 없어요"
-                    description="경매에서 낙찰받거나 즉시구매하면 여기에 쌓입니다."
-                />
-            )}
-
-            {orders.length > 0 && (
-                <>
-                    <section
-                        aria-label="거래 내역 목록"
-                        className="grid grid-cols-1 gap-4 min-[1000px]:grid-cols-2"
-                    >
-                        {orders.map((order) => (
-                            <OrderCard
-                                key={order.orderPublicId}
-                                order={order}
-                                deliveryStatus={deliveryStatusFor(
-                                    order,
-                                    deliveries,
-                                )}
-                            />
-                        ))}
-                    </section>
-
-                    <div ref={sentinelRef} aria-hidden className="h-px" />
-
-                    {isFetchingNextPage && (
+            }
+                state={listState}
+                layout="two-column"
+                label="거래 내역 목록"
+                resultBar={
+                    orders.length > 0 && isError ? (
                         <p
-                            role="status"
-                            className="py-2 text-center text-xs text-gray-400"
+                            role="alert"
+                            className="rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger-ink"
                         >
-                            더 불러오는 중…
+                            최신 내역을 불러오지 못했습니다. 표시된 거래는 이전
+                            결과입니다.
                         </p>
-                    )}
-                </>
-            )}
-        </div>
+                    ) : undefined
+                }
+                pagination={
+                    <CursorPagination
+                        sentinelRef={sentinelRef}
+                        hasNext={Boolean(hasNextPage)}
+                        isFetchingNextPage={isFetchingNextPage}
+                        onLoadMore={() => void fetchNextPage()}
+                    />
+                }
+                renderSkeleton={() => <ItemListSkeleton layout="two-column" />}
+            >
+                {orders.map((order) => (
+                    <OrderCard
+                        key={order.orderPublicId}
+                        order={order}
+                        deliveryStatus={deliveryStatusFor(order, deliveries)}
+                    />
+                ))}
+        </ListFrame>
     )
 }
 
-/** 목록 영역만 스켈레톤(전체 블러 금지). */
-function OrderListSkeleton() {
-    return (
-        <div
-            aria-hidden
-            className="grid grid-cols-1 gap-4 min-[1000px]:grid-cols-2"
-        >
-            {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                    key={index}
-                    className="grid min-h-[150px] grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface"
-                >
-                    <div className="animate-pulse bg-gray-100" />
-                    <div className="flex flex-col gap-2 p-[17px]">
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-auto h-4 w-2/3 animate-pulse rounded bg-gray-100" />
-                    </div>
-                </div>
-            ))}
-        </div>
-    )
-}
-
-function StateBlock({
-    icon: Icon,
+function OrderFilterTabs<T extends string>({
+    label,
     title,
-    description,
-    action,
+    tabs,
+    value,
+    onChange,
 }: {
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+    label: string
     title: string
-    description: string
-    action?: React.ReactNode
+    tabs: { value: T; label: string }[]
+    value: T
+    onChange: (value: T) => void
 }) {
     return (
-        <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
-                <Icon aria-hidden className="size-7" />
-            </span>
-            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
-            {action && <div className="mt-5">{action}</div>}
-        </section>
+        <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-content-subtle">{title}</span>
+            <div
+                role="tablist"
+                aria-label={label}
+                className="inline-flex w-fit gap-1 rounded-lg border border-content-line bg-content-surface p-1"
+            >
+                {tabs.map((tab) => {
+                    const active = value === tab.value
+                    return (
+                        <button
+                            key={tab.value}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            className={`rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
+                                active
+                                    ? 'bg-brand-structure text-on-strong'
+                                    : 'text-content-subtle hover:text-brand-structure'
+                            }`}
+                            onClick={() => onChange(tab.value)}
+                        >
+                            {tab.label}
+                        </button>
+                    )
+                })}
+            </div>
+        </div>
     )
 }

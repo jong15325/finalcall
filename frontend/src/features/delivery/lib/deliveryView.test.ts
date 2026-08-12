@@ -44,7 +44,9 @@ describe('deliveryView', () => {
         )
         expect(deliveryBadgeStyleOf('APPLIED').shortLabel).toBe('게임 도착')
         expect(deliveryBadgeStyleOf('FAILED').badgeClass).toContain('danger')
-        expect(deliveryBadgeStyleOf('PENDING').badgeClass).toContain('orange')
+        expect(deliveryBadgeStyleOf('PENDING').badgeClass).toContain(
+            'control-action',
+        )
         expect(deliveryBadgeStyleOf('APPLIED').badgeClass).toContain('success')
     })
 })

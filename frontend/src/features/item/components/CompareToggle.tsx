@@ -31,8 +31,8 @@ function CompareToggle({
 }: CompareToggleProps) {
     // 목업 `.compare-toggle`: 선택/hover 는 브랜드 오렌지, 기본은 다크 반투명 유리(§2.9).
     const stateClass = pressed
-        ? 'border-gray-900 bg-orange text-gray-900'
-        : 'border-white/60 bg-navy-900/75 text-white hover:border-gray-900 hover:bg-orange hover:text-gray-900'
+        ? 'border-content-fg bg-control-action text-content-fg'
+        : 'border-on-strong/60 bg-chrome-strong/75 text-on-strong hover:border-content-fg hover:bg-control-action hover:text-content-fg'
 
     return (
         <button
@@ -40,7 +40,7 @@ function CompareToggle({
             aria-pressed={pressed}
             aria-label={label}
             disabled={disabled}
-            className={`inline-grid size-11 place-items-center rounded-[9px] border shadow-[0_4px_12px_rgba(13,22,38,0.16)] backdrop-blur-sm transition-colors disabled:cursor-not-allowed disabled:border-line disabled:bg-gray-100 disabled:text-gray-400 ${stateClass} ${className}`.trim()}
+            className={`inline-grid size-11 place-items-center rounded-[9px] border shadow-[var(--shadow-control)] backdrop-blur-sm transition-colors disabled:cursor-not-allowed disabled:border-content-line disabled:bg-content-soft disabled:text-content-subtle ${stateClass} ${className}`.trim()}
             onClick={() => onToggle(!pressed)}
         >
             <TbColumns3 aria-hidden="true" className="size-[15px]" />

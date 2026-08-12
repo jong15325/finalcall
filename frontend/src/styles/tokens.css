@@ -1,0 +1,95 @@
+@layer theme {
+    :root {
+        /* FinalCall 브랜드 팔레트 — frontend-ui-system-contract §2 정본. */
+        --brand-navy: #16213a;
+        --brand-navy-900: #101a2e;
+        --brand-navy-800: #1b2a47;
+        --brand-navy-700: #223458;
+        --brand-gold: #c8a028;
+        --brand-gold-bright: #dfc447;
+        --brand-gold-deep: #8b6100;
+        --brand-gold-soft: #f6edcd;
+        --action: #ef8a2c;
+        --action-hover: #d9741a;
+        --action-soft: #fdefe0;
+
+        /* 콘텐츠 표면과 전경. */
+        --surface: #ffffff;
+        --surface-sunken: #f4f5f8;
+        --line: #e4e7ee;
+        --fg: #171a20;
+        --fg-muted: #4d5461;
+        --fg-subtle: #6b7484;
+        --chrome-fg: #ffffff;
+        --chrome-muted: #cfd4de;
+        --on-strong: var(--chrome-fg);
+
+        /* 의미 상태. */
+        --success: #16a34a;
+        --success-ink: #166534;
+        --success-soft: #dcfce7;
+        --danger: #e11d48;
+        --danger-ink: #9f1239;
+        --danger-soft: #ffe4e6;
+        --warning: #a0510a;
+        --warning-soft: #fdf2d6;
+        --info: #1d4ed8;
+        --info-soft: #dbeafe;
+
+        /* 외부 브랜드 공식색 — 재색하지 않는다. */
+        --kakao: #fee500;
+        --naver: #03c75a;
+
+        /* 게임 element — 아이템 표시와 route 장식 범위에서만 소비한다. */
+        --element-water: #19b2ff;
+        --element-fire: #ff5500;
+        --element-earth: #95b259;
+        --element-wind: #66cccc;
+        --element-water-ink: #1d6fd1;
+        --element-fire-ink: #c2410c;
+        --element-earth-ink: #8b6100;
+        --element-wind-ink: #15803d;
+
+        /* 공통 elevation과 modal scrim. */
+        --overlay-scrim: rgb(16 26 46 / 50%);
+        --overlay-scrim-soft: rgb(16 26 46 / 45%);
+        --shadow-dialog: 0 30px 80px rgb(17 26 44 / 33%);
+        --shadow-dialog-soft: 0 30px 80px rgb(17 26 44 / 28%);
+        --shadow-popover: 0 24px 60px rgb(17 26 44 / 24%);
+        --shadow-card-hover: 0 12px 30px rgb(37 57 88 / 10%);
+        --shadow-control: 0 4px 12px rgb(13 22 38 / 16%);
+        --shadow-art: 0 10px 24px rgb(0 0 0 / 45%);
+        --item-stage-line: #31445e;
+
+        /* 역할형 alias. 컴포넌트는 이 이름을 우선 소비한다. */
+        --app-canvas: var(--surface-sunken);
+        --content-surface: var(--surface);
+        --content-soft: var(--surface-sunken);
+        --content-line: var(--line);
+        --content-fg: var(--fg);
+        --content-muted: var(--fg-muted);
+        --content-subtle: var(--fg-subtle);
+        --chrome-bg: var(--brand-navy);
+        --chrome-bg-strong: var(--brand-navy-900);
+        --chrome-bg-raised: var(--brand-navy-800);
+        --chrome-bg-selected: var(--brand-navy-700);
+        --control-action: var(--action);
+        --control-action-hover: var(--action-hover);
+        --control-action-soft: var(--action-soft);
+        --control-focus: var(--brand-gold-bright);
+        --brand-structure: var(--brand-navy);
+        --brand-highlight: var(--brand-gold);
+        --brand-highlight-bright: var(--brand-gold-bright);
+        --brand-highlight-deep: var(--brand-gold-deep);
+        --brand-highlight-soft: var(--brand-gold-soft);
+
+        /* geometry · motion */
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --radius-xl: 12px;
+        --motion-fast: 120ms;
+        --motion-base: 200ms;
+        --motion-slow: 320ms;
+    }
+}

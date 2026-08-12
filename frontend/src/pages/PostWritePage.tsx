@@ -15,7 +15,6 @@ import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
 import type { BoardResponse } from '@/lib/api/boards'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시글 작성/수정 (FC-202 — 승인 화면 D). `/boards/:slug/write`(작성)·`/boards/:slug/:postId/edit`(수정).
@@ -44,7 +43,7 @@ function DeniedBlock({ slug }: { slug: string }) {
             action={
                 <Link
                     to={boardPath(slug)}
-                    className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                    className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                 >
                     목록으로
                 </Link>
@@ -58,15 +57,15 @@ function WriteHeader({ board }: { board: BoardResponse }) {
         <header className="mb-4">
             <nav
                 aria-label="위치"
-                className="mb-1 flex items-center gap-1.5 text-xs text-gray-400"
+                className="mb-1 flex items-center gap-1.5 text-xs text-content-subtle"
             >
-                <Link to={boardPath(board.slug)} className="hover:text-navy">
+                <Link to={boardPath(board.slug)} className="hover:text-brand-structure">
                     {board.name}
                 </Link>
                 <span aria-hidden>/</span>
                 <span>글쓰기</span>
             </nav>
-            <h1 className="text-xl font-bold text-gray-900">글쓰기</h1>
+            <h1 className="text-xl font-bold text-content-fg">글쓰기</h1>
         </header>
     )
 }
@@ -77,16 +76,6 @@ function CreatePostView({ slug }: { slug: string }) {
     const boardQuery = useBoard(slug)
     const isAdmin = useIsAdmin()
     const createMutation = useCreatePost(slug)
-    const writeDenied =
-        boardQuery.data !== undefined &&
-        !canWriteBoard(boardQuery.data, true, isAdmin)
-    useAppFooterVariant(
-        !boardQuery.isPending &&
-            (boardQuery.isError || !boardQuery.data || writeDenied)
-            ? 'compact'
-            : 'default',
-    )
-
     if (boardQuery.isPending) return <FormSkeleton />
 
     const boardNotFound =
@@ -101,7 +90,7 @@ function CreatePostView({ slug }: { slug: string }) {
                 action={
                     <Link
                         to={boardPath(slug)}
-                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                     >
                         목록으로
                     </Link>
@@ -156,19 +145,6 @@ function EditPostView({ slug, postId }: { slug: string; postId: string }) {
     const boardQuery = useBoard(slug)
     const postQuery = usePostDetail(slug, postId)
     const updateMutation = useUpdatePost(slug, postId)
-    const editDenied = postQuery.data !== undefined && !postQuery.data.editable
-    useAppFooterVariant(
-        !boardQuery.isPending &&
-            !postQuery.isPending &&
-            (boardQuery.isError ||
-                !boardQuery.data ||
-                postQuery.isError ||
-                !postQuery.data ||
-                editDenied)
-            ? 'compact'
-            : 'default',
-    )
-
     if (boardQuery.isPending || postQuery.isPending) return <FormSkeleton />
 
     const postNotFound =
@@ -184,7 +160,7 @@ function EditPostView({ slug, postId }: { slug: string; postId: string }) {
                 action={
                     <Link
                         to={boardPath(slug)}
-                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                     >
                         목록으로
                     </Link>
@@ -248,8 +224,8 @@ function EditPostView({ slug, postId }: { slug: string; postId: string }) {
 function FormSkeleton() {
     return (
         <div className="mx-auto w-full max-w-3xl">
-            <div className="mb-4 h-6 w-24 animate-pulse rounded bg-gray-100" />
-            <div className="h-96 animate-pulse rounded-2xl border border-line bg-surface" />
+            <div className="mb-4 h-6 w-24 animate-pulse rounded bg-content-soft" />
+            <div className="h-96 animate-pulse rounded-2xl border border-content-line bg-content-surface" />
         </div>
     )
 }

@@ -1,4 +1,4 @@
-import ItemCardGrid from '@/features/item/components/ItemCardGrid'
+import { Fragment } from 'react'
 import InventoryItemCard from './InventoryItemCard'
 import type { DeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
@@ -48,7 +48,7 @@ function InventorySlotGrid({
     for (let slot = 1; slot <= slotCount; slot += 1) slotNumbers.push(slot)
 
     return (
-        <ItemCardGrid variant="inventory" as="ul" ariaLabel="인벤토리 슬롯">
+        <Fragment>
             {slotNumbers.map((slotNo) => {
                 const item = bySlot.get(slotNo)
                 return (
@@ -69,7 +69,7 @@ function InventorySlotGrid({
                     </li>
                 )
             })}
-        </ItemCardGrid>
+        </Fragment>
     )
 }
 
@@ -83,17 +83,17 @@ function EmptySlot({ slotNo }: { slotNo: number }) {
     return (
         <div
             aria-label={`빈 슬롯 ${slotNo}`}
-            className="relative flex h-full min-h-[210px] w-full items-center justify-center rounded-xl border border-dashed border-line bg-surface-sunken"
+            className="relative flex h-full min-h-[210px] w-full items-center justify-center rounded-xl border border-dashed border-content-line bg-content-soft"
         >
             <span
                 aria-hidden
-                className="flex size-10 items-center justify-center rounded-lg bg-gray-100 text-2xl font-light text-gray-300"
+                className="flex size-10 items-center justify-center rounded-lg bg-content-soft text-2xl font-light text-content-line"
             >
                 +
             </span>
             <span
                 aria-hidden
-                className="absolute bottom-2 right-2.5 text-[10px] font-bold text-gray-300"
+                className="absolute bottom-2 right-2.5 text-[10px] font-bold text-content-line"
             >
                 {String(slotNo).padStart(2, '0')}
             </span>

@@ -24,7 +24,6 @@ import { buildReturnUrlQuery } from '@/lib/returnUrl'
 import { hasErrorCode } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 경매 상세·입찰 (FC-072 — 목업 `#auction-detail` · design-brief B-3/B-4 · rebuild-contract-map §2).
@@ -67,12 +66,6 @@ export default function AuctionDetailPage() {
     }, [toast])
 
     const auction = detailQuery.data
-    useAppFooterVariant(
-        !detailQuery.isPending && (detailQuery.isError || !auction)
-            ? 'compact'
-            : 'default',
-    )
-
     // ── 로딩 ────────────────────────────────────────────────────────────────
     if (detailQuery.isPending) {
         return (
@@ -106,14 +99,14 @@ export default function AuctionDetailPage() {
                         notFound ? (
                             <Link
                                 to={paths.auctions}
-                                className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                                className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                             >
                                 경매 목록으로
                             </Link>
                         ) : (
                             <button
                                 type="button"
-                                className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                                className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                                 onClick={() => void detailQuery.refetch()}
                             >
                                 다시 시도
@@ -180,7 +173,7 @@ export default function AuctionDetailPage() {
                 <div className="flex flex-col gap-6">
                     <Link
                         to={paths.auctions}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-content-subtle hover:text-brand-structure"
                     >
                         <TbArrowLeft aria-hidden className="size-4" />
                         경매 목록
@@ -189,7 +182,7 @@ export default function AuctionDetailPage() {
                     {toast && (
                         <p
                             role="status"
-                            className="rounded-lg bg-success-subtle px-4 py-2.5 text-sm font-medium text-success"
+                            className="rounded-lg bg-success-soft px-4 py-2.5 text-sm font-medium text-success-ink"
                         >
                             {toast}
                         </p>
@@ -274,12 +267,12 @@ function AuctionPageRegion({ children }: { children: React.ReactNode }) {
 function DetailSkeleton() {
     return (
         <div aria-hidden className="flex flex-col gap-6">
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-4 w-24 animate-pulse rounded bg-content-soft" />
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
-                <div className="min-h-[390px] animate-pulse rounded-2xl bg-gray-100" />
-                <div className="min-h-[390px] animate-pulse rounded-2xl bg-gray-100" />
+                <div className="min-h-[390px] animate-pulse rounded-2xl bg-content-soft" />
+                <div className="min-h-[390px] animate-pulse rounded-2xl bg-content-soft" />
             </div>
-            <div className="h-40 animate-pulse rounded-2xl bg-gray-100" />
+            <div className="h-40 animate-pulse rounded-2xl bg-content-soft" />
         </div>
     )
 }
@@ -296,12 +289,12 @@ function StateBlock({
     action?: React.ReactNode
 }) {
     return (
-        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-content-soft text-content-subtle">
                 <Icon aria-hidden className="size-7" />
             </span>
-            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            <h2 className="mt-4 text-lg font-bold text-content-fg">{title}</h2>
+            <p className="mt-1 text-sm text-content-subtle">{description}</p>
             {action && <div className="mt-5">{action}</div>}
         </section>
     )

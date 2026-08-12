@@ -39,16 +39,16 @@ function WalletBalanceCard({
         : 0
 
     return (
-        <section className="flex flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6">
+        <section className="flex flex-col rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
             <div className="flex items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-navy text-gold-bright">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-structure text-brand-highlight-bright">
                     <TbWallet aria-hidden className="size-5" />
                 </span>
                 <div className="min-w-0">
-                    <h2 className="text-base font-bold text-gray-900">
+                    <h2 className="text-base font-bold text-content-fg">
                         게임머니
                     </h2>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-content-subtle">
                         사용 가능한 금액과 입찰 중 묶인 금액을 구분해
                         확인하세요.
                     </p>
@@ -57,35 +57,35 @@ function WalletBalanceCard({
 
             {isLoading ? (
                 <div aria-hidden className="mt-5 flex flex-col gap-3">
-                    <div className="h-9 w-48 animate-pulse rounded bg-gray-100" />
-                    <div className="h-2 w-full animate-pulse rounded bg-gray-100" />
+                    <div className="h-9 w-48 animate-pulse rounded bg-content-soft" />
+                    <div className="h-2 w-full animate-pulse rounded bg-content-soft" />
                 </div>
             ) : isError || !balance ? (
-                <p className="mt-5 text-sm text-gray-500">
+                <p className="mt-5 text-sm text-content-subtle">
                     잔액을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
                 </p>
             ) : (
                 <>
                     {/* 사용 가능 게임머니 — hero */}
                     <div className="mt-5">
-                        <span className="text-xs font-semibold text-gray-500">
+                        <span className="text-xs font-semibold text-content-subtle">
                             사용 가능 게임머니
                         </span>
                         <CodeAmount
                             value={balance.gameMoneyAvailable}
                             mode="full"
-                            className="mt-1 text-3xl font-bold text-gray-900"
+                            className="mt-1 text-3xl font-bold text-content-fg"
                         />
                     </div>
 
                     {/* 총 보유 / 입찰 보류 */}
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
-                        <span className="flex items-center gap-1.5 text-gray-500">
+                        <span className="flex items-center gap-1.5 text-content-subtle">
                             총 보유
                             <CodeAmount
                                 value={balance.gameMoneyBalance}
                                 mode="full"
-                                className="font-semibold text-gray-700"
+                                className="font-semibold text-content-fg"
                             />
                         </span>
                         <span className="flex items-center gap-1.5 text-warning">
@@ -105,7 +105,7 @@ function WalletBalanceCard({
                         aria-valuenow={Math.round(percent)}
                         aria-valuemin={0}
                         aria-valuemax={100}
-                        className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100"
+                        className="mt-3 h-2 w-full overflow-hidden rounded-full bg-content-soft"
                     >
                         <div
                             className="h-full rounded-full bg-warning transition-[width]"
@@ -113,21 +113,21 @@ function WalletBalanceCard({
                         />
                     </div>
                     {hasHold && (
-                        <p className="mt-2 text-xs text-gray-500">
+                        <p className="mt-2 text-xs text-content-subtle">
                             입찰 중 묶인 금액은 낙찰·유찰이 확정되면 풀립니다.
                         </p>
                     )}
 
                     {/* 캐시 잔액 + 충전 자리보류 */}
-                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-content-line pt-4">
                         <div className="min-w-0">
-                            <span className="text-xs font-semibold text-gray-500">
+                            <span className="text-xs font-semibold text-content-subtle">
                                 캐시 잔액
                             </span>
                             <CodeAmount
                                 value={balance.cashBalance}
                                 mode="full"
-                                className="mt-0.5 text-lg font-bold text-gray-800"
+                                className="mt-0.5 text-lg font-bold text-content-fg"
                             />
                         </div>
                         {/* 충전 — 준비 중 자리(미구현·미호출). DOM 속성으로 비활성 전달 */}
@@ -136,12 +136,12 @@ function WalletBalanceCard({
                             type="button"
                             aria-disabled="true"
                             title="캐시 충전은 준비 중입니다"
-                            className="shrink-0 rounded-lg bg-gray-100 px-3.5 py-2 text-xs font-bold text-gray-400"
+                            className="shrink-0 rounded-lg bg-content-soft px-3.5 py-2 text-xs font-bold text-content-subtle"
                         >
                             충전 준비 중
                         </button>
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">
+                    <p className="mt-2 text-xs text-content-subtle">
                         캐시 충전은 아직 연결되지 않았습니다. 보유 캐시로
                         게임머니를 교환할 수 있습니다.
                     </p>

@@ -1,19 +1,18 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router'
-import {
-    TbAlertTriangle,
-    TbBuildingStore,
-    TbFlame,
-    TbPin,
-    TbSpeakerphone,
-} from 'react-icons/tb'
+import { TbBuildingStore, TbFlame, TbPin, TbSpeakerphone } from 'react-icons/tb'
 import { boardPath, boardPostPath, paths } from '@/app/paths'
+import ListFrame from '@/components/common/ListFrame'
+import type { ListFrameState } from '@/components/common/ListFrame'
 import AuctionPreviewCard from '@/features/auction/components/AuctionPreviewCard'
 import { auctionPhaseOf } from '@/features/auction/lib/auctionPhase'
 import { useNow } from '@/features/auction/lib/useNow'
 import { formatPostTime } from '@/features/board/lib/postView'
 import HomeBanner from '@/features/home/components/HomeBanner'
-import HomeSection from '@/features/home/components/HomeSection'
+import HomeSection, {
+    HomeSectionHeading,
+} from '@/features/home/components/HomeSection'
+import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import { useAuctionList } from '@/lib/queries/auctions'
 import { usePostList } from '@/lib/queries/boards'
 import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
@@ -82,53 +81,47 @@ function ClosingSoonSection({ now }: { now: number }) {
     }, [data, now])
 
     const isEmpty = !isPending && auctions.length === 0
+    const listState: ListFrameState = isPending
+        ? { kind: 'loading', count: PREVIEW_COUNT }
+        : isError && auctions.length === 0
+          ? {
+                kind: 'error',
+                message: '잠시 후 다시 시도해 주세요.',
+                onRetry: () => void refetch(),
+            }
+          : isEmpty
+            ? {
+                  kind: 'empty',
+                  title: '지금 마감 임박한 경매가 없어요',
+                  description: '전체 경매에서 원하는 아이템을 찾아보세요.',
+              }
+            : { kind: 'ready' }
 
     return (
-        <HomeSection
-            icon={TbFlame}
-            title="오늘의 경매 마감 임박"
-            description="현재 참여할 수 있는 경매 아이템입니다."
-            seeAllHref={paths.auctions}
-        >
-            {isPending && <PreviewGridSkeleton count={PREVIEW_COUNT} />}
-
-            {!isPending && isError && auctions.length === 0 && (
-                <StateBlock
-                    icon={TbAlertTriangle}
-                    title="마감 임박 경매를 불러오지 못했어요"
-                    description="잠시 후 다시 시도해 주세요."
-                    action={
-                        <button
-                            type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
-                            onClick={() => void refetch()}
-                        >
-                            다시 시도
-                        </button>
-                    }
-                />
-            )}
-
-            {isEmpty && !isError && (
-                <StateBlock
-                    icon={TbFlame}
-                    title="지금 마감 임박한 경매가 없어요"
-                    description="전체 경매에서 원하는 아이템을 찾아보세요."
-                />
-            )}
-
-            {auctions.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 xs:grid-cols-3 md:grid-cols-6">
-                    {auctions.map((auction) => (
-                        <AuctionPreviewCard
-                            key={auction.auctionPublicId}
-                            auction={auction}
-                            now={now}
-                        />
-                    ))}
-                </div>
-            )}
-        </HomeSection>
+        <section>
+            <ListFrame
+                heading={
+                    <HomeSectionHeading
+                        icon={TbFlame}
+                        title="오늘의 경매 마감 임박"
+                        description="현재 참여할 수 있는 경매 아이템입니다."
+                        seeAllHref={paths.auctions}
+                    />
+                }
+                state={listState}
+                layout="preview"
+                label="마감 임박 경매 목록"
+                renderSkeleton={() => <ItemListSkeleton layout="preview" />}
+            >
+                {auctions.map((auction) => (
+                    <AuctionPreviewCard
+                        key={auction.auctionPublicId}
+                        auction={auction}
+                        now={now}
+                    />
+                ))}
+            </ListFrame>
+        </section>
     )
 }
 
@@ -154,23 +147,23 @@ function RecommendMarketSection() {
                         <li
                             key={index}
                             aria-disabled="true"
-                            className="home-recommend-card flex flex-col overflow-hidden rounded-xl border border-dashed border-line bg-surface"
+                            className="home-recommend-card flex flex-col overflow-hidden rounded-xl border border-dashed border-content-line bg-content-surface"
                         >
-                            <div className="grid aspect-square place-items-center bg-gray-50 text-gray-300">
+                            <div className="grid aspect-square place-items-center bg-content-soft text-content-line">
                                 <TbBuildingStore
                                     aria-hidden
                                     className="size-6"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5 p-3">
-                                <span className="h-3 w-3/4 rounded bg-gray-100" />
-                                <span className="h-3 w-1/2 rounded bg-gray-100" />
+                                <span className="h-3 w-3/4 rounded bg-content-soft" />
+                                <span className="h-3 w-1/2 rounded bg-content-soft" />
                             </div>
                         </li>
                     ),
                 )}
             </ul>
-            <p className="mt-2 text-center text-xs text-gray-400">
+            <p className="mt-2 text-center text-xs text-content-subtle">
                 고정가 마켓은 준비 중이에요.
             </p>
         </HomeSection>
@@ -202,7 +195,7 @@ function NoticeSection() {
             {isPending && (
                 <ul
                     aria-hidden
-                    className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface"
+                    className="divide-y divide-content-line overflow-hidden rounded-xl border border-content-line bg-content-surface"
                 >
                     {Array.from({ length: NOTICE_PREVIEW_COUNT }).map(
                         (_, index) => (
@@ -210,8 +203,8 @@ function NoticeSection() {
                                 key={index}
                                 className="flex items-center gap-3 px-4 py-3"
                             >
-                                <span className="h-3 min-w-0 flex-1 animate-pulse rounded bg-gray-100" />
-                                <span className="h-3 w-10 shrink-0 animate-pulse rounded bg-gray-100" />
+                                <span className="h-3 min-w-0 flex-1 animate-pulse rounded bg-content-soft" />
+                                <span className="h-3 w-10 shrink-0 animate-pulse rounded bg-content-soft" />
                             </li>
                         ),
                     )}
@@ -219,19 +212,19 @@ function NoticeSection() {
             )}
 
             {!isPending && isError && (
-                <p className="rounded-xl border border-dashed border-line bg-surface px-4 py-6 text-center text-sm text-gray-500">
+                <p className="rounded-xl border border-dashed border-content-line bg-content-surface px-4 py-6 text-center text-sm text-content-subtle">
                     공지를 불러오지 못했어요.
                 </p>
             )}
 
             {!isPending && !isError && notices.length === 0 && (
-                <p className="rounded-xl border border-dashed border-line bg-surface px-4 py-6 text-center text-sm text-gray-400">
+                <p className="rounded-xl border border-dashed border-content-line bg-content-surface px-4 py-6 text-center text-sm text-content-subtle">
                     등록된 공지가 없어요.
                 </p>
             )}
 
             {notices.length > 0 && (
-                <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+                <ul className="divide-y divide-content-line overflow-hidden rounded-xl border border-content-line bg-content-surface">
                     {notices.map((notice) => (
                         <li key={notice.postPublicId}>
                             <Link
@@ -239,18 +232,18 @@ function NoticeSection() {
                                     NOTICE_SLUG,
                                     notice.postPublicId,
                                 )}
-                                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-content-soft"
                             >
                                 {notice.isPinned && (
-                                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-gold-subtle px-1.5 py-0.5 text-[10px] font-bold text-gold-deep">
+                                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-brand-highlight-soft px-1.5 py-0.5 text-[10px] font-bold text-brand-highlight-deep">
                                         <TbPin aria-hidden className="size-3" />
                                         고정
                                     </span>
                                 )}
-                                <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">
+                                <span className="min-w-0 flex-1 truncate text-sm font-medium text-content-fg">
                                     {notice.title}
                                 </span>
-                                <span className="shrink-0 text-xs text-gray-400">
+                                <span className="shrink-0 text-xs text-content-subtle">
                                     {formatPostTime(notice.createdAt)}
                                 </span>
                             </Link>
@@ -259,54 +252,5 @@ function NoticeSection() {
                 </ul>
             )}
         </HomeSection>
-    )
-}
-
-/* ── 공통 표시 조각 ────────────────────────────────────────────────────────── */
-
-/** 마감 임박 그리드 스켈레톤(섹션 영역만 — 전체 블러 금지, §5). */
-function PreviewGridSkeleton({ count }: { count: number }) {
-    return (
-        <div
-            aria-hidden
-            className="grid grid-cols-2 gap-3 xs:grid-cols-3 md:grid-cols-6"
-        >
-            {Array.from({ length: count }).map((_, index) => (
-                <div
-                    key={index}
-                    className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface"
-                >
-                    <div className="aspect-square animate-pulse bg-gray-100" />
-                    <div className="flex flex-col gap-2 p-3">
-                        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-1 h-3 w-2/3 animate-pulse rounded bg-gray-100" />
-                    </div>
-                </div>
-            ))}
-        </div>
-    )
-}
-
-function StateBlock({
-    icon: Icon,
-    title,
-    description,
-    action,
-}: {
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
-    title: string
-    description: string
-    action?: React.ReactNode
-}) {
-    return (
-        <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
-                <Icon aria-hidden className="size-6" />
-            </span>
-            <h3 className="mt-3 text-base font-bold text-gray-900">{title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
-            {action && <div className="mt-4">{action}</div>}
-        </section>
     )
 }

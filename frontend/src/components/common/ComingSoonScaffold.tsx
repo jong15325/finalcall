@@ -30,30 +30,30 @@ function ComingSoonScaffold({
     return (
         <section className="flex flex-col gap-5">
             <header className="flex items-start gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-navy text-gold-bright">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-brand-structure text-brand-highlight-bright">
                     <Icon aria-hidden className="size-6" />
                 </span>
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="text-xl font-bold text-gray-900">
+                        <h1 className="text-xl font-bold text-content-fg">
                             {title}
                         </h1>
-                        <span className="rounded-full bg-gold-subtle px-2.5 py-0.5 text-xs font-bold text-gold-deep">
+                        <span className="rounded-full bg-brand-highlight-soft px-2.5 py-0.5 text-xs font-bold text-brand-highlight-deep">
                             준비 중
                         </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                    <p className="mt-1 text-sm text-content-subtle">{description}</p>
                 </div>
             </header>
 
-            <div className="overflow-hidden rounded-2xl border border-dashed border-line bg-surface">
+            <div className="overflow-hidden rounded-2xl border border-dashed border-content-line bg-content-surface">
                 <div
                     aria-hidden
                     className="pointer-events-none select-none p-5 opacity-60"
                 >
                     {children}
                 </div>
-                <p className="border-t border-dashed border-line bg-surface-sunken px-5 py-3 text-center text-xs font-medium text-gray-400">
+                <p className="border-t border-dashed border-content-line bg-content-soft px-5 py-3 text-center text-xs font-medium text-content-subtle">
                     {note}
                 </p>
             </div>

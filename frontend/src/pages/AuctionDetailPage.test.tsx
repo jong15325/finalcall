@@ -26,7 +26,7 @@ vi.mock('@/features/auction/components/AuctionHeroCard', () => ({
     default: () => (
         <div
             data-testid="auction-hero"
-            className="detail-surface bg-surface text-gray-900"
+            className="detail-surface bg-content-surface text-content-fg"
         >
             경매 상품
         </div>
@@ -34,7 +34,7 @@ vi.mock('@/features/auction/components/AuctionHeroCard', () => ({
 }))
 vi.mock('@/features/auction/components/BidHistory', () => ({
     default: ({ auctionPublicId }: { auctionPublicId: string }) => (
-        <div data-testid="bid-history" className="detail-surface bg-surface">
+        <div data-testid="bid-history" className="detail-surface bg-content-surface">
             {auctionPublicId}
         </div>
     ),
@@ -49,7 +49,7 @@ vi.mock('@/features/auction/components/BidPanel', () => ({
     }) => (
         <aside
             data-testid="bid-panel"
-            className="detail-surface sticky z-10 bg-surface"
+            className="detail-surface sticky z-10 bg-content-surface"
         >
             <button data-testid="open-bid" type="button" onClick={onBid}>
                 입찰 열기
@@ -104,7 +104,7 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         expect(view.container.querySelector('.element-detail')).toBeNull()
         expect(screen.getByTestId('auction-page-region')).toHaveClass('min-w-0')
         expect(screen.getByTestId('auction-page-region')).not.toHaveClass(
-            'bg-surface',
+            'bg-content-surface',
             'border',
             'rounded-xl',
             'shadow-sm',
@@ -145,8 +145,8 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
             'z-0',
         )
         expect(screen.getByTestId('auction-hero')).toHaveClass(
-            'bg-surface',
-            'text-gray-900',
+            'bg-content-surface',
+            'text-content-fg',
         )
         expect(
             view.container.querySelector('.element-detail__scene'),
@@ -223,7 +223,7 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         const errorView = renderPage('/auctions/NOPE')
         expect(errorView.container.querySelector('.element-detail')).toBeNull()
         expect(screen.getByTestId('auction-page-region')).not.toHaveClass(
-            'bg-surface',
+            'bg-content-surface',
             'border',
             'rounded-xl',
         )

@@ -19,7 +19,7 @@ export default function EventPostCard({ slug, post }: EventPostCardProps) {
     return (
         <Link
             to={boardPostPath(slug, post.postPublicId)}
-            className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:border-gray-300 hover:shadow-md"
+            className="flex flex-col overflow-hidden rounded-xl border border-content-line bg-content-surface transition-shadow hover:border-content-line hover:shadow-md"
         >
             <div className="relative aspect-[16/7]">
                 {post.thumbnailUrl ? (
@@ -31,30 +31,30 @@ export default function EventPostCard({ slug, post }: EventPostCardProps) {
                 ) : (
                     <span
                         aria-hidden
-                        className="grid size-full place-items-center bg-gradient-to-br from-navy-700 to-navy-500 text-navy-500"
+                        className="grid size-full place-items-center bg-gradient-to-br from-chrome-selected to-brand-structure text-brand-structure"
                     >
-                        <TbPhoto className="size-8 text-white/40" />
+                        <TbPhoto className="size-8 text-on-strong/40" />
                     </span>
                 )}
                 {post.isPinned && (
-                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold-subtle px-2 py-0.5 text-[11px] font-bold text-gold-deep">
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-brand-highlight-soft px-2 py-0.5 text-[11px] font-bold text-brand-highlight-deep">
                         <TbPin aria-hidden className="size-3" />
                         진행중
                     </span>
                 )}
             </div>
             <div className="p-4">
-                <h3 className="truncate text-[15px] font-bold text-gray-900">
+                <h3 className="truncate text-[15px] font-bold text-content-fg">
                     {post.title}
                 </h3>
-                <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-400">
+                <div className="mt-1.5 flex items-center gap-2 text-xs text-content-subtle">
                     <span>{formatPostTime(post.createdAt)}</span>
                     {post.commentCount > 0 && (
                         <>
-                            <span aria-hidden className="text-gray-300">
+                            <span aria-hidden className="text-content-line">
                                 ·
                             </span>
-                            <span className="inline-flex items-center gap-0.5 font-bold text-orange-deep">
+                            <span className="inline-flex items-center gap-0.5 font-bold text-control-action-hover">
                                 <TbMessage aria-hidden className="size-3.5" />
                                 {post.commentCount}
                             </span>

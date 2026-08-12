@@ -5,6 +5,7 @@ import { paths } from '@/app/paths'
 import ShopHeroCard from '@/features/shop/components/ShopHeroCard'
 import ShopBuyPanel from '@/features/shop/components/ShopBuyPanel'
 import ShopPurchaseDialog from '@/features/shop/components/ShopPurchaseDialog'
+import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 import { useNow } from '@/features/auction/lib/useNow'
 import { useShopDetail, usePurchaseShop } from '@/lib/queries/shop'
 import { useMyBalance } from '@/lib/queries/balance'
@@ -12,7 +13,6 @@ import { useIsAuthenticated, useAuthStore } from '@/store/authStore'
 import { buildReturnUrlQuery } from '@/lib/returnUrl'
 import { hasErrorCode } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 고정가 마켓 상세·구매 `/market/:id` (FC-094 게이트 — 경매 상세를 고정가로 변형).
@@ -52,12 +52,6 @@ export default function MarketDetailPage() {
     }, [toast])
 
     const shop = detailQuery.data
-    useAppFooterVariant(
-        !detailQuery.isPending && (detailQuery.isError || !shop)
-            ? 'compact'
-            : 'default',
-    )
-
     // ── 로딩 ────────────────────────────────────────────────────────────────
     if (detailQuery.isPending) {
         return <DetailSkeleton />
@@ -83,14 +77,14 @@ export default function MarketDetailPage() {
                     notFound ? (
                         <Link
                             to={paths.market}
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                         >
                             마켓 목록으로
                         </Link>
                     ) : (
                         <button
                             type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                             onClick={() => void detailQuery.refetch()}
                         >
                             다시 시도
@@ -121,10 +115,11 @@ export default function MarketDetailPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6">
+        <ElementDetailBackground element={shop.item.element}>
+            <div className="flex flex-col gap-6">
             <Link
                 to={paths.market}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-content-subtle hover:text-brand-structure"
             >
                 <TbArrowLeft aria-hidden className="size-4" />
                 아이템 마켓
@@ -133,7 +128,7 @@ export default function MarketDetailPage() {
             {toast && (
                 <p
                     role="status"
-                    className="rounded-lg bg-success-subtle px-4 py-2.5 text-sm font-medium text-success"
+                    className="rounded-lg bg-success-soft px-4 py-2.5 text-sm font-medium text-success-ink"
                 >
                     {toast}
                 </p>
@@ -171,7 +166,8 @@ export default function MarketDetailPage() {
                 onClose={() => setPurchaseOpen(false)}
                 onConfirm={handlePurchase}
             />
-        </div>
+            </div>
+        </ElementDetailBackground>
     )
 }
 
@@ -179,10 +175,10 @@ export default function MarketDetailPage() {
 function DetailSkeleton() {
     return (
         <div aria-hidden className="flex flex-col gap-6">
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-4 w-24 animate-pulse rounded bg-content-soft" />
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
-                <div className="min-h-[390px] animate-pulse rounded-2xl bg-gray-100" />
-                <div className="min-h-[390px] animate-pulse rounded-2xl bg-gray-100" />
+                <div className="min-h-[390px] animate-pulse rounded-2xl bg-content-soft" />
+                <div className="min-h-[390px] animate-pulse rounded-2xl bg-content-soft" />
             </div>
         </div>
     )
@@ -200,12 +196,12 @@ function StateBlock({
     action?: React.ReactNode
 }) {
     return (
-        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-content-soft text-content-subtle">
                 <Icon aria-hidden className="size-7" />
             </span>
-            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            <h2 className="mt-4 text-lg font-bold text-content-fg">{title}</h2>
+            <p className="mt-1 text-sm text-content-subtle">{description}</p>
             {action && <div className="mt-5">{action}</div>}
         </section>
     )

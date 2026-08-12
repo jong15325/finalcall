@@ -99,7 +99,7 @@ function WithdrawDialog({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-navy-900/60 px-4 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose()
@@ -110,18 +110,18 @@ function WithdrawDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="withdrawDialogTitle"
-                className="w-full max-w-[520px] overflow-hidden rounded-2xl bg-surface shadow-[0_30px_80px_rgba(17,26,44,0.33)]"
+                className="w-full max-w-[520px] overflow-hidden rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
                 onMouseDown={(event) => event.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
                     <div className="flex items-center gap-2">
                         <TbAlertTriangle
                             aria-hidden
-                            className="size-5 text-danger"
+                            className="size-5 text-danger-ink"
                         />
                         <h4
                             id="withdrawDialogTitle"
-                            className="text-lg font-bold text-gray-900"
+                            className="text-lg font-bold text-content-fg"
                         >
                             정말 탈퇴하시겠습니까?
                         </h4>
@@ -129,7 +129,7 @@ function WithdrawDialog({
                     <button
                         type="button"
                         aria-label="닫기"
-                        className="flex size-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                        className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
                         onClick={onClose}
                     >
                         <TbX aria-hidden className="size-5" />
@@ -137,7 +137,7 @@ function WithdrawDialog({
                 </div>
 
                 <div className="px-5 py-5">
-                    <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-gray-600">
+                    <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-content-muted">
                         <li>
                             남은 게임머니·캐시 잔액이 <strong>모두 소멸</strong>
                             하며 복구할 수 없습니다.
@@ -149,7 +149,7 @@ function WithdrawDialog({
                         <li>진행 중인 거래가 있으면 탈퇴할 수 없습니다.</li>
                     </ul>
 
-                    <label className="mt-4 flex items-start gap-2.5 rounded-lg bg-surface-sunken px-3.5 py-3 text-sm text-gray-700">
+                    <label className="mt-4 flex items-start gap-2.5 rounded-lg bg-content-soft px-3.5 py-3 text-sm text-content-fg">
                         <input
                             type="checkbox"
                             className="mt-0.5 size-4 shrink-0 accent-[var(--danger)]"
@@ -166,17 +166,17 @@ function WithdrawDialog({
                     {errorMessage && (
                         <p
                             role="alert"
-                            className="mt-3 rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                            className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                         >
                             {errorMessage}
                         </p>
                     )}
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-line bg-surface-sunken px-5 py-4">
+                <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
                     <button
                         type="button"
-                        className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                        className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                         onClick={onClose}
                     >
                         취소
@@ -184,7 +184,7 @@ function WithdrawDialog({
                     <button
                         type="button"
                         disabled={!acknowledged || isSubmitting}
-                        className="rounded-lg bg-danger px-5 py-2.5 text-sm font-bold text-white hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-lg bg-danger px-5 py-2.5 text-sm font-bold text-on-strong hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={onConfirm}
                     >
                         {isSubmitting ? '처리 중…' : '탈퇴 확정'}

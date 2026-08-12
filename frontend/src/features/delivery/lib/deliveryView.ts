@@ -36,8 +36,8 @@ const SHIPPING: DeliveryBadgeStyle = {
     shortLabel: '배송중',
     longLabel: '게임으로 배송중',
     badgeClass:
-        'bg-orange-subtle text-orange-deep border border-orange/40',
-    dotClass: 'bg-orange',
+        'bg-control-action-soft text-control-action-hover border border-control-action/40',
+    dotClass: 'bg-control-action',
 }
 
 const ARRIVED: DeliveryBadgeStyle = {
@@ -45,7 +45,7 @@ const ARRIVED: DeliveryBadgeStyle = {
     shortLabel: '게임 도착',
     longLabel: '게임 도착',
     badgeClass:
-        'bg-success-subtle text-success border border-success/40',
+        'bg-success-soft text-success-ink border border-success/40',
     dotClass: 'bg-success',
 }
 
@@ -53,7 +53,7 @@ const FAILED: DeliveryBadgeStyle = {
     bucket: 'FAILED',
     shortLabel: '문제',
     longLabel: '문제 발생 · 문의',
-    badgeClass: 'bg-danger-subtle text-danger border border-danger/40',
+    badgeClass: 'bg-danger-soft text-danger-ink border border-danger/40',
     dotClass: 'bg-danger',
 }
 

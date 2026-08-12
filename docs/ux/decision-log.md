@@ -1,5 +1,14 @@
 # 디자인 결정 로그 (U-xxx)
 
+## U-022. 프론트 UI 시스템 정본 통합 — navy/gold/orange와 고정 commerce chrome
+
+상태: DECIDED · 소유: 사용자/architect · 관련: EPIC-FRONTEND-UI-SYSTEM, supersedes U-021의 브랜드 값·CTA 매핑 및 route chrome 재색 조항 · 2026-08-12
+
+- `docs/spec/frontend-ui-system-contract.md` v1.0을 브랜드 값, 소비 경계, 목록과 카드 책임의 최상위 구현 정본으로 승인했다.
+- navy는 고정 commerce chrome, gold는 브랜드 강조와 focus 보조, orange는 주요 CTA와 활성 조작을 담당한다. 퍼플 브랜드 역할과 블랙 CTA 역할은 폐기한다.
+- route element accent는 world-map 장식과 명시적 content scope에만 전달한다.
+- footer는 route metadata, 목록은 `ListFrame`, 카드는 표시/controlled flip/action surface 분리를 정본으로 삼는다.
+
 각 항목 1결정. 상태 라벨만 갱신, 본문 불변(collaboration-guide 4절). 근거는 확정 스펙(api-contract v1.4 · erd v0.7 · domain-spec v0.5) 또는 ACCEPTED 결정.
 주: 개별 항목 본문에 남은 구 버전 표기(예: U-010의 "api-contract v1.2")는 발번 시점의 근거라 불변이다 — 항목 불변 규약(4절). 이 머리말이 현행 기준을 가리킨다.
 

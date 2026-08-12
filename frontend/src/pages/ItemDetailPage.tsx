@@ -6,7 +6,6 @@ import { hasErrorCode } from '@/lib/api/errors'
 import { useItemInstance } from '@/lib/queries/items'
 import { ERROR_CODES } from '@/types/errorCodes'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 보유 아이템 인스턴스 상세 `/items/{id}` (FC-077 — 목업 `itemDetail()` · design-brief B-11).
@@ -18,12 +17,6 @@ import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 export default function ItemDetailPage() {
     const { id = '' } = useParams()
     const detailQuery = useItemInstance(id)
-    useAppFooterVariant(
-        !detailQuery.isPending && (detailQuery.isError || !detailQuery.data)
-            ? 'compact'
-            : 'default',
-    )
-
     if (detailQuery.isPending) {
         return <DetailSkeleton />
     }
@@ -34,29 +27,29 @@ export default function ItemDetailPage() {
             <div className="flex flex-col gap-5">
                 <Link
                     to={paths.inventory}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-content-subtle hover:text-brand-structure"
                 >
                     <TbArrowLeft aria-hidden className="size-4" />
                     인벤토리
                 </Link>
-                <div className="rounded-2xl border border-line bg-surface px-6 py-16 text-center">
+                <div className="rounded-2xl border border-content-line bg-content-surface px-6 py-16 text-center">
                     {notFound ? (
                         <TbSearchOff
                             aria-hidden
-                            className="mx-auto size-10 text-gray-300"
+                            className="mx-auto size-10 text-content-line"
                         />
                     ) : (
                         <TbAlertTriangle
                             aria-hidden
-                            className="mx-auto size-10 text-gray-300"
+                            className="mx-auto size-10 text-content-line"
                         />
                     )}
-                    <p className="mt-4 text-base font-bold text-gray-900">
+                    <p className="mt-4 text-base font-bold text-content-fg">
                         {notFound
                             ? '아이템을 찾을 수 없습니다'
                             : '아이템을 불러오지 못했습니다'}
                     </p>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         {notFound
                             ? '이미 사라졌거나 주소가 잘못되었습니다.'
                             : '잠시 후 다시 시도해 주세요.'}
@@ -65,14 +58,14 @@ export default function ItemDetailPage() {
                         {notFound ? (
                             <Link
                                 to={paths.inventory}
-                                className="inline-flex rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                                className="inline-flex rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                             >
                                 인벤토리로
                             </Link>
                         ) : (
                             <button
                                 type="button"
-                                className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                                className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                                 onClick={() => void detailQuery.refetch()}
                             >
                                 다시 시도
@@ -95,10 +88,10 @@ export default function ItemDetailPage() {
 function DetailSkeleton() {
     return (
         <div aria-hidden className="flex flex-col gap-5">
-            <div className="h-5 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-5 w-24 animate-pulse rounded bg-content-soft" />
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-                <div className="h-[280px] animate-pulse rounded-2xl bg-gray-100 lg:h-[430px]" />
-                <div className="h-[430px] animate-pulse rounded-2xl bg-gray-100" />
+                <div className="h-[280px] animate-pulse rounded-2xl bg-content-soft lg:h-[430px]" />
+                <div className="h-[430px] animate-pulse rounded-2xl bg-content-soft" />
             </div>
         </div>
     )

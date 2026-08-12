@@ -128,7 +128,7 @@ function MemoComposeDialog({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-navy-900/60 px-0 backdrop-blur-[2px] sm:items-center sm:px-4"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-chrome-strong/60 px-0 backdrop-blur-[2px] sm:items-center sm:px-4"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose()
@@ -139,21 +139,21 @@ function MemoComposeDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="memoComposeTitle"
-                className="flex max-h-[92vh] w-full max-w-[600px] flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[0_30px_80px_rgba(17,26,44,0.33)] sm:rounded-2xl"
+                className="flex max-h-[92vh] w-full max-w-[600px] flex-col overflow-hidden rounded-t-2xl bg-content-surface shadow-[var(--shadow-dialog)] sm:rounded-2xl"
                 onMouseDown={(event) => event.stopPropagation()}
             >
-                <div className="flex flex-none items-center justify-between border-b border-line px-5 py-4">
+                <div className="flex flex-none items-center justify-between border-b border-content-line px-5 py-4">
                     <h4
                         id="memoComposeTitle"
-                        className="flex items-center gap-2 text-lg font-bold text-gray-900"
+                        className="flex items-center gap-2 text-lg font-bold text-content-fg"
                     >
-                        <TbPencil aria-hidden className="size-5 text-navy" />
+                        <TbPencil aria-hidden className="size-5 text-brand-structure" />
                         쪽지 쓰기
                     </h4>
                     <button
                         type="button"
                         aria-label="닫기"
-                        className="flex size-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                        className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
                         onClick={onClose}
                     >
                         <TbX aria-hidden className="size-5" />
@@ -165,10 +165,10 @@ function MemoComposeDialog({
                     <div>
                         <label
                             htmlFor="memo-receiver"
-                            className="mb-1.5 block text-sm font-bold text-gray-800"
+                            className="mb-1.5 block text-sm font-bold text-content-fg"
                         >
                             받는 사람
-                            <span className="ml-0.5 text-danger">*</span>
+                            <span className="ml-0.5 text-danger-ink">*</span>
                         </label>
                         <input
                             id="memo-receiver"
@@ -177,12 +177,12 @@ function MemoComposeDialog({
                             maxLength={RECEIVER_MAX}
                             placeholder="닉네임 입력 (최대 16자)"
                             autoComplete="off"
-                            className="h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-gray-900 outline-none focus:border-orange focus:ring-2 focus:ring-orange/30"
+                            className="h-11 w-full rounded-lg border border-content-line bg-content-surface px-3 text-sm text-content-fg outline-none focus:border-control-action focus:ring-2 focus:ring-control-action/30"
                             onChange={(event) =>
                                 setReceiver(event.target.value)
                             }
                         />
-                        <p className="mt-1.5 text-xs text-gray-400">
+                        <p className="mt-1.5 text-xs text-content-subtle">
                             활성 회원의 닉네임을 입력하세요. 없는 닉네임이면
                             보낼 수 없습니다.
                         </p>
@@ -192,33 +192,33 @@ function MemoComposeDialog({
                     <div>
                         <label
                             htmlFor="memo-body"
-                            className="mb-1.5 block text-sm font-bold text-gray-800"
+                            className="mb-1.5 block text-sm font-bold text-content-fg"
                         >
                             내용
-                            <span className="ml-0.5 text-danger">*</span>
+                            <span className="ml-0.5 text-danger-ink">*</span>
                         </label>
                         <textarea
                             id="memo-body"
                             value={body}
                             placeholder="자유롭게 입력하세요. 줄바꿈은 게임에서 자동으로 처리됩니다."
                             rows={4}
-                            className={`min-h-28 w-full resize-y rounded-lg border bg-surface px-3 py-2.5 text-sm leading-relaxed text-gray-900 outline-none break-keep focus:ring-2 ${
+                            className={`min-h-28 w-full resize-y rounded-lg border bg-content-surface px-3 py-2.5 text-sm leading-relaxed text-content-fg outline-none break-keep focus:ring-2 ${
                                 overLimit
                                     ? 'border-danger focus:border-danger focus:ring-danger/30'
-                                    : 'border-line focus:border-orange focus:ring-orange/30'
+                                    : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                             }`}
                             onChange={(event) => setBody(event.target.value)}
                         />
-                        <div className="mt-1.5 flex items-center justify-between text-xs text-gray-400">
+                        <div className="mt-1.5 flex items-center justify-between text-xs text-content-subtle">
                             <span>게임 표시 용량</span>
                             <span aria-live="polite">
                                 <b
                                     className={`font-bold tabular-nums ${
                                         overLimit
-                                            ? 'text-danger'
+                                            ? 'text-danger-ink'
                                             : near
                                               ? 'text-warning'
-                                              : 'text-gray-600'
+                                              : 'text-content-muted'
                                     }`}
                                 >
                                     {bytes}
@@ -229,7 +229,7 @@ function MemoComposeDialog({
                         {overLimit && (
                             <p
                                 role="alert"
-                                className="mt-1 text-xs font-semibold text-danger"
+                                className="mt-1 text-xs font-semibold text-danger-ink"
                             >
                                 내용이 게임 표시 한도(112바이트)를 넘었습니다.
                                 줄여 주세요.
@@ -239,7 +239,7 @@ function MemoComposeDialog({
 
                     {/* 실시간 게임 미리보기 */}
                     <div>
-                        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-gray-500">
+                        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-content-subtle">
                             게임에서 이렇게 보여요 (실시간)
                         </p>
                         <GamePreview
@@ -253,17 +253,17 @@ function MemoComposeDialog({
                     {errorMessage && (
                         <p
                             role="alert"
-                            className="rounded-lg bg-danger-subtle px-3 py-2 text-sm text-danger"
+                            className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                         >
                             {errorMessage}
                         </p>
                     )}
                 </div>
 
-                <div className="flex flex-none justify-end gap-2 border-t border-line bg-surface-sunken px-5 py-4">
+                <div className="flex flex-none justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
                     <button
                         type="button"
-                        className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                        className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                         onClick={onClose}
                     >
                         취소
@@ -271,7 +271,7 @@ function MemoComposeDialog({
                     <button
                         type="button"
                         disabled={!canSend}
-                        className="rounded-lg bg-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={handleSend}
                     >
                         {isSubmitting ? '보내는 중…' : '보내기'}

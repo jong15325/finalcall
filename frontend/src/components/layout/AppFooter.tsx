@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { paths } from '@/app/paths'
+import type { FooterDensity } from '@/app/routeUi'
 import BrandLogo from '@/components/brand/BrandLogo'
-import type { AppFooterVariant } from './AppFooterContext'
 
 const serviceLinks = [
     { label: '경매', to: paths.auctions },
@@ -10,13 +10,13 @@ const serviceLinks = [
 ] as const
 
 /** AppShell 전역 서비스 정보. AuthLayout에는 포함하지 않는다. */
-function AppFooter({ variant = 'default' }: { variant?: AppFooterVariant }) {
+function AppFooter({ variant = 'default' }: { variant?: FooterDensity }) {
     const compact = variant === 'compact'
 
     return (
         <footer
             data-variant={variant}
-            className="detail-chrome relative z-10 border-t border-line bg-navy-900 text-gray-300"
+            className="app-chrome relative z-10 border-t border-chrome-selected bg-chrome-strong text-chrome-muted"
         >
             <div
                 className={`mx-auto w-full max-w-[1440px] px-5 sm:px-8 xl:px-10 ${compact ? 'py-5 sm:py-6' : 'py-10 sm:py-12'}`}
@@ -27,7 +27,7 @@ function AppFooter({ variant = 'default' }: { variant?: AppFooterVariant }) {
                     <div className="max-w-xl">
                         <BrandLogo className="brightness-0 invert" />
                         <p
-                            className={`${compact ? 'mt-3' : 'mt-5'} text-sm leading-6 text-gray-300`}
+                            className={`${compact ? 'mt-3' : 'mt-5'} text-sm leading-6 text-chrome-muted`}
                         >
                             마감 순간에도 정확한 가격과 거래 흐름을 지키는 게임
                             아이템 거래 플랫폼입니다.
@@ -35,21 +35,21 @@ function AppFooter({ variant = 'default' }: { variant?: AppFooterVariant }) {
                         <p
                             className={`${compact ? 'mt-2' : 'mt-4'} text-sm leading-6`}
                         >
-                            <span className="font-semibold text-white">
+                            <span className="font-semibold text-chrome-fg">
                                 서비스 문의
                             </span>{' '}
-                            <span className="text-gray-400">
+                            <span className="text-chrome-muted">
                                 공식 문의 채널 준비 중
                             </span>
                         </p>
                     </div>
 
                     <nav aria-label="하단 서비스 메뉴">
-                        <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white">
+                        <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-chrome-fg">
                             {serviceLinks.map((link) => (
                                 <li key={link.to}>
                                     <Link
-                                        className="rounded-sm underline-offset-4 hover:text-gold-bright hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-bright"
+                                        className="rounded-sm underline-offset-4 hover:text-brand-highlight-bright hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-control-focus"
                                         to={link.to}
                                     >
                                         {link.label}
@@ -61,7 +61,7 @@ function AppFooter({ variant = 'default' }: { variant?: AppFooterVariant }) {
                 </div>
 
                 <div
-                    className={`${compact ? 'mt-4 pt-4' : 'mt-10 pt-7'} border-t border-navy-700 text-xs leading-5 text-gray-400`}
+                    className={`${compact ? 'mt-4 pt-4' : 'mt-10 pt-7'} border-t border-chrome-selected text-xs leading-5 text-chrome-muted`}
                 >
                     <p>© 2026 장터. All rights reserved.</p>
                     <div
@@ -96,7 +96,7 @@ function AppFooter({ variant = 'default' }: { variant?: AppFooterVariant }) {
                             </li>
                             <li>
                                 <Link
-                                    className="rounded-sm font-semibold text-gray-300 underline-offset-4 hover:text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-bright"
+                                    className="rounded-sm font-semibold text-chrome-muted underline-offset-4 hover:text-chrome-fg hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-control-focus"
                                     to="/boards/notice"
                                 >
                                     공지사항

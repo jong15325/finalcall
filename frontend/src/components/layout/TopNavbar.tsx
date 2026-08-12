@@ -54,21 +54,21 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
     }
 
     return (
-        <header className="detail-chrome sticky top-0 z-30 h-16 border-b border-line bg-surface/95 backdrop-blur">
+        <header className="app-chrome sticky top-0 z-30 h-16 border-b border-chrome-selected bg-chrome text-chrome-fg">
             <div className="mx-auto flex h-full w-full max-w-[1440px] items-center gap-3 px-4">
                 <NavLink
                     to={paths.home}
                     aria-label="장터 홈"
-                    className="hidden shrink-0 border-r border-line pr-4 xl:block"
+                    className="hidden shrink-0 border-r border-chrome-selected pr-4 xl:block"
                 >
-                    <BrandLogo className="max-h-10 w-[132px]" />
+                    <BrandLogo className="max-h-10 w-[132px] brightness-0 invert" />
                 </NavLink>
                 {/* 모바일 햄버거 — 사이드바 드로어 열기(데스크톱 접기/펼치기는 사이드바 헤더 토글) */}
                 <button
                     ref={menuButtonRef}
                     type="button"
                     aria-label="메뉴 열기"
-                    className="flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 xl:hidden"
+                    className="flex size-9 items-center justify-center rounded-lg text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg xl:hidden"
                     onClick={onOpenMobile}
                 >
                     <TbMenu2 aria-hidden className="size-5" />
@@ -76,14 +76,14 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
 
                 {/* 페이지 문맥 */}
                 <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-navy text-gold-bright">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-chrome-raised text-brand-highlight-bright">
                         <PageIcon aria-hidden className="size-5" />
                     </span>
                     <span className="flex min-w-0 flex-col leading-tight">
-                        <span className="hidden text-[11px] font-semibold tracking-wide text-gray-400 sm:block">
+                        <span className="hidden text-[11px] font-semibold tracking-wide text-chrome-muted sm:block">
                             JANGTEO MARKETPLACE
                         </span>
-                        <strong className="truncate text-sm font-bold text-gray-900">
+                        <strong className="truncate text-sm font-bold text-chrome-fg">
                             {title}
                         </strong>
                     </span>
@@ -92,19 +92,19 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                 {/* 우측 클러스터 */}
                 <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
                     {/* 거래 서버 상태 — PC 전용 */}
-                    <span className="hidden items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-gray-600 lg:flex">
+                    <span className="hidden items-center gap-1.5 rounded-full border border-chrome-selected px-3 py-1.5 text-xs font-semibold text-chrome-muted lg:flex">
                         <TbCircleCheckFilled
                             aria-hidden
-                            className="size-4 text-success"
+                            className="size-4 text-success-ink"
                         />
                         거래 서버{' '}
-                        <strong className="text-gray-900">정상</strong>
+                        <strong className="text-chrome-fg">정상</strong>
                     </span>
 
                     {/* 실시간 경매 바로가기 — PC 전용 */}
                     <NavLink
                         to={paths.auctions}
-                        className="hidden items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-orange hover:text-orange-deep lg:flex"
+                        className="hidden items-center gap-1.5 rounded-full border border-chrome-selected px-3 py-1.5 text-xs font-semibold text-chrome-muted hover:border-control-action hover:text-control-action lg:flex"
                     >
                         <TbGavel aria-hidden className="size-4" />
                         실시간 경매
@@ -115,7 +115,7 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                         <NavLink
                             to={paths.inventory}
                             aria-label="인벤토리 바로가기"
-                            className="hidden size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 lg:flex"
+                            className="hidden size-9 items-center justify-center rounded-lg text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg lg:flex"
                         >
                             <TbBackpack aria-hidden className="size-5" />
                         </NavLink>
@@ -125,19 +125,19 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                     {authenticated && (
                         <NavLink
                             to={paths.wallet}
-                            className="hidden items-center gap-2 rounded-full border border-line px-3 py-1.5 hover:border-gold sm:flex"
+                            className="hidden items-center gap-2 rounded-full border border-chrome-selected px-3 py-1.5 hover:border-brand-highlight sm:flex"
                         >
-                            <span className="hidden text-[11px] font-semibold text-gray-400 sm:block">
+                            <span className="hidden text-[11px] font-semibold text-chrome-muted sm:block">
                                 보유 코드
                             </span>
                             <CodeAmount
                                 value={balance?.gameMoneyBalance ?? null}
                                 mode="compact"
-                                className="text-sm font-bold text-gray-900"
+                                className="text-sm font-bold text-chrome-fg"
                             />
                             <TbChevronRight
                                 aria-hidden
-                                className="hidden size-4 text-gray-400 sm:block"
+                                className="hidden size-4 text-chrome-muted sm:block"
                             />
                         </NavLink>
                     )}
@@ -151,12 +151,12 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                                     ? `쪽지 · 안 읽음 ${unreadCount}건`
                                     : '쪽지'
                             }
-                            className="relative flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+                            className="relative flex size-9 items-center justify-center rounded-lg text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg"
                         >
                             <TbMail aria-hidden className="size-5" />
                             {unreadCount > 0 && (
                                 <span
-                                    className={`absolute -right-0.5 -top-0.5 grid min-w-[16px] place-items-center rounded-full px-1 text-[10px] leading-4 ring-2 ring-surface ${UNREAD_BADGE_CLASS}`}
+                                    className={`absolute -right-0.5 -top-0.5 grid min-w-[16px] place-items-center rounded-full px-1 text-[10px] leading-4 ring-2 ring-chrome ${UNREAD_BADGE_CLASS}`}
                                 >
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
@@ -167,19 +167,19 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                     {/* 알림 — 준비 중(빈 드롭다운) */}
                     <Dropdown
                         triggerLabel="알림 열기"
-                        triggerClassName="flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+                        triggerClassName="flex size-9 items-center justify-center rounded-lg text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg"
                         trigger={<TbBell aria-hidden className="size-5" />}
                         panelClassName="w-72"
                     >
-                        <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-                            <h6 className="text-sm font-bold text-gray-900">
+                        <div className="flex items-center gap-2 border-b border-chrome-selected px-4 py-3">
+                            <h6 className="text-sm font-bold text-chrome-fg">
                                 알림
                             </h6>
-                            <span className="rounded-full bg-gold-subtle px-2 py-0.5 text-[10px] font-bold text-gold-deep">
+                            <span className="rounded-full bg-brand-highlight-soft px-2 py-0.5 text-[10px] font-bold text-brand-highlight-deep">
                                 준비 중
                             </span>
                         </div>
-                        <p className="px-4 py-8 text-center text-sm text-gray-400">
+                        <p className="px-4 py-8 text-center text-sm text-chrome-muted">
                             알림 기능은 준비 중이에요
                         </p>
                     </Dropdown>
@@ -190,31 +190,31 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                             triggerLabel="사용자 메뉴 열기"
                             triggerClassName="flex items-center rounded-full"
                             trigger={
-                                <span className="flex size-9 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
+                                <span className="flex size-9 items-center justify-center rounded-full bg-chrome-selected text-sm font-bold text-chrome-fg">
                                     {user?.nickname?.slice(0, 1) ?? '?'}
                                 </span>
                             }
                             panelClassName="w-56"
                         >
-                            <div className="border-b border-line px-4 py-3">
-                                <p className="truncate text-sm font-bold text-gray-900">
+                            <div className="border-b border-chrome-selected px-4 py-3">
+                                <p className="truncate text-sm font-bold text-chrome-fg">
                                     {user?.nickname ?? '회원'}
                                 </p>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-chrome-muted">
                                     {user?.isAdmin ? '관리자' : '일반 회원'}
                                 </p>
                             </div>
                             <nav className="p-1.5">
                                 <NavLink
                                     to={paths.me}
-                                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-chrome-muted hover:bg-chrome-selected hover:text-chrome-fg"
                                 >
                                     <TbUser aria-hidden className="size-5" />
                                     마이페이지
                                 </NavLink>
                                 <NavLink
                                     to={paths.me}
-                                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-chrome-muted hover:bg-chrome-selected hover:text-chrome-fg"
                                 >
                                     <TbSettings
                                         aria-hidden
@@ -223,10 +223,10 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                                     설정
                                 </NavLink>
                             </nav>
-                            <div className="border-t border-line p-1.5">
+                            <div className="border-t border-chrome-selected p-1.5">
                                 <button
                                     type="button"
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-subtle"
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-danger-ink hover:bg-danger-soft"
                                     onClick={handleSignOut}
                                 >
                                     <TbLogout aria-hidden className="size-5" />
@@ -238,13 +238,13 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                         <div className="flex items-center gap-1.5">
                             <NavLink
                                 to={paths.login}
-                                className="rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                                className="rounded-lg px-3 py-2 text-sm font-semibold text-chrome-muted hover:bg-chrome-selected hover:text-chrome-fg"
                             >
                                 로그인
                             </NavLink>
                             <NavLink
                                 to={paths.signup}
-                                className="detail-cta rounded-lg bg-orange px-3 py-2 text-sm font-bold text-white hover:bg-orange-deep"
+                                className="rounded-lg bg-control-action px-3 py-2 text-sm font-bold text-content-fg hover:bg-control-action-hover"
                             >
                                 회원가입
                             </NavLink>

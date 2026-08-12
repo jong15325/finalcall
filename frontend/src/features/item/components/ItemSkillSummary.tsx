@@ -43,7 +43,7 @@ function ItemSkillSummary({
     if (slots.length === 0) {
         return (
             <p
-                className={`text-[11px] text-gray-400 xs:text-xs ${className}`.trim()}
+                className={`text-[11px] text-content-subtle xs:text-xs ${className}`.trim()}
             >
                 {emptyLabel}
             </p>
@@ -66,7 +66,7 @@ function ItemSkillSummary({
                 return (
                     <li
                         key={skill.slot}
-                        className="truncate text-[11px] font-medium text-navy-700 xs:text-xs"
+                        className="truncate text-[11px] font-medium text-chrome-selected xs:text-xs"
                     >
                         {showSlotLabels && (
                             <span className="item-skill-summary__slot">
@@ -76,7 +76,7 @@ function ItemSkillSummary({
                         {showSlotLabels && ' '}
                         {skillLabelOf(skill)}
                         {showPercent && (
-                            <span className="ml-1 font-bold text-orange-deep">
+                            <span className="ml-1 font-bold text-control-action-hover">
                                 {skillPercent}%
                             </span>
                         )}

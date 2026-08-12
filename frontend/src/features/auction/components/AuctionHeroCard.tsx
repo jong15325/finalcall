@@ -33,9 +33,9 @@ import type { AuctionDetail } from '@/lib/api/auctions'
  */
 
 const PHASE_BADGE_CLASS: Record<AuctionPhase, string> = {
-    live: 'bg-success-subtle text-success',
-    scheduled: 'detail-meta bg-navy/10 text-navy-700',
-    ended: 'bg-gray-100 text-gray-500',
+    live: 'bg-success-soft text-success-ink',
+    scheduled: 'detail-meta bg-brand-structure/10 text-chrome-selected',
+    ended: 'bg-content-soft text-content-subtle',
 }
 
 interface AuctionHeroCardProps {
@@ -71,7 +71,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
     const channelLimit = channelLimitOf(item.level)
 
     return (
-        <section className="detail-surface grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
+        <section className="detail-surface grid overflow-hidden rounded-2xl border border-content-line bg-content-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
             {/* 아트 열 — 스프라이트 스테이지가 열 전체를 채우고 프레임을 가운데. lg 에서 2배 확대(§3·§5). */}
             <div className="relative min-h-[220px] lg:min-h-[390px]">
                 <ItemFrame
@@ -97,51 +97,51 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     </span>
                 </div>
 
-                <h2 className="mt-4 text-xl font-bold leading-tight text-gray-900 lg:text-2xl">
+                <h2 className="mt-4 text-xl font-bold leading-tight text-content-fg lg:text-2xl">
                     카드정보{' '}
-                    <small className="text-[10px] font-bold tracking-[0.12em] text-gray-400">
+                    <small className="text-[10px] font-bold tracking-[0.12em] text-content-subtle">
                         CARD INFO
                     </small>
                 </h2>
 
-                <dl className="mt-4 border-t border-line">
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
+                <dl className="mt-4 border-t border-content-line">
+                    <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-content-subtle">
                             타입
                         </dt>
-                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                        <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
                             {typeLine}
                         </dd>
                     </div>
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
+                    <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-content-subtle">
                             명칭
                         </dt>
-                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                        <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
                             {item.nameSnapshot}
                         </dd>
                     </div>
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
+                    <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-content-subtle">
                             채널제한
                         </dt>
-                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                        <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
                             {channelLimit}
                         </dd>
                     </div>
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
+                    <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-content-subtle">
                             속성
                         </dt>
-                        <dd className="min-w-0 break-words text-right font-semibold text-gray-900">
+                        <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
                             {elementLabelOf(item.element)}
                         </dd>
                     </div>
-                    <div className="flex items-start justify-between gap-4 border-b border-line py-2.5 text-sm">
-                        <dt className="shrink-0 font-medium text-gray-500">
+                    <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
+                        <dt className="shrink-0 font-medium text-content-subtle">
                             남은 골드 포스
                         </dt>
-                        <dd className="font-semibold tabular-nums text-gray-900">
+                        <dd className="font-semibold tabular-nums text-content-fg">
                             {goldforceDays === null
                                 ? '없음'
                                 : `${goldforceDays}일`}
@@ -149,8 +149,8 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     </div>
                 </dl>
 
-                <div className="mt-5 rounded-lg bg-surface-sunken p-4">
-                    <h3 className="text-sm font-bold text-gray-700">
+                <div className="mt-5 rounded-lg bg-content-soft p-4">
+                    <h3 className="text-sm font-bold text-content-fg">
                         특수 스킬
                     </h3>
                     {skills.length > 0 ? (
@@ -171,14 +171,14 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                                     >
                                         <span
                                             aria-hidden="true"
-                                            className="grid size-5 shrink-0 place-items-center rounded border border-line bg-surface text-xs font-bold text-navy"
+                                            className="grid size-5 shrink-0 place-items-center rounded border border-content-line bg-content-surface text-xs font-bold text-brand-structure"
                                         >
                                             {skill.slot}
                                         </span>
-                                        <span className="min-w-0 break-words font-semibold text-gray-900">
+                                        <span className="min-w-0 break-words font-semibold text-content-fg">
                                             {skillLabelOf(skill)}
                                             {showPercent && (
-                                                <span className="whitespace-nowrap font-extrabold text-gold-deep">
+                                                <span className="whitespace-nowrap font-extrabold text-brand-highlight-deep">
                                                     {' '}
                                                     ({item.skillPercent}%)
                                                 </span>
@@ -189,7 +189,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             })}
                         </ul>
                     ) : (
-                        <p className="mt-2 py-2.5 text-sm text-gray-500">
+                        <p className="mt-2 py-2.5 text-sm text-content-subtle">
                             보유한 특수 스킬이 없습니다.
                         </p>
                     )}

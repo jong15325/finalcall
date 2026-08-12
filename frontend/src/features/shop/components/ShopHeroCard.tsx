@@ -26,10 +26,10 @@ import type { ShopDetail } from '@/lib/api/shop'
  */
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
-    ACTIVE: 'bg-success-subtle text-success',
-    SOLD: 'bg-gray-100 text-gray-500',
-    EXPIRED: 'bg-gray-100 text-gray-500',
-    CANCELLED: 'bg-gray-100 text-gray-500',
+    ACTIVE: 'bg-success-soft text-success-ink',
+    SOLD: 'bg-content-soft text-content-subtle',
+    EXPIRED: 'bg-content-soft text-content-subtle',
+    CANCELLED: 'bg-content-soft text-content-subtle',
 }
 
 interface ShopHeroCardProps {
@@ -57,10 +57,10 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
     const hasSkill = skills.length > 0
     const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
     const badgeClass =
-        STATUS_BADGE_CLASS[shop.status] ?? 'bg-gray-100 text-gray-500'
+        STATUS_BADGE_CLASS[shop.status] ?? 'bg-content-soft text-content-subtle'
 
     return (
-        <section className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
+        <section className="grid overflow-hidden rounded-2xl border border-content-line bg-content-surface md:grid-cols-[118px_minmax(0,1fr)] lg:grid-cols-[245px_minmax(0,1fr)]">
             {/* 아트 열 — 스프라이트 스테이지가 열 전체를 채우고 프레임을 가운데. lg 2배 확대(§3·§5). */}
             <div className="relative min-h-[220px] lg:min-h-[390px]">
                 <ItemFrame
@@ -84,25 +84,25 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
                     >
                         {shopStatusLabelOf(shop.status)}
                     </span>
-                    <span className="rounded-full bg-navy/10 px-2.5 py-1 text-[11px] font-bold text-navy-700">
+                    <span className="rounded-full bg-brand-structure/10 px-2.5 py-1 text-[11px] font-bold text-chrome-selected">
                         고정가
                     </span>
                     {goldforceDays !== null && (
-                        <span className="rounded-full bg-gold-subtle px-2.5 py-1 text-[11px] font-bold text-gold-deep">
+                        <span className="rounded-full bg-brand-highlight-soft px-2.5 py-1 text-[11px] font-bold text-brand-highlight-deep">
                             골드포스 {goldforceDays}일 남음
                         </span>
                     )}
                 </div>
 
-                <h2 className="mt-4 text-xl font-bold leading-tight text-gray-900 lg:text-2xl">
+                <h2 className="mt-4 text-xl font-bold leading-tight text-content-fg lg:text-2xl">
                     {item.nameSnapshot}
                 </h2>
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-content-subtle">
                     {itemTypeLabel(item.subGroup, item.kind)} ·{' '}
                     {elementBadgeLabelOf(item.element)} · Lv.{item.level}
                 </p>
 
-                <p className="my-5 rounded-lg bg-surface-sunken p-3.5 text-sm text-gray-600">
+                <p className="my-5 rounded-lg bg-content-soft p-3.5 text-sm text-content-muted">
                     {item.specSnapshot}
                 </p>
 
@@ -110,28 +110,28 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
                     {skills.map((skill) => (
                         <div
                             key={skill.slot}
-                            className="flex items-center justify-between border-b border-line py-2.5 text-sm"
+                            className="flex items-center justify-between border-b border-content-line py-2.5 text-sm"
                         >
-                            <dt className="font-medium text-gray-500">
+                            <dt className="font-medium text-content-subtle">
                                 스킬 {skill.slot}
                             </dt>
-                            <dd className="font-semibold text-gray-900">
+                            <dd className="font-semibold text-content-fg">
                                 {skillLabelOf(skill)}
                             </dd>
                         </div>
                     ))}
                     {item.skillPercent > 0 && (
-                        <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                            <dt className="font-medium text-gray-500">
+                        <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
+                            <dt className="font-medium text-content-subtle">
                                 발동 확률
                             </dt>
-                            <dd className="font-semibold text-gray-900">
+                            <dd className="font-semibold text-content-fg">
                                 +{item.skillPercent}%
                             </dd>
                         </div>
                     )}
                     {skills.length === 0 && item.skillPercent <= 0 && (
-                        <div className="py-2.5 text-sm text-gray-400">
+                        <div className="py-2.5 text-sm text-content-subtle">
                             스킬 없음
                         </div>
                     )}

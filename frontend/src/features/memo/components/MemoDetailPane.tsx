@@ -56,10 +56,10 @@ function MemoDetailPane({
     if (selectedId === null) {
         return (
             <div className="hidden flex-1 flex-col items-center justify-center gap-3 p-10 text-center lg:flex">
-                <span className="flex size-14 items-center justify-center rounded-2xl bg-surface-sunken text-gray-300">
+                <span className="flex size-14 items-center justify-center rounded-2xl bg-content-soft text-content-line">
                     <TbMailOpened aria-hidden className="size-7" />
                 </span>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-content-subtle">
                     왼쪽에서 쪽지를 선택하면 여기에 내용이 표시됩니다.
                 </p>
             </div>
@@ -75,12 +75,12 @@ function MemoDetailPane({
             <div className="flex flex-1 flex-col">
                 <MobileBackBar onBack={onBack} />
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-content-subtle">
                         {memoAccessErrorMessage(error)}
                     </p>
                     <button
                         type="button"
-                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                         onClick={onRetry}
                     >
                         다시 시도
@@ -103,7 +103,7 @@ function MemoDetailPane({
             <MobileBackBar onBack={onBack} />
 
             {/* 헤더 */}
-            <div className="flex items-start gap-3 border-b border-line px-5 py-4">
+            <div className="flex items-start gap-3 border-b border-content-line px-5 py-4">
                 <MemoAvatar
                     initial={avatarInitial(name)}
                     system={system}
@@ -111,11 +111,11 @@ function MemoDetailPane({
                 />
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <span className="truncate text-base font-bold text-gray-900">
+                        <span className="truncate text-base font-bold text-content-fg">
                             {name}
                         </span>
                         {system ? (
-                            <span className="flex-none rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-bold text-navy-700">
+                            <span className="flex-none rounded-full bg-brand-structure/10 px-1.5 py-0.5 text-[10px] font-bold text-chrome-selected">
                                 시스템
                             </span>
                         ) : (
@@ -127,7 +127,7 @@ function MemoDetailPane({
                             )
                         )}
                     </div>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-content-subtle">
                         {box === 'received' ? '받은 쪽지' : '보낸 쪽지'} ·{' '}
                         {formatMemoTimeFull(memo.createdAt)}
                         {readNote ? ` · ${readNote}` : ''}
@@ -139,7 +139,7 @@ function MemoDetailPane({
                     {!system && (
                         <button
                             type="button"
-                            className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100"
+                            className="inline-flex items-center gap-1 rounded-lg border border-content-line bg-content-surface px-3 py-2 text-sm font-bold text-content-fg hover:bg-content-soft"
                             onClick={() => onReply(replyTarget)}
                         >
                             <TbArrowBackUp aria-hidden className="size-4" />
@@ -149,7 +149,7 @@ function MemoDetailPane({
                     <button
                         type="button"
                         disabled={isDeleting}
-                        className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-bold text-danger hover:bg-danger-subtle disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-1 rounded-lg border border-content-line bg-content-surface px-3 py-2 text-sm font-bold text-danger-ink hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={onDelete}
                     >
                         <TbTrash aria-hidden className="size-4" />
@@ -160,7 +160,7 @@ function MemoDetailPane({
 
             {/* 본문 + 게임 미리보기 */}
             <div className="min-h-0 flex-1 overflow-y-auto">
-                <p className="whitespace-pre-wrap break-keep px-5 py-5 text-[15px] leading-7 text-gray-800">
+                <p className="whitespace-pre-wrap break-keep px-5 py-5 text-[15px] leading-7 text-content-fg">
                     {memo.body}
                 </p>
                 <div className="px-5 pb-5">
@@ -177,16 +177,16 @@ function MemoDetailPane({
 /** 모바일 상세 상단 뒤로가기 바(데스크톱에선 숨김). */
 function MobileBackBar({ onBack }: { onBack: () => void }) {
     return (
-        <div className="flex h-12 items-center gap-1 border-b border-line px-2 lg:hidden">
+        <div className="flex h-12 items-center gap-1 border-b border-content-line px-2 lg:hidden">
             <button
                 type="button"
                 aria-label="목록으로"
-                className="flex size-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+                className="flex size-9 items-center justify-center rounded-lg text-content-muted hover:bg-content-soft"
                 onClick={onBack}
             >
                 <TbChevronLeft aria-hidden className="size-5" />
             </button>
-            <span className="text-sm font-bold text-gray-900">쪽지</span>
+            <span className="text-sm font-bold text-content-fg">쪽지</span>
         </div>
     )
 }
@@ -195,17 +195,17 @@ function DetailSkeleton({ onBack }: { onBack: () => void }) {
     return (
         <div aria-hidden className="flex flex-1 flex-col">
             <MobileBackBar onBack={onBack} />
-            <div className="flex items-start gap-3 border-b border-line px-5 py-4">
-                <div className="size-11 animate-pulse rounded-full bg-gray-100" />
+            <div className="flex items-start gap-3 border-b border-content-line px-5 py-4">
+                <div className="size-11 animate-pulse rounded-full bg-content-soft" />
                 <div className="flex-1 space-y-2 py-1">
-                    <div className="h-4 w-32 animate-pulse rounded bg-gray-100" />
-                    <div className="h-3 w-48 animate-pulse rounded bg-gray-100" />
+                    <div className="h-4 w-32 animate-pulse rounded bg-content-soft" />
+                    <div className="h-3 w-48 animate-pulse rounded bg-content-soft" />
                 </div>
             </div>
             <div className="space-y-2 px-5 py-5">
-                <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
-                <div className="h-4 w-4/5 animate-pulse rounded bg-gray-100" />
-                <div className="h-24 w-full animate-pulse rounded bg-gray-100" />
+                <div className="h-4 w-full animate-pulse rounded bg-content-soft" />
+                <div className="h-4 w-4/5 animate-pulse rounded bg-content-soft" />
+                <div className="h-24 w-full animate-pulse rounded bg-content-soft" />
             </div>
         </div>
     )

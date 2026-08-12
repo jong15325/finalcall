@@ -7,10 +7,8 @@ import BidDialog from '@/features/auction/components/BidDialog'
 import PurchaseDialog from '@/features/auction/components/PurchaseDialog'
 import { useCompareStore } from '@/store/compareStore'
 import AppShell from './AppShell'
-import { useAppFooterVariant } from './AppFooterContext'
 
 function CompactPage() {
-    useAppFooterVariant('compact')
     return (
         <main>
             짧은 상태 <Link to="/market">정상 route로</Link>
@@ -119,11 +117,7 @@ describe('AppShell route-scoped 상세 배경', () => {
 
         expect(shell).toHaveClass('isolate')
         expect(shell).toHaveClass('app-shell-height')
-        expect(shell).toHaveAttribute('data-detail-theme', 'fire')
-        expect(shell).toHaveStyle({
-            '--detail-accent': '#ff5500',
-            '--detail-cta-bg': '#f59e0b',
-        })
+        expect(scene).toHaveAttribute('data-accent', 'fire')
         expect(scene).toHaveClass(
             'world-map-background',
             'absolute',
@@ -137,7 +131,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.container.querySelector('header')).toHaveClass(
             'sticky',
             'z-30',
-            'bg-surface/95',
+            'bg-chrome',
         )
         expect(
             view.getByRole('navigation', { name: '모바일 주요 메뉴' }),
@@ -147,8 +141,8 @@ describe('AppShell route-scoped 상세 배경', () => {
         ).toBeNull()
         expect(view.container.querySelector('footer')).toHaveClass(
             'z-10',
-            'bg-navy-900',
-            'text-gray-300',
+            'bg-chrome-strong',
+            'text-chrome-muted',
         )
         expect(view.container.querySelector('#view')).not.toHaveClass(
             'overflow-auto',
@@ -156,9 +150,9 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.getByTestId('app-content-plane')).toHaveClass(
             'max-w-[1440px]',
-            'bg-surface',
+            'bg-content-surface',
             'sm:border',
-            'sm:border-line',
+            'sm:border-content-line',
             'sm:rounded-xl',
             'sm:shadow-sm',
             'xl:rounded-2xl',
@@ -215,10 +209,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(
             view.container.querySelectorAll('.world-map-background'),
         ).toHaveLength(1)
-        expect(view.container.firstElementChild).toHaveAttribute(
-            'data-detail-theme',
-            'water',
-        )
+        expect(scene).toHaveAttribute('data-accent', 'water')
         expect(view.getByText('경매 목록')).toBeVisible()
     })
 
@@ -273,7 +264,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         const longView = renderShell('/long')
         expect(longView.container.querySelector('footer')).toHaveAttribute(
             'data-variant',
-            'default',
+            'compact',
         )
         expect(longView.container.querySelector('#view')).not.toHaveClass(
             'overflow-auto',
@@ -304,10 +295,9 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(
             view.container.querySelector('.world-map-background'),
         ).toHaveAttribute('data-accent', 'water')
-        expect(view.container.firstElementChild).toHaveAttribute(
-            'data-detail-theme',
-            'water',
-        )
+        expect(
+            view.container.querySelector('.world-map-background'),
+        ).toHaveAttribute('data-accent', 'water')
         expect(imageConstructor).not.toHaveBeenCalled()
         expect(requestFrame).not.toHaveBeenCalled()
         expect(addMediaListener).toHaveBeenCalledTimes(1)
@@ -330,18 +320,16 @@ describe('AppShell route-scoped 상세 배경', () => {
 
     it('목록→상세는 water를 응답 element로 교체하고 목록→다른 route는 정리한다', () => {
         const detailView = renderShell('/auctions')
-        expect(detailView.container.firstElementChild).toHaveAttribute(
-            'data-detail-theme',
-            'water',
-        )
+        expect(
+            detailView.container.querySelector('.world-map-background'),
+        ).toHaveAttribute('data-accent', 'water')
         fireEvent.click(detailView.getByRole('link', { name: '상세로' }))
         expect(
             detailView.container.querySelectorAll('.world-map-background'),
         ).toHaveLength(1)
-        expect(detailView.container.firstElementChild).toHaveAttribute(
-            'data-detail-theme',
-            'fire',
-        )
+        expect(
+            detailView.container.querySelector('.world-map-background'),
+        ).toHaveAttribute('data-accent', 'fire')
         detailView.unmount()
 
         const leaveView = renderShell('/auctions')
@@ -349,21 +337,17 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(
             leaveView.container.querySelectorAll('.world-map-background'),
         ).toHaveLength(1)
-        expect(leaveView.container.firstElementChild).not.toHaveAttribute(
-            'data-detail-theme',
-        )
+        expect(
+            leaveView.container.querySelector('.world-map-background'),
+        ).toHaveAttribute('data-accent', 'neutral')
     })
 
     it('아이템 상세도 응답 속성으로 theme을 등록한다', () => {
         const view = renderShell('/items/I-1')
 
-        expect(view.container.firstElementChild).toHaveAttribute(
-            'data-detail-theme',
-            'water',
-        )
-        expect(view.container.firstElementChild).toHaveStyle({
-            '--detail-accent': '#19b2ff',
-        })
+        expect(
+            view.container.querySelector('.world-map-background'),
+        ).toHaveAttribute('data-accent', 'water')
     })
 
     it('xl PC는 Sidebar DOM 없이 수평 메뉴와 content plane을 렌더한다', () => {
@@ -385,7 +369,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.getByTestId('app-content-plane')).toHaveClass(
             'max-w-[1440px]',
-            'bg-surface',
+            'bg-content-surface',
         )
         vi.unstubAllGlobals()
     })

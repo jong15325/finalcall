@@ -45,21 +45,21 @@ export default function AuthTextField({
         <div>
             <label
                 htmlFor={id}
-                className="text-xs font-semibold text-gray-600"
+                className="text-xs font-semibold text-content-muted"
             >
                 {label}
             </label>
             <div className="mt-1.5 flex gap-2">
                 <div
-                    className={`flex h-11 min-w-0 flex-1 items-center rounded-lg border bg-surface transition focus-within:ring-2 ${
+                    className={`flex h-11 min-w-0 flex-1 items-center rounded-lg border bg-content-surface transition focus-within:ring-2 ${
                         invalid
                             ? 'border-danger focus-within:ring-danger/30'
-                            : 'border-line focus-within:border-orange focus-within:ring-orange/30'
+                            : 'border-content-line focus-within:border-control-action focus-within:ring-control-action/30'
                     }`}
                 >
                     <span
                         aria-hidden
-                        className="ml-3.5 flex shrink-0 text-lg text-gray-400"
+                        className="ml-3.5 flex shrink-0 text-lg text-content-subtle"
                     >
                         {icon}
                     </span>
@@ -73,7 +73,7 @@ export default function AuthTextField({
                         maxLength={maxLength}
                         aria-invalid={invalid || undefined}
                         aria-describedby={describedById}
-                        className="min-w-0 flex-1 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+                        className="min-w-0 flex-1 bg-transparent px-3 text-sm text-content-fg placeholder:text-content-subtle outline-none"
                         onChange={(event) => onChange(event.target.value)}
                     />
                 </div>

@@ -22,6 +22,40 @@ interface HomeSectionProps {
     children: ReactNode
 }
 
+type HomeSectionHeadingProps = Omit<HomeSectionProps, 'children'>
+
+export function HomeSectionHeading({
+    icon: Icon,
+    title,
+    description,
+    seeAllHref,
+    seeAllLabel = '전체 보기',
+}: HomeSectionHeadingProps) {
+    return (
+        <header className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+                <h2 className="flex items-center gap-2 text-lg font-bold text-content-fg xs:text-xl">
+                    <Icon aria-hidden className="size-5 text-brand-structure" />
+                    {title}
+                </h2>
+                {description && (
+                    <p className="mt-0.5 truncate text-xs text-content-subtle xs:text-sm">
+                        {description}
+                    </p>
+                )}
+            </div>
+
+            <Link
+                to={seeAllHref}
+                className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-brand-structure hover:text-control-action-hover xs:text-sm"
+            >
+                {seeAllLabel}
+                <TbChevronRight aria-hidden className="size-4" />
+            </Link>
+        </header>
+    )
+}
+
 function HomeSection({
     icon: Icon,
     title,
@@ -32,27 +66,13 @@ function HomeSection({
 }: HomeSectionProps) {
     return (
         <section className="flex flex-col gap-3">
-            <header className="flex items-end justify-between gap-3">
-                <div className="min-w-0">
-                    <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 xs:text-xl">
-                        <Icon aria-hidden className="size-5 text-navy" />
-                        {title}
-                    </h2>
-                    {description && (
-                        <p className="mt-0.5 truncate text-xs text-gray-500 xs:text-sm">
-                            {description}
-                        </p>
-                    )}
-                </div>
-
-                <Link
-                    to={seeAllHref}
-                    className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-navy hover:text-orange-deep xs:text-sm"
-                >
-                    {seeAllLabel}
-                    <TbChevronRight aria-hidden className="size-4" />
-                </Link>
-            </header>
+            <HomeSectionHeading
+                icon={Icon}
+                title={title}
+                description={description}
+                seeAllHref={seeAllHref}
+                seeAllLabel={seeAllLabel}
+            />
 
             {children}
         </section>

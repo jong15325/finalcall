@@ -21,7 +21,6 @@ import CommentSection from '@/features/board/components/CommentSection'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시글 상세 `/boards/:slug/:postId` (FC-202 — 승인 화면 C).
@@ -109,10 +108,6 @@ export default function PostDetailPage() {
     // 글 없음(삭제·미존재) — 상세 대신 안내.
     const notFound =
         isError && isApiError(error) && error.code === ERROR_CODES.POST_001
-    useAppFooterVariant(
-        !isPending && (notFound || isError || !post) ? 'compact' : 'default',
-    )
-
     if (notFound) {
         return (
             <BoardStateBlock
@@ -122,7 +117,7 @@ export default function PostDetailPage() {
                 action={
                     <Link
                         to={boardPath(slug)}
-                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                     >
                         목록으로
                     </Link>
@@ -133,13 +128,13 @@ export default function PostDetailPage() {
 
     if (isPending) {
         return (
-            <div className="rounded-2xl border border-line bg-surface p-7">
-                <div className="h-6 w-2/3 animate-pulse rounded bg-gray-100" />
-                <div className="mt-4 h-3 w-1/3 animate-pulse rounded bg-gray-100" />
+            <div className="rounded-2xl border border-content-line bg-content-surface p-7">
+                <div className="h-6 w-2/3 animate-pulse rounded bg-content-soft" />
+                <div className="mt-4 h-3 w-1/3 animate-pulse rounded bg-content-soft" />
                 <div className="mt-8 space-y-3">
-                    <div className="h-3 w-full animate-pulse rounded bg-gray-100" />
-                    <div className="h-3 w-5/6 animate-pulse rounded bg-gray-100" />
-                    <div className="h-3 w-4/6 animate-pulse rounded bg-gray-100" />
+                    <div className="h-3 w-full animate-pulse rounded bg-content-soft" />
+                    <div className="h-3 w-5/6 animate-pulse rounded bg-content-soft" />
+                    <div className="h-3 w-4/6 animate-pulse rounded bg-content-soft" />
                 </div>
             </div>
         )
@@ -154,7 +149,7 @@ export default function PostDetailPage() {
                 action={
                     <button
                         type="button"
-                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                         onClick={() => void refetch()}
                     >
                         다시 시도
@@ -175,36 +170,36 @@ export default function PostDetailPage() {
             {/* 뒤로 */}
             <Link
                 to={boardPath(slug)}
-                className="inline-flex w-max items-center gap-1 text-sm font-semibold text-gray-500 hover:text-navy"
+                className="inline-flex w-max items-center gap-1 text-sm font-semibold text-content-subtle hover:text-brand-structure"
             >
                 <TbChevronLeft aria-hidden className="size-4" />
                 {boardQuery.data?.name ?? '목록'}
             </Link>
 
-            <article className="rounded-2xl border border-line bg-surface p-6 sm:p-7">
+            <article className="rounded-2xl border border-content-line bg-content-surface p-6 sm:p-7">
                 {/* 헤더 */}
-                <header className="border-b border-line pb-5">
-                    <h1 className="flex items-start gap-2 text-[22px] font-bold leading-snug text-gray-900">
+                <header className="border-b border-content-line pb-5">
+                    <h1 className="flex items-start gap-2 text-[22px] font-bold leading-snug text-content-fg">
                         {post.isPinned && (
-                            <span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-gold-subtle px-2 py-0.5 text-[11px] font-bold text-gold-deep">
+                            <span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-highlight-soft px-2 py-0.5 text-[11px] font-bold text-brand-highlight-deep">
                                 <TbPin aria-hidden className="size-3" />
                                 고정
                             </span>
                         )}
                         {post.title}
                     </h1>
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-gray-500">
-                        <span className="inline-flex items-center gap-1.5 font-bold text-gray-700">
-                            <span className="grid size-6 place-items-center rounded-full bg-navy-600 text-[11px] font-bold text-white">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-content-subtle">
+                        <span className="inline-flex items-center gap-1.5 font-bold text-content-fg">
+                            <span className="grid size-6 place-items-center rounded-full bg-chrome-selected text-[11px] font-bold text-on-strong">
                                 {avatarInitial(post.authorNickname)}
                             </span>
                             {post.authorNickname}
                         </span>
-                        <span aria-hidden className="text-gray-300">
+                        <span aria-hidden className="text-content-line">
                             ·
                         </span>
                         <span>{formatPostTimeFull(post.createdAt)}</span>
-                        <span aria-hidden className="text-gray-300">
+                        <span aria-hidden className="text-content-line">
                             ·
                         </span>
                         <span className="inline-flex items-center gap-1">
@@ -213,7 +208,7 @@ export default function PostDetailPage() {
                         </span>
                         {boardQuery.data?.allowComments && (
                             <>
-                                <span aria-hidden className="text-gray-300">
+                                <span aria-hidden className="text-content-line">
                                     ·
                                 </span>
                                 <span className="inline-flex items-center gap-1">
@@ -228,7 +223,7 @@ export default function PostDetailPage() {
                             <span className="ml-auto flex items-center gap-2">
                                 <Link
                                     to={boardPostEditPath(slug, postId)}
-                                    className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-bold text-gray-600 hover:border-navy"
+                                    className="inline-flex items-center gap-1 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-bold text-content-muted hover:border-brand-structure"
                                 >
                                     <TbPencil
                                         aria-hidden
@@ -238,7 +233,7 @@ export default function PostDetailPage() {
                                 </Link>
                                 <button
                                     type="button"
-                                    className="inline-flex items-center gap-1 rounded-lg border border-danger-subtle bg-surface px-3 py-1.5 text-xs font-bold text-danger hover:bg-danger-subtle"
+                                    className="inline-flex items-center gap-1 rounded-lg border border-danger-soft bg-content-surface px-3 py-1.5 text-xs font-bold text-danger-ink hover:bg-danger-soft"
                                     onClick={() => setConfirmOpen(true)}
                                 >
                                     <TbTrash aria-hidden className="size-3.5" />
@@ -250,7 +245,7 @@ export default function PostDetailPage() {
                 </header>
 
                 {/* 본문 */}
-                <div className="whitespace-pre-wrap py-6 text-[15px] leading-8 text-gray-700">
+                <div className="whitespace-pre-wrap py-6 text-[15px] leading-8 text-content-fg">
                     {post.content}
                 </div>
 
@@ -262,7 +257,7 @@ export default function PostDetailPage() {
                                 key={image.imagePublicId}
                                 src={image.url}
                                 alt=""
-                                className="aspect-[4/3] w-full rounded-lg border border-line object-cover"
+                                className="aspect-[4/3] w-full rounded-lg border border-content-line object-cover"
                             />
                         ))}
                     </div>
@@ -272,7 +267,7 @@ export default function PostDetailPage() {
                 {deleteMutation.isError && (
                     <p
                         role="alert"
-                        className="mb-2 flex items-center gap-2 rounded-lg bg-danger-subtle px-3.5 py-3 text-sm text-danger"
+                        className="mb-2 flex items-center gap-2 rounded-lg bg-danger-soft px-3.5 py-3 text-sm text-danger-ink"
                     >
                         <TbAlertTriangle
                             aria-hidden
@@ -291,9 +286,9 @@ export default function PostDetailPage() {
                         commentCount={post.commentCount}
                     />
                 ) : boardQuery.isError ? null : (
-                    <div aria-hidden className="mt-6 border-t border-line pt-6">
-                        <div className="h-5 w-24 animate-pulse rounded bg-gray-100" />
-                        <div className="mt-4 h-16 animate-pulse rounded-lg bg-gray-100" />
+                    <div aria-hidden className="mt-6 border-t border-content-line pt-6">
+                        <div className="h-5 w-24 animate-pulse rounded bg-content-soft" />
+                        <div className="mt-4 h-16 animate-pulse rounded-lg bg-content-soft" />
                     </div>
                 )}
             </article>
@@ -302,7 +297,7 @@ export default function PostDetailPage() {
             {confirmOpen && (
                 <div
                     role="presentation"
-                    className="fixed inset-0 z-50 grid place-items-center bg-navy/40 p-4"
+                    className="fixed inset-0 z-50 grid place-items-center bg-brand-structure/40 p-4"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget)
                             setConfirmOpen(false)
@@ -313,23 +308,23 @@ export default function PostDetailPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="deletePostTitle"
-                        className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl"
+                        className="w-full max-w-sm rounded-2xl bg-content-surface p-6 shadow-xl"
                         onMouseDown={(event) => event.stopPropagation()}
                     >
                         <h2
                             id="deletePostTitle"
-                            className="text-lg font-bold text-gray-900"
+                            className="text-lg font-bold text-content-fg"
                         >
                             게시글을 삭제할까요?
                         </h2>
-                        <p className="mt-1.5 text-sm text-gray-500">
+                        <p className="mt-1.5 text-sm text-content-subtle">
                             삭제한 글은 되돌릴 수 없어요.
                         </p>
                         <div className="mt-5 flex justify-end gap-2.5">
                             <button
                                 ref={cancelRef}
                                 type="button"
-                                className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:border-navy"
+                                className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:border-brand-structure"
                                 onClick={() => setConfirmOpen(false)}
                             >
                                 취소
@@ -337,7 +332,7 @@ export default function PostDetailPage() {
                             <button
                                 type="button"
                                 disabled={deleteMutation.isPending}
-                                className="rounded-lg bg-danger px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-lg bg-danger px-4 py-2.5 text-sm font-bold text-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                 onClick={handleDelete}
                             >
                                 {deleteMutation.isPending ? '삭제 중…' : '삭제'}
@@ -351,7 +346,7 @@ export default function PostDetailPage() {
             <div className="text-center">
                 <Link
                     to={boardPath(slug)}
-                    className="text-sm font-semibold text-gray-400 hover:text-navy"
+                    className="text-sm font-semibold text-content-subtle hover:text-brand-structure"
                 >
                     목록으로
                 </Link>

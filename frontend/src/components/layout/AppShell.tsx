@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
+import { resolveRouteUi } from '@/app/routeUi'
 import CompareBar from '@/features/item/components/CompareBar'
 import Sidebar from './Sidebar'
 import TopNavbar from './TopNavbar'
@@ -8,15 +9,7 @@ import HorizontalNav from './HorizontalNav'
 import useDesktopLayout from './useDesktopLayout'
 import WorldMapBackground from './WorldMapBackground'
 import AppFooter from './AppFooter'
-import {
-    AppFooterVariantProvider,
-    type AppFooterVariant,
-} from './AppFooterContext'
-import {
-    RouteVisualThemeProvider,
-    routeThemeStyle,
-    useRouteVisualTheme,
-} from './RouteVisualThemeContext'
+import { RouteAccentProvider, useRouteAccent } from './RouteAccentContext'
 
 /**
  * 앱 셸 (FC-067 — HANDOVER §5·§20).
@@ -36,20 +29,19 @@ import {
 
 function AppShell() {
     return (
-        <RouteVisualThemeProvider>
-            <ThemedAppShell />
-        </RouteVisualThemeProvider>
+        <RouteAccentProvider>
+            <AppShellContent />
+        </RouteAccentProvider>
     )
 }
 
-function ThemedAppShell() {
-    const { theme } = useRouteVisualTheme()
+function AppShellContent() {
+    const { accent } = useRouteAccent()
     // 기본 미고정(localStorage 없으면 false = 레일 + hover). 명세: 버튼 OFF 일 때 hover 가 기본 동작.
     const [mobileOpen, setMobileOpen] = useState(false)
-    const [footerVariant, setFooterVariant] =
-        useState<AppFooterVariant>('default')
     const desktop = useDesktopLayout()
     const { pathname } = useLocation()
+    const routeUi = resolveRouteUi(pathname)
     const menuButtonRef = useRef<HTMLButtonElement>(null)
     const previousPathRef = useRef(pathname)
 
@@ -84,12 +76,8 @@ function ThemedAppShell() {
     }, [closeMobile, mobileOpen])
 
     return (
-        <div
-            className="app-shell-height relative isolate flex bg-transparent"
-            data-detail-theme={theme ?? undefined}
-            style={theme ? routeThemeStyle(theme) : undefined}
-        >
-            <WorldMapBackground accent={theme} />
+        <div className="app-shell-height relative isolate flex bg-transparent">
+            <WorldMapBackground accent={accent} />
             {!desktop && mobileOpen && (
                 <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
@@ -107,15 +95,14 @@ function ThemedAppShell() {
                 >
                     <div
                         data-testid="app-content-plane"
-                        className="mx-auto w-full min-w-0 max-w-[1440px] bg-surface px-3 py-4 sm:rounded-xl sm:border sm:border-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl"
+                        data-content-plane={routeUi.contentPlane}
+                        className="mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl"
                     >
-                        <AppFooterVariantProvider value={setFooterVariant}>
-                            <Outlet />
-                        </AppFooterVariantProvider>
+                        <Outlet />
                     </div>
                 </main>
 
-                <AppFooter variant={footerVariant} />
+                <AppFooter variant={routeUi.footer} />
             </div>
 
             <CompareBar />

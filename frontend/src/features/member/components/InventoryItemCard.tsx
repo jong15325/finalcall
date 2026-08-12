@@ -1,7 +1,13 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { TbLock } from 'react-icons/tb'
-import ItemCardTile from '@/features/item/components/ItemCardTile'
-import type { ItemCardData } from '@/features/item/components/ItemCard'
+import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
+import ItemCardFlip from '@/features/item/components/ItemCardFlip'
+import ItemCardView, {
+    ItemCardArtwork,
+    ItemCardBackView,
+} from '@/features/item/components/ItemCardView'
+import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
+import type { ItemCardSource } from '@/features/item/components/itemCardModel'
 import { decodeTypeCode } from '@/features/item/lib/itemCode'
 import DeliveryBadge from '@/features/delivery/components/DeliveryBadge'
 import { isFailed, isShipping } from '@/features/delivery/lib/deliveryView'
@@ -12,14 +18,14 @@ import type { InventoryItem } from '@/lib/api/inventory'
  * 인벤토리 카드 — **아이템 마켓 카드와 동일**(FC-178 · 승인 목업 `sell-flow-mockup.html`).
  *
  * ══════════════════════════════════════════════════════════════════════════════
- * ★ **정본 `ItemCardTile` 의 얇은 어댑터**(EPIC-CARD-SYSTEM T5 · 제안 §3 단계3). 마켓 `ShopCard`
+ * ★ **정본 카드 composition의 얇은 어댑터**. 마켓 `ShopCard`
  *   와 같은 타일 조립(`.shop-card` 래퍼·전면 오버레이 열기 버튼)을 공유하고, 이 어댑터는 인벤토리
- *   요약을 `ItemCardData` 로 매핑만 한다. 마켓과 다른 점은 **가격·판매자·비교 토글이 없다**는 것뿐
+ *   요약을 view model로 매핑만 한다. 마켓과 다른 점은 **가격·판매자·비교 토글이 없다**는 것뿐
  *   (내 보유 아이템이라 판매가 없음 → `price`·`sellerNickname`·`compare` 미전달, `variant="market"`).
  *   그리드 슬롯 높이를 채우려 `fullHeight` 를 준다.
  * ══════════════════════════════════════════════════════════════════════════════
  * ★ **데이터 매핑**: 인벤토리 요약(`summary`)은 4축을 `typeCode` 하나로 싣는다(계약 §4.2) →
- *   `decodeTypeCode` 로 분해해 `ItemCardData` 로 옮긴다. **스킬명(skill1Name/skill2Name)은 계약
+ *   `decodeTypeCode` 로 분해해 공용 source로 옮긴다. **스킬명(skill1Name/skill2Name)은 계약
  *   v1.21(FC-179) 델타로 요약에 실린다** → 그대로 전달해 인벤 카드도 `스킬 #코드` 대신 실제 이름을
  *   표시한다(마켓·경매와 동일 배선 = `skillSlots.skillLabelOf`). 이름이 null 이면 코드 폴백은 유지.
  *
@@ -39,8 +45,8 @@ interface InventoryItemCardProps {
     deliveryStatus?: DeliveryStatus
 }
 
-/** 인벤토리 요약 → 공용 카드 데이터(`ItemCardData`). 스킬명(v1.21 델타)을 그대로 전달한다. */
-function toCardData(item: InventoryItem): ItemCardData {
+/** 인벤토리 요약 → 공용 카드 source. 스킬명(v1.21 델타)을 그대로 전달한다. */
+function toCardData(item: InventoryItem): ItemCardSource {
     const { summary } = item
     const axes = decodeTypeCode(summary.typeCode)
     return {
@@ -64,6 +70,7 @@ function InventoryItemCard({
     onOpen,
     deliveryStatus,
 }: InventoryItemCardProps) {
+    const [flipped, setFlipped] = useState(false)
     const shipping = deliveryStatus !== undefined && isShipping(deliveryStatus)
     const failed = deliveryStatus !== undefined && isFailed(deliveryStatus)
 
@@ -74,28 +81,54 @@ function InventoryItemCard({
 
     // 배송 진행 중·실패는 하단에 상시 잠금 문구(디자인 승인 "상시 노출"). 재판매(판매 등록) 불가.
     const footer = shipping ? (
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-content-subtle">
             <TbLock aria-hidden className="size-3.5" />
             배송 중 · 판매 등록 불가
         </span>
     ) : failed ? (
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-danger">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-danger-ink">
             <TbLock aria-hidden className="size-3.5" />
             지급 실패 · 고객센터 문의
         </span>
     ) : undefined
+    const viewModel = toItemCardViewModel(toCardData(item), now ?? Date.now())
 
     return (
-        <ItemCardTile
-            fullHeight
-            variant="market"
-            item={toCardData(item)}
-            now={now}
-            openLabel={item.summary.displayName}
+        <div className="shop-card group h-full w-full rounded-xl transition-transform hover:-translate-y-[3px]">
+            <ItemCardView
+                density="compact"
+                item={viewModel}
+                artwork={
+                    viewModel.skills.length > 0 ? (
+                        <ItemCardFlip
+                            back={<ItemCardBackView item={viewModel} />}
+                            flipped={flipped}
+                            front={<ItemCardArtwork item={viewModel} />}
+                            label={viewModel.name}
+                            onFlippedChange={setFlipped}
+                        />
+                    ) : (
+                        <div className="item-card__skill-flip is-market">
+                            <ItemCardArtwork item={viewModel} />
+                        </div>
+                    )
+                }
             badge={badge}
-            footer={footer}
-            onOpen={() => onOpen(item)}
-        />
+                footer={
+                    <div className="flex flex-col gap-2">
+                        {footer}
+                        <ItemCardActionSurface
+                            opensDialog
+                            action={{
+                                kind: 'button',
+                                label: `${viewModel.name} 카드정보 보기`,
+                                onPress: () => onOpen(item),
+                            }}
+                        />
+                    </div>
+                }
+            />
+        </div>
     )
 }
 

@@ -3,7 +3,6 @@ import { Link } from 'react-router'
 import { TbAlertTriangle, TbColumns3, TbX } from 'react-icons/tb'
 import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 import Countdown from '@/features/auction/components/Countdown'
 import {
     auctionPhaseLabelOf,
@@ -171,8 +170,6 @@ export default function ComparePage() {
         }
     })
 
-    useAppFooterVariant(columns.length === 0 ? 'compact' : 'default')
-
     if (columns.length === 0) return <CompareEmpty />
 
     const count = columns.length
@@ -185,18 +182,18 @@ export default function ComparePage() {
         <div className="flex flex-col gap-5">
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                        <TbColumns3 aria-hidden className="size-6 text-navy" />
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
+                        <TbColumns3 aria-hidden className="size-6 text-brand-structure" />
                         아이템 비교
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         가격과 스킬 1·2를 가장 먼저 확인하고 거래 방식을
                         비교하세요.
                     </p>
                 </div>
                 <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-content-line px-3 py-2 text-sm font-bold text-content-muted hover:bg-content-soft"
                     onClick={clear}
                 >
                     <TbX aria-hidden className="size-4" />
@@ -204,20 +201,20 @@ export default function ComparePage() {
                 </button>
             </header>
 
-            <section className="overflow-hidden rounded-2xl border border-line bg-surface">
+            <section className="overflow-hidden rounded-2xl border border-content-line bg-content-surface">
                 {/* 내부 가로 스크롤 — 모바일에서 표가 넘치면 여기서만 스크롤한다 */}
                 <div className="overflow-x-auto [overscroll-behavior-inline:contain]">
                     <div style={gridStyle}>
                         {/* 상품 헤더 행 */}
                         <div
                             style={gridStyle}
-                            className="sticky top-0 z-[3] grid bg-surface"
+                            className="sticky top-0 z-[3] grid bg-content-surface"
                         >
-                            <div className="sticky left-0 z-[4] flex flex-col justify-end gap-2 border-b border-r border-line bg-surface-sunken p-4">
-                                <span className="w-fit rounded-full bg-navy/10 px-2 py-0.5 text-[10px] font-bold text-navy-700">
+                            <div className="sticky left-0 z-[4] flex flex-col justify-end gap-2 border-b border-r border-content-line bg-content-soft p-4">
+                                <span className="w-fit rounded-full bg-brand-structure/10 px-2 py-0.5 text-[10px] font-bold text-chrome-selected">
                                     최대 {MAX_COMPARE_ITEMS}개
                                 </span>
-                                <strong className="text-xs text-gray-900">
+                                <strong className="text-xs text-content-fg">
                                     비교 항목
                                 </strong>
                             </div>
@@ -243,9 +240,9 @@ export default function ComparePage() {
                                         <CodeAmount
                                             value={column.price.amount}
                                             mode="full"
-                                            className="text-lg font-bold text-orange-deep"
+                                            className="text-lg font-bold text-control-action-hover"
                                         />
-                                        <small className="text-[10px] text-gray-500">
+                                        <small className="text-[10px] text-content-subtle">
                                             {column.price.meaning}
                                         </small>
                                     </>
@@ -292,7 +289,7 @@ export default function ComparePage() {
                             columns={columns}
                             render={(column) => (
                                 <>
-                                    <strong className="text-[13px] text-gray-900">
+                                    <strong className="text-[13px] text-content-fg">
                                         {column.statusLabel ?? '-'}
                                     </strong>
                                     {column.countdownEndAt && (
@@ -319,17 +316,17 @@ export default function ComparePage() {
                                 )
                                 if (days === null) {
                                     return (
-                                        <span className="text-xs text-gray-400">
+                                        <span className="text-xs text-content-subtle">
                                             미적용
                                         </span>
                                     )
                                 }
                                 return (
                                     <>
-                                        <strong className="text-[13px] text-gray-900">
+                                        <strong className="text-[13px] text-content-fg">
                                             {days}일
                                         </strong>
-                                        <small className="text-[10px] text-gray-500">
+                                        <small className="text-[10px] text-content-subtle">
                                             잔여 기간
                                         </small>
                                     </>
@@ -345,12 +342,12 @@ export default function ComparePage() {
                             render={(column) =>
                                 column.item ? (
                                     <>
-                                        <strong className="text-[13px] text-gray-900">
+                                        <strong className="text-[13px] text-content-fg">
                                             {elementLabelOf(
                                                 column.item.element,
                                             )}
                                         </strong>
-                                        <small className="text-[10px] text-gray-500">
+                                        <small className="text-[10px] text-content-subtle">
                                             {itemTypeLabel(
                                                 column.item.subGroup,
                                                 column.item.kind,
@@ -370,7 +367,7 @@ export default function ComparePage() {
                                 column.tradeHref ? (
                                     <Link
                                         to={column.tradeHref}
-                                        className="w-fit rounded-lg border border-navy px-3 py-1.5 text-xs font-bold text-navy hover:bg-navy hover:text-white"
+                                        className="w-fit rounded-lg border border-brand-structure px-3 py-1.5 text-xs font-bold text-brand-structure hover:bg-brand-structure hover:text-on-strong"
                                     >
                                         {column.tradeLabel}
                                     </Link>
@@ -398,7 +395,7 @@ function CompareProduct({
         <button
             type="button"
             aria-label="비교에서 제거"
-            className="absolute right-2.5 top-2.5 z-[3] grid size-7 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+            className="absolute right-2.5 top-2.5 z-[3] grid size-7 place-items-center rounded-full bg-content-soft text-content-subtle hover:bg-content-line"
             onClick={onRemove}
         >
             <TbX aria-hidden className="size-4" />
@@ -407,18 +404,18 @@ function CompareProduct({
 
     if (column.state !== 'ready' || !column.item) {
         return (
-            <div className="relative min-w-0 border-b border-r border-line p-4 text-center">
+            <div className="relative min-w-0 border-b border-r border-content-line p-4 text-center">
                 {removeButton}
-                <div className="mx-auto grid h-[156px] place-items-center rounded-xl bg-navy-900/90 text-gray-500">
+                <div className="mx-auto grid h-[156px] place-items-center rounded-xl bg-chrome-strong/90 text-content-subtle">
                     {column.state === 'loading' ? (
                         <span
                             role="status"
-                            className="animate-pulse text-xs text-gray-300"
+                            className="animate-pulse text-xs text-content-line"
                         >
                             불러오는 중…
                         </span>
                     ) : (
-                        <span className="flex flex-col items-center gap-1 text-xs text-gray-300">
+                        <span className="flex flex-col items-center gap-1 text-xs text-content-line">
                             <TbAlertTriangle aria-hidden className="size-6" />
                             불러오지 못함
                         </span>
@@ -442,11 +439,11 @@ function CompareProduct({
     const hasSkill = item.skill1 !== null || item.skill2 !== null
     const badgeClass =
         column.source === 'MARKET'
-            ? 'bg-navy/10 text-navy-700'
-            : 'bg-orange-subtle text-orange-deep'
+            ? 'bg-brand-structure/10 text-chrome-selected'
+            : 'bg-control-action-soft text-control-action-hover'
 
     return (
-        <div className="relative min-w-0 border-b border-r border-line p-4 text-center">
+        <div className="relative min-w-0 border-b border-r border-content-line p-4 text-center">
             {removeButton}
             <div className="relative block h-[158px] overflow-hidden rounded-xl">
                 <ItemFrame
@@ -465,10 +462,10 @@ function CompareProduct({
             >
                 {column.sourceLabel}
             </span>
-            <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-gray-900">
+            <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-content-fg">
                 {item.nameSnapshot}
             </h2>
-            <p className="mt-0.5 line-clamp-1 text-[11px] text-gray-500">
+            <p className="mt-0.5 line-clamp-1 text-[11px] text-content-subtle">
                 {item.specSnapshot}
             </p>
         </div>
@@ -489,14 +486,14 @@ function CompareRow({
     columns: CompareColumn[]
     render: (column: CompareColumn) => ReactNode
 }) {
-    const priorityBg = priority ? 'bg-orange-subtle/30' : ''
+    const priorityBg = priority ? 'bg-control-action-soft/30' : ''
     return (
         <div style={gridStyle} className="grid">
             <strong
-                className={`sticky left-0 z-[2] flex min-h-[76px] flex-col justify-center border-b border-r border-line px-4 py-3 text-xs ${
+                className={`sticky left-0 z-[2] flex min-h-[76px] flex-col justify-center border-b border-r border-content-line px-4 py-3 text-xs ${
                     priority
-                        ? 'bg-orange-subtle/40 text-orange-deep'
-                        : 'bg-surface-sunken text-gray-700'
+                        ? 'bg-control-action-soft/40 text-control-action-hover'
+                        : 'bg-content-soft text-content-fg'
                 }`}
             >
                 {label}
@@ -506,10 +503,10 @@ function CompareRow({
                 return (
                     <div
                         key={column.listingId}
-                        className={`flex min-h-[76px] flex-col justify-center gap-0.5 border-b border-r border-line px-4 py-3 ${priorityBg}`}
+                        className={`flex min-h-[76px] flex-col justify-center gap-0.5 border-b border-r border-content-line px-4 py-3 ${priorityBg}`}
                     >
                         {cell ?? (
-                            <span className="text-xs text-gray-300">-</span>
+                            <span className="text-xs text-content-line">-</span>
                         )}
                     </div>
                 )
@@ -530,7 +527,7 @@ function SkillCell({
     const empty = label === '없음'
     return (
         <strong
-            className={`text-[13px] ${empty ? 'font-medium text-gray-400' : 'text-gray-900'}`}
+            className={`text-[13px] ${empty ? 'font-medium text-content-subtle' : 'text-content-fg'}`}
         >
             {label}
         </strong>
@@ -540,27 +537,27 @@ function SkillCell({
 /** 빈 상태 — 경매·마켓 양쪽으로 유도. */
 function CompareEmpty() {
     return (
-        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="grid size-14 place-items-center rounded-2xl bg-navy text-gold-bright">
+        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+            <span className="grid size-14 place-items-center rounded-2xl bg-brand-structure text-brand-highlight-bright">
                 <TbColumns3 aria-hidden className="size-7" />
             </span>
-            <h1 className="mt-4 text-xl font-bold text-gray-900">
+            <h1 className="mt-4 text-xl font-bold text-content-fg">
                 비교할 아이템이 없습니다
             </h1>
-            <p className="mt-2 max-w-md text-sm text-gray-500">
+            <p className="mt-2 max-w-md text-sm text-content-subtle">
                 실시간 경매나 아이템 마켓에서 카드의 &lsquo;비교&rsquo; 버튼으로
                 아이템을 담으면 여기에서 나란히 비교할 수 있어요.
             </p>
             <div className="mt-6 flex items-center gap-2">
                 <Link
                     to={paths.auctions}
-                    className="rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
+                    className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                 >
                     실시간 경매
                 </Link>
                 <Link
                     to={paths.market}
-                    className="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                    className="rounded-lg border border-content-line px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                 >
                     아이템 마켓
                 </Link>

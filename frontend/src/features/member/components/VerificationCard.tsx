@@ -226,23 +226,23 @@ function VerificationCard({ profile }: VerificationCardProps) {
             : null
 
     return (
-        <section className="flex h-full min-w-0 flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6">
+        <section className="flex h-full min-w-0 flex-col rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
             {/* 헤더 — 이메일 인증 상태를 요약 배지로 */}
             <div className="flex items-center gap-3">
                 <span
                     className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
                         isVerified
-                            ? 'bg-success-subtle text-success'
-                            : 'bg-navy text-gold-bright'
+                            ? 'bg-success-soft text-success-ink'
+                            : 'bg-brand-structure text-brand-highlight-bright'
                     }`}
                 >
                     <TbShieldCheck aria-hidden className="size-5" />
                 </span>
                 <div className="min-w-0">
-                    <h3 className="text-base font-bold text-gray-900">
+                    <h3 className="text-base font-bold text-content-fg">
                         본인 인증
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-content-subtle">
                         안전한 거래를 위한 이메일 인증
                     </p>
                 </div>
@@ -292,7 +292,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                         <button
                             type="button"
                             disabled={requestMutation.isPending}
-                            className="h-11 rounded-lg bg-orange px-4 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                            className="h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={handleRequestCode}
                         >
                             {requestMutation.isPending
@@ -301,7 +301,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                         </button>
                         <button
                             type="button"
-                            className="self-center text-xs font-semibold text-gray-500 underline underline-offset-2 hover:text-navy"
+                            className="self-center text-xs font-semibold text-content-subtle underline underline-offset-2 hover:text-brand-structure"
                             onClick={openEmailForm}
                         >
                             이메일 변경
@@ -311,8 +311,8 @@ function VerificationCard({ profile }: VerificationCardProps) {
 
                 {panel === 'code' && (
                     <div className="flex flex-col gap-3">
-                        <p className="text-xs text-gray-500">
-                            <b className="font-bold text-gray-700">
+                        <p className="text-xs text-content-subtle">
+                            <b className="font-bold text-content-fg">
                                 {profile.emailMasked}
                             </b>
                             로 보낸 6자리 코드를 입력해 주세요. 10분 안에
@@ -322,7 +322,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                         <div className="flex flex-col gap-1.5">
                             <label
                                 id="otpLabel"
-                                className="text-xs font-semibold text-gray-600"
+                                className="text-xs font-semibold text-content-muted"
                             >
                                 인증 코드 6자리
                             </label>
@@ -334,7 +334,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                                 onChange={setCode}
                                 onComplete={handleVerify}
                             />
-                            <div className="flex items-center justify-between text-xs text-gray-400">
+                            <div className="flex items-center justify-between text-xs text-content-subtle">
                                 <span>
                                     남은 시간{' '}
                                     <span className="tabular-nums">
@@ -368,7 +368,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                                 message="이미 코드를 보냈어요. 메일함(스팸함 포함)을 먼저 확인해 주세요."
                             />
                         ) : codeError?.kind === 'again' ? (
-                            <p role="alert" className="text-sm text-danger">
+                            <p role="alert" className="text-sm text-danger-ink">
                                 {codeError.message} (남은 시도{' '}
                                 {Math.max(MAX_ATTEMPTS - attempts, 0)}회)
                             </p>
@@ -391,16 +391,16 @@ function VerificationCard({ profile }: VerificationCardProps) {
                                 expired
                             }
                             aria-busy={verifyMutation.isPending || undefined}
-                            className="flex h-11 items-center justify-center gap-2 rounded-lg bg-orange px-4 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex h-11 items-center justify-center gap-2 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => handleVerify()}
                         >
                             {verifyMutation.isPending ? '확인 중…' : '인증하기'}
                         </button>
 
-                        <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                        <div className="flex items-center justify-center gap-1.5 text-xs text-content-subtle">
                             {cooldownLeft > 0 ? (
                                 <span>
-                                    <span className="font-bold tabular-nums text-gray-700">
+                                    <span className="font-bold tabular-nums text-content-fg">
                                         {cooldownLeft}
                                     </span>
                                     초 후 다시 받을 수 있어요
@@ -411,7 +411,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                                     <button
                                         type="button"
                                         disabled={requestMutation.isPending}
-                                        className="font-semibold text-orange-deep underline underline-offset-2 hover:text-orange disabled:opacity-60"
+                                        className="font-semibold text-control-action-hover underline underline-offset-2 hover:text-control-action disabled:opacity-60"
                                         onClick={handleResend}
                                     >
                                         코드 다시 받기
@@ -433,12 +433,12 @@ function VerificationCard({ profile }: VerificationCardProps) {
                         <EmailRow verified masked={profile.emailMasked} />
                         <button
                             type="button"
-                            className="h-11 rounded-lg border border-line bg-surface px-4 text-sm font-bold text-gray-700 hover:bg-gray-100"
+                            className="h-11 rounded-lg border border-content-line bg-content-surface px-4 text-sm font-bold text-content-fg hover:bg-content-soft"
                             onClick={openEmailForm}
                         >
                             이메일 변경
                         </button>
-                        <p className="text-center text-xs text-gray-400">
+                        <p className="text-center text-xs text-content-subtle">
                             이메일을 바꾸면 다시 인증해야 합니다.
                         </p>
                     </div>
@@ -446,15 +446,15 @@ function VerificationCard({ profile }: VerificationCardProps) {
             </div>
 
             {/* 휴대폰 인증 — 백엔드 없음, "준비 중" 유지(FC-048) */}
-            <div className="mt-4 flex items-center justify-between rounded-lg bg-surface-sunken px-3.5 py-2.5 text-sm">
-                <span className="flex items-center gap-2 text-gray-600">
+            <div className="mt-4 flex items-center justify-between rounded-lg bg-content-soft px-3.5 py-2.5 text-sm">
+                <span className="flex items-center gap-2 text-content-muted">
                     <TbDeviceMobile
                         aria-hidden
-                        className="size-4 text-gray-400"
+                        className="size-4 text-content-subtle"
                     />
                     휴대폰 인증
                 </span>
-                <span className="text-xs font-semibold text-gray-400">
+                <span className="text-xs font-semibold text-content-subtle">
                     준비 중
                 </span>
             </div>
@@ -472,7 +472,7 @@ function StatusBadge({
 }) {
     if (verified) {
         return (
-            <span className="ms-auto inline-flex items-center gap-1 rounded-full bg-success-subtle px-2.5 py-0.5 text-xs font-bold text-success">
+            <span className="ms-auto inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-bold text-success-ink">
                 <TbCircleCheck aria-hidden className="size-3.5" />
                 인증됨
             </span>
@@ -480,13 +480,13 @@ function StatusBadge({
     }
     if (hasEmail) {
         return (
-            <span className="ms-auto rounded-full bg-warning-subtle px-2.5 py-0.5 text-xs font-bold text-warning">
+            <span className="ms-auto rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-bold text-warning">
                 미인증
             </span>
         )
     }
     return (
-        <span className="ms-auto rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-bold text-gray-500">
+        <span className="ms-auto rounded-full bg-content-soft px-2.5 py-0.5 text-xs font-bold text-content-subtle">
             미설정
         </span>
     )
@@ -501,13 +501,13 @@ function EmailRow({
     verified: boolean
 }) {
     return (
-        <div className="flex items-center gap-2 rounded-lg bg-surface-sunken px-3.5 py-3">
-            <TbMail aria-hidden className="size-4 shrink-0 text-gray-400" />
-            <span className="min-w-0 flex-1 break-all text-sm font-bold text-gray-900">
+        <div className="flex items-center gap-2 rounded-lg bg-content-soft px-3.5 py-3">
+            <TbMail aria-hidden className="size-4 shrink-0 text-content-subtle" />
+            <span className="min-w-0 flex-1 break-all text-sm font-bold text-content-fg">
                 {masked ?? '이메일 미설정'}
             </span>
             {verified ? (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-success">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-success-ink">
                     <TbCircleCheck aria-hidden className="size-3.5" />
                     인증됨
                 </span>
@@ -538,14 +538,14 @@ function EmailForm({
 }) {
     return (
         <form noValidate className="flex flex-col gap-3" onSubmit={onSubmit}>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-content-subtle">
                 알림·본인 확인에 쓸 이메일을 등록합니다. 등록 후 6자리 인증
                 코드를 보내드립니다.
             </p>
             <div className="flex flex-col gap-1.5">
                 <label
                     htmlFor="verifyEmail"
-                    className="text-xs font-semibold text-gray-600"
+                    className="text-xs font-semibold text-content-muted"
                 >
                     이메일
                 </label>
@@ -559,10 +559,10 @@ function EmailForm({
                     value={value}
                     aria-invalid={error ? true : undefined}
                     aria-describedby={error ? 'verifyEmailError' : undefined}
-                    className={`h-11 rounded-lg border bg-surface px-3.5 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 outline-none focus:ring-2 ${
+                    className={`h-11 rounded-lg border bg-content-surface px-3.5 text-sm font-semibold text-content-fg placeholder:font-normal placeholder:text-content-subtle outline-none focus:ring-2 ${
                         error
                             ? 'border-danger focus:ring-danger/30'
-                            : 'border-line focus:border-orange focus:ring-orange/30'
+                            : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                     }`}
                     onChange={(e) => onChange(e.target.value)}
                 />
@@ -570,7 +570,7 @@ function EmailForm({
                     <p
                         id="verifyEmailError"
                         role="alert"
-                        className="text-sm text-danger"
+                        className="text-sm text-danger-ink"
                     >
                         {error}
                     </p>
@@ -580,14 +580,14 @@ function EmailForm({
                 <button
                     type="submit"
                     disabled={pending}
-                    className="h-11 flex-1 rounded-lg bg-orange px-4 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-11 flex-1 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {pending ? '저장 중…' : '이메일 저장'}
                 </button>
                 {canCancel && (
                     <button
                         type="button"
-                        className="h-11 rounded-lg border border-line bg-surface px-4 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                        className="h-11 rounded-lg border border-content-line bg-content-surface px-4 text-sm font-bold text-content-muted hover:bg-content-soft"
                         onClick={onCancel}
                     >
                         취소
@@ -611,10 +611,10 @@ function Banner({
     role?: 'status' | 'alert'
 }) {
     const toneClass = {
-        success: 'bg-success-subtle text-success',
-        warning: 'bg-warning-subtle text-warning',
-        danger: 'bg-danger-subtle text-danger',
-        info: 'bg-navy/5 text-navy',
+        success: 'bg-success-soft text-success-ink',
+        warning: 'bg-warning-soft text-warning',
+        danger: 'bg-danger-soft text-danger-ink',
+        info: 'bg-brand-structure/5 text-brand-structure',
     }[tone]
     const Icon =
         tone === 'success'
@@ -633,7 +633,7 @@ function Banner({
                 {title && (
                     <strong className="block text-sm font-bold">{title}</strong>
                 )}
-                <p className="text-xs leading-relaxed text-gray-600">
+                <p className="text-xs leading-relaxed text-content-muted">
                     {message}
                 </p>
             </div>

@@ -13,12 +13,12 @@ import { paths } from '@/app/paths'
 function AuthLayout() {
     const isSignup = useLocation().pathname === paths.signup
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-surface-sunken px-4 py-10">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-content-soft px-4 py-10">
             <Link to={paths.home} aria-label="장터 홈" className="mb-8">
                 <BrandLogo className="max-h-10" />
             </Link>
             <div
-                className={`w-full rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8 ${
+                className={`w-full rounded-2xl border border-content-line bg-content-surface p-6 shadow-sm sm:p-8 ${
                     isSignup ? 'max-w-xl' : 'max-w-md'
                 }`}
             >

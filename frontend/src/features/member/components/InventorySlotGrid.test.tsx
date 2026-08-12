@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
+import { ListGrid } from '@/components/common/ListFrame'
 import InventorySlotGrid from './InventorySlotGrid'
 import type { InventoryItem } from '@/lib/api/inventory'
 
@@ -7,7 +8,7 @@ import type { InventoryItem } from '@/lib/api/inventory'
  * 인벤토리 슬롯 그리드 (FC-076 → FC-177 개편).
  *
  * 고정하는 것:
- *  1. 마켓과 동형 전체폭 그리드(2/3/6열) — `<ul aria-label="인벤토리 슬롯">`.
+ *  1. ListFrame이 소유한 마켓 동형 전체폭 그리드(2/3/6열).
  *  2. 채운 슬롯 = 클릭 시 `onItemClick(item)` 을 부르는 버튼(이름은 aria-label 로만).
  *  3. 빈 슬롯 = 번호 라벨(상호작용 없음). capacity 까지 슬롯을 채운다.
  *  4. 페이지네이션·타이틀바·확장 자리는 제거됐다(승인 목업 = 단일 그리드).
@@ -34,13 +35,15 @@ function renderGrid(
 ) {
     const onItemClick = props.onItemClick ?? vi.fn()
     const utils = render(
-        <InventorySlotGrid
-            capacity={24}
-            used={0}
-            items={[]}
-            onItemClick={onItemClick}
-            {...props}
-        />,
+        <ListGrid layout="inventory" as="ul" label="인벤토리 슬롯">
+            <InventorySlotGrid
+                capacity={24}
+                used={0}
+                items={[]}
+                onItemClick={onItemClick}
+                {...props}
+            />
+        </ListGrid>,
     )
     return { ...utils, onItemClick }
 }

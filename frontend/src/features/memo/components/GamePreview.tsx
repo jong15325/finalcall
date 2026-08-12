@@ -28,23 +28,23 @@ function GamePreview({
     const lines = wrap28(body)
 
     return (
-        <div className="overflow-hidden rounded-lg border border-navy-700 bg-navy-900">
-            <div className="flex items-center gap-1.5 border-b border-navy-700 bg-navy-800 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-gold-bright">
+        <div className="overflow-hidden rounded-lg border border-chrome-selected bg-chrome-strong">
+            <div className="flex items-center gap-1.5 border-b border-chrome-selected bg-chrome-raised px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-brand-highlight-bright">
                 <span
                     aria-hidden
-                    className="size-1.5 rounded-full bg-gold-bright"
+                    className="size-1.5 rounded-full bg-brand-highlight-bright"
                 />
                 {title}
             </div>
             {showRuler && (
                 <div
                     aria-hidden
-                    className="whitespace-pre px-3 pt-1.5 font-mono text-[10px] tracking-wide text-gray-500"
+                    className="whitespace-pre px-3 pt-1.5 font-mono text-[10px] tracking-wide text-content-subtle"
                 >
                     ····5···10···15···20···25··│
                 </div>
             )}
-            <div className="px-3 py-2 font-mono text-[13px] leading-relaxed text-gray-100">
+            <div className="px-3 py-2 font-mono text-[13px] leading-relaxed text-content-soft">
                 {lines.map((line, index) => (
                     // 줄 내용은 순서가 곧 정체성이라 index 키가 안정적이다(줄 병합·삽입 없음).
                     <div key={index} className="whitespace-pre">
@@ -53,7 +53,7 @@ function GamePreview({
                 ))}
             </div>
             {caption && (
-                <p className="px-3 pb-2.5 text-[10px] leading-snug text-gray-400">
+                <p className="px-3 pb-2.5 text-[10px] leading-snug text-content-subtle">
                     {caption}
                 </p>
             )}

@@ -95,12 +95,12 @@ function ProfileCard({
     const initial = [...profile.nickname][0] ?? '?'
 
     return (
-        <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+        <section className="rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
                 {/* 아바타 — 계약에 이미지 없음 → 닉네임 이니셜 중립 자리 */}
                 <span
                     aria-hidden
-                    className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-navy text-2xl font-bold text-gold-bright"
+                    className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-brand-structure text-2xl font-bold text-brand-highlight-bright"
                 >
                     {initial}
                 </span>
@@ -110,7 +110,7 @@ function ProfileCard({
                         <form noValidate onSubmit={handleSubmit}>
                             <label
                                 htmlFor="profileNickname"
-                                className="text-sm font-semibold text-gray-700"
+                                className="text-sm font-semibold text-content-fg"
                             >
                                 닉네임
                             </label>
@@ -129,10 +129,10 @@ function ProfileCard({
                                             ? 'profileNicknameError'
                                             : undefined
                                     }
-                                    className={`min-w-0 flex-1 rounded-lg border bg-surface px-3.5 py-2.5 text-base font-semibold text-gray-900 focus:outline-none focus:ring-2 ${
+                                    className={`min-w-0 flex-1 rounded-lg border bg-content-surface px-3.5 py-2.5 text-base font-semibold text-content-fg focus:outline-none focus:ring-2 ${
                                         errorMessage
                                             ? 'border-danger focus:ring-danger/30'
-                                            : 'border-line focus:border-orange focus:ring-orange/30'
+                                            : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                                     }`}
                                     value={draft}
                                     onChange={(event) => {
@@ -144,13 +144,13 @@ function ProfileCard({
                                     <button
                                         type="submit"
                                         disabled={savePending}
-                                        className="rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {savePending ? '저장 중…' : '저장'}
                                     </button>
                                     <button
                                         type="button"
-                                        className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                                        className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
                                         onClick={closeEditor}
                                     >
                                         취소
@@ -161,7 +161,7 @@ function ProfileCard({
                                 <p
                                     id="profileNicknameError"
                                     role="alert"
-                                    className="mt-2 text-sm text-danger"
+                                    className="mt-2 text-sm text-danger-ink"
                                 >
                                     {errorMessage}
                                 </p>
@@ -170,17 +170,17 @@ function ProfileCard({
                     ) : (
                         <>
                             <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="text-xl font-bold text-gray-900">
+                                <h2 className="text-xl font-bold text-content-fg">
                                     {profile.nickname}
                                 </h2>
                                 {profile.isAdmin && (
-                                    <span className="rounded-full bg-gold-subtle px-2.5 py-0.5 text-xs font-bold text-gold-deep">
+                                    <span className="rounded-full bg-brand-highlight-soft px-2.5 py-0.5 text-xs font-bold text-brand-highlight-deep">
                                         관리자
                                     </span>
                                 )}
                                 <button
                                     type="button"
-                                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-gray-500 hover:bg-gray-100 hover:text-navy"
+                                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-content-subtle hover:bg-content-soft hover:text-brand-structure"
                                     onClick={openEditor}
                                 >
                                     <TbPencil
@@ -190,7 +190,7 @@ function ProfileCard({
                                     닉네임 수정
                                 </button>
                             </div>
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-content-subtle">
                                 {formatJoinDate(profile.createdAt)}
                             </p>
                         </>
@@ -201,14 +201,14 @@ function ProfileCard({
                 <div className="flex shrink-0 flex-col gap-2 xs:flex-row lg:ms-auto">
                     <Link
                         to={paths.inventory}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-navy px-4 py-2.5 text-sm font-bold text-white hover:bg-navy-800"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-structure px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                     >
                         <TbBackpack aria-hidden className="size-4" />
                         인벤토리
                     </Link>
                     <Link
                         to={paths.tempStorage}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-fg hover:bg-content-soft"
                     >
                         <TbArchive aria-hidden className="size-4" />
                         임시 보관함

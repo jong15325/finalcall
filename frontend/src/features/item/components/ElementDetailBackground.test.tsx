@@ -10,7 +10,7 @@ describe('ElementDetailBackground', () => {
             </ElementDetailBackground>,
         )
 
-        expect(container.firstElementChild).toHaveAttribute(
+        expect(container.querySelector('.element-detail')).toHaveAttribute(
             'data-element',
             'fire',
         )
@@ -26,7 +26,7 @@ describe('ElementDetailBackground', () => {
                 상세 정보
             </ElementDetailBackground>,
         )
-        expect(container.firstElementChild).toHaveAttribute(
+        expect(container.querySelector('.element-detail')).toHaveAttribute(
             'data-element',
             'neutral',
         )

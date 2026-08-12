@@ -50,28 +50,28 @@ function ShopBuyPanel({
     const remainingDays = shopRemainingDays(shop.endAt, now)
 
     return (
-        <aside className="rounded-2xl border border-line bg-surface">
+        <aside className="rounded-2xl border border-content-line bg-content-surface">
             <div className="flex flex-col p-5 lg:sticky lg:top-24">
                 {/* 판매가 — 브랜드 navy 블록(전체표기) */}
-                <div className="my-1 grid gap-1 rounded-xl bg-navy p-5 text-white">
-                    <span className="text-xs text-white/70">판매가</span>
+                <div className="my-1 grid gap-1 rounded-xl bg-brand-structure p-5 text-on-strong">
+                    <span className="text-xs text-on-strong/70">판매가</span>
                     <CodeAmount
                         value={shop.price}
                         mode="full"
                         className="text-2xl font-bold"
                     />
-                    <span className="text-xs text-white/60">
+                    <span className="text-xs text-on-strong/60">
                         판매자 {shop.sellerNickname}
                     </span>
                 </div>
 
                 <dl className="my-5">
                     {remainingDays !== null && (
-                        <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                            <dt className="font-medium text-gray-500">
+                        <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
+                            <dt className="font-medium text-content-subtle">
                                 남은 판매기간
                             </dt>
-                            <dd className="font-semibold text-gray-900">
+                            <dd className="font-semibold text-content-fg">
                                 {remainingDays > 0
                                     ? `${remainingDays}일 남음`
                                     : '오늘 종료'}
@@ -79,11 +79,11 @@ function ShopBuyPanel({
                         </div>
                     )}
                     {isAuthed && (
-                        <div className="flex items-center justify-between border-b border-line py-2.5 text-sm">
-                            <dt className="font-medium text-gray-500">
+                        <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
+                            <dt className="font-medium text-content-subtle">
                                 사용 가능 게임머니
                             </dt>
-                            <dd className="font-semibold text-gray-900">
+                            <dd className="font-semibold text-content-fg">
                                 <CodeAmount
                                     value={balance?.gameMoneyAvailable ?? null}
                                     mode="full"
@@ -99,11 +99,11 @@ function ShopBuyPanel({
                         <button
                             disabled
                             type="button"
-                            className="w-full rounded-lg bg-gray-200 px-5 py-3.5 text-sm font-bold text-gray-500 disabled:cursor-not-allowed"
+                            className="w-full rounded-lg bg-content-line px-5 py-3.5 text-sm font-bold text-content-subtle disabled:cursor-not-allowed"
                         >
                             {shopStatusLabelOf(shop.status)}
                         </button>
-                        <p className="mt-3 text-center text-xs text-gray-500">
+                        <p className="mt-3 text-center text-xs text-content-subtle">
                             지금은 구매할 수 없는 상품입니다.
                         </p>
                     </>
@@ -112,36 +112,36 @@ function ShopBuyPanel({
                         <button
                             disabled
                             type="button"
-                            className="w-full rounded-lg bg-gray-200 px-5 py-3.5 text-sm font-bold text-gray-500 disabled:cursor-not-allowed"
+                            className="w-full rounded-lg bg-content-line px-5 py-3.5 text-sm font-bold text-content-subtle disabled:cursor-not-allowed"
                         >
                             내 상품입니다
                         </button>
-                        <p className="mt-3 text-center text-xs text-gray-500">
+                        <p className="mt-3 text-center text-xs text-content-subtle">
                             내가 등록한 상품은 구매할 수 없습니다.
                         </p>
                     </>
                 ) : !isAuthed ? (
                     <Link
                         to={loginHref}
-                        className="block w-full rounded-lg bg-orange px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-orange-deep"
+                        className="block w-full rounded-lg bg-control-action px-5 py-3.5 text-center text-sm font-bold text-on-strong hover:bg-control-action-hover"
                     >
                         로그인하고 구매
                     </Link>
                 ) : (
                     <button
                         type="button"
-                        className="w-full rounded-lg bg-orange px-5 py-3.5 text-sm font-bold text-white hover:bg-orange-deep"
+                        className="w-full rounded-lg bg-control-action px-5 py-3.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                         onClick={onBuy}
                     >
                         바로 구매
                     </button>
                 )}
 
-                <p className="mt-3 text-center text-xs text-gray-500">
+                <p className="mt-3 text-center text-xs text-content-subtle">
                     구매하면 게임머니가 바로 차감되고 아이템은 인벤토리로
                     들어옵니다.
                 </p>
-                <p className="mt-2 text-center text-[11px] text-gray-400">
+                <p className="mt-2 text-center text-[11px] text-content-subtle">
                     구매자 수수료 없음. 판매자는 판매가 구간별 수수료 차감 후
                     정산.
                 </p>

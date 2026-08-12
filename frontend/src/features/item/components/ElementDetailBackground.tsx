@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { toElementKey } from '@/features/item/lib/element'
 import type { ElementKey } from '@/features/item/lib/element'
-import { useRouteVisualTheme } from '@/components/layout/RouteVisualThemeContext'
+import {
+    RouteAccentScope,
+    useRouteAccent,
+} from '@/components/layout/RouteAccentContext'
 import './ElementDetailBackground.css'
 
 export default function ElementDetailBackground({
@@ -13,17 +16,19 @@ export default function ElementDetailBackground({
     ambientOnly?: boolean
 }) {
     const key = toElementKey(element)
-    const { registerTheme } = useRouteVisualTheme()
+    const { registerAccent } = useRouteAccent()
 
     useEffect(() => {
-        registerTheme(key)
-        return () => registerTheme(null)
-    }, [key, registerTheme])
+        registerAccent(key)
+        return () => registerAccent(null)
+    }, [key, registerAccent])
 
     return (
-        <div className="element-detail" data-element={key ?? 'neutral'}>
-            <div className="element-detail__content">{children}</div>
-        </div>
+        <RouteAccentScope accent={key}>
+            <div className="element-detail" data-element={key ?? 'neutral'}>
+                <div className="element-detail__content">{children}</div>
+            </div>
+        </RouteAccentScope>
     )
 }
 

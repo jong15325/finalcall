@@ -50,7 +50,7 @@ const SLIDES: BannerSlide[] = [
             '이번 주말, 레전드 장비 거래 수수료를 더 가볍게 만나보세요.',
         cta: '할인 아이템 보기',
         href: paths.market,
-        surface: 'from-navy-900 via-navy-800 to-gold-deep',
+        surface: 'from-chrome-strong via-chrome-raised to-brand-highlight-deep',
         art: [
             { subGroup: 1, kind: 3, element: 2, level: 9 },
             { subGroup: 1, kind: 1, element: 3, level: 9 },
@@ -63,7 +63,7 @@ const SLIDES: BannerSlide[] = [
         description: '단 20분 남은 레전드 장비. 지금 입찰에 참여할 수 있습니다.',
         cta: '경매 참여하기',
         href: paths.auctions,
-        surface: 'from-navy-900 via-navy-700 to-orange-deep',
+        surface: 'from-chrome-strong via-chrome-selected to-control-action-hover',
         art: [
             { subGroup: 1, kind: 4, element: 4, level: 9 },
             { subGroup: 1, kind: 2, element: 1, level: 9 },
@@ -77,7 +77,7 @@ const SLIDES: BannerSlide[] = [
         description: '최근 체결가와 수요를 분석해 적정 거래 가격을 제안합니다.',
         cta: '시세 확인하기',
         href: paths.market,
-        surface: 'from-navy-800 via-navy-600 to-navy-500',
+        surface: 'from-chrome-raised via-chrome-selected to-brand-structure',
         art: [
             { subGroup: 2, kind: 3, element: 2, level: 9 },
             { subGroup: 2, kind: 1, element: 1, level: 9 },
@@ -112,7 +112,7 @@ function SlideArt({ art }: { art: ItemArtInput[] }) {
                         alt=""
                         width={resolved.width}
                         height={resolved.height}
-                        className={`drop-shadow-[0_10px_24px_rgba(0,0,0,0.45)] [image-rendering:pixelated] ${
+                        className={`drop-shadow-[var(--shadow-art)] [image-rendering:pixelated] ${
                             index === 0
                                 ? 'translate-y-1'
                                 : '-translate-y-2 opacity-90'
@@ -211,14 +211,14 @@ function HomeBanner() {
                                 to={slide.href}
                                 aria-label={`${slide.title}, ${slide.cta}`}
                                 tabIndex={isActive ? 0 : -1}
-                                className={`relative flex min-h-[200px] flex-col justify-center gap-2.5 overflow-hidden bg-gradient-to-br px-6 py-8 text-white sm:min-h-[248px] sm:px-10 ${slide.surface}`}
+                                className={`relative flex min-h-[200px] flex-col justify-center gap-2.5 overflow-hidden bg-gradient-to-br px-6 py-8 text-on-strong sm:min-h-[248px] sm:px-10 ${slide.surface}`}
                             >
                                 <span className="flex items-center gap-2">
-                                    <span className="rounded-full bg-gold-bright px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-navy-900">
+                                    <span className="rounded-full bg-brand-highlight-bright px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-chrome-strong">
                                         {slide.tag}
                                     </span>
                                     {slide.subTag && (
-                                        <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold text-white">
+                                        <span className="rounded-full bg-content-surface/20 px-2.5 py-1 text-[11px] font-bold text-on-strong">
                                             {slide.subTag}
                                         </span>
                                     )}
@@ -226,10 +226,10 @@ function HomeBanner() {
                                 <span className="max-w-md text-2xl font-extrabold leading-tight sm:text-[32px]">
                                     {slide.title}
                                 </span>
-                                <span className="max-w-md text-sm text-white/80">
+                                <span className="max-w-md text-sm text-on-strong/80">
                                     {slide.description}
                                 </span>
-                                <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-lg bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur-sm">
+                                <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-lg bg-content-surface/15 px-4 py-2 text-sm font-bold backdrop-blur-sm">
                                     {slide.cta}
                                     <TbChevronRight
                                         aria-hidden
@@ -248,7 +248,7 @@ function HomeBanner() {
             <button
                 type="button"
                 aria-label="이전 배너"
-                className="absolute left-3 top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-black/25 text-white transition-colors hover:bg-black/40 sm:grid"
+                className="absolute left-3 top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-chrome-strong/25 text-on-strong transition-colors hover:bg-chrome-strong/40 sm:grid"
                 onClick={() => go(active - 1)}
             >
                 <TbChevronLeft aria-hidden className="size-5" />
@@ -256,7 +256,7 @@ function HomeBanner() {
             <button
                 type="button"
                 aria-label="다음 배너"
-                className="absolute right-3 top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-black/25 text-white transition-colors hover:bg-black/40 sm:grid"
+                className="absolute right-3 top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-chrome-strong/25 text-on-strong transition-colors hover:bg-chrome-strong/40 sm:grid"
                 onClick={() => go(active + 1)}
             >
                 <TbChevronRight aria-hidden className="size-5" />
@@ -274,8 +274,8 @@ function HomeBanner() {
                             aria-current={isActive}
                             className={`h-2 rounded-full transition-all ${
                                 isActive
-                                    ? 'w-5 bg-white'
-                                    : 'w-2 bg-white/50 hover:bg-white/80'
+                                    ? 'w-5 bg-content-surface'
+                                    : 'w-2 bg-content-surface/50 hover:bg-content-surface/80'
                             }`}
                             onClick={() => go(index)}
                         />

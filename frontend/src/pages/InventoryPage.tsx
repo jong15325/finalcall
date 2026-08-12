@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TbArchive, TbLayoutGrid } from 'react-icons/tb'
 import { paths } from '@/app/paths'
-import { ItemCardGridSkeleton } from '@/features/item/components/ItemCardGrid'
+import ListFrame from '@/components/common/ListFrame'
+import type { ListFrameState } from '@/components/common/ListFrame'
+import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import InventorySlotGrid from '@/features/member/components/InventorySlotGrid'
 import InventoryCardInfoDialog from '@/features/member/components/InventoryCardInfoDialog'
 import DeliveredBanner from '@/features/delivery/components/DeliveredBanner'
@@ -10,7 +12,6 @@ import { isArrived } from '@/features/delivery/lib/deliveryView'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useDeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 인벤토리 `/me/inventory` (FC-076 → FC-177 개편 → FC-178 마켓 카드 이식).
@@ -30,15 +31,6 @@ export default function InventoryPage() {
     const deliveryQuery = useDeliveryLookup()
     const deliveries = deliveryQuery.data
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
-    useAppFooterVariant(
-        !inventoryQuery.isPending &&
-            (inventoryQuery.isError ||
-                !inventoryQuery.data ||
-                inventoryQuery.data.items.length === 0)
-            ? 'compact'
-            : 'default',
-    )
-
     // 게임 도착(APPLIED) 배송 — 상단 배너로 세션 1회 알린다. APPLIED 아이템은 IN_GAME 으로 빠져
     // 인벤 목록엔 없으므로 배송 lookup 에서 직접 뽑는다.
     const arrived = useMemo(
@@ -55,57 +47,66 @@ export default function InventoryPage() {
         navigate(`${paths.sell}?item=${item.itemInstancePublicId}`)
     }
 
+    const listState: ListFrameState = inventoryQuery.isPending
+        ? { kind: 'loading', count: 12 }
+        : inventoryQuery.isError || !inventoryQuery.data
+          ? {
+                kind: 'error',
+                message: '인벤토리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                onRetry: () => void inventoryQuery.refetch(),
+            }
+          : { kind: 'ready' }
+
     return (
-        <div className="flex flex-col gap-5">
-            <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+            <ListFrame
+                state={listState}
+                layout="inventory"
+                as="ul"
+                label="인벤토리 슬롯"
+                heading={<><header className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
                         <TbLayoutGrid
                             aria-hidden
-                            className="size-6 text-navy"
+                            className="size-6 text-brand-structure"
                         />
                         인벤토리
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         아이템 마켓과 같은 카드 목록입니다. 카드를 눌러
                         카드정보를 보고 바로 판매 등록하세요.
                     </p>
                 </div>
                 <Link
                     to={paths.tempStorage}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-navy hover:border-navy"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-brand-structure hover:border-brand-structure"
                 >
                     <TbArchive aria-hidden className="size-4" />
                     임시 보관함
                 </Link>
-            </header>
-
-            {/* 게임 도착 알림 — 세션 1회 dismiss(디자인 승인). 도착이 없으면 아무것도 안 그림. */}
-            <DeliveredBanner arrived={arrived} />
-
-            {inventoryQuery.isPending ? (
-                <ItemCardGridSkeleton variant="inventory" count={12} />
-            ) : inventoryQuery.isError || !inventoryQuery.data ? (
-                <p className="rounded-2xl border border-line bg-surface px-5 py-16 text-center text-sm text-gray-500">
-                    인벤토리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-                </p>
-            ) : (
-                <>
+                </header><DeliveredBanner arrived={arrived} /></>}
+                resultBar={
+                    inventoryQuery.data ? (
                     <div className="flex items-center gap-2">
-                        <span className="rounded-lg bg-navy/5 px-3 py-1.5 text-xs font-bold text-navy">
+                        <span className="rounded-lg bg-brand-structure/5 px-3 py-1.5 text-xs font-bold text-brand-structure">
                             전체 아이템
                         </span>
-                        <span className="rounded-full border border-line bg-surface-sunken px-3 py-1.5 text-xs font-bold text-navy">
+                        <span className="rounded-full border border-content-line bg-content-soft px-3 py-1.5 text-xs font-bold text-brand-structure">
                             {inventoryQuery.data.used} /{' '}
                             {inventoryQuery.data.capacity} 사용
                         </span>
-                        <span className="ml-auto text-xs text-gray-400">
+                        <span className="ml-auto text-xs text-content-subtle">
                             {inventoryQuery.data.used === 0
                                 ? '보유한 아이템이 없습니다.'
                                 : '카드를 눌러 카드정보를 확인하세요.'}
                         </span>
                     </div>
-
+                    ) : undefined
+                }
+                renderSkeleton={() => <ItemListSkeleton layout="inventory" />}
+            >
+                {inventoryQuery.data && (
                     <InventorySlotGrid
                         capacity={inventoryQuery.data.capacity}
                         used={inventoryQuery.data.used}
@@ -113,8 +114,8 @@ export default function InventoryPage() {
                         deliveries={deliveries}
                         onItemClick={setSelectedItem}
                     />
-                </>
-            )}
+                )}
+            </ListFrame>
 
             {selectedItem && (
                 <InventoryCardInfoDialog

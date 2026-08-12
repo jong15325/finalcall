@@ -68,7 +68,7 @@ function OrderCard({ order, deliveryStatus }: OrderCardProps) {
         : ''
 
     return (
-        <article className="grid grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-line bg-surface xs:grid-cols-[112px_minmax(0,1fr)]">
+        <article className="grid grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-content-line bg-content-surface xs:grid-cols-[112px_minmax(0,1fr)]">
             {/* 아트 열 */}
             <ItemFrame
                 fill
@@ -87,42 +87,42 @@ function OrderCard({ order, deliveryStatus }: OrderCardProps) {
                         <span
                             className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                                 isSeller
-                                    ? 'bg-gold-subtle text-gold-deep'
-                                    : 'bg-navy/10 text-navy-700'
+                                    ? 'bg-brand-highlight-soft text-brand-highlight-deep'
+                                    : 'bg-brand-structure/10 text-chrome-selected'
                             }`}
                         >
                             {orderRoleLabelOf(order.myRole)}
                         </span>
-                        <span className="text-[10px] font-semibold uppercase text-gray-500">
+                        <span className="text-[10px] font-semibold uppercase text-content-subtle">
                             {orderSourceLabelOf(order.sourceType)} ·{' '}
                             {elementLabelOf(item.element)}
                         </span>
                     </div>
-                    <span className="shrink-0 text-[10px] text-gray-400">
+                    <span className="shrink-0 text-[10px] text-content-subtle">
                         {dateLabel}
                     </span>
                 </div>
 
-                <h3 className="mb-1 mt-3 line-clamp-2 text-[15px] font-bold leading-tight text-gray-900">
+                <h3 className="mb-1 mt-3 line-clamp-2 text-[15px] font-bold leading-tight text-content-fg">
                     {item.nameSnapshot}
                 </h3>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-xs text-content-subtle">
                     {item.specSnapshot} · Lv.{item.level}
                 </p>
-                <p className="mt-1 truncate text-xs text-gray-500">
+                <p className="mt-1 truncate text-xs text-content-subtle">
                     {counterpartyLabelOf(order)}
                 </p>
 
-                <dl className="mt-3 border-t border-line pt-3 text-sm">
+                <dl className="mt-3 border-t border-content-line pt-3 text-sm">
                     <div className="flex items-center justify-between">
-                        <dt className="text-xs font-medium text-gray-500">
+                        <dt className="text-xs font-medium text-content-subtle">
                             {isSeller ? '판매가' : '결제 금액'}
                         </dt>
                         <dd>
                             <CodeAmount
                                 value={order.finalPrice}
                                 mode="full"
-                                className="font-bold text-gray-900"
+                                className="font-bold text-content-fg"
                             />
                         </dd>
                     </div>
@@ -131,7 +131,7 @@ function OrderCard({ order, deliveryStatus }: OrderCardProps) {
                     {showsAccounting && (
                         <>
                             <div className="mt-1.5 flex items-center justify-between">
-                                <dt className="text-xs font-medium text-gray-500">
+                                <dt className="text-xs font-medium text-content-subtle">
                                     수수료
                                 </dt>
                                 <dd>
@@ -143,14 +143,14 @@ function OrderCard({ order, deliveryStatus }: OrderCardProps) {
                                 </dd>
                             </div>
                             <div className="mt-1.5 flex items-center justify-between">
-                                <dt className="text-xs font-medium text-gray-500">
+                                <dt className="text-xs font-medium text-content-subtle">
                                     정산액
                                 </dt>
                                 <dd>
                                     <CodeAmount
                                         value={order.settleAmount ?? null}
                                         mode="full"
-                                        className="font-bold text-success"
+                                        className="font-bold text-success-ink"
                                     />
                                 </dd>
                             </div>
@@ -160,8 +160,8 @@ function OrderCard({ order, deliveryStatus }: OrderCardProps) {
 
                 {/* 배송 상태 행 — 구매 카드에만(상위가 BUYER 에게만 status 주입). */}
                 {deliveryStatus !== undefined && (
-                    <div className="mt-2.5 flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2">
-                        <span className="text-xs font-medium text-gray-500">
+                    <div className="mt-2.5 flex items-center justify-between gap-2 rounded-lg bg-content-soft px-3 py-2">
+                        <span className="text-xs font-medium text-content-subtle">
                             배송 상태
                         </span>
                         <DeliveryBadge

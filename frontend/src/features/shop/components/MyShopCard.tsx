@@ -1,5 +1,6 @@
 import CodeAmount from '@/components/common/CodeAmount'
-import ItemCard from '@/features/item/components/ItemCard'
+import ItemCardView from '@/features/item/components/ItemCardView'
+import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import type { MyShopSummary } from '@/lib/api/shop'
 
 /**
@@ -27,27 +28,29 @@ interface MyShopCardProps {
 }
 
 function MyShopCard({ shop, now, onCancel, isCancelling }: MyShopCardProps) {
+    const item = toItemCardViewModel(shop.item, now, {
+        price: { amount: shop.price, label: '등록가' },
+    })
+
     return (
-        <ItemCard
-            item={shop.item}
-            price={{ amount: shop.price, label: '등록가' }}
-            now={now}
+        <ItemCardView
+            item={item}
             footer={
                 <div className="flex flex-col gap-2">
                     <div className="flex items-baseline justify-between gap-1.5 whitespace-nowrap">
-                        <span className="text-[11px] text-gray-500 xs:text-xs">
+                        <span className="text-label text-content-subtle xs:text-xs">
                             예상 정산액
                         </span>
                         <CodeAmount
                             value={shop.estimatedSettle}
                             mode="compact"
-                            className="text-[13px] font-bold text-navy xs:text-sm"
+                            className="text-body font-bold text-brand-structure xs:text-sm"
                         />
                     </div>
                     <button
                         type="button"
                         disabled={isCancelling}
-                        className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-gray-600 hover:border-danger hover:text-danger disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-full rounded-lg border border-content-line bg-content-surface px-3 py-2 text-xs font-bold text-content-muted hover:border-danger hover:text-danger-ink disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={() => onCancel(shop)}
                     >
                         {isCancelling ? '내리는 중…' : '내리기'}

@@ -65,17 +65,17 @@ export default function PostForm({
 
     return (
         <form
-            className="rounded-2xl border border-line bg-surface p-6 sm:p-7"
+            className="rounded-2xl border border-content-line bg-content-surface p-6 sm:p-7"
             onSubmit={handleSubmit}
         >
             {/* 게시판 안내 */}
-            <div className="mb-5 flex items-start gap-2 rounded-lg bg-surface-sunken px-3.5 py-3 text-sm text-gray-600">
+            <div className="mb-5 flex items-start gap-2 rounded-lg bg-content-soft px-3.5 py-3 text-sm text-content-muted">
                 <TbInfoCircle
                     aria-hidden
-                    className="mt-0.5 size-4 shrink-0 text-navy"
+                    className="mt-0.5 size-4 shrink-0 text-brand-structure"
                 />
                 <span>
-                    <b className="text-gray-900">{board.name}</b>에 글을
+                    <b className="text-content-fg">{board.name}</b>에 글을
                     올립니다.
                     {board.writePolicy === 'ADMIN_ONLY'
                         ? ' 관리자만 작성할 수 있어요.'
@@ -86,7 +86,7 @@ export default function PostForm({
             {errorMessage && (
                 <p
                     role="alert"
-                    className="mb-5 flex items-center gap-2 rounded-lg bg-danger-subtle px-3.5 py-3 text-sm text-danger"
+                    className="mb-5 flex items-center gap-2 rounded-lg bg-danger-soft px-3.5 py-3 text-sm text-danger-ink"
                 >
                     <TbAlertTriangle aria-hidden className="size-4 shrink-0" />
                     {errorMessage}
@@ -97,9 +97,9 @@ export default function PostForm({
             <div className="mb-5">
                 <label
                     htmlFor="post-title"
-                    className="mb-1.5 block text-sm font-bold text-gray-700"
+                    className="mb-1.5 block text-sm font-bold text-content-fg"
                 >
-                    제목 <span className="text-orange-deep">*</span>
+                    제목 <span className="text-control-action-hover">*</span>
                 </label>
                 <input
                     id="post-title"
@@ -107,10 +107,10 @@ export default function PostForm({
                     value={title}
                     maxLength={TITLE_MAX}
                     placeholder="제목을 입력하세요"
-                    className="h-11 w-full rounded-lg border border-line bg-surface px-3.5 text-gray-800 outline-none focus:border-orange focus:ring-2 focus:ring-orange-subtle"
+                    className="h-11 w-full rounded-lg border border-content-line bg-content-surface px-3.5 text-content-fg outline-none focus:border-control-action focus:ring-2 focus:ring-control-action-soft"
                     onChange={(event) => setTitle(event.target.value)}
                 />
-                <p className="mt-1.5 text-right text-xs text-gray-400 tabular-nums">
+                <p className="mt-1.5 text-right text-xs text-content-subtle tabular-nums">
                     {title.length} / {TITLE_MAX}
                 </p>
             </div>
@@ -119,9 +119,9 @@ export default function PostForm({
             <div className="mb-5">
                 <label
                     htmlFor="post-content"
-                    className="mb-1.5 block text-sm font-bold text-gray-700"
+                    className="mb-1.5 block text-sm font-bold text-content-fg"
                 >
-                    내용 <span className="text-orange-deep">*</span>
+                    내용 <span className="text-control-action-hover">*</span>
                 </label>
                 <textarea
                     id="post-content"
@@ -129,10 +129,10 @@ export default function PostForm({
                     maxLength={CONTENT_MAX}
                     placeholder="내용을 입력하세요"
                     rows={12}
-                    className="w-full resize-y rounded-lg border border-line bg-surface px-3.5 py-3 leading-relaxed text-gray-800 outline-none focus:border-orange focus:ring-2 focus:ring-orange-subtle"
+                    className="w-full resize-y rounded-lg border border-content-line bg-content-surface px-3.5 py-3 leading-relaxed text-content-fg outline-none focus:border-control-action focus:ring-2 focus:ring-control-action-soft"
                     onChange={(event) => setContent(event.target.value)}
                 />
-                <p className="mt-1.5 text-right text-xs text-gray-400 tabular-nums">
+                <p className="mt-1.5 text-right text-xs text-content-subtle tabular-nums">
                     {content.length.toLocaleString()} /{' '}
                     {CONTENT_MAX.toLocaleString()}
                 </p>
@@ -144,10 +144,10 @@ export default function PostForm({
             </div>
 
             {/* 액션 */}
-            <div className="flex justify-end gap-2.5 border-t border-line pt-5">
+            <div className="flex justify-end gap-2.5 border-t border-content-line pt-5">
                 <button
                     type="button"
-                    className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-bold text-gray-600 hover:border-navy"
+                    className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:border-brand-structure"
                     onClick={onCancel}
                 >
                     취소
@@ -155,7 +155,7 @@ export default function PostForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="rounded-lg bg-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {isSubmitting ? '처리 중…' : submitLabel}
                 </button>

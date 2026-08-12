@@ -120,7 +120,7 @@ describe('HorizontalNav', () => {
         )
         expect(
             screen.getByRole('button', { name: /마켓/ }).className,
-        ).toContain('border-orange')
+        ).toContain('border-control-action')
     })
 
     it('/items/:id는 마켓 그룹의 명시적 상세 경로로 활성 표시한다', () => {
@@ -131,7 +131,7 @@ describe('HorizontalNav', () => {
         )
         expect(
             screen.getByRole('button', { name: /마켓/ }).className,
-        ).toContain('border-orange')
+        ).toContain('border-control-action')
     })
 
     it('좌우 방향키로 최상위 항목을 순환 탐색한다', async () => {

@@ -22,26 +22,26 @@ export default function BoardHubCard({ board }: BoardHubCardProps) {
     return (
         <Link
             to={boardPath(board.slug)}
-            className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-navy"
+            className="flex flex-col gap-3 rounded-2xl border border-content-line bg-content-surface p-5 transition-colors hover:border-brand-structure"
         >
             <span
                 className={`flex size-11 items-center justify-center rounded-xl ${
                     isEvent
-                        ? 'bg-orange-subtle text-orange-deep'
+                        ? 'bg-control-action-soft text-control-action-hover'
                         : isNotice
-                          ? 'bg-navy text-gold-bright'
-                          : 'bg-navy text-white'
+                          ? 'bg-brand-structure text-brand-highlight-bright'
+                          : 'bg-brand-structure text-on-strong'
                 }`}
             >
                 <Icon aria-hidden className="size-6" />
             </span>
 
             <div className="min-w-0">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-content-fg">
                     {board.name}
                 </h3>
                 {board.description && (
-                    <p className="mt-1 line-clamp-2 text-sm text-gray-500">
+                    <p className="mt-1 line-clamp-2 text-sm text-content-subtle">
                         {board.description}
                     </p>
                 )}
@@ -51,18 +51,18 @@ export default function BoardHubCard({ board }: BoardHubCardProps) {
                 <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
                         board.writePolicy === 'ADMIN_ONLY'
-                            ? 'bg-navy text-white'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-brand-structure text-on-strong'
+                            : 'bg-content-soft text-content-muted'
                     }`}
                 >
                     {board.writePolicy === 'ADMIN_ONLY' ? '관리자' : '누구나'}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-content-subtle">
                     {board.allowComments ? '댓글 참여' : '댓글 없음'}
                 </span>
             </div>
 
-            <span className="mt-auto flex items-center justify-between border-t border-line pt-3 text-sm font-bold text-navy">
+            <span className="mt-auto flex items-center justify-between border-t border-content-line pt-3 text-sm font-bold text-brand-structure">
                 바로가기
                 <TbChevronRight aria-hidden className="size-4" />
             </span>

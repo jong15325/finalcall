@@ -17,7 +17,6 @@ import {
 } from '@/lib/queries/memos'
 import type { MemoBox } from '@/features/memo/lib/memoView'
 import type { MemoSummary, SendMemoRequest } from '@/lib/api/memos'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 쪽지 `/me/messages` (FC-172 · 계약 §2.6).
@@ -47,10 +46,6 @@ export default function MessagesPage() {
         () => active.data?.pages.flatMap((page) => page.content) ?? [],
         [active.data],
     )
-    useAppFooterVariant(
-        !active.isPending && memos.length === 0 ? 'compact' : 'default',
-    )
-
     const detail = useMemoDetail(selectedId)
     const sendMutation = useSendMemo()
     const deleteMutation = useDeleteMemo()
@@ -117,15 +112,15 @@ export default function MessagesPage() {
         <div className="flex flex-col gap-4">
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">쪽지</h1>
-                    <p className="mt-1 max-w-[60ch] text-sm text-gray-500">
+                    <h1 className="text-2xl font-bold text-content-fg">쪽지</h1>
+                    <p className="mt-1 max-w-[60ch] text-sm text-content-subtle">
                         받은 쪽지와 보낸 쪽지를 한 곳에서 봅니다. 여기서 보낸
                         쪽지는 상대가 게임에서도 받습니다.
                     </p>
                 </div>
                 <button
                     type="button"
-                    className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
+                    className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                     onClick={() => openCompose()}
                 >
                     <TbPencil aria-hidden className="size-4" />
@@ -136,7 +131,7 @@ export default function MessagesPage() {
             {deleteMutation.isError && (
                 <p
                     role="alert"
-                    className="rounded-lg bg-danger-subtle px-4 py-2.5 text-sm text-danger"
+                    className="rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger-ink"
                 >
                     {deleteMemoErrorMessage(deleteMutation.error)}
                 </p>
@@ -144,20 +139,20 @@ export default function MessagesPage() {
 
             <section
                 aria-label="쪽지함"
-                className="overflow-hidden rounded-2xl border border-line bg-surface lg:grid lg:min-h-[600px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
+                className="overflow-hidden rounded-2xl border border-content-line bg-content-surface lg:grid lg:min-h-[600px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
             >
                 {/* 좌: 목록 (모바일은 선택 시 숨김) */}
                 <div
-                    className={`min-h-[420px] flex-col lg:flex lg:min-h-0 lg:border-r lg:border-line ${
+                    className={`min-h-[420px] flex-col lg:flex lg:min-h-0 lg:border-r lg:border-content-line ${
                         selectedId ? 'hidden lg:flex' : 'flex'
                     }`}
                 >
                     {/* 탭 */}
-                    <div className="flex-none border-b border-line p-3">
+                    <div className="flex-none border-b border-content-line p-3">
                         <div
                             role="tablist"
                             aria-label="쪽지함 선택"
-                            className="inline-flex w-full gap-1 rounded-lg bg-surface-sunken p-1"
+                            className="inline-flex w-full gap-1 rounded-lg bg-content-soft p-1"
                         >
                             <TabButton
                                 active={box === 'received'}
@@ -177,7 +172,7 @@ export default function MessagesPage() {
                     {memos.length > 0 && active.isError && (
                         <p
                             role="alert"
-                            className="flex-none bg-danger-subtle px-4 py-2 text-xs text-danger"
+                            className="flex-none bg-danger-soft px-4 py-2 text-xs text-danger-ink"
                         >
                             최신 목록을 불러오지 못했습니다.
                         </p>
@@ -195,7 +190,7 @@ export default function MessagesPage() {
                                 action={
                                     <button
                                         type="button"
-                                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                                         onClick={() => void active.refetch()}
                                     >
                                         다시 시도
@@ -243,7 +238,7 @@ export default function MessagesPage() {
                                 {active.isFetchingNextPage && (
                                     <p
                                         role="status"
-                                        className="py-2 text-center text-xs text-gray-400"
+                                        className="py-2 text-center text-xs text-content-subtle"
                                     >
                                         더 불러오는 중…
                                     </p>
@@ -305,14 +300,14 @@ function TabButton({
             aria-selected={active}
             className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-bold transition-colors ${
                 active
-                    ? 'bg-surface text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-content-surface text-content-fg shadow-sm'
+                    : 'text-content-subtle hover:text-content-fg'
             }`}
             onClick={onClick}
         >
             {label}
             {badge !== undefined && badge > 0 && (
-                <span className="inline-grid min-w-[18px] place-items-center rounded-full bg-orange px-1 text-[11px] font-bold text-white tabular-nums">
+                <span className="inline-grid min-w-[18px] place-items-center rounded-full bg-control-action px-1 text-[11px] font-bold text-on-strong tabular-nums">
                     {badge}
                 </span>
             )}
@@ -326,12 +321,12 @@ function ListSkeleton() {
             {Array.from({ length: 5 }).map((_, index) => (
                 <li
                     key={index}
-                    className="flex items-start gap-3 border-b border-line px-4 py-3.5"
+                    className="flex items-start gap-3 border-b border-content-line px-4 py-3.5"
                 >
-                    <div className="size-10 animate-pulse rounded-full bg-gray-100" />
+                    <div className="size-10 animate-pulse rounded-full bg-content-soft" />
                     <div className="flex-1 space-y-2 py-1">
-                        <div className="h-3.5 w-24 animate-pulse rounded bg-gray-100" />
-                        <div className="h-3 w-4/5 animate-pulse rounded bg-gray-100" />
+                        <div className="h-3.5 w-24 animate-pulse rounded bg-content-soft" />
+                        <div className="h-3 w-4/5 animate-pulse rounded bg-content-soft" />
                     </div>
                 </li>
             ))}
@@ -352,11 +347,11 @@ function ListState({
 }) {
     return (
         <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-surface-sunken text-gray-300">
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-content-soft text-content-line">
                 <Icon aria-hidden className="size-6" />
             </span>
-            <h2 className="mt-1 text-base font-bold text-gray-900">{title}</h2>
-            <p className="text-sm text-gray-400">{description}</p>
+            <h2 className="mt-1 text-base font-bold text-content-fg">{title}</h2>
+            <p className="text-sm text-content-subtle">{description}</p>
             {action && <div className="mt-3">{action}</div>}
         </div>
     )

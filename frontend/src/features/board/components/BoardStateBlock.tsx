@@ -20,13 +20,13 @@ export default function BoardStateBlock({
     action,
 }: BoardStateBlockProps) {
     return (
-        <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+        <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-content-soft text-content-subtle">
                 <Icon aria-hidden className="size-7" />
             </span>
-            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
+            <h2 className="mt-4 text-lg font-bold text-content-fg">{title}</h2>
             {description && (
-                <p className="mt-1 text-sm text-gray-500">{description}</p>
+                <p className="mt-1 text-sm text-content-subtle">{description}</p>
             )}
             {action && <div className="mt-5">{action}</div>}
         </section>

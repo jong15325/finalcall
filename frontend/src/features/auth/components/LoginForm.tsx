@@ -47,7 +47,7 @@ export default function LoginForm({
 
     return (
         <div>
-            <h1 className="text-center text-2xl font-bold text-gray-900">
+            <h1 className="text-center text-2xl font-bold text-content-fg">
                 로그인
             </h1>
 
@@ -81,7 +81,7 @@ export default function LoginForm({
                 />
 
                 {errorMessage && (
-                    <p id="loginError" role="alert" className="text-sm text-danger">
+                    <p id="loginError" role="alert" className="text-sm text-danger-ink">
                         {errorMessage}
                     </p>
                 )}
@@ -89,7 +89,7 @@ export default function LoginForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="mt-1 h-11 rounded-lg bg-orange px-4 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-1 h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {isSubmitting ? '로그인 중…' : '로그인'}
                 </button>
@@ -98,11 +98,11 @@ export default function LoginForm({
             {/* 소셜 로그인 — 카카오·네이버(design-system §5.11, FC-155). 목업엔 있으나 구현 누락분 보강. */}
             <SocialLoginSection />
 
-            <p className="mt-6 text-center text-xs text-gray-500">
+            <p className="mt-6 text-center text-xs text-content-subtle">
                 계정이 없으신가요?{' '}
                 <Link
                     to={paths.signup}
-                    className="font-bold text-orange-deep hover:underline"
+                    className="font-bold text-control-action-hover hover:underline"
                 >
                     회원가입
                 </Link>

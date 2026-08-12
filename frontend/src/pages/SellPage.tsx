@@ -20,7 +20,6 @@ import type {
     SellField,
     SellValidationError,
 } from '@/features/auction/lib/sellForm'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 판매/경매 등록 `/sell` (FC-073 — 목업 `auctionSell`(`.sell-grid`) · design-brief B-12).
@@ -93,7 +92,9 @@ export default function SellPage() {
     const [shopConfirmOpen, setShopConfirmOpen] = useState(false)
     const [pendingRequest, setPendingRequest] =
         useState<CreateAuctionRequest | null>(null)
-    const [pendingShopPrice, setPendingShopPrice] = useState<number | null>(null)
+    const [pendingShopPrice, setPendingShopPrice] = useState<number | null>(
+        null,
+    )
 
     const items = useMemo(
         () => inventoryQuery.data?.items ?? [],
@@ -110,13 +111,6 @@ export default function SellPage() {
                   ) ?? null)
                 : null,
         [items, itemParam],
-    )
-    useAppFooterVariant(
-        !inventoryQuery.isPending &&
-            (inventoryQuery.isError ||
-                (inventoryQuery.isSuccess && preemptedItem === null))
-            ? 'compact'
-            : 'default',
     )
     const selectedId = preemptedItem?.itemInstancePublicId ?? null
 
@@ -169,7 +163,9 @@ export default function SellPage() {
     /** 고정가 등록 — 아이템 + 가격(>0)만 검증한다(기한은 서버 자동, §3.1). */
     const handleOpenShopConfirm = () => {
         if (!selectedId) {
-            setErrors([{ field: 'item', message: '출품할 아이템을 선택해 주세요.' }])
+            setErrors([
+                { field: 'item', message: '출품할 아이템을 선택해 주세요.' },
+            ])
             document.getElementById(FIELD_INPUT_ID.item)?.focus()
             return
         }
@@ -212,11 +208,11 @@ export default function SellPage() {
     return (
         <div className="flex flex-col gap-5">
             <header>
-                <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                    <TbTag aria-hidden className="size-6 text-navy" />
+                <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
+                    <TbTag aria-hidden className="size-6 text-brand-structure" />
                     아이템 판매
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-content-subtle">
                     {sellMethod === 'auction'
                         ? '인벤토리 아이템의 가격과 경매 시간을 설정하세요.'
                         : '인벤토리 아이템을 고정가로 등록해 바로 판매하세요.'}
@@ -233,7 +229,7 @@ export default function SellPage() {
                     action={
                         <button
                             type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                             onClick={() => void inventoryQuery.refetch()}
                         >
                             다시 시도
@@ -250,7 +246,7 @@ export default function SellPage() {
                     action={
                         <Link
                             to={paths.inventory}
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                         >
                             인벤토리로 가기
                         </Link>
@@ -267,7 +263,7 @@ export default function SellPage() {
                     action={
                         <Link
                             to={paths.inventory}
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                         >
                             인벤토리로 가기
                         </Link>
@@ -278,15 +274,15 @@ export default function SellPage() {
             {inventoryQuery.isSuccess && preemptedItem && (
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
                     {/* 좌: 폼 */}
-                    <section className="rounded-2xl border border-line bg-surface p-5 lg:p-6">
+                    <section className="rounded-2xl border border-content-line bg-content-surface p-5 lg:p-6">
                         {/* 1. 판매할 아이템 — 인벤토리에서 선점한 아이템만 잠금 카드로 고정(FC-177) */}
-                        <h2 className="text-base font-bold text-gray-900">
+                        <h2 className="text-base font-bold text-content-fg">
                             1. 판매할 아이템
                         </h2>
                         <PreemptedItemCard item={preemptedItem} />
 
                         {/* 2. 판매 방식 — 목업 §sell "판매 방식"(경매/고정가) */}
-                        <h2 className="mt-6 text-base font-bold text-gray-900">
+                        <h2 className="mt-6 text-base font-bold text-content-fg">
                             2. 판매 방식
                         </h2>
                         <div
@@ -311,7 +307,7 @@ export default function SellPage() {
                         {sellMethod === 'auction' ? (
                             <>
                                 {/* 3. 가격 설정 */}
-                                <h2 className="mt-6 text-base font-bold text-gray-900">
+                                <h2 className="mt-6 text-base font-bold text-content-fg">
                                     3. 가격 설정
                                 </h2>
                                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -335,7 +331,7 @@ export default function SellPage() {
                                 </div>
 
                                 {/* 4. 경매 시간 */}
-                                <h2 className="mt-6 text-base font-bold text-gray-900">
+                                <h2 className="mt-6 text-base font-bold text-content-fg">
                                     4. 경매 시간
                                 </h2>
                                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -380,7 +376,7 @@ export default function SellPage() {
                         ) : (
                             <>
                                 {/* 3. 판매 가격 — 고정가는 가격 하나(기한은 서버 자동, §3.1) */}
-                                <h2 className="mt-6 text-base font-bold text-gray-900">
+                                <h2 className="mt-6 text-base font-bold text-content-fg">
                                     3. 판매 가격
                                 </h2>
                                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -398,9 +394,9 @@ export default function SellPage() {
                                         }}
                                     />
                                 </div>
-                                <p className="mt-3 text-xs leading-relaxed text-gray-400">
-                                    판매 기한은 서버가 자동으로 정합니다. 판매되기
-                                    전에는 언제든 취소할 수 있어요.
+                                <p className="mt-3 text-xs leading-relaxed text-content-subtle">
+                                    판매 기한은 서버가 자동으로 정합니다.
+                                    판매되기 전에는 언제든 취소할 수 있어요.
                                 </p>
                             </>
                         )}
@@ -408,11 +404,11 @@ export default function SellPage() {
 
                     {/* 우: 등록 전 확인 aside */}
                     <aside>
-                        <div className="sticky top-24 rounded-2xl border border-line bg-surface p-5">
-                            <h2 className="text-base font-bold text-gray-900">
+                        <div className="sticky top-24 rounded-2xl border border-content-line bg-content-surface p-5">
+                            <h2 className="text-base font-bold text-content-fg">
                                 등록 전 확인
                             </h2>
-                            <ul className="mt-3 flex list-disc flex-col gap-2 pl-4 text-xs leading-relaxed text-gray-500">
+                            <ul className="mt-3 flex list-disc flex-col gap-2 pl-4 text-xs leading-relaxed text-content-subtle">
                                 {sellMethod === 'auction' ? (
                                     <>
                                         <li>
@@ -458,7 +454,7 @@ export default function SellPage() {
                                   )) && (
                                 <p
                                     role="alert"
-                                    className="mt-4 rounded-lg bg-danger-subtle px-3 py-2 text-xs text-danger"
+                                    className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger-ink"
                                 >
                                     입력을 다시 확인해 주세요.
                                 </p>
@@ -466,7 +462,7 @@ export default function SellPage() {
 
                             <button
                                 type="button"
-                                className="mt-4 w-full rounded-lg bg-orange px-5 py-3 text-sm font-bold text-white hover:bg-orange-deep"
+                                className="mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                                 onClick={
                                     sellMethod === 'auction'
                                         ? handleOpenConfirm
@@ -527,13 +523,13 @@ function MethodOption({
             aria-checked={checked}
             className={`flex flex-col items-start gap-0.5 rounded-xl border p-3.5 text-left transition-colors ${
                 checked
-                    ? 'border-orange bg-orange-subtle ring-1 ring-orange'
-                    : 'border-line bg-surface hover:border-navy/40'
+                    ? 'border-control-action bg-control-action-soft ring-1 ring-control-action'
+                    : 'border-content-line bg-content-surface hover:border-brand-structure/40'
             }`}
             onClick={onSelect}
         >
-            <span className="text-sm font-bold text-gray-900">{label}</span>
-            <span className="text-xs text-gray-500">{description}</span>
+            <span className="text-sm font-bold text-content-fg">{label}</span>
+            <span className="text-xs text-content-subtle">{description}</span>
         </button>
     )
 }
@@ -560,7 +556,7 @@ function PreemptedItemCard({ item }: { item: InventoryItem }) {
         item.summary.skill1Code !== null || item.summary.skill2Code !== null
 
     return (
-        <div className="mt-3 flex items-center gap-4 rounded-xl border border-orange bg-orange-subtle p-3">
+        <div className="mt-3 flex items-center gap-4 rounded-xl border border-control-action bg-control-action-soft p-3">
             <span
                 className="item-sprite-stage flex h-[134px] w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg"
                 style={
@@ -575,32 +571,34 @@ function PreemptedItemCard({ item }: { item: InventoryItem }) {
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
                     name={item.summary.displayName}
-                    visual={{ goldforceExpireAt: item.summary.goldforceExpireAt }}
+                    visual={{
+                        goldforceExpireAt: item.summary.goldforceExpireAt,
+                    }}
                     hasSkill={hasSkill}
                     size="frame"
                 />
             </span>
             <div className="min-w-0 flex-1">
-                <h3 className="truncate text-base font-bold text-gray-900">
+                <h3 className="truncate text-base font-bold text-content-fg">
                     {item.summary.displayName}
                 </h3>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <span className="rounded-md bg-surface px-2 py-1 text-[11px] font-bold text-navy">
+                    <span className="rounded-md bg-content-surface px-2 py-1 text-[11px] font-bold text-brand-structure">
                         {elementBadgeLabelOf(axes.element)}
                     </span>
-                    <span className="rounded-md bg-navy px-2 py-1 text-[11px] font-bold text-white">
+                    <span className="rounded-md bg-brand-structure px-2 py-1 text-[11px] font-bold text-on-strong">
                         {itemTypeLabel(axes.subGroup, axes.kind)} · Lv.
                         {item.summary.level}
                     </span>
                 </div>
                 <Link
                     to={paths.inventory}
-                    className="mt-2 inline-block text-xs font-bold text-orange-deep underline underline-offset-2 hover:text-orange"
+                    className="mt-2 inline-block text-xs font-bold text-control-action-hover underline underline-offset-2 hover:text-control-action"
                 >
                     인벤토리에서 다시 선택
                 </Link>
             </div>
-            <span className="ml-auto hidden shrink-0 items-center gap-1 self-start rounded-full border border-orange bg-surface px-2.5 py-1 text-[11px] font-bold text-orange-deep sm:inline-flex">
+            <span className="ml-auto hidden shrink-0 items-center gap-1 self-start rounded-full border border-control-action bg-content-surface px-2.5 py-1 text-[11px] font-bold text-control-action-hover sm:inline-flex">
                 <TbLock aria-hidden className="size-3" />
                 선점됨
             </span>
@@ -628,10 +626,10 @@ function NumberField({
 }) {
     return (
         <div>
-            <label htmlFor={id} className="text-sm font-semibold text-gray-700">
+            <label htmlFor={id} className="text-sm font-semibold text-content-fg">
                 {label}
                 {optional && (
-                    <span className="ml-1 text-xs font-normal text-gray-400">
+                    <span className="ml-1 text-xs font-normal text-content-subtle">
                         (선택)
                     </span>
                 )}
@@ -641,10 +639,10 @@ function NumberField({
                 inputMode="numeric"
                 autoComplete="off"
                 placeholder={placeholder}
-                className={`mt-1.5 w-full rounded-lg border bg-surface px-3 py-2.5 text-sm font-semibold tabular-nums text-gray-900 focus:outline-none focus:ring-2 ${
+                className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3 py-2.5 text-sm font-semibold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
                     error
                         ? 'border-danger focus:ring-danger/30'
-                        : 'border-line focus:border-orange focus:ring-orange/30'
+                        : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                 }`}
                 aria-invalid={error !== undefined || undefined}
                 value={value}
@@ -673,10 +671,10 @@ function DateTimeField({
 }) {
     return (
         <div>
-            <label htmlFor={id} className="text-sm font-semibold text-gray-700">
+            <label htmlFor={id} className="text-sm font-semibold text-content-fg">
                 {label}
                 {optional && (
-                    <span className="ml-1 text-xs font-normal text-gray-400">
+                    <span className="ml-1 text-xs font-normal text-content-subtle">
                         (선택)
                     </span>
                 )}
@@ -684,10 +682,10 @@ function DateTimeField({
             <input
                 id={id}
                 type="datetime-local"
-                className={`mt-1.5 w-full rounded-lg border bg-surface px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
+                className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3 py-2.5 text-sm text-content-fg focus:outline-none focus:ring-2 ${
                     error
                         ? 'border-danger focus:ring-danger/30'
-                        : 'border-line focus:border-orange focus:ring-orange/30'
+                        : 'border-content-line focus:border-control-action focus:ring-control-action/30'
                 }`}
                 aria-invalid={error !== undefined || undefined}
                 value={value}
@@ -714,12 +712,12 @@ function SelectField({
 }) {
     return (
         <div>
-            <label htmlFor={id} className="text-sm font-semibold text-gray-700">
+            <label htmlFor={id} className="text-sm font-semibold text-content-fg">
                 {label}
             </label>
             <select
                 id={id}
-                className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-gray-900 focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30"
+                className="mt-1.5 w-full rounded-lg border border-content-line bg-content-surface px-3 py-2.5 text-sm text-content-fg focus:border-control-action focus:outline-none focus:ring-2 focus:ring-control-action/30"
                 value={value === null ? '' : String(value)}
                 onChange={(event) =>
                     onChange(
@@ -743,7 +741,7 @@ function SelectField({
 function FieldError({ message }: { message?: string }) {
     if (!message) return null
     return (
-        <p role="alert" className="mt-1.5 text-xs text-danger">
+        <p role="alert" className="mt-1.5 text-xs text-danger-ink">
             {message}
         </p>
     )
@@ -766,8 +764,8 @@ function SellSkeleton() {
             aria-hidden
             className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
         >
-            <div className="h-[520px] animate-pulse rounded-2xl bg-gray-100" />
-            <div className="h-80 animate-pulse rounded-2xl bg-gray-100" />
+            <div className="h-[520px] animate-pulse rounded-2xl bg-content-soft" />
+            <div className="h-80 animate-pulse rounded-2xl bg-content-soft" />
         </div>
     )
 }
@@ -784,12 +782,12 @@ function StateBlock({
     action?: React.ReactNode
 }) {
     return (
-        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+        <section className="flex min-h-[50vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-content-soft text-content-subtle">
                 <Icon aria-hidden className="size-7" />
             </span>
-            <h2 className="mt-4 text-lg font-bold text-gray-900">{title}</h2>
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            <h2 className="mt-4 text-lg font-bold text-content-fg">{title}</h2>
+            <p className="mt-1 text-sm text-content-subtle">{description}</p>
             {action && <div className="mt-5">{action}</div>}
         </section>
     )

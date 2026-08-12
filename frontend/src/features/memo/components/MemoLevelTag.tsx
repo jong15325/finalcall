@@ -15,10 +15,10 @@ function MemoLevelTag({ level, gender }: MemoLevelTagProps) {
     if (level === undefined) return null
     const g = genderLabel(gender)
     return (
-        <span className="inline-flex flex-none items-center gap-1 rounded-full border border-gold-deep bg-gradient-to-br from-gold-bright to-gold px-2 py-px text-[11px] font-extrabold leading-tight text-gray-900">
+        <span className="inline-flex flex-none items-center gap-1 rounded-full border border-brand-highlight-deep bg-gradient-to-br from-brand-highlight-bright to-brand-highlight px-2 py-px text-[11px] font-extrabold leading-tight text-content-fg">
             Lv.{level}
             {g && (
-                <span className="border-l border-gray-900/25 pl-1 font-bold">
+                <span className="border-l border-content-fg/25 pl-1 font-bold">
                     {g}
                 </span>
             )}

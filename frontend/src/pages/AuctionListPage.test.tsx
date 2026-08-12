@@ -23,13 +23,6 @@ vi.mock('@/features/auction/components/AuctionFilters', () => ({
 vi.mock('@/features/auction/components/AuctionCard', () => ({
     default: () => <article data-testid="auction-card" />,
 }))
-vi.mock('@/features/item/components/ItemCardGrid', () => ({
-    default: ({ children }: { children: React.ReactNode }) => (
-        <section data-testid="auction-grid">{children}</section>
-    ),
-    ItemCardGridSkeleton: () => <div data-testid="auction-loading" />,
-}))
-
 const baseQuery = {
     data: undefined,
     isPending: false,
@@ -59,7 +52,7 @@ describe('AuctionListPage 밝은 region', () => {
     beforeEach(() => mocks.browse.mockReturnValue(baseQuery))
 
     it.each([
-        ['loading', { ...baseQuery, isPending: true }, 'auction-loading'],
+        ['loading', { ...baseQuery, isPending: true }, 'busy'],
         ['error', { ...baseQuery, isError: true }, 'heading'],
     ])('%s 상태를 같은 region 안에 둔다', (_name, query, target) => {
         mocks.browse.mockReturnValue(query)
@@ -68,7 +61,8 @@ describe('AuctionListPage 밝은 region', () => {
         const state =
             target === 'heading'
                 ? screen.getByRole('heading', { level: 2 })
-                : screen.getByTestId(target)
+                : region.querySelector<HTMLElement>('[aria-busy="true"]')
+        expect(state).not.toBeNull()
         expect(region).toContainElement(state)
         expect(region).toContainElement(screen.getByTestId('auction-filters'))
     })
@@ -88,7 +82,9 @@ describe('AuctionListPage 밝은 region', () => {
         })
         renderPage()
         const readyRegion = screen.getByTestId('auction-list-region')
-        expect(readyRegion).toContainElement(screen.getByTestId('auction-grid'))
+        expect(readyRegion).toContainElement(
+            screen.getByRole('region', { name: '경매 목록' }),
+        )
         expect(readyRegion).toContainElement(screen.getByTestId('auction-card'))
         expect(readyRegion).toContainElement(screen.getByRole('status'))
     })
@@ -97,9 +93,13 @@ describe('AuctionListPage 밝은 region', () => {
         const view = renderPage(true)
         const scene = view.container.querySelector('.element-detail__scene')
         const region = screen.getByTestId('auction-list-region')
-        expect(region).toHaveClass('min-w-0', 'flex', 'gap-5')
+        expect(region.firstElementChild).toHaveClass(
+            'min-w-0',
+            'flex',
+            'gap-5',
+        )
         expect(region).not.toHaveClass(
-            'bg-surface',
+            'bg-content-surface',
             'border',
             'rounded-xl',
             'shadow-sm',

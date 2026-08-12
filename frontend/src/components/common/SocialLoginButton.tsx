@@ -21,7 +21,7 @@ interface ProviderMeta {
 const PROVIDER_META: Record<OAuthProvider, ProviderMeta> = {
     kakao: {
         label: '카카오로 계속하기',
-        className: 'bg-kakao text-black',
+        className: 'bg-kakao text-content-fg',
         mark: (
             <svg viewBox="0 0 18 18" aria-hidden="true">
                 <path
@@ -33,7 +33,7 @@ const PROVIDER_META: Record<OAuthProvider, ProviderMeta> = {
     },
     naver: {
         label: '네이버로 계속하기',
-        className: 'bg-naver text-white',
+        className: 'bg-naver text-on-strong',
         mark: (
             <svg viewBox="0 0 18 18" aria-hidden="true">
                 <path
@@ -69,7 +69,7 @@ export default function SocialLoginButton({
             <span className="h-[18px] w-[18px] shrink-0">{meta.mark}</span>
             {meta.label}
             {disabled && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-bold tracking-wide text-gray-700">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-content-surface/90 px-2 py-0.5 text-[11px] font-bold tracking-wide text-content-fg">
                     준비 중
                 </span>
             )}

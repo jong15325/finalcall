@@ -106,10 +106,10 @@ export default function ImageUploader({
     return (
         <div>
             <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-sm font-bold text-gray-700">
+                <span className="text-sm font-bold text-content-fg">
                     이미지 첨부
                 </span>
-                <span className="text-xs text-gray-400 tabular-nums">
+                <span className="text-xs text-content-subtle tabular-nums">
                     {total} / {MAX_IMAGES}
                 </span>
             </div>
@@ -130,13 +130,13 @@ export default function ImageUploader({
             {images.length === 0 && uploadingCount === 0 ? (
                 <button
                     type="button"
-                    className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-dashed border-gray-300 bg-surface-sunken px-4 py-6 text-sm text-gray-500 hover:border-navy"
+                    className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-dashed border-content-line bg-content-soft px-4 py-6 text-sm text-content-subtle hover:border-brand-structure"
                     onClick={openPicker}
                 >
-                    <span className="grid size-10 place-items-center rounded-xl border border-line bg-surface text-gray-400">
+                    <span className="grid size-10 place-items-center rounded-xl border border-content-line bg-content-surface text-content-subtle">
                         <TbPhoto aria-hidden className="size-5" />
                     </span>
-                    이미지를 <b className="text-navy">추가</b>하세요 (최대{' '}
+                    이미지를 <b className="text-brand-structure">추가</b>하세요 (최대{' '}
                     {MAX_IMAGES}장 · 5MB · jpg/png/webp/gif)
                 </button>
             ) : (
@@ -144,13 +144,13 @@ export default function ImageUploader({
                     {images.map((image, index) => (
                         <div
                             key={image.imagePublicId}
-                            className="group relative aspect-square overflow-hidden rounded-lg border border-line bg-gray-100"
+                            className="group relative aspect-square overflow-hidden rounded-lg border border-content-line bg-content-soft"
                         >
                             {/* presigned 미리보기 만료 시 이미지가 깨져도 첨부는 유효하다(imagePublicId 만 제출).
                                 깨지면 아래 사진 아이콘이 드러난다(리뷰 MINOR-5). */}
                             <span
                                 aria-hidden
-                                className="absolute inset-0 grid place-items-center text-gray-300"
+                                className="absolute inset-0 grid place-items-center text-content-line"
                             >
                                 <TbPhoto className="size-5" />
                             </span>
@@ -163,23 +163,23 @@ export default function ImageUploader({
                                         'hidden'
                                 }}
                             />
-                            <span className="absolute left-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-navy/80 text-[11px] font-bold text-white tabular-nums">
+                            <span className="absolute left-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-brand-structure/80 text-[11px] font-bold text-on-strong tabular-nums">
                                 {index + 1}
                             </span>
                             <button
                                 type="button"
                                 aria-label="이미지 제거"
-                                className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-navy/80 text-white hover:bg-danger"
+                                className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-brand-structure/80 text-on-strong hover:bg-danger"
                                 onClick={() => remove(image.imagePublicId)}
                             >
                                 <TbX aria-hidden className="size-3" />
                             </button>
-                            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-navy/70 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-brand-structure/70 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                                 <button
                                     type="button"
                                     aria-label="앞으로 이동"
                                     disabled={index === 0}
-                                    className="grid size-5 place-items-center rounded text-white hover:bg-white/20 disabled:opacity-30"
+                                    className="grid size-5 place-items-center rounded text-on-strong hover:bg-content-surface/20 disabled:opacity-30"
                                     onClick={() => move(index, index - 1)}
                                 >
                                     <TbChevronLeft
@@ -191,7 +191,7 @@ export default function ImageUploader({
                                     type="button"
                                     aria-label="뒤로 이동"
                                     disabled={index === images.length - 1}
-                                    className="grid size-5 place-items-center rounded text-white hover:bg-white/20 disabled:opacity-30"
+                                    className="grid size-5 place-items-center rounded text-on-strong hover:bg-content-surface/20 disabled:opacity-30"
                                     onClick={() => move(index, index + 1)}
                                 >
                                     <TbChevronRight
@@ -207,7 +207,7 @@ export default function ImageUploader({
                     {Array.from({ length: uploadingCount }).map((_, index) => (
                         <div
                             key={`uploading-${index}`}
-                            className="grid aspect-square place-items-center rounded-lg border border-line bg-surface-sunken text-gray-400"
+                            className="grid aspect-square place-items-center rounded-lg border border-content-line bg-content-soft text-content-subtle"
                         >
                             <TbLoader2
                                 aria-hidden
@@ -220,7 +220,7 @@ export default function ImageUploader({
                     {!isFull && (
                         <button
                             type="button"
-                            className="grid aspect-square place-items-center rounded-lg border border-dashed border-gray-300 bg-surface text-gray-400 hover:border-navy hover:text-navy"
+                            className="grid aspect-square place-items-center rounded-lg border border-dashed border-content-line bg-content-surface text-content-subtle hover:border-brand-structure hover:text-brand-structure"
                             onClick={openPicker}
                         >
                             <TbPlus aria-hidden className="size-5" />
@@ -232,7 +232,7 @@ export default function ImageUploader({
             {error && (
                 <p
                     role="alert"
-                    className="mt-2 flex items-center gap-1.5 text-xs text-danger"
+                    className="mt-2 flex items-center gap-1.5 text-xs text-danger-ink"
                 >
                     <TbAlertTriangle
                         aria-hidden

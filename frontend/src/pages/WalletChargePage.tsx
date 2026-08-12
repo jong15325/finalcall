@@ -1,6 +1,5 @@
 import { TbCreditCard } from 'react-icons/tb'
 import ComingSoonScaffold from '@/components/common/ComingSoonScaffold'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 코드 충전 `/wallet/charge` — [준비 중] 결제(`/charges`·Toss) 미구현(rebuild-contract-map §5).
@@ -9,8 +8,6 @@ import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
  *   `/charges`·Toss 승인을 호출하지 않고 결제창을 띄우지 않는다(정직성·FC-048).
  */
 export default function WalletChargePage() {
-    useAppFooterVariant('compact')
-
     return (
         <ComingSoonScaffold
             icon={TbCreditCard}
@@ -23,12 +20,12 @@ export default function WalletChargePage() {
                 {Array.from({ length: 6 }).map((_, index) => (
                     <div
                         key={index}
-                        className="h-14 rounded-xl border border-line bg-gray-50"
+                        className="h-14 rounded-xl border border-content-line bg-content-soft"
                     />
                 ))}
             </div>
             {/* 결제 버튼 자리 */}
-            <div className="mt-4 h-11 rounded-xl bg-gray-100" />
+            <div className="mt-4 h-11 rounded-xl bg-content-soft" />
         </ComingSoonScaffold>
     )
 }

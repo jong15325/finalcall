@@ -36,9 +36,9 @@ interface ItemInstanceDetailProps {
 
 function SpecRow({ term, children }: { term: string; children: ReactNode }) {
     return (
-        <div className="flex items-center justify-between gap-4 border-b border-line py-3 last:border-b-0">
-            <dt className="text-sm font-medium text-gray-500">{term}</dt>
-            <dd className="m-0 text-right text-sm font-semibold text-gray-900">
+        <div className="flex items-center justify-between gap-4 border-b border-content-line py-3 last:border-b-0">
+            <dt className="text-sm font-medium text-content-subtle">{term}</dt>
+            <dd className="m-0 text-right text-sm font-semibold text-content-fg">
                 {children}
             </dd>
         </div>
@@ -81,7 +81,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
         <div className="flex flex-col gap-5">
             <Link
                 to={paths.inventory}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-navy"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-content-subtle hover:text-brand-structure"
             >
                 <TbArrowLeft aria-hidden className="size-4" />
                 인벤토리
@@ -91,7 +91,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
                 {/* 아트 — 네이비 그라데이션 스테이지(색만 브랜드) */}
                 <section
-                    className="grid min-h-[280px] place-items-center rounded-2xl bg-gradient-to-br from-navy-600 to-navy-900 p-6 lg:min-h-[430px]"
+                    className="grid min-h-[280px] place-items-center rounded-2xl bg-gradient-to-br from-chrome-selected to-chrome-strong p-6 lg:min-h-[430px]"
                     aria-label="아이템 이미지"
                 >
                     <ItemFrame
@@ -108,23 +108,23 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                 </section>
 
                 {/* 스펙 카드 */}
-                <section className="detail-surface rounded-2xl border border-line bg-surface p-6">
+                <section className="detail-surface rounded-2xl border border-content-line bg-content-surface p-6">
                     {/* 배지: 위치 + (활성 시) 골드포스 */}
                     <div className="flex flex-wrap gap-2">
-                        <span className="detail-meta rounded-md bg-navy/5 px-2.5 py-1 text-xs font-semibold text-navy-700">
+                        <span className="detail-meta rounded-md bg-brand-structure/5 px-2.5 py-1 text-xs font-semibold text-chrome-selected">
                             {itemLocationLabel(item.location)}
                         </span>
                         {gfDays !== null && (
-                            <span className="rounded-md bg-gold-subtle px-2.5 py-1 text-xs font-semibold text-gold-deep">
+                            <span className="rounded-md bg-brand-highlight-soft px-2.5 py-1 text-xs font-semibold text-brand-highlight-deep">
                                 골드포스 활성
                             </span>
                         )}
                     </div>
 
-                    <h1 className="mt-3 text-2xl font-bold text-gray-900">
+                    <h1 className="mt-3 text-2xl font-bold text-content-fg">
                         {template.displayName}
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         {itemTypeLabel(template.subGroup, template.kind)}
                         {canRegister && ` · 슬롯 ${item.slotNo}`}
                     </p>
@@ -150,7 +150,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                             ))
                         ) : (
                             <SpecRow term="스킬">
-                                <span className="text-gray-400">없음</span>
+                                <span className="text-content-subtle">없음</span>
                             </SpecRow>
                         )}
 
@@ -172,7 +172,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                         <div className="mt-6 flex flex-wrap gap-2">
                             <Link
                                 to={paths.sell}
-                                className="detail-cta inline-flex items-center gap-1.5 rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
+                                className="detail-cta inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                             >
                                 <TbTag aria-hidden className="size-4" />
                                 경매에 등록

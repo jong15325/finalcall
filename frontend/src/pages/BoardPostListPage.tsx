@@ -21,7 +21,6 @@ import EventPostCard from '@/features/board/components/EventPostCard'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 게시판 글 목록 `/boards/:slug` (FC-202 — 승인 화면 B).
@@ -73,12 +72,6 @@ export default function BoardPostListPage() {
         boardQuery.isError &&
         isApiError(boardQuery.error) &&
         boardQuery.error.code === ERROR_CODES.BOARD_001
-    useAppFooterVariant(
-        boardNotFound || (!isPending && posts.length === 0)
-            ? 'compact'
-            : 'default',
-    )
-
     if (boardNotFound) {
         return (
             <BoardStateBlock
@@ -88,7 +81,7 @@ export default function BoardPostListPage() {
                 action={
                     <Link
                         to={paths.boards}
-                        className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                     >
                         게시판 목록으로
                     </Link>
@@ -102,7 +95,7 @@ export default function BoardPostListPage() {
             {/* 허브 복귀 — 게시판 목록(허브)으로 */}
             <Link
                 to={paths.boards}
-                className="inline-flex w-max items-center gap-1 text-sm font-semibold text-gray-500 hover:text-navy"
+                className="inline-flex w-max items-center gap-1 text-sm font-semibold text-content-subtle hover:text-brand-structure"
             >
                 <TbChevronLeft aria-hidden className="size-4" />
                 게시판
@@ -110,7 +103,7 @@ export default function BoardPostListPage() {
 
             {/* 게시판 탭 — 게시판 간 이동 */}
             {boardsQuery.data && boardsQuery.data.length > 0 && (
-                <div className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-line bg-surface p-1">
+                <div className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-content-line bg-content-surface p-1">
                     {boardsQuery.data.map((tab) => {
                         const active = tab.slug === slug
                         return (
@@ -119,8 +112,8 @@ export default function BoardPostListPage() {
                                 to={boardPath(tab.slug)}
                                 className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
                                     active
-                                        ? 'bg-navy text-white'
-                                        : 'text-gray-500 hover:text-navy'
+                                        ? 'bg-brand-structure text-on-strong'
+                                        : 'text-content-subtle hover:text-brand-structure'
                                 }`}
                             >
                                 {tab.name}
@@ -133,11 +126,11 @@ export default function BoardPostListPage() {
             {/* 헤더 + 글쓰기 */}
             <header className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0">
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-2xl font-bold text-content-fg">
                         {board?.name ?? '게시판'}
                     </h1>
                     {board?.description && (
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-content-subtle">
                             {board.description}
                         </p>
                     )}
@@ -145,7 +138,7 @@ export default function BoardPostListPage() {
                 {showWrite ? (
                     <Link
                         to={boardWritePath(slug)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-orange px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                     >
                         <TbPencilPlus aria-hidden className="size-4" />
                         글쓰기
@@ -153,7 +146,7 @@ export default function BoardPostListPage() {
                 ) : (
                     board &&
                     writeDisabledLabel(board) && (
-                        <span className="text-xs font-medium text-gray-400">
+                        <span className="text-xs font-medium text-content-subtle">
                             {writeDisabledLabel(board)}
                         </span>
                     )
@@ -162,16 +155,16 @@ export default function BoardPostListPage() {
 
             {/* 로딩 */}
             {isPending && (
-                <div className="overflow-hidden rounded-xl border border-line bg-surface">
+                <div className="overflow-hidden rounded-xl border border-content-line bg-content-surface">
                     {Array.from({ length: 6 }).map((_, index) => (
                         <div
                             key={index}
-                            className="flex items-center gap-3.5 border-b border-line px-4 py-3.5 last:border-b-0"
+                            className="flex items-center gap-3.5 border-b border-content-line px-4 py-3.5 last:border-b-0"
                         >
-                            <div className="size-14 shrink-0 animate-pulse rounded-lg bg-gray-100" />
+                            <div className="size-14 shrink-0 animate-pulse rounded-lg bg-content-soft" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-3.5 w-2/3 animate-pulse rounded bg-gray-100" />
-                                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-100" />
+                                <div className="h-3.5 w-2/3 animate-pulse rounded bg-content-soft" />
+                                <div className="h-3 w-1/3 animate-pulse rounded bg-content-soft" />
                             </div>
                         </div>
                     ))}
@@ -187,7 +180,7 @@ export default function BoardPostListPage() {
                     action={
                         <button
                             type="button"
-                            className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                             onClick={() => void refetch()}
                         >
                             다시 시도
@@ -210,7 +203,7 @@ export default function BoardPostListPage() {
                         showWrite ? (
                             <Link
                                 to={boardWritePath(slug)}
-                                className="rounded-lg bg-orange px-4 py-2 text-sm font-bold text-white hover:bg-orange-deep"
+                                className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-on-strong hover:bg-control-action-hover"
                             >
                                 글쓰기
                             </Link>
@@ -223,7 +216,7 @@ export default function BoardPostListPage() {
             {!isPending && isError && posts.length > 0 && (
                 <p
                     role="alert"
-                    className="rounded-lg bg-danger-subtle px-4 py-2.5 text-sm text-danger"
+                    className="rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger-ink"
                 >
                     최신 목록을 불러오지 못했어요. 표시된 글은 이전 결과예요.
                 </p>
@@ -242,7 +235,7 @@ export default function BoardPostListPage() {
                         ))}
                     </div>
                 ) : (
-                    <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+                    <ul className="divide-y divide-content-line overflow-hidden rounded-xl border border-content-line bg-content-surface">
                         {posts.map((post) => (
                             <li key={post.postPublicId}>
                                 <PostCard
@@ -260,7 +253,7 @@ export default function BoardPostListPage() {
             {isFetchingNextPage && (
                 <p
                     role="status"
-                    className="py-2 text-center text-xs text-gray-400"
+                    className="py-2 text-center text-xs text-content-subtle"
                 >
                     더 불러오는 중…
                 </p>

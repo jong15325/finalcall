@@ -11,7 +11,6 @@ import MyShopsSection from '@/features/shop/components/MyShopsSection'
 import { useMe, useUpdateNickname, useWithdraw } from '@/lib/queries/me'
 import { useMyBalance } from '@/lib/queries/balance'
 import { resetSessionState } from '@/lib/api/session'
-import { useAppFooterVariant } from '@/components/layout/AppFooterContext'
 
 /**
  * 마이페이지 통합 홈 `/me` (FC-074 — 목업 accountHub('profile')=accountOverview · design-brief B-7).
@@ -29,12 +28,6 @@ export default function MePage() {
     const balanceQuery = useMyBalance()
     const nicknameMutation = useUpdateNickname()
     const withdrawMutation = useWithdraw()
-    useAppFooterVariant(
-        !meQuery.isPending && (meQuery.isError || !meQuery.data)
-            ? 'compact'
-            : 'default',
-    )
-
     const [withdrawOpen, setWithdrawOpen] = useState(false)
 
     const openWithdraw = () => {
@@ -60,8 +53,8 @@ export default function MePage() {
     return (
         <div className="flex flex-col gap-4">
             <header>
-                <h1 className="text-2xl font-bold text-gray-900">마이페이지</h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <h1 className="text-2xl font-bold text-content-fg">마이페이지</h1>
+                <p className="mt-1 text-sm text-content-subtle">
                     계정 정보와 자산을 한 곳에서 관리하세요.
                 </p>
             </header>
@@ -69,19 +62,19 @@ export default function MePage() {
             {meQuery.isPending ? (
                 <MeSkeleton />
             ) : meQuery.isError || !meQuery.data ? (
-                <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-                    <span className="flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+                <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+                    <span className="flex size-14 items-center justify-center rounded-2xl bg-content-soft text-content-subtle">
                         <TbAlertTriangle aria-hidden className="size-7" />
                     </span>
-                    <h2 className="mt-4 text-lg font-bold text-gray-900">
+                    <h2 className="mt-4 text-lg font-bold text-content-fg">
                         프로필을 불러오지 못했습니다
                     </h2>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-content-subtle">
                         잠시 후 다시 시도해 주세요.
                     </p>
                     <button
                         type="button"
-                        className="mt-5 rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-800"
+                        className="mt-5 rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
                         onClick={() => void meQuery.refetch()}
                     >
                         다시 시도
@@ -113,38 +106,38 @@ export default function MePage() {
                     {/* 거래 내역 진입점 (FC-090 실연동) */}
                     <Link
                         to={paths.orders}
-                        className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-5 hover:border-navy sm:p-6"
+                        className="flex items-center gap-3 rounded-2xl border border-content-line bg-content-surface p-5 hover:border-brand-structure sm:p-6"
                     >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-navy text-gold-bright">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-structure text-brand-highlight-bright">
                             <TbReceipt aria-hidden className="size-5" />
                         </span>
                         <span className="min-w-0">
-                            <span className="block text-base font-bold text-gray-900">
+                            <span className="block text-base font-bold text-content-fg">
                                 거래 내역
                             </span>
-                            <span className="block text-xs text-gray-500">
+                            <span className="block text-xs text-content-subtle">
                                 구매·판매한 거래를 확인하세요.
                             </span>
                         </span>
                         <TbChevronRight
                             aria-hidden
-                            className="ms-auto size-5 shrink-0 text-gray-400"
+                            className="ms-auto size-5 shrink-0 text-content-subtle"
                         />
                     </Link>
 
                     {/* 위험 구역 — 회원 탈퇴 */}
-                    <section className="flex flex-col gap-3 rounded-2xl border border-danger/30 bg-danger-subtle/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <section className="flex flex-col gap-3 rounded-2xl border border-danger/30 bg-danger-soft/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                         <div>
-                            <h3 className="text-base font-bold text-gray-900">
+                            <h3 className="text-base font-bold text-content-fg">
                                 회원 탈퇴
                             </h3>
-                            <p className="mt-1 text-sm text-gray-600">
+                            <p className="mt-1 text-sm text-content-muted">
                                 잔액과 계정 정보가 소멸하며 복구할 수 없습니다.
                             </p>
                         </div>
                         <button
                             type="button"
-                            className="shrink-0 rounded-lg border border-danger bg-surface px-4 py-2.5 text-sm font-bold text-danger hover:bg-danger-subtle"
+                            className="shrink-0 rounded-lg border border-danger bg-content-surface px-4 py-2.5 text-sm font-bold text-danger-ink hover:bg-danger-soft"
                             onClick={openWithdraw}
                         >
                             탈퇴하기
@@ -168,10 +161,10 @@ export default function MePage() {
 function MeSkeleton() {
     return (
         <div aria-hidden className="flex flex-col gap-4">
-            <div className="h-28 animate-pulse rounded-2xl bg-gray-100" />
+            <div className="h-28 animate-pulse rounded-2xl bg-content-soft" />
             <div className="grid gap-4 lg:grid-cols-2">
-                <div className="h-44 animate-pulse rounded-2xl bg-gray-100" />
-                <div className="h-44 animate-pulse rounded-2xl bg-gray-100" />
+                <div className="h-44 animate-pulse rounded-2xl bg-content-soft" />
+                <div className="h-44 animate-pulse rounded-2xl bg-content-soft" />
             </div>
         </div>
     )

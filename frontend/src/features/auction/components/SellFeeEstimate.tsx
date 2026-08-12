@@ -24,12 +24,12 @@ function SellFeeEstimate({ startPrice }: SellFeeEstimateProps) {
     const { fee, settle } = computeSellerFee(startPrice)
 
     return (
-        <div className="mt-4 rounded-xl border border-line bg-surface p-4">
+        <div className="mt-4 rounded-xl border border-content-line bg-content-surface p-4">
             <div className="flex items-center justify-between">
-                <h6 className="text-sm font-bold text-gray-900">
+                <h6 className="text-sm font-bold text-content-fg">
                     판매 수수료 안내
                 </h6>
-                <span className="rounded-full bg-orange-subtle px-2 py-0.5 text-[10px] font-bold text-orange-deep">
+                <span className="rounded-full bg-control-action-soft px-2 py-0.5 text-[10px] font-bold text-control-action-hover">
                     예상 · 정산 시 서버 확정
                 </span>
             </div>
@@ -40,48 +40,48 @@ function SellFeeEstimate({ startPrice }: SellFeeEstimateProps) {
                         key={bracket.range}
                         className="flex items-center justify-between text-xs"
                     >
-                        <span className="text-gray-500">{bracket.range}</span>
-                        <strong className="font-semibold text-gray-700">
+                        <span className="text-content-subtle">{bracket.range}</span>
+                        <strong className="font-semibold text-content-fg">
                             {bracket.rate}
                         </strong>
                     </li>
                 ))}
             </ul>
 
-            <dl className="mt-3 rounded-lg border border-line bg-surface-sunken p-3 text-sm">
+            <dl className="mt-3 rounded-lg border border-content-line bg-content-soft p-3 text-sm">
                 <div className="flex items-center justify-between">
-                    <dt className="text-gray-500">시작가</dt>
+                    <dt className="text-content-subtle">시작가</dt>
                     <dd>
                         <CodeAmount
                             value={startPrice > 0 ? startPrice : null}
                             mode="full"
-                            className="font-semibold text-gray-900"
+                            className="font-semibold text-content-fg"
                         />
                     </dd>
                 </div>
                 <div className="mt-1.5 flex items-center justify-between">
-                    <dt className="text-gray-500">예상 수수료</dt>
+                    <dt className="text-content-subtle">예상 수수료</dt>
                     <dd>
                         <CodeAmount
                             value={startPrice > 0 ? fee : null}
                             mode="full"
-                            className="font-semibold text-danger"
+                            className="font-semibold text-danger-ink"
                         />
                     </dd>
                 </div>
-                <div className="mt-1.5 flex items-center justify-between border-t border-line pt-1.5">
-                    <dt className="font-medium text-gray-700">정산 예상</dt>
+                <div className="mt-1.5 flex items-center justify-between border-t border-content-line pt-1.5">
+                    <dt className="font-medium text-content-fg">정산 예상</dt>
                     <dd>
                         <CodeAmount
                             value={startPrice > 0 ? settle : null}
                             mode="full"
-                            className="font-bold text-gray-900"
+                            className="font-bold text-content-fg"
                         />
                     </dd>
                 </div>
             </dl>
 
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
+            <p className="mt-2 text-[11px] leading-relaxed text-content-subtle">
                 구매자 수수료는 없습니다. 판매 수수료는 낙찰가 구간별로 정산 시
                 차감됩니다.
             </p>

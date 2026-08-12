@@ -21,11 +21,11 @@ describe('<CompareToggle>', () => {
         const selected = screen.getByRole('button', { name: '비교 담기' })
         expect(selected).toHaveAttribute('aria-pressed', 'true')
         expect(selected).toHaveClass(
-            'border-gray-900',
-            'bg-orange',
-            'text-gray-900',
+            'border-content-fg',
+            'bg-control-action',
+            'text-content-fg',
         )
-        expect(selected).not.toHaveClass('text-white')
+        expect(selected).not.toHaveClass('text-on-strong')
     })
 
     it('클릭하면 반대값을 콜백으로 올린다(controlled)', async () => {

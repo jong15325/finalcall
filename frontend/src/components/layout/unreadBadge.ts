@@ -1,2 +1,2 @@
 export const UNREAD_BADGE_CLASS =
-    'bg-orange text-gray-900 font-bold tabular-nums'
+    'bg-control-action text-content-fg font-bold tabular-nums'

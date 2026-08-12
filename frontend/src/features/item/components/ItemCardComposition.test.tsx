@@ -1,0 +1,90 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
+import { describe, expect, it, vi } from 'vitest'
+import ItemCardActionSurface from './ItemCardActionSurface'
+import ItemCardFlip from './ItemCardFlip'
+import ItemCardView from './ItemCardView'
+import type { ItemCardViewModel } from './ItemCardView'
+
+const item: ItemCardViewModel = {
+    name: '불의 전투도끼',
+    description: '공격력이 높은 한손 도끼',
+    typeLabel: '블랙 - 무기',
+    kindLabel: '도끼',
+    level: 3,
+    element: 'fire',
+    artUrl: '/art/items/level3/l/fire/axe.png',
+    skills: [{ slot: 1, label: '공격시간 3 감소' }],
+    price: { amount: 2_480_000, label: '현재가' },
+    goldforceExpireAt: null,
+    referenceNow: Date.parse('2026-07-23T00:00:00Z'),
+}
+
+describe('아이템 카드 composition', () => {
+    it('표시 view는 외부 상태 없이 아이템 정보를 렌더한다', () => {
+        render(<ItemCardView item={item} />)
+
+        expect(
+            screen.getByRole('heading', { name: item.name }),
+        ).toBeInTheDocument()
+        expect(screen.getByText('248만')).toBeInTheDocument()
+        expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
+    })
+
+    it('controlled flip은 자기 focus 범위의 Escape만 처리한다', () => {
+        const onFlippedChange = vi.fn()
+        render(
+            <ItemCardFlip
+                flipped
+                back={<span>뒷면</span>}
+                front={<span>앞면</span>}
+                label={item.name}
+                onFlippedChange={onFlippedChange}
+            />,
+        )
+
+        fireEvent.keyDown(window, { key: 'Escape' })
+        expect(onFlippedChange).not.toHaveBeenCalled()
+
+        fireEvent.keyDown(
+            screen.getByRole('button', {
+                name: `${item.name} 스킬 닫기`,
+            }),
+            { key: 'Escape' },
+        )
+        expect(onFlippedChange).toHaveBeenCalledWith(false)
+    })
+
+    it('action surface는 link와 button을 각각 단일 주 행동으로 렌더한다', () => {
+        const onPress = vi.fn()
+        const view = render(
+            <MemoryRouter>
+                <ItemCardActionSurface
+                    action={{
+                        kind: 'link',
+                        to: '/auctions/A-1',
+                        label: '경매 상세 보기',
+                    }}
+                />
+                <ItemCardActionSurface
+                    opensDialog
+                    action={{
+                        kind: 'button',
+                        label: '카드정보 보기',
+                        onPress,
+                    }}
+                />
+            </MemoryRouter>,
+        )
+
+        expect(
+            screen.getByRole('link', { name: '경매 상세 보기' }),
+        ).toHaveAttribute('href', '/auctions/A-1')
+        const button = screen.getByRole('button', { name: '카드정보 보기' })
+        expect(button).toHaveAttribute('aria-haspopup', 'dialog')
+        expect(button.querySelector('button, a')).toBeNull()
+        fireEvent.click(button)
+        expect(onPress).toHaveBeenCalledOnce()
+        view.unmount()
+    })
+})

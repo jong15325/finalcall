@@ -37,7 +37,7 @@ interface ShopFiltersProps {
 }
 
 const SELECT_CLASS =
-    'w-full min-w-[125px] rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-gray-900 focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30'
+    'w-full min-w-[125px] rounded-lg border border-content-line bg-content-surface px-3 py-2 text-sm font-medium text-content-fg focus:border-control-action focus:outline-none focus:ring-2 focus:ring-control-action/30'
 
 function ShopFilters({
     filters,
@@ -62,8 +62,8 @@ function ShopFilters({
                 aria-pressed={active}
                 className={`min-h-[40px] shrink-0 rounded-lg border px-3.5 text-sm font-bold transition-colors ${
                     active
-                        ? 'border-navy bg-navy text-white'
-                        : 'border-line bg-surface text-gray-600 hover:border-navy'
+                        ? 'border-brand-structure bg-brand-structure text-on-strong'
+                        : 'border-content-line bg-content-surface text-content-muted hover:border-brand-structure'
                 }`}
                 onClick={() => onChange({ subGroup: code, kind: null })}
             >
@@ -74,7 +74,7 @@ function ShopFilters({
 
     return (
         <section aria-label="마켓 필터" className="flex flex-col gap-3">
-            <div className="rounded-2xl border border-line bg-surface p-4">
+            <div className="rounded-2xl border border-content-line bg-content-surface p-4">
                 {/* 자유문 검색(FC-108 · 계약 C1) — 페이지 내 목록 검색. 상단 전역검색 아님(mockup §5.2) */}
                 <ListSearchBar
                     value={filters.q ?? ''}
@@ -94,7 +94,7 @@ function ShopFilters({
 
                     {/* 속성·정렬 select */}
                     <div className="grid grid-cols-1 gap-2 xs:grid-cols-2">
-                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                        <label className="grid gap-1 text-[11px] font-bold text-content-subtle">
                             <span>속성</span>
                             <select
                                 className={SELECT_CLASS}
@@ -119,7 +119,7 @@ function ShopFilters({
                             </select>
                         </label>
 
-                        <label className="grid gap-1 text-[11px] font-bold text-gray-500">
+                        <label className="grid gap-1 text-[11px] font-bold text-content-subtle">
                             <span>정렬</span>
                             <select
                                 className={SELECT_CLASS}
@@ -150,7 +150,7 @@ function ShopFilters({
                             key={chip.id}
                             type="button"
                             aria-label={`${chip.label} 필터 해제`}
-                            className="flex items-center gap-1 rounded-full bg-navy/5 py-1 pl-3 pr-2 text-xs font-medium text-navy-700 hover:bg-navy/10"
+                            className="flex items-center gap-1 rounded-full bg-brand-structure/5 py-1 pl-3 pr-2 text-xs font-medium text-chrome-selected hover:bg-brand-structure/10"
                             onClick={() => onChange(chip.patch)}
                         >
                             {chip.label}
@@ -159,7 +159,7 @@ function ShopFilters({
                     ))}
                     <button
                         type="button"
-                        className="text-xs font-bold text-gray-500 underline-offset-2 hover:underline"
+                        className="text-xs font-bold text-content-subtle underline-offset-2 hover:underline"
                         onClick={onReset}
                     >
                         전체 초기화

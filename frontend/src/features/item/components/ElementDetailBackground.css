@@ -1,16 +1,34 @@
+.route-accent-scope,
 .element-detail {
     min-width: 0;
+}
+
+.route-accent-scope[data-route-accent='water'] {
+    --route-accent: var(--element-water);
+}
+
+.route-accent-scope[data-route-accent='fire'] {
+    --route-accent: var(--element-fire);
+}
+
+.route-accent-scope[data-route-accent='earth'] {
+    --route-accent: var(--element-earth);
+}
+
+.route-accent-scope[data-route-accent='wind'] {
+    --route-accent: var(--element-wind);
+}
+
+.route-accent-scope[data-route-accent='neutral'] {
+    --route-accent: var(--content-line);
 }
 
 .element-detail__ambient-canvas {
     position: absolute;
     inset: 0;
+    z-index: 2;
     width: 100%;
     height: 100%;
-}
-
-.element-detail__ambient-canvas {
-    z-index: 2;
 }
 
 .element-detail__content {
@@ -18,123 +36,15 @@
     min-width: 0;
 }
 
-.element-detail:not(.element-detail--ambient-only)
-    .element-detail__content
-    > div
-    > a {
-    color: var(--detail-text);
-    text-shadow: 0 1px 8px rgb(2 6 23 / 0.72);
-}
-
-[data-detail-theme] .detail-chrome {
-    border-color: var(--detail-chrome-border);
-    background: var(--detail-chrome-surface);
-    color: var(--detail-text);
-}
-
-[data-detail-theme] .detail-chrome :is([class*='text-gray-'], strong) {
-    color: var(--detail-text);
-}
-
-[data-detail-theme] .detail-chrome :is(.bg-surface, [class*='bg-surface\/']) {
-    background: rgb(15 23 42 / 0.98);
-}
-
-.element-detail:not(.element-detail--ambient-only) .detail-surface {
-    border-color: var(--detail-content-border);
-    background: var(--detail-content-surface);
+/* Route accent는 콘텐츠 장식선에만 적용한다. 본문·CTA·focus·chrome은 재색하지 않는다. */
+.route-accent-scope .detail-surface {
     box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--detail-accent) 28%, transparent),
-        0 18px 48px rgb(2 6 23 / 0.28);
-    color: var(--detail-text);
+        0 0 0 1px color-mix(in srgb, var(--route-accent) 20%, transparent),
+        0 1px 2px color-mix(in srgb, var(--content-fg) 8%, transparent);
 }
 
-.element-detail:not(.element-detail--ambient-only)
-    .auction-detail-region
-    .detail-surface {
-    border-color: var(--line);
-    background: var(--surface);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
-    color: var(--gray-900);
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .auction-detail-region
-    .detail-surface
-    :is([class*='text-gray-9'], [class*='text-gray-7']) {
-    color: var(--gray-900);
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .auction-detail-region
-    .detail-surface
-    :is([class*='text-gray-5'], [class*='text-gray-4']) {
-    color: var(--gray-500);
-}
-
-.element-detail .auction-detail-region .detail-surface [class*='border-line'] {
-    border-color: var(--line);
-}
-
-.element-detail
-    .auction-detail-region
-    .detail-surface
-    :is(.detail-meta, [class~='text-navy'], [class~='text-navy-700']) {
-    color: var(--navy);
-}
-
-.element-detail .auction-detail-region > div > a {
-    color: var(--gray-500);
-    text-shadow: none;
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .detail-surface
-    :is([class*='text-gray-9'], [class*='text-gray-7']) {
-    color: var(--detail-text);
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .detail-surface
-    :is([class*='text-gray-5'], [class*='text-gray-4']) {
-    color: var(--detail-muted);
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .detail-surface
-    :is([class*='border-line']) {
-    border-color: var(--detail-content-border);
-}
-
-.element-detail:not(.element-detail--ambient-only) .detail-surface .detail-meta,
-.element-detail:not(.element-detail--ambient-only)
-    .detail-surface
-    :is([class~='text-navy'], [class~='text-navy-700']) {
-    color: var(--detail-meta-text);
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .detail-surface
-    :is([class~='bg-navy/5'], [class~='bg-navy/10']) {
-    background: var(--detail-meta-surface);
-}
-
-.element-detail:not(.element-detail--ambient-only) .detail-cta:not(:disabled),
-[data-detail-theme] .detail-chrome .detail-cta:not(:disabled) {
-    background: var(--detail-cta-bg);
-    color: var(--detail-cta-text);
-}
-
-.element-detail:not(.element-detail--ambient-only)
-    .detail-cta:not(:disabled):hover,
-[data-detail-theme] .detail-chrome .detail-cta:not(:disabled):hover {
-    background: var(--detail-cta-hover);
-    color: var(--detail-cta-text);
-}
-
-.element-detail:not(.element-detail--ambient-only) a:focus-visible,
-.element-detail:not(.element-detail--ambient-only) button:focus-visible,
-[data-detail-theme] .detail-chrome :is(a, button):focus-visible {
-    outline: 2px solid var(--detail-focus-ring);
-    outline-offset: 2px;
+@media (forced-colors: active) {
+    .route-accent-scope .detail-surface {
+        box-shadow: none;
+    }
 }

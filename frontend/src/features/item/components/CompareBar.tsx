@@ -34,20 +34,20 @@ function CompareBar() {
         <aside
             aria-label="아이템 비교 선택"
             aria-live="polite"
-            className="detail-chrome fixed inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[920px] items-center gap-3 rounded-2xl border border-line bg-surface/95 px-4 py-3 shadow-[0_18px_55px_rgba(28,34,56,0.22)] backdrop-blur-md xl:inset-x-auto xl:right-6 xl:bottom-6 xl:left-auto"
+            className="app-chrome fixed inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[920px] items-center gap-3 rounded-xl border border-chrome-selected bg-chrome px-4 py-3 text-chrome-fg shadow-xl xl:inset-x-auto xl:right-6 xl:bottom-6 xl:left-auto"
         >
             <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-navy/10 text-navy">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-chrome-raised text-brand-highlight-bright">
                     <TbColumns3 aria-hidden className="size-5" />
                 </span>
                 <span className="grid min-w-0">
-                    <strong className="text-[13px] text-gray-900">
+                    <strong className="text-[13px] text-chrome-fg">
                         아이템 비교{' '}
-                        <b className="text-orange-deep">
+                        <b className="text-control-action">
                             {items.length}/{MAX_COMPARE_ITEMS}
                         </b>
                     </strong>
-                    <small className="truncate text-[11px] text-gray-500">
+                    <small className="truncate text-[11px] text-chrome-muted">
                         {canCompare
                             ? '가격과 스킬 1·2를 우선 비교합니다'
                             : '한 개 더 담으면 비교할 수 있어요'}
@@ -60,13 +60,13 @@ function CompareBar() {
                 {items.map((item, index) => (
                     <span
                         key={item.listingId}
-                        className="relative grid size-11 place-items-center rounded-lg border border-line bg-surface-sunken text-xs font-bold text-navy-700"
+                        className="relative grid size-11 place-items-center rounded-lg border border-chrome-selected bg-chrome-raised text-xs font-bold text-chrome-fg"
                     >
                         {index + 1}
                         <button
                             type="button"
                             aria-label={`${index + 1}번 아이템 비교에서 빼기`}
-                            className="absolute -right-1.5 -top-1.5 grid size-[18px] place-items-center rounded-full bg-navy text-white hover:bg-navy-800"
+                            className="absolute -right-1.5 -top-1.5 grid size-[18px] place-items-center rounded-full bg-control-action text-content-fg hover:bg-control-action-hover"
                             onClick={() => remove(item.listingId)}
                         >
                             <TbX aria-hidden className="size-3" />
@@ -77,7 +77,7 @@ function CompareBar() {
                     <span
                         key={`empty-${index}`}
                         aria-hidden
-                        className="grid size-11 place-items-center rounded-lg border border-dashed border-line text-gray-300"
+                        className="grid size-11 place-items-center rounded-lg border border-dashed border-chrome-selected text-chrome-muted"
                     >
                         +
                     </span>
@@ -87,7 +87,7 @@ function CompareBar() {
             <span className="flex shrink-0 items-center gap-2">
                 <button
                     type="button"
-                    className="hidden rounded-lg border border-line px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 sm:block"
+                    className="hidden rounded-lg border border-chrome-selected px-3 py-2 text-xs font-bold text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg sm:block"
                     onClick={clear}
                 >
                     전체 해제
@@ -95,14 +95,14 @@ function CompareBar() {
                 {canCompare ? (
                     <Link
                         to={paths.compare}
-                        className="detail-cta whitespace-nowrap rounded-lg bg-orange px-4 py-2 text-xs font-bold text-white hover:bg-orange-deep"
+                        className="whitespace-nowrap rounded-lg bg-control-action px-4 py-2 text-xs font-bold text-content-fg hover:bg-control-action-hover"
                     >
                         비교하기
                     </Link>
                 ) : (
                     <span
                         aria-disabled="true"
-                        className="cursor-not-allowed whitespace-nowrap rounded-lg bg-gray-100 px-4 py-2 text-xs font-bold text-gray-400"
+                        className="cursor-not-allowed whitespace-nowrap rounded-lg bg-chrome-raised px-4 py-2 text-xs font-bold text-chrome-muted opacity-60"
                     >
                         비교하기
                     </span>

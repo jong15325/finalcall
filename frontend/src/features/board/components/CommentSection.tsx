@@ -53,9 +53,9 @@ export default function CommentSection({
         return (
             <section
                 aria-label="댓글"
-                className="mt-6 border-t border-line pt-6"
+                className="mt-6 border-t border-content-line pt-6"
             >
-                <div className="flex items-center justify-center gap-2 rounded-lg bg-surface-sunken px-4 py-5 text-sm text-gray-400">
+                <div className="flex items-center justify-center gap-2 rounded-lg bg-content-soft px-4 py-5 text-sm text-content-subtle">
                     <TbMessageOff aria-hidden className="size-4" />이 게시판은
                     댓글을 받지 않습니다.
                 </div>
@@ -64,12 +64,12 @@ export default function CommentSection({
     }
 
     return (
-        <section aria-label="댓글" className="mt-6 border-t border-line pt-6">
+        <section aria-label="댓글" className="mt-6 border-t border-content-line pt-6">
             <div className="flex items-center gap-2">
-                <h3 className="flex items-center gap-1.5 text-base font-bold text-gray-900">
-                    <TbMessage aria-hidden className="size-4 text-navy" />
+                <h3 className="flex items-center gap-1.5 text-base font-bold text-content-fg">
+                    <TbMessage aria-hidden className="size-4 text-brand-structure" />
                     댓글
-                    <span className="text-orange-deep">
+                    <span className="text-control-action-hover">
                         {commentCount.toLocaleString()}
                     </span>
                 </h3>
@@ -166,15 +166,15 @@ function CommentSortControl({
                 aria-haspopup="menu"
                 aria-expanded={open}
                 aria-controls={open ? 'comment-sort-menu' : undefined}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-bold text-gray-600 hover:border-navy"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-3 text-xs font-bold text-content-muted hover:border-brand-structure"
                 onClick={() => {
                     setActiveIndex(currentIndex)
                     setOpen((v) => !v)
                 }}
             >
-                <TbArrowsSort aria-hidden className="size-3.5 text-gray-400" />
+                <TbArrowsSort aria-hidden className="size-3.5 text-content-subtle" />
                 {current.label}
-                <TbChevronDown aria-hidden className="size-3.5 text-gray-400" />
+                <TbChevronDown aria-hidden className="size-3.5 text-content-subtle" />
             </button>
 
             {open && (
@@ -182,17 +182,17 @@ function CommentSortControl({
                     {/* 모바일 전용 스크림 — 시트 뒤 어둡게 + 바깥 탭으로 닫기 */}
                     <div
                         aria-hidden
-                        className="fixed inset-0 z-40 bg-navy-900/35 sm:hidden"
+                        className="fixed inset-0 z-40 bg-chrome-strong/35 sm:hidden"
                         onClick={() => setOpen(false)}
                     />
                     <div
                         id="comment-sort-menu"
                         role="menu"
                         aria-label="댓글 정렬"
-                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-line bg-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-40 sm:rounded-xl sm:border sm:p-1.5 sm:shadow-lg"
+                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-content-line bg-content-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-40 sm:rounded-xl sm:border sm:p-1.5 sm:shadow-lg"
                         onKeyDown={handleMenuKeyDown}
                     >
-                        <p className="px-3 pb-1.5 pt-1 text-xs font-bold text-gray-400 sm:hidden">
+                        <p className="px-3 pb-1.5 pt-1 text-xs font-bold text-content-subtle sm:hidden">
                             정렬
                         </p>
                         {SORT_OPTIONS.map((option, index) => {
@@ -207,10 +207,10 @@ function CommentSortControl({
                                     role="menuitemradio"
                                     aria-checked={selected}
                                     tabIndex={activeIndex === index ? 0 : -1}
-                                    className={`flex h-12 w-full items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-gray-100 sm:h-9 ${
+                                    className={`flex h-12 w-full items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-content-soft sm:h-9 ${
                                         selected
-                                            ? 'font-bold text-navy'
-                                            : 'font-semibold text-gray-600'
+                                            ? 'font-bold text-brand-structure'
+                                            : 'font-semibold text-content-muted'
                                     }`}
                                     onClick={() => select(option.value)}
                                 >
@@ -218,7 +218,7 @@ function CommentSortControl({
                                     {selected && (
                                         <TbCheck
                                             aria-hidden
-                                            className="ml-auto size-4 text-orange-deep"
+                                            className="ml-auto size-4 text-control-action-hover"
                                         />
                                     )}
                                 </button>
@@ -246,11 +246,11 @@ function CommentComposer({
 
     if (!isAuthenticated) {
         return (
-            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-surface px-4 py-5 text-sm text-gray-500">
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-dashed border-content-line bg-content-surface px-4 py-5 text-sm text-content-subtle">
                 댓글을 작성하려면
                 <Link
                     to={`${paths.login}${buildReturnUrlQuery(location)}`}
-                    className="font-bold text-navy hover:text-orange-deep"
+                    className="font-bold text-brand-structure hover:text-control-action-hover"
                 >
                     로그인
                 </Link>
@@ -276,7 +276,7 @@ function CommentComposer({
 
     return (
         <form className="mt-4" onSubmit={handleSubmit}>
-            <div className="rounded-lg border border-line bg-surface-sunken px-3 py-2.5 focus-within:border-orange focus-within:ring-2 focus-within:ring-orange-subtle">
+            <div className="rounded-lg border border-content-line bg-content-soft px-3 py-2.5 focus-within:border-control-action focus-within:ring-2 focus-within:ring-control-action-soft">
                 <label htmlFor="comment-content" className="sr-only">
                     댓글 내용
                 </label>
@@ -286,13 +286,13 @@ function CommentComposer({
                     maxLength={CONTENT_MAX}
                     rows={2}
                     placeholder="따뜻한 댓글을 남겨보세요."
-                    className="w-full resize-none bg-transparent text-sm text-gray-700 outline-none"
+                    className="w-full resize-none bg-transparent text-sm text-content-fg outline-none"
                     onChange={(event) => setContent(event.target.value)}
                 />
                 {createMutation.isError && (
                     <p
                         role="alert"
-                        className="mt-1 flex items-center gap-1.5 text-xs text-danger"
+                        className="mt-1 flex items-center gap-1.5 text-xs text-danger-ink"
                     >
                         <TbAlertTriangle
                             aria-hidden
@@ -302,13 +302,13 @@ function CommentComposer({
                     </p>
                 )}
                 <div className="mt-1.5 flex items-center justify-between">
-                    <span className="text-xs text-gray-400 tabular-nums">
+                    <span className="text-xs text-content-subtle tabular-nums">
                         {content.length} / {CONTENT_MAX}
                     </span>
                     <button
                         type="submit"
                         disabled={!canSubmit}
-                        className="rounded-lg bg-orange px-4 py-1.5 text-sm font-bold text-white hover:bg-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-control-action px-4 py-1.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {createMutation.isPending ? '등록 중…' : '등록'}
                     </button>
@@ -351,10 +351,10 @@ function CommentList({
             <div aria-hidden className="mt-4 space-y-3">
                 {Array.from({ length: 3 }).map((_, index) => (
                     <div key={index} className="flex gap-3">
-                        <div className="size-9 shrink-0 animate-pulse rounded-full bg-gray-100" />
+                        <div className="size-9 shrink-0 animate-pulse rounded-full bg-content-soft" />
                         <div className="flex-1 space-y-2">
-                            <div className="h-3 w-1/4 animate-pulse rounded bg-gray-100" />
-                            <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
+                            <div className="h-3 w-1/4 animate-pulse rounded bg-content-soft" />
+                            <div className="h-3 w-3/4 animate-pulse rounded bg-content-soft" />
                         </div>
                     </div>
                 ))}
@@ -364,13 +364,13 @@ function CommentList({
 
     if (isError) {
         return (
-            <div className="mt-4 flex flex-col items-center gap-2 rounded-lg border border-dashed border-line bg-surface px-4 py-8 text-center">
-                <p className="text-sm text-gray-500">
+            <div className="mt-4 flex flex-col items-center gap-2 rounded-lg border border-dashed border-content-line bg-content-surface px-4 py-8 text-center">
+                <p className="text-sm text-content-subtle">
                     댓글을 불러오지 못했어요.
                 </p>
                 <button
                     type="button"
-                    className="rounded-lg border border-line px-3 py-1.5 text-xs font-bold text-gray-600 hover:border-navy"
+                    className="rounded-lg border border-content-line px-3 py-1.5 text-xs font-bold text-content-muted hover:border-brand-structure"
                     onClick={() => void refetch()}
                 >
                     다시 시도
@@ -381,7 +381,7 @@ function CommentList({
 
     if (comments.length === 0) {
         return (
-            <p className="mt-4 rounded-lg border border-dashed border-line bg-surface px-4 py-8 text-center text-sm text-gray-400">
+            <p className="mt-4 rounded-lg border border-dashed border-content-line bg-content-surface px-4 py-8 text-center text-sm text-content-subtle">
                 아직 댓글이 없어요. 첫 댓글을 남겨보세요.
             </p>
         )
@@ -405,7 +405,7 @@ function CommentList({
             {isFetchingNextPage && (
                 <p
                     role="status"
-                    className="py-2 text-center text-xs text-gray-400"
+                    className="py-2 text-center text-xs text-content-subtle"
                 >
                     더 불러오는 중…
                 </p>

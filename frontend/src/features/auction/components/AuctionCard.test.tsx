@@ -143,8 +143,8 @@ describe('<AuctionCard>', () => {
 
         const skillList = screen.getByRole('list', { name: '스킬' })
         expect(skillList).toHaveClass(
-            '[&_li]:bg-navy/5',
-            '[&_li]:text-navy-700',
+            '[&_li]:bg-brand-structure/5',
+            '[&_li]:text-chrome-selected',
             '[&_li]:!whitespace-normal',
             '[&_li]:!overflow-visible',
             '[&_.item-skill-summary__slot]:mr-1.5',

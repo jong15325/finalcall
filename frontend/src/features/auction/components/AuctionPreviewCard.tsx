@@ -1,9 +1,8 @@
-import { Link } from 'react-router'
 import { auctionDetailPath } from '@/app/paths'
-import CodeAmount from '@/components/common/CodeAmount'
-import ItemFrame from '@/features/item/components/ItemFrame'
+import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
+import ItemCardView from '@/features/item/components/ItemCardView'
+import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import { elementLabelOf } from '@/features/item/lib/element'
-import { itemArt } from '@/features/item/lib/itemArt'
 import {
     auctionPhaseOf,
     type AuctionPhase,
@@ -27,9 +26,9 @@ import type { AuctionSummary } from '@/lib/api/auctions'
  */
 
 const PHASE_BADGE_CLASS: Record<AuctionPhase, string> = {
-    live: 'bg-success-subtle text-success',
-    scheduled: 'bg-navy/10 text-navy-700',
-    ended: 'bg-gray-100 text-gray-500',
+    live: 'bg-success-soft text-success-ink',
+    scheduled: 'bg-brand-highlight-soft text-brand-highlight-deep',
+    ended: 'bg-content-soft text-content-subtle',
 }
 
 const PHASE_LABEL: Record<AuctionPhase, string> = {
@@ -55,75 +54,46 @@ function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
         now,
     )
     const price = auctionPriceOf(auction)
-    const art = itemArt(
-        {
-            subGroup: item.subGroup,
-            kind: item.kind,
-            element: item.element,
-            level: item.level,
-        },
-        'l',
-        1,
-    )
-    const hasSkill = item.skill1 !== null || item.skill2 !== null
+    const viewModel = toItemCardViewModel(item, now, { price })
 
     return (
-        <Link
-            to={auctionDetailPath(auction.auctionPublicId)}
-            aria-label={`${item.nameSnapshot} 경매 상세 보기`}
-            className="home-recommend-card flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-transform hover:-translate-y-[3px] hover:shadow-[0_12px_30px_rgba(37,57,88,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-        >
-            {/* 아트 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
-            <span className="relative block h-[158px]">
-                <ItemFrame
-                    fill
-                    imageUrl={art?.src}
-                    spriteUrl={art?.src}
-                    name={item.nameSnapshot}
-                    visual={{ goldforceExpireAt: item.goldforceExpireAt }}
-                    hasSkill={hasSkill}
-                    size="stage"
-                    now={now}
-                    overlay={
-                        <CardCompareOverlay
-                            listingId={auction.auctionPublicId}
-                            name={item.nameSnapshot}
-                        />
-                    }
-                />
-            </span>
-
-            {/* copy */}
-            <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-3">
-                <span className="flex items-center gap-1.5">
+        <div className="home-recommend-card h-full transition-transform hover:-translate-y-[3px]">
+            <ItemCardView
+                item={viewModel}
+                artworkOverlay={
+                    <CardCompareOverlay
+                        listingId={auction.auctionPublicId}
+                        name={item.nameSnapshot}
+                    />
+                }
+                badge={
+                    <span className="flex items-center gap-1.5">
                     <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${PHASE_BADGE_CLASS[phase]}`}
                     >
                         {PHASE_LABEL[phase]}
                     </span>
-                    <span className="text-[10px] font-semibold uppercase text-gray-500">
+                    <span className="text-[10px] font-semibold uppercase text-content-subtle">
                         {elementLabelOf(item.element)}
                     </span>
-                </span>
-
-                <span className="line-clamp-2 min-h-[2.6em] text-[13px] font-bold leading-tight text-gray-900 xs:text-sm">
-                    {item.nameSnapshot}
-                </span>
-
-                <span className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
-                    <span className="text-[11px] text-gray-400">
-                        {price.label}
                     </span>
-                    <CodeAmount
-                        value={price.amount}
-                        mode="compact"
-                        className="text-[13px] font-bold text-gray-900 xs:text-sm"
-                    />
-                </span>
-
-                <Countdown endAt={auction.endAt} now={now} />
-            </span>
-        </Link>
+                }
+                footer={
+                    <div className="flex flex-col gap-2">
+                        <Countdown endAt={auction.endAt} now={now} />
+                        <ItemCardActionSurface
+                            action={{
+                                kind: 'link',
+                                to: auctionDetailPath(
+                                    auction.auctionPublicId,
+                                ),
+                                label: `${item.nameSnapshot} 경매 상세 보기`,
+                            }}
+                        />
+                    </div>
+                }
+            />
+        </div>
     )
 }
 

@@ -19,7 +19,7 @@ function MobileBottomNav() {
     return (
         <nav
             aria-label="모바일 주요 메뉴"
-            className="detail-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] xl:hidden"
+            className="app-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-chrome-selected bg-chrome pb-[env(safe-area-inset-bottom)] xl:hidden"
         >
             {mobileNav.map((item) => {
                 const Icon = item.icon
@@ -31,7 +31,7 @@ function MobileBottomNav() {
                             type="button"
                             aria-disabled="true"
                             title={`${item.label} · 준비 중`}
-                            className="flex flex-1 flex-col items-center gap-0.5 py-2 text-gray-300"
+                            className="flex flex-1 flex-col items-center gap-0.5 py-2 text-chrome-muted opacity-60"
                         >
                             {Icon && <Icon aria-hidden className="size-6" />}
                             <span className="text-[11px] font-medium">
@@ -48,7 +48,9 @@ function MobileBottomNav() {
                         end={item.to === '/'}
                         className={({ isActive }) =>
                             `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
-                                isActive ? 'text-orange-deep' : 'text-gray-500'
+                                isActive
+                                    ? 'text-control-action'
+                                    : 'text-chrome-muted'
                             }`
                         }
                     >

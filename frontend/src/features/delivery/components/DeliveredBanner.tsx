@@ -70,7 +70,7 @@ export default function DeliveredBanner({ arrived }: DeliveredBannerProps) {
     return (
         <div
             role="status"
-            className="flex items-start gap-3 rounded-xl border border-success/40 bg-success-subtle px-4 py-3 text-[13px] leading-relaxed text-success"
+            className="flex items-start gap-3 rounded-xl border border-success/40 bg-success-soft px-4 py-3 text-[13px] leading-relaxed text-success-ink"
         >
             <TbCheck aria-hidden className="mt-0.5 size-[18px] shrink-0" />
             <div className="min-w-0 flex-1">
@@ -83,7 +83,7 @@ export default function DeliveredBanner({ arrived }: DeliveredBannerProps) {
             <button
                 type="button"
                 aria-label="게임 도착 알림 닫기"
-                className="-mr-1 -mt-0.5 shrink-0 rounded-md p-1 text-success/70 hover:bg-success/10 hover:text-success"
+                className="-mr-1 -mt-0.5 shrink-0 rounded-md p-1 text-success-ink/70 hover:bg-success/10 hover:text-success-ink"
                 onClick={dismiss}
             >
                 <TbX aria-hidden className="size-4" />

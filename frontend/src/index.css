@@ -1,65 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
+@import './styles/tokens.css';
 @import 'tailwindcss';
 
 @config '../tailwind.config.cjs';
-
-/*
- * 장터 디자인 토큰 (FC-067).
- * 색상 값 정본. 유틸리티 이름 매핑은 tailwind.config.cjs.
- * 팔레트: 네이비 #16213a · 골드 · 오렌지 #ef8a2c (docs/game_ui + 브랜드 결정).
- */
-@layer theme {
-    :root {
-        /* 네이비 — 구조 */
-        --navy: #16213a;
-        --navy-900: #101a2e;
-        --navy-800: #1b2a47;
-        --navy-700: #223458;
-        --navy-600: #2c4270;
-        --navy-500: #385189;
-
-        /* 골드 — 강조·가격 */
-        --gold: #c8a028;
-        --gold-bright: #dfc447;
-        --gold-deep: #8b6100;
-        --gold-subtle: #f6edcd;
-
-        /* 오렌지 — 주요 액션(CTA) */
-        --orange: #ef8a2c;
-        --orange-deep: #d9741a;
-        --orange-subtle: #fdefe0;
-
-        /* 소셜 로그인 (design-system §2.8) — 외부 브랜드 규격, 팔레트 예외·재색 금지 */
-        --kakao: #fee500;
-        --naver: #03c75a;
-
-        /* 표면·경계 */
-        --surface: #ffffff;
-        --surface-sunken: #f4f5f8;
-        --line: #e4e7ee;
-
-        /* 상태 */
-        --success: #16a34a;
-        --success-subtle: #dcfce7;
-        --danger: #e11d48;
-        --danger-subtle: #ffe4e6;
-        --warning: #d99a1a;
-        --warning-subtle: #fdf2d6;
-
-        /* 중립 그레이 */
-        --gray-50: #f8f9fb;
-        --gray-100: #f1f3f7;
-        --gray-200: #e4e7ee;
-        --gray-300: #cfd4de;
-        --gray-400: #9aa3b2;
-        --gray-500: #6b7484;
-        --gray-600: #4d5461;
-        --gray-700: #3a3f4a;
-        --gray-800: #262a33;
-        --gray-900: #171a20;
-        --gray-950: #0c0e12;
-    }
-}
 
 @layer base {
     *,
@@ -67,7 +9,7 @@
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--line, currentColor);
+        border-color: var(--content-line, currentColor);
     }
 
     html {
@@ -76,7 +18,7 @@
     }
 
     body {
-        @apply bg-surface-sunken text-gray-700 text-sm font-medium leading-normal antialiased;
+        @apply bg-app-canvas text-content-fg text-sm font-medium leading-normal antialiased;
         /* 외부 가로 오버플로 차단(HANDOVER §3.4) */
         overflow-x: hidden;
     }
@@ -94,32 +36,32 @@
 
     h1,
     .h1 {
-        @apply text-3xl font-bold text-gray-900;
+        @apply text-3xl font-bold text-content-fg;
     }
     h2,
     .h2 {
-        @apply text-2xl font-bold text-gray-900;
+        @apply text-2xl font-bold text-content-fg;
     }
     h3,
     .h3 {
-        @apply text-xl font-bold text-gray-900;
+        @apply text-xl font-bold text-content-fg;
     }
     h4,
     .h4 {
-        @apply text-lg font-semibold text-gray-900;
+        @apply text-lg font-semibold text-content-fg;
     }
     h5,
     .h5 {
-        @apply text-base font-semibold text-gray-900;
+        @apply text-base font-semibold text-content-fg;
     }
 
     hr {
-        @apply border-line;
+        @apply border-content-line;
     }
 
     /* 키보드 포커스 링 — 접근성(HANDOVER §24) */
     :focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--control-focus);
         outline-offset: 2px;
     }
 }

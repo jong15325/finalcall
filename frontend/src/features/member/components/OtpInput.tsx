@@ -98,8 +98,8 @@ export default function OtpInput({
     }
 
     const cellClass = invalid
-        ? 'border-danger bg-surface text-danger'
-        : 'border-line bg-surface-sunken text-gray-900 focus:border-orange'
+        ? 'border-danger bg-content-surface text-danger-ink'
+        : 'border-content-line bg-content-soft text-content-fg focus:border-control-action'
 
     return (
         <div
@@ -121,7 +121,7 @@ export default function OtpInput({
                     aria-label={`${index + 1}번째 자리`}
                     aria-invalid={invalid || undefined}
                     value={value[index] ?? ''}
-                    className={`h-14 min-w-0 flex-1 rounded-lg border text-center text-xl font-extrabold tabular-nums outline-none transition focus:ring-2 focus:ring-orange/30 disabled:cursor-not-allowed disabled:text-gray-400 sm:h-[52px] ${cellClass}`}
+                    className={`h-14 min-w-0 flex-1 rounded-lg border text-center text-xl font-extrabold tabular-nums outline-none transition focus:ring-2 focus:ring-control-action/30 disabled:cursor-not-allowed disabled:text-content-subtle sm:h-[52px] ${cellClass}`}
                     onChange={(event) =>
                         handleChange(index, event.target.value)
                     }

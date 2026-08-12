@@ -29,7 +29,7 @@ function MobileGroup({
             <button
                 type="button"
                 aria-expanded={open}
-                className={`${row} justify-between text-gray-700 hover:bg-gray-100`}
+                className={`${row} justify-between text-chrome-fg hover:bg-chrome-raised`}
                 onClick={() => setOpen((value) => !value)}
             >
                 <span className="flex items-center gap-3">
@@ -42,14 +42,14 @@ function MobileGroup({
                 />
             </button>
             {open && (
-                <ul className="ml-8 border-l border-line pl-2">
+                <ul className="ml-8 border-l border-content-line pl-2">
                     {group.children.map((child) => (
                         <li key={child.to}>
                             {child.ready ? (
                                 <NavLink
                                     to={child.to}
                                     className={({ isActive }) =>
-                                        `${row} ${isActive ? 'bg-orange-subtle text-orange-deep' : 'text-gray-600 hover:bg-gray-100'}`
+                                        `${row} ${isActive ? 'bg-chrome-selected text-chrome-fg' : 'text-chrome-muted hover:bg-chrome-raised'}`
                                     }
                                     onClick={onNavigate}
                                 >
@@ -59,7 +59,7 @@ function MobileGroup({
                                 <button
                                     disabled
                                     type="button"
-                                    className={`${row} text-gray-400`}
+                                    className={`${row} text-chrome-muted opacity-60`}
                                 >
                                     {child.label} · 준비 중
                                 </button>
@@ -91,7 +91,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                 <button
                     type="button"
                     aria-label="메뉴 닫기"
-                    className="fixed inset-0 z-40 bg-navy/40 xl:hidden"
+                    className="fixed inset-0 z-40 bg-brand-structure/40 xl:hidden"
                     onClick={onCloseMobile}
                 />
             )}
@@ -99,14 +99,14 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                 ref={asideRef}
                 aria-label="모바일 메뉴"
                 aria-hidden={!mobileOpen}
-                className={`fixed inset-y-0 left-0 z-50 flex w-[min(82vw,280px)] flex-col border-r border-line bg-surface shadow-xl transition-transform xl:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`app-chrome fixed inset-y-0 left-0 z-50 flex w-[min(82vw,280px)] flex-col border-r border-chrome-selected bg-chrome shadow-xl transition-transform xl:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <div className="flex h-16 items-center justify-between border-b border-line px-4">
-                    <BrandLogo />
+                <div className="flex h-16 items-center justify-between border-b border-chrome-selected px-4">
+                    <BrandLogo className="brightness-0 invert" />
                     <button
                         type="button"
                         aria-label="메뉴 닫기"
-                        className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                        className="rounded-lg p-2 text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg"
                         onClick={onCloseMobile}
                     >
                         <TbX aria-hidden className="size-5" />
@@ -130,7 +130,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                                         to={entry.to}
                                         end={entry.to === '/'}
                                         className={({ isActive }) =>
-                                            `${row} ${isActive ? 'bg-orange-subtle text-orange-deep' : 'text-gray-600 hover:bg-gray-100'}`
+                                            `${row} ${isActive ? 'bg-chrome-selected text-chrome-fg' : 'text-chrome-muted hover:bg-chrome-raised'}`
                                         }
                                         onClick={onCloseMobile}
                                     >
@@ -145,16 +145,16 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                         )}
                     </ul>
                 </nav>
-                <div className="border-t border-line p-3">
+                <div className="border-t border-chrome-selected p-3">
                     <NavLink
                         to={paths.messages}
-                        className={`${row} text-gray-700 hover:bg-gray-100`}
+                        className={`${row} text-chrome-fg hover:bg-chrome-raised`}
                         onClick={onCloseMobile}
                     >
                         <TbHeadset aria-hidden className="size-5" />
                         안전거래센터
                         {(unreadMemo?.count ?? 0) > 0 && (
-                            <span className="ml-auto rounded-full bg-orange px-2 py-0.5 text-xs font-bold text-zinc-900">
+                            <span className="ml-auto rounded-full bg-control-action px-2 py-0.5 text-xs font-bold text-content-fg">
                                 {unreadMemo?.count}
                             </span>
                         )}
