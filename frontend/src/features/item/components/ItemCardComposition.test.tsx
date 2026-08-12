@@ -87,4 +87,34 @@ describe('아이템 카드 composition', () => {
         expect(onPress).toHaveBeenCalledOnce()
         view.unmount()
     })
+
+    it('footer pointer action은 키보드 대표 action과 겹치지 않는다', () => {
+        const onPress = vi.fn()
+        const { container } = render(
+            <ItemCardView
+                item={item}
+                footer={<span>배송 중</span>}
+                footerAction={
+                    <ItemCardActionSurface
+                        area="footer"
+                        keyboard={false}
+                        action={{
+                            kind: 'button',
+                            label: '카드정보 보기',
+                            onPress,
+                        }}
+                    />
+                }
+            />,
+        )
+
+        const footerAction = container.querySelector(
+            '[data-card-hit-area="footer"]',
+        )
+        expect(footerAction).toHaveAttribute('aria-hidden', 'true')
+        expect(footerAction).toHaveAttribute('tabindex', '-1')
+        expect(footerAction?.parentElement).toHaveClass('relative')
+        fireEvent.click(footerAction as Element)
+        expect(onPress).toHaveBeenCalledOnce()
+    })
 })

@@ -92,10 +92,26 @@ function InventoryItemCard({
         </span>
     ) : undefined
     const viewModel = toItemCardViewModel(toCardData(item), now ?? Date.now())
+    const action = {
+        kind: 'button' as const,
+        label: `${viewModel.name} 카드정보 보기`,
+        onPress: () => onOpen(item),
+    }
+    const artworkAction = (
+        <ItemCardActionSurface area="artwork" keyboard={false} action={action} />
+    )
+    const controlGapAction = (
+        <ItemCardActionSurface
+            area="control-gap"
+            keyboard={false}
+            action={action}
+        />
+    )
 
     return (
-        <div className="shop-card group h-full w-full rounded-xl transition-transform hover:-translate-y-[3px]">
+        <div className="shop-card group relative h-full w-full rounded-xl transition-transform hover:-translate-y-[3px]">
             <ItemCardView
+                fullHeight
                 density="compact"
                 item={viewModel}
                 artwork={
@@ -105,27 +121,48 @@ function InventoryItemCard({
                             flipped={flipped}
                             front={<ItemCardArtwork item={viewModel} />}
                             label={viewModel.name}
+                            leading={badge}
+                            artworkAction={artworkAction}
+                            controlGapAction={controlGapAction}
                             onFlippedChange={setFlipped}
                         />
                     ) : (
-                        <div className="item-card__skill-flip is-market">
-                            <ItemCardArtwork item={viewModel} />
+                        <div className="item-card__artwork-composition">
+                            <div className="item-card__skill-flip is-market">
+                                <ItemCardArtwork item={viewModel} />
+                            </div>
+                            <div className="item-card__artwork-controls">
+                                <div className="item-card__control-gap">
+                                    {controlGapAction}
+                                </div>
+                            </div>
+                            {badge ? (
+                                <div
+                                    className="item-card__leading-status"
+                                    data-card-overlay="badge"
+                                >
+                                    {badge}
+                                </div>
+                            ) : null}
+                            {artworkAction}
                         </div>
                     )
                 }
-            badge={badge}
-                footer={
-                    <div className="flex flex-col gap-2">
-                        {footer}
+                action={
+                    <ItemCardActionSurface
+                        opensDialog
+                        action={action}
+                    />
+                }
+                footer={footer}
+                footerAction={
+                    footer ? (
                         <ItemCardActionSurface
-                            opensDialog
-                            action={{
-                                kind: 'button',
-                                label: `${viewModel.name} 카드정보 보기`,
-                                onPress: () => onOpen(item),
-                            }}
+                            area="footer"
+                            keyboard={false}
+                            action={action}
                         />
-                    </div>
+                    ) : undefined
                 }
             />
         </div>

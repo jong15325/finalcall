@@ -52,18 +52,61 @@ describe('<ShopCard>', () => {
         const opener = screen.getByRole('button', {
             name: '불의 전투도끼 카드정보 보기',
         })
+        expect(opener).toHaveClass('item-card__primary-action--content')
+        expect(opener.closest('.item-card__market-info')).not.toBeNull()
+        expect(opener).toBeEmptyDOMElement()
         expect(opener.querySelector('button')).toBeNull()
-        // 열기 버튼 + 스킬 플립 트리거 + 비교 담기 = 3개.
-        expect(container.querySelectorAll('button')).toHaveLength(3)
+        // 키보드 대표 열기 + 포인터용 아트 열기 + 스킬 플립 + 비교 담기.
+        const controlGapOpeners = container.querySelectorAll(
+            '[data-card-hit-area="control-gap"]',
+        )
+        expect(controlGapOpeners).toHaveLength(2)
+        controlGapOpeners.forEach((gap) => {
+            expect(gap).toHaveAttribute('aria-hidden', 'true')
+            expect(gap).toHaveAttribute('tabindex', '-1')
+            expect(gap.parentElement).toHaveClass('item-card__control-gap')
+        })
+        const artworkOpener = container.querySelector(
+            '.item-card__primary-action--artwork',
+        )
+        expect(artworkOpener).toHaveAttribute('aria-hidden', 'true')
+        expect(artworkOpener).toHaveAttribute('tabindex', '-1')
         // disclosure(m3): 스킬 플립 트리거는 뒷면 region 을 aria-controls 로 가리킨다.
         const trigger = screen.getByRole('button', {
             name: '불의 전투도끼 스킬 보기',
         })
+        expect(trigger.parentElement).toHaveClass(
+            'item-card__artwork-controls',
+        )
         const controls = trigger.getAttribute('aria-controls')
         expect(controls).toBeTruthy()
         expect(
             container.querySelector('.item-card__skill-flip-back'),
         ).toHaveAttribute('id', controls)
+        expect(
+            container.querySelector('.item-card__skill-flip'),
+        ).not.toContainElement(
+            screen.getByRole('button', {
+                name: '불의 전투도끼 비교에 담기',
+            }),
+        )
+        expect(artworkOpener?.parentElement).toHaveClass(
+            'item-card__artwork-composition',
+        )
+        expect(trigger.parentElement).toContainElement(
+            screen.getByRole('button', {
+                name: '불의 전투도끼 비교에 담기',
+            }),
+        )
+        expect(trigger.parentElement).not.toContainElement(
+            artworkOpener as HTMLElement | null,
+        )
+        expect(trigger).toHaveAttribute('data-card-hit-area', 'flip')
+        expect(
+            screen.getByRole('button', {
+                name: '불의 전투도끼 비교에 담기',
+            }).closest('[data-card-hit-area="compare"]'),
+        ).not.toBeNull()
     })
 
     it('정보영역 클릭은 네비게이션 없이 onOpen 으로 모달을 연다', () => {
@@ -85,6 +128,20 @@ describe('<ShopCard>', () => {
 
         // 상세 페이지로 이동하지 않고(경로 불변) 부모에 선택 리스팅을 넘긴다.
         expect(screen.getByTestId('location')).toHaveTextContent('/market')
+        expect(onOpen).toHaveBeenCalledWith(baseShop)
+    })
+
+    it('상단 control rect 밖의 빈 영역도 같은 모달 action으로 동작한다', () => {
+        const onOpen = vi.fn()
+        const { container } = renderWithProviders(
+            <ShopCard shop={baseShop} now={NOW} onOpen={onOpen} />,
+        )
+
+        const gapAction = container.querySelector(
+            '[data-card-hit-area="control-gap"]',
+        )
+        expect(gapAction).not.toBeNull()
+        fireEvent.click(gapAction as Element)
         expect(onOpen).toHaveBeenCalledWith(baseShop)
     })
 

@@ -54,9 +54,24 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
             name={shop.item.nameSnapshot}
         />
     )
+    const action = {
+        kind: 'button' as const,
+        label: `${item.name} 카드정보 보기`,
+        onPress: () => onOpen(shop),
+    }
+    const artworkAction = (
+        <ItemCardActionSurface area="artwork" keyboard={false} action={action} />
+    )
+    const controlGapAction = (
+        <ItemCardActionSurface
+            area="control-gap"
+            keyboard={false}
+            action={action}
+        />
+    )
 
     return (
-        <div className="shop-card group h-full rounded-xl transition-transform hover:-translate-y-[3px]">
+        <div className="shop-card group relative rounded-xl transition-transform hover:-translate-y-[3px]">
             <ItemCardView
                 density="compact"
                 item={item}
@@ -68,22 +83,34 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
                             front={<ItemCardArtwork item={item} />}
                             label={item.name}
                             overlay={compare}
+                            artworkAction={artworkAction}
+                            controlGapAction={controlGapAction}
                             onFlippedChange={setFlipped}
                         />
                     ) : (
-                        <div className="item-card__skill-flip is-market">
-                            <ItemCardArtwork item={item} overlay={compare} />
+                        <div className="item-card__artwork-composition">
+                            <div className="item-card__skill-flip is-market">
+                                <ItemCardArtwork item={item} />
+                            </div>
+                            <div className="item-card__artwork-controls">
+                                <div className="item-card__control-gap">
+                                    {controlGapAction}
+                                </div>
+                                <div
+                                    className="item-card__secondary-actions"
+                                    data-card-hit-area="compare"
+                                >
+                                    {compare}
+                                </div>
+                            </div>
+                            {artworkAction}
                         </div>
                     )
                 }
-                footer={
+                action={
                     <ItemCardActionSurface
                         opensDialog
-                        action={{
-                            kind: 'button',
-                            label: `${item.name} 카드정보 보기`,
-                            onPress: () => onOpen(shop),
-                        }}
+                        action={action}
                     />
                 }
             />

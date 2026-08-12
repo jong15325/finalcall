@@ -1,6 +1,8 @@
 import { auctionDetailPath } from '@/app/paths'
 import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
-import ItemCardView from '@/features/item/components/ItemCardView'
+import ItemCardView, {
+    ItemCardArtwork,
+} from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import { elementLabelOf } from '@/features/item/lib/element'
 import {
@@ -55,43 +57,63 @@ function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
     )
     const price = auctionPriceOf(auction)
     const viewModel = toItemCardViewModel(item, now, { price })
+    const action = {
+        kind: 'link' as const,
+        to: auctionDetailPath(auction.auctionPublicId),
+        label: `${item.nameSnapshot} 경매 상세 보기`,
+    }
+    const controlGapAction = (
+        <ItemCardActionSurface
+            area="control-gap"
+            keyboard={false}
+            action={action}
+        />
+    )
 
     return (
-        <div className="home-recommend-card h-full transition-transform hover:-translate-y-[3px]">
+        <div className="home-recommend-card relative transition-transform hover:-translate-y-[3px]">
             <ItemCardView
+                density="preview"
                 item={viewModel}
-                artworkOverlay={
-                    <CardCompareOverlay
-                        listingId={auction.auctionPublicId}
-                        name={item.nameSnapshot}
-                    />
-                }
-                badge={
-                    <span className="flex items-center gap-1.5">
-                    <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${PHASE_BADGE_CLASS[phase]}`}
-                    >
-                        {PHASE_LABEL[phase]}
-                    </span>
-                    <span className="text-[10px] font-semibold uppercase text-content-subtle">
-                        {elementLabelOf(item.element)}
-                    </span>
-                    </span>
-                }
-                footer={
-                    <div className="flex flex-col gap-2">
-                        <Countdown endAt={auction.endAt} now={now} />
+                artwork={
+                    <div className="item-card__artwork-composition">
+                        <ItemCardArtwork item={viewModel} mode="preview" />
+                        <div className="item-card__artwork-controls">
+                            <div className="item-card__control-gap">
+                                {controlGapAction}
+                            </div>
+                            <div
+                                className="item-card__secondary-actions"
+                                data-card-hit-area="compare"
+                            >
+                                <CardCompareOverlay
+                                    listingId={auction.auctionPublicId}
+                                    name={item.nameSnapshot}
+                                />
+                            </div>
+                        </div>
                         <ItemCardActionSurface
-                            action={{
-                                kind: 'link',
-                                to: auctionDetailPath(
-                                    auction.auctionPublicId,
-                                ),
-                                label: `${item.nameSnapshot} 경매 상세 보기`,
-                            }}
+                            area="artwork"
+                            keyboard={false}
+                            action={action}
                         />
                     </div>
                 }
+                action={<ItemCardActionSurface action={action} />}
+                hoverShadow="preview"
+                meta={
+                    <span className="flex items-center gap-1.5">
+                        <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${PHASE_BADGE_CLASS[phase]}`}
+                        >
+                            {PHASE_LABEL[phase]}
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase text-content-subtle">
+                            {elementLabelOf(item.element)}
+                        </span>
+                    </span>
+                }
+                trailing={<Countdown endAt={auction.endAt} now={now} />}
             />
         </div>
     )

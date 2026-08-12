@@ -72,6 +72,44 @@ describe('<InventorySlotGrid>', () => {
         expect(onItemClick).toHaveBeenCalledWith(target)
     })
 
+    it('배송 badge는 비상호작용 overlay이고 그 아래 빈 영역은 카드 action이 소유한다', () => {
+        const target = item(1, 'INST-1', '불의 검')
+        const deliveries = new Map([
+            [
+                target.itemInstancePublicId,
+                {
+                    deliveryPublicId: 'DELIVERY-1',
+                    status: 'PENDING' as const,
+                    item: target.summary,
+                    itemInstancePublicId: target.itemInstancePublicId,
+                    createdAt: '2026-08-13T00:00:00Z',
+                },
+            ],
+        ])
+        const { container, onItemClick } = renderGrid({
+            used: 1,
+            items: [target],
+            deliveries,
+        })
+
+        const controls = container.querySelector(
+            '.item-card__artwork-controls',
+        )
+        const badge = container.querySelector('[data-card-overlay="badge"]')
+        const gapAction = container.querySelector(
+            '[data-card-hit-area="control-gap"]',
+        )
+        expect(badge).not.toBeNull()
+        expect(controls).not.toContainElement(badge as HTMLElement | null)
+        expect(badge?.parentElement).toContainElement(
+            controls as HTMLElement | null,
+        )
+        expect(gapAction?.parentElement).toHaveClass('item-card__control-gap')
+
+        fireEvent.click(gapAction as Element)
+        expect(onItemClick).toHaveBeenCalledWith(target)
+    })
+
     it('빈 슬롯은 번호 라벨을 가진다(상호작용 없음)', () => {
         renderGrid({ used: 1, items: [item(1, 'INST-1', '불의 검')] })
         // slot 1 은 채워졌고 slot 2 는 비었다

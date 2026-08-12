@@ -50,6 +50,28 @@ describe('<AuctionPreviewCard>', () => {
             name: '불의 전투도끼 경매 상세 보기',
         })
         expect(link).toHaveAttribute('href', '/auctions/01J3PREVIEW0001')
+        expect(link).toHaveClass('item-card__primary-action--content')
+        expect(link).toBeEmptyDOMElement()
+        expect(screen.queryByText('카드정보 보기')).not.toBeInTheDocument()
+        const links = document.querySelectorAll('a[href="/auctions/01J3PREVIEW0001"]')
+        expect(links).toHaveLength(3)
+        const artworkLink = document.querySelector(
+            '[data-card-hit-area="artwork"]',
+        )
+        const gapLink = document.querySelector(
+            '[data-card-hit-area="control-gap"]',
+        )
+        expect(artworkLink).toHaveAttribute('aria-hidden', 'true')
+        expect(artworkLink).toHaveAttribute('tabindex', '-1')
+        expect(artworkLink).toHaveClass('item-card__primary-action--artwork')
+        expect(artworkLink?.previousElementSibling).toHaveClass(
+            'item-card__artwork-controls',
+        )
+        expect(gapLink?.parentElement).toHaveClass('item-card__control-gap')
+        expect(gapLink?.closest('.item-card__secondary-actions')).toBeNull()
+        expect(link.closest('article')).toHaveClass(
+            'hover:shadow-[var(--shadow-card-hover)]',
+        )
     })
 
     it('진행 중(now < endAt)이면 "진행 중" 배지', () => {

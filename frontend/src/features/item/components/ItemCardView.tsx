@@ -27,36 +27,51 @@ export interface ItemCardViewModel {
 
 export interface ItemCardViewProps {
     item: ItemCardViewModel
-    density?: 'regular' | 'compact'
+    density?: 'regular' | 'compact' | 'preview'
+    fullHeight?: boolean
     artwork?: ReactNode
     artworkOverlay?: ReactNode
-    badge?: ReactNode
+    meta?: ReactNode
+    trailing?: ReactNode
     footer?: ReactNode
+    footerAction?: ReactNode
+    action?: ReactNode
+    hoverShadow?: 'default' | 'preview'
 }
 
 /** router·dialog·mutation·flip 상태를 모르는 순수 아이템 표시. */
 export default function ItemCardView({
     item,
     density = 'regular',
+    fullHeight = false,
     artwork,
     artworkOverlay,
-    badge,
+    meta,
+    trailing,
     footer,
+    footerAction,
+    action,
+    hoverShadow = 'default',
 }: ItemCardViewProps) {
     const compact = density === 'compact'
+    const preview = density === 'preview'
     const elementNumber = elementNumberOf(item.element)
+    const hoverShadowClass =
+        hoverShadow === 'preview'
+            ? 'hover:shadow-[var(--shadow-card-hover)]'
+            : 'hover:shadow-md'
 
     return (
-        <article className="item-card flex h-full flex-col overflow-hidden rounded-xl border border-content-line bg-content-surface transition-shadow hover:shadow-md">
+        <article
+            className={`item-card flex flex-col overflow-hidden rounded-xl border border-content-line bg-content-surface transition-shadow ${hoverShadowClass} ${fullHeight ? 'h-full' : ''}`.trim()}
+        >
             <div className="relative">
                 {artwork ?? (
                     <ItemCardArtwork
                         item={item}
+                        mode={preview ? 'preview' : 'card'}
                         overlay={artworkOverlay}
                     />
-                )}
-                {badge && (
-                    <div className="absolute left-1.5 top-1.5">{badge}</div>
                 )}
             </div>
 
@@ -86,6 +101,30 @@ export default function ItemCardView({
                             />
                         </div>
                     )}
+                    {action}
+                </div>
+            ) : preview ? (
+                <div className="relative flex min-w-0 flex-1 flex-col gap-1.5 p-3">
+                    {meta}
+                    <h3 className="line-clamp-2 min-h-[2.6em] text-body font-bold leading-tight text-content-fg xs:text-sm">
+                        {item.name}
+                    </h3>
+                    {item.price && (
+                        <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
+                            {item.price.label && (
+                                <span className="text-label text-content-subtle">
+                                    {item.price.label}
+                                </span>
+                            )}
+                            <CodeAmount
+                                value={item.price.amount}
+                                mode="compact"
+                                className="text-body font-bold text-content-fg xs:text-sm"
+                            />
+                        </div>
+                    )}
+                    {trailing}
+                    {action}
                 </div>
             ) : (
                 <div className="flex flex-1 flex-col gap-1.5 p-3">
@@ -110,11 +149,15 @@ export default function ItemCardView({
                         </div>
                     )}
                     <ItemSkillList skills={item.skills} />
+                    {action}
                 </div>
             )}
 
             {footer ? (
-                <div className="border-t border-content-line p-2">{footer}</div>
+                <div className="relative border-t border-content-line p-2">
+                    {footer}
+                    {footerAction}
+                </div>
             ) : null}
         </article>
     )
@@ -123,22 +166,28 @@ export default function ItemCardView({
 export function ItemCardArtwork({
     item,
     overlay,
+    mode = 'card',
 }: {
     item: ItemCardViewModel
     overlay?: ReactNode
+    mode?: 'card' | 'preview'
 }) {
-    return (
+    const frame = (
         <ItemFrame
             showGoldforceDays
+            fill={mode === 'preview'}
             imageUrl={item.artUrl}
             spriteUrl={item.artUrl}
             name={item.name}
             visual={{ goldforceExpireAt: item.goldforceExpireAt }}
             hasSkill={item.skills.length > 0}
+            size={mode === 'preview' ? 'stage' : undefined}
             now={item.referenceNow}
             overlay={overlay}
         />
     )
+
+    return mode === 'preview' ? <div className="h-[158px]">{frame}</div> : frame
 }
 
 export function ItemCardBackView({ item }: { item: ItemCardViewModel }) {

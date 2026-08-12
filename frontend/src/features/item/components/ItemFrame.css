@@ -353,14 +353,43 @@
     filter: drop-shadow(0 8px 9px rgba(3, 9, 19, 0.48));
 }
 /* ── 마켓 카드 스킬 플립 — 이미지 스테이지만 뒤집고 상품명·가격은 유지 ───────────── */
+.item-card__artwork-composition {
+    position: relative;
+}
+
+.item-card__artwork-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    height: 44px;
+    align-items: center;
+}
+
+.item-card__leading-status {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: flex;
+    max-width: calc(100% - 12px);
+    pointer-events: none;
+}
+
 .item-card__secondary-actions {
     display: flex;
-    min-height: 44px;
+    flex: 0 0 44px;
+    min-width: 44px;
+    height: 44px;
     align-items: center;
-    justify-content: flex-end;
-    padding: 4px 6px;
-    border-bottom: 1px solid var(--content-line);
-    background: var(--content-soft);
+    justify-content: center;
+}
+
+.item-card__control-gap {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 44px;
 }
 
 .item-card__skill-flip {
@@ -455,12 +484,12 @@
 }
 
 .item-card__skill-flip-trigger {
-    position: absolute;
-    z-index: 10;
-    inset: 0;
+    position: relative;
+    flex: 0 0 44px;
+    height: 44px;
     border: 0;
     background: transparent;
-    pointer-events: none;
+    touch-action: manipulation;
 }
 
 .item-card__skill-flip.is-enabled:hover .item-card__skill-flip-inner,
@@ -472,11 +501,6 @@
 
 /* 터치 기기에서는 이미지 영역 전체가 명시적인 토글이다. */
 @media (hover: none) {
-    .item-card__skill-flip.is-enabled .item-card__skill-flip-trigger {
-        pointer-events: auto;
-        touch-action: manipulation;
-    }
-
     .item-card__skill-flip.is-enabled:hover .item-card__skill-flip-inner {
         transform: none;
     }
@@ -658,4 +682,24 @@
 .item-card__skill-flip-trigger:focus-visible {
     outline: 2px solid var(--control-focus);
     outline-offset: 2px;
+}
+
+/* 주 action은 정보 본문·아트 하단·상단 빈칸을 분할 소유한다. 실제 flip/compare 44px만 제외한다. */
+.item-card__primary-action {
+    position: absolute;
+    display: block;
+    border-radius: 12px;
+}
+
+.item-card__primary-action--content {
+    inset: 0;
+}
+
+.item-card__primary-action--artwork {
+    inset: 44px 0 0;
+}
+
+.item-card__primary-action--control-gap,
+.item-card__primary-action--footer {
+    inset: 0;
 }
