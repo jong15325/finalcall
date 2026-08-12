@@ -12,7 +12,7 @@ export default function WorldMapBackground({
 
     return (
         <div
-            className="world-map-background pointer-events-none absolute inset-0 -z-10 overflow-hidden sm:fixed"
+            className="world-map-background pointer-events-none fixed inset-0 -z-10 overflow-hidden"
             data-accent={accent ?? 'neutral'}
             data-image-state={failed ? 'failed' : 'ready'}
             aria-hidden="true"

@@ -159,7 +159,7 @@ export default function MarketPage() {
                         </div>
                         <Link
                             to={paths.sell}
-                            className="rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-content-fg hover:bg-control-action-hover"
+                            className="rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                         >
                             아이템 판매
                         </Link>

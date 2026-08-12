@@ -61,6 +61,7 @@ module.exports = {
                 'control-action': 'var(--control-action)',
                 'control-action-hover': 'var(--control-action-hover)',
                 'control-action-soft': 'var(--control-action-soft)',
+                'control-action-ink': 'var(--control-action-ink)',
                 'control-focus': 'var(--control-focus)',
                 'brand-structure': 'var(--brand-structure)',
                 'brand-highlight': 'var(--brand-highlight)',

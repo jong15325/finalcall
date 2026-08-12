@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-303
 title: 프론트 공통 UI 시스템과 AppShell 시각 일관성 개선
 state: review
-children: [FC-270, FC-271, FC-272, FC-273, FC-274, FC-275, FC-276, FC-277, FC-278, FC-279, FC-280, FC-281]
+children: [FC-270, FC-271, FC-272, FC-273, FC-274, FC-275, FC-276, FC-277, FC-278, FC-279, FC-280, FC-281, FC-282]
 gate: null
 ---
 
@@ -27,6 +27,7 @@ AppShell·목록·아이템 카드의 소유권과 재사용 경계를 재구성
 - FC-279: 디자인·프론트 규약 정본 동기화
 - FC-280: 아이템 카드 시각·클릭 회귀 복구
 - FC-281: 목록별 아이템 이미지 clipping 회귀 수정
+- FC-282: 모바일 공통 배경과 판매 CTA 색상 회귀 수정
 
 ## 게이트
 

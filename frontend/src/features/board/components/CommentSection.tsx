@@ -308,7 +308,7 @@ function CommentComposer({
                     <button
                         type="submit"
                         disabled={!canSubmit}
-                        className="rounded-lg bg-control-action px-4 py-1.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-control-action px-4 py-1.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {createMutation.isPending ? '등록 중…' : '등록'}
                     </button>

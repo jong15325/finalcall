@@ -138,7 +138,7 @@ export default function BoardPostListPage() {
                 {showWrite ? (
                     <Link
                         to={boardWritePath(slug)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                     >
                         <TbPencilPlus aria-hidden className="size-4" />
                         글쓰기
@@ -203,7 +203,7 @@ export default function BoardPostListPage() {
                         showWrite ? (
                             <Link
                                 to={boardWritePath(slug)}
-                                className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                                className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                             >
                                 글쓰기
                             </Link>

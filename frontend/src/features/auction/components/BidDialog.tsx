@@ -340,7 +340,7 @@ function BidDialog({
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="detail-cta rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            className="detail-cta rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '전송 중…' : '입찰 확정'}
                         </button>

@@ -123,14 +123,14 @@ function ShopBuyPanel({
                 ) : !isAuthed ? (
                     <Link
                         to={loginHref}
-                        className="block w-full rounded-lg bg-control-action px-5 py-3.5 text-center text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                        className="block w-full rounded-lg bg-control-action px-5 py-3.5 text-center text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                     >
                         로그인하고 구매
                     </Link>
                 ) : (
                     <button
                         type="button"
-                        className="w-full rounded-lg bg-control-action px-5 py-3.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                        className="w-full rounded-lg bg-control-action px-5 py-3.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                         onClick={onBuy}
                     >
                         바로 구매

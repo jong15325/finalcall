@@ -204,7 +204,7 @@ function ShopSellConfirmDialog({
                             ref={confirmRef}
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '등록 중…' : '고정가 등록 확정'}
                         </button>

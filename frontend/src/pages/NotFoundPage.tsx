@@ -14,7 +14,7 @@ export default function NotFoundPage() {
             </p>
             <Link
                 to={paths.home}
-                className="mt-6 rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                className="mt-6 rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
             >
                 홈으로 돌아가기
             </Link>

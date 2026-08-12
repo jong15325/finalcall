@@ -137,7 +137,7 @@ export default function AuctionListPage() {
                         </div>
                         <Link
                             to={paths.sell}
-                            className="shrink-0 rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-content-fg hover:bg-control-action-hover"
+                            className="shrink-0 rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                         >
                             경매 등록
                         </Link>

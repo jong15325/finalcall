@@ -77,7 +77,12 @@ describe('SellPage 선점 모드 (FC-177)', () => {
         expect(screen.queryByText('1. 판매할 아이템')).toBeNull()
         expect(
             screen.getByRole('link', { name: '인벤토리로 가기' }),
-        ).toBeInTheDocument()
+        ).toHaveClass(
+            'bg-control-action',
+            'text-control-action-ink',
+            'hover:bg-control-action-hover',
+            'focus-visible:ring-control-focus',
+        )
     })
 
     it('?item 없음 → 선택 유도 빈 상태를 보인다', async () => {

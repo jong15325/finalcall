@@ -120,7 +120,7 @@ export default function MessagesPage() {
                 </div>
                 <button
                     type="button"
-                    className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                    className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                     onClick={() => openCompose()}
                 >
                     <TbPencil aria-hidden className="size-4" />
@@ -307,7 +307,7 @@ function TabButton({
         >
             {label}
             {badge !== undefined && badge > 0 && (
-                <span className="inline-grid min-w-[18px] place-items-center rounded-full bg-control-action px-1 text-[11px] font-bold text-on-strong tabular-nums">
+                <span className="inline-grid min-w-[18px] place-items-center rounded-full bg-control-action px-1 text-[11px] font-bold text-control-action-ink tabular-nums">
                     {badge}
                 </span>
             )}

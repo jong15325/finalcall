@@ -74,7 +74,7 @@ export default function MyShopsSection() {
                   action: (
                       <Link
                           to={paths.sell}
-                          className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-content-fg hover:bg-control-action-hover"
+                          className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                       >
                           아이템 판매
                       </Link>

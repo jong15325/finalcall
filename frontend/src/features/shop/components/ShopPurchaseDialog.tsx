@@ -205,7 +205,7 @@ function ShopPurchaseDialog({
                             ref={confirmRef}
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-brand-structure px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-chrome-raised disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSubmitting ? '전송 중…' : '구매 확정'}
                         </button>

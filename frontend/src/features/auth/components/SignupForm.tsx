@@ -407,7 +407,7 @@ export default function SignupForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="mt-1 h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+                    className="mt-1 h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
                 >
                     {isSubmitting ? '가입 중…' : '회원가입'}
                 </button>

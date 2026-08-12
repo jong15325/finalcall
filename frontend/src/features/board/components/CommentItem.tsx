@@ -426,7 +426,7 @@ function CommentBody({
                                     <button
                                         type="button"
                                         disabled={!canSave}
-                                        className="rounded-lg bg-control-action px-3 py-1.5 text-xs font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg bg-control-action px-3 py-1.5 text-xs font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                                         onClick={handleSave}
                                     >
                                         {updateMutation.isPending
@@ -780,7 +780,7 @@ function ReplyComposer({
                         <button
                             type="submit"
                             disabled={!canSubmit}
-                            className="rounded-lg bg-control-action px-4 py-1.5 text-xs font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg bg-control-action px-4 py-1.5 text-xs font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {createReplyMutation.isPending
                                 ? '등록 중…'

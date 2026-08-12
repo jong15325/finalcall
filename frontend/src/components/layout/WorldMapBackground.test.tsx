@@ -1,4 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { stubMatchMedia } from '@/test/renderWithProviders'
 import WorldMapBackground from './WorldMapBackground'
@@ -49,9 +50,12 @@ describe('WorldMapBackground', () => {
         const view = render(<WorldMapBackground accent="water" />)
 
         expect(view.container.firstElementChild).toHaveClass(
-            'absolute',
+            'fixed',
             'inset-0',
             '-z-10',
+        )
+        expect(view.container.firstElementChild).not.toHaveClass(
+            'absolute',
             'sm:fixed',
         )
 
@@ -78,6 +82,25 @@ describe('WorldMapBackground', () => {
             'data-image-state',
             'failed',
         )
+    })
+
+    it('reduced motion은 정적 배경을 유지하고 forced colors만 scene을 숨긴다', () => {
+        const css = readFileSync(
+            `${process.cwd()}/src/components/layout/WorldMapBackground.css`,
+            'utf8',
+        )
+        const reducedMotion = css.slice(
+            css.indexOf('@media (prefers-reduced-motion: reduce)'),
+            css.indexOf('@media (forced-colors: active)'),
+        )
+        const forcedColors = css.slice(
+            css.indexOf('@media (forced-colors: active)'),
+        )
+
+        expect(reducedMotion).toContain('animation: none')
+        expect(reducedMotion).toContain('element-detail__ambient-canvas')
+        expect(reducedMotion).not.toContain('world-map-background__image')
+        expect(forcedColors).toContain('display: none')
     })
 
     it('한 프레임에서 wind·fire·earth·water 네 motif를 모두 그린다', () => {

@@ -144,7 +144,7 @@ function ProfileCard({
                                     <button
                                         type="submit"
                                         disabled={savePending}
-                                        className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {savePending ? '저장 중…' : '저장'}
                                     </button>

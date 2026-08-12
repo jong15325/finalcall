@@ -66,7 +66,7 @@ function CompareBar() {
                         <button
                             type="button"
                             aria-label={`${index + 1}번 아이템 비교에서 빼기`}
-                            className="absolute -right-1.5 -top-1.5 grid size-[18px] place-items-center rounded-full bg-control-action text-content-fg hover:bg-control-action-hover"
+                            className="absolute -right-1.5 -top-1.5 grid size-[18px] place-items-center rounded-full bg-control-action text-control-action-ink hover:bg-control-action-hover"
                             onClick={() => remove(item.listingId)}
                         >
                             <TbX aria-hidden className="size-3" />
@@ -95,7 +95,7 @@ function CompareBar() {
                 {canCompare ? (
                     <Link
                         to={paths.compare}
-                        className="whitespace-nowrap rounded-lg bg-control-action px-4 py-2 text-xs font-bold text-content-fg hover:bg-control-action-hover"
+                        className="whitespace-nowrap rounded-lg bg-control-action px-4 py-2 text-xs font-bold text-control-action-ink hover:bg-control-action-hover"
                     >
                         비교하기
                     </Link>

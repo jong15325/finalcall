@@ -105,7 +105,7 @@ export default function ListFrame({
                         action={
                             <button
                                 type="button"
-                                className="rounded-md bg-control-action px-4 py-2 text-body font-bold text-content-fg hover:bg-control-action-hover"
+                                className="rounded-md bg-control-action px-4 py-2 text-body font-bold text-control-action-ink hover:bg-control-action-hover"
                                 onClick={state.onRetry}
                             >
                                 다시 시도

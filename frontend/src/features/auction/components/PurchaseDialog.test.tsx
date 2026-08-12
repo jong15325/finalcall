@@ -37,7 +37,14 @@ describe('<PurchaseDialog>', () => {
     it('확정 버튼이 onConfirm 을 부른다', () => {
         const onConfirm = vi.fn()
         renderDialog({ onConfirm })
-        screen.getByRole('button', { name: '즉시구매 확정' }).click()
+        const confirm = screen.getByRole('button', { name: '즉시구매 확정' })
+        expect(confirm).toHaveClass(
+            'bg-control-action',
+            'text-control-action-ink',
+            'hover:bg-control-action-hover',
+            'focus-visible:ring-control-focus',
+        )
+        confirm.click()
         expect(onConfirm).toHaveBeenCalledOnce()
     })
 

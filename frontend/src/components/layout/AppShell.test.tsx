@@ -120,11 +120,11 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(scene).toHaveAttribute('data-accent', 'fire')
         expect(scene).toHaveClass(
             'world-map-background',
-            'absolute',
+            'fixed',
             'inset-0',
             '-z-10',
-            'sm:fixed',
         )
+        expect(scene).not.toHaveClass('absolute', 'sm:fixed')
         expect(scene).not.toHaveClass('w-screen')
         expect(view.container.querySelector('aside')).toBeNull()
         expect(view.queryByRole('navigation', { name: '주요 메뉴' })).toBeNull()

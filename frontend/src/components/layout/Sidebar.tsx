@@ -154,7 +154,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                         <TbHeadset aria-hidden className="size-5" />
                         안전거래센터
                         {(unreadMemo?.count ?? 0) > 0 && (
-                            <span className="ml-auto rounded-full bg-control-action px-2 py-0.5 text-xs font-bold text-content-fg">
+                            <span className="ml-auto rounded-full bg-control-action px-2 py-0.5 text-xs font-bold text-control-action-ink">
                                 {unreadMemo?.count}
                             </span>
                         )}

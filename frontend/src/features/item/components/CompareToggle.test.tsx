@@ -23,7 +23,7 @@ describe('<CompareToggle>', () => {
         expect(selected).toHaveClass(
             'border-content-fg',
             'bg-control-action',
-            'text-content-fg',
+            'text-control-action-ink',
         )
         expect(selected).not.toHaveClass('text-on-strong')
     })

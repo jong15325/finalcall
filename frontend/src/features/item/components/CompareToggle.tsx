@@ -31,8 +31,8 @@ function CompareToggle({
 }: CompareToggleProps) {
     // 목업 `.compare-toggle`: 선택/hover 는 브랜드 오렌지, 기본은 다크 반투명 유리(§2.9).
     const stateClass = pressed
-        ? 'border-content-fg bg-control-action text-content-fg'
-        : 'border-on-strong/60 bg-chrome-strong/75 text-on-strong hover:border-content-fg hover:bg-control-action hover:text-content-fg'
+        ? 'border-content-fg bg-control-action text-control-action-ink'
+        : 'border-on-strong/60 bg-chrome-strong/75 text-on-strong hover:border-content-fg hover:bg-control-action hover:text-control-action-ink'
 
     return (
         <button

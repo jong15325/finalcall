@@ -229,7 +229,7 @@ export default function SellPage() {
                     action={
                         <button
                             type="button"
-                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
+                            className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                             onClick={() => void inventoryQuery.refetch()}
                         >
                             다시 시도
@@ -246,7 +246,7 @@ export default function SellPage() {
                     action={
                         <Link
                             to={paths.inventory}
-                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
+                            className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                         >
                             인벤토리로 가기
                         </Link>
@@ -263,7 +263,7 @@ export default function SellPage() {
                     action={
                         <Link
                             to={paths.inventory}
-                            className="rounded-lg bg-brand-structure px-4 py-2 text-sm font-bold text-on-strong hover:bg-chrome-raised"
+                            className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                         >
                             인벤토리로 가기
                         </Link>
@@ -462,7 +462,7 @@ export default function SellPage() {
 
                             <button
                                 type="button"
-                                className="mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                                className="mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                                 onClick={
                                     sellMethod === 'auction'
                                         ? handleOpenConfirm

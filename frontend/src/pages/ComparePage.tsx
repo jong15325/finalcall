@@ -551,7 +551,7 @@ function CompareEmpty() {
             <div className="mt-6 flex items-center gap-2">
                 <Link
                     to={paths.auctions}
-                    className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                    className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                 >
                     실시간 경매
                 </Link>

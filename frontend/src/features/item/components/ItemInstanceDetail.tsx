@@ -172,7 +172,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                         <div className="mt-6 flex flex-wrap gap-2">
                             <Link
                                 to={paths.sell}
-                                className="detail-cta inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover"
+                                className="detail-cta inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                             >
                                 <TbTag aria-hidden className="size-4" />
                                 경매에 등록

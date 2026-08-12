@@ -292,7 +292,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                         <button
                             type="button"
                             disabled={requestMutation.isPending}
-                            className="h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            className="h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={handleRequestCode}
                         >
                             {requestMutation.isPending
@@ -391,7 +391,7 @@ function VerificationCard({ profile }: VerificationCardProps) {
                                 expired
                             }
                             aria-busy={verifyMutation.isPending || undefined}
-                            className="flex h-11 items-center justify-center gap-2 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex h-11 items-center justify-center gap-2 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => handleVerify()}
                         >
                             {verifyMutation.isPending ? '확인 중…' : '인증하기'}
@@ -580,7 +580,7 @@ function EmailForm({
                 <button
                     type="submit"
                     disabled={pending}
-                    className="h-11 flex-1 rounded-lg bg-control-action px-4 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-11 flex-1 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {pending ? '저장 중…' : '이메일 저장'}
                 </button>

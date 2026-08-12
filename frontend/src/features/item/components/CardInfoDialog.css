@@ -347,7 +347,7 @@
     border-radius: 12px;
     padding: 15px 24px;
     background: var(--control-action);
-    color: var(--chrome-fg);
+    color: var(--control-action-ink);
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.2px;
@@ -470,7 +470,7 @@
 }
 .shop-cardinfo .confirm-actions .btn-primary {
     background: var(--control-action);
-    color: var(--chrome-fg);
+    color: var(--control-action-ink);
 }
 .shop-cardinfo .confirm-actions .btn-primary:hover:not(:disabled) {
     background: var(--control-action-hover);

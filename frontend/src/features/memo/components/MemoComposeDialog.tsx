@@ -271,7 +271,7 @@ function MemoComposeDialog({
                     <button
                         type="button"
                         disabled={!canSend}
-                        className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-on-strong hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={handleSend}
                     >
                         {isSubmitting ? '보내는 중…' : '보내기'}

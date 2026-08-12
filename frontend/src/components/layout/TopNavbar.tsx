@@ -244,7 +244,7 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                             </NavLink>
                             <NavLink
                                 to={paths.signup}
-                                className="rounded-lg bg-control-action px-3 py-2 text-sm font-bold text-content-fg hover:bg-control-action-hover"
+                                className="rounded-lg bg-control-action px-3 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                             >
                                 회원가입
                             </NavLink>

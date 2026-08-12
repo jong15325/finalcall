@@ -76,6 +76,7 @@
         --control-action: var(--action);
         --control-action-hover: var(--action-hover);
         --control-action-soft: var(--action-soft);
+        --control-action-ink: var(--fg);
         --control-focus: var(--brand-gold-bright);
         --brand-structure: var(--brand-navy);
         --brand-highlight: var(--brand-gold);

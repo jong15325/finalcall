@@ -60,6 +60,9 @@ for (const file of walk(sourceRoot)) {
 const tailwindSource = stripComments(readFileSync(resolve(frontendRoot, 'tailwind.config.cjs'), 'utf8'))
 for (const match of tailwindSource.matchAll(rawColorPattern)) failures.push(`tailwind.config.cjs: raw color ${match[0]}`)
 for (const match of tailwindSource.matchAll(/^\s*(?:navy|gold|orange|surface|line|'surface-sunken'|'gray-\d+'|'(?:success|danger|warning)-subtle')\s*:/gmu)) failures.push(`tailwind.config.cjs: legacy palette key ${match[0].trim()}`)
+if (!/'control-action-ink'\s*:\s*'var\(--control-action-ink\)'/u.test(tailwindSource)) {
+    failures.push('tailwind.config.cjs: control-action-ink utility 매핑 누락')
+}
 
 const tokens = readFileSync(resolve(frontendRoot, tokenRegistry), 'utf8')
 const declarations = [...tokens.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/gu)]
@@ -69,9 +72,35 @@ for (const [, name] of declarations) {
     seen.add(name)
 }
 const tokenValues = new Map(declarations.map(([, name, value]) => [name, value.trim()]))
-for (const [ink, soft] of [['--success-ink', '--success-soft'], ['--danger-ink', '--danger-soft']]) {
-    const ratio = contrast(resolveHex(ink), resolveHex(soft))
-    if (ratio < 4.5) failures.push(`${tokenRegistry}: ${ink}/${soft} contrast ${ratio.toFixed(2)} < 4.5`)
+for (const [ink, surface] of [
+    ['--success-ink', '--success-soft'],
+    ['--danger-ink', '--danger-soft'],
+    ['--control-action-ink', '--control-action'],
+    ['--control-action-ink', '--control-action-hover'],
+]) {
+    const ratio = contrast(resolveHex(ink), resolveHex(surface))
+    if (ratio < 4.5) failures.push(`${tokenRegistry}: ${ink}/${surface} contrast ${ratio.toFixed(2)} < 4.5`)
+}
+
+for (const [path, source] of sources) {
+    for (const [index, line] of source.split('\n').entries()) {
+        const hasActionFill = /(?<!:)\bbg-control-action(?![-/])/u.test(line)
+        const hasActionHover = /\bhover:bg-control-action-hover\b/u.test(line)
+        const hasWrongInk = /\b(?:hover:)?text-(?:on-strong|content-fg)\b/u.test(line)
+        if (hasActionFill && hasWrongInk) {
+            failures.push(`${path}:${index + 1}: control-action fill에 text-control-action-ink를 사용해야 함`)
+        }
+        if (hasActionFill && hasActionHover && !/\btext-control-action-ink\b/u.test(line)) {
+            failures.push(`${path}:${index + 1}: primary control-action foreground 누락`)
+        }
+    }
+    if (path.endsWith('.css')) {
+        for (const match of source.matchAll(/([^{}]+)\{([^{}]*\bbackground\s*:\s*var\(--control-action\)[^{}]*)\}/gu)) {
+            if (!/\bcolor\s*:\s*var\(--control-action-ink\)/u.test(match[2])) {
+                failures.push(`${path}: ${match[1].trim()} control-action foreground 누락`)
+            }
+        }
+    }
 }
 
 const listFrameContracts = new Map([
