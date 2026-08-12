@@ -3,7 +3,7 @@ id: EPIC-FRONTEND-UI-SYSTEM
 type: epic
 jira_key: KAN-303
 title: 프론트 공통 UI 시스템과 AppShell 시각 일관성 개선
-state: review
+state: done
 children: [FC-270, FC-271, FC-272, FC-273, FC-274, FC-275, FC-276, FC-277, FC-278, FC-279, FC-280, FC-281, FC-282]
 gate: null
 ---

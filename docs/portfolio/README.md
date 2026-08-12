@@ -1,5 +1,13 @@
 # FinalCall 포트폴리오 도시에 (인덱스)
 
+## 2026-08-13 추가 도시에
+
+| 도시에 | 상태 | 한 줄 요약 |
+|---|---|---|
+| [frontend-ui-system.md](frontend-ui-system.md) | 완료·게이트3 승인 | navy/gold/orange 역할형 토큰을 단일 정본으로 통합하고, route accent와 commerce chrome을 격리했다. 선언형 route metadata·`ListFrame`·표시/flip/action 카드 composition으로 공개·보호 화면을 이관했으며, 카드·clipping·모바일 배경 회귀와 CTA 대비(2.52/3.25→6.92/5.36)를 후속 보정해 최종 98파일·765테스트를 통과했다. |
+
+_갱신: 2026-08-13 (portfolio-writer, frontend-ui-system.md 신설 — EPIC-FRONTEND-UI-SYSTEM 브랜드 토큰·고정 commerce chrome·route metadata·목록/카드 composition·정적 guard·FC-280~282 회귀 보정 증거)_
+
 ## 2026-08-07 추가 도시에
 
 | 도시에 | 상태 | 한 줄 요약 |
@@ -33,6 +41,7 @@ Java 21 + Spring Boot 3.5 모놀리식 서비스 + SCG 엣지 게이트웨이(�
 | [shop.md](shop.md) | 완료·게이트3 Done | 고정가 마켓(EPIC-SHOP) — "입찰 없는 즉시 SOLD". 정산 꼬리(SettlementRecorder·sale_order source_type=SHOP·수익원장·인벤토리 CAS) **코드 변경 0 재사용**(3번째 소비처), shop 애그리거트 머리만 신규. 동시성 3중 방어(행 FOR UPDATE+status CAS+sale_order UK)·구매/만료 시간축 배타·잔액 user_id 오름차순(A4)·만료 워커 TEMP 직행. contract-first 게이트2 기한 모델 정정→재작업 0, 목업 fidelity+상세 경매디자인 재사용, FC-096 취소 UI 후속 분리. |
 | [market-quickbuy.md](market-quickbuy.md) | 완료·게이트3 Done | 마켓 즉시구매(EPIC-MARKET-QUICKBUY) — 목록에서 게임 "카드정보" UI 차용 모달로 인라인 구매. **구매 API 계약 변경 0**(POST /shops/{id}/purchase 재사용). 규율 2건: **N+1 회피**(판매자 거래횟수를 페이지당 배치 IN 집계 1쿼리로 계약·슬라이스 테스트 Statistics=1 강제)와 **데이터 위조 금지**(연출값을 실데이터/표시파생/제거로 3분 — 거래횟수 실집계 sellerCompletedSales, 채널제한 표시파생 격리, 랭크뱃지 제거). 형상 보존(필드 1개 추가). 디자인 게이트 반복→게이트2 계약 승격→병렬 팬아웃. |
 | [item-delivery.md](item-delivery.md) | 완료·게이트3 Done | 게임 아이템 지급 연동(EPIC-ITEM-DELIVERY) — 낙찰·구매 아이템을 게임 인벤토리로 도착시키는 **웹측 우편함 다리**(1단계). **하이브리드 우편함**(DB 내구 정본 + Redis best-effort 알림, 순수 Redis 기각—증발·이중쓰기·장애전파)·**정산 TX 내 트랜잭셔널 아웃박스**(SettlementRecorder 꼬리 1행, 양 경로 자동 커버)·**claim 멱등**(at-least-once 전달 + item_uuid UK exactly-once 효과)·**재판매 2중 방어**(location XOR CAS + 배송 존재 가드로 apply~IN_GAME lag 창 봉쇄)·게임 claim=DB 직접 프로토콜(웹 API 아님). reviewer 2라운드(MAJOR-2 lag 창 구멍·MAJOR-1 테스트 격리 오염 해소). 게임 실이식은 phase-2. |
+| [frontend-ui-system.md](frontend-ui-system.md) | 완료·게이트3 승인 | 프론트 UI 시스템(EPIC-FRONTEND-UI-SYSTEM) — navy/gold/orange semantic token 단일화, 고정 commerce chrome과 route accent 격리, 선언형 shell metadata, `ListFrame`, 아이템 카드 composition, 정적 guard. 사용자 피드백 회귀 3건을 경계 유지 상태로 보정하고 최신 98파일·765테스트 통과. |
 
 ## 향후 도메인 (자리표시 — 미착수/진행 중)
 
