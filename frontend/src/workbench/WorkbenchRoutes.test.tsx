@@ -195,6 +195,9 @@ describe('WorkbenchRoutes', () => {
                 'sm:py-5',
                 'xl:py-7',
             )
+            expect(view.getByTestId('app-content-plane')).toHaveClass(
+                width === 1280 ? 'mt-3' : 'mt-2',
+            )
             expect(navigation).toHaveClass(
                 'w-full',
                 'max-w-[1440px]',

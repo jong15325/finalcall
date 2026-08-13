@@ -15,6 +15,7 @@ export function installNavigationLayoutPreview(
     const contentPlane = view?.querySelector<HTMLElement>(
         '[data-testid="app-content-plane"]',
     )
+    const desktopGap = window.matchMedia('(min-width: 1280px)')
     const headerInner = header?.firstElementChild as HTMLElement | null
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.firstElementChild as HTMLElement | null
@@ -43,6 +44,7 @@ export function installNavigationLayoutPreview(
             horizontalNav,
             footer,
             view,
+            contentPlane,
             headerInner,
             navigationInner,
             footerInner,
@@ -82,6 +84,7 @@ export function installNavigationLayoutPreview(
     footer.classList.add('px-3', 'sm:px-5', 'xl:px-8')
     header.classList.add('rounded-xl')
     horizontalNav?.classList.add('rounded-xl')
+    let releaseSelectedGap: () => void = () => undefined
 
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock) {
         surface.classList.add('transition-all', 'motion-reduce:transition-none')
@@ -89,6 +92,14 @@ export function installNavigationLayoutPreview(
         frame.classList.add('px-3', 'sm:px-5', 'xl:px-8')
         view.classList.remove('py-4', 'sm:py-5', 'xl:py-7')
         view.classList.add('pb-4')
+        const applySelectedGap = () => {
+            contentPlane.classList.toggle('mt-2', !desktopGap.matches)
+            contentPlane.classList.toggle('mt-3', desktopGap.matches)
+        }
+        applySelectedGap()
+        desktopGap.addEventListener('change', applySelectedGap)
+        releaseSelectedGap = () =>
+            desktopGap.removeEventListener('change', applySelectedGap)
     }
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
         surface.classList.add('rounded-xl')
@@ -169,6 +180,7 @@ export function installNavigationLayoutPreview(
 
     return () => {
         window.removeEventListener('scroll', onScroll)
+        releaseSelectedGap()
         cancelAnimationFrame(animationFrame)
         shellColumn.insertBefore(header, view)
         if (horizontalNav) shellColumn.insertBefore(horizontalNav, view)

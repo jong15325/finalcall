@@ -138,7 +138,8 @@ try {
                 (selectedAtTop
                     ? before.dockState !== 'stuck' ||
                       before.navBounds.top !== 0 ||
-                      threshold.navBounds.top !== 0
+                      threshold.navBounds.top !== 0 ||
+                      before.contentGap !== (viewport.mobile ? 8 : 12)
                     : before.dockState !== 'flow' ||
                       before.navBounds.top <= 0 ||
                       threshold.dockState !== 'stuck' ||
@@ -175,7 +176,7 @@ try {
                 process.exitCode = 1
             } else {
                 console.log(
-                    `[workbench] ${viewport.width}px ${variant} top ${before.navBounds.top}→${threshold.navBounds.top}→${after.navBounds.top}px, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
+                    `[workbench] ${viewport.width}px ${variant} top ${before.navBounds.top}→${threshold.navBounds.top}→${after.navBounds.top}px, gap ${before.contentGap}px, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
                 )
             }
         }
@@ -368,6 +369,9 @@ function navigationAuditExpression(mobile) {
             contentBounds,
             delta,
             contentDelta,
+            contentGap: navBounds && contentBounds
+                ? Math.round((contentBounds.top - (navBounds.top + navBounds.height)) * 100) / 100
+                : null,
             aligned: Boolean(delta && delta.left <= 1 && delta.right <= 1 && delta.width <= 1),
             alignedExactly: Boolean(delta && delta.left === 0 && delta.right === 0 && delta.width === 0),
             contentAligned: Boolean(contentDelta && contentDelta.left === 0 && contentDelta.right === 0 && contentDelta.width === 0),
