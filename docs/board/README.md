@@ -16,6 +16,7 @@ docs/board/
 - 에픽: `EPIC-<도메인>` (대문자 도메인)
 - 리뷰: `FC-NNN-review.md`
 - `jira_key`: 모든 에픽·task에 미러 시 부여된 KAN-N (최초 1회 기록 후 불변)
+- Jira task summary: 파일의 `id`와 `title`을 조합한 `FC-NNN · <title>`
 
 ## 티켓 스키마 (YAML 프론트매터)
 id · type(task|epic) · epic · derived_from(직접 부모 티켓, 최초면 null) ·

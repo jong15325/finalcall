@@ -1,5 +1,5 @@
 // Jira 미러 드리프트 가드레일(계층①: 파일-단독 탐지). CLAUDE.md 섹션 12.
-// git commit 직전, 보드 에픽·task 중 jira_key 가 비어있는(=Jira 미생성) 항목을 경고.
+// git commit 직전, 보드 에픽·task의 빈 jira_key와 task ID·파일명·title 형식 오류를 경고.
 // warn-only: 항상 exit 0(커밋 차단 안 함). 드리프트는 즉시 치명 아님·비차단 원칙(섹션 12).
 // 계층②(key·상태·귀속·링크 불일치)는 Jira 읽기가 필요 → 훅 대상 아님. 총괄이 HANDOVER 패리티로 대조.
 const fs = require("fs");
@@ -50,11 +50,23 @@ try {
       const text = fs.readFileSync(path.join(dir, f), "utf8");
       const type = frontmatterValue(text, "type");
       if (type !== "epic" && type !== "task") continue;
+      const id = frontmatterValue(text, "id");
+      if (type === "task") {
+        const title = frontmatterValue(text, "title");
+        if (!/^FC-\d{3}$/.test(id || "")) {
+          drift.push(`  - ${f} (task) — id가 FC-NNN 형식이 아님`);
+        } else if (f !== `${id}.md`) {
+          drift.push(`  - ${id} (task) — 파일명이 ${id}.md와 불일치`);
+        }
+        if (isEmpty(title)) {
+          drift.push(`  - ${id || f} (task) — Jira summary를 만들 title 없음`);
+        }
+      }
       const jiraKey = frontmatterValue(text, "jira_key");
       if (isEmpty(jiraKey)) {
-        const id = frontmatterValue(text, "id") || f;
+        const displayId = id || f;
         const state = frontmatterValue(text, "state") || "미상";
-        drift.push(`  - ${id} (${type}, state: ${state}) — jira_key 없음`);
+        drift.push(`  - ${displayId} (${type}, state: ${state}) — jira_key 없음`);
       }
     }
   }
@@ -64,7 +76,7 @@ try {
 
 if (drift.length > 0) {
   process.stderr.write(
-    "Jira 미러 드리프트 경고(계층①: Jira 이슈 미생성). 에픽·task의 jira_key 가 비어 있습니다:\n" +
+    "Jira 미러 드리프트 경고(계층①). 빈 jira_key 또는 task ID·파일명·title 형식 오류가 있습니다:\n" +
       drift.join("\n") +
       "\n총괄은 상태 전이 시 미러를 즉시 반영하세요(비차단=실패 허용이지 생략 아님). 커밋은 계속 진행됩니다.\n"
   );

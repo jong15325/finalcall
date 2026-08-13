@@ -265,9 +265,9 @@ architect(계약 확정, 게이트2)
 
 ### Jira 미러 (사용자 대시보드)
 - **파일 → Jira 단방향**. Jira(Atlassian MCP, KAN 프로젝트)는 **사용자 전용 읽기 미러**. 에이전트는 Jira를 읽지 않음(서브에이전트 도구셋에서 Atlassian MCP 제외, **메인세션만** 미러).
-- ⚠️ **미러 규율**: 에픽·task 전건을 생성하고 생성·상태 전이 **때마다 즉시** 반영. "비차단"은 실패 허용이지 **생략 허용 아님**. jira_key 없으면 생성 후 프론트매터 기록(불변), 있으면 전이.
+- ⚠️ **미러 규율**: 에픽·task 전건을 생성하고 생성·상태 전이 **때마다 즉시** 반영. Jira task summary는 반드시 `FC-NNN · <title>`. "비차단"은 실패 허용이지 **생략 허용 아님**. jira_key 없으면 생성 후 프론트매터 기록(불변), 있으면 전이.
 - **좌표**: KAN 프로젝트(팀관리형), cloudId `aa1e251d-04f2-43ee-bbe6-4ca5195150ca`. 전이 ID: 21=진행중, 31=검토중, 41=완료. 매핑: state→status, owner→라벨 `agent:<owner>`, task의 epic→Jira parent(또는 Epic Link), derived_from→relates to, depends_on/blocks→방향을 보존한 Blocks 링크, gate→라벨 `gate:*`.
-- **인수 시 백필**: 상태와 무관하게 `jira_key: null`인 에픽·task를 스캔해 백필하고 key·상태·에픽 귀속·관계 링크를 전건 대조한다.
+- **인수 시 백필**: 상태와 무관하게 `jira_key: null`인 에픽·task를 스캔해 백필하고 key·summary·상태·에픽 귀속·관계 링크를 전건 대조한다.
 - **드리프트 가드**: `git commit` 전 `.claude/hooks/check-mirror-drift.js`가 warn(비차단).
 
 ---
