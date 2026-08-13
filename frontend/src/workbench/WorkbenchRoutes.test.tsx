@@ -180,7 +180,7 @@ describe('WorkbenchRoutes', () => {
 
             expect(frame).toHaveClass('sticky', 'top-0', 'z-30')
             expect(frame.style.top).toBe(width === 1280 ? '12px' : '8px')
-            expect(frame).toHaveAttribute('data-workbench-dock-state', 'stuck')
+            expect(frame).toHaveAttribute('data-workbench-dock-state', 'flow')
             expect(
                 screen.getByRole('link', { name: /접점 고정형/ }),
             ).toHaveAttribute('aria-current', 'true')

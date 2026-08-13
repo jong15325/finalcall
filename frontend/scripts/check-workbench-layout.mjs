@@ -112,7 +112,7 @@ try {
             await cdp.send('Runtime.evaluate', {
                 expression:
                     variant === 'fc-nav-contact-dock'
-                        ? 'window.scrollTo(0, 1)'
+                        ? 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().bottom)'
                         : 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().top)',
             })
             await delay(100)
@@ -165,9 +165,10 @@ try {
             const selectedOffset = viewport.mobile ? 8 : 12
             const navigationFailed =
                 (selectedAtTop
-                    ? before.dockState !== 'stuck' ||
+                    ? before.dockState !== 'flow' ||
                       before.navBounds.top !== selectedOffset ||
-                      threshold.navBounds.top !== selectedOffset ||
+                      threshold.dockState !== 'stuck' ||
+                      threshold.navBounds.top !== 0 ||
                       before.contentGap !== 0 ||
                       !before.radiusMatches ||
                       before.hasBacking ||
@@ -179,7 +180,7 @@ try {
                       threshold.dockState !== 'stuck' ||
                       threshold.navBounds.top !== 0) ||
                 after.dockState !== 'stuck' ||
-                after.navBounds.top !== (selectedAtTop ? selectedOffset : 0) ||
+                after.navBounds.top !== 0 ||
                 (selectedAtTop &&
                     (!after.radiusMatches ||
                         after.hasBacking ||

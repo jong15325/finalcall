@@ -18,7 +18,7 @@ export function installNavigationLayoutPreview(
     const headerInner = header?.firstElementChild as HTMLElement | null
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.firstElementChild as HTMLElement | null
-    const selectedAtTop = variant === NAVIGATION_LAYOUT_VARIANTS.contactDock
+    const contactDock = variant === NAVIGATION_LAYOUT_VARIANTS.contactDock
     const desktopOffset = window.matchMedia('(min-width: 1280px)')
 
     if (
@@ -60,7 +60,7 @@ export function installNavigationLayoutPreview(
 
     sentinel.dataset.workbenchDockSentinel = variant
     frame.dataset.workbenchNavigationFrame = variant
-    frame.dataset.workbenchDockState = selectedAtTop ? 'stuck' : 'flow'
+    frame.dataset.workbenchDockState = 'flow'
     frame.dataset.workbenchDockDirection = 'expanded'
     frame.classList.add('sticky', 'top-0', 'z-30')
     surface.dataset.workbenchNavMeasure = variant
@@ -95,7 +95,8 @@ export function installNavigationLayoutPreview(
         const applySelectedOffset = () => {
             const offset = desktopOffset.matches ? '12px' : '8px'
             const mobileRadius = '12px'
-            frame.style.top = offset
+            frame.style.top =
+                frame.dataset.workbenchDockState === 'stuck' ? '0px' : offset
             sentinel.style.height = offset
             surface.style.borderTopLeftRadius = desktopOffset.matches
                 ? contentRadius.borderTopLeftRadius
@@ -131,7 +132,7 @@ export function installNavigationLayoutPreview(
     frame.append(surface, compactSpacer)
     footerInner.dataset.workbenchFooterMeasure = variant
     contentPlane.dataset.workbenchContentMeasure = variant
-    if (selectedAtTop) {
+    if (contactDock) {
         shellColumn.insertBefore(sentinel, view)
         shellColumn.insertBefore(frame, view)
     } else {
@@ -161,8 +162,18 @@ export function installNavigationLayoutPreview(
     const update = () => {
         animationFrame = 0
         const scrollY = window.scrollY
-        const stuck = selectedAtTop || sentinel.getBoundingClientRect().top <= 0
+        const sentinelBounds = sentinel.getBoundingClientRect()
+        const stuck = contactDock
+            ? window.scrollY > 0 && sentinelBounds.bottom <= 0
+            : sentinelBounds.top <= 0
         frame.dataset.workbenchDockState = stuck ? 'stuck' : 'flow'
+        if (contactDock) {
+            frame.style.top = stuck
+                ? '0px'
+                : desktopOffset.matches
+                  ? '12px'
+                  : '8px'
+        }
 
         if (variant === NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
             surface.classList.toggle('rounded-xl', stuck)
