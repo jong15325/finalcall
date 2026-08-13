@@ -1,12 +1,14 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import Color from 'color'
+import ts from 'typescript'
 
 const frontendRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const sourceRoot = resolve(frontendRoot, 'src')
 const workbenchRoot = resolve(sourceRoot, 'workbench')
 const failures = []
-const productionSource = collectProductionSource()
+const productionClassTokens = collectProductionStaticTokens()
 const allowlistedVariables = new Set([
     '--chrome-bg',
     '--chrome-bg-strong',
@@ -51,8 +53,8 @@ for (const file of walk(workbenchRoot)) {
     ) {
         failures.push(`${path}: shell/common component 재선언 금지`)
     }
-    for (const token of extractClassTokens(source)) {
-        if (!productionSource.includes(token)) {
+    for (const token of extractClassTokens(file, source)) {
+        if (!productionClassTokens.has(token)) {
             failures.push(
                 `${path}: production source에 없는 Tailwind utility ${token}`,
             )
@@ -88,6 +90,9 @@ const indexCss = readFileSync(resolve(sourceRoot, 'index.css'), 'utf8')
 if (!/@source not ['"]\.\/workbench['"];/u.test(indexCss)) {
     failures.push('src/index.css: Tailwind workbench source exclusion 누락')
 }
+
+checkFixtureContrast()
+checkClassParserCoverage()
 
 const registrySource = readFileSync(
     resolve(workbenchRoot, 'registry.ts'),
@@ -127,26 +132,196 @@ function normalize(path) {
     return path.replaceAll('\\', '/')
 }
 
-function collectProductionSource() {
-    const sources = []
+function collectProductionStaticTokens() {
+    const tokens = new Set()
     for (const file of walk(sourceRoot)) {
         const path = normalize(relative(frontendRoot, file))
-        if (path.startsWith('src/workbench/') || !/\.(?:ts|tsx)$/u.test(file))
+        if (
+            path.startsWith('src/workbench/') ||
+            /\.(?:test|stories)\.(?:ts|tsx)$/u.test(file) ||
+            !/\.(?:ts|tsx)$/u.test(file)
+        )
             continue
-        sources.push(readFileSync(file, 'utf8'))
-    }
-    return sources.join('\n')
-}
-
-function extractClassTokens(source) {
-    const tokens = new Set()
-    for (const match of source.matchAll(
-        /className\s*=\s*(?:['"]([^'"]*)['"]|`([^`]*)`)/gu,
-    )) {
-        const value = match[1] ?? match[2] ?? ''
-        for (const token of value.split(/\s+/u)) {
-            if (/^[\w:[\]./%-]+$/u.test(token)) tokens.add(token)
+        for (const token of extractStaticTokens(
+            file,
+            readFileSync(file, 'utf8'),
+        )) {
+            tokens.add(token)
         }
     }
     return tokens
+}
+
+function extractStaticTokens(file, source) {
+    const tokens = new Set()
+    const sourceFile = ts.createSourceFile(
+        file,
+        source,
+        ts.ScriptTarget.Latest,
+        true,
+        file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    )
+    visit(sourceFile)
+    return tokens
+
+    function visit(node) {
+        if (
+            ts.isStringLiteral(node) ||
+            ts.isNoSubstitutionTemplateLiteral(node) ||
+            ts.isTemplateHead(node) ||
+            ts.isTemplateMiddle(node) ||
+            ts.isTemplateTail(node)
+        ) {
+            addTokens(tokens, node.text)
+        }
+        ts.forEachChild(node, visit)
+    }
+}
+
+function extractClassTokens(file, source) {
+    const tokens = new Set()
+    const sourceFile = ts.createSourceFile(
+        file,
+        source,
+        ts.ScriptTarget.Latest,
+        true,
+        file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    )
+
+    visit(sourceFile)
+    return tokens
+
+    function visit(node) {
+        if (
+            ts.isJsxAttribute(node) &&
+            node.name.text === 'className' &&
+            node.initializer
+        ) {
+            collectClassLiterals(node.initializer)
+        }
+        ts.forEachChild(node, visit)
+    }
+
+    function collectClassLiterals(node) {
+        if (
+            ts.isStringLiteral(node) ||
+            ts.isNoSubstitutionTemplateLiteral(node) ||
+            ts.isTemplateHead(node) ||
+            ts.isTemplateMiddle(node) ||
+            ts.isTemplateTail(node)
+        ) {
+            addTokens(tokens, node.text)
+        }
+        ts.forEachChild(node, collectClassLiterals)
+    }
+}
+
+function addTokens(tokens, value) {
+    for (const token of value.split(/\s+/u)) {
+        if (/^[!\w:[\]./%-]+$/u.test(token)) tokens.add(token)
+    }
+}
+
+function checkFixtureContrast() {
+    const fixturePath = resolve(workbenchRoot, 'fixtures/colorSystem.ts')
+    const source = readFileSync(fixturePath, 'utf8')
+    const sourceFile = ts.createSourceFile(
+        fixturePath,
+        source,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TS,
+    )
+    const tokensCss = readFileSync(
+        resolve(sourceRoot, 'styles/tokens.css'),
+        'utf8',
+    )
+    const contentSurface = readCssColor(tokensCss, '--surface')
+    const chromeMuted = readCssColor(tokensCss, '--chrome-muted')
+    let paletteCount = 0
+
+    visit(sourceFile)
+    if (paletteCount !== 10) {
+        failures.push(
+            `src/workbench/fixtures/colorSystem.ts: contrast guard가 10개 팔레트 대신 ${paletteCount}개를 찾음`,
+        )
+    }
+
+    function visit(node) {
+        if (
+            ts.isCallExpression(node) &&
+            ts.isIdentifier(node.expression) &&
+            node.expression.text === 'palette'
+        ) {
+            paletteCount += 1
+            const id = stringArgument(node, 0)
+            const chromeBg = stringArgument(node, 4)
+            const controlFocus = stringArgument(node, 6)
+            if (id && chromeBg && chromeMuted) {
+                checkContrast(
+                    id,
+                    '--chrome-muted / --chrome-bg',
+                    chromeMuted,
+                    chromeBg,
+                    4.5,
+                )
+            }
+            if (id && controlFocus && contentSurface) {
+                checkContrast(
+                    id,
+                    '--control-focus / --content-surface',
+                    controlFocus,
+                    contentSurface,
+                    3,
+                )
+            }
+        }
+        ts.forEachChild(node, visit)
+    }
+}
+
+function stringArgument(call, index) {
+    const argument = call.arguments[index]
+    return argument && ts.isStringLiteral(argument) ? argument.text : undefined
+}
+
+function readCssColor(source, variable) {
+    const escaped = variable.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+    const match = source.match(
+        new RegExp(`${escaped}:\\s*(#[\\da-f]{6})`, 'iu'),
+    )
+    if (!match) {
+        failures.push(
+            `src/styles/tokens.css: ${variable} raw color를 찾을 수 없음`,
+        )
+        return undefined
+    }
+    return match[1]
+}
+
+function checkContrast(id, pair, foreground, background, minimum) {
+    const ratio = Color(foreground).contrast(Color(background))
+    if (ratio < minimum) {
+        failures.push(
+            `src/workbench/fixtures/colorSystem.ts: ${id} ${pair} contrast ${ratio.toFixed(2)}:1 < ${minimum}:1`,
+        )
+    }
+}
+
+function checkClassParserCoverage() {
+    const synthetic = [
+        "const view = <div className={`min-w-44 ${active ? 'bg-control-action' : 'bg-content-surface'}`} />",
+    ].join('\n')
+    const extracted = extractClassTokens('parser-coverage.tsx', synthetic)
+    for (const expected of [
+        'min-w-44',
+        'bg-control-action',
+        'bg-content-surface',
+    ]) {
+        if (!extracted.has(expected)) {
+            failures.push(
+                `scripts/check-workbench.mjs: JSX class parser가 ${expected}를 검출하지 못함`,
+            )
+        }
+    }
 }

@@ -144,7 +144,7 @@ function WorkbenchIndex() {
 function WorkbenchNotFound({ scenarioId }: { scenarioId: string }) {
     return (
         <main className="grid min-h-screen place-items-center bg-content-soft px-4">
-            <section className="max-w-md rounded-2xl border border-content-line bg-content-surface p-8 text-center shadow-sm">
+            <section className="max-w-md rounded-2xl border border-content-line bg-content-surface p-6 text-center shadow-sm">
                 <h1 className="text-xl font-bold">
                     등록되지 않은 시나리오입니다.
                 </h1>

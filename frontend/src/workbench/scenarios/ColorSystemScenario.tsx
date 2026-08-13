@@ -9,6 +9,16 @@ import type {
     WorkbenchFixture,
 } from '../types'
 
+const PREVIEW_STATES = ['loading', 'empty', 'error', 'success'] as const
+type PreviewState = (typeof PREVIEW_STATES)[number]
+
+const PREVIEW_STATE_LABEL: Record<PreviewState, string> = {
+    loading: '로딩',
+    empty: '빈 결과',
+    error: '오류',
+    success: '성공',
+}
+
 interface ColorSystemFixture extends WorkbenchFixture {
     palettes: typeof COLOR_PALETTES
     semanticOverridesByVariant: Readonly<Record<string, SemanticTokenOverrides>>
@@ -34,14 +44,21 @@ export default function ColorSystemScenario({
     const selected =
         scenarioFixture.palettes.find(({ id }) => id === requested) ??
         scenarioFixture.palettes[0]
+    const requestedState = searchParams.get('state')
+    const previewState = PREVIEW_STATES.includes(requestedState as PreviewState)
+        ? (requestedState as PreviewState)
+        : 'success'
 
     return (
-        <div className="flex min-w-0 flex-col gap-8">
-            <header>
+        <div
+            data-testid="color-system-scenario"
+            className="flex min-w-0 max-w-full flex-col gap-8"
+        >
+            <header className="min-w-0">
                 <p className="text-sm font-bold text-control-action-hover">
                     실제 AppShell 기반 비교
                 </p>
-                <h1 className="mt-1 text-2xl font-bold text-content-fg">
+                <h1 className="mt-1 min-w-0 break-words text-2xl font-bold text-content-fg">
                     내비게이션 · 푸터 · 버튼 메인 컬러 10안
                 </h1>
                 <p className="mt-2 max-w-[65ch] text-sm leading-6 text-content-muted">
@@ -58,20 +75,23 @@ export default function ColorSystemScenario({
                     >
                         팔레트 선택
                     </h2>
-                    <span className="text-xs text-content-subtle">
-                        정성 순위 {selected.rank}/10
+                    <span className="shrink-0 text-xs text-content-subtle">
+                        추천 순위 {selected.rank}/10
                     </span>
                 </div>
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+                <div
+                    data-testid="palette-selector"
+                    className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1"
+                >
                     {scenarioFixture.palettes.map((palette) => {
                         const active = palette.id === selected.id
                         return (
                             <Link
                                 key={palette.id}
-                                to={`/__design/main-color-palettes?variant=${palette.id}`}
+                                to={`/__design/main-color-palettes?variant=${palette.id}&state=${previewState}`}
                                 aria-current={active ? 'true' : undefined}
                                 style={palette.overrides as SemanticStyle}
-                                className={`min-h-11 min-w-44 shrink-0 rounded-xl border px-3 py-2 text-left text-sm font-bold transition-colors ${
+                                className={`min-h-11 min-w-52 shrink-0 rounded-xl border px-3 py-2 text-left text-sm font-bold transition-colors ${
                                     active
                                         ? 'border-control-action bg-control-action text-control-action-ink'
                                         : 'border-content-line bg-content-surface text-content-fg hover:border-control-action'
@@ -89,11 +109,14 @@ export default function ColorSystemScenario({
                 </div>
             </section>
 
-            <section className="grid gap-4 min-[1000px]:grid-cols-2">
-                <article className="rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+            <section
+                data-testid="palette-preview-grid"
+                className="grid min-w-0 gap-4 min-[1000px]:grid-cols-2"
+            >
+                <article className="min-w-0 rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <h2 className="text-lg font-bold">
+                        <div className="min-w-0">
+                            <h2 className="break-words text-lg font-bold">
                                 {selected.name}
                             </h2>
                             <p className="mt-1 text-xs font-semibold text-content-subtle">
@@ -109,17 +132,18 @@ export default function ColorSystemScenario({
                     <p className="mt-4 max-w-[65ch] text-sm leading-6 text-content-muted">
                         {selected.note}
                     </p>
-                    <dl className="mt-5 divide-y divide-content-line rounded-xl border border-content-line px-4">
+                    <dl className="mt-5 min-w-0 divide-y divide-content-line rounded-xl border border-content-line px-4">
                         {Object.entries(selected.overrides).map(
                             ([token, value]) => (
                                 <div
                                     key={token}
-                                    className="flex items-center justify-between gap-4 py-2.5 text-xs"
+                                    data-testid="semantic-token-row"
+                                    className="flex min-w-0 flex-wrap items-center justify-between gap-4 py-2.5 text-xs"
                                 >
-                                    <dt className="font-mono text-content-muted">
+                                    <dt className="min-w-0 break-words font-mono text-content-muted">
                                         {token}
                                     </dt>
-                                    <dd className="font-bold text-content-fg">
+                                    <dd className="shrink-0 font-bold text-content-fg">
                                         {value}
                                     </dd>
                                 </div>
@@ -128,33 +152,64 @@ export default function ColorSystemScenario({
                     </dl>
                 </article>
 
-                <WalletSummaryCard
-                    balance={{
-                        gameMoneyBalance: 1_520_000,
-                        gameMoneyAvailable: 1_240_000,
-                        gameMoneyHeld: 280_000,
-                        cashBalance: 50_000,
-                    }}
-                    isLoading={false}
-                    isError={false}
-                />
+                <section className="min-w-0 rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+                    <h2 className="text-lg font-bold">UI 상태 선택</h2>
+                    <p className="mt-1 text-xs text-content-subtle">
+                        공용 ListFrame과 WalletSummaryCard의 실제 상태입니다.
+                    </p>
+                    <nav
+                        aria-label="UI 상태"
+                        className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"
+                    >
+                        {PREVIEW_STATES.map((state) => {
+                            const active = state === previewState
+                            return (
+                                <Link
+                                    key={state}
+                                    to={`/__design/main-color-palettes?variant=${selected.id}&state=${state}`}
+                                    aria-current={active ? 'true' : undefined}
+                                    className={`flex min-h-11 items-center justify-center rounded-lg border px-3 py-2 text-sm font-bold transition-colors ${
+                                        active
+                                            ? 'border-control-action bg-control-action text-control-action-ink'
+                                            : 'border-content-line bg-content-surface text-content-fg hover:border-control-action'
+                                    }`}
+                                >
+                                    {PREVIEW_STATE_LABEL[state]}
+                                </Link>
+                            )
+                        })}
+                    </nav>
+                </section>
             </section>
 
             <section aria-labelledby="state-preview-title">
                 <h2 id="state-preview-title" className="mb-3 text-lg font-bold">
-                    실제 공용 상태와 주요 행동
+                    실제 공용 상태와 주요 행동 ·{' '}
+                    {PREVIEW_STATE_LABEL[previewState]}
                 </h2>
                 <ListFrame
-                    state={{
-                        kind: 'error',
-                        message:
-                            '고정 fixture로 오류와 다시 시도 행동을 확인합니다.',
-                        onRetry: () => undefined,
-                    }}
+                    state={listFrameState(previewState)}
                     layout="two-column"
-                    label="디자인 상태 프리뷰"
-                    renderSkeleton={() => null}
-                />
+                    label="디자인 상태 미리보기"
+                    renderSkeleton={() => (
+                        <WalletSummaryCard
+                            isLoading
+                            balance={undefined}
+                            isError={false}
+                        />
+                    )}
+                >
+                    <WalletSummaryCard
+                        balance={{
+                            gameMoneyBalance: 1_520_000,
+                            gameMoneyAvailable: 1_240_000,
+                            gameMoneyHeld: 280_000,
+                            cashBalance: 50_000,
+                        }}
+                        isLoading={false}
+                        isError={false}
+                    />
+                </ListFrame>
             </section>
 
             <section className="flex flex-wrap items-center gap-3 rounded-xl bg-content-soft p-4">
@@ -176,4 +231,23 @@ export default function ColorSystemScenario({
             </section>
         </div>
     )
+}
+
+function listFrameState(state: PreviewState) {
+    if (state === 'loading') return { kind: 'loading' as const, count: 2 }
+    if (state === 'empty') {
+        return {
+            kind: 'empty' as const,
+            title: '표시할 항목이 없습니다.',
+            description: 'fixture를 바꾸지 않고 빈 결과 상태를 확인합니다.',
+        }
+    }
+    if (state === 'error') {
+        return {
+            kind: 'error' as const,
+            message: '고정 fixture로 오류와 다시 시도 행동을 확인합니다.',
+            onRetry: () => undefined,
+        }
+    }
+    return { kind: 'ready' as const }
 }
