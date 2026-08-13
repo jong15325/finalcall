@@ -13,6 +13,7 @@ const forbiddenMarkers = [
     'wind-particle-studies',
     'fire-particle-studies',
     'water-particle-studies',
+    'wallet-balance-studies',
     'fc-nav-restrained',
     'fc-nav-balanced',
     'fc-nav-floating',
@@ -67,6 +68,11 @@ const forbiddenMarkers = [
     'fc-water-wavelets',
     'fc-water-refractive-beads',
     'fc-water-hybrid-current',
+    'fc-wallet-available-first',
+    'fc-wallet-balance-statement',
+    'fc-wallet-split-assets',
+    'fc-wallet-mobile-wallet',
+    'fc-wallet-balanced-metrics',
 ]
 const failures = []
 

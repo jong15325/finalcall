@@ -25,6 +25,7 @@ try {
     }
     const colorPageUrl = `http://127.0.0.1:${address.port}/__design/main-color-palettes?variant=fc-palette-steel-blue&state=success`
     const navigationPageUrl = `http://127.0.0.1:${address.port}/__design/top-navigation-layouts`
+    const walletPageUrl = `http://127.0.0.1:${address.port}/__design/wallet-balance-studies?variant=fc-wallet-balanced-metrics&state=ready&sample=long`
     edge = spawn(
         edgePath,
         [
@@ -68,6 +69,39 @@ try {
             console.log(
                 `[workbench] ${viewport.width}px 실제 DOM overflow 0건 (${audit.document.scrollWidth}/${audit.document.clientWidth}px)`,
             )
+        }
+
+        for (const textZoom of [100, 200]) {
+            await cdp.send('Page.navigate', { url: walletPageUrl })
+            await waitForScenario(cdp, '[data-testid=wallet-balance-scenario]')
+            await cdp.send('Runtime.evaluate', {
+                expression: `document.documentElement.style.fontSize = '${textZoom}%'`,
+            })
+            await delay(50)
+            const walletResult = await cdp.send('Runtime.evaluate', {
+                expression: walletLayoutAuditExpression(viewport.mobile),
+                returnByValue: true,
+            })
+            const walletAudit = walletResult.result.value
+            if (
+                !walletAudit.documentFits ||
+                !walletAudit.scenarioFits ||
+                !walletAudit.amountsFit ||
+                !walletAudit.controlsFit ||
+                walletAudit.hasHorizontalScroller ||
+                walletAudit.studyColumns !== (viewport.mobile ? 1 : 2) ||
+                walletAudit.metricColumns !== (viewport.mobile ? 1 : 3)
+            ) {
+                console.error(
+                    `[workbench] ${viewport.width}px/${textZoom}% wallet layout guard 실패`,
+                )
+                console.error(JSON.stringify(walletAudit, null, 2))
+                process.exitCode = 1
+            } else {
+                console.log(
+                    `[workbench] ${viewport.width}px/${textZoom}% wallet overflow 0건 columns ${walletAudit.studyColumns}/${walletAudit.metricColumns}`,
+                )
+            }
         }
 
         const navigationVariants = [
@@ -959,6 +993,74 @@ function layoutAuditExpression() {
             palette: palette ? metrics(palette) : null,
             violations,
             chain,
+        }
+    })()`
+}
+
+function walletLayoutAuditExpression(mobile) {
+    return `(() => {
+        const documentElement = document.documentElement
+        const scenario = document.querySelector('[data-testid="wallet-balance-scenario"]')
+        const study = document.querySelector('[data-testid="wallet-study-layout"]')
+        const candidate = document.querySelector('[data-wallet-variant]')
+        const metrics = candidate?.querySelector('[data-wallet-metrics]')
+        const amounts = candidate ? [...candidate.querySelectorAll('[aria-label$="코드"]')] : []
+        const controls = scenario ? [...scenario.querySelectorAll('a, button')] : []
+        const bounds = (element) => {
+            if (!element) return null
+            const rect = element.getBoundingClientRect()
+            return { left: rect.left, right: rect.right, width: rect.width }
+        }
+        const scenarioBounds = bounds(scenario)
+        const gridColumns = (element) => {
+            if (!element) return 0
+            return getComputedStyle(element).gridTemplateColumns
+                .split(' ')
+                .filter(Boolean).length
+        }
+        return {
+            documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
+            scenarioFits: Boolean(
+                scenario &&
+                scenario.scrollWidth <= scenario.clientWidth + 1 &&
+                candidate &&
+                candidate.scrollWidth <= candidate.clientWidth + 1
+            ),
+            amountsFit: Boolean(
+                amounts.length === 4 && amounts.every((amount) => {
+                    const amountBounds = bounds(amount)
+                    const textBounds = bounds(amount.lastElementChild)
+                    const candidateBounds = bounds(candidate)
+                    return amountBounds && textBounds && candidateBounds &&
+                        getComputedStyle(amount).wordBreak === 'break-all' &&
+                        amountBounds.left >= candidateBounds.left - 1 &&
+                        amountBounds.right <= candidateBounds.right + 1 &&
+                        textBounds.left >= candidateBounds.left - 1 &&
+                        textBounds.right <= candidateBounds.right + 1
+                })
+            ),
+            controlsFit: Boolean(
+                scenarioBounds && controls.length > 0 && controls.every((control) => {
+                    const controlBounds = bounds(control)
+                    return controlBounds &&
+                        controlBounds.left >= scenarioBounds.left - 1 &&
+                        controlBounds.right <= scenarioBounds.right + 1
+                })
+            ),
+            hasHorizontalScroller: Boolean(
+                scenario && [...scenario.querySelectorAll('*')].some(
+                    (element) => getComputedStyle(element).overflowX === 'auto'
+                )
+            ),
+            studyColumns: gridColumns(study),
+            metricColumns: gridColumns(metrics),
+            expectedMobile: ${mobile},
+            widths: {
+                document: [documentElement.scrollWidth, documentElement.clientWidth],
+                scenario: scenario ? [scenario.scrollWidth, scenario.clientWidth] : null,
+                candidate: candidate ? [candidate.scrollWidth, candidate.clientWidth] : null,
+                amounts: amounts.map((amount) => [amount.scrollWidth, amount.clientWidth]),
+            },
         }
     })()`
 }

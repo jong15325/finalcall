@@ -80,3 +80,16 @@ export const WATER_PARTICLE_VARIANT_IDS = Object.values(WATER_PARTICLE_VARIANTS)
 
 export type WaterParticleVariantId =
     (typeof WATER_PARTICLE_VARIANTS)[keyof typeof WATER_PARTICLE_VARIANTS]
+
+export const WALLET_BALANCE_VARIANTS = {
+    availableFirst: 'fc-wallet-available-first',
+    balanceStatement: 'fc-wallet-balance-statement',
+    splitAssets: 'fc-wallet-split-assets',
+    mobileWallet: 'fc-wallet-mobile-wallet',
+    balancedMetrics: 'fc-wallet-balanced-metrics',
+} as const
+
+export const WALLET_BALANCE_VARIANT_IDS = Object.values(WALLET_BALANCE_VARIANTS)
+
+export type WalletBalanceVariantId =
+    (typeof WALLET_BALANCE_VARIANTS)[keyof typeof WALLET_BALANCE_VARIANTS]

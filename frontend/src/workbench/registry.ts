@@ -3,6 +3,7 @@ import {
     COLOR_PALETTE_VARIANT_IDS,
     FIRE_PARTICLE_VARIANT_IDS,
     NAVIGATION_LAYOUT_VARIANT_IDS,
+    WALLET_BALANCE_VARIANT_IDS,
     WIND_PARTICLE_VARIANT_IDS,
     WATER_PARTICLE_VARIANT_IDS,
 } from './scenarioMetadata'
@@ -61,6 +62,14 @@ export const WORKBENCH_SCENARIOS = [
         routeContext: paths.home,
         variants: WATER_PARTICLE_VARIANT_IDS,
         load: () => import('./scenarios/WaterParticleScenario'),
+    }),
+    defineScenario({
+        id: 'wallet-balance-studies',
+        title: '마이페이지 지갑 잔액 5안',
+        shell: 'app',
+        routeContext: paths.wallet,
+        variants: WALLET_BALANCE_VARIANT_IDS,
+        load: () => import('./scenarios/WalletBalanceScenario'),
     }),
 ] as const
 

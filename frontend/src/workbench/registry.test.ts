@@ -4,6 +4,7 @@ import { WORKBENCH_SCENARIOS } from './registry'
 import {
     FIRE_PARTICLE_VARIANT_IDS,
     WATER_PARTICLE_VARIANT_IDS,
+    WALLET_BALANCE_VARIANT_IDS,
     WIND_PARTICLE_VARIANT_IDS,
 } from './scenarioMetadata'
 import { SEMANTIC_OVERRIDE_KEYS } from './types'
@@ -41,11 +42,7 @@ describe('workbench registry', () => {
         for (const scenario of WORKBENCH_SCENARIOS) {
             const module = await scenario.load()
             const overrideGroups = module.fixture.semanticOverridesByVariant
-            if (
-                overrideGroups &&
-                'variants' in scenario &&
-                scenario.variants
-            ) {
+            if (overrideGroups && 'variants' in scenario && scenario.variants) {
                 expect(Object.keys(overrideGroups)).toEqual(
                     expect.arrayContaining([...scenario.variants]),
                 )
@@ -103,4 +100,23 @@ describe('workbench registry', () => {
             ).toBe(10)
         },
     )
+
+    it('registers five lazy wallet information hierarchies on the real wallet route', async () => {
+        const scenario = WORKBENCH_SCENARIOS.find(
+            ({ id }) => id === 'wallet-balance-studies',
+        )!
+
+        expect(scenario.routeContext).toBe(paths.wallet)
+        expect(scenario.variants).toEqual(WALLET_BALANCE_VARIANT_IDS)
+        expect(scenario.variants).toHaveLength(5)
+
+        const module = await scenario.load()
+        const fixture = module.fixture as {
+            options: readonly { id: string; fontSpec: string }[]
+        }
+        expect(fixture.options).toHaveLength(5)
+        expect(new Set(fixture.options.map(({ id }) => id)).size).toBe(5)
+        expect(fixture.options[0].fontSpec).toContain('32px')
+        expect(fixture.options[4].fontSpec).toContain('28px')
+    })
 })

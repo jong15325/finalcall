@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import userEvent from '@testing-library/user-event'
@@ -11,6 +11,7 @@ import { memoKeys } from '@/lib/queries/memos'
 import { useAuthStore } from '@/store/authStore'
 import { COLOR_PALETTES } from './fixtures/colorSystem'
 import { WIND_PARTICLE_OPTIONS } from './fixtures/windParticles'
+import { WALLET_BALANCE_OPTIONS } from './fixtures/walletBalance'
 import { NAVIGATION_LAYOUT_VARIANTS } from './scenarioMetadata'
 import WorkbenchRoutes from './WorkbenchRoutes'
 
@@ -189,14 +190,12 @@ describe('WorkbenchRoutes', () => {
                 'data-workbench-dock-sentinel',
                 NAVIGATION_LAYOUT_VARIANTS.contactDock,
             )
-            expect(view.getByTestId('app-content-plane').parentElement).toHaveClass(
-                'pb-4',
-            )
-            expect(view.getByTestId('app-content-plane').parentElement).not.toHaveClass(
-                'py-4',
-                'sm:py-5',
-                'xl:py-7',
-            )
+            expect(
+                view.getByTestId('app-content-plane').parentElement,
+            ).toHaveClass('pb-4')
+            expect(
+                view.getByTestId('app-content-plane').parentElement,
+            ).not.toHaveClass('py-4', 'sm:py-5', 'xl:py-7')
             expect(navigation).toHaveClass(
                 'w-full',
                 'max-w-[1440px]',
@@ -515,4 +514,45 @@ describe('WorkbenchRoutes', () => {
             ).toHaveAttribute('aria-current', 'true')
         },
     )
+
+    it('DEV wallet route에서 5개 정보 구조와 상태·긴 정수를 실제 AppShell에 재현한다', async () => {
+        const selected = WALLET_BALANCE_OPTIONS[4]
+        const view = renderWorkbench(
+            `/__design/wallet-balance-studies?variant=${selected.id}&state=ready&sample=long`,
+        )
+
+        expect(
+            await screen.findByRole('heading', {
+                name: '마이페이지 지갑 잔액 5안',
+            }),
+        ).toBeVisible()
+        expect(view.getByTestId('app-content-plane')).toHaveAttribute(
+            'data-content-plane',
+            'default',
+        )
+        expect(view.getByTestId('wallet-balance-scenario')).toHaveClass(
+            'w-full',
+            'min-w-0',
+            'max-w-full',
+        )
+
+        const optionNav = screen.getByRole('navigation', {
+            name: '지갑 디자인 안',
+        })
+        expect(within(optionNav).getAllByRole('link')).toHaveLength(5)
+        expect(
+            within(optionNav).getByRole('link', {
+                name: new RegExp(selected.shortName),
+            }),
+        ).toHaveAttribute('aria-current', 'true')
+        expect(
+            screen.getByRole('link', { name: '긴 안전정수' }),
+        ).toHaveAttribute('aria-current', 'true')
+        expect(
+            screen.getByLabelText('8,607,199,254,740,000 코드'),
+        ).toBeVisible()
+        expect(
+            screen.getAllByRole('button', { name: '충전 준비 중' })[0],
+        ).toBeDisabled()
+    })
 })
