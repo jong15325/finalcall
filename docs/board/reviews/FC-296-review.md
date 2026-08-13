@@ -12,3 +12,9 @@
 - 단일 IntersectionObserver는 unmount 시 정리되며 layout jump와 scroll polling이 없다.
 - dropdown·drawer·mobile safe area·focus·z-index 계층과 인증·route element·의미색이 유지된다.
 - 전체 100 files / 787 tests, typecheck, lint, UI/workbench guard, production build와 residue guard가 통과했다.
+
+## 하단 라운드 회귀 재확인
+
+- 모바일 TopNavbar 12px, 데스크톱 HorizontalNav 16px 하단 좌우 라운드를 실제 소유 요소에 적용했다.
+- flow·stuck corner hit-test에서 각진 chrome 누출과 dropdown clipping이 없음을 확인했다.
+- 재리뷰 판정: PASS — critical 0 / major 0 / minor 0.
