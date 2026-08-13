@@ -72,6 +72,9 @@ AGENTS.md
 # 채택하지 않은 일회성 색상 목업
 /docs/ux/mockups/button-color-system-options.html
 
+# 현재 규약과 분리된 로컬 AI 세션 초안
+/docs/AI-KICKOFF-PROMPT.md
+
 # docs 작업 로그는 제외하지 않는다 (C-067, supersedes C-058).
 # C-058이 inbox-log·handover를 여기 넣었다가 철회했다 — 호스트 Grep이 gitignore 대상 파일을
 # 스코프에 따라 조용히 건너뛰어 `rules [9.1]`(호스트 도구로 판단)의 신뢰성이 깨졌다.
