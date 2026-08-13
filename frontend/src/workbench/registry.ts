@@ -11,7 +11,7 @@ function defineScenario(
 export const WORKBENCH_SCENARIOS = [
     defineScenario({
         id: 'main-color-palettes',
-        title: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+        title: '밝고 선명한 메인 컬러 10안',
         shell: 'app',
         routeContext: auctionDetailPath('design-preview'),
         variants: COLOR_PALETTE_VARIANT_IDS,

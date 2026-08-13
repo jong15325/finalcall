@@ -75,14 +75,15 @@ export default function ColorSystemScenario({
         >
             <header className="w-full min-w-0 max-w-full">
                 <p className="text-sm font-bold text-control-action-hover">
-                    실제 AppShell 기반 비교
+                    Restrained · 실제 AppShell 기반 비교
                 </p>
                 <h1 className="mt-1 w-full min-w-0 max-w-full break-all text-2xl font-bold text-content-fg">
-                    내비게이션 · 푸터 · 버튼 메인 컬러 10안
+                    밝고 선명한 메인 컬러 10안
                 </h1>
                 <p className="mt-2 w-full min-w-0 max-w-full break-words text-sm leading-6 text-content-muted">
-                    선택한 팔레트가 현재 화면의 실제 내비게이션, 푸터와 주요
-                    행동 토큰에 함께 적용됩니다. 상태색은 변경하지 않습니다.
+                    후보색은 실제 내비게이션·푸터·주요 버튼·현재 선택에만
+                    적용됩니다. 취소는 중립, 승인·성공은 초록, 위험은 빨강으로
+                    고정해 거래 상태의 의미를 보존합니다.
                 </p>
             </header>
 
@@ -145,15 +146,25 @@ export default function ColorSystemScenario({
                                 {selected.label} · 순위 {selected.rank}/10
                             </p>
                         </div>
-                        {selected.experiment && (
-                            <span className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-bold text-warning">
-                                계약 변경 실험안
-                            </span>
-                        )}
                     </div>
-                    <p className="mt-4 w-full min-w-0 max-w-full break-words text-sm leading-6 text-content-muted">
-                        {selected.note}
-                    </p>
+                    <div className="mt-4 w-full min-w-0 max-w-full space-y-3 text-sm leading-6">
+                        <div>
+                            <p className="font-bold text-content-fg">
+                                추천 근거
+                            </p>
+                            <p className="break-words text-content-muted">
+                                {selected.note}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="font-bold text-content-fg">
+                                트레이드오프
+                            </p>
+                            <p className="break-words text-content-muted">
+                                {selected.tradeoff}
+                            </p>
+                        </div>
+                    </div>
                     <dl className="mt-5 w-full min-w-0 max-w-full divide-y divide-content-line rounded-xl border border-content-line px-4">
                         {Object.entries(selected.overrides).map(
                             ([token, value]) => (
@@ -175,7 +186,61 @@ export default function ColorSystemScenario({
                 </article>
 
                 <section className="w-full min-w-0 max-w-full rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
-                    <h2 className="text-lg font-bold">UI 상태 선택</h2>
+                    <h2 className="text-lg font-bold">색 역할 비교</h2>
+                    <p className="mt-1 text-xs leading-5 text-content-subtle">
+                        후보 메인색과 고정 의미색이 실제 거래 조작에서 어떻게
+                        분리되는지 비교합니다.
+                    </p>
+                    <div
+                        data-testid="candidate-action-scope"
+                        className="mt-4 rounded-xl border border-content-line bg-content-soft p-4"
+                    >
+                        <p className="text-xs font-bold text-content-muted">
+                            후보색 적용 · 주요 행동과 현재 선택
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                className="min-h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                            >
+                                입찰하기
+                            </button>
+                            <button
+                                type="button"
+                                aria-pressed="true"
+                                className="min-h-11 rounded-lg border border-control-action bg-content-surface px-4 text-sm font-bold text-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                            >
+                                선택됨
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        data-testid="fixed-semantic-scope"
+                        className="mt-3 rounded-xl border border-content-line bg-content-soft p-4"
+                    >
+                        <p className="text-xs font-bold text-content-muted">
+                            항상 고정 · 취소 / 승인·성공 / 위험
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                className="min-h-11 rounded-lg border border-content-line bg-content-surface px-4 text-sm font-bold text-content-muted"
+                            >
+                                취소
+                            </button>
+                            <span className="inline-flex min-h-11 items-center rounded-lg bg-success-soft px-4 text-sm font-bold text-success-ink">
+                                승인 완료
+                            </span>
+                            <button
+                                type="button"
+                                className="min-h-11 rounded-lg bg-danger px-4 text-sm font-bold text-on-strong hover:opacity-90"
+                            >
+                                거래 취소
+                            </button>
+                        </div>
+                    </div>
+
+                    <h2 className="mt-6 text-lg font-bold">UI 상태 선택</h2>
                     <p className="mt-1 text-xs text-content-subtle">
                         공용 ListFrame과 WalletSummaryCard의 실제 상태입니다.
                     </p>

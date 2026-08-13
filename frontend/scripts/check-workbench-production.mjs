@@ -11,14 +11,20 @@ const forbiddenMarkers = [
     'auth-layout',
     'fc-palette-cobalt',
     'fc-palette-navy-orange',
+    'fc-palette-azure',
+    'fc-palette-ocean',
     'fc-palette-teal',
     'fc-palette-royal',
     'fc-palette-slate',
+    'fc-palette-deep-cyan',
+    'fc-palette-clear-navy',
+    'fc-palette-steel-blue',
     'fc-palette-emerald',
     'fc-palette-burgundy',
     'fc-palette-terracotta',
     'fc-palette-indigo',
     'fc-palette-plum',
+    'fc-palette-amber',
 ]
 const failures = []
 

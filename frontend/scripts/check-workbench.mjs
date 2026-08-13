@@ -312,6 +312,7 @@ function checkFixtureContrast() {
     )
     const contentSurface = readCssColor(tokensCss, '--surface')
     const chromeMuted = readCssColor(tokensCss, '--chrome-muted')
+    const whiteButtonInk = '#FFFFFF'
     let paletteCount = 0
 
     visit(sourceFile)
@@ -330,7 +331,9 @@ function checkFixtureContrast() {
             paletteCount += 1
             const id = stringArgument(node, 2)
             const chromeBg = stringArgument(node, 4)
-            const controlFocus = stringArgument(node, 6)
+            const controlAction = stringArgument(node, 6)
+            const controlActionHover = stringArgument(node, 7)
+            const controlFocus = stringArgument(node, 8)
             if (id && chromeBg && chromeMuted) {
                 checkContrast(
                     id,
@@ -347,6 +350,24 @@ function checkFixtureContrast() {
                     controlFocus,
                     contentSurface,
                     3,
+                )
+            }
+            if (id && controlAction) {
+                checkContrast(
+                    id,
+                    '--control-action-ink / --control-action',
+                    whiteButtonInk,
+                    controlAction,
+                    4.5,
+                )
+            }
+            if (id && controlActionHover) {
+                checkContrast(
+                    id,
+                    '--control-action-ink / --control-action-hover',
+                    whiteButtonInk,
+                    controlActionHover,
+                    4.5,
                 )
             }
         }

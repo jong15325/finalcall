@@ -1,14 +1,14 @@
 export const COLOR_PALETTE_VARIANTS = {
     cobalt: 'fc-palette-cobalt',
-    navyOrange: 'fc-palette-navy-orange',
+    azure: 'fc-palette-azure',
+    ocean: 'fc-palette-ocean',
     teal: 'fc-palette-teal',
-    royal: 'fc-palette-royal',
-    slate: 'fc-palette-slate',
+    deepCyan: 'fc-palette-deep-cyan',
+    clearNavy: 'fc-palette-clear-navy',
+    steelBlue: 'fc-palette-steel-blue',
     emerald: 'fc-palette-emerald',
-    burgundy: 'fc-palette-burgundy',
     terracotta: 'fc-palette-terracotta',
-    indigo: 'fc-palette-indigo',
-    plum: 'fc-palette-plum',
+    amber: 'fc-palette-amber',
 } as const
 
 export const COLOR_PALETTE_VARIANT_IDS = Object.values(COLOR_PALETTE_VARIANTS)

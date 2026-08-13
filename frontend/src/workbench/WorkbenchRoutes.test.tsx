@@ -52,13 +52,14 @@ function useViewport(width: number) {
 
 describe('WorkbenchRoutes', () => {
     it('renders a known scenario inside the real AppShell route context', async () => {
+        const teal = COLOR_PALETTES.find(({ id }) => id === 'fc-palette-teal')!
         const view = renderWorkbench(
             '/__design/main-color-palettes?variant=fc-palette-teal',
         )
 
         expect(
             await screen.findByRole('heading', {
-                name: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+                name: '밝고 선명한 메인 컬러 10안',
             }),
         ).toBeVisible()
         expect(view.getByTestId('app-content-plane')).toHaveAttribute(
@@ -67,14 +68,56 @@ describe('WorkbenchRoutes', () => {
         )
         await waitFor(() => {
             expect(view.container.firstElementChild).toHaveStyle({
-                '--chrome-bg': COLOR_PALETTES[2].overrides['--chrome-bg'],
-                '--control-action':
-                    COLOR_PALETTES[2].overrides['--control-action'],
+                '--chrome-bg': teal.overrides['--chrome-bg'],
+                '--control-action': teal.overrides['--control-action'],
             })
         })
         expect(view.getByRole('link', { name: /클린 틸/ })).toHaveAttribute(
             'aria-current',
             'true',
+        )
+    })
+
+    it('10개 후보에서 금지 색을 제외하고 후보 행동색과 고정 의미색을 분리한다', async () => {
+        const view = renderWorkbench(
+            '/__design/main-color-palettes?variant=fc-palette-cobalt',
+        )
+        await screen.findByRole('heading', {
+            name: '밝고 선명한 메인 컬러 10안',
+        })
+
+        expect(COLOR_PALETTES).toHaveLength(10)
+        expect(COLOR_PALETTES.map(({ name }) => name).join(' ')).not.toMatch(
+            /퍼플|플럼|인디고/u,
+        )
+        expect(
+            new Set(
+                COLOR_PALETTES.map(
+                    ({ overrides }) => overrides['--control-action-ink'],
+                ),
+            ),
+        ).toEqual(
+            new Set([COLOR_PALETTES[0].overrides['--control-action-ink']]),
+        )
+
+        expect(screen.getByRole('button', { name: '입찰하기' })).toHaveClass(
+            'bg-control-action',
+            'text-control-action-ink',
+        )
+        expect(screen.getByRole('button', { name: '선택됨' })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+        )
+        expect(view.getByTestId('fixed-semantic-scope')).toHaveTextContent(
+            '취소 / 승인·성공 / 위험',
+        )
+        expect(screen.getByText('승인 완료')).toHaveClass(
+            'bg-success-soft',
+            'text-success-ink',
+        )
+        expect(screen.getByRole('button', { name: '거래 취소' })).toHaveClass(
+            'bg-danger',
+            'text-on-strong',
         )
     })
 
@@ -86,7 +129,7 @@ describe('WorkbenchRoutes', () => {
                 '/__design/main-color-palettes?variant=fc-palette-cobalt',
             )
             await screen.findByRole('heading', {
-                name: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+                name: '밝고 선명한 메인 컬러 10안',
             })
 
             const scenario = view.getByTestId('color-system-scenario')
@@ -142,7 +185,7 @@ describe('WorkbenchRoutes', () => {
             queryClient,
         )
         await screen.findByRole('heading', {
-            name: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+            name: '밝고 선명한 메인 컬러 10안',
         })
 
         expect(useAuthStore.getState().user?.nickname).toBe('프리뷰 사용자')
@@ -176,7 +219,7 @@ describe('WorkbenchRoutes', () => {
             `/__design/main-color-palettes?variant=fc-palette-cobalt&state=${state}`,
         )
         await screen.findByRole('heading', {
-            name: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+            name: '밝고 선명한 메인 컬러 10안',
         })
 
         if (target.startsWith('[')) {
@@ -204,7 +247,7 @@ describe('WorkbenchRoutes', () => {
             '/__design/main-color-palettes?variant=fc-palette-cobalt&state=success',
         )
         await screen.findByRole('heading', {
-            name: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+            name: '밝고 선명한 메인 컬러 10안',
         })
 
         const loading = screen.getByRole('link', { name: '로딩' })
