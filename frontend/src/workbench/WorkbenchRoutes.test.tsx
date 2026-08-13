@@ -148,7 +148,7 @@ describe('WorkbenchRoutes', () => {
     })
 
     it.each([390, 1280])(
-        '%ipx 접점 고정형은 normal flow와 동일 폭 도킹 구조를 제공한다',
+        '%ipx 접점 고정형은 최초부터 상단에 붙은 동일 폭 sticky 구조를 제공한다',
         async (width) => {
             useViewport(width)
             const view = renderWorkbench(
@@ -179,13 +179,21 @@ describe('WorkbenchRoutes', () => {
             )!
 
             expect(frame).toHaveClass('sticky', 'top-0', 'z-30')
-            expect(frame).toHaveAttribute('data-workbench-dock-state')
+            expect(frame).toHaveAttribute('data-workbench-dock-state', 'stuck')
             expect(
                 screen.getByRole('link', { name: /접점 고정형/ }),
             ).toHaveAttribute('aria-current', 'true')
             expect(frame.previousElementSibling).toHaveAttribute(
                 'data-workbench-dock-sentinel',
                 NAVIGATION_LAYOUT_VARIANTS.contactDock,
+            )
+            expect(view.getByTestId('app-content-plane').parentElement).toHaveClass(
+                'pb-4',
+            )
+            expect(view.getByTestId('app-content-plane').parentElement).not.toHaveClass(
+                'py-4',
+                'sm:py-5',
+                'xl:py-7',
             )
             expect(navigation).toHaveClass(
                 'w-full',

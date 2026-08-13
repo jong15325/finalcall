@@ -92,7 +92,9 @@ try {
             const before = beforeResult.result.value
             await cdp.send('Runtime.evaluate', {
                 expression:
-                    'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().top)',
+                    variant === 'fc-nav-contact-dock'
+                        ? 'window.scrollTo(0, 1)'
+                        : 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().top)',
             })
             await delay(100)
             const thresholdResult = await cdp.send('Runtime.evaluate', {
@@ -131,11 +133,16 @@ try {
                 )
             }
             const audits = [before, threshold, after, upward].filter(Boolean)
+            const selectedAtTop = variant === 'fc-nav-contact-dock'
             const navigationFailed =
-                before.dockState !== 'flow' ||
-                before.navBounds.top <= 0 ||
-                threshold.dockState !== 'stuck' ||
-                threshold.navBounds.top !== 0 ||
+                (selectedAtTop
+                    ? before.dockState !== 'stuck' ||
+                      before.navBounds.top !== 0 ||
+                      threshold.navBounds.top !== 0
+                    : before.dockState !== 'flow' ||
+                      before.navBounds.top <= 0 ||
+                      threshold.dockState !== 'stuck' ||
+                      threshold.navBounds.top !== 0) ||
                 after.dockState !== 'stuck' ||
                 after.navBounds.top !== 0 ||
                 before.frameHeight !== after.frameHeight ||

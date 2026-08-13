@@ -18,6 +18,7 @@ export function installNavigationLayoutPreview(
     const headerInner = header?.firstElementChild as HTMLElement | null
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.firstElementChild as HTMLElement | null
+    const selectedAtTop = variant === NAVIGATION_LAYOUT_VARIANTS.contactDock
 
     if (
         !view ||
@@ -41,6 +42,7 @@ export function installNavigationLayoutPreview(
             header,
             horizontalNav,
             footer,
+            view,
             headerInner,
             navigationInner,
             footerInner,
@@ -56,7 +58,7 @@ export function installNavigationLayoutPreview(
 
     sentinel.dataset.workbenchDockSentinel = variant
     frame.dataset.workbenchNavigationFrame = variant
-    frame.dataset.workbenchDockState = 'flow'
+    frame.dataset.workbenchDockState = selectedAtTop ? 'stuck' : 'flow'
     frame.dataset.workbenchDockDirection = 'expanded'
     frame.classList.add('sticky', 'top-0', 'z-30')
     surface.dataset.workbenchNavMeasure = variant
@@ -83,6 +85,10 @@ export function installNavigationLayoutPreview(
 
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock) {
         surface.classList.add('transition-all', 'motion-reduce:transition-none')
+    } else {
+        frame.classList.add('px-3', 'sm:px-5', 'xl:px-8')
+        view.classList.remove('py-4', 'sm:py-5', 'xl:py-7')
+        view.classList.add('pb-4')
     }
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
         surface.classList.add('rounded-xl')
@@ -99,8 +105,13 @@ export function installNavigationLayoutPreview(
     frame.append(surface, compactSpacer)
     footerInner.dataset.workbenchFooterMeasure = variant
     contentPlane.dataset.workbenchContentMeasure = variant
-    view.insertBefore(sentinel, contentPlane)
-    view.insertBefore(frame, contentPlane)
+    if (selectedAtTop) {
+        shellColumn.insertBefore(sentinel, view)
+        shellColumn.insertBefore(frame, view)
+    } else {
+        view.insertBefore(sentinel, contentPlane)
+        view.insertBefore(frame, contentPlane)
+    }
 
     let previousScrollY = window.scrollY
     let scrollingDown = false
@@ -124,7 +135,7 @@ export function installNavigationLayoutPreview(
     const update = () => {
         animationFrame = 0
         const scrollY = window.scrollY
-        const stuck = sentinel.getBoundingClientRect().top <= 0
+        const stuck = selectedAtTop || sentinel.getBoundingClientRect().top <= 0
         frame.dataset.workbenchDockState = stuck ? 'stuck' : 'flow'
 
         if (variant === NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
