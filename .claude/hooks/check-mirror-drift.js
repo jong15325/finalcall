@@ -1,5 +1,5 @@
 // Jira 미러 드리프트 가드레일(계층①: 파일-단독 탐지). CLAUDE.md 섹션 12.
-// git commit 직전, 보드 티켓/에픽 중 state≠todo 인데 jira_key 가 비어있는(=Jira 미생성) 항목을 경고.
+// git commit 직전, 보드 에픽 중 state≠todo 인데 jira_key 가 비어있는(=Jira 미생성) 항목을 경고.
 // warn-only: 항상 exit 0(커밋 차단 안 함). 드리프트는 즉시 치명 아님·비차단 원칙(섹션 12).
 // 계층②(보드 done인데 Jira 미완료)는 Jira 읽기가 필요 → 훅 대상 아님. 총괄이 HANDOVER 패리티로 대조.
 const fs = require("fs");
@@ -21,10 +21,7 @@ if (!commitRe.test(cmd)) {
 }
 
 const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const dirs = [
-  path.join(projectDir, "docs", "board", "tickets"),
-  path.join(projectDir, "docs", "board", "epics"),
-];
+const dirs = [path.join(projectDir, "docs", "board", "epics")];
 
 // 프론트매터에서 key 값을 읽는다(첫 `---`~다음 `---` 블록의 `key: value`).
 function frontmatterValue(text, key) {
@@ -48,6 +45,7 @@ try {
     for (const f of fs.readdirSync(dir)) {
       if (!f.endsWith(".md") || f.startsWith("_")) continue; // _TEMPLATE.md 등 비티켓 제외
       const text = fs.readFileSync(path.join(dir, f), "utf8");
+      if (frontmatterValue(text, "type") !== "epic") continue;
       const state = frontmatterValue(text, "state");
       if (isEmpty(state) || state === "todo") continue; // todo 는 미러 전이 전 → 정상
       const jiraKey = frontmatterValue(text, "jira_key");
@@ -63,7 +61,7 @@ try {
 
 if (drift.length > 0) {
   process.stderr.write(
-    "Jira 미러 드리프트 경고(계층①: Jira 미생성). state≠todo 인데 jira_key 가 비어 있습니다:\n" +
+    "Jira 미러 드리프트 경고(계층①: Jira 에픽 미생성). state≠todo 에픽인데 jira_key 가 비어 있습니다:\n" +
       drift.join("\n") +
       "\n총괄은 상태 전이 시 미러를 즉시 반영하세요(비차단=실패 허용이지 생략 아님). 커밋은 계속 진행됩니다.\n"
   );

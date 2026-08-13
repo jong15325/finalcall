@@ -314,7 +314,7 @@ INCLUDE_AWS_SPEC_HINT = true
 |---|---|---|---|
 | architect | 기능 착수 시 계약/spec 확정. 구현 전 필수 선행 | 읽기 + spec/ 쓰기 | gpt-5.6-sol |
 | backend-impl | 계약 확정 후 서버 구현·테스트 | Read/Write/Edit/Bash | gpt-5.6-sol |
-| frontend-impl | 계약 확정 후 클라이언트 구현(디자인 흡수). 새 화면은 디자인 게이트 후 | Read/Write/Edit/Bash | gpt-5.6-sol |
+| frontend-impl | 계약 확정 후 클라이언트 구현(디자인 흡수). 새 화면·주요 UI는 실제 프론트 dev-only 워크벤치의 디자인 게이트 후 | Read/Write/Edit/Bash | gpt-5.6-sol |
 | reviewer | 구현 후 Done 전 필수. **확인소**(보안 첫 검문소 아님) — 정합성·QA + 도메인 인가(주체=SecurityContext·/me IDOR·세션 폐기 완전성) 최종 판정 | 읽기 전용(Read/Grep/Glob/Bash) | gpt-5.6-sol |
 | portfolio-writer | 에픽 완료(게이트3) 또는 사용자 요청 시. 코드·spec·보드·리뷰를 읽어 포트폴리오용 도시에 축적 | 읽기 + docs/portfolio 쓰기 | gpt-5.6-sol |
 | consultant | **구조적 규약 개정 시에만** 명시적 소환. 평상시 휴면 | 읽기 + docs 규약 | gpt-5.6-sol |
@@ -331,7 +331,7 @@ INCLUDE_AWS_SPEC_HINT = true
 
 ```
 architect(계약 확정)
-  → [디자인 게이트: 새 화면/주요 UI]
+  → [디자인 게이트: 실제 AppShell·토큰·공용 컴포넌트를 재사용한 dev-only 워크벤치에서 새 화면/주요 UI 검증]
   → backend-impl  ∥  frontend-impl        (병렬)
   → reviewer(보안+QA+접근성)
   → Done            (reviewer 통과가 필수 선행)
@@ -351,7 +351,7 @@ architect(계약 확정)
 |---|---|---|
 | **게이트1 (에픽 승인)** | 에픽 착수 시 | 총괄이 분해안(하위 티켓·의존)을 사용자에게 제시 → 승인·조정. 하위는 자동 진행 |
 | **게이트2 (스키마/계약/성능)** | 스키마·API계약·성능 영향·되돌리기 큰 결정 | **자동 진행 중에도 예외적으로 멈추고** 사용자에 상신. 그 이하는 총괄 자율 |
-| **디자인 게이트** | frontend-impl이 **새 화면·주요 UI** 구현 전 | 디자인 방향을 사용자에 제시 → 승인·조정 후 구현. **단순 수정은 자동** |
+| **디자인 게이트** | frontend-impl이 **새 화면·주요 UI** 구현 전 | 실제 프론트 dev-only `/__design/<scenario>` 워크벤치에서 390·1280px 시각안을 제시 → 승인·조정 후 구현. 정적 HTML 목업은 역사 참고만 하며 **단순 수정은 자동** |
 | **게이트3 (push + Done)** | 에픽 완료 시 | **push는 사용자가 직접 실행**(에이전트 불가, PreToolUse 훅이 차단). **Done 전이는 사용자 승인**. 커밋은 게이트 없음 |
 
 - **보안 리뷰는 게이트가 아니다.** 커밋 보안 리뷰는 warn-only(비차단)이며 커밋 게이트를 신설하지 않는다(게이트3의 "커밋은 게이트 없음" 유지). 상신이 필요한 보안 결정(스키마·계약·인가 모델 변경)은 기존 **게이트2**로 수렴한다.
@@ -360,7 +360,7 @@ architect(계약 확정)
 
 ## 섹션 11: 티켓·에픽 (파일 티켓 보드)
 
-- **canonical 진실원 = 레포 내 티켓 파일**. 위치: `docs/board/{tickets/, epics/, reviews/}`. **티켓당 파일 1개**(모놀리식 보드 금지 — 병렬 쓰기 충돌 회피).
+- **canonical 진실원 = 레포 내 티켓 파일**. 위치: `docs/board/{tickets/, epics/, reviews/}`. **티켓당 파일 1개**(모놀리식 보드 금지 — 병렬 쓰기 충돌 회피). Jira는 에픽 단위만 미러하며 하위 task의 `jira_key`는 `null`로 유지한다.
 - **스키마** — YAML 프론트매터:
 
 ```yaml
@@ -369,7 +369,7 @@ id: FC-014
 type: task                 # task | epic
 epic: EPIC-MEMBER          # 귀속 에픽(task). epic이면 삭제
 derived_from: FC-012       # 직접 부모 티켓. 최초 발생이면 null
-jira_key: KAN-7            # 미러 대상. 최초 생성 시 기록 후 불변
+jira_key: null             # task는 null. epic만 KAN-N을 최초 기록 후 불변
 title: member 잔액 원자적 증감 구현
 state: doing               # todo | doing | review | blocked | done
 owner: backend-impl        # architect | backend-impl | frontend-impl | reviewer | main
@@ -400,11 +400,12 @@ doing/review ──선행 미충족·게이트2 대기──▶ blocked ──�
 
 ## 섹션 12: Jira 미러 (사용자 대시보드)
 
-- **파일 → Jira 단방향**. Jira(Atlassian MCP, KAN)는 **사용자 전용 읽기 미러**다. 에이전트는 **Jira를 읽지 않는다**(서브에이전트 도구셋에서 Atlassian MCP 제외).
-- **트리거**: **메인세션만** 상태 전이 **때마다 즉시** 반영한다(에픽 생성·상태 전이 포함). **비차단**은 미러 실패 시 파일 작업을 멈추지 않는다는 뜻이며 — **실패 허용이지 생략 허용이 아니다**(가시성 도구, 게이트 아님).
-- **매핑**: state→status(칸반 컬럼) · owner→라벨 `agent:<owner>` · epic→Jira Epic(+Epic Link) · depends_on/blocks→issue link · gate→라벨 `gate:*`.
+- **파일 → Jira 단방향·에픽 단위**. Jira(Atlassian MCP, KAN)는 **사용자 전용 에픽 대시보드**다. 하위 task는 Jira 이슈를 만들지 않고 파일 보드에서만 관리한다. 에이전트는 **Jira를 읽지 않는다**(서브에이전트 도구셋에서 Atlassian MCP 제외).
+- **트리거**: **메인세션만** 에픽 생성과 에픽 롤업 상태 전이 때마다 즉시 반영한다. 하위 task 전이는 Jira에 개별 반영하지 않고 그 결과로 바뀐 에픽 롤업만 반영한다. **비차단**은 미러 실패 시 파일 작업을 멈추지 않는다는 뜻이며 — **실패 허용이지 생략 허용이 아니다**(가시성 도구, 게이트 아님).
+- **에픽 설명 템플릿**: 배경 → 목표 → 범위 → 하위 작업(파일 티켓 ID) → 완료 기준 → 게이트 → 정본 경로 순서로 작성한다. 하위 작업의 정본이 `docs/board/tickets/`임을 명시한다.
+- **매핑**: epic state→status(칸반 컬럼) · 현재 임계경로 owner→라벨 `agent:<owner>` · gate→라벨 `gate:*`.
 - **역류 방지**: Jira 변경은 파일에 **영향 없음**. `jira_key`로 식별하는 **멱등 upsert**(생성 아닌 갱신). 파일과 어긋나면 **파일이 정본**, 다음 미러가 덮어쓴다.
-- **드리프트 가드레일**: (계층①·자동) `state≠todo`인데 `jira_key`가 비어 있으면 "Jira 미생성" 드리프트다 — `git commit` 전 `.Codex/hooks/check-mirror-drift.js`가 파일만으로 탐지해 **경고**한다(warn-only, 커밋 비차단). (계층②·수동) 보드 `done`인데 Jira 미완료 유형은 Jira 읽기가 필요해 훅/서브에이전트가 못 잡는다 → **총괄만** HANDOVER "이어받는 법"의 미러 패리티 단계에서 주기적으로 대조·보정한다.
+- **드리프트 가드레일**: (계층①·자동) `type: epic`이고 `state≠todo`인데 `jira_key`가 비어 있으면 "Jira 미생성" 드리프트다. task의 빈 `jira_key`는 정상이다. `git commit` 전 `.codex/hooks/check-mirror-drift.js`가 에픽만 탐지해 **경고**한다(warn-only, 커밋 비차단). (계층②·수동) 파일 에픽과 Jira 상태 불일치는 총괄이 HANDOVER 패리티 단계에서 대조·보정한다.
 
 ## 섹션 13: 커밋·push 규약 (오케스트레이션 모드)
 
