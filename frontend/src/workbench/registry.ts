@@ -1,5 +1,8 @@
 import { auctionDetailPath, paths } from '@/app/paths'
-import { COLOR_PALETTE_VARIANT_IDS } from './scenarioMetadata'
+import {
+    COLOR_PALETTE_VARIANT_IDS,
+    NAVIGATION_LAYOUT_VARIANT_IDS,
+} from './scenarioMetadata'
 import type { WorkbenchFixture, WorkbenchScenarioDefinition } from './types'
 
 function defineScenario(
@@ -23,6 +26,14 @@ export const WORKBENCH_SCENARIOS = [
         shell: 'auth',
         routeContext: paths.login,
         load: () => import('./scenarios/AuthLayoutScenario'),
+    }),
+    defineScenario({
+        id: 'top-navigation-layouts',
+        title: '상단 네비게이션 레이아웃 3안',
+        shell: 'app',
+        routeContext: paths.auctions,
+        variants: NAVIGATION_LAYOUT_VARIANT_IDS,
+        load: () => import('./scenarios/NavigationLayoutScenario'),
     }),
 ] as const
 

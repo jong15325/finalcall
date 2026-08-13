@@ -227,6 +227,19 @@ function extractClassTokens(file, source) {
         ) {
             collectClassLiterals(node.initializer)
         }
+        if (
+            ts.isCallExpression(node) &&
+            ts.isPropertyAccessExpression(node.expression) &&
+            node.expression.name.text === 'add' &&
+            ts.isPropertyAccessExpression(node.expression.expression) &&
+            node.expression.expression.name.text === 'classList'
+        ) {
+            for (const argument of node.arguments) {
+                if (ts.isStringLiteralLike(argument)) {
+                    addTokens(tokens, argument.text)
+                }
+            }
+        }
         ts.forEachChild(node, visit)
     }
 
@@ -439,12 +452,15 @@ function checkContrast(id, pair, foreground, background, minimum) {
 function checkClassParserCoverage() {
     const synthetic = [
         "const view = <div className={`min-w-44 ${active ? 'bg-control-action' : 'bg-content-surface'}`} />",
+        "element.classList.add('p-3', 'rounded-xl')",
     ].join('\n')
     const extracted = extractClassTokens('parser-coverage.tsx', synthetic)
     for (const expected of [
         'min-w-44',
         'bg-control-action',
         'bg-content-surface',
+        'p-3',
+        'rounded-xl',
     ]) {
         if (!extracted.has(expected)) {
             failures.push(

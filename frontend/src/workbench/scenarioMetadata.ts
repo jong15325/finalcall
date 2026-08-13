@@ -12,3 +12,16 @@ export const COLOR_PALETTE_VARIANTS = {
 } as const
 
 export const COLOR_PALETTE_VARIANT_IDS = Object.values(COLOR_PALETTE_VARIANTS)
+
+export const NAVIGATION_LAYOUT_VARIANTS = {
+    restrained: 'fc-nav-restrained',
+    balanced: 'fc-nav-balanced',
+    floating: 'fc-nav-floating',
+} as const
+
+export const NAVIGATION_LAYOUT_VARIANT_IDS = Object.values(
+    NAVIGATION_LAYOUT_VARIANTS,
+)
+
+export type NavigationLayoutVariantId =
+    (typeof NAVIGATION_LAYOUT_VARIANTS)[keyof typeof NAVIGATION_LAYOUT_VARIANTS]

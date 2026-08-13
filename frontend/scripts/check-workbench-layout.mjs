@@ -23,7 +23,8 @@ try {
     if (!address || typeof address === 'string') {
         throw new Error('Vite 임시 포트를 확인할 수 없습니다.')
     }
-    const pageUrl = `http://127.0.0.1:${address.port}/__design/main-color-palettes?variant=fc-palette-steel-blue&state=success`
+    const colorPageUrl = `http://127.0.0.1:${address.port}/__design/main-color-palettes?variant=fc-palette-steel-blue&state=success`
+    const navigationPageUrl = `http://127.0.0.1:${address.port}/__design/top-navigation-layouts`
     edge = spawn(
         edgePath,
         [
@@ -47,8 +48,8 @@ try {
             ...viewport,
             deviceScaleFactor: 1,
         })
-        await cdp.send('Page.navigate', { url: pageUrl })
-        await waitForScenario(cdp)
+        await cdp.send('Page.navigate', { url: colorPageUrl })
+        await waitForScenario(cdp, '[data-testid=color-system-scenario]')
         const result = await cdp.send('Runtime.evaluate', {
             expression: layoutAuditExpression(),
             returnByValue: true,
@@ -67,6 +68,58 @@ try {
             console.log(
                 `[workbench] ${viewport.width}px 실제 DOM overflow 0건 (${audit.document.scrollWidth}/${audit.document.clientWidth}px)`,
             )
+        }
+
+        const navigationVariants = viewport.mobile
+            ? ['fc-nav-balanced']
+            : ['fc-nav-restrained', 'fc-nav-balanced', 'fc-nav-floating']
+        for (const variant of navigationVariants) {
+            await cdp.send('Page.navigate', {
+                url: `${navigationPageUrl}?variant=${variant}`,
+            })
+            await waitForScenario(
+                cdp,
+                '[data-testid=navigation-layout-scenario]',
+            )
+            if (!viewport.mobile) {
+                await waitForScenario(cdp, '[data-workbench-nav-measure]')
+            }
+            const navigationResult = await cdp.send('Runtime.evaluate', {
+                expression: navigationAuditExpression(viewport.mobile),
+                returnByValue: true,
+            })
+            const navigationAudit = navigationResult.result.value
+            if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
+                console.log(
+                    JSON.stringify(
+                        { viewport, variant, navigation: navigationAudit },
+                        null,
+                        2,
+                    ),
+                )
+            }
+            const navigationFailed = viewport.mobile
+                ? !navigationAudit.documentFits ||
+                  !navigationAudit.safeArea ||
+                  !navigationAudit.mobileUsable
+                : !navigationAudit.documentFits ||
+                  !navigationAudit.aligned ||
+                  navigationAudit.desktopMenuCount === 0
+            if (navigationFailed) {
+                console.error(
+                    `[workbench] ${viewport.width}px ${variant} navigation layout guard 실패`,
+                )
+                console.error(JSON.stringify(navigationAudit, null, 2))
+                process.exitCode = 1
+            } else if (viewport.mobile) {
+                console.log(
+                    `[workbench] ${viewport.width}px mobile safe gutter·menu usability 통과`,
+                )
+            } else {
+                console.log(
+                    `[workbench] ${viewport.width}px ${variant} navigation/footer alignment ${navigationAudit.delta.left}/${navigationAudit.delta.right}/${navigationAudit.delta.width}px`,
+                )
+            }
         }
     }
     cdp.close()
@@ -194,17 +247,67 @@ async function connectCdp(url) {
     }
 }
 
-async function waitForScenario(cdp) {
+async function waitForScenario(cdp, selector) {
     for (let attempt = 0; attempt < 100; attempt += 1) {
         const result = await cdp.send('Runtime.evaluate', {
-            expression:
-                "document.querySelector('[data-testid=color-system-scenario]') !== null",
+            expression: `document.querySelector('${selector}') !== null`,
             returnByValue: true,
         })
         if (result.result.value === true) return
         await delay(50)
     }
     throw new Error('워크벤치 시나리오가 렌더되지 않았습니다.')
+}
+
+function navigationAuditExpression(mobile) {
+    return `(() => {
+        const documentElement = document.documentElement
+        const mobileNav = document.querySelector('nav.fixed.inset-x-0')
+        const navTarget = document.querySelector('[data-workbench-nav-measure]')
+        const footerTarget = document.querySelector('[data-workbench-footer-measure]')
+        const bounds = (element) => {
+            if (!element) return null
+            const rect = element.getBoundingClientRect()
+            return {
+                left: Math.round(rect.left * 100) / 100,
+                right: Math.round(rect.right * 100) / 100,
+                width: Math.round(rect.width * 100) / 100,
+                height: Math.round(rect.height * 100) / 100,
+            }
+        }
+        const navBounds = bounds(navTarget)
+        const footerBounds = bounds(footerTarget)
+        const delta = navBounds && footerBounds
+            ? {
+                  left: Math.abs(navBounds.left - footerBounds.left),
+                  right: Math.abs(navBounds.right - footerBounds.right),
+                  width: Math.abs(navBounds.width - footerBounds.width),
+              }
+            : null
+        const mobileBounds = bounds(mobileNav)
+        const mobileItems = mobileNav
+            ? [...mobileNav.children].map(bounds).filter(Boolean)
+            : []
+        return {
+            documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
+            navBounds,
+            footerBounds,
+            delta,
+            aligned: Boolean(delta && delta.left <= 1 && delta.right <= 1 && delta.width <= 1),
+            desktopMenuCount: document.querySelectorAll('[data-horizontal-root]:not([disabled])').length,
+            safeArea: Boolean(mobileNav && String(mobileNav.className).includes('pb-[env(safe-area-inset-bottom)]')),
+            mobileUsable: Boolean(
+                ${mobile} &&
+                mobileBounds &&
+                mobileBounds.left >= -1 &&
+                mobileBounds.right <= documentElement.clientWidth + 1 &&
+                mobileItems.length > 0 &&
+                mobileItems.every((item) => item.width >= 44 && item.height >= 44)
+            ),
+            mobileBounds,
+            mobileItems,
+        }
+    })()`
 }
 
 function layoutAuditExpression() {

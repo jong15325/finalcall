@@ -35,9 +35,12 @@ describe('workbench registry', () => {
         const allowlist = new Set<string>(SEMANTIC_OVERRIDE_KEYS)
         for (const scenario of WORKBENCH_SCENARIOS) {
             const module = await scenario.load()
-            const overrideGroups =
-                module.fixture.semanticOverridesByVariant ?? {}
-            if ('variants' in scenario && scenario.variants) {
+            const overrideGroups = module.fixture.semanticOverridesByVariant
+            if (
+                overrideGroups &&
+                'variants' in scenario &&
+                scenario.variants
+            ) {
                 expect(Object.keys(overrideGroups)).toEqual(
                     expect.arrayContaining([...scenario.variants]),
                 )
@@ -45,7 +48,7 @@ describe('workbench registry', () => {
                     scenario.variants.length,
                 )
             }
-            for (const overrides of Object.values(overrideGroups)) {
+            for (const overrides of Object.values(overrideGroups ?? {})) {
                 expect(
                     Object.keys(overrides).every((key) => allowlist.has(key)),
                 ).toBe(true)

@@ -10,6 +10,7 @@ import { balanceKeys } from '@/lib/queries/balance'
 import { memoKeys } from '@/lib/queries/memos'
 import { useAuthStore } from '@/store/authStore'
 import { COLOR_PALETTES } from './fixtures/colorSystem'
+import { NAVIGATION_LAYOUT_VARIANTS } from './scenarioMetadata'
 import WorkbenchRoutes from './WorkbenchRoutes'
 
 beforeEach(() => {
@@ -143,6 +144,129 @@ describe('WorkbenchRoutes', () => {
 
         for (const [token, value] of Object.entries(steel.overrides)) {
             expect(value.toLowerCase()).toBe(resolveToken(token).toLowerCase())
+        }
+    })
+
+    it('1280px 균형형 navigation과 footer가 같은 gutter·max-width로 정렬된다', async () => {
+        useViewport(1280)
+        const view = renderWorkbench(
+            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.balanced}`,
+        )
+        await screen.findByRole('heading', {
+            name: '상단 네비게이션 레이아웃 3안',
+        })
+
+        await waitFor(() => {
+            expect(
+                view.container.querySelector(
+                    '[data-workbench-navigation-frame]',
+                ),
+            ).toBeInTheDocument()
+        })
+        const frame = view.container.querySelector<HTMLElement>(
+            '[data-workbench-navigation-frame]',
+        )!
+        const navigation = view.container.querySelector<HTMLElement>(
+            '[data-workbench-nav-measure]',
+        )!
+        const footer = view.container.querySelector<HTMLElement>(
+            '[data-workbench-footer-measure]',
+        )!
+
+        expect(frame).toHaveClass('p-3', 'sticky', 'top-0')
+        expect(navigation).toHaveClass(
+            'mx-auto',
+            'w-full',
+            'max-w-[1440px]',
+            'rounded-xl',
+            'shadow-sm',
+        )
+        expect(footer.parentElement).toHaveClass('px-3')
+        expect(footer).toHaveClass(
+            'mx-auto',
+            'w-full',
+            'max-w-[1440px]',
+            'xl:px-10',
+        )
+        expect(navigation.querySelector('header > div')).toHaveClass(
+            'xl:px-10',
+        )
+        expect(navigation.querySelector('nav > ul')).toHaveClass('xl:px-10')
+
+        const navigationBounds = navigation.getBoundingClientRect()
+        const footerBounds = footer.getBoundingClientRect()
+        expect([
+            navigationBounds.left,
+            navigationBounds.right,
+            navigationBounds.width,
+        ]).toEqual([
+            footerBounds.left,
+            footerBounds.right,
+            footerBounds.width,
+        ])
+    })
+
+    it('3안이 단순 radius 교체가 아닌 연속형·분리형 topology를 제공한다', async () => {
+        useViewport(1280)
+        const view = renderWorkbench(
+            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.floating}`,
+        )
+        await screen.findByRole('heading', {
+            name: '상단 네비게이션 레이아웃 3안',
+        })
+
+        expect(
+            screen.getAllByRole('link', {
+                name: /절제형|균형형|플로팅형/,
+            }),
+        ).toHaveLength(3)
+        expect(screen.getByText('권장')).toBeVisible()
+        await waitFor(() => {
+            expect(
+                view.container.querySelector(
+                    '[data-workbench-navigation-frame]',
+                ),
+            ).toHaveClass('space-y-2', 'p-4')
+        })
+        const frame = view.container.querySelector<HTMLElement>(
+            '[data-workbench-navigation-frame]',
+        )!
+        expect(frame.querySelector(':scope > header')).toHaveClass(
+            'rounded-2xl',
+            'shadow-lg',
+        )
+        expect(frame.querySelector(':scope > nav')).toHaveClass(
+            'rounded-2xl',
+            'shadow-lg',
+        )
+    })
+
+    it('390px에서는 mobile safe gutter와 메뉴 접근성을 그대로 유지한다', async () => {
+        useViewport(390)
+        const view = renderWorkbench(
+            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.balanced}`,
+        )
+        await screen.findByRole('heading', {
+            name: '상단 네비게이션 레이아웃 3안',
+        })
+
+        expect(
+            view.container.querySelector('[data-workbench-navigation-frame]'),
+        ).toBeNull()
+        const mobileNav = view.container.querySelector<HTMLElement>(
+            'nav.fixed.inset-x-0',
+        )!
+        expect(mobileNav).toHaveClass(
+            'pb-[env(safe-area-inset-bottom)]',
+            'xl:hidden',
+        )
+        for (const item of mobileNav.children) {
+            expect(item).toHaveClass('flex-1')
+        }
+        for (const option of screen.getAllByRole('link', {
+            name: /절제형|균형형|플로팅형/,
+        })) {
+            expect(option).toHaveClass('min-h-11', 'min-w-0')
         }
     })
 
