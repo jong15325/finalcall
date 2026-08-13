@@ -168,6 +168,7 @@ try {
                       before.contentGap !== 0 ||
                       !before.radiusMatches ||
                       !before.cornerClipped ||
+                      !before.topCornersChrome ||
                       !dropdown?.dropdownUnclipped ||
                       !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
@@ -418,15 +419,26 @@ function navigationAuditExpression(mobile) {
             sentinelTop: bounds(sentinel)?.top,
             frameHeight: frameBounds?.height,
             surfaceClassName: String(navTarget?.className ?? ''),
-            navRadius: surfaceStyle?.borderTopLeftRadius,
-            contentRadius: contentStyle?.borderTopLeftRadius,
+            navRadius: surfaceStyle
+                ? [surfaceStyle.borderTopLeftRadius, surfaceStyle.borderTopRightRadius, surfaceStyle.borderBottomRightRadius, surfaceStyle.borderBottomLeftRadius].join(' ')
+                : null,
+            contentRadius: contentStyle
+                ? [contentStyle.borderTopLeftRadius, contentStyle.borderTopRightRadius, contentStyle.borderBottomRightRadius, contentStyle.borderBottomLeftRadius].join(' ')
+                : null,
             radiusMatches: Boolean(
                 surfaceStyle &&
                 contentStyle &&
-                surfaceStyle.borderTopLeftRadius === contentStyle.borderTopLeftRadius &&
-                surfaceStyle.borderTopRightRadius === contentStyle.borderTopRightRadius &&
+                surfaceStyle.borderTopLeftRadius === '0px' &&
+                surfaceStyle.borderTopRightRadius === '0px' &&
                 surfaceStyle.borderBottomLeftRadius === contentStyle.borderBottomLeftRadius &&
                 surfaceStyle.borderBottomRightRadius === contentStyle.borderBottomRightRadius
+            ),
+            topCornersChrome: Boolean(
+                navBounds &&
+                [
+                    document.elementFromPoint(navBounds.left + 2, navBounds.top + 2),
+                    document.elementFromPoint(navBounds.right - 2, navBounds.top + 2),
+                ].every((element) => element && (element === navTarget || navTarget?.contains(element)))
             ),
             cornerClipped: Boolean(
                 surfaceStyle &&

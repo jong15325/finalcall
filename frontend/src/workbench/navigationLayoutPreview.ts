@@ -93,9 +93,13 @@ export function installNavigationLayoutPreview(
         view.classList.add('pb-4')
         header.classList.remove('rounded-xl')
         horizontalNav?.classList.remove('rounded-xl')
-        for (const element of [surface, header, horizontalNav]) {
-            element?.classList.add('sm:rounded-xl', 'xl:rounded-2xl')
-        }
+        const contentRadius = getComputedStyle(contentPlane)
+        surface.style.borderTopLeftRadius = '0px'
+        surface.style.borderTopRightRadius = '0px'
+        surface.style.borderBottomLeftRadius =
+            contentRadius.borderBottomLeftRadius
+        surface.style.borderBottomRightRadius =
+            contentRadius.borderBottomRightRadius
         surface.classList.add('overflow-hidden')
         const preserveDropdown = () => {
             const open = surface.querySelector('[role="menu"]') !== null

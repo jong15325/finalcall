@@ -198,10 +198,10 @@ describe('WorkbenchRoutes', () => {
             expect(navigation).toHaveClass(
                 'w-full',
                 'max-w-[1440px]',
-                'sm:rounded-xl',
-                'xl:rounded-2xl',
                 'overflow-hidden',
             )
+            expect(navigation.style.borderTopLeftRadius).toBe('0px')
+            expect(navigation.style.borderTopRightRadius).toBe('0px')
             const navigationBounds = navigation.getBoundingClientRect()
             for (const target of [content, footer]) {
                 const bounds = target.getBoundingClientRect()
