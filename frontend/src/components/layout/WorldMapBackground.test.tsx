@@ -76,6 +76,12 @@ describe('WorldMapBackground', () => {
             '/img/backgrounds/world-map/world-map-mobile.jpg',
         )
         expect(view.container.querySelectorAll('canvas')).toHaveLength(1)
+        expect(
+            view.container.querySelector('.world-map-background__glow--wind'),
+        ).not.toBeInTheDocument()
+        expect(
+            view.container.querySelector('.world-map-background__glow--fire'),
+        ).toBeInTheDocument()
 
         fireEvent.error(view.container.querySelector('img')!)
         expect(view.container.firstElementChild).toHaveAttribute(
@@ -101,6 +107,21 @@ describe('WorldMapBackground', () => {
         expect(reducedMotion).toContain('element-detail__ambient-canvas')
         expect(reducedMotion).not.toContain('world-map-background__image')
         expect(forcedColors).toContain('display: none')
+    })
+
+    it('회전 스포트라이트 CSS만 제거하고 다른 글로우는 유지한다', () => {
+        const css = readFileSync(
+            `${process.cwd()}/src/components/layout/WorldMapBackground.css`,
+            'utf8',
+        )
+
+        expect(css).not.toContain('world-map-background__glow--wind')
+        expect(css).not.toContain('@keyframes world-map-wind')
+        expect(css).not.toContain('conic-gradient')
+        expect(css).toContain('world-map-background__glow--earth')
+        expect(css).toContain('world-map-background__glow--fire')
+        expect(css).toContain('world-map-background__glow--water')
+        expect(css).toContain('@keyframes world-map-fire')
     })
 
     it('한 프레임에서 wind·fire·earth·water 네 motif를 모두 그린다', () => {

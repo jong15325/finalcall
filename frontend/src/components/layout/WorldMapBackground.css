@@ -31,16 +31,6 @@
     );
 }
 
-.world-map-background__glow--wind {
-    background: conic-gradient(
-        from 25deg at 20% 69%,
-        transparent,
-        rgb(220 255 248 / 0.32),
-        transparent 28%
-    );
-    animation: world-map-wind 9s linear infinite;
-}
-
 .world-map-background__glow--fire {
     background: radial-gradient(
         circle at 76% 23%,
@@ -64,16 +54,9 @@
 }
 
 .world-map-background[data-accent='earth'] .world-map-background__glow--earth,
-.world-map-background[data-accent='wind'] .world-map-background__glow--wind,
 .world-map-background[data-accent='fire'] .world-map-background__glow--fire,
 .world-map-background[data-accent='water'] .world-map-background__glow--water {
     opacity: 0.82;
-}
-
-@keyframes world-map-wind {
-    to {
-        transform: rotate(1turn) scale(1.05);
-    }
 }
 
 @keyframes world-map-fire {
@@ -93,15 +76,6 @@
             circle at 22% 42.7%,
             rgb(210 242 150 / 0.34),
             transparent 10%
-        );
-    }
-
-    .world-map-background__glow--wind {
-        background: conic-gradient(
-            from 25deg at 20% 55%,
-            transparent,
-            rgb(220 255 248 / 0.32),
-            transparent 28%
         );
     }
 

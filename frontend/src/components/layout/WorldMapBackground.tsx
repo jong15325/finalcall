@@ -51,7 +51,6 @@ export default function WorldMapBackground({
                 </picture>
             )}
             <div className="world-map-background__glow world-map-background__glow--earth" />
-            <div className="world-map-background__glow world-map-background__glow--wind" />
             <div className="world-map-background__glow world-map-background__glow--fire" />
             <div className="world-map-background__glow world-map-background__glow--water" />
             <AmbientCanvas />
