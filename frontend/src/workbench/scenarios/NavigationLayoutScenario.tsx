@@ -90,7 +90,7 @@ export default function NavigationLayoutScenario({
                                 {layout.name}
                                 {layout.recommended && (
                                     <span className="rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success-ink">
-                                        권장
+                                        선택안
                                     </span>
                                 )}
                             </span>

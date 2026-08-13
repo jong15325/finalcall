@@ -5,7 +5,7 @@ export const NAVIGATION_LAYOUT_OPTIONS = [
     {
         id: NAVIGATION_LAYOUT_VARIANTS.contactDock,
         name: '접점 고정형',
-        label: '권장 · 상태 변화 최소',
+        label: '선택안 · 상태 변화 최소',
         summary:
             '내비게이션이 일반 문서 흐름을 따라 이동하다 콘텐츠 경계가 화면 상단에 닿는 순간 그대로 고정됩니다.',
         tradeoff:

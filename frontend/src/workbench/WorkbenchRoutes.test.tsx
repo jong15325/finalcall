@@ -180,6 +180,9 @@ describe('WorkbenchRoutes', () => {
 
             expect(frame).toHaveClass('sticky', 'top-0', 'z-30')
             expect(frame).toHaveAttribute('data-workbench-dock-state')
+            expect(
+                screen.getByRole('link', { name: /접점 고정형/ }),
+            ).toHaveAttribute('aria-current', 'true')
             expect(frame.previousElementSibling).toHaveAttribute(
                 'data-workbench-dock-sentinel',
                 NAVIGATION_LAYOUT_VARIANTS.contactDock,
@@ -215,7 +218,7 @@ describe('WorkbenchRoutes', () => {
                 name: /접점 고정형|도킹 전환형|컴팩트 도킹형|방향 반응형/,
             }),
         ).toHaveLength(4)
-        expect(screen.getByText('권장')).toBeVisible()
+        expect(screen.getByText('선택안')).toBeVisible()
         await waitFor(() => {
             expect(
                 view.container.querySelector('[data-horizontal-root]'),

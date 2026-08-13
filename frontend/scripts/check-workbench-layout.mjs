@@ -168,7 +168,7 @@ try {
                 process.exitCode = 1
             } else {
                 console.log(
-                    `[workbench] ${viewport.width}px ${variant} flow→threshold→stuck, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
+                    `[workbench] ${viewport.width}px ${variant} top ${before.navBounds.top}→${threshold.navBounds.top}→${after.navBounds.top}px, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
                 )
             }
         }
