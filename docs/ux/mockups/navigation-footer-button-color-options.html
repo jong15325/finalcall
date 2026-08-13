@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FinalCall 메인 컬러 10안 비교</title>
+  <style>
+    :root {
+      --brand: #1957b8;
+      --brand-strong: #123b78;
+      --brand-soft: #e8f0ff;
+      --brand-accent: #f2b134;
+      --surface: #ffffff;
+      --canvas: #f4f5f8;
+      --line: #dfe3eb;
+      --fg: #171a20;
+      --muted: #4d5461;
+      --subtle: #687181;
+      --neutral: #3f4856;
+      --success: #167047;
+      --danger: #bd2447;
+      --warning-soft: #fff2d5;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 14px 34px rgb(25 35 55 / 10%);
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: light; scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--canvas);
+      color: var(--fg);
+      font-family: Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    :focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px var(--brand);
+    }
+
+    .page { width: min(100% - 48px, 1440px); margin: 0 auto; padding: 34px 0 56px; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 22px; }
+    .intro-copy { max-width: 760px; }
+    .intro h1 { margin: 0; font-size: 29px; line-height: 1.25; letter-spacing: -.035em; text-wrap: balance; }
+    .intro p { max-width: 72ch; margin: 10px 0 0; color: var(--muted); }
+    .method {
+      flex: none;
+      max-width: 380px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .method strong { color: var(--fg); }
+
+    .palette-section { margin-bottom: 22px; }
+    .palette-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+    .palette-head h2 { margin: 0; font-size: 16px; }
+    .palette-head p { margin: 0; color: var(--subtle); font-size: 12px; }
+    .palette-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; }
+    .palette-tab {
+      min-width: 0;
+      min-height: 88px;
+      padding: 11px;
+      border: 1px solid #cbd1dc;
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--fg);
+      text-align: left;
+      transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+    .palette-tab:hover { border-color: var(--tab-brand); transform: translateY(-1px); }
+    .palette-tab[aria-pressed="true"] { border-color: var(--tab-brand); box-shadow: inset 0 0 0 2px var(--tab-brand); }
+    .palette-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 800; }
+    .rank {
+      flex: none;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #eef1f5;
+      color: #444d5a;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .rank.recommended { background: #dff6e8; color: #155f3c; }
+    .rank.experiment { background: #f5e9f2; color: #6e365e; }
+    .swatches { display: flex; gap: 5px; margin: 9px 0 6px; }
+    .swatch { width: 30px; height: 12px; border: 1px solid rgb(23 26 32 / 12%); border-radius: 3px; background: var(--swatch); }
+    .palette-meta { display: block; overflow: hidden; color: var(--subtle); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .comparison { display: grid; grid-template-columns: minmax(0, 1fr) 338px; gap: 18px; align-items: start; }
+    .preview-frame { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow); }
+    .topbar { background: var(--brand); color: #ffffff; }
+    .topbar-inner { min-height: 62px; display: flex; align-items: center; gap: 26px; padding: 0 24px; }
+    .logo { display: flex; align-items: center; gap: 9px; flex: none; font-size: 19px; font-weight: 900; letter-spacing: -.025em; text-decoration: none; }
+    .logo-mark { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 7px; background: var(--brand-accent); color: #20242b; font-size: 13px; }
+    .global-nav { display: flex; align-self: stretch; gap: 2px; }
+    .global-nav a { position: relative; display: flex; align-items: center; padding: 0 12px; color: rgb(255 255 255 / 82%); font-size: 13px; font-weight: 650; text-decoration: none; }
+    .global-nav a:hover, .global-nav a.active { color: #ffffff; background: rgb(255 255 255 / 9%); }
+    .global-nav a.active::after { position: absolute; right: 12px; bottom: 0; left: 12px; height: 3px; border-radius: 3px 3px 0 0; background: var(--brand-accent); content: ""; }
+    .account { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .balance { padding: 6px 10px; border: 1px solid rgb(255 255 255 / 32%); border-radius: 999px; color: #ffffff; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .avatar { width: 34px; height: 34px; border: 1px solid rgb(255 255 255 / 46%); border-radius: 50%; background: rgb(255 255 255 / 12%); color: #ffffff; font-weight: 800; }
+
+    .subnav { min-height: 42px; display: flex; align-items: center; gap: 18px; padding: 0 24px; border-bottom: 1px solid var(--line); background: #ffffff; color: var(--muted); font-size: 12px; }
+    .subnav strong { color: var(--brand); }
+    .subnav .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: #17623f; font-weight: 750; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+    .demo-content { display: grid; grid-template-columns: minmax(0, 1fr) 292px; gap: 16px; padding: 20px; background: var(--canvas); }
+    .content-card, .bid-card, .button-showcase { border: 1px solid var(--line); border-radius: var(--radius-md); background: #ffffff; }
+    .content-card { min-width: 0; padding: 20px; }
+    .content-card h2 { margin: 0 0 4px; color: var(--fg); font-size: 18px; letter-spacing: -.02em; }
+    .content-card > p { margin: 0; color: var(--subtle); font-size: 12px; }
+    .item-stage { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 18px; align-items: center; margin-top: 17px; }
+    .item-art { min-height: 146px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--brand-soft); color: var(--brand); }
+    .item-art span { display: grid; width: 72px; height: 72px; place-items: center; border: 2px solid currentColor; border-radius: 18px; font-size: 34px; transform: rotate(-8deg); }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; background: #e4f6eb; color: #14643e; font-size: 10px; font-weight: 800; }
+    .item-name { margin: 9px 0 3px; font-size: 19px; font-weight: 850; }
+    .item-meta { color: var(--subtle); font-size: 12px; }
+    .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 14px; }
+    .fact { padding: 9px 10px; border-radius: var(--radius-sm); background: var(--canvas); }
+    .fact span { display: block; color: var(--subtle); font-size: 10px; }
+    .fact strong { display: block; margin-top: 2px; color: var(--fg); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+    .bid-card { align-self: start; padding: 18px; }
+    .bid-head { display: flex; justify-content: space-between; gap: 12px; }
+    .bid-head strong { font-size: 14px; }
+    .bid-head span { color: var(--danger); font-size: 11px; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .price-label { display: block; margin-top: 18px; color: var(--subtle); font-size: 11px; }
+    .price { margin: 2px 0 15px; color: var(--brand); font-size: 25px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .button-stack { display: grid; gap: 8px; }
+    .btn {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 15px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 800;
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--brand); color: #ffffff; }
+    .btn-primary:hover { background: var(--brand-strong); }
+    .btn-secondary { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+    .btn-secondary:hover { background: #ffffff; }
+    .btn-cancel { border-color: #6b7280; background: #ffffff; color: var(--neutral); }
+    .btn-cancel:hover { background: #f1f3f6; }
+    .btn-approve { background: var(--success); color: #ffffff; }
+    .btn-approve:hover { background: #0e5936; }
+    .btn-danger { background: var(--danger); color: #ffffff; }
+    .btn-danger:hover { background: #971936; }
+    .safe-copy { margin: 10px 0 0; color: var(--subtle); font-size: 10px; text-align: center; }
+
+    .button-showcase { grid-column: 1 / -1; padding: 14px 16px; }
+    .showcase-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+    .showcase-head strong { font-size: 13px; }
+    .showcase-head span { color: var(--subtle); font-size: 10px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .demo-footer { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; min-height: 72px; padding: 14px 24px; background: var(--brand-strong); color: #ffffff; }
+    .footer-brand { font-weight: 850; }
+    .footer-brand small { display: block; margin-top: 2px; color: rgb(255 255 255 / 76%); font-weight: 500; }
+    .footer-links { display: flex; gap: 16px; color: rgb(255 255 255 / 82%); font-size: 11px; }
+    .footer-links a { text-decoration: none; }
+    .footer-links a:hover { color: #ffffff; text-decoration: underline; }
+
+    .inspector { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: #ffffff; box-shadow: var(--shadow); }
+    .inspector-head { padding: 18px; border-bottom: 1px solid var(--line); }
+    .inspector-kicker { margin: 0 0 5px; color: var(--brand); font-size: 11px; font-weight: 850; }
+    .inspector h2 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+    .inspector-note { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+    .experiment-alert { display: none; margin-top: 10px; padding: 8px 10px; border: 1px solid #b16d9f; border-radius: var(--radius-sm); background: #fbf1f8; color: #653055; font-size: 11px; font-weight: 700; }
+    .inspector.is-experiment .experiment-alert { display: block; }
+    .token-list { margin: 0; padding: 4px 18px; }
+    .token-row { display: grid; grid-template-columns: 88px 1fr auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .token-row:last-child { border-bottom: 0; }
+    .token-row dt { color: var(--subtle); font-size: 11px; }
+    .token-row dd { margin: 0; color: var(--fg); font-size: 11px; font-weight: 750; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .token-dot { width: 18px; height: 18px; border: 1px solid rgb(23 26 32 / 15%); border-radius: 4px; background: var(--dot); }
+    .contrast-box { padding: 14px 18px 18px; background: #fafbfc; }
+    .contrast-box h3 { margin: 0 0 8px; font-size: 13px; }
+    .contrast-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; color: var(--muted); font-size: 11px; }
+    .ratio { flex: none; color: #17623f; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .contrast-result { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: #e4f6eb; color: #155f3c; font-size: 11px; font-weight: 750; }
+
+    .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+    .principle { padding: 15px; border: 1px solid var(--line); border-radius: var(--radius-md); background: #ffffff; }
+    .principle h3 { margin: 0 0 5px; font-size: 13px; }
+    .principle p { margin: 0; color: var(--muted); font-size: 11px; }
+    .principle a { color: var(--brand); font-weight: 750; text-underline-offset: 2px; }
+    .reference-note { margin: 10px 0 0; color: var(--subtle); font-size: 11px; }
+
+    @media (max-width: 1100px) {
+      .palette-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .comparison { grid-template-columns: 1fr; }
+      .inspector { display: grid; grid-template-columns: 1fr 1fr; }
+      .inspector-head { border-right: 1px solid var(--line); border-bottom: 0; }
+      .contrast-box { grid-column: 1 / -1; }
+    }
+    @media (max-width: 760px) {
+      .page { width: min(100% - 28px, 1440px); padding-top: 24px; }
+      .intro { display: block; }
+      .method { max-width: none; margin-top: 14px; }
+      .palette-grid { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+      .palette-tab { flex: 0 0 224px; scroll-snap-align: start; }
+      .global-nav a:nth-child(n+3), .balance { display: none; }
+      .topbar-inner, .subnav { padding-right: 16px; padding-left: 16px; }
+      .demo-content { grid-template-columns: 1fr; padding: 14px; }
+      .button-showcase { grid-column: auto; }
+      .principles { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .page { width: min(100% - 20px, 1440px); }
+      .intro h1 { font-size: 24px; }
+      .palette-head { align-items: start; flex-direction: column; gap: 2px; }
+      .topbar-inner { min-height: 58px; gap: 10px; }
+      .global-nav a { padding: 0 8px; font-size: 12px; }
+      .avatar { width: 32px; height: 32px; }
+      .subnav span:not(.live) { display: none; }
+      .item-stage { grid-template-columns: 1fr; }
+      .item-art { min-height: 116px; }
+      .facts { grid-template-columns: 1fr; }
+      .button-row { display: grid; grid-template-columns: 1fr 1fr; }
+      .button-row .btn { width: 100%; min-width: 0; }
+      .btn { min-height: 44px; }
+      .demo-footer { grid-template-columns: 1fr; gap: 9px; }
+      .footer-links { flex-wrap: wrap; gap: 8px 14px; }
+      .inspector { display: block; }
+      .inspector-head { border-right: 0; border-bottom: 1px solid var(--line); }
+      .token-row { grid-template-columns: 80px 1fr auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .palette-tab, .btn { transition: none; }
+      .palette-tab:hover { transform: none; }
+    }
+    @media (forced-colors: active) {
+      .palette-tab[aria-pressed="true"], .btn, .preview-frame, .inspector { border: 2px solid ButtonText; }
+      .global-nav a.active::after, .live-dot { background: Highlight; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro" aria-labelledby="page-title">
+      <div class="intro-copy">
+        <h1 id="page-title">내비게이션 · 푸터 · 버튼 메인 컬러 10안</h1>
+        <p>탁한 파스텔 대신 밝고 선명한 중명도 컬러를 비교합니다. 취소·승인·위험은 고정 의미색으로 분리하고, 선택한 메인색은 내비게이션·푸터·주요 CTA에 같은 역할로 이어집니다.</p>
+      </div>
+      <aside class="method"><strong>순위 기준</strong> 거래 신뢰감, 게임 아이템 식별력, 흰 글자 WCAG AA, 기존 FinalCall과의 전환 비용을 합친 정성 평가입니다. 사용자 선호도 조사 결과는 아닙니다.</aside>
+    </section>
+
+    <section class="palette-section" aria-labelledby="palette-title">
+      <div class="palette-head">
+        <h2 id="palette-title">팔레트 선택</h2>
+        <p>10개 카드를 눌러 같은 화면에서 직접 비교하세요.</p>
+      </div>
+      <div class="palette-grid" id="paletteGrid" role="group" aria-label="메인 컬러 팔레트 10안"></div>
+    </section>
+
+    <section class="comparison" aria-label="선택 팔레트 적용 결과">
+      <div class="preview-frame">
+        <header class="topbar">
+          <div class="topbar-inner">
+            <a class="logo" href="#" aria-label="FinalCall 홈"><span class="logo-mark">F</span>FinalCall</a>
+            <nav class="global-nav" aria-label="주요 메뉴">
+              <a href="#">마켓</a><a class="active" href="#">실시간 경매</a><a href="#">판매</a><a href="#">커뮤니티</a>
+            </nav>
+            <div class="account"><span class="balance">1,250,000 G</span><button class="avatar" type="button" aria-label="내 프로필">김</button></div>
+          </div>
+        </header>
+        <nav class="subnav" aria-label="경매 상세 메뉴"><strong>실시간 경매</strong><span>아이템 정보</span><span>입찰 내역</span><span class="live"><i class="live-dot"></i>서버 정상</span></nav>
+
+        <div class="demo-content">
+          <article class="content-card">
+            <h2>마감 직전에도 흔들리지 않는 거래</h2>
+            <p>같은 콘텐츠 밀도에서 메인 컬러가 정보 위계와 신뢰감에 주는 영향을 확인합니다.</p>
+            <div class="item-stage">
+              <div class="item-art" aria-hidden="true"><span>⚔</span></div>
+              <div>
+                <span class="badge">● 진행 중</span>
+                <div class="item-name">불꽃의 장검</div>
+                <div class="item-meta">골드 · 검 · 레벨 1 · 전체 채널</div>
+                <div class="facts">
+                  <div class="fact"><span>판매자</span><strong>용사상회</strong></div>
+                  <div class="fact"><span>입찰 수</span><strong>18회</strong></div>
+                  <div class="fact"><span>즉시구매가</span><strong>1,520,000 G</strong></div>
+                  <div class="fact"><span>종료 시각</span><strong>18:00:00</strong></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <aside class="bid-card">
+            <div class="bid-head"><strong>입찰하기</strong><span>02:18 남음</span></div>
+            <span class="price-label">현재 최고 입찰가</span>
+            <div class="price">1,240,000 G</div>
+            <div class="button-stack">
+              <button class="btn btn-primary" type="button">1,260,000 G 입찰</button>
+              <button class="btn btn-secondary" type="button">즉시구매 정보</button>
+            </div>
+            <p class="safe-copy">금액과 종료 시각을 확인한 뒤 입찰하세요.</p>
+          </aside>
+
+          <section class="button-showcase" aria-labelledby="button-role-title">
+            <div class="showcase-head"><strong id="button-role-title">버튼 역할 비교</strong><span>메인 역할과 상태 역할을 분리</span></div>
+            <div class="button-row">
+              <button class="btn btn-primary" type="button">주요 행동</button>
+              <button class="btn btn-secondary" type="button">보조 행동</button>
+              <button class="btn btn-cancel" type="button">취소</button>
+              <button class="btn btn-approve" type="button">승인</button>
+              <button class="btn btn-danger" type="button">판매 취소</button>
+            </div>
+          </section>
+        </div>
+
+        <footer class="demo-footer">
+          <div class="footer-brand">FinalCall<small>실시간 신뢰 경매 · 안전한 게임 아이템 거래</small></div>
+          <nav class="footer-links" aria-label="푸터 메뉴"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a></nav>
+        </footer>
+      </div>
+
+      <aside class="inspector" id="inspector" aria-live="polite">
+        <div class="inspector-head">
+          <p class="inspector-kicker" id="inspectorRank">추천 1순위</p>
+          <h2 id="inspectorTitle">선명한 코발트</h2>
+          <p class="inspector-note" id="inspectorNote"></p>
+          <div class="experiment-alert">현재 정본의 ‘퍼플 브랜드 역할 금지’와 충돌합니다. 브랜드 계약을 바꾸는 실험안이며 추천하지 않습니다.</div>
+        </div>
+        <dl class="token-list">
+          <div class="token-row"><dt>메인</dt><dd id="brandHex">#1957B8</dd><i class="token-dot" id="brandDot"></i></div>
+          <div class="token-row"><dt>푸터</dt><dd id="strongHex">#123B78</dd><i class="token-dot" id="strongDot"></i></div>
+          <div class="token-row"><dt>보조 면</dt><dd id="softHex">#E8F0FF</dd><i class="token-dot" id="softDot"></i></div>
+          <div class="token-row"><dt>강조</dt><dd id="accentHex">#F2B134</dd><i class="token-dot" id="accentDot"></i></div>
+        </dl>
+        <div class="contrast-box">
+          <h3>WCAG 대비 자동 계산</h3>
+          <div class="contrast-row"><span>내비게이션 흰 글자 / 메인</span><strong class="ratio" id="navRatio"></strong></div>
+          <div class="contrast-row"><span>푸터 흰 글자 / 푸터색</span><strong class="ratio" id="footerRatio"></strong></div>
+          <div class="contrast-row"><span>Primary 흰 글자 / 메인</span><strong class="ratio" id="primaryRatio"></strong></div>
+          <div class="contrast-row"><span>Secondary 메인 글자 / 보조 면</span><strong class="ratio" id="secondaryRatio"></strong></div>
+          <div class="contrast-row"><span>승인 흰 글자 / #167047</span><strong class="ratio" id="approveRatio"></strong></div>
+          <div class="contrast-row"><span>위험 흰 글자 / #BD2447</span><strong class="ratio" id="dangerRatio"></strong></div>
+          <p class="contrast-result" id="contrastResult">표시된 텍스트 조합이 모두 WCAG AA 4.5:1 이상입니다.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="principles" aria-label="디자인 레퍼런스에서 가져온 원칙">
+      <article class="principle">
+        <h3>Baymard · 다음 행동을 한눈에</h3>
+        <p>완벽한 버튼색보다 primary가 다른 행동과 확실히 구분되는지가 중요합니다. 이 목업은 실제 거래 영역의 filled primary를 하나로 제한했습니다. <a href="https://baymard.com/learn/button-design" target="_blank" rel="noreferrer">원문 보기</a></p>
+      </article>
+      <article class="principle">
+        <h3>Shopify · 한 영역에 primary 하나</h3>
+        <p>하나의 목적에 집중하고 primary와 secondary를 명확히 나눕니다. 입찰 카드에는 ‘입찰’만 primary로 두고 정보 확인은 secondary로 내렸습니다. <a href="https://shopify.dev/docs/apps/design/navigation" target="_blank" rel="noreferrer">원문 보기</a></p>
+      </article>
+      <article class="principle">
+        <h3>Atlassian · color는 역할</h3>
+        <p>brand는 primary, neutral은 보조, danger는 파괴적 행동에만 씁니다. 승인·취소·위험색을 메인색 변경과 분리한 이유입니다. <a href="https://atlassian.design/foundations/color" target="_blank" rel="noreferrer">원문 보기</a></p>
+      </article>
+    </section>
+    <p class="reference-note">레퍼런스의 색상값이나 화면을 복제하지 않고, primary 1개 · 브랜드 역할색 · 위험 의미색 분리 원칙만 FinalCall 화면에 번역했습니다.</p>
+  </main>
+
+  <script>
+    const palettes = [
+      { id: 'cobalt', rank: 1, name: '선명한 코발트', brand: '#1957B8', strong: '#123B78', soft: '#E8F0FF', accent: '#F2B134', label: '가장 추천', type: 'recommended', note: '밝고 또렷하지만 가볍지 않습니다. 거래 신뢰와 실시간 서비스의 속도감을 가장 균형 있게 전달합니다.' },
+      { id: 'navy-orange', rank: 2, name: '브라이트 네이비 + 오렌지', brand: '#24507F', strong: '#183858', soft: '#E9F0F7', accent: '#EF8A2C', label: '안전한 전환', type: 'recommended', note: '현재 navy-orange 구조를 밝게 다듬은 안입니다. 기존 인지 자산을 지키면서 탁한 인상을 줄여 전환 비용이 가장 낮습니다.' },
+      { id: 'teal', rank: 3, name: '클린 틸', brand: '#0B6B66', strong: '#074A47', soft: '#E2F3F1', accent: '#F2B84B', label: '추천', type: 'recommended', note: '침착함과 디지털 감각이 함께 느껴집니다. 네이비보다 산뜻하지만 금융·거래 맥락의 안정감은 유지합니다.' },
+      { id: 'royal', rank: 4, name: '로열 블루', brand: '#3C4DB7', strong: '#29347F', soft: '#ECEEFF', accent: '#74C6D7', label: '검토', type: '', note: '코발트보다 게임 서비스의 개성이 강합니다. 선명한 선택 상태에는 유리하지만 장시간 화면에서는 조금 더 적극적으로 보입니다.' },
+      { id: 'slate', rank: 5, name: '슬레이트 + 앰버', brand: '#46586D', strong: '#2E3B4A', soft: '#EAF0F5', accent: '#E4A72A', label: '검토', type: '', note: '차분한 상거래 인상이 강하고 앰버 포인트가 현재 골드 자산과 연결됩니다. 다만 생동감은 상위 블루·틸보다 낮습니다.' },
+      { id: 'emerald', rank: 6, name: '에메랄드', brand: '#176B45', strong: '#0F4930', soft: '#E5F3EB', accent: '#E8B64B', label: '검토', type: '', note: '안전과 완료의 인상이 강해 거래 신뢰에는 좋습니다. 승인 상태색과 브랜드색의 의미가 가까워지는 점은 주의가 필요합니다.' },
+      { id: 'burgundy', rank: 7, name: '버건디', brand: '#8A3145', strong: '#5C2030', soft: '#F8E9ED', accent: '#E8B85A', label: '개성안', type: '', note: '프리미엄과 경매의 긴장감을 잘 만듭니다. 위험 버튼과 같은 적색 축이라 의미 분리를 더 세심하게 관리해야 합니다.' },
+      { id: 'terracotta', rank: 8, name: '테라코타', brand: '#97462F', strong: '#693221', soft: '#F8ECE7', accent: '#F0BA71', label: '개성안', type: '', note: '기존 오렌지의 활력을 더 성숙하게 만든 안입니다. 따뜻하고 독특하지만 긴 화면에서는 블루 계열보다 상거래 신뢰가 약할 수 있습니다.' },
+      { id: 'indigo', rank: 9, name: '인디고', brand: '#4B4BA8', strong: '#343475', soft: '#EEEEFC', accent: '#FFB45A', label: '주의', type: '', note: '블루에 가까운 인디고라 사용 가능 범위는 있지만, 현 정본의 퍼플 금지 경계와 가까워 브랜드 합의가 선행되어야 합니다.' },
+      { id: 'plum', rank: 10, name: '플럼', brand: '#744264', strong: '#4E2D46', soft: '#F5EAF2', accent: '#E9A7C7', label: '실험 · 비추천', type: 'experiment', experiment: true, note: '경매의 프리미엄 인상은 만들지만 퍼플 브랜드 역할 금지와 직접 충돌합니다. 비교를 위한 브랜드 변경 실험안입니다.' }
+    ];
+
+    const root = document.documentElement;
+    const grid = document.querySelector('#paletteGrid');
+    const inspector = document.querySelector('#inspector');
+
+    function hexToRgb(hex) {
+      const value = hex.replace('#', '');
+      return [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
+    }
+
+    function luminance(hex) {
+      const channels = hexToRgb(hex).map((value) => {
+        const normalized = value / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    }
+
+    function contrast(foreground, background) {
+      const light = Math.max(luminance(foreground), luminance(background));
+      const dark = Math.min(luminance(foreground), luminance(background));
+      return (light + 0.05) / (dark + 0.05);
+    }
+
+    function ratioText(foreground, background) {
+      return `${contrast(foreground, background).toFixed(2)}:1 · AA`;
+    }
+
+    palettes.forEach((palette, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'palette-tab';
+      button.dataset.palette = palette.id;
+      button.setAttribute('aria-pressed', String(index === 0));
+      button.style.setProperty('--tab-brand', palette.brand);
+      button.innerHTML = `
+        <span class="palette-title">${palette.name}<span class="rank ${palette.type}">${palette.label}</span></span>
+        <span class="swatches" aria-hidden="true">
+          <i class="swatch" style="--swatch:${palette.brand}"></i>
+          <i class="swatch" style="--swatch:${palette.strong}"></i>
+          <i class="swatch" style="--swatch:${palette.soft}"></i>
+          <i class="swatch" style="--swatch:${palette.accent}"></i>
+        </span>
+        <span class="palette-meta">${palette.brand} · ${palette.accent}</span>`;
+      button.addEventListener('click', () => applyPalette(palette, button));
+      grid.appendChild(button);
+    });
+
+    function applyPalette(palette, selectedButton) {
+      root.style.setProperty('--brand', palette.brand);
+      root.style.setProperty('--brand-strong', palette.strong);
+      root.style.setProperty('--brand-soft', palette.soft);
+      root.style.setProperty('--brand-accent', palette.accent);
+
+      document.querySelectorAll('.palette-tab').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button === selectedButton));
+      });
+
+      document.querySelector('#inspectorRank').textContent = `${palette.label} · 정성 순위 ${palette.rank}/10`;
+      document.querySelector('#inspectorTitle').textContent = palette.name;
+      document.querySelector('#inspectorNote').textContent = palette.note;
+      inspector.classList.toggle('is-experiment', Boolean(palette.experiment));
+
+      const tokens = [
+        ['brandHex', 'brandDot', palette.brand],
+        ['strongHex', 'strongDot', palette.strong],
+        ['softHex', 'softDot', palette.soft],
+        ['accentHex', 'accentDot', palette.accent]
+      ];
+      tokens.forEach(([textId, dotId, value]) => {
+        document.querySelector(`#${textId}`).textContent = value;
+        document.querySelector(`#${dotId}`).style.setProperty('--dot', value);
+      });
+
+      const checks = [
+        ['navRatio', '#FFFFFF', palette.brand],
+        ['footerRatio', '#FFFFFF', palette.strong],
+        ['primaryRatio', '#FFFFFF', palette.brand],
+        ['secondaryRatio', palette.brand, palette.soft],
+        ['approveRatio', '#FFFFFF', '#167047'],
+        ['dangerRatio', '#FFFFFF', '#BD2447']
+      ];
+      const passing = checks.every(([, foreground, background]) => contrast(foreground, background) >= 4.5);
+      checks.forEach(([id, foreground, background]) => {
+        document.querySelector(`#${id}`).textContent = ratioText(foreground, background);
+      });
+      const result = document.querySelector('#contrastResult');
+      result.textContent = passing
+        ? '표시된 텍스트 조합이 모두 WCAG AA 4.5:1 이상입니다.'
+        : '4.5:1 미만 조합이 있어 실제 적용 전 색상 보정이 필요합니다.';
+      result.style.background = passing ? '#E4F6EB' : '#FFF2D5';
+      result.style.color = passing ? '#155F3C' : '#75430B';
+    }
+
+    applyPalette(palettes[0], document.querySelector('.palette-tab'));
+  </script>
+</body>
+</html>
