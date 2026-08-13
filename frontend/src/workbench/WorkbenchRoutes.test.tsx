@@ -10,6 +10,7 @@ import { balanceKeys } from '@/lib/queries/balance'
 import { memoKeys } from '@/lib/queries/memos'
 import { useAuthStore } from '@/store/authStore'
 import { COLOR_PALETTES } from './fixtures/colorSystem'
+import { WIND_PARTICLE_OPTIONS } from './fixtures/windParticles'
 import { NAVIGATION_LAYOUT_VARIANTS } from './scenarioMetadata'
 import WorkbenchRoutes from './WorkbenchRoutes'
 
@@ -458,5 +459,31 @@ describe('WorkbenchRoutes', () => {
                 name: '등록되지 않은 시나리오입니다.',
             }),
         ).toBeVisible()
+    })
+
+    it('DEV route에서 서로 다른 바람 렌더링 10안을 동시에 비교한다', async () => {
+        const selected = WIND_PARTICLE_OPTIONS[1]
+        const view = renderWorkbench(
+            `/__design/wind-particle-studies?variant=${selected.id}`,
+        )
+
+        expect(
+            await screen.findByRole('heading', {
+                name: '바람 파티클 렌더링 10안',
+            }),
+        ).toBeVisible()
+        expect(
+            view.container.querySelectorAll('[data-wind-variant]'),
+        ).toHaveLength(10)
+        expect(
+            view.container.querySelectorAll('[data-wind-canvas]'),
+        ).toHaveLength(10)
+        expect(screen.getByRole('link', { name: '선택됨' })).toHaveAttribute(
+            'aria-current',
+            'true',
+        )
+        expect(screen.getAllByText('렌더링 원리')).toHaveLength(10)
+        expect(screen.getAllByText('추천 이유')).toHaveLength(10)
+        expect(screen.getAllByText('트레이드오프')).toHaveLength(10)
     })
 })

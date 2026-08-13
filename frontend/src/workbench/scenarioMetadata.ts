@@ -26,3 +26,21 @@ export const NAVIGATION_LAYOUT_VARIANT_IDS = Object.values(
 
 export type NavigationLayoutVariantId =
     (typeof NAVIGATION_LAYOUT_VARIANTS)[keyof typeof NAVIGATION_LAYOUT_VARIANTS]
+
+export const WIND_PARTICLE_VARIANTS = {
+    streamline: 'fc-wind-streamline-trails',
+    silkRibbon: 'fc-wind-layered-silk-ribbons',
+    curlNoise: 'fc-wind-curl-noise-field',
+    smoke: 'fc-wind-smoke-advection',
+    gustBands: 'fc-wind-gust-pulse-bands',
+    vortex: 'fc-wind-vortex-shedding',
+    feathered: 'fc-wind-feathered-dashes',
+    dust: 'fc-wind-luminous-dust-flow',
+    pressure: 'fc-wind-pressure-contours',
+    hybrid: 'fc-wind-ribbon-mist-hybrid',
+} as const
+
+export const WIND_PARTICLE_VARIANT_IDS = Object.values(WIND_PARTICLE_VARIANTS)
+
+export type WindParticleVariantId =
+    (typeof WIND_PARTICLE_VARIANTS)[keyof typeof WIND_PARTICLE_VARIANTS]

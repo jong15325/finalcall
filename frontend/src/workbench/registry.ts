@@ -2,6 +2,7 @@ import { auctionDetailPath, paths } from '@/app/paths'
 import {
     COLOR_PALETTE_VARIANT_IDS,
     NAVIGATION_LAYOUT_VARIANT_IDS,
+    WIND_PARTICLE_VARIANT_IDS,
 } from './scenarioMetadata'
 import type { WorkbenchFixture, WorkbenchScenarioDefinition } from './types'
 
@@ -34,6 +35,14 @@ export const WORKBENCH_SCENARIOS = [
         routeContext: paths.auctions,
         variants: NAVIGATION_LAYOUT_VARIANT_IDS,
         load: () => import('./scenarios/NavigationLayoutScenario'),
+    }),
+    defineScenario({
+        id: 'wind-particle-studies',
+        title: '바람 파티클 렌더링 10안',
+        shell: 'app',
+        routeContext: paths.home,
+        variants: WIND_PARTICLE_VARIANT_IDS,
+        load: () => import('./scenarios/WindParticleScenario'),
     }),
 ] as const
 

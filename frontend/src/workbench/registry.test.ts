@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { paths } from '@/app/paths'
 import { WORKBENCH_SCENARIOS } from './registry'
+import { WIND_PARTICLE_VARIANT_IDS } from './scenarioMetadata'
 import { SEMANTIC_OVERRIDE_KEYS } from './types'
 
 describe('workbench registry', () => {
@@ -54,5 +55,24 @@ describe('workbench registry', () => {
                 ).toBe(true)
             }
         }
+    })
+
+    it('registers the ten wind rendering principles as a lazy DEV scenario', async () => {
+        const scenario = WORKBENCH_SCENARIOS.find(
+            ({ id }) => id === 'wind-particle-studies',
+        )!
+
+        expect(scenario.routeContext).toBe(paths.home)
+        expect(scenario.variants).toEqual(WIND_PARTICLE_VARIANT_IDS)
+        expect(scenario.variants).toHaveLength(10)
+
+        const module = await scenario.load()
+        const fixture = module.fixture as {
+            options: readonly { renderer: string }[]
+        }
+        expect(fixture.options).toHaveLength(10)
+        expect(
+            new Set(fixture.options.map(({ renderer }) => renderer)).size,
+        ).toBe(10)
     })
 })

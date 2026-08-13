@@ -10,6 +10,7 @@ const forbiddenMarkers = [
     'main-color-palettes',
     'auth-layout',
     'top-navigation-layouts',
+    'wind-particle-studies',
     'fc-nav-restrained',
     'fc-nav-balanced',
     'fc-nav-floating',
@@ -34,6 +35,16 @@ const forbiddenMarkers = [
     'fc-palette-indigo',
     'fc-palette-plum',
     'fc-palette-amber',
+    'fc-wind-streamline-trails',
+    'fc-wind-layered-silk-ribbons',
+    'fc-wind-curl-noise-field',
+    'fc-wind-smoke-advection',
+    'fc-wind-gust-pulse-bands',
+    'fc-wind-vortex-shedding',
+    'fc-wind-feathered-dashes',
+    'fc-wind-luminous-dust-flow',
+    'fc-wind-pressure-contours',
+    'fc-wind-ribbon-mist-hybrid',
 ]
 const failures = []
 
