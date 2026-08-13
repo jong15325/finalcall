@@ -115,10 +115,9 @@ describe('WorkbenchRoutes', () => {
             'bg-success-soft',
             'text-success-ink',
         )
-        expect(screen.getByRole('button', { name: '거래 취소' })).toHaveClass(
-            'bg-danger',
-            'text-on-strong',
-        )
+        expect(
+            screen.getByRole('button', { name: '경매 강제 종료' }),
+        ).toHaveClass('bg-danger', 'text-on-strong')
     })
 
     it.each([390, 1280])(

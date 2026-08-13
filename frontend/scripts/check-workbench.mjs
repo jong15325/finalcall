@@ -81,7 +81,13 @@ for (const file of walk(sourceRoot)) {
         continue
     if (!/\.(?:ts|tsx)$/u.test(file)) continue
     const source = readFileSync(file, 'utf8')
-    for (const specifier of extractModuleSpecifiers(file, source)) {
+    const references = analyzeModuleReferences(file, source)
+    if (references.nonLiteralDynamicImports > 0) {
+        failures.push(
+            `${path}: production module의 non-literal dynamic import 금지`,
+        )
+    }
+    for (const specifier of references.specifiers) {
         if (resolvesToWorkbench(file, specifier)) {
             failures.push(
                 `${path}: production module의 workbench import 금지 ${specifier}`,
@@ -103,10 +109,10 @@ const registrySource = readFileSync(
     resolve(workbenchRoot, 'registry.ts'),
     'utf8',
 )
-for (const specifier of extractModuleSpecifiers(
+for (const specifier of analyzeModuleReferences(
     resolve(workbenchRoot, 'registry.ts'),
     registrySource,
-)) {
+).specifiers) {
     if (
         resolvesToDirectory(
             resolve(workbenchRoot, 'registry.ts'),
@@ -243,8 +249,9 @@ function addTokens(tokens, value) {
     }
 }
 
-function extractModuleSpecifiers(file, source) {
+function analyzeModuleReferences(file, source) {
     const specifiers = []
+    let nonLiteralDynamicImports = 0
     const sourceFile = ts.createSourceFile(
         file,
         source,
@@ -253,25 +260,30 @@ function extractModuleSpecifiers(file, source) {
         file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
     )
     visit(sourceFile)
-    return specifiers
+    return { nonLiteralDynamicImports, specifiers }
 
     function visit(node) {
         if (
             (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
             node.moduleSpecifier &&
-            ts.isStringLiteral(node.moduleSpecifier)
+            ts.isStringLiteralLike(node.moduleSpecifier)
         ) {
             specifiers.push(node.moduleSpecifier.text)
         }
-        if (
-            ts.isCallExpression(node) &&
-            node.arguments.length > 0 &&
-            ts.isStringLiteral(node.arguments[0]) &&
-            (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
-                (ts.isIdentifier(node.expression) &&
-                    node.expression.text === 'require'))
-        ) {
-            specifiers.push(node.arguments[0].text)
+        if (ts.isCallExpression(node) && node.arguments.length > 0) {
+            const dynamicImport =
+                node.expression.kind === ts.SyntaxKind.ImportKeyword
+            const requireCall =
+                ts.isIdentifier(node.expression) &&
+                node.expression.text === 'require'
+            if (
+                (dynamicImport || requireCall) &&
+                ts.isStringLiteralLike(node.arguments[0])
+            ) {
+                specifiers.push(node.arguments[0].text)
+            } else if (dynamicImport) {
+                nonLiteralDynamicImports += 1
+            }
         }
         ts.forEachChild(node, visit)
     }
@@ -331,6 +343,7 @@ function checkFixtureContrast() {
             paletteCount += 1
             const id = stringArgument(node, 2)
             const chromeBg = stringArgument(node, 4)
+            const chromeBgStrong = stringArgument(node, 5)
             const controlAction = stringArgument(node, 6)
             const controlActionHover = stringArgument(node, 7)
             const controlFocus = stringArgument(node, 8)
@@ -349,6 +362,24 @@ function checkFixtureContrast() {
                     '--control-focus / --content-surface',
                     controlFocus,
                     contentSurface,
+                    3,
+                )
+            }
+            if (id && controlFocus && chromeBg) {
+                checkContrast(
+                    id,
+                    '--control-focus / --chrome-bg',
+                    controlFocus,
+                    chromeBg,
+                    3,
+                )
+            }
+            if (id && controlFocus && chromeBgStrong) {
+                checkContrast(
+                    id,
+                    '--control-focus / --chrome-bg-strong',
+                    controlFocus,
+                    chromeBgStrong,
                     3,
                 )
             }
@@ -435,16 +466,29 @@ function checkImportResolverCoverage() {
             file: resolve(sourceRoot, 'example.ts'),
             source: "const module = import('@/workbench/registry')",
         },
+        {
+            file: resolve(sourceRoot, 'app/example.ts'),
+            source: 'const module = import(`../workbench/registry`)',
+        },
     ]
     for (const example of cases) {
-        const [specifier] = extractModuleSpecifiers(
+        const [specifier] = analyzeModuleReferences(
             example.file,
             example.source,
-        )
+        ).specifiers
         if (!specifier || !resolvesToWorkbench(example.file, specifier)) {
             failures.push(
                 `scripts/check-workbench.mjs: import resolver가 ${specifier ?? 'specifier 없음'}을 검출하지 못함`,
             )
         }
+    }
+    const nonLiteral = analyzeModuleReferences(
+        resolve(sourceRoot, 'example.ts'),
+        "const path = './feature'; const module = import(path)",
+    )
+    if (nonLiteral.nonLiteralDynamicImports !== 1) {
+        failures.push(
+            'scripts/check-workbench.mjs: non-literal dynamic import를 검출하지 못함',
+        )
     }
 }

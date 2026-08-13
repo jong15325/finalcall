@@ -235,7 +235,7 @@ export default function ColorSystemScenario({
                                 type="button"
                                 className="min-h-11 rounded-lg bg-danger px-4 text-sm font-bold text-on-strong hover:opacity-90"
                             >
-                                거래 취소
+                                경매 강제 종료
                             </button>
                         </div>
                     </div>
