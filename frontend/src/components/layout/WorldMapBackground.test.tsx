@@ -7,10 +7,12 @@ import WorldMapBackground from './WorldMapBackground'
 function createContext() {
     const gradient = { addColorStop: vi.fn() }
     return {
+        gradient,
         arc: vi.fn(),
         beginPath: vi.fn(),
         clearRect: vi.fn(),
         closePath: vi.fn(),
+        bezierCurveTo: vi.fn(),
         createRadialGradient: vi.fn(() => gradient),
         ellipse: vi.fn(),
         fill: vi.fn(),
@@ -38,6 +40,8 @@ describe('WorldMapBackground', () => {
     })
 
     afterEach(() => {
+        Reflect.deleteProperty(HTMLCanvasElement.prototype, 'clientWidth')
+        Reflect.deleteProperty(HTMLCanvasElement.prototype, 'clientHeight')
         vi.useRealTimers()
         vi.restoreAllMocks()
         vi.unstubAllGlobals()
@@ -119,6 +123,8 @@ describe('WorldMapBackground', () => {
         expect(css).not.toContain('@keyframes world-map-wind')
         expect(css).not.toContain('conic-gradient')
         expect(css).toContain('world-map-background__glow--earth')
+        expect(css).toContain('rgb(229 255 178 / 0.48)')
+        expect(css).toContain('rgb(152 196 92 / 0.3)')
         expect(css).toContain('world-map-background__glow--fire')
         expect(css).toContain('world-map-background__glow--water')
         expect(css).toContain('@keyframes world-map-fire')
@@ -143,12 +149,49 @@ describe('WorldMapBackground', () => {
         act(() => callbacks[0]?.(1000))
 
         expect(context.quadraticCurveTo).toHaveBeenCalled()
+        expect(context.bezierCurveTo).toHaveBeenCalledTimes(36)
         expect(context.createRadialGradient).toHaveBeenCalled()
         expect(context.rotate).toHaveBeenCalled()
         expect(context.ellipse).toHaveBeenCalled()
         expect(view.container.querySelector('canvas')).toHaveAttribute(
             'data-particle-limit',
             '48',
+        )
+    })
+
+    it('wind는 회전 대신 오른쪽으로 흐르는 복수 곡선이고 earth는 강화된 명암을 쓴다', () => {
+        Object.defineProperties(HTMLCanvasElement.prototype, {
+            clientWidth: { configurable: true, value: 1000 },
+            clientHeight: { configurable: true, value: 800 },
+        })
+        const context = createContext()
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            context as unknown as CanvasRenderingContext2D,
+        )
+        const callbacks: FrameRequestCallback[] = []
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            (callback: FrameRequestCallback) => {
+                callbacks.push(callback)
+                return callbacks.length
+            },
+        )
+        vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+        render(<WorldMapBackground accent={null} />)
+        act(() => callbacks[0]?.(1000))
+        const firstFrameCurveCount = context.bezierCurveTo.mock.calls.length
+        const firstEndX = context.bezierCurveTo.mock.calls[0][4]
+        act(() => callbacks[1]?.(1040))
+        const secondEndX =
+            context.bezierCurveTo.mock.calls[firstFrameCurveCount][4]
+
+        expect(firstFrameCurveCount).toBe(36)
+        expect(secondEndX).toBeGreaterThan(firstEndX)
+        expect(context.rotate).toHaveBeenCalledTimes(24)
+        expect(context.gradient.addColorStop).toHaveBeenCalledWith(
+            0.48,
+            'rgba(158, 205, 92, .26)',
         )
     })
 

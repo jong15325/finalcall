@@ -106,11 +106,9 @@ export function AmbientCanvas() {
                     y: minY + particle.y * (maxY - minY),
                 }
                 if (particle.element === 'wind') {
-                    const dx = particle.x - 0.5
-                    const dy = particle.y - 0.5
-                    const force = particle.speed * delta * 0.72
-                    particle.x += -dy * force
-                    particle.y += dx * force
+                    particle.x += particle.speed * delta * 0.52
+                    particle.y +=
+                        Math.sin(time * 0.0011 + particle.phase) * delta * 0.01
                     drawWind(context, drawParticle, width, height, time)
                 } else if (particle.element === 'fire') {
                     particle.y -= particle.speed * delta * 0.9
@@ -234,13 +232,26 @@ function drawWind(
 ) {
     const x = particle.x * width
     const y = particle.y * height
-    const bend = Math.sin(time * 0.001 + particle.phase) * particle.size * 5
-    context.beginPath()
-    context.moveTo(x - particle.size * 10, y + bend)
-    context.quadraticCurveTo(x, y - particle.size * 3, x + particle.size * 9, y)
-    context.strokeStyle = 'rgba(220, 255, 248, .5)'
-    context.lineWidth = 0.8 + (particle.phase % 3) * 0.45
-    context.stroke()
+    const length = particle.size * 30
+    const wave = Math.sin(time * 0.0012 + particle.phase) * particle.size * 4
+    const baseLineWidth = 0.8 + (particle.phase % 3) * 0.45
+    for (const strand of [2, 0, 1]) {
+        const offset = (strand - 1) * particle.size * 2.4
+        const strength = strand === 1 ? 1 : strand === 0 ? 0.78 : 0.58
+        context.beginPath()
+        context.moveTo(x - length, y + offset + wave * 0.35)
+        context.bezierCurveTo(
+            x - length * 0.68,
+            y - wave + offset,
+            x - length * 0.28,
+            y + wave * 0.72 - offset * 0.35,
+            x + particle.size * (7 - strand),
+            y + offset * 0.2,
+        )
+        context.strokeStyle = `rgba(220, 255, 248, ${0.56 * strength})`
+        context.lineWidth = baseLineWidth * strength
+        context.stroke()
+    }
 }
 
 function drawFire(
@@ -284,23 +295,27 @@ function drawEarth(
 ) {
     const x = particle.x * width
     const y = particle.y * height
-    const glow = context.createRadialGradient(x, y, 0, x, y, particle.size * 5)
-    glow.addColorStop(0, 'rgba(210, 242, 150, .5)')
-    glow.addColorStop(1, 'rgba(110, 145, 70, 0)')
+    const glow = context.createRadialGradient(x, y, 0, x, y, particle.size * 6)
+    glow.addColorStop(0, 'rgba(232, 255, 184, .72)')
+    glow.addColorStop(0.48, 'rgba(158, 205, 92, .26)')
+    glow.addColorStop(1, 'rgba(84, 120, 48, 0)')
     context.fillStyle = glow
     context.beginPath()
-    context.arc(x, y, particle.size * 5, 0, Math.PI * 2)
+    context.arc(x, y, particle.size * 6, 0, Math.PI * 2)
     context.fill()
     context.save()
     context.translate(x, y)
     context.rotate(time * 0.0002 + particle.phase)
-    context.strokeStyle = 'rgba(220, 240, 175, .54)'
+    context.fillStyle = 'rgba(94, 132, 56, .34)'
+    context.strokeStyle = 'rgba(232, 250, 190, .74)'
+    context.lineWidth = 0.8 + particle.size * 0.12
     context.beginPath()
-    context.moveTo(-particle.size * 2.5, 0)
-    context.lineTo(0, -particle.size * 2.5)
-    context.lineTo(particle.size * 2.5, 0)
-    context.lineTo(0, particle.size * 2.5)
+    context.moveTo(-particle.size * 2.8, 0)
+    context.lineTo(0, -particle.size * 2.8)
+    context.lineTo(particle.size * 2.8, 0)
+    context.lineTo(0, particle.size * 2.8)
     context.closePath()
+    context.fill()
     context.stroke()
     context.restore()
 }

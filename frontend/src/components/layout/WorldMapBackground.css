@@ -26,7 +26,8 @@
 .world-map-background__glow--earth {
     background: radial-gradient(
         circle at 22% 22%,
-        rgb(210 242 150 / 0.34),
+        rgb(229 255 178 / 0.48),
+        rgb(152 196 92 / 0.3) 9%,
         transparent 18%
     );
 }
@@ -74,7 +75,8 @@
     .world-map-background__glow--earth {
         background: radial-gradient(
             circle at 22% 42.7%,
-            rgb(210 242 150 / 0.34),
+            rgb(229 255 178 / 0.48),
+            rgb(152 196 92 / 0.3) 5%,
             transparent 10%
         );
     }
