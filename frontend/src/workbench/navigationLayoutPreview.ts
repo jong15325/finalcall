@@ -15,7 +15,6 @@ export function installNavigationLayoutPreview(
     const contentPlane = view?.querySelector<HTMLElement>(
         '[data-testid="app-content-plane"]',
     )
-    const desktopGap = window.matchMedia('(min-width: 1280px)')
     const headerInner = header?.firstElementChild as HTMLElement | null
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.firstElementChild as HTMLElement | null
@@ -84,7 +83,7 @@ export function installNavigationLayoutPreview(
     footer.classList.add('px-3', 'sm:px-5', 'xl:px-8')
     header.classList.add('rounded-xl')
     horizontalNav?.classList.add('rounded-xl')
-    let releaseSelectedGap: () => void = () => undefined
+    let dropdownObserver: MutationObserver | null = null
 
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock) {
         surface.classList.add('transition-all', 'motion-reduce:transition-none')
@@ -92,16 +91,24 @@ export function installNavigationLayoutPreview(
         frame.classList.add('px-3', 'sm:px-5', 'xl:px-8')
         view.classList.remove('py-4', 'sm:py-5', 'xl:py-7')
         view.classList.add('pb-4')
-        const applySelectedGap = () => {
-            contentPlane.classList.toggle('mt-2', !desktopGap.matches)
-            contentPlane.classList.toggle('mt-3', desktopGap.matches)
+        header.classList.remove('rounded-xl')
+        horizontalNav?.classList.remove('rounded-xl')
+        for (const element of [surface, header, horizontalNav]) {
+            element?.classList.add('sm:rounded-xl', 'xl:rounded-2xl')
         }
-        applySelectedGap()
-        desktopGap.addEventListener('change', applySelectedGap)
-        releaseSelectedGap = () =>
-            desktopGap.removeEventListener('change', applySelectedGap)
+        surface.classList.add('overflow-hidden')
+        const preserveDropdown = () => {
+            const open = surface.querySelector('[role="menu"]') !== null
+            surface.classList.toggle('overflow-hidden', !open)
+            surface.classList.toggle('overflow-visible', open)
+        }
+        dropdownObserver = new MutationObserver(preserveDropdown)
+        dropdownObserver.observe(surface, { childList: true, subtree: true })
     }
-    if (variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
+    if (
+        variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock &&
+        variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock
+    ) {
         surface.classList.add('rounded-xl')
     }
     if (
@@ -180,7 +187,7 @@ export function installNavigationLayoutPreview(
 
     return () => {
         window.removeEventListener('scroll', onScroll)
-        releaseSelectedGap()
+        dropdownObserver?.disconnect()
         cancelAnimationFrame(animationFrame)
         shellColumn.insertBefore(header, view)
         if (horizontalNav) shellColumn.insertBefore(horizontalNav, view)

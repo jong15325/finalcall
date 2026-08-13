@@ -90,6 +90,24 @@ try {
                 returnByValue: true,
             })
             const before = beforeResult.result.value
+            let dropdown = null
+            if (variant === 'fc-nav-contact-dock') {
+                await cdp.send('Runtime.evaluate', {
+                    expression:
+                        'document.querySelector(\'button[aria-haspopup="menu"]\').click()',
+                })
+                await delay(100)
+                const dropdownResult = await cdp.send('Runtime.evaluate', {
+                    expression: navigationAuditExpression(viewport.mobile),
+                    returnByValue: true,
+                })
+                dropdown = dropdownResult.result.value
+                await cdp.send('Runtime.evaluate', {
+                    expression:
+                        'document.querySelector(\'button[aria-haspopup="menu"]\').click()',
+                })
+                await delay(100)
+            }
             await cdp.send('Runtime.evaluate', {
                 expression:
                     variant === 'fc-nav-contact-dock'
@@ -126,7 +144,15 @@ try {
             if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
                 console.log(
                     JSON.stringify(
-                        { viewport, variant, before, threshold, after, upward },
+                        {
+                            viewport,
+                            variant,
+                            before,
+                            dropdown,
+                            threshold,
+                            after,
+                            upward,
+                        },
                         null,
                         2,
                     ),
@@ -139,7 +165,11 @@ try {
                     ? before.dockState !== 'stuck' ||
                       before.navBounds.top !== 0 ||
                       threshold.navBounds.top !== 0 ||
-                      before.contentGap !== (viewport.mobile ? 8 : 12)
+                      before.contentGap !== 0 ||
+                      !before.radiusMatches ||
+                      !before.cornerClipped ||
+                      !dropdown?.dropdownUnclipped ||
+                      !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
                       before.navBounds.top <= 0 ||
                       threshold.dockState !== 'stuck' ||
@@ -152,7 +182,7 @@ try {
                         !entry.documentFits ||
                         !entry.alignedExactly ||
                         !entry.contentAligned ||
-                        !entry.dropdownUnclipped,
+                        (!selectedAtTop && !entry.dropdownUnclipped),
                 ) ||
                 (viewport.mobile
                     ? !after.safeArea || !after.mobileUsable
@@ -171,12 +201,16 @@ try {
                     `[workbench] ${viewport.width}px ${variant} navigation layout guard 실패`,
                 )
                 console.error(
-                    JSON.stringify({ before, threshold, after, upward }, null, 2),
+                    JSON.stringify(
+                        { before, dropdown, threshold, after, upward },
+                        null,
+                        2,
+                    ),
                 )
                 process.exitCode = 1
             } else {
                 console.log(
-                    `[workbench] ${viewport.width}px ${variant} top ${before.navBounds.top}→${threshold.navBounds.top}→${after.navBounds.top}px, gap ${before.contentGap}px, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
+                    `[workbench] ${viewport.width}px ${variant} top ${before.navBounds.top}→${threshold.navBounds.top}→${after.navBounds.top}px, gap ${before.contentGap}px, radius ${before.navRadius}/${before.contentRadius}, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
                 )
             }
         }
@@ -336,6 +370,7 @@ function navigationAuditExpression(mobile) {
                 width: Math.round(rect.width * 100) / 100,
                 height: Math.round(rect.height * 100) / 100,
                 top: Math.round(rect.top * 100) / 100,
+                bottom: Math.round(rect.bottom * 100) / 100,
             }
         }
         const navBounds = bounds(navTarget)
@@ -359,6 +394,9 @@ function navigationAuditExpression(mobile) {
         const frameBounds = bounds(frame)
         const header = navTarget?.querySelector('header')
         const surfaceStyle = navTarget ? getComputedStyle(navTarget) : null
+        const contentStyle = contentTarget ? getComputedStyle(contentTarget) : null
+        const menu = navTarget?.querySelector('[role="menu"]')
+        const menuBounds = bounds(menu)
         const mobileItems = mobileNav
             ? [...mobileNav.children].map(bounds).filter(Boolean)
             : []
@@ -380,6 +418,21 @@ function navigationAuditExpression(mobile) {
             sentinelTop: bounds(sentinel)?.top,
             frameHeight: frameBounds?.height,
             surfaceClassName: String(navTarget?.className ?? ''),
+            navRadius: surfaceStyle?.borderTopLeftRadius,
+            contentRadius: contentStyle?.borderTopLeftRadius,
+            radiusMatches: Boolean(
+                surfaceStyle &&
+                contentStyle &&
+                surfaceStyle.borderTopLeftRadius === contentStyle.borderTopLeftRadius &&
+                surfaceStyle.borderTopRightRadius === contentStyle.borderTopRightRadius &&
+                surfaceStyle.borderBottomLeftRadius === contentStyle.borderBottomLeftRadius &&
+                surfaceStyle.borderBottomRightRadius === contentStyle.borderBottomRightRadius
+            ),
+            cornerClipped: Boolean(
+                surfaceStyle &&
+                surfaceStyle.overflowX === 'hidden' &&
+                surfaceStyle.overflowY === 'hidden'
+            ),
             rounded: Boolean(navTarget?.classList.contains('rounded-xl')),
             shadowed: Boolean(navTarget?.classList.contains('shadow-sm')),
             compact: Boolean(header?.classList.contains('h-12')),
@@ -387,6 +440,10 @@ function navigationAuditExpression(mobile) {
                 surfaceStyle &&
                 surfaceStyle.overflowX === 'visible' &&
                 surfaceStyle.overflowY === 'visible'
+            ),
+            menuBounds,
+            menuEscapesSurface: Boolean(
+                menuBounds && navBounds && menuBounds.bottom > navBounds.top + navBounds.height
             ),
             scrollY: window.scrollY,
             desktopMenuCount: document.querySelectorAll('[data-horizontal-root]:not([disabled])').length,
