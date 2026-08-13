@@ -413,6 +413,7 @@ doing/review ──선행 미충족·게이트2 대기──▶ blocked ──�
 - **커밋 = 자동, 게이트 없음**. 메시지는 섹션 6 Conventional Commits 형식을 준수한다. 코드는 atomic 커밋을 유지한다.
 - **push = 에픽 완료 시 사용자가 직접 실행**. 에이전트는 push 권한이 없다. **PreToolUse 훅이 `git push`를 차단하고 `git commit`은 통과**시킨다(게이트3 훅 · settings.json).
 - **Done 전이 = 사용자 승인**(게이트3).
+- **세션 경계 명령**: 사용자의 `출근`·`퇴근` 입력은 `docs/common/rules.md [8.7]~[8.9]`의 전체 절차를 즉시 실행하는 명령이다. 총괄 핸드오버 정본은 `docs/board/HANDOVER.md`, 형식 정본은 `docs/common/templates.md [8]`이다.
 
 ### 보안 층 구성 (경매 에픽부터)
 
