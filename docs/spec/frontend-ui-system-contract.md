@@ -1,6 +1,6 @@
-# 프론트 UI 시스템 계약 v1.1
+# 프론트 UI 시스템 계약 v1.2
 
-- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타 승인 2026-08-13**
+- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타·접점 고정형 navigation 디자인 승인 2026-08-13**
 - 적용 범위: `frontend/src/**`, `frontend/tailwind.config.cjs`, AppShell 아래 공개·보호·404 route
 - 제외: API wire contract, 백엔드, DB 스키마, `AuthLayout`의 독립 레이아웃 구조
 - 목적: 디자인 토큰, AppShell chrome, 목록 프레임, 아이템 카드의 단일 계약을 확정해 route·페이지별 시각/상호작용 포크를 막는다.
@@ -185,6 +185,26 @@ CTA·상태·focus·본문 색을 재정의하지 않는다. 페이지 전체 co
 - chrome 고정으로 인해 새로운 backdrop blur, filter animation, Canvas 또는 image request를 추가하지 않는다.
 - reduced motion, update slow, forced colors, visibility cleanup과 particle/DPR 상한은
   `world-map-common-background-contract.md` v1.0을 그대로 따른다.
+
+### 3.4 상단 navigation 접점 고정 계약
+
+운영 AppShell의 desktop·mobile 상단 navigation은 디자인 워크벤치 `fc-nav-contact-dock`의 최종
+**접점 고정형**을 정본으로 사용한다.
+
+- navigation은 문서 흐름에서 시작한다. 최초 flow 상태의 viewport 상단 간격은 mobile `8px`, desktop
+  `12px`이고, sentinel 임계에 도달한 stuck 상태에서는 `top: 0`으로 전환한다.
+- frame은 투명하며 별도 backing surface를 만들지 않는다. 실제 navigation chrome surface만 commerce chrome
+  token을 소비하고 네 모서리를 mobile `12px`, desktop `16px`로 둥글게 처리한다.
+- navigation과 바로 뒤 content plane의 세로 간격은 `0`이다. overlay나 음수 margin으로 접합부를 덮지 않으며,
+  라운드 바깥에는 `app-canvas`가 보여야 한다. 스크롤 중 content의 흰 surface가 모서리 뒤로 비치면 안 된다.
+- navigation, content, footer는 같은 shell width owner를 소비해 left, right, width가 일치해야 한다. 각 영역에서
+  독립적인 max-width·horizontal gutter 값을 재정의하지 않는다.
+- 기존 실제 메뉴, 인증 상태, dropdown, mobile navigation의 정보 구조와 상호작용은 유지한다. 이 계약은 chrome
+  배치·표면만 바꾸며 route/API 계약이나 navigation 기능을 변경하지 않는다.
+- stuck 판정은 sentinel 또는 동등한 단일 관찰 지점으로 수행한다. scroll listener 기반 layout polling, 새
+  backdrop blur/filter animation, Canvas, image request를 추가하지 않는다.
+- 키보드 focus, dropdown stacking, mobile drawer, reduced motion과 body 단일 scroll은 기존 계약을 그대로
+  유지하며, flow→stuck 전환으로 layout jump나 가로 overflow가 생기면 안 된다.
 
 ## 4. 선언형 shell/footer metadata 계약
 
@@ -455,4 +475,5 @@ type ItemCardAction =
 - `FC-272`, `FC-273`, `FC-274`는 `FC-271` 뒤 쓰기 파일 집합이 겹치지 않을 때 병렬 가능하다.
 - `FC-275`와 `FC-276`도 공개/보호 소비자 파일 집합을 분리하면 병렬 가능하다.
 - 직접 영향 이력: FC-180~184(카드 시스템), FC-239~244(상세 theme/chrome), FC-245~269(AppShell·scene·footer).
+- 접점 고정형 navigation 영향: FC-294(승인 시안), FC-295(운영 AppShell 적용), FC-296(통합 리뷰).
 - 비영향: API contract, ERD, backend, item element wire 값, 경매/구매/배송의 도메인 동작과 데이터 스키마.
