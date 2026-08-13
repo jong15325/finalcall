@@ -130,4 +130,24 @@ describe('WalletBalanceCandidate', () => {
             balanced.container.querySelector('[data-wallet-metrics]'),
         ).toHaveClass('grid-cols-1', 'sm:grid-cols-3')
     })
+
+    it.each([
+        [WALLET_BALANCE_VARIANTS.availableFirst, '2rem'],
+        [WALLET_BALANCE_VARIANTS.mobileWallet, '2rem'],
+        [WALLET_BALANCE_VARIANTS.balancedMetrics, '1.75rem'],
+    ] as const)('%s의 승인된 히어로 크기를 유지한다', (variant, fontSize) => {
+        const view = render(
+            <WalletBalanceCandidate
+                balance={balance}
+                state="ready"
+                variant={variant}
+            />,
+        )
+
+        expect(
+            view.container.querySelector(
+                '[data-wallet-variant] [aria-label$="코드"]',
+            ),
+        ).toHaveStyle({ fontSize })
+    })
 })

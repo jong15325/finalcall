@@ -26,6 +26,11 @@ try {
     const colorPageUrl = `http://127.0.0.1:${address.port}/__design/main-color-palettes?variant=fc-palette-steel-blue&state=success`
     const navigationPageUrl = `http://127.0.0.1:${address.port}/__design/top-navigation-layouts`
     const walletPageUrl = `http://127.0.0.1:${address.port}/__design/wallet-balance-studies?variant=fc-wallet-balanced-metrics&state=ready&sample=long`
+    const walletTypographyVariants = [
+        ['fc-wallet-available-first', '32px'],
+        ['fc-wallet-mobile-wallet', '32px'],
+        ['fc-wallet-balanced-metrics', '28px'],
+    ]
     edge = spawn(
         edgePath,
         [
@@ -69,6 +74,39 @@ try {
             console.log(
                 `[workbench] ${viewport.width}px 실제 DOM overflow 0건 (${audit.document.scrollWidth}/${audit.document.clientWidth}px)`,
             )
+        }
+
+        for (const [variant, expectedFontSize] of walletTypographyVariants) {
+            await cdp.send('Page.navigate', {
+                url: `http://127.0.0.1:${address.port}/__design/wallet-balance-studies?variant=${variant}&state=ready&sample=standard`,
+            })
+            await waitForScenario(cdp, `[data-wallet-variant="${variant}"]`)
+            const typographyResult = await cdp.send('Runtime.evaluate', {
+                expression: `(() => {
+                    const candidate = document.querySelector('[data-wallet-variant="${variant}"]')
+                    const hero = candidate?.querySelector('[aria-label$="코드"]')
+                    return {
+                        variant: candidate?.dataset.walletVariant ?? null,
+                        fontSize: hero ? getComputedStyle(hero).fontSize : null,
+                    }
+                })()`,
+                returnByValue: true,
+            })
+            const typography = typographyResult.result.value
+            if (
+                typography.variant !== variant ||
+                typography.fontSize !== expectedFontSize
+            ) {
+                console.error(
+                    `[workbench] ${viewport.width}px ${variant} wallet typography guard 실패`,
+                )
+                console.error(JSON.stringify(typography, null, 2))
+                process.exitCode = 1
+            } else {
+                console.log(
+                    `[workbench] ${viewport.width}px ${variant} hero ${typography.fontSize}`,
+                )
+            }
         }
 
         for (const textZoom of [100, 200]) {

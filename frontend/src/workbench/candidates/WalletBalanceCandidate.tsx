@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import CodeAmount from '@/components/common/CodeAmount'
 import type { BalanceResponse } from '@/lib/api/balance'
 import {
@@ -17,6 +18,9 @@ interface CandidateFrameProps {
     state: WalletPreviewState
     variant: WalletBalanceVariantId
 }
+
+const AVAILABLE_HERO_STYLE = { fontSize: '2rem' } satisfies CSSProperties
+const BALANCED_HERO_STYLE = { fontSize: '1.75rem' } satisfies CSSProperties
 
 export default function WalletBalanceCandidate({
     balance,
@@ -119,7 +123,8 @@ function AvailableFirst({ balance }: { balance: BalanceResponse }) {
             <CodeAmount
                 value={balance.gameMoneyAvailable}
                 mode="full"
-                className="mt-1 max-w-full min-w-0 flex-wrap break-all text-3xl font-bold leading-tight text-content-fg sm:text-[32px]"
+                className="mt-1 max-w-full min-w-0 flex-wrap break-all font-bold leading-tight text-content-fg"
+                style={AVAILABLE_HERO_STYLE}
             />
             <dl
                 data-wallet-metrics="equal-three"
@@ -229,7 +234,8 @@ function MobileWallet({ balance }: { balance: BalanceResponse }) {
                 <CodeAmount
                     value={balance.gameMoneyAvailable}
                     mode="full"
-                    className="mt-1 max-w-full min-w-0 flex-wrap justify-center break-all text-3xl font-bold leading-tight text-content-fg sm:text-[32px]"
+                    className="mt-1 max-w-full min-w-0 flex-wrap justify-center break-all font-bold leading-tight text-content-fg"
+                    style={AVAILABLE_HERO_STYLE}
                 />
             </div>
             <div className="mt-5 grid grid-cols-2 gap-2">
@@ -272,7 +278,8 @@ function BalancedMetrics({ balance }: { balance: BalanceResponse }) {
                 <CodeAmount
                     value={balance.gameMoneyAvailable}
                     mode="full"
-                    className="mt-1 max-w-full min-w-0 flex-wrap break-all text-3xl font-bold leading-tight text-content-fg"
+                    className="mt-1 max-w-full min-w-0 flex-wrap break-all font-bold leading-tight text-content-fg"
+                    style={BALANCED_HERO_STYLE}
                 />
                 <p className="mt-2 text-xs text-content-subtle">
                     입찰과 즉시구매에 바로 사용
