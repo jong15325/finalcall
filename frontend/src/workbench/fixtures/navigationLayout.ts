@@ -3,43 +3,43 @@ import type { WorkbenchFixture } from '../types'
 
 export const NAVIGATION_LAYOUT_OPTIONS = [
     {
-        id: NAVIGATION_LAYOUT_VARIANTS.restrained,
-        name: '절제형',
-        label: '8px · 평면',
+        id: NAVIGATION_LAYOUT_VARIANTS.contactDock,
+        name: '접점 고정형',
+        label: '권장 · 상태 변화 최소',
         summary:
-            '작은 여백 안에 상단 바와 메뉴 바를 한 덩어리로 묶어 기존 화면의 밀도를 가장 가깝게 유지합니다.',
+            '내비게이션이 일반 문서 흐름을 따라 이동하다 콘텐츠 경계가 화면 상단에 닿는 순간 그대로 고정됩니다.',
         tradeoff:
-            '변화가 조용해 새 레이아웃의 존재감은 세 안 중 가장 낮습니다.',
-        recommended: false,
-    },
-    {
-        id: NAVIGATION_LAYOUT_VARIANTS.balanced,
-        name: '균형형',
-        label: '12px · 절제된 음영',
-        summary:
-            '푸터 콘텐츠와 같은 폭에 맞춘 연속형 내비게이션 영역으로, 여백과 정보 밀도의 균형이 가장 안정적입니다.',
-        tradeoff:
-            '절제형보다 상단 점유가 조금 늘지만 메뉴 탐색 흐름은 그대로 유지합니다.',
+            '가장 예측 가능하고 조용하지만 도킹 상태를 별도 장식으로 강조하지 않습니다.',
         recommended: true,
     },
     {
-        id: NAVIGATION_LAYOUT_VARIANTS.floating,
-        name: '플로팅형',
-        label: '16px · 분리형 입체감',
+        id: NAVIGATION_LAYOUT_VARIANTS.transitionDock,
+        name: '도킹 전환형',
+        label: '접점 · 표면 전환',
         summary:
-            '상단 정보 바와 메뉴 바를 두 영역으로 분리해 구조와 현재 위치를 가장 강하게 드러냅니다.',
+            '고정되는 순간에만 모서리와 절제된 음영을 더해 현재 도킹 상태를 분명하게 알립니다.',
         tradeoff:
-            '존재감과 상단 점유가 커서 콘텐츠 중심 화면에서는 다소 무겁게 느껴질 수 있습니다.',
+            '상태 인지는 빠르지만 접점 고정형보다 시각 변화가 한 단계 더 큽니다.',
         recommended: false,
     },
     {
-        id: NAVIGATION_LAYOUT_VARIANTS.contentCompanion,
-        name: '콘텐츠 동행형',
-        label: '동일 폭 · sticky',
+        id: NAVIGATION_LAYOUT_VARIANTS.compactDock,
+        name: '컴팩트 도킹형',
+        label: '접점 · 높이 축소',
         summary:
-            '내비게이션, 콘텐츠, 푸터의 좌우 시작점과 끝점을 같은 폭으로 맞추고 스크롤 중에도 그 폭을 유지합니다.',
+            '고정되는 순간 보조 정보와 상단 바 높이를 줄이되 실제 주요 메뉴와 필수 조작은 유지합니다.',
         tradeoff:
-            '상단에 12px 간격을 둔 채 따라오므로 전체 폭 내비게이션보다 콘텐츠와의 결속감이 강합니다.',
+            '콘텐츠 공간은 넓어지지만 상단 정보 밀도가 스크롤 상태에 따라 달라집니다.',
+        recommended: false,
+    },
+    {
+        id: NAVIGATION_LAYOUT_VARIANTS.directionDock,
+        name: '방향 반응형',
+        label: '하향 축소 · 상향 복귀',
+        summary:
+            '아래로 읽을 때는 최소화하고 위로 되돌아갈 때 즉시 복귀해 탐색과 콘텐츠 집중을 함께 지원합니다.',
+        tradeoff:
+            '방향에 반응하므로 네 안 중 동작 규칙을 사용자가 가장 많이 학습해야 합니다.',
         recommended: false,
     },
 ] as const

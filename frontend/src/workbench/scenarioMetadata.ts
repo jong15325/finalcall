@@ -14,10 +14,10 @@ export const COLOR_PALETTE_VARIANTS = {
 export const COLOR_PALETTE_VARIANT_IDS = Object.values(COLOR_PALETTE_VARIANTS)
 
 export const NAVIGATION_LAYOUT_VARIANTS = {
-    restrained: 'fc-nav-restrained',
-    balanced: 'fc-nav-balanced',
-    floating: 'fc-nav-floating',
-    contentCompanion: 'fc-nav-content-companion',
+    contactDock: 'fc-nav-contact-dock',
+    transitionDock: 'fc-nav-transition-dock',
+    compactDock: 'fc-nav-compact-dock',
+    directionDock: 'fc-nav-direction-dock',
 } as const
 
 export const NAVIGATION_LAYOUT_VARIANT_IDS = Object.values(

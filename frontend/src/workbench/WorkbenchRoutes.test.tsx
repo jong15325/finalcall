@@ -147,135 +147,12 @@ describe('WorkbenchRoutes', () => {
         }
     })
 
-    it('1280px 균형형 navigation과 footer가 같은 gutter·max-width로 정렬된다', async () => {
-        useViewport(1280)
-        const view = renderWorkbench(
-            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.balanced}`,
-        )
-        await screen.findByRole('heading', {
-            name: '상단 네비게이션 레이아웃 4안',
-        })
-
-        await waitFor(() => {
-            expect(
-                view.container.querySelector(
-                    '[data-workbench-navigation-frame]',
-                ),
-            ).toBeInTheDocument()
-        })
-        const frame = view.container.querySelector<HTMLElement>(
-            '[data-workbench-navigation-frame]',
-        )!
-        const navigation = view.container.querySelector<HTMLElement>(
-            '[data-workbench-nav-measure]',
-        )!
-        const footer = view.container.querySelector<HTMLElement>(
-            '[data-workbench-footer-measure]',
-        )!
-
-        expect(frame).toHaveClass('p-3', 'sticky', 'top-0')
-        expect(navigation).toHaveClass(
-            'mx-auto',
-            'w-full',
-            'max-w-[1440px]',
-            'rounded-xl',
-            'shadow-sm',
-        )
-        expect(footer.parentElement).toHaveClass('px-3')
-        expect(footer).toHaveClass(
-            'mx-auto',
-            'w-full',
-            'max-w-[1440px]',
-            'xl:px-10',
-        )
-        expect(navigation.querySelector('header > div')).toHaveClass(
-            'xl:px-10',
-        )
-        expect(navigation.querySelector('nav > ul')).toHaveClass('xl:px-10')
-
-        const navigationBounds = navigation.getBoundingClientRect()
-        const footerBounds = footer.getBoundingClientRect()
-        expect([
-            navigationBounds.left,
-            navigationBounds.right,
-            navigationBounds.width,
-        ]).toEqual([
-            footerBounds.left,
-            footerBounds.right,
-            footerBounds.width,
-        ])
-    })
-
-    it('3안이 단순 radius 교체가 아닌 연속형·분리형 topology를 제공한다', async () => {
-        useViewport(1280)
-        const view = renderWorkbench(
-            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.floating}`,
-        )
-        await screen.findByRole('heading', {
-            name: '상단 네비게이션 레이아웃 4안',
-        })
-
-        expect(
-            screen.getAllByRole('link', {
-                name: /절제형|균형형|플로팅형/,
-            }),
-        ).toHaveLength(3)
-        expect(screen.getByText('권장')).toBeVisible()
-        await waitFor(() => {
-            expect(
-                view.container.querySelector(
-                    '[data-workbench-navigation-frame]',
-                ),
-            ).toHaveClass('space-y-2', 'p-4')
-        })
-        const frame = view.container.querySelector<HTMLElement>(
-            '[data-workbench-navigation-frame]',
-        )!
-        expect(frame.querySelector(':scope > header')).toHaveClass(
-            'rounded-2xl',
-            'shadow-lg',
-        )
-        expect(frame.querySelector(':scope > nav')).toHaveClass(
-            'rounded-2xl',
-            'shadow-lg',
-        )
-    })
-
-    it('390px에서는 mobile safe gutter와 메뉴 접근성을 그대로 유지한다', async () => {
-        useViewport(390)
-        const view = renderWorkbench(
-            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.balanced}`,
-        )
-        await screen.findByRole('heading', {
-            name: '상단 네비게이션 레이아웃 4안',
-        })
-
-        expect(
-            view.container.querySelector('[data-workbench-navigation-frame]'),
-        ).toBeNull()
-        const mobileNav = view.container.querySelector<HTMLElement>(
-            'nav.fixed.inset-x-0',
-        )!
-        expect(mobileNav).toHaveClass(
-            'pb-[env(safe-area-inset-bottom)]',
-            'xl:hidden',
-        )
-        for (const item of mobileNav.children) {
-            expect(item).toHaveClass('flex-1')
-        }
-        for (const option of screen.getAllByRole('link', {
-            name: /절제형|균형형|플로팅형/,
-        })) {
-            expect(option).toHaveClass('min-h-11', 'min-w-0')
-        }
-    })
-
     it.each([390, 1280])(
-        '%ipx 콘텐츠 동행형은 navigation·content·footer의 동일 폭 sticky 구조를 제공한다',
+        '%ipx 접점 고정형은 normal flow와 동일 폭 도킹 구조를 제공한다',
         async (width) => {
             useViewport(width)
             const view = renderWorkbench(
-                `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.contentCompanion}`,
+                `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.contactDock}`,
             )
             await screen.findByRole('heading', {
                 name: '상단 네비게이션 레이아웃 4안',
@@ -301,18 +178,17 @@ describe('WorkbenchRoutes', () => {
                 '[data-workbench-footer-measure]',
             )!
 
-            expect(frame).toHaveClass('sticky', 'top-3', 'z-30', 'px-3')
+            expect(frame).toHaveClass('sticky', 'top-0', 'z-30')
+            expect(frame).toHaveAttribute('data-workbench-dock-state')
+            expect(frame.previousElementSibling).toHaveAttribute(
+                'data-workbench-dock-sentinel',
+                NAVIGATION_LAYOUT_VARIANTS.contactDock,
+            )
             expect(navigation).toHaveClass(
                 'w-full',
                 'max-w-[1440px]',
                 'rounded-xl',
             )
-            expect(
-                screen.getByRole('heading', {
-                    name: '스크롤 동작 확인 영역',
-                }).parentElement,
-            ).toHaveClass('min-h-screen')
-
             const navigationBounds = navigation.getBoundingClientRect()
             for (const target of [content, footer]) {
                 const bounds = target.getBoundingClientRect()
@@ -324,6 +200,64 @@ describe('WorkbenchRoutes', () => {
             }
         },
     )
+
+    it('4안은 실제 공용 navigation을 유지하며 도킹 상태 변화만 구분한다', async () => {
+        useViewport(1280)
+        const view = renderWorkbench(
+            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.transitionDock}`,
+        )
+        await screen.findByRole('heading', {
+            name: '상단 네비게이션 레이아웃 4안',
+        })
+
+        expect(
+            screen.getAllByRole('link', {
+                name: /접점 고정형|도킹 전환형|컴팩트 도킹형|방향 반응형/,
+            }),
+        ).toHaveLength(4)
+        expect(screen.getByText('권장')).toBeVisible()
+        await waitFor(() => {
+            expect(
+                view.container.querySelector('[data-horizontal-root]'),
+            ).toBeInTheDocument()
+        })
+        expect(
+            view.container.querySelector('[data-workbench-nav-measure]'),
+        ).toHaveClass('transition-all', 'motion-reduce:transition-none')
+    })
+
+    it('390px에서도 실제 mobile menu와 safe-area 접근성을 유지한다', async () => {
+        useViewport(390)
+        const view = renderWorkbench(
+            `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.compactDock}`,
+        )
+        await screen.findByRole('heading', {
+            name: '상단 네비게이션 레이아웃 4안',
+        })
+
+        await waitFor(() => {
+            expect(
+                view.container.querySelector(
+                    '[data-workbench-navigation-frame]',
+                ),
+            ).toBeInTheDocument()
+        })
+        const mobileNav = view.container.querySelector<HTMLElement>(
+            'nav.fixed.inset-x-0',
+        )!
+        expect(mobileNav).toHaveClass(
+            'pb-[env(safe-area-inset-bottom)]',
+            'xl:hidden',
+        )
+        for (const item of mobileNav.children) {
+            expect(item).toHaveClass('flex-1')
+        }
+        for (const option of screen.getAllByRole('link', {
+            name: /접점 고정형|도킹 전환형|컴팩트 도킹형|방향 반응형/,
+        })) {
+            expect(option).toHaveClass('min-h-11', 'min-w-0')
+        }
+    })
 
     it.each([390, 1280])(
         '%ipx에서 팔레트 scroller 밖의 page-level intrinsic overflow를 만들지 않는다',

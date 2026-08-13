@@ -25,21 +25,15 @@ export default function NavigationLayoutScenario({
     const selected =
         scenarioFixture.layouts.find(({ id }) => id === requested) ??
         scenarioFixture.layouts.find(
-            ({ id }) => id === NAVIGATION_LAYOUT_VARIANTS.balanced,
+            ({ id }) => id === NAVIGATION_LAYOUT_VARIANTS.contactDock,
         )!
 
     useLayoutEffect(() => {
-        const media = window.matchMedia('(min-width: 1280px)')
         let release: () => void = () => undefined
         let frame = 0
         const apply = () => {
             release()
             cancelAnimationFrame(frame)
-            if (
-                !media.matches &&
-                selected.id !== NAVIGATION_LAYOUT_VARIANTS.contentCompanion
-            )
-                return
             frame = requestAnimationFrame(() => {
                 if (!scenarioRef.current) return
                 release = installNavigationLayoutPreview(
@@ -49,9 +43,7 @@ export default function NavigationLayoutScenario({
             })
         }
         apply()
-        media.addEventListener('change', apply)
         return () => {
-            media.removeEventListener('change', apply)
             cancelAnimationFrame(frame)
             release()
         }
@@ -71,9 +63,9 @@ export default function NavigationLayoutScenario({
                     상단 네비게이션 레이아웃 4안
                 </h1>
                 <p className="mt-2 max-w-[65ch] break-words text-sm leading-6 text-content-muted">
-                    위의 실제 상단 바와 메뉴, 아래의 실제 푸터를 함께 보며 콘텐츠
-                    폭, 좌우 여백, 입체감을 비교합니다. 메뉴·인증·잔액 고정 데이터와
-                    키보드 동작은 운영 컴포넌트를 그대로 사용합니다.
+                    실제 상단 바와 메뉴가 콘텐츠 경계까지 일반 흐름으로 이동한 뒤
+                    고정되는 네 가지 방식을 비교합니다. 내비게이션·콘텐츠·푸터의
+                    가로 폭과 실제 인증·잔액·키보드 동작은 그대로 유지합니다.
                 </p>
             </header>
 
@@ -141,23 +133,21 @@ export default function NavigationLayoutScenario({
                 </dl>
             </section>
 
-            {selected.id === NAVIGATION_LAYOUT_VARIANTS.contentCompanion && (
-                <section className="min-h-screen rounded-xl border border-content-line bg-content-surface p-4">
-                    <h2 className="text-lg font-bold text-content-fg">
-                        스크롤 동작 확인 영역
-                    </h2>
-                    <p className="mt-2 max-w-[65ch] text-sm leading-6 text-content-muted">
-                        아래로 스크롤해도 실제 내비게이션은 콘텐츠와 같은 가로 폭을
-                        유지하며 화면 상단 12px 위치를 따라옵니다. 메뉴와 드롭다운은
-                        잘리지 않도록 열린 영역에 유지됩니다.
-                    </p>
-                </section>
-            )}
+            <section className="min-h-screen rounded-xl border border-content-line bg-content-surface p-4">
+                <h2 className="text-lg font-bold text-content-fg">
+                    임계점과 도킹 상태 확인 영역
+                </h2>
+                <p className="mt-2 max-w-[65ch] text-sm leading-6 text-content-muted">
+                    처음에는 내비게이션이 문서와 함께 움직입니다. 콘텐츠 상단 경계가
+                    화면 상단에 닿은 뒤에는 같은 가로 폭을 유지한 채 고정되며, 선택한
+                    안에 따라 표면·높이·스크롤 방향 반응만 달라집니다.
+                </p>
+            </section>
 
             <p className="rounded-lg border border-content-line bg-content-surface px-4 py-3 text-sm leading-6 text-content-muted">
-                390px에서는 기존 모바일 상단 바와 safe-area 하단 메뉴를 유지합니다.
-                콘텐츠 동행형은 모바일에서도 같은 폭을 유지하고, 나머지 데스크톱
-                전용 틀은 1280px 이상에서만 적용됩니다.
+                390px에서는 실제 모바일 상단 바와 safe-area 하단 메뉴를 유지합니다.
+                어떤 안에서도 드롭다운과 메뉴를 자르는 overflow 컨테이너는 만들지
+                않습니다.
             </p>
         </div>
     )

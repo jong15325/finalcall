@@ -70,14 +70,12 @@ try {
             )
         }
 
-        const navigationVariants = viewport.mobile
-            ? ['fc-nav-balanced', 'fc-nav-content-companion']
-            : [
-                  'fc-nav-restrained',
-                  'fc-nav-balanced',
-                  'fc-nav-floating',
-                  'fc-nav-content-companion',
-              ]
+        const navigationVariants = [
+            'fc-nav-contact-dock',
+            'fc-nav-transition-dock',
+            'fc-nav-compact-dock',
+            'fc-nav-direction-dock',
+        ]
         for (const variant of navigationVariants) {
             await cdp.send('Page.navigate', {
                 url: `${navigationPageUrl}?variant=${variant}`,
@@ -86,76 +84,91 @@ try {
                 cdp,
                 '[data-testid=navigation-layout-scenario]',
             )
-            if (!viewport.mobile || variant === 'fc-nav-content-companion') {
-                await waitForScenario(cdp, '[data-workbench-nav-measure]')
-            }
-            const companion = variant === 'fc-nav-content-companion'
-            const initialNavigationResult = companion
-                ? await cdp.send('Runtime.evaluate', {
-                      expression: navigationAuditExpression(viewport.mobile),
-                      returnByValue: true,
-                  })
-                : null
-            if (companion) {
-                await cdp.send('Runtime.evaluate', {
-                    expression: 'window.scrollTo(0, 640)',
-                })
-                await delay(100)
-            }
-            const navigationResult = await cdp.send('Runtime.evaluate', {
+            await waitForScenario(cdp, '[data-workbench-nav-measure]')
+            const beforeResult = await cdp.send('Runtime.evaluate', {
                 expression: navigationAuditExpression(viewport.mobile),
                 returnByValue: true,
             })
-            const navigationAudit = navigationResult.result.value
-            const initialNavigationAudit = initialNavigationResult?.result.value
+            const before = beforeResult.result.value
+            await cdp.send('Runtime.evaluate', {
+                expression:
+                    'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().top)',
+            })
+            await delay(100)
+            const thresholdResult = await cdp.send('Runtime.evaluate', {
+                expression: navigationAuditExpression(viewport.mobile),
+                returnByValue: true,
+            })
+            const threshold = thresholdResult.result.value
+            await cdp.send('Runtime.evaluate', {
+                expression: 'window.scrollTo(0, window.scrollY + 480)',
+            })
+            await delay(100)
+            const afterResult = await cdp.send('Runtime.evaluate', {
+                expression: navigationAuditExpression(viewport.mobile),
+                returnByValue: true,
+            })
+            const after = afterResult.result.value
+            let upward = null
+            if (variant === 'fc-nav-direction-dock') {
+                await cdp.send('Runtime.evaluate', {
+                    expression: 'window.scrollTo(0, window.scrollY - 160)',
+                })
+                await delay(100)
+                const upwardResult = await cdp.send('Runtime.evaluate', {
+                    expression: navigationAuditExpression(viewport.mobile),
+                    returnByValue: true,
+                })
+                upward = upwardResult.result.value
+            }
             if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
                 console.log(
                     JSON.stringify(
-                        { viewport, variant, navigation: navigationAudit },
+                        { viewport, variant, before, threshold, after, upward },
                         null,
                         2,
                     ),
                 )
             }
-            const companionFailed =
-                companion &&
-                (!navigationAudit.contentAligned ||
-                    navigationAudit.delta.left !== 0 ||
-                    navigationAudit.delta.right !== 0 ||
-                    navigationAudit.delta.width !== 0 ||
-                    navigationAudit.contentDelta.left !== 0 ||
-                    navigationAudit.contentDelta.right !== 0 ||
-                    navigationAudit.contentDelta.width !== 0 ||
-                    !navigationAudit.stickyMaintained ||
-                    navigationAudit.navBounds.top !==
-                        initialNavigationAudit.navBounds.top ||
-                    navigationAudit.scrollY === 0)
-            const navigationFailed = viewport.mobile
-                ? !navigationAudit.documentFits ||
-                  !navigationAudit.safeArea ||
-                  !navigationAudit.mobileUsable ||
-                  companionFailed
-                : !navigationAudit.documentFits ||
-                  !navigationAudit.aligned ||
-                  navigationAudit.desktopMenuCount === 0 ||
-                  companionFailed
+            const audits = [before, threshold, after, upward].filter(Boolean)
+            const navigationFailed =
+                before.dockState !== 'flow' ||
+                before.navBounds.top <= 0 ||
+                threshold.dockState !== 'stuck' ||
+                threshold.navBounds.top !== 0 ||
+                after.dockState !== 'stuck' ||
+                after.navBounds.top !== 0 ||
+                before.frameHeight !== after.frameHeight ||
+                audits.some(
+                    (entry) =>
+                        !entry.documentFits ||
+                        !entry.alignedExactly ||
+                        !entry.contentAligned ||
+                        !entry.dropdownUnclipped,
+                ) ||
+                (viewport.mobile
+                    ? !after.safeArea || !after.mobileUsable
+                    : after.desktopMenuCount === 0) ||
+                (variant === 'fc-nav-contact-dock' &&
+                    before.surfaceClassName !== after.surfaceClassName) ||
+                (variant === 'fc-nav-transition-dock' &&
+                    (!after.rounded || !after.shadowed)) ||
+                (variant === 'fc-nav-compact-dock' && !after.compact) ||
+                (variant === 'fc-nav-direction-dock' &&
+                    (after.dockDirection !== 'minimized' ||
+                        upward?.dockDirection !== 'expanded' ||
+                        upward?.compact))
             if (navigationFailed) {
                 console.error(
                     `[workbench] ${viewport.width}px ${variant} navigation layout guard 실패`,
                 )
-                console.error(JSON.stringify(navigationAudit, null, 2))
+                console.error(
+                    JSON.stringify({ before, threshold, after, upward }, null, 2),
+                )
                 process.exitCode = 1
-            } else if (companion) {
-                console.log(
-                    `[workbench] ${viewport.width}px ${variant} navigation/content/footer alignment ${navigationAudit.delta.left}/${navigationAudit.delta.right}/${navigationAudit.delta.width}px, sticky ${navigationAudit.navBounds.top}px`,
-                )
-            } else if (viewport.mobile) {
-                console.log(
-                    `[workbench] ${viewport.width}px mobile safe gutter·menu usability 통과`,
-                )
             } else {
                 console.log(
-                    `[workbench] ${viewport.width}px ${variant} navigation/footer alignment ${navigationAudit.delta.left}/${navigationAudit.delta.right}/${navigationAudit.delta.width}px`,
+                    `[workbench] ${viewport.width}px ${variant} flow→threshold→stuck, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
                 )
             }
         }
@@ -301,6 +314,8 @@ function navigationAuditExpression(mobile) {
     return `(() => {
         const documentElement = document.documentElement
         const mobileNav = document.querySelector('nav.fixed.inset-x-0')
+        const frame = document.querySelector('[data-workbench-navigation-frame]')
+        const sentinel = document.querySelector('[data-workbench-dock-sentinel]')
         const navTarget = document.querySelector('[data-workbench-nav-measure]')
         const footerTarget = document.querySelector('[data-workbench-footer-measure]')
         const contentTarget = document.querySelector('[data-workbench-content-measure]')
@@ -333,6 +348,9 @@ function navigationAuditExpression(mobile) {
               }
             : null
         const mobileBounds = bounds(mobileNav)
+        const frameBounds = bounds(frame)
+        const header = navTarget?.querySelector('header')
+        const surfaceStyle = navTarget ? getComputedStyle(navTarget) : null
         const mobileItems = mobileNav
             ? [...mobileNav.children].map(bounds).filter(Boolean)
             : []
@@ -344,8 +362,21 @@ function navigationAuditExpression(mobile) {
             delta,
             contentDelta,
             aligned: Boolean(delta && delta.left <= 1 && delta.right <= 1 && delta.width <= 1),
+            alignedExactly: Boolean(delta && delta.left === 0 && delta.right === 0 && delta.width === 0),
             contentAligned: Boolean(contentDelta && contentDelta.left === 0 && contentDelta.right === 0 && contentDelta.width === 0),
-            stickyMaintained: Boolean(navBounds && navBounds.top === 12),
+            dockState: frame?.dataset.workbenchDockState,
+            dockDirection: frame?.dataset.workbenchDockDirection,
+            sentinelTop: bounds(sentinel)?.top,
+            frameHeight: frameBounds?.height,
+            surfaceClassName: String(navTarget?.className ?? ''),
+            rounded: Boolean(navTarget?.classList.contains('rounded-xl')),
+            shadowed: Boolean(navTarget?.classList.contains('shadow-sm')),
+            compact: Boolean(header?.classList.contains('h-12')),
+            dropdownUnclipped: Boolean(
+                surfaceStyle &&
+                surfaceStyle.overflowX === 'visible' &&
+                surfaceStyle.overflowY === 'visible'
+            ),
             scrollY: window.scrollY,
             desktopMenuCount: document.querySelectorAll('[data-horizontal-root]:not([disabled])').length,
             safeArea: Boolean(mobileNav && String(mobileNav.className).includes('pb-[env(safe-area-inset-bottom)]')),
