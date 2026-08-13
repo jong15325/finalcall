@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { paths } from '@/app/paths'
 import { WORKBENCH_SCENARIOS } from './registry'
-import { WIND_PARTICLE_VARIANT_IDS } from './scenarioMetadata'
+import {
+    FIRE_PARTICLE_VARIANT_IDS,
+    WATER_PARTICLE_VARIANT_IDS,
+    WIND_PARTICLE_VARIANT_IDS,
+} from './scenarioMetadata'
 import { SEMANTIC_OVERRIDE_KEYS } from './types'
 
 describe('workbench registry', () => {
@@ -75,4 +79,28 @@ describe('workbench registry', () => {
             new Set(fixture.options.map(({ renderer }) => renderer)).size,
         ).toBe(10)
     })
+
+    it.each([
+        ['fire-particle-studies', FIRE_PARTICLE_VARIANT_IDS],
+        ['water-particle-studies', WATER_PARTICLE_VARIANT_IDS],
+    ] as const)(
+        'registers %s with ten lazy rendering principles',
+        async (id, variants) => {
+            const scenario = WORKBENCH_SCENARIOS.find(
+                ({ id: scenarioId }) => scenarioId === id,
+            )!
+            expect(scenario.routeContext).toBe(paths.home)
+            expect(scenario.variants).toEqual(variants)
+            expect(scenario.variants).toHaveLength(10)
+
+            const module = await scenario.load()
+            const fixture = module.fixture as {
+                options: readonly { renderer: string }[]
+            }
+            expect(fixture.options).toHaveLength(10)
+            expect(
+                new Set(fixture.options.map(({ renderer }) => renderer)).size,
+            ).toBe(10)
+        },
+    )
 })

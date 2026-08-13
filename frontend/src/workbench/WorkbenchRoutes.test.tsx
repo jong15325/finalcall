@@ -486,4 +486,33 @@ describe('WorkbenchRoutes', () => {
         expect(screen.getAllByText('추천 이유')).toHaveLength(10)
         expect(screen.getAllByText('트레이드오프')).toHaveLength(10)
     })
+
+    it.each([
+        ['fire', '불 파티클 렌더링 10안'],
+        ['water', '물 파티클 렌더링 10안'],
+    ] as const)(
+        'DEV route에서 %s 렌더링 10안을 실제 AppShell 안에 동시에 표시한다',
+        async (element, heading) => {
+            const view = renderWorkbench(
+                `/__design/${element}-particle-studies`,
+            )
+
+            expect(
+                await screen.findByRole('heading', { name: heading }),
+            ).toBeVisible()
+            expect(
+                view.container.querySelectorAll(
+                    `[data-element-particle="${element}"]`,
+                ),
+            ).toHaveLength(10)
+            expect(
+                view.container.querySelectorAll(`[data-${element}-canvas]`),
+            ).toHaveLength(10)
+            expect(screen.getAllByText('렌더링 원리')).toHaveLength(10)
+            expect(screen.getAllByText('추천 이유')).toHaveLength(10)
+            expect(
+                screen.getByRole('link', { name: '선택됨' }),
+            ).toHaveAttribute('aria-current', 'true')
+        },
+    )
 })
