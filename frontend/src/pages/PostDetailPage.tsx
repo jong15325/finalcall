@@ -186,7 +186,9 @@ export default function PostDetailPage() {
                                 고정
                             </span>
                         )}
-                        {post.title}
+                        <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+                            {post.title}
+                        </span>
                     </h1>
                     <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-content-subtle">
                         <span className="inline-flex items-center gap-1.5 font-bold text-content-fg">
@@ -286,7 +288,10 @@ export default function PostDetailPage() {
                         commentCount={post.commentCount}
                     />
                 ) : boardQuery.isError ? null : (
-                    <div aria-hidden className="mt-6 border-t border-content-line pt-6">
+                    <div
+                        aria-hidden
+                        className="mt-6 border-t border-content-line pt-6"
+                    >
                         <div className="h-5 w-24 animate-pulse rounded bg-content-soft" />
                         <div className="mt-4 h-16 animate-pulse rounded-lg bg-content-soft" />
                     </div>

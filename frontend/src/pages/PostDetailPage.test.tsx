@@ -94,15 +94,10 @@ describe('PostDetailPage 공통 콘텐츠 폭 계약', () => {
             expect(layout).toHaveClass('w-full', 'min-w-0')
             expect(layout).not.toHaveClass('mx-auto', 'max-w-3xl')
             expect(article).toHaveClass('w-full', 'min-w-0')
-            expect(screen.getByRole('heading', { level: 1 })).toHaveClass(
-                'min-w-0',
-                'break-words',
-            )
-            expect(prose).toHaveClass(
-                'min-w-0',
-                'max-w-[75ch]',
-                'break-words',
-            )
+            expect(
+                screen.getByText(longText, { selector: 'h1 > span' }),
+            ).toHaveClass('min-w-0', 'break-words', '[overflow-wrap:anywhere]')
+            expect(prose).toHaveClass('min-w-0', 'max-w-[75ch]', 'break-words')
             expect(article).toContainElement(screen.getByLabelText('댓글'))
             expect(article).toContainElement(
                 screen.getByRole('button', { name: '댓글 등록' }),
@@ -131,9 +126,11 @@ describe('PostDetailPage 공통 콘텐츠 폭 계약', () => {
             error: new Error('일시 오류'),
         })
         renderPage()
-        const errorState = screen.getByRole('heading', {
-            level: 2,
-        }).closest('section')
+        const errorState = screen
+            .getByRole('heading', {
+                level: 2,
+            })
+            .closest('section')
         expect(errorState).toHaveClass('bg-content-surface')
         expect(errorState).not.toHaveClass('max-w-3xl')
     })

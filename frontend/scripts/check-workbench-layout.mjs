@@ -112,8 +112,8 @@ try {
             await cdp.send('Runtime.evaluate', {
                 expression:
                     variant === 'fc-nav-contact-dock'
-                        ? 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().bottom + 1)'
-                        : 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().top)',
+                        ? "window.scrollTo(0, window.scrollY + document.querySelector('[data-workbench-dock-sentinel]').getBoundingClientRect().bottom + 1)"
+                        : "window.scrollTo(0, window.scrollY + document.querySelector('[data-workbench-dock-sentinel]').getBoundingClientRect().top)",
             })
             await delay(100)
             const thresholdResult = await cdp.send('Runtime.evaluate', {
@@ -235,17 +235,19 @@ try {
             const reference = navigationSnapshots.get(referenceVariant)
             const sameSurrounding = Boolean(
                 contact &&
-                    reference &&
-                    !contact.hasBacking &&
-                    !reference.hasBacking &&
-                    contact.surfaceDirectChildOfFrame &&
-                    reference.surfaceDirectChildOfFrame &&
-                    contact.frameBackgroundColor === reference.frameBackgroundColor &&
-                    contact.surfaceBackgroundColor === reference.surfaceBackgroundColor &&
-                    contact.cornerSurroundingColors.join('|') ===
-                        reference.cornerSurroundingColors.join('|') &&
-                    contact.bottomCornerSurroundingColors.join('|') ===
-                        reference.bottomCornerSurroundingColors.join('|')
+                reference &&
+                !contact.hasBacking &&
+                !reference.hasBacking &&
+                contact.surfaceDirectChildOfFrame &&
+                reference.surfaceDirectChildOfFrame &&
+                contact.frameBackgroundColor ===
+                    reference.frameBackgroundColor &&
+                contact.surfaceBackgroundColor ===
+                    reference.surfaceBackgroundColor &&
+                contact.cornerSurroundingColors.join('|') ===
+                    reference.cornerSurroundingColors.join('|') &&
+                contact.bottomCornerSurroundingColors.join('|') ===
+                    reference.bottomCornerSurroundingColors.join('|'),
             )
             if (!sameSurrounding) {
                 console.error(
@@ -283,7 +285,7 @@ try {
         })
         await cdp.send('Runtime.evaluate', {
             expression:
-                'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-app-navigation-sentinel]\').getBoundingClientRect().bottom + 1)',
+                "window.scrollTo(0, window.scrollY + document.querySelector('[data-app-navigation-sentinel]').getBoundingClientRect().bottom + 1)",
         })
         await delay(100)
         const productionThreshold = (
@@ -354,6 +356,38 @@ try {
         } else {
             console.log(
                 `[production] ${viewport.width}px navigation top ${productionBefore.navBounds.top}→${productionThreshold.navBounds.top}→${productionAfter.navBounds.top}px, gap ${productionBefore.contentGap}px, radius ${productionBefore.navRadius.join(' ')}, alignment ${productionAfter.delta.left}/${productionAfter.delta.right}/${productionAfter.delta.width}px`,
+            )
+        }
+
+        await cdp.send('Runtime.evaluate', {
+            expression: installPostDetailFixtureExpression(),
+        })
+        await cdp.send('Runtime.evaluate', {
+            expression: `history.pushState({}, '', '/boards/community/P-1'); window.dispatchEvent(new PopStateEvent('popstate')); window.scrollTo(0, 0)`,
+        })
+        await waitForScenario(cdp, 'h1 > span')
+        const postDetailAudit = (
+            await cdp.send('Runtime.evaluate', {
+                expression: postDetailAuditExpression(),
+                returnByValue: true,
+            })
+        ).result.value
+        if (
+            !postDetailAudit.documentFits ||
+            !postDetailAudit.layoutFillsContent ||
+            !postDetailAudit.titleFits ||
+            !postDetailAudit.proseFits ||
+            !postDetailAudit.commentsFit ||
+            !postDetailAudit.controlsFit
+        ) {
+            console.error(
+                `[production] ${viewport.width}px post detail layout guard 실패`,
+            )
+            console.error(JSON.stringify(postDetailAudit, null, 2))
+            process.exitCode = 1
+        } else {
+            console.log(
+                `[production] ${viewport.width}px post detail alignment ${postDetailAudit.delta.left}/${postDetailAudit.delta.right}/${postDetailAudit.delta.width}px, overflow 0건`,
             )
         }
     }
@@ -492,6 +526,102 @@ async function waitForScenario(cdp, selector) {
         await delay(50)
     }
     throw new Error('워크벤치 시나리오가 렌더되지 않았습니다.')
+}
+
+function installPostDetailFixtureExpression() {
+    return `(() => {
+        const nativeFetch = window.fetch.bind(window)
+        const longText = '공백없이아주긴게시글제목'.repeat(100)
+        const response = (data) => Promise.resolve(new Response(
+            JSON.stringify({ success: true, data, timestamp: '2026-08-13T00:00:00Z' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ))
+        window.fetch = (input, init) => {
+            const requestUrl = typeof input === 'string' ? input : input.url
+            const path = new URL(requestUrl, location.origin).pathname
+            if (path.endsWith('/boards/community/posts/P-1')) {
+                return response({
+                    postPublicId: 'P-1', boardSlug: 'community', title: longText,
+                    content: longText, authorNickname: '작성자', isPinned: true,
+                    viewCount: 12, commentCount: 1, images: [],
+                    createdAt: '2026-08-13T00:00:00Z',
+                    updatedAt: '2026-08-13T00:00:00Z', editable: true,
+                })
+            }
+            if (path.endsWith('/boards/community')) {
+                return response({
+                    slug: 'community', name: '커뮤니티', description: null,
+                    boardType: 'GENERAL', writePolicy: 'AUTHENTICATED',
+                    allowComments: true, sortOrder: 1,
+                })
+            }
+            if (path.endsWith('/posts/P-1/comments')) {
+                return response({
+                    content: [{
+                        commentPublicId: 'C-1', authorNickname: '댓글작성자',
+                        content: '공백없는아주긴댓글'.repeat(120),
+                        createdAt: '2026-08-13T00:00:00Z',
+                        updatedAt: '2026-08-13T00:00:00Z', editable: false,
+                        ownedByMe: false, likeCount: 0, dislikeCount: 0,
+                        myReaction: null, deleted: false, replyCount: 0,
+                    }],
+                    page: 0, size: 20, totalElements: 1, totalPages: 1,
+                })
+            }
+            return nativeFetch(input, init)
+        }
+    })()`
+}
+
+function postDetailAuditExpression() {
+    return `(() => {
+        const documentElement = document.documentElement
+        const view = document.querySelector('#view')
+        const layout = view?.firstElementChild
+        const title = layout?.querySelector('h1 > span')
+        const prose = layout?.querySelector('article > div.whitespace-pre-wrap')
+        const comment = layout?.querySelector('section[aria-label="댓글"] li p.break-words')
+        const viewStyle = view ? getComputedStyle(view) : null
+        const viewBounds = view?.getBoundingClientRect()
+        const layoutBounds = layout?.getBoundingClientRect()
+        const contentBounds = viewBounds && viewStyle ? {
+            left: viewBounds.left + parseFloat(viewStyle.paddingLeft),
+            right: viewBounds.right - parseFloat(viewStyle.paddingRight),
+            width: viewBounds.width - parseFloat(viewStyle.paddingLeft) - parseFloat(viewStyle.paddingRight),
+        } : null
+        const delta = contentBounds && layoutBounds ? {
+            left: Math.abs(contentBounds.left - layoutBounds.left),
+            right: Math.abs(contentBounds.right - layoutBounds.right),
+            width: Math.abs(contentBounds.width - layoutBounds.width),
+        } : { left: null, right: null, width: null }
+        const fits = (element) => Boolean(
+            element && element.scrollWidth <= element.clientWidth
+        )
+        const controls = layout ? [...layout.querySelectorAll('button, a')] : []
+        return {
+            documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
+            layoutFillsContent: Boolean(
+                delta.left < 0.01 && delta.right < 0.01 && delta.width < 0.01
+            ),
+            titleFits: fits(title),
+            proseFits: fits(prose),
+            commentsFit: fits(comment),
+            controlsFit: Boolean(
+                layoutBounds && controls.length > 0 && controls.every((control) => {
+                    const rect = control.getBoundingClientRect()
+                    return rect.left >= layoutBounds.left - 0.01 &&
+                        rect.right <= layoutBounds.right + 0.01
+                })
+            ),
+            delta,
+            widths: {
+                document: [documentElement.scrollWidth, documentElement.clientWidth],
+                title: title ? [title.scrollWidth, title.clientWidth] : null,
+                prose: prose ? [prose.scrollWidth, prose.clientWidth] : null,
+                comment: comment ? [comment.scrollWidth, comment.clientWidth] : null,
+            },
+        }
+    })()`
 }
 
 function productionNavigationAuditExpression() {
