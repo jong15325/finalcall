@@ -168,12 +168,10 @@ try {
                       threshold.navBounds.top !== selectedOffset ||
                       before.contentGap !== 0 ||
                       !before.radiusMatches ||
-                      !before.silhouetteVisible ||
+                      !before.backingIsDarkChrome ||
                       !before.cornerClipped ||
-                      !before.topCornersChrome ||
-                      before.whiteCornerPixels !== 0 ||
-                      !before.bottomCornersBacked ||
-                      before.bottomWhitePixels !== 0 ||
+                      !before.topCornersDarkChrome ||
+                      !before.bottomCornersDarkChrome ||
                       !dropdown?.dropdownUnclipped ||
                       !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
@@ -184,11 +182,9 @@ try {
                 after.navBounds.top !== (selectedAtTop ? selectedOffset : 0) ||
                 (selectedAtTop &&
                     (!after.radiusMatches ||
-                        !after.silhouetteVisible ||
-                        !after.topCornersChrome ||
-                        after.whiteCornerPixels !== 0 ||
-                        !after.bottomCornersBacked ||
-                        after.bottomWhitePixels !== 0)) ||
+                        !after.backingIsDarkChrome ||
+                        !after.topCornersDarkChrome ||
+                        !after.bottomCornersDarkChrome)) ||
                 before.frameHeight !== after.frameHeight ||
                 audits.some(
                     (entry) =>
@@ -411,6 +407,20 @@ function navigationAuditExpression(mobile) {
         const surfaceStyle = navTarget ? getComputedStyle(navTarget) : null
         const backingStyle = navBacking ? getComputedStyle(navBacking) : null
         const contentStyle = contentTarget ? getComputedStyle(contentTarget) : null
+        const semanticBackground = (token) => {
+            const probe = document.createElement('span')
+            probe.style.backgroundColor = 'var(' + token + ')'
+            document.body.append(probe)
+            const color = getComputedStyle(probe).backgroundColor
+            probe.remove()
+            return color
+        }
+        const expectedBackingColor = semanticBackground('--chrome-bg-strong')
+        const excludedBackingColors = [
+            semanticBackground('--content-soft'),
+            semanticBackground('--content-surface'),
+            semanticBackground('--app-canvas'),
+        ]
         const menu = navTarget?.querySelector('[role="menu"]')
         const menuBounds = bounds(menu)
         const cornerElements = navBounds
@@ -465,41 +475,30 @@ function navigationAuditExpression(mobile) {
                 surfaceStyle.borderBottomLeftRadius === expectedRadius &&
                 surfaceStyle.borderBottomRightRadius === expectedRadius
             ),
-            silhouetteVisible: Boolean(
+            backingIsDarkChrome: Boolean(
                 surfaceStyle &&
                 backingStyle &&
-                backingStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
-                backingStyle.backgroundColor !== 'rgb(255, 255, 255)' &&
+                navBacking?.classList.contains('bg-chrome-strong') &&
+                backingStyle.backgroundColor === expectedBackingColor &&
+                !excludedBackingColors.includes(backingStyle.backgroundColor) &&
                 backingStyle.backgroundColor !== surfaceStyle.backgroundColor
             ),
-            topCornersChrome: Boolean(
+            topCornersDarkChrome: Boolean(
                 cornerElements.length === 2 &&
-                cornerElements.every(
-                    (element) =>
-                        element &&
-                        (element === navTarget ||
-                            navTarget?.contains(element) ||
-                            element === navBacking)
+                cornerElements.every((element) => element === navBacking) &&
+                cornerColors.every(
+                    (color) => color === expectedBackingColor
                 )
             ),
             cornerColors,
-            whiteCornerPixels: cornerColors.filter(
-                (color) => color === 'rgb(255, 255, 255)'
-            ).length,
-            bottomCornersBacked: Boolean(
+            bottomCornersDarkChrome: Boolean(
                 bottomCornerElements.length === 2 &&
-                bottomCornerElements.every(
-                    (element) =>
-                        element &&
-                        (element === navTarget ||
-                            navTarget?.contains(element) ||
-                            element === navBacking)
+                bottomCornerElements.every((element) => element === navBacking) &&
+                bottomCornerColors.every(
+                    (color) => color === expectedBackingColor
                 )
             ),
             bottomCornerColors,
-            bottomWhitePixels: bottomCornerColors.filter(
-                (color) => color === 'rgb(255, 255, 255)'
-            ).length,
             cornerClipped: Boolean(
                 surfaceStyle &&
                 surfaceStyle.overflowX === 'hidden' &&

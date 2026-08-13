@@ -218,7 +218,8 @@ describe('WorkbenchRoutes', () => {
             expect(navigation.style.borderBottomRightRadius).toBe(
                 expectedRadius,
             )
-            expect(navigation.parentElement).toHaveClass('bg-content-soft')
+            expect(navigation.parentElement).toHaveClass('bg-chrome-strong')
+            expect(navigation.parentElement).not.toHaveClass('bg-content-soft')
             const navigationBounds = navigation.getBoundingClientRect()
             for (const target of [content, footer]) {
                 const bounds = target.getBoundingClientRect()

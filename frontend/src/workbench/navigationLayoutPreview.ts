@@ -102,7 +102,7 @@ export function installNavigationLayoutPreview(
             'mx-auto',
             'w-full',
             'max-w-[1440px]',
-            'bg-content-soft',
+            'bg-chrome-strong',
         )
         const applySelectedOffset = () => {
             const offset = desktopOffset.matches ? '12px' : '8px'
