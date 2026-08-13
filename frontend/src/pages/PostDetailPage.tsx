@@ -128,7 +128,7 @@ export default function PostDetailPage() {
 
     if (isPending) {
         return (
-            <div className="rounded-2xl border border-content-line bg-content-surface p-7">
+            <div className="w-full min-w-0 rounded-2xl border border-content-line bg-content-surface p-7">
                 <div className="h-6 w-2/3 animate-pulse rounded bg-content-soft" />
                 <div className="mt-4 h-3 w-1/3 animate-pulse rounded bg-content-soft" />
                 <div className="mt-8 space-y-3">
@@ -166,7 +166,7 @@ export default function PostDetailPage() {
     }
 
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+        <div className="flex w-full min-w-0 flex-col gap-4">
             {/* 뒤로 */}
             <Link
                 to={boardPath(slug)}
@@ -176,10 +176,10 @@ export default function PostDetailPage() {
                 {boardQuery.data?.name ?? '목록'}
             </Link>
 
-            <article className="rounded-2xl border border-content-line bg-content-surface p-6 sm:p-7">
+            <article className="w-full min-w-0 rounded-2xl border border-content-line bg-content-surface p-6 sm:p-7">
                 {/* 헤더 */}
-                <header className="border-b border-content-line pb-5">
-                    <h1 className="flex items-start gap-2 text-[22px] font-bold leading-snug text-content-fg">
+                <header className="min-w-0 border-b border-content-line pb-5">
+                    <h1 className="flex min-w-0 items-start gap-2 break-words text-[22px] font-bold leading-snug text-content-fg">
                         {post.isPinned && (
                             <span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-highlight-soft px-2 py-0.5 text-[11px] font-bold text-brand-highlight-deep">
                                 <TbPin aria-hidden className="size-3" />
@@ -188,7 +188,7 @@ export default function PostDetailPage() {
                         )}
                         {post.title}
                     </h1>
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-content-subtle">
+                    <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-content-subtle">
                         <span className="inline-flex items-center gap-1.5 font-bold text-content-fg">
                             <span className="grid size-6 place-items-center rounded-full bg-chrome-selected text-[11px] font-bold text-on-strong">
                                 {avatarInitial(post.authorNickname)}
@@ -220,7 +220,7 @@ export default function PostDetailPage() {
 
                         {/* editable=true(작성자 or 관리자) 일 때만 */}
                         {post.editable && (
-                            <span className="ml-auto flex items-center gap-2">
+                            <span className="ml-auto flex max-w-full flex-wrap items-center gap-2">
                                 <Link
                                     to={boardPostEditPath(slug, postId)}
                                     className="inline-flex items-center gap-1 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-bold text-content-muted hover:border-brand-structure"
@@ -245,7 +245,7 @@ export default function PostDetailPage() {
                 </header>
 
                 {/* 본문 */}
-                <div className="whitespace-pre-wrap py-6 text-[15px] leading-8 text-content-fg">
+                <div className="min-w-0 max-w-[75ch] break-words whitespace-pre-wrap py-6 text-[15px] leading-8 text-content-fg">
                     {post.content}
                 </div>
 

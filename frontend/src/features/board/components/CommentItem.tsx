@@ -436,7 +436,7 @@ function CommentBody({
                                 </div>
                             </div>
                         ) : (
-                            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-content-fg">
+                            <p className="mt-1 break-words whitespace-pre-wrap text-sm leading-relaxed text-content-fg">
                                 {mention && (
                                     <span className="mr-1 inline-flex h-5 items-center rounded-full bg-brand-structure px-2 align-[1px] text-xs font-bold text-on-strong">
                                         @{mention}

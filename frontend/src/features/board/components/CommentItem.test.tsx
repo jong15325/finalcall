@@ -102,6 +102,16 @@ function renderComment(
 }
 
 describe('<CommentItem> FC-219·FC-223 댓글 UI', () => {
+    it('공백 없는 긴 댓글도 콘텐츠 영역 안에서 줄바꿈한다', () => {
+        const longComment = '긴댓글'.repeat(160)
+        renderComment({}, { content: longComment })
+
+        expect(screen.getByText(longComment)).toHaveClass(
+            'break-words',
+            'whitespace-pre-wrap',
+        )
+    })
+
     it('루트와 답글에서 비공감 UI를 숨기고 공감 카운트만 표시한다', () => {
         renderComment()
 
