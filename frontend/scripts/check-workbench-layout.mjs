@@ -67,9 +67,40 @@ try {
         )
     }
 } finally {
-    if (edge && !edge.killed) edge.kill()
+    await stopEdge(edge)
     await vite.close()
-    rmSync(profilePath, { recursive: true, force: true })
+    await removeProfile(profilePath)
+}
+
+async function stopEdge(process) {
+    if (!process || process.exitCode !== null) return
+
+    const exited = new Promise((resolveExit) => {
+        process.once('exit', resolveExit)
+    })
+    process.kill()
+    await Promise.race([exited, delay(2_000)])
+}
+
+async function removeProfile(path) {
+    const retryableCodes = new Set(['EBUSY', 'ENOTEMPTY', 'EPERM'])
+    const attempts = 8
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            rmSync(path, { recursive: true, force: true })
+            return
+        } catch (error) {
+            if (!retryableCodes.has(error?.code)) throw error
+            if (attempt === attempts) {
+                console.warn(
+                    `[workbench] Edge 임시 프로필 정리를 건너뜁니다 (${error.code}): ${path}`,
+                )
+                return
+            }
+            await delay(attempt * 100)
+        }
+    }
 }
 
 function findEdge() {
