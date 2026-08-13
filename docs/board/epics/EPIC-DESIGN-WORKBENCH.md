@@ -3,9 +3,9 @@ id: EPIC-DESIGN-WORKBENCH
 type: epic
 jira_key: KAN-317
 title: 실제 프론트 기반 디자인 워크벤치 구축
-state: review
+state: done
 children: [FC-283, FC-284, FC-285, FC-286, FC-287, FC-288, FC-290, FC-291, FC-292, FC-293, FC-294, FC-295, FC-296]
-gate: gate3
+gate: null
 ---
 
 ## 목표
