@@ -69,6 +69,12 @@
         --content-fg: var(--fg);
         --content-muted: var(--fg-muted);
         --content-subtle: var(--fg-subtle);
+        --amount-code-tier-1: #607400;
+        --amount-code-tier-2: #0075a5;
+        --amount-code-tier-3: #ce00a5;
+        --amount-code-tier-4: #007d00;
+        --amount-code-tier-5: #a65a00;
+        --amount-code-tier-6: #bd0000;
         --chrome-bg: var(--brand-navy);
         --chrome-bg-strong: var(--brand-navy-900);
         --chrome-bg-raised: var(--brand-navy-800);

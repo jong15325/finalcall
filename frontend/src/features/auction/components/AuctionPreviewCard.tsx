@@ -21,7 +21,7 @@ import type { AuctionSummary } from '@/lib/api/auctions'
  *   홈 추천행은 아트가 위, copy 가 아래인 세로 카드다 — 그래서 별도 컴포넌트로 둔다.
  * ★ **아트는 공용 `ItemFrame`**(프레임·골드포스·스프라이트 규칙 유지) — `itemArt` 로 경로 파생.
  * ★ **가격 = `highestBidAmount ?? startPrice`**, 라벨은 입찰 유무로 갈린다(`auctionPriceOf`).
- *   금액은 `CodeAmount`(정수·코드 아이콘) — `G` 텍스트 단위 금지(§3.3).
+ *   금액은 `CodeAmount`(정수·텍스트 단위) — 축약 화폐 별칭 금지(§3.3).
  * ★ **상태·마감은 클라 파생**(`auctionPhaseOf`, `now>=endAt`) — 서버 status 불신. 카운트다운도 같은 `now`.
  * ★ `now` 는 밖(홈 섹션)이 **단일 타이머**로 주입한다 — 카드마다 타이머를 걸지 않는다.
  * ★ 색은 브랜드 토큰(navy/gold/gray). 목업의 Vuexy 블루는 재구축 폐기 팔레트라 구조만 따른다(§2.9).

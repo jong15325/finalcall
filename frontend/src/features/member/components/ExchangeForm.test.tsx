@@ -70,6 +70,7 @@ describe('<ExchangeForm>', () => {
 
     it('성공 결과에서만 지급액·환율을 표기한다', () => {
         renderForm({ result })
+        expect(screen.getByLabelText('120,000 캐시')).toBeInTheDocument()
         expect(screen.getByLabelText('10,000 코드')).toBeInTheDocument()
         expect(screen.getByText('적용 환율 1 : 1')).toBeInTheDocument()
         expect(screen.getByText('교환이 완료되었습니다.')).toBeInTheDocument()

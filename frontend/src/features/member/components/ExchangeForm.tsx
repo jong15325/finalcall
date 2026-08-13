@@ -71,7 +71,10 @@ function ExchangeForm({
     const errorMessage = localError ?? serverError
 
     return (
-        <section className="flex flex-col rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+        <section
+            id="exchange-form"
+            className="flex min-w-0 max-w-full flex-col rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6"
+        >
             <h2 className="text-base font-bold text-content-fg">
                 캐시 → 게임머니 교환
             </h2>
@@ -101,7 +104,7 @@ function ExchangeForm({
                         aria-describedby={
                             errorMessage ? 'exchangeCashError' : undefined
                         }
-                        className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3.5 py-2.5 text-base font-semibold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
+                        className={`mt-1.5 w-full min-w-0 max-w-full rounded-lg border bg-content-surface px-3.5 py-2.5 text-base font-semibold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
                             errorMessage
                                 ? 'border-danger focus:ring-danger/30'
                                 : 'border-content-line focus:border-control-action focus:ring-control-action/30'
@@ -113,12 +116,13 @@ function ExchangeForm({
                             setRaw(event.target.value.replace(/[^\d]/g, ''))
                         }}
                     />
-                    <p className="mt-1.5 flex items-center gap-1 text-xs text-content-subtle">
+                    <p className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1 text-xs text-content-subtle">
                         보유 캐시
                         <CodeAmount
                             value={cashBalance ?? null}
+                            currency="cash"
                             mode="full"
-                            className="font-semibold text-content-subtle"
+                            className="max-w-full min-w-0 flex-wrap break-all font-semibold text-content-subtle"
                         />
                     </p>
                 </div>
@@ -170,7 +174,7 @@ function ExchangeForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-w-0 whitespace-normal break-words rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {isSubmitting ? '교환 중…' : '교환하기'}
                 </button>

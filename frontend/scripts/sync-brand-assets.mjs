@@ -6,11 +6,11 @@
  * 원본을 옮기지 않고 **빌드 산출물 쪽으로 복사**한다. 복사본(`public/brand/`)은 `.gitignore`
  * 대상이라 바이너리가 레포에 이중 등재되지 않는다 — 정본은 언제나 `docs/game_ui` 한 곳뿐이다.
  *
- * ★ 아이템 아트와 달리 **크로마키 변환이 없다.** 로고·코드 아이콘은 이미 알파(PNG-32) 자산이라
+ * ★ 아이템 아트와 달리 **크로마키 변환이 없다.** 로고는 이미 알파(PNG-32) 자산이라
  * 단순 복사로 충분하다. (아이템 도트 아트만 네 귀퉁이 `#0000FF` 크로마키를 알파로 바꾼다.)
  *
  * ★ 파일명 매핑 — 목업 자산명(`jangteo-logo` 등)에 맞춰 사본 이름을 고정한다. `BrandLogo`·
- * `CodeAmount` 가 이 경로를 참조한다.
+ * `BrandLogo` 가 이 경로를 참조한다.
  *
  * 실행: `npm run dev` / `npm run build` 의 pre 스크립트가 `sync-art` 뒤에 자동 호출한다.
  */
@@ -21,14 +21,13 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 /** 자산 정본(레포 공용). 여기를 편집하지 않는다 — 읽기 전용 원본이다. */
 const SOURCE = resolve(here, '../../docs/game_ui/common')
-/** 복사 대상(미추적). `BrandLogo`·`CodeAmount` 의 참조 경로와 짝을 맞춘다. */
+/** 복사 대상(미추적). `BrandLogo` 의 참조 경로와 짝을 맞춘다. */
 const TARGET = resolve(here, '../public/brand')
 
 /** 원본 파일명 → 사본 파일명. 목업(§5.1) 자산명 규칙을 따른다. */
 const ASSETS = [
     ['logo2.png', 'jangteo-logo.png'], // 펼침 워드마크
     ['logo.png', 'jangteo-logo-mark.png'], // 접힘 심볼
-    ['code-Photoroom.png', 'code.png'], // 코드 화폐 아이콘
 ]
 
 async function main() {

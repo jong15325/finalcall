@@ -39,7 +39,16 @@ describe('<WalletBalanceCard>', () => {
         expect(screen.getByLabelText('4,500,000 코드')).toBeInTheDocument()
         expect(screen.getByLabelText('6,000,000 코드')).toBeInTheDocument()
         expect(screen.getByLabelText('1,500,000 코드')).toBeInTheDocument()
-        expect(screen.getByLabelText('120,000 코드')).toBeInTheDocument()
+        expect(screen.getByLabelText('120,000 캐시')).toBeInTheDocument()
+        expect(screen.getByLabelText('4,500,000 코드')).toHaveClass(
+            'text-[2rem]',
+            'flex-wrap',
+            'break-all',
+        )
+        expect(screen.getByRole('link', { name: '교환하기' })).toHaveAttribute(
+            'href',
+            '#exchange-form',
+        )
     })
 
     it('홀드 미터가 홀드/총 비율을 aria-valuenow 로 노출한다', () => {
@@ -71,7 +80,7 @@ describe('<WalletBalanceCard>', () => {
 
     it('로딩 중에는 금액을 표시하지 않는다', () => {
         renderCard({ balance: undefined, isLoading: true })
-        expect(screen.queryByLabelText(/코드$/)).toBeNull()
+        expect(screen.queryByLabelText(/(?:코드|캐시)$/)).toBeNull()
     })
 
     it('에러 시 안내 문구를 표시한다', () => {

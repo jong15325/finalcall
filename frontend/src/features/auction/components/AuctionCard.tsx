@@ -25,7 +25,7 @@ import type { AuctionSummary } from '@/lib/api/auctions'
  * ★ **아트는 공용 `ItemFrame`**(프레임·골드포스·스프라이트 규칙 유지) — `itemArt` 로 경로 파생.
  *   세로형 `ItemCard` 는 이 화면에서 쓰지 않는다(카드 형태가 다르다).
  * ★ **가격 = `highestBidAmount ?? startPrice`**, 라벨은 입찰 유무로 갈린다(현재가/시작가). 금액은
- *   `CodeAmount`(정수·코드 아이콘) — `G` 텍스트 단위 금지(§3.3).
+ *   `CodeAmount`(정수·텍스트 단위) — 축약 화폐 별칭 금지(§3.3).
  * ★ **상태·마감은 클라 파생**(`auctionPhaseOf`, `now>=endAt`) — 서버 status 불신. 카운트다운도 같은 `now`.
  * ★ 판매자는 `sellerNickname` 원문(마스킹 미결·§8) — 문자열 비교로 본인 판정하지 않는다.
  * ★ 색은 브랜드 토큰(navy/gold/gray) — 목업의 Vuexy 블루(#3867df 등)는 재구축에서 폐기된 팔레트라

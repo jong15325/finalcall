@@ -132,7 +132,11 @@ function AvailableFirst({ balance }: { balance: BalanceResponse }) {
             >
                 <Metric label="총 보유" value={balance.gameMoneyBalance} />
                 <Metric label="입찰 보류" value={balance.gameMoneyHeld} />
-                <Metric label="캐시" value={balance.cashBalance} />
+                <Metric
+                    label="캐시"
+                    value={balance.cashBalance}
+                    currency="cash"
+                />
             </dl>
         </div>
     )
@@ -174,6 +178,7 @@ function BalanceStatement({ balance }: { balance: BalanceResponse }) {
                     label="캐시"
                     note="충전·교환 자산"
                     value={balance.cashBalance}
+                    currency="cash"
                 />
             </dl>
         </div>
@@ -207,6 +212,7 @@ function SplitAssets({ balance }: { balance: BalanceResponse }) {
                 </p>
                 <CodeAmount
                     value={balance.cashBalance}
+                    currency="cash"
                     mode="full"
                     className="mt-1 max-w-full min-w-0 flex-wrap break-all text-xl font-bold text-content-fg"
                 />
@@ -262,7 +268,11 @@ function MobileWallet({ balance }: { balance: BalanceResponse }) {
                     value={balance.gameMoneyBalance}
                 />
                 <StatementRow label="입찰 보류" value={balance.gameMoneyHeld} />
-                <StatementRow label="캐시" value={balance.cashBalance} />
+                <StatementRow
+                    label="캐시"
+                    value={balance.cashBalance}
+                    currency="cash"
+                />
             </dl>
         </div>
     )
@@ -291,19 +301,32 @@ function BalancedMetrics({ balance }: { balance: BalanceResponse }) {
             >
                 <Metric label="총 보유" value={balance.gameMoneyBalance} />
                 <Metric label="입찰 보류" value={balance.gameMoneyHeld} />
-                <Metric label="캐시" value={balance.cashBalance} />
+                <Metric
+                    label="캐시"
+                    value={balance.cashBalance}
+                    currency="cash"
+                />
             </dl>
         </div>
     )
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({
+    label,
+    value,
+    currency,
+}: {
+    label: string
+    value: number
+    currency?: 'code' | 'cash'
+}) {
     return (
         <div className="min-w-0 rounded-lg bg-content-soft px-3 py-3">
             <dt className="text-xs font-bold text-content-muted">{label}</dt>
             <dd className="mt-1 flex w-full min-w-0">
                 <CodeAmount
                     value={value}
+                    currency={currency}
                     mode="full"
                     className="w-full max-w-full min-w-0 flex-1 flex-wrap break-all text-xl font-bold text-content-fg"
                 />
@@ -316,10 +339,12 @@ function StatementRow({
     label,
     note,
     value,
+    currency,
 }: {
     label: string
     note?: string
     value: number
+    currency?: 'code' | 'cash'
 }) {
     return (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
@@ -336,6 +361,7 @@ function StatementRow({
             <dd className="min-w-0 max-w-full">
                 <CodeAmount
                     value={value}
+                    currency={currency}
                     mode="full"
                     className="max-w-full min-w-0 flex-wrap break-all text-base font-bold text-content-fg"
                 />

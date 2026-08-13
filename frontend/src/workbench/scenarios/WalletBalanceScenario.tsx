@@ -1,4 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
+import ExchangeForm from '@/features/member/components/ExchangeForm'
+import WalletBalanceCard from '@/features/member/components/WalletBalanceCard'
+import WalletSummaryCard from '@/features/member/components/WalletSummaryCard'
 import WalletBalanceCandidate from '../candidates/WalletBalanceCandidate'
 import {
     walletBalanceFixture,
@@ -35,6 +38,8 @@ export default function WalletBalanceScenario({
         ? (requestedState as WalletPreviewState)
         : 'ready'
     const usesLongSample = searchParams.get('sample') === 'long'
+    const showsProductionComponents =
+        searchParams.get('implementation') === 'production'
     const balance = usesLongSample
         ? scenarioFixture.balances.longSafeInteger
         : scenarioFixture.balances.standard
@@ -187,7 +192,9 @@ export default function WalletBalanceScenario({
 
             <section
                 data-testid="wallet-study-layout"
-                className="grid w-full min-w-0 max-w-full grid-cols-1 gap-4 lg:grid-cols-2"
+                className={`grid w-full min-w-0 max-w-full grid-cols-1 gap-4 ${
+                    showsProductionComponents ? '' : 'lg:grid-cols-2'
+                }`}
             >
                 <article className="w-full min-w-0 max-w-full rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
                     <p className="text-xs font-bold text-control-action-hover">
@@ -218,11 +225,50 @@ export default function WalletBalanceScenario({
                 </article>
 
                 <div className="w-full min-w-0 max-w-full">
-                    <WalletBalanceCandidate
-                        balance={balance}
-                        state={state}
-                        variant={selected.id}
-                    />
+                    {showsProductionComponents ? (
+                        <div
+                            data-testid="production-wallet-preview"
+                            className="grid min-w-0 gap-4"
+                        >
+                            <div className="grid min-w-0 gap-4 lg:grid-cols-[1.5fr_1fr]">
+                                <WalletBalanceCard
+                                    balance={
+                                        state === 'ready' ? balance : undefined
+                                    }
+                                    isLoading={state === 'loading'}
+                                    isError={state === 'error'}
+                                />
+                                <ExchangeForm
+                                    cashBalance={
+                                        state === 'ready'
+                                            ? balance.cashBalance
+                                            : undefined
+                                    }
+                                    isSubmitting={false}
+                                    submitError={
+                                        state === 'error'
+                                            ? new Error('fixture')
+                                            : null
+                                    }
+                                    result={undefined}
+                                    onExchange={() => undefined}
+                                />
+                            </div>
+                            <WalletSummaryCard
+                                balance={
+                                    state === 'ready' ? balance : undefined
+                                }
+                                isLoading={state === 'loading'}
+                                isError={state === 'error'}
+                            />
+                        </div>
+                    ) : (
+                        <WalletBalanceCandidate
+                            balance={balance}
+                            state={state}
+                            variant={selected.id}
+                        />
+                    )}
                 </div>
             </section>
         </div>

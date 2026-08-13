@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -67,6 +67,12 @@ if (!/'control-action-ink'\s*:\s*'var\(--control-action-ink\)'/u.test(tailwindSo
 if (!/'control-focus-on-dark'\s*:\s*'var\(--control-focus-on-dark\)'/u.test(tailwindSource)) {
     failures.push('tailwind.config.cjs: control-focus-on-dark utility 매핑 누락')
 }
+for (const tier of [1, 2, 3, 4, 5, 6]) {
+    const utility = `amount-code-tier-${tier}`
+    if (!new RegExp(`'${utility}'\\s*:\\s*'var\\(--${utility}\\)'`, 'u').test(tailwindSource)) {
+        failures.push(`tailwind.config.cjs: ${utility} utility 매핑 누락`)
+    }
+}
 
 const tokens = readFileSync(resolve(frontendRoot, tokenRegistry), 'utf8')
 const declarations = [...tokens.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/gu)]
@@ -86,9 +92,22 @@ for (const [name, expected] of [
     ['--control-action-ink', '#ffffff'],
     ['--control-focus', '#c38000'],
     ['--control-focus-on-dark', '#c78300'],
+    ['--amount-code-tier-1', '#607400'],
+    ['--amount-code-tier-2', '#0075a5'],
+    ['--amount-code-tier-3', '#ce00a5'],
+    ['--amount-code-tier-4', '#007d00'],
+    ['--amount-code-tier-5', '#a65a00'],
+    ['--amount-code-tier-6', '#bd0000'],
 ]) {
     if (tokenValues.get(name)?.toLowerCase() !== expected) {
         failures.push(`${tokenRegistry}: ${name} 브라이트 스틸 계약값 불일치`)
+    }
+}
+for (const tier of [1, 2, 3, 4, 5, 6]) {
+    for (const surface of ['--surface', '--surface-sunken']) {
+        const name = `--amount-code-tier-${tier}`
+        const ratio = contrast(resolveHex(name), resolveHex(surface))
+        if (ratio < 4.5) failures.push(`${tokenRegistry}: ${name}/${surface} contrast ${ratio.toFixed(2)} < 4.5`)
     }
 }
 for (const [ink, surface] of [
@@ -115,6 +134,17 @@ for (const [focus, surface] of [
 const indexCss = sources.get('src/index.css') ?? ''
 if (!/\.app-chrome\s*\{\s*--control-focus:\s*var\(--control-focus-on-dark\);\s*\}/u.test(indexCss)) {
     failures.push('src/index.css: dark chrome focus token 소비 누락')
+}
+
+for (const [path, source] of sources) {
+    if (source.includes('code.png')) failures.push(`${path}: 제거된 code.png 참조`)
+}
+const brandSyncSource = readFileSync(resolve(frontendRoot, 'scripts/sync-brand-assets.mjs'), 'utf8')
+if (/code(?:-Photoroom)?\.png/u.test(brandSyncSource)) {
+    failures.push('scripts/sync-brand-assets.mjs: 제거된 코드 화폐 자산 참조')
+}
+if (existsSync(resolve(frontendRoot, 'public/brand/code.png'))) {
+    failures.push('public/brand/code.png: 제거된 코드 화폐 자산 잔존')
 }
 
 for (const [path, source] of sources) {

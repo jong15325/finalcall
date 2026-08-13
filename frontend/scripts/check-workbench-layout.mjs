@@ -438,6 +438,10 @@ try {
             expression: `history.pushState({}, '', '/boards/community/P-1'); window.dispatchEvent(new PopStateEvent('popstate')); window.scrollTo(0, 0)`,
         })
         await waitForScenario(cdp, 'h1 > span')
+        await waitForScenario(
+            cdp,
+            'section[aria-label="댓글"] li p.break-words',
+        )
         const postDetailAudit = (
             await cdp.send('Runtime.evaluate', {
                 expression: postDetailAuditExpression(),
@@ -461,6 +465,43 @@ try {
             console.log(
                 `[production] ${viewport.width}px post detail alignment ${postDetailAudit.delta.left}/${postDetailAudit.delta.right}/${postDetailAudit.delta.width}px, overflow 0건`,
             )
+        }
+
+        for (const textZoom of [100, 200]) {
+            await cdp.send('Page.navigate', {
+                url: `http://127.0.0.1:${address.port}/__design/wallet-balance-studies?variant=fc-wallet-mobile-wallet&state=ready&sample=long&implementation=production`,
+            })
+            await waitForScenario(cdp, '[data-testid="wallet-balance-card"]')
+            await cdp.send('Runtime.evaluate', {
+                expression: `document.documentElement.style.fontSize = '${textZoom}%'`,
+            })
+            await delay(50)
+            const walletAudit = (
+                await cdp.send('Runtime.evaluate', {
+                    expression: productionWalletAuditExpression(),
+                    returnByValue: true,
+                })
+            ).result.value
+            const expectedHeroSize = textZoom === 100 ? '32px' : '64px'
+            if (
+                !walletAudit.documentFits ||
+                !walletAudit.planeFits ||
+                !walletAudit.cardFits ||
+                !walletAudit.amountsFit ||
+                !walletAudit.controlsFit ||
+                walletAudit.amountCount !== 9 ||
+                walletAudit.heroFontSize !== expectedHeroSize
+            ) {
+                console.error(
+                    `[production] ${viewport.width}px/${textZoom}% wallet layout guard 실패`,
+                )
+                console.error(JSON.stringify(walletAudit, null, 2))
+                process.exitCode = 1
+            } else {
+                console.log(
+                    `[production] ${viewport.width}px/${textZoom}% wallet overflow 0건, hero ${walletAudit.heroFontSize}`,
+                )
+            }
         }
     }
     cdp.close()
@@ -1042,7 +1083,7 @@ function walletLayoutAuditExpression(mobile) {
         const study = document.querySelector('[data-testid="wallet-study-layout"]')
         const candidate = document.querySelector('[data-wallet-variant]')
         const metrics = candidate?.querySelector('[data-wallet-metrics]')
-        const amounts = candidate ? [...candidate.querySelectorAll('[aria-label$="코드"]')] : []
+        const amounts = candidate ? [...candidate.querySelectorAll('[aria-label$="코드"], [aria-label$="캐시"]')] : []
         const controls = scenario ? [...scenario.querySelectorAll('a, button')] : []
         const bounds = (element) => {
             if (!element) return null
@@ -1098,6 +1139,54 @@ function walletLayoutAuditExpression(mobile) {
                 scenario: scenario ? [scenario.scrollWidth, scenario.clientWidth] : null,
                 candidate: candidate ? [candidate.scrollWidth, candidate.clientWidth] : null,
                 amounts: amounts.map((amount) => [amount.scrollWidth, amount.clientWidth]),
+            },
+        }
+    })()`
+}
+
+function productionWalletAuditExpression() {
+    return `(() => {
+        const documentElement = document.documentElement
+        const plane = document.querySelector('[data-testid="app-content-plane"]')
+        const card = document.querySelector('[data-testid="wallet-balance-card"]')
+        const amounts = plane ? [...plane.querySelectorAll('[aria-label$="코드"], [aria-label$="캐시"]')] : []
+        const hero = card?.querySelector('[aria-label="8,607,199,254,740,000 코드"]')
+        const controls = plane ? [...plane.querySelectorAll('a, button, input')] : []
+        const bounds = (element) => {
+            if (!element) return null
+            const rect = element.getBoundingClientRect()
+            return { left: rect.left, right: rect.right, width: rect.width }
+        }
+        const within = (element, owner) => {
+            const elementBounds = bounds(element)
+            const ownerBounds = bounds(owner)
+            return Boolean(
+                elementBounds && ownerBounds &&
+                elementBounds.left >= ownerBounds.left - 1 &&
+                elementBounds.right <= ownerBounds.right + 1
+            )
+        }
+        return {
+            documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
+            planeFits: Boolean(plane && plane.scrollWidth <= plane.clientWidth + 1),
+            cardFits: Boolean(card && card.scrollWidth <= card.clientWidth + 1 && within(card, plane)),
+            amountsFit: Boolean(
+                card && amounts.every((amount) =>
+                    amount.scrollWidth <= amount.clientWidth + 1 && within(amount, plane)
+                )
+            ),
+            controlsFit: Boolean(
+                plane && controls.length > 0 && controls.every((control) => within(control, plane))
+            ),
+            amountCount: amounts.length,
+            heroFontSize: hero ? getComputedStyle(hero).fontSize : null,
+            widths: {
+                document: [documentElement.scrollWidth, documentElement.clientWidth],
+                plane: plane ? [plane.scrollWidth, plane.clientWidth] : null,
+                card: card ? [card.scrollWidth, card.clientWidth] : null,
+                amounts: amounts.map((amount) => [amount.scrollWidth, amount.clientWidth]),
+                planeBounds: bounds(plane),
+                amountBounds: amounts.map(bounds),
             },
         }
     })()`

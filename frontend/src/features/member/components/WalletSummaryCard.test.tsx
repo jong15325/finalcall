@@ -41,6 +41,12 @@ describe('<WalletSummaryCard>', () => {
         expect(screen.getByLabelText('5,720,000 코드')).toBeInTheDocument()
         expect(screen.getByLabelText('6,000,000 코드')).toBeInTheDocument()
         expect(screen.getByLabelText('280,000 코드')).toBeInTheDocument()
+        expect(screen.getByLabelText('120,000 캐시')).toBeInTheDocument()
+        expect(screen.getByLabelText('5,720,000 코드')).toHaveClass(
+            'text-[2rem]',
+            'flex-wrap',
+            'break-all',
+        )
         expect(screen.getByText('총 보유')).toBeInTheDocument()
         expect(screen.getByText('입찰 보류')).toBeInTheDocument()
     })
@@ -59,7 +65,7 @@ describe('<WalletSummaryCard>', () => {
 
     it('로딩 중에는 금액을 표시하지 않는다', () => {
         renderCard({ balance: undefined, isLoading: true })
-        expect(screen.queryByLabelText(/코드$/)).toBeNull()
+        expect(screen.queryByLabelText(/(?:코드|캐시)$/)).toBeNull()
     })
 
     it('에러 시 안내 문구를 표시한다', () => {

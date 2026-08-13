@@ -37,7 +37,7 @@ describe('WalletBalanceCandidate', () => {
                 '1,520,000 코드',
                 '1,240,000 코드',
                 '280,000 코드',
-                '50,000 코드',
+                '50,000 캐시',
             ]) {
                 expect(
                     screen.getByLabelText(accessibleAmount),
@@ -94,7 +94,7 @@ describe('WalletBalanceCandidate', () => {
                 0,
             )
             for (const amount of candidate.querySelectorAll(
-                '[aria-label$="코드"]',
+                '[aria-label$="코드"], [aria-label$="캐시"]',
             )) {
                 expect(amount).toHaveClass(
                     'max-w-full',
