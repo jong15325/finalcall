@@ -316,7 +316,7 @@ INCLUDE_AWS_SPEC_HINT = true
 | backend-impl | 계약 확정 후 서버 구현·테스트 | Read/Write/Edit/Bash | gpt-5.6-sol |
 | frontend-impl | 계약 확정 후 클라이언트 구현(디자인 흡수). 새 화면·주요 UI는 실제 프론트 dev-only 워크벤치의 디자인 게이트 후 | Read/Write/Edit/Bash | gpt-5.6-sol |
 | reviewer | 구현 후 Done 전 필수. **확인소**(보안 첫 검문소 아님) — 정합성·QA + 도메인 인가(주체=SecurityContext·/me IDOR·세션 폐기 완전성) 최종 판정 | 읽기 전용(Read/Grep/Glob/Bash) | gpt-5.6-sol |
-| portfolio-writer | 에픽 완료(게이트3) 또는 사용자 요청 시. 코드·spec·보드·리뷰를 읽어 포트폴리오용 도시에 축적 | 읽기 + docs/portfolio 쓰기 | gpt-5.6-sol |
+| portfolio-writer | 프로젝트에서 중점적·중요하고 기술적 선택·트레이드오프가 있는 에픽 또는 사용자 명시 요청 시. 코드·spec·보드·리뷰를 읽어 포트폴리오용 도시에 축적 | 읽기 + docs/portfolio 쓰기 | gpt-5.6-sol |
 | consultant | **구조적 규약 개정 시에만** 명시적 소환. 평상시 휴면 | 읽기 + docs 규약 | gpt-5.6-sol |
 
 - **에이전트 간 직접 통신 금지**. 서브에이전트는 **파일 read/write + 메인세션 반환**만 한다. 다른 에이전트를 호출하거나 대화하지 않는다.
@@ -335,7 +335,7 @@ architect(계약 확정)
   → backend-impl  ∥  frontend-impl        (병렬)
   → reviewer(보안+QA+접근성)
   → Done            (reviewer 통과가 필수 선행)
-  → [portfolio-writer: 에픽 완료(게이트3) 또는 사용자 요청 시 도시에 축적 — 임계경로 밖, 읽기+docs/portfolio only]
+  → [portfolio-writer: 중점적·중요한 기술 선택·트레이드오프가 있는 에픽 또는 사용자 명시 요청 시에만 도시에 축적 — 매 에픽 자동 호출 금지, 임계경로 밖, 읽기+docs/portfolio only]
 ```
 
 - **팬아웃(병행) 판정**: 두 위임을 병렬로 내는 조건은 **의존 없음 + 쓰기 파일 집합 무교차** 둘 다 충족일 때다. "같은 도메인"이 아니라 "같은 파일"로 센다.
