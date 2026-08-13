@@ -110,6 +110,57 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(appCss).toContain('min-height: 100dvh')
     })
 
+    it('sentinel 임계에서 상단 navigation을 flow에서 stuck으로 전환한다', () => {
+        let observerCallback: IntersectionObserverCallback | undefined
+        const disconnect = vi.fn()
+        vi.stubGlobal(
+            'IntersectionObserver',
+            class {
+                constructor(callback: IntersectionObserverCallback) {
+                    observerCallback = callback
+                }
+                observe = vi.fn()
+                disconnect = disconnect
+            },
+        )
+        const view = renderShell('/market')
+        const frame = view.container.querySelector<HTMLElement>(
+            '[data-app-navigation-frame]',
+        )!
+        const surface = view.container.querySelector(
+            '[data-app-navigation-surface]',
+        )
+
+        expect(frame).toHaveAttribute('data-dock-state', 'flow')
+        expect(frame).toHaveClass('top-2', 'xl:top-3')
+        expect(surface).toHaveClass(
+            'rounded-xl',
+            'xl:rounded-2xl',
+            'max-w-[1440px]',
+        )
+        expect(surface?.parentElement).toBe(frame)
+        expect(view.container.querySelector('#view')).toHaveClass('px-3')
+        expect(view.container.querySelector('footer')).toHaveClass('px-3')
+
+        act(() => {
+            observerCallback?.(
+                [
+                    {
+                        isIntersecting: false,
+                        boundingClientRect: { bottom: 0 },
+                    } as IntersectionObserverEntry,
+                ],
+                {} as IntersectionObserver,
+            )
+        })
+
+        expect(frame).toHaveAttribute('data-dock-state', 'stuck')
+        expect(frame).toHaveClass('top-0')
+        view.unmount()
+        expect(disconnect).toHaveBeenCalledOnce()
+        vi.unstubAllGlobals()
+    })
+
     it('상세 route에서 fixed 배경을 chrome 아래에 둔다', () => {
         const view = renderShell('/auctions/A-1')
         const shell = view.container.firstElementChild
@@ -128,11 +179,16 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(scene).not.toHaveClass('w-screen')
         expect(view.container.querySelector('aside')).toBeNull()
         expect(view.queryByRole('navigation', { name: '주요 메뉴' })).toBeNull()
-        expect(view.container.querySelector('header')).toHaveClass(
+        expect(
+            view.container.querySelector('[data-app-navigation-frame]'),
+        ).toHaveClass(
             'sticky',
             'z-30',
-            'bg-chrome',
+            'top-2',
+            'xl:top-3',
         )
+        expect(view.container.querySelector('header')).toHaveClass('bg-chrome')
+        expect(view.container.querySelector('header')).not.toHaveClass('sticky')
         expect(
             view.getByRole('navigation', { name: '모바일 주요 메뉴' }),
         ).toHaveClass('fixed', 'z-30')
@@ -141,9 +197,11 @@ describe('AppShell route-scoped 상세 배경', () => {
         ).toBeNull()
         expect(view.container.querySelector('footer')).toHaveClass(
             'z-10',
-            'bg-chrome-strong',
             'text-chrome-muted',
         )
+        expect(
+            view.container.querySelector('[data-app-footer-surface]'),
+        ).toHaveClass('bg-chrome-strong')
         expect(view.container.querySelector('#view')).not.toHaveClass(
             'overflow-auto',
             'overflow-hidden',
@@ -165,11 +223,11 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(view.container.querySelector('#view')).toHaveClass(
             'px-3',
-            'py-4',
+            'pb-4',
             'sm:px-5',
-            'sm:py-5',
+            'sm:pb-5',
             'xl:px-8',
-            'xl:py-7',
+            'xl:pb-7',
         )
         expect(
             view.container.querySelector('#view')?.parentElement,
@@ -365,8 +423,10 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.container.querySelector('aside')).toBeNull()
         expect(view.getByRole('navigation', { name: '주요 메뉴' })).toHaveClass(
             'h-12',
-            'sticky',
         )
+        expect(
+            view.container.querySelector('[data-app-navigation-frame]'),
+        ).toHaveClass('sticky')
         expect(view.getByTestId('app-content-plane')).toHaveClass(
             'max-w-[1440px]',
             'bg-content-surface',

@@ -43,7 +43,9 @@ function AppShellContent() {
     const { pathname } = useLocation()
     const routeUi = resolveRouteUi(pathname)
     const menuButtonRef = useRef<HTMLButtonElement>(null)
+    const navigationSentinelRef = useRef<HTMLDivElement>(null)
     const previousPathRef = useRef(pathname)
+    const [navigationStuck, setNavigationStuck] = useState(false)
 
     const closeMobile = useCallback(
         (restoreFocus = true) => {
@@ -75,6 +77,18 @@ function AppShellContent() {
         return () => window.removeEventListener('keydown', onKeyDown)
     }, [closeMobile, mobileOpen])
 
+    useEffect(() => {
+        const sentinel = navigationSentinelRef.current
+        if (!sentinel || !('IntersectionObserver' in window)) return
+        const observer = new IntersectionObserver(([entry]) => {
+            setNavigationStuck(
+                !entry.isIntersecting && entry.boundingClientRect.bottom <= 0,
+            )
+        })
+        observer.observe(sentinel)
+        return () => observer.disconnect()
+    }, [])
+
     return (
         <div className="app-shell-height relative isolate flex bg-transparent">
             <WorldMapBackground accent={accent} />
@@ -83,15 +97,32 @@ function AppShellContent() {
             )}
 
             <div className="flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0">
-                <TopNavbar
-                    menuButtonRef={menuButtonRef}
-                    onOpenMobile={() => setMobileOpen(true)}
+                <div
+                    ref={navigationSentinelRef}
+                    aria-hidden
+                    data-app-navigation-sentinel
+                    className="h-2 xl:h-3"
                 />
-                {desktop && <HorizontalNav />}
+                <div
+                    data-app-navigation-frame
+                    data-dock-state={navigationStuck ? 'stuck' : 'flow'}
+                    className={`sticky z-30 px-3 sm:px-5 xl:px-8 ${navigationStuck ? 'top-0' : 'top-2 xl:top-3'}`}
+                >
+                    <div
+                        data-app-navigation-surface
+                        className="app-chrome mx-auto w-full max-w-[1440px] rounded-xl border border-chrome-selected bg-chrome text-chrome-fg shadow-sm xl:rounded-2xl"
+                    >
+                        <TopNavbar
+                            menuButtonRef={menuButtonRef}
+                            onOpenMobile={() => setMobileOpen(true)}
+                        />
+                        {desktop && <HorizontalNav />}
+                    </div>
+                </div>
 
                 <main
                     id="view"
-                    className="min-w-0 flex-1 px-3 py-4 sm:px-5 sm:py-5 xl:px-8 xl:py-7"
+                    className="min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7"
                 >
                     <div
                         data-testid="app-content-plane"

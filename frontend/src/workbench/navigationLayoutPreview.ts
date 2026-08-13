@@ -7,9 +7,18 @@ export function installNavigationLayoutPreview(
 ) {
     const view = scenario.closest<HTMLElement>('#view')
     const shellColumn = view?.parentElement
-    const header = shellColumn?.querySelector<HTMLElement>(':scope > header')
-    const horizontalNav = shellColumn?.querySelector<HTMLElement>(
-        ':scope > nav.app-chrome',
+    const productionFrame = shellColumn?.querySelector<HTMLElement>(
+        '[data-app-navigation-frame]',
+    )
+    const productionSurface = productionFrame?.querySelector<HTMLElement>(
+        '[data-app-navigation-surface]',
+    )
+    const productionSentinel = shellColumn?.querySelector<HTMLElement>(
+        '[data-app-navigation-sentinel]',
+    )
+    const header = productionSurface?.querySelector<HTMLElement>('header')
+    const horizontalNav = productionSurface?.querySelector<HTMLElement>(
+        'nav.app-chrome',
     )
     const footer = shellColumn?.querySelector<HTMLElement>(':scope > footer')
     const contentPlane = view?.querySelector<HTMLElement>(
@@ -17,9 +26,10 @@ export function installNavigationLayoutPreview(
     )
     const headerInner = header?.firstElementChild as HTMLElement | null
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
-    const footerInner = footer?.firstElementChild as HTMLElement | null
+    const footerInner = footer?.querySelector<HTMLElement>(
+        '[data-app-footer-surface]',
+    )
     const contactDock = variant === NAVIGATION_LAYOUT_VARIANTS.contactDock
-    const desktopOffset = window.matchMedia('(min-width: 1280px)')
 
     if (
         !view ||
@@ -28,9 +38,27 @@ export function installNavigationLayoutPreview(
         !footer ||
         !contentPlane ||
         !headerInner ||
-        !footerInner
+        !footerInner ||
+        !productionFrame ||
+        !productionSurface ||
+        !productionSentinel
     ) {
         return () => undefined
+    }
+
+    if (contactDock) {
+        productionSentinel.dataset.workbenchDockSentinel = variant
+        productionFrame.dataset.workbenchNavigationFrame = variant
+        productionSurface.dataset.workbenchNavMeasure = variant
+        footerInner.dataset.workbenchFooterMeasure = variant
+        contentPlane.dataset.workbenchContentMeasure = variant
+        return () => {
+            delete productionSentinel.dataset.workbenchDockSentinel
+            delete productionFrame.dataset.workbenchNavigationFrame
+            delete productionSurface.dataset.workbenchNavMeasure
+            delete footerInner.dataset.workbenchFooterMeasure
+            delete contentPlane.dataset.workbenchContentMeasure
+        }
     }
 
     const auxiliaries = Array.from(
@@ -48,6 +76,8 @@ export function installNavigationLayoutPreview(
             headerInner,
             navigationInner,
             footerInner,
+            productionFrame,
+            productionSentinel,
             ...auxiliaries,
         ]
             .filter((element): element is HTMLElement => element != null)
@@ -74,6 +104,9 @@ export function installNavigationLayoutPreview(
         'bg-chrome',
     )
     compactSpacer.classList.add('hidden', 'h-4')
+    productionFrame.classList.add('hidden')
+    productionSentinel.classList.add('hidden')
+    view.classList.add('pt-4')
 
     header.classList.remove('sticky', 'top-0', 'z-30', 'border-b')
     horizontalNav?.classList.remove('sticky', 'top-16', 'z-20', 'border-b')
@@ -84,43 +117,11 @@ export function installNavigationLayoutPreview(
     footer.classList.add('px-3', 'sm:px-5', 'xl:px-8')
     header.classList.add('rounded-xl')
     horizontalNav?.classList.add('rounded-xl')
-    let releaseSelectedOffset: () => void = () => undefined
-
     surface.classList.add('transition-all', 'motion-reduce:transition-none')
-    if (variant === NAVIGATION_LAYOUT_VARIANTS.contactDock) {
-        frame.classList.add('px-3', 'sm:px-5', 'xl:px-8')
-        view.classList.remove('py-4', 'sm:py-5', 'xl:py-7')
-        view.classList.add('pb-4')
-        const contentRadius = getComputedStyle(contentPlane)
-        const applySelectedOffset = () => {
-            const offset = desktopOffset.matches ? '12px' : '8px'
-            const mobileRadius = '12px'
-            frame.style.top =
-                frame.dataset.workbenchDockState === 'stuck' ? '0px' : offset
-            sentinel.style.height = offset
-            surface.style.borderTopLeftRadius = desktopOffset.matches
-                ? contentRadius.borderTopLeftRadius
-                : mobileRadius
-            surface.style.borderTopRightRadius = desktopOffset.matches
-                ? contentRadius.borderTopRightRadius
-                : mobileRadius
-            surface.style.borderBottomLeftRadius = desktopOffset.matches
-                ? contentRadius.borderBottomLeftRadius
-                : mobileRadius
-            surface.style.borderBottomRightRadius = desktopOffset.matches
-                ? contentRadius.borderBottomRightRadius
-                : mobileRadius
-        }
-        applySelectedOffset()
-        desktopOffset.addEventListener('change', applySelectedOffset)
-        releaseSelectedOffset = () =>
-            desktopOffset.removeEventListener('change', applySelectedOffset)
-    }
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
         surface.classList.add('rounded-xl')
     }
     if (
-        variant === NAVIGATION_LAYOUT_VARIANTS.contactDock ||
         variant === NAVIGATION_LAYOUT_VARIANTS.compactDock ||
         variant === NAVIGATION_LAYOUT_VARIANTS.directionDock
     ) {
@@ -132,13 +133,8 @@ export function installNavigationLayoutPreview(
     frame.append(surface, compactSpacer)
     footerInner.dataset.workbenchFooterMeasure = variant
     contentPlane.dataset.workbenchContentMeasure = variant
-    if (contactDock) {
-        shellColumn.insertBefore(sentinel, view)
-        shellColumn.insertBefore(frame, view)
-    } else {
-        view.insertBefore(sentinel, contentPlane)
-        view.insertBefore(frame, contentPlane)
-    }
+    view.insertBefore(sentinel, contentPlane)
+    view.insertBefore(frame, contentPlane)
 
     let previousScrollY = window.scrollY
     let scrollingDown = false
@@ -161,19 +157,8 @@ export function installNavigationLayoutPreview(
     }
     const update = () => {
         animationFrame = 0
-        const scrollY = window.scrollY
-        const sentinelBounds = sentinel.getBoundingClientRect()
-        const stuck = contactDock
-            ? window.scrollY > 0 && sentinelBounds.bottom <= 0
-            : sentinelBounds.top <= 0
+        const stuck = sentinel.getBoundingClientRect().top <= 0
         frame.dataset.workbenchDockState = stuck ? 'stuck' : 'flow'
-        if (contactDock) {
-            frame.style.top = stuck
-                ? '0px'
-                : desktopOffset.matches
-                  ? '12px'
-                  : '8px'
-        }
 
         if (variant === NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
             surface.classList.toggle('rounded-xl', stuck)
@@ -206,10 +191,9 @@ export function installNavigationLayoutPreview(
 
     return () => {
         window.removeEventListener('scroll', onScroll)
-        releaseSelectedOffset()
         cancelAnimationFrame(animationFrame)
-        shellColumn.insertBefore(header, view)
-        if (horizontalNav) shellColumn.insertBefore(horizontalNav, view)
+        productionSurface.append(header)
+        if (horizontalNav) productionSurface.append(horizontalNav)
         sentinel.remove()
         frame.remove()
         for (const [element, className] of originalClasses) {

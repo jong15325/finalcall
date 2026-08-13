@@ -16,10 +16,11 @@ function AppFooter({ variant = 'default' }: { variant?: FooterDensity }) {
     return (
         <footer
             data-variant={variant}
-            className="app-chrome relative z-10 border-t border-chrome-selected bg-chrome-strong text-chrome-muted"
+            className="app-chrome relative z-10 px-3 text-chrome-muted sm:px-5 xl:px-8"
         >
             <div
-                className={`mx-auto w-full max-w-[1440px] px-5 sm:px-8 xl:px-10 ${compact ? 'py-5 sm:py-6' : 'py-10 sm:py-12'}`}
+                data-app-footer-surface
+                className={`mx-auto w-full max-w-[1440px] rounded-xl border border-chrome-selected bg-chrome-strong px-5 sm:px-8 xl:rounded-2xl xl:px-10 ${compact ? 'py-5 sm:py-6' : 'py-10 sm:py-12'}`}
             >
                 <div
                     className={`flex flex-col lg:flex-row lg:items-start lg:justify-between ${compact ? 'gap-4 lg:gap-10' : 'gap-8 lg:gap-16'}`}

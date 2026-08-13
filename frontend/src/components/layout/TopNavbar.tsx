@@ -54,8 +54,8 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
     }
 
     return (
-        <header className="app-chrome sticky top-0 z-30 h-16 border-b border-chrome-selected bg-chrome text-chrome-fg">
-            <div className="mx-auto flex h-full w-full max-w-[1440px] items-center gap-3 px-4">
+        <header className="app-chrome h-16 rounded-t-xl border-b border-chrome-selected bg-chrome text-chrome-fg xl:rounded-t-2xl">
+            <div className="flex h-full w-full items-center gap-3 px-4">
                 <NavLink
                     to={paths.home}
                     aria-label="장터 홈"

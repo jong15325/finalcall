@@ -112,7 +112,7 @@ try {
             await cdp.send('Runtime.evaluate', {
                 expression:
                     variant === 'fc-nav-contact-dock'
-                        ? 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().bottom)'
+                        ? 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().bottom + 1)'
                         : 'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-workbench-dock-sentinel]\').getBoundingClientRect().top)',
             })
             await delay(100)
@@ -250,6 +250,99 @@ try {
                 console.error(JSON.stringify({ contact, reference }, null, 2))
                 process.exitCode = 1
             }
+        }
+
+        await cdp.send('Page.navigate', {
+            url: `http://127.0.0.1:${address.port}/market`,
+        })
+        await waitForScenario(cdp, '[data-app-navigation-surface]')
+        const productionBefore = (
+            await cdp.send('Runtime.evaluate', {
+                expression: productionNavigationAuditExpression(),
+                returnByValue: true,
+            })
+        ).result.value
+        await cdp.send('Runtime.evaluate', {
+            expression:
+                'document.querySelector(\'button[aria-haspopup="menu"]\').click()',
+        })
+        await delay(100)
+        const productionDropdown = (
+            await cdp.send('Runtime.evaluate', {
+                expression: productionNavigationAuditExpression(),
+                returnByValue: true,
+            })
+        ).result.value
+        await cdp.send('Runtime.evaluate', {
+            expression:
+                'document.querySelector(\'button[aria-haspopup="menu"]\').click()',
+        })
+        await cdp.send('Runtime.evaluate', {
+            expression:
+                'window.scrollTo(0, window.scrollY + document.querySelector(\'[data-app-navigation-sentinel]\').getBoundingClientRect().bottom + 1)',
+        })
+        await delay(100)
+        const productionThreshold = (
+            await cdp.send('Runtime.evaluate', {
+                expression: productionNavigationAuditExpression(),
+                returnByValue: true,
+            })
+        ).result.value
+        await cdp.send('Runtime.evaluate', {
+            expression: 'window.scrollTo(0, window.scrollY + 480)',
+        })
+        await delay(100)
+        const productionAfter = (
+            await cdp.send('Runtime.evaluate', {
+                expression: productionNavigationAuditExpression(),
+                returnByValue: true,
+            })
+        ).result.value
+        const expectedOffset = viewport.mobile ? 8 : 12
+        const expectedRadius = viewport.mobile ? '12px' : '16px'
+        const productionFailed =
+            productionBefore.dockState !== 'flow' ||
+            productionBefore.navBounds.top !== expectedOffset ||
+            productionThreshold.dockState !== 'stuck' ||
+            productionThreshold.navBounds.top !== 0 ||
+            productionAfter.dockState !== 'stuck' ||
+            productionAfter.navBounds.top !== 0 ||
+            productionBefore.navRadius.some(
+                (radius) => radius !== expectedRadius,
+            ) ||
+            productionAfter.navRadius.some(
+                (radius) => radius !== expectedRadius,
+            ) ||
+            productionBefore.hasBacking ||
+            productionBefore.frameBackgroundColor !== 'rgba(0, 0, 0, 0)' ||
+            productionBefore.contentGap !== 0 ||
+            productionBefore.frameHeight !== productionAfter.frameHeight ||
+            !productionBefore.alignedExactly ||
+            !productionAfter.alignedExactly ||
+            !productionBefore.documentFits ||
+            !productionAfter.documentFits ||
+            !productionDropdown.dropdownUnclipped
+        if (productionFailed) {
+            console.error(
+                `[production] ${viewport.width}px navigation layout guard 실패`,
+            )
+            console.error(
+                JSON.stringify(
+                    {
+                        productionBefore,
+                        productionDropdown,
+                        productionThreshold,
+                        productionAfter,
+                    },
+                    null,
+                    2,
+                ),
+            )
+            process.exitCode = 1
+        } else {
+            console.log(
+                `[production] ${viewport.width}px navigation top ${productionBefore.navBounds.top}→${productionThreshold.navBounds.top}→${productionAfter.navBounds.top}px, gap ${productionBefore.contentGap}px, radius ${productionBefore.navRadius.join(' ')}, alignment ${productionAfter.delta.left}/${productionAfter.delta.right}/${productionAfter.delta.width}px`,
+            )
         }
     }
     cdp.close()
@@ -389,6 +482,80 @@ async function waitForScenario(cdp, selector) {
     throw new Error('워크벤치 시나리오가 렌더되지 않았습니다.')
 }
 
+function productionNavigationAuditExpression() {
+    return `(() => {
+        const documentElement = document.documentElement
+        const frame = document.querySelector('[data-app-navigation-frame]')
+        const surface = document.querySelector('[data-app-navigation-surface]')
+        const content = document.querySelector('[data-testid="app-content-plane"]')
+        const footer = document.querySelector('[data-app-footer-surface]')
+        const menu = surface?.querySelector('[role="menu"]')
+        const bounds = (element) => {
+            if (!element) return null
+            const rect = element.getBoundingClientRect()
+            return {
+                left: Math.round(rect.left * 100) / 100,
+                right: Math.round(rect.right * 100) / 100,
+                width: Math.round(rect.width * 100) / 100,
+                height: Math.round(rect.height * 100) / 100,
+                top: Math.round(rect.top * 100) / 100,
+                bottom: Math.round(rect.bottom * 100) / 100,
+            }
+        }
+        const navBounds = bounds(surface)
+        const contentBounds = bounds(content)
+        const footerBounds = bounds(footer)
+        const delta = navBounds && contentBounds && footerBounds
+            ? {
+                  left: Math.max(
+                      Math.abs(navBounds.left - contentBounds.left),
+                      Math.abs(navBounds.left - footerBounds.left),
+                  ),
+                  right: Math.max(
+                      Math.abs(navBounds.right - contentBounds.right),
+                      Math.abs(navBounds.right - footerBounds.right),
+                  ),
+                  width: Math.max(
+                      Math.abs(navBounds.width - contentBounds.width),
+                      Math.abs(navBounds.width - footerBounds.width),
+                  ),
+              }
+            : null
+        const surfaceStyle = surface ? getComputedStyle(surface) : null
+        const frameStyle = frame ? getComputedStyle(frame) : null
+        return {
+            documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
+            dockState: frame?.dataset.dockState,
+            navBounds,
+            contentBounds,
+            footerBounds,
+            frameHeight: bounds(frame)?.height,
+            contentGap: navBounds && contentBounds
+                ? Math.round((contentBounds.top - navBounds.bottom) * 100) / 100
+                : null,
+            delta,
+            alignedExactly: Boolean(
+                delta && delta.left === 0 && delta.right === 0 && delta.width === 0
+            ),
+            navRadius: surfaceStyle
+                ? [
+                      surfaceStyle.borderTopLeftRadius,
+                      surfaceStyle.borderTopRightRadius,
+                      surfaceStyle.borderBottomRightRadius,
+                      surfaceStyle.borderBottomLeftRadius,
+                  ]
+                : [],
+            hasBacking: Boolean(document.querySelector('[data-app-navigation-backing]')),
+            frameBackgroundColor: frameStyle?.backgroundColor ?? null,
+            dropdownUnclipped: Boolean(
+                menu &&
+                surfaceStyle?.overflowX === 'visible' &&
+                surfaceStyle?.overflowY === 'visible'
+            ),
+        }
+    })()`
+}
+
 function navigationAuditExpression(mobile) {
     return `(() => {
         const documentElement = document.documentElement
@@ -482,7 +649,8 @@ function navigationAuditExpression(mobile) {
             aligned: Boolean(delta && delta.left <= 1 && delta.right <= 1 && delta.width <= 1),
             alignedExactly: Boolean(delta && delta.left === 0 && delta.right === 0 && delta.width === 0),
             contentAligned: Boolean(contentDelta && contentDelta.left === 0 && contentDelta.right === 0 && contentDelta.width === 0),
-            dockState: frame?.dataset.workbenchDockState,
+            dockState:
+                frame?.dataset.workbenchDockState ?? frame?.dataset.dockState,
             dockDirection: frame?.dataset.workbenchDockDirection,
             sentinelTop: bounds(sentinel)?.top,
             frameHeight: frameBounds?.height,

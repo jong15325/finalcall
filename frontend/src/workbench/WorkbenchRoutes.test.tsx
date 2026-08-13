@@ -178,9 +178,9 @@ describe('WorkbenchRoutes', () => {
                 '[data-workbench-footer-measure]',
             )!
 
-            expect(frame).toHaveClass('sticky', 'top-0', 'z-30')
-            expect(frame.style.top).toBe(width === 1280 ? '12px' : '8px')
-            expect(frame).toHaveAttribute('data-workbench-dock-state', 'flow')
+            expect(frame).toHaveClass('sticky', 'z-30')
+            expect(frame).toHaveClass('top-2', 'xl:top-3')
+            expect(frame).toHaveAttribute('data-dock-state', 'flow')
             expect(
                 screen.getByRole('link', { name: /접점 고정형/ }),
             ).toHaveAttribute('aria-current', 'true')
@@ -201,26 +201,9 @@ describe('WorkbenchRoutes', () => {
                 'max-w-[1440px]',
                 'rounded-xl',
                 'shadow-sm',
-                'transition-all',
+                'xl:rounded-2xl',
             )
             expect(navigation).not.toHaveClass('overflow-hidden')
-            const contentStyle = getComputedStyle(content)
-            const expectedRadius =
-                width === 1280
-                    ? contentStyle.borderTopLeftRadius
-                    : '12px'
-            expect(navigation.style.borderTopLeftRadius).toBe(
-                expectedRadius,
-            )
-            expect(navigation.style.borderTopRightRadius).toBe(
-                expectedRadius,
-            )
-            expect(navigation.style.borderBottomLeftRadius).toBe(
-                expectedRadius,
-            )
-            expect(navigation.style.borderBottomRightRadius).toBe(
-                expectedRadius,
-            )
             expect(navigation.parentElement).toBe(frame)
             expect(
                 view.container.querySelector('[data-workbench-nav-backing]'),

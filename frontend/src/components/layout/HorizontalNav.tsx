@@ -204,7 +204,7 @@ export default function HorizontalNav() {
     return (
         <nav
             aria-label="주요 메뉴"
-            className="app-chrome sticky top-16 z-20 hidden h-12 border-b border-chrome-selected bg-chrome xl:block"
+            className="app-chrome hidden h-12 bg-chrome xl:block"
             onKeyDown={(event) => {
                 if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
                     return
@@ -222,7 +222,7 @@ export default function HorizontalNav() {
                 items[(index + offset + items.length) % items.length]?.focus()
             }}
         >
-            <ul className="mx-auto flex h-full w-full max-w-[1440px] px-6">
+            <ul className="flex h-full w-full px-6">
                 {sidebarNav.map((entry) =>
                     entry.kind === 'group' ? (
                         <GroupMenu key={entry.label} group={entry} />
