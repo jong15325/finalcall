@@ -1,5 +1,16 @@
 # 디자인 결정 로그 (U-xxx)
 
+## U-023. 브라이트 스틸 전역 채택과 focus 명암 분기
+
+상태: DECIDED · 소유: 사용자/architect · 관련: FC-290, supersedes U-022의 navy/orange 브랜드 값·단일 focus 매핑 · 2026-08-13
+
+- 실제 프론트 워크벤치에서 사용자가 `브라이트 스틸`을 선택하고 게이트2에서 전역 채택을 승인했다.
+- chrome은 `#32475A`/strong `#273746`, action은 `#3D5F7C`/hover `#2E485F`, action ink는 white로 확정한다.
+- focus 선택 원값 `#C78300`은 steel chrome에서 유지한다. 밝은 surface/canvas에는 같은 계열을 2% 어둡힌
+  `#C38000`을 사용한다. 한 중간 휘도 색으로 light/dark 양쪽 3:1을 동시에 만족할 수 없어 semantic 역할을
+  `control-focus`와 `control-focus-on-dark`로 분리했다.
+- success/danger/warning/info 값과 route element 격리는 U-022 및 UI 시스템 계약 v1.1 그대로 유지한다.
+
 ## U-022. 프론트 UI 시스템 정본 통합 — navy/gold/orange와 고정 commerce chrome
 
 상태: DECIDED · 소유: 사용자/architect · 관련: EPIC-FRONTEND-UI-SYSTEM, supersedes U-021의 브랜드 값·CTA 매핑 및 route chrome 재색 조항 · 2026-08-12

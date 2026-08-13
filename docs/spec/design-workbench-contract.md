@@ -3,7 +3,7 @@
 - 상태: **DECIDED — 게이트2 사용자 승인 (2026-08-13)**
 - 적용 범위: `frontend/src/workbench/**`, `frontend/src/app/router.tsx`, `frontend/src/index.css`,
   `frontend/scripts/**`, `frontend/package.json`, 디자인 게이트 검증
-- 선행 계약: `frontend-ui-system-contract.md` v1.0, `horizontal-app-shell-contract.md` v1.5
+- 선행 계약: `frontend-ui-system-contract.md` v1.1, `horizontal-app-shell-contract.md` v1.5
 - 제외: API wire contract, 백엔드, DB 스키마, 운영 route의 UI 계약과 데이터 계약
 - 목적: 목업이 실제 프론트와 달라지는 문제를 없애고, 이후 디자인 판단을 실제 런타임 CSS·shell·공용
   컴포넌트에서 검증한다.

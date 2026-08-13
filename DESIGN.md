@@ -3,10 +3,12 @@ theme: light
 register: product
 contract: docs/spec/frontend-ui-system-contract.md
 brand:
-  navy: "#16213A"
-  navy-strong: "#101A2E"
+  steel: "#32475A"
+  steel-strong: "#273746"
   gold: "#C8A028"
-  action: "#EF8A2C"
+  action: "#3D5F7C"
+  focus: "#C38000"
+  focus-on-dark: "#C78300"
 surface:
   content: "#FFFFFF"
   canvas: "#F4F5F8"
@@ -18,11 +20,11 @@ text:
 
 # FinalCall Design
 
-구현 정본은 `docs/spec/frontend-ui-system-contract.md` v1.0이다. 이 파일은 impeccable용 제품 디자인 요약이며 토큰 값을 별도로 결정하지 않는다.
+구현 정본은 `docs/spec/frontend-ui-system-contract.md` v1.1이다. 이 파일은 impeccable용 제품 디자인 요약이며 토큰 값을 별도로 결정하지 않는다.
 
 ## 방향
 
-FinalCall은 돈이 오가는 게임 아이템 거래처다. 고정 commerce chrome은 navy로 신뢰와 구조를 만들고, gold는 브랜드 강조와 dark chrome의 focus 보조, orange는 주요 CTA와 활성 조작에만 쓴다. 퍼플 브랜드 역할과 블랙 CTA 역할은 폐기됐다. 본문 near-black은 중립 전경이므로 계속 허용한다.
+FinalCall은 돈이 오가는 게임 아이템 거래처다. 고정 commerce chrome은 브라이트 스틸로 신뢰와 구조를 만들고, gold는 브랜드 강조, 브라이트 스틸 action은 주요 CTA와 활성 조작에 쓴다. focus는 밝은 표면 `#C38000`, dark chrome `#C78300`으로 분리한다. 퍼플 브랜드 역할과 블랙 CTA 역할은 폐기됐다. 본문 near-black은 중립 전경이므로 계속 허용한다.
 
 route element accent는 AppShell의 단일 world-map 장식과 route가 명시한 `RouteAccentScope` 콘텐츠에만 도달한다. header, desktop/mobile navigation, drawer, footer, CompareBar는 route나 API 응답에 따라 재색되지 않는다.
 

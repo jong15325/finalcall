@@ -1,6 +1,6 @@
-# 프론트 UI 시스템 계약 v1.0
+# 프론트 UI 시스템 계약 v1.1
 
-- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12**
+- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타 승인 2026-08-13**
 - 적용 범위: `frontend/src/**`, `frontend/tailwind.config.cjs`, AppShell 아래 공개·보호·404 route
 - 제외: API wire contract, 백엔드, DB 스키마, `AuthLayout`의 독립 레이아웃 구조
 - 목적: 디자인 토큰, AppShell chrome, 목록 프레임, 아이템 카드의 단일 계약을 확정해 route·페이지별 시각/상호작용 포크를 막는다.
@@ -11,7 +11,8 @@
 
 게이트2에서 아래를 확정했다.
 
-1. **navy/gold/orange를 FinalCall 공식 브랜드 팔레트로 승격**한다.
+1. **브라이트 스틸/gold를 FinalCall 공식 브랜드 팔레트로 사용**한다. 브라이트 스틸은 고정 commerce
+   chrome과 일반 주요 행동을 맡고, gold는 브랜드 강조와 focus 보조를 맡는다.
 2. AppShell의 header, desktop/mobile navigation, footer, CompareBar는 route와 무관한 **고정 commerce
    chrome**이다. route accent가 이 영역을 재색하지 않는다.
 3. route accent는 AppShell이 소유한 world-map 장식과 route가 명시한 content subtree에서만 소비한다.
@@ -48,17 +49,17 @@
 
 | 계열 | 토큰 | 값 | 역할 |
 |---|---|---:|---|
-| navy | `brand-navy` | `#16213A` | 브랜드 구조색, 고정 chrome 배경 |
-| navy | `brand-navy-900` | `#101A2E` | footer·강한 chrome |
-| navy | `brand-navy-800` | `#1B2A47` | chrome hover/raised |
-| navy | `brand-navy-700` | `#223458` | chrome border/selected |
+| steel | `brand-navy` | `#32475A` | 브랜드 구조색, 고정 chrome 배경 |
+| steel | `brand-navy-900` | `#273746` | footer·강한 chrome |
+| steel | `brand-navy-800` | `#273746` | chrome hover/raised |
+| steel | `brand-navy-700` | `#32475A` | chrome border/selected |
 | gold | `brand-gold` | `#C8A028` | 브랜드 강조·가격 보조 신호 |
-| gold | `brand-gold-bright` | `#DFC447` | dark chrome 위 hover/focus 보조 |
+| gold | `brand-gold-bright` | `#DFC447` | dark chrome 위 브랜드 hover 보조 |
 | gold | `brand-gold-deep` | `#8B6100` | light surface 위 gold 전경 |
 | gold | `brand-gold-soft` | `#F6EDCD` | gold 선택·안내 배경 |
-| orange | `action` | `#EF8A2C` | 주요 CTA·활성 조작 |
-| orange | `action-hover` | `#D9741A` | CTA hover/pressed |
-| orange | `action-soft` | `#FDEFE0` | 선택·hover 보조 면 |
+| steel | `action` | `#3D5F7C` | 주요 CTA·활성 조작 |
+| steel | `action-hover` | `#2E485F` | CTA hover/pressed |
+| support | `action-soft` | `#FDEFE0` | 선택·hover 보조 면(브라이트 스틸 후보의 비변경 영역) |
 | surface | `surface` | `#FFFFFF` | 카드·콘텐츠·입력 표면 |
 | surface | `surface-sunken` | `#F4F5F8` | 앱 canvas·함몰 면 |
 | border | `line` | `#E4E7EE` | 장식 경계·구분선 |
@@ -68,6 +69,10 @@
 
 상태색은 `success #16A34A`, `danger #E11D48`, `warning #A0510A`, `info #1D4ED8`를 사용하고 각
 `*-soft`는 `tokens.css`에서 한 번만 정의한다. 상태색은 정보 의미에만 쓰며 CTA·route accent를 대신하지 않는다.
+
+`brand-navy*`는 기존 consumer를 일괄 승계하기 위한 물리 식별자로 유지하지만 값과 공식 명칭은 브라이트
+스틸이다. 새 코드는 palette 이름을 해석하거나 직접 소비하지 않고 아래 semantic alias만 사용한다. 이름을
+`brand-steel*`로 동시에 복제하지 않으며, 향후 물리 이름 변경은 별도 호환 제거 티켓으로만 수행한다.
 
 게임 element 색과 브랜드 gold는 이름과 소비 경계를 분리한다. `element-*`, `item-goldforce-*`는 아이템 아트,
 속성 라벨, 프레임 안에서만 사용한다. `brand-gold-*`와 서로 alias하지 않는다.
@@ -82,17 +87,32 @@
 | `content-surface` | `surface` | content plane·card·form |
 | `chrome-bg` | `brand-navy` | header·nav·mobile nav·CompareBar |
 | `chrome-bg-strong` | `brand-navy-900` | footer |
+| `chrome-bg-raised` | `brand-navy-800` | chrome hover/raised |
+| `chrome-bg-selected` | `brand-navy-700` | chrome selected/border |
 | `chrome-fg` | white | chrome 본문·아이콘 |
 | `chrome-muted` | 승인된 light neutral | chrome 보조 문구 |
 | `control-action` | `action` | primary action |
 | `control-action-hover` | `action-hover` | primary action hover/pressed |
-| `control-focus` | `brand-gold-bright` | dark chrome focus 또는 light surface에서 검증된 focus ring |
+| `control-action-ink` | `#FFFFFF` | primary action 전경 |
+| `control-focus` | `#C38000` | white/content/canvas의 focus ring |
+| `control-focus-on-dark` | `#C78300` | steel chrome/strong/raised의 focus ring |
 | `content-fg` | `fg` | light content 제목·본문 |
 | `content-muted` | `fg-muted` | light content 보조 정보 |
 | `content-line` | `line` | light content 경계 |
 
 `text-body`처럼 typography utility와 충돌하는 color 이름을 만들지 않는다. 색 utility는 `text-fg`,
 `text-fg-muted`, `bg-content-surface`, `bg-chrome`처럼 역할이 드러나야 한다.
+
+focus는 한 색으로 밝은 canvas와 어두운 chrome 양쪽에서 동시에 3:1을 만들 수 없는 휘도 구간이므로 역할을
+두 개로 분리한다. 전역 `:focus-visible` 기본은 `control-focus`다. 실제 배경이 `chrome-bg`,
+`chrome-bg-strong`, `chrome-bg-raised`, `chrome-bg-selected`인 control만 `control-focus-on-dark`를 명시적으로
+소비한다. dark chrome 안의 white dropdown/dialog처럼 밝은 overlay는 다시 `control-focus`를 소비한다. route나
+element에 따른 자동 재색은 금지한다.
+
+WCAG 상대휘도 검증값은 다음과 같다. white action ink는 chrome `9.61:1`, strong/raised `12.20:1`, action
+`6.72:1`, action hover `9.51:1`이다. `control-focus #C38000`은 white `3.28:1`, app canvas
+`#F4F5F8`에서 `3.01:1`이고, `control-focus-on-dark #C78300`은 chrome/selected `3.06:1`,
+strong/raised `3.88:1`이다. 구현 guard는 이 여섯 조합을 하한 3:1로 고정한다.
 
 ### 2.4 typography·geometry·motion
 
@@ -436,4 +456,3 @@ type ItemCardAction =
 - `FC-275`와 `FC-276`도 공개/보호 소비자 파일 집합을 분리하면 병렬 가능하다.
 - 직접 영향 이력: FC-180~184(카드 시스템), FC-239~244(상세 theme/chrome), FC-245~269(AppShell·scene·footer).
 - 비영향: API contract, ERD, backend, item element wire 값, 경매/구매/배송의 도메인 동작과 데이터 스키마.
-

@@ -1,6 +1,6 @@
 # 디자인(UX/UI) 파트 지침 (D-071, 지침 유형)
 
-> UI 구현 정본은 `docs/spec/frontend-ui-system-contract.md` v1.0이다. 이 문서의 `primary` 예시는 일반 원칙 설명이며 FinalCall 구현은 navy/gold/orange 역할형 token과 고정 commerce chrome 경계를 따른다.
+> UI 구현 정본은 `docs/spec/frontend-ui-system-contract.md` v1.1이다. 이 문서의 `primary` 예시는 일반 원칙 설명이며 FinalCall 구현은 브라이트 스틸/gold 역할형 token과 고정 commerce chrome 경계를 따른다.
 
 프로덕트 디자인 역할의 산출물·프로세스 규약. 협업 규약은 common/rules.md, 형식은
 common/templates.md를 따른다. 기획(설계, P-xxx)과 구분 — 기획=도메인/스펙, 디자인=UI/UX 시각·상호작용.
