@@ -361,7 +361,7 @@ architect(계약 확정)
 
 ## 섹션 11: 티켓·에픽 (파일 티켓 보드)
 
-- **canonical 진실원 = 레포 내 티켓 파일**. 위치: `docs/board/{tickets/, epics/, reviews/}`. **티켓당 파일 1개**(모놀리식 보드 금지 — 병렬 쓰기 충돌 회피). Jira는 에픽 단위만 미러하며 하위 task의 `jira_key`는 `null`로 유지한다.
+- **canonical 진실원 = 레포 내 티켓 파일**. 위치: `docs/board/{tickets/, epics/, reviews/}`. **티켓당 파일 1개**(모놀리식 보드 금지 — 병렬 쓰기 충돌 회피). 모든 에픽과 하위 task는 Jira 이슈로 미러하며 `jira_key`를 최초 생성 시 기록한 뒤 불변으로 유지한다.
 - **스키마** — YAML 프론트매터:
 
 ```yaml
@@ -370,7 +370,7 @@ id: FC-014
 type: task                 # task | epic
 epic: EPIC-MEMBER          # 귀속 에픽(task). epic이면 삭제
 derived_from: FC-012       # 직접 부모 티켓. 최초 발생이면 null
-jira_key: null             # task는 null. epic만 KAN-N을 최초 기록 후 불변
+jira_key: KAN-7            # 전건 미러 대상. 최초 생성 시 기록 후 불변
 title: member 잔액 원자적 증감 구현
 state: doing               # todo | doing | review | blocked | done
 owner: backend-impl        # architect | backend-impl | frontend-impl | reviewer | main
@@ -401,12 +401,12 @@ doing/review ──선행 미충족·게이트2 대기──▶ blocked ──�
 
 ## 섹션 12: Jira 미러 (사용자 대시보드)
 
-- **파일 → Jira 단방향·에픽 단위**. Jira(Atlassian MCP, KAN)는 **사용자 전용 에픽 대시보드**다. 하위 task는 Jira 이슈를 만들지 않고 파일 보드에서만 관리한다. 에이전트는 **Jira를 읽지 않는다**(서브에이전트 도구셋에서 Atlassian MCP 제외).
-- **트리거**: **메인세션만** 에픽 생성과 에픽 롤업 상태 전이 때마다 즉시 반영한다. 하위 task 전이는 Jira에 개별 반영하지 않고 그 결과로 바뀐 에픽 롤업만 반영한다. **비차단**은 미러 실패 시 파일 작업을 멈추지 않는다는 뜻이며 — **실패 허용이지 생략 허용이 아니다**(가시성 도구, 게이트 아님).
-- **에픽 설명 템플릿**: 배경 → 목표 → 범위 → 하위 작업(파일 티켓 ID) → 완료 기준 → 게이트 → 정본 경로 순서로 작성한다. 하위 작업의 정본이 `docs/board/tickets/`임을 명시한다.
-- **매핑**: epic state→status(칸반 컬럼) · 현재 임계경로 owner→라벨 `agent:<owner>` · gate→라벨 `gate:*`.
+- **파일 → Jira 단방향·전건 미러**. Jira(Atlassian MCP, KAN)는 **사용자 전용 대시보드**다. 모든 에픽과 하위 task를 Jira 이슈로 발급한다. 에이전트는 **Jira를 읽지 않는다**(서브에이전트 도구셋에서 Atlassian MCP 제외).
+- **트리거**: **메인세션만** 에픽·task 생성과 상태 전이 **때마다 즉시** 반영한다. **비차단**은 미러 실패 시 파일 작업을 멈추지 않는다는 뜻이며 — **실패 허용이지 생략 허용이 아니다**(가시성 도구, 게이트 아님).
+- **설명 템플릿**: 에픽은 배경 → 목표 → 범위 → 하위 작업(파일 티켓 ID) → 완료 기준 → 게이트 → 정본 경로, task는 목표 → DoD → 의존 → 게이트 → 정본 경로 순서로 작성한다.
+- **매핑**: state→status(칸반 컬럼) · owner→라벨 `agent:<owner>` · gate→라벨 `gate:*` · task의 `epic`→해당 Jira 에픽의 parent(프로젝트가 Epic Link를 쓰면 Epic Link) · `derived_from`→원본 이슈와 `relates to` 링크 · `depends_on`/`blocks`→방향을 보존한 issue link. 관계 대상의 `jira_key`가 아직 없으면 대상을 먼저 생성한 뒤 링크한다.
 - **역류 방지**: Jira 변경은 파일에 **영향 없음**. `jira_key`로 식별하는 **멱등 upsert**(생성 아닌 갱신). 파일과 어긋나면 **파일이 정본**, 다음 미러가 덮어쓴다.
-- **드리프트 가드레일**: (계층①·자동) `type: epic`이고 `state≠todo`인데 `jira_key`가 비어 있으면 "Jira 미생성" 드리프트다. task의 빈 `jira_key`는 정상이다. `git commit` 전 `.codex/hooks/check-mirror-drift.js`가 에픽만 탐지해 **경고**한다(warn-only, 커밋 비차단). (계층②·수동) 파일 에픽과 Jira 상태 불일치는 총괄이 HANDOVER 패리티 단계에서 대조·보정한다.
+- **드리프트 가드레일**: (계층①·자동) 템플릿을 제외한 에픽·task의 `jira_key`가 비어 있으면 상태와 무관하게 "Jira 미생성" 드리프트다. `git commit` 전 `.codex/hooks/check-mirror-drift.js`가 전건 탐지해 **경고**한다(warn-only, 커밋 비차단). (계층②·수동) 파일 보드 전건과 Jira의 key·상태·에픽 귀속·관계 링크 불일치는 총괄이 출근·퇴근 HANDOVER 패리티 단계에서 대조·보정한다.
 
 ## 섹션 13: 커밋·push 규약 (오케스트레이션 모드)
 
