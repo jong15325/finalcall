@@ -6,8 +6,11 @@ import WorldMapBackground from './WorldMapBackground'
 
 function createContext() {
     const gradient = { addColorStop: vi.fn() }
-    return {
+    const compositionModes: string[] = []
+    let compositionMode = 'source-over'
+    const context = {
         gradient,
+        compositionModes,
         arc: vi.fn(),
         beginPath: vi.fn(),
         clearRect: vi.fn(),
@@ -20,6 +23,8 @@ function createContext() {
         lineTo: vi.fn(),
         moveTo: vi.fn(),
         quadraticCurveTo: vi.fn(),
+        rect: vi.fn(),
+        clip: vi.fn(),
         restore: vi.fn(),
         rotate: vi.fn(),
         save: vi.fn(),
@@ -27,8 +32,20 @@ function createContext() {
         stroke: vi.fn(),
         strokeStyle: '',
         translate: vi.fn(),
+        globalAlpha: 1,
+        globalCompositeOperation: compositionMode,
+        lineCap: 'butt',
         lineWidth: 0,
     }
+    Object.defineProperty(context, 'globalCompositeOperation', {
+        configurable: true,
+        get: () => compositionMode,
+        set: (value: string) => {
+            compositionMode = value
+            compositionModes.push(value)
+        },
+    })
+    return context
 }
 
 describe('WorldMapBackground', () => {
@@ -149,7 +166,7 @@ describe('WorldMapBackground', () => {
         act(() => callbacks[0]?.(1000))
 
         expect(context.quadraticCurveTo).toHaveBeenCalled()
-        expect(context.bezierCurveTo).toHaveBeenCalledTimes(36)
+        expect(context.bezierCurveTo).toHaveBeenCalledTimes(15)
         expect(context.createRadialGradient).toHaveBeenCalled()
         expect(context.rotate).toHaveBeenCalled()
         expect(context.ellipse).toHaveBeenCalled()
@@ -159,7 +176,7 @@ describe('WorldMapBackground', () => {
         )
     })
 
-    it('wind는 회전 대신 오른쪽으로 흐르는 복수 곡선이고 earth는 강화된 명암을 쓴다', () => {
+    it('wind는 clip 내부 비단 리본 위로 간헐적 돌풍 band를 겹친다', () => {
         Object.defineProperties(HTMLCanvasElement.prototype, {
             clientWidth: { configurable: true, value: 1000 },
             clientHeight: { configurable: true, value: 800 },
@@ -181,17 +198,94 @@ describe('WorldMapBackground', () => {
         render(<WorldMapBackground accent={null} />)
         act(() => callbacks[0]?.(1000))
         const firstFrameCurveCount = context.bezierCurveTo.mock.calls.length
-        const firstEndX = context.bezierCurveTo.mock.calls[0][4]
-        act(() => callbacks[1]?.(1040))
-        const secondEndX =
-            context.bezierCurveTo.mock.calls[firstFrameCurveCount][4]
+        act(() => callbacks[1]?.(4000))
+        const secondFrameCurveCount =
+            context.bezierCurveTo.mock.calls.length - firstFrameCurveCount
 
-        expect(firstFrameCurveCount).toBe(36)
-        expect(secondEndX).toBeGreaterThan(firstEndX)
-        expect(context.rotate).toHaveBeenCalledTimes(24)
+        expect(firstFrameCurveCount).toBe(15)
+        expect(secondFrameCurveCount).toBe(12)
+        expect(context.rect).toHaveBeenCalledWith(0, 280, 430, 520)
+        expect(context.clip).toHaveBeenCalledTimes(2)
+        expect(context.compositionModes).toContain('screen')
+        expect(context.globalCompositeOperation).toBe('source-over')
+    })
+
+    it('wind 렌더러는 회전 스포트라이트를 재도입하지 않는다', () => {
+        const source = readFileSync(
+            `${process.cwd()}/src/features/item/components/ElementDetailBackground.tsx`,
+            'utf8',
+        )
+        const windRenderer = source.slice(
+            source.indexOf('function drawWindField'),
+            source.indexOf('function drawFire'),
+        )
+
+        expect(windRenderer).toContain('drawGustPulseBands')
+        expect(windRenderer).toContain('context.clip()')
+        expect(windRenderer).not.toContain('rotate(')
+        expect(source).not.toContain('function drawWind(')
+    })
+
+    it('wind 변경 뒤에도 earth·fire·water motif와 명암을 유지한다', () => {
+        Object.defineProperties(HTMLCanvasElement.prototype, {
+            clientWidth: { configurable: true, value: 1000 },
+            clientHeight: { configurable: true, value: 800 },
+        })
+        const context = createContext()
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            context as unknown as CanvasRenderingContext2D,
+        )
+        const callbacks: FrameRequestCallback[] = []
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            (callback: FrameRequestCallback) => {
+                callbacks.push(callback)
+                return callbacks.length
+            },
+        )
+        vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+        render(<WorldMapBackground accent={null} />)
+        act(() => callbacks[0]?.(1000))
+
+        expect(context.createRadialGradient).toHaveBeenCalled()
+        expect(context.rotate).toHaveBeenCalledTimes(12)
+        expect(context.ellipse).toHaveBeenCalled()
         expect(context.gradient.addColorStop).toHaveBeenCalledWith(
             0.48,
             'rgba(158, 205, 92, .26)',
+        )
+    })
+
+    it('모바일 wind clip도 지정된 왼쪽 하단 경계를 벗어나지 않는다', () => {
+        Object.defineProperties(HTMLCanvasElement.prototype, {
+            clientWidth: { configurable: true, value: 1000 },
+            clientHeight: { configurable: true, value: 800 },
+        })
+        const media = stubMatchMedia()
+        media.setMatches('(max-width: 639px)', true)
+        const context = createContext()
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            context as unknown as CanvasRenderingContext2D,
+        )
+        const callbacks: FrameRequestCallback[] = []
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            (callback: FrameRequestCallback) => {
+                callbacks.push(callback)
+                return callbacks.length
+            },
+        )
+        vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+        render(<WorldMapBackground accent={null} />)
+        act(() => callbacks[0]?.(1000))
+
+        expect(context.rect).toHaveBeenCalledWith(
+            0,
+            0.461 * 800,
+            0.43 * 1000,
+            (0.63 - 0.461) * 800,
         )
     })
 

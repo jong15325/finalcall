@@ -8,14 +8,15 @@ const tokenRegistry = 'src/styles/tokens.css'
 const rawColorPattern = /#[\da-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/giu
 const exactRawColorAllowlist = new Map([
     ['src/components/layout/WorldMapBackground.css', new Set([
-        'rgb(210 242 150 / 0.34)', 'rgb(220 255 248 / 0.32)',
+        'rgb(229 255 178 / 0.48)', 'rgb(152 196 92 / 0.3)',
         'rgb(255 100 22 / 0.42)', 'rgb(100 220 255 / 0.38)',
     ])],
     ['src/features/item/components/ElementDetailBackground.tsx', new Set([
         'rgba(220, 255, 248, .5)', 'rgba(255, 220, 120, .72)',
         'rgba(255, 70, 20, 0)', 'rgba(255, 155, 48, .58)',
-        'rgba(210, 242, 150, .5)', 'rgba(110, 145, 70, 0)',
-        'rgba(220, 240, 175, .54)', 'rgba(225, 250, 253, .62)',
+        'rgba(232, 255, 184, .72)', 'rgba(158, 205, 92, .26)',
+        'rgba(84, 120, 48, 0)', 'rgba(94, 132, 56, .34)',
+        'rgba(232, 250, 190, .74)', 'rgba(225, 250, 253, .62)',
         'rgba(220, 250, 255, .46)', 'rgba(220, 250, 255, ${0.55 * (1 - progress)',
         'rgba(225, 250, 253, .44)',
     ])],

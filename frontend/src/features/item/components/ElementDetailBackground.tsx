@@ -95,10 +95,8 @@ export function AmbientCanvas() {
             const delta = Math.min((time - previous) / 1000 || 0, 0.04)
             previous = time
             context.clearRect(0, 0, width, height)
+            const bounds = mobileViewport.matches ? mobileBounds : desktopBounds
             for (const particle of particles) {
-                const bounds = mobileViewport.matches
-                    ? mobileBounds
-                    : desktopBounds
                 const [minX, maxX, minY, maxY] = bounds[particle.element]
                 const drawParticle = {
                     ...particle,
@@ -109,7 +107,6 @@ export function AmbientCanvas() {
                     particle.x += particle.speed * delta * 0.52
                     particle.y +=
                         Math.sin(time * 0.0011 + particle.phase) * delta * 0.01
-                    drawWind(context, drawParticle, width, height, time)
                 } else if (particle.element === 'fire') {
                     particle.y -= particle.speed * delta * 0.9
                     particle.x +=
@@ -132,6 +129,7 @@ export function AmbientCanvas() {
                 if (particle.x < -0.1) particle.x = 1.02
                 if (particle.x > 1.02) particle.x = -0.08
             }
+            drawWindField(context, particles, bounds.wind, width, height, time)
             if (
                 visible &&
                 !reducedMotion.matches &&
@@ -223,33 +221,110 @@ interface AmbientParticle {
     drift: number
 }
 
-function drawWind(
+type ElementBounds = readonly [number, number, number, number]
+
+const AMBIENT_COLORS = {
+    wind: 'rgba(220, 255, 248, .5)',
+    fireCore: 'rgba(255, 220, 120, .72)',
+    fireEdge: 'rgba(255, 70, 20, 0)',
+    fireFill: 'rgba(255, 155, 48, .58)',
+    earthCore: 'rgba(232, 255, 184, .72)',
+    earthMid: 'rgba(158, 205, 92, .26)',
+    earthEdge: 'rgba(84, 120, 48, 0)',
+    earthFill: 'rgba(94, 132, 56, .34)',
+    earthStroke: 'rgba(232, 250, 190, .74)',
+    waterStroke: 'rgba(225, 250, 253, .62)',
+    waterFill: 'rgba(220, 250, 255, .46)',
+    waterDrop: 'rgba(225, 250, 253, .44)',
+} as const
+
+function drawWindField(
     context: CanvasRenderingContext2D,
-    particle: AmbientParticle,
+    particles: readonly AmbientParticle[],
+    bounds: ElementBounds,
     width: number,
     height: number,
     time: number,
 ) {
-    const x = particle.x * width
-    const y = particle.y * height
-    const length = particle.size * 30
-    const wave = Math.sin(time * 0.0012 + particle.phase) * particle.size * 4
-    const baseLineWidth = 0.8 + (particle.phase % 3) * 0.45
-    for (const strand of [2, 0, 1]) {
-        const offset = (strand - 1) * particle.size * 2.4
-        const strength = strand === 1 ? 1 : strand === 0 ? 0.78 : 0.58
+    const [minX, maxX, minY, maxY] = bounds
+    const regionX = minX * width
+    const regionY = minY * height
+    const regionWidth = (maxX - minX) * width
+    const regionHeight = (maxY - minY) * height
+
+    context.save()
+    context.beginPath()
+    context.rect(regionX, regionY, regionWidth, regionHeight)
+    context.clip()
+    context.globalCompositeOperation = 'screen'
+    context.lineCap = 'round'
+
+    for (const particle of particles) {
+        if (particle.element !== 'wind') continue
+        const x = (minX + particle.x * (maxX - minX)) * width
+        const y = (minY + particle.y * (maxY - minY)) * height
+        const length = Math.min(regionWidth * 0.24, particle.size * 42)
+        const wave = Math.sin(time * 0.001 + particle.phase) * particle.size * 7
+
         context.beginPath()
-        context.moveTo(x - length, y + offset + wave * 0.35)
+        context.moveTo(x - length, y + wave * 0.25)
         context.bezierCurveTo(
-            x - length * 0.68,
-            y - wave + offset,
+            x - length * 0.7,
+            y - wave,
             x - length * 0.28,
-            y + wave * 0.72 - offset * 0.35,
-            x + particle.size * (7 - strand),
-            y + offset * 0.2,
+            y + wave * 0.8,
+            x + particle.size * 8,
+            y,
         )
-        context.strokeStyle = `rgba(220, 255, 248, ${0.56 * strength})`
-        context.lineWidth = baseLineWidth * strength
+        context.strokeStyle = AMBIENT_COLORS.wind
+        context.globalAlpha = 0.14
+        context.lineWidth = 5 + particle.size * 1.8
+        context.stroke()
+        context.globalAlpha = 0.48
+        context.lineWidth = 0.7 + particle.size * 0.42
+        context.stroke()
+    }
+
+    drawGustPulseBands(context, bounds, width, height, time)
+    context.restore()
+    context.globalAlpha = 1
+    context.globalCompositeOperation = 'source-over'
+}
+
+function drawGustPulseBands(
+    context: CanvasRenderingContext2D,
+    bounds: ElementBounds,
+    width: number,
+    height: number,
+    time: number,
+) {
+    const cycle = (time % 6200) / 6200
+    if (cycle < 0.12 || cycle > 0.34) return
+
+    const intensity = Math.sin(((cycle - 0.12) / 0.22) * Math.PI)
+    const [minX, maxX, minY, maxY] = bounds
+    const left = minX * width
+    const right = maxX * width
+    const regionHeight = (maxY - minY) * height
+    const progress = (cycle - 0.12) / 0.22
+
+    context.strokeStyle = AMBIENT_COLORS.wind
+    for (let band = 0; band < 3; band += 1) {
+        const y =
+            (minY + 0.24 * (maxY - minY)) * height + band * regionHeight * 0.2
+        const phase = progress * Math.PI * 2 + band * 0.8
+        context.beginPath()
+        context.moveTo(left - regionHeight * 0.08, y)
+        context.bezierCurveTo(
+            left + (right - left) * 0.3,
+            y - Math.sin(phase) * regionHeight * 0.08,
+            left + (right - left) * 0.68,
+            y + Math.cos(phase) * regionHeight * 0.07,
+            right + regionHeight * 0.08,
+            y - Math.sin(phase * 0.7) * regionHeight * 0.04,
+        )
+        context.globalAlpha = intensity * (0.18 - band * 0.035)
+        context.lineWidth = 2.6 + band * 1.2
         context.stroke()
     }
 }
@@ -272,8 +347,8 @@ function drawFire(
         y,
         particle.size * pulse,
     )
-    glow.addColorStop(0, 'rgba(255, 220, 120, .72)')
-    glow.addColorStop(1, 'rgba(255, 70, 20, 0)')
+    glow.addColorStop(0, AMBIENT_COLORS.fireCore)
+    glow.addColorStop(1, AMBIENT_COLORS.fireEdge)
     context.fillStyle = glow
     context.beginPath()
     context.arc(x, y, particle.size * pulse, 0, Math.PI * 2)
@@ -282,7 +357,7 @@ function drawFire(
     context.moveTo(x, y - particle.size * 4)
     context.quadraticCurveTo(x + particle.size * 2, y, x, y + particle.size)
     context.quadraticCurveTo(x - particle.size * 2, y, x, y - particle.size * 4)
-    context.fillStyle = 'rgba(255, 155, 48, .58)'
+    context.fillStyle = AMBIENT_COLORS.fireFill
     context.fill()
 }
 
@@ -296,9 +371,9 @@ function drawEarth(
     const x = particle.x * width
     const y = particle.y * height
     const glow = context.createRadialGradient(x, y, 0, x, y, particle.size * 6)
-    glow.addColorStop(0, 'rgba(232, 255, 184, .72)')
-    glow.addColorStop(0.48, 'rgba(158, 205, 92, .26)')
-    glow.addColorStop(1, 'rgba(84, 120, 48, 0)')
+    glow.addColorStop(0, AMBIENT_COLORS.earthCore)
+    glow.addColorStop(0.48, AMBIENT_COLORS.earthMid)
+    glow.addColorStop(1, AMBIENT_COLORS.earthEdge)
     context.fillStyle = glow
     context.beginPath()
     context.arc(x, y, particle.size * 6, 0, Math.PI * 2)
@@ -306,8 +381,8 @@ function drawEarth(
     context.save()
     context.translate(x, y)
     context.rotate(time * 0.0002 + particle.phase)
-    context.fillStyle = 'rgba(94, 132, 56, .34)'
-    context.strokeStyle = 'rgba(232, 250, 190, .74)'
+    context.fillStyle = AMBIENT_COLORS.earthFill
+    context.strokeStyle = AMBIENT_COLORS.earthStroke
     context.lineWidth = 0.8 + particle.size * 0.12
     context.beginPath()
     context.moveTo(-particle.size * 2.8, 0)
@@ -331,7 +406,7 @@ function drawWater(
     const y = particle.y * height
     const size = particle.size + 0.8
     if (y < impactY) {
-        context.strokeStyle = 'rgba(225, 250, 253, .62)'
+        context.strokeStyle = AMBIENT_COLORS.waterStroke
         context.beginPath()
         context.moveTo(x - particle.drift * 60, y - size * 5)
         context.lineTo(x, y)
@@ -346,7 +421,7 @@ function drawWater(
             0,
             Math.PI * 2,
         )
-        context.fillStyle = 'rgba(220, 250, 255, .46)'
+        context.fillStyle = AMBIENT_COLORS.waterFill
         context.fill()
         return
     }
@@ -374,7 +449,7 @@ function drawWater(
             0,
             Math.PI * 2,
         )
-        context.fillStyle = 'rgba(225, 250, 253, .44)'
+        context.fillStyle = AMBIENT_COLORS.waterDrop
         context.fill()
     }
 }
