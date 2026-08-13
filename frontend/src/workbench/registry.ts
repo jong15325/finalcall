@@ -1,5 +1,5 @@
 import { auctionDetailPath, paths } from '@/app/paths'
-import { COLOR_PALETTES } from './fixtures/colorSystem'
+import { COLOR_PALETTE_VARIANT_IDS } from './scenarioMetadata'
 import type { WorkbenchFixture, WorkbenchScenarioDefinition } from './types'
 
 function defineScenario(
@@ -14,7 +14,7 @@ export const WORKBENCH_SCENARIOS = [
         title: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
         shell: 'app',
         routeContext: auctionDetailPath('design-preview'),
-        variants: COLOR_PALETTES.map(({ id }) => id),
+        variants: COLOR_PALETTE_VARIANT_IDS,
         load: () => import('./scenarios/ColorSystemScenario'),
     }),
     defineScenario({

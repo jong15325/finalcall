@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '@/auth'
+import { balanceKeys } from '@/lib/queries/balance'
+import { memoKeys } from '@/lib/queries/memos'
+import { useAuthStore } from '@/store/authStore'
 import { COLOR_PALETTES } from './fixtures/colorSystem'
 import WorkbenchRoutes from './WorkbenchRoutes'
 
@@ -11,11 +14,8 @@ beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 })
 
-function renderWorkbench(route: string) {
-    const queryClient = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-    })
-    return render(
+function renderWorkbench(route: string, queryClient = createQueryClient()) {
+    const view = render(
         <MemoryRouter initialEntries={[route]}>
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
@@ -24,6 +24,13 @@ function renderWorkbench(route: string) {
             </QueryClientProvider>
         </MemoryRouter>,
     )
+    return Object.assign(view, { queryClient })
+}
+
+function createQueryClient() {
+    return new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+    })
 }
 
 function useViewport(width: number) {
@@ -83,7 +90,7 @@ describe('WorkbenchRoutes', () => {
             })
 
             const scenario = view.getByTestId('color-system-scenario')
-            expect(scenario).toHaveClass('min-w-0', 'max-w-full')
+            expect(scenario).toHaveClass('w-full', 'min-w-0', 'max-w-full')
             expect(view.getByTestId('palette-preview-grid')).toHaveClass(
                 'min-w-0',
             )
@@ -98,11 +105,66 @@ describe('WorkbenchRoutes', () => {
                 expect(row).toHaveClass('min-w-0', 'flex-wrap')
                 expect(row.querySelector('dt')).toHaveClass(
                     'min-w-0',
-                    'break-words',
+                    'break-all',
+                )
+                expect(row.querySelector('dd')).toHaveClass(
+                    'min-w-0',
+                    'max-w-full',
+                    'break-all',
                 )
             }
         },
     )
+
+    it('실제 auth/query 상태를 결정적 fixture로 격리하고 이탈 시 복원한다', async () => {
+        const originalSession = {
+            accessToken: 'original-access',
+            refreshToken: 'original-refresh',
+            accessExpiresAt: '2030-01-01T00:00:00Z',
+            user: {
+                userPublicId: 'original-user',
+                nickname: '원래 사용자',
+                isAdmin: true,
+            },
+        }
+        useAuthStore.getState().setSession(originalSession)
+        const queryClient = createQueryClient()
+        queryClient.setQueryData(balanceKeys.me(), {
+            cashBalance: 1,
+            gameMoneyBalance: 2,
+            gameMoneyHeld: 0,
+            gameMoneyAvailable: 2,
+        })
+        queryClient.setQueryData(memoKeys.unread(), { count: 77 })
+
+        const view = renderWorkbench(
+            '/__design/main-color-palettes?variant=fc-palette-cobalt',
+            queryClient,
+        )
+        await screen.findByRole('heading', {
+            name: '내비게이션 · 푸터 · 버튼 메인 컬러 10안',
+        })
+
+        expect(useAuthStore.getState().user?.nickname).toBe('프리뷰 사용자')
+        expect(queryClient.getQueryData(balanceKeys.me())).toMatchObject({
+            gameMoneyBalance: 1_520_000,
+        })
+        expect(queryClient.getQueryData(memoKeys.unread())).toEqual({
+            count: 3,
+        })
+        expect(
+            screen.getAllByRole('link', { name: '쪽지 · 안 읽음 3건' }),
+        ).not.toHaveLength(0)
+
+        view.unmount()
+        expect(useAuthStore.getState().user).toEqual(originalSession.user)
+        expect(queryClient.getQueryData(balanceKeys.me())).toMatchObject({
+            gameMoneyBalance: 2,
+        })
+        expect(queryClient.getQueryData(memoKeys.unread())).toEqual({
+            count: 77,
+        })
+    })
 
     it.each([
         ['loading', '[aria-busy="true"]'],

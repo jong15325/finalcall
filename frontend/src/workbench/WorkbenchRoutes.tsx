@@ -1,7 +1,11 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useLayoutEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, Route, Routes, useLocation } from 'react-router'
 import AppShell from '@/components/layout/AppShell'
 import AuthLayout from '@/components/layout/AuthLayout'
+import { balanceKeys } from '@/lib/queries/balance'
+import { memoKeys } from '@/lib/queries/memos'
+import { useAuthStore } from '@/store/authStore'
 import { findWorkbenchScenario, WORKBENCH_SCENARIOS } from './registry'
 import type {
     SemanticStyle,
@@ -99,17 +103,96 @@ function LoadedScenario<TFixture extends WorkbenchFixture>({
     const Shell = definition.shell === 'app' ? AppShell : AuthLayout
 
     return (
-        <div style={overrides as SemanticStyle | undefined}>
-            <Routes location={routeLocation}>
-                <Route element={<Shell />}>
-                    <Route
-                        path={definition.routeContext}
-                        element={<Preview fixture={module.fixture} />}
-                    />
-                </Route>
-            </Routes>
-        </div>
+        <WorkbenchFixtureBoundary fixture={module.fixture}>
+            <div
+                className="w-full min-w-0 max-w-full"
+                style={overrides as SemanticStyle | undefined}
+            >
+                <Routes location={routeLocation}>
+                    <Route element={<Shell />}>
+                        <Route
+                            path={definition.routeContext}
+                            element={<Preview fixture={module.fixture} />}
+                        />
+                    </Route>
+                </Routes>
+            </div>
+        </WorkbenchFixtureBoundary>
     )
+}
+
+function WorkbenchFixtureBoundary({
+    children,
+    fixture,
+}: {
+    children: React.ReactNode
+    fixture: WorkbenchFixture
+}) {
+    const queryClient = useQueryClient()
+    const [ready, setReady] = useState(false)
+
+    useLayoutEffect(() => {
+        const auth = useAuthStore.getState()
+        const previousAuth = {
+            accessToken: auth.accessToken,
+            refreshToken: auth.refreshToken,
+            accessExpiresAt: auth.accessExpiresAt,
+            user: auth.user,
+        }
+        const queryKeys = [balanceKeys.me(), memoKeys.unread()] as const
+        const previousQueries = queryKeys.map((queryKey) => ({
+            queryKey,
+            state: queryClient.getQueryState(queryKey),
+        }))
+        const shellState = fixture.shellState ?? { authSession: null }
+
+        for (const queryKey of queryKeys) {
+            queryClient.removeQueries({ exact: true, queryKey })
+        }
+        auth.clearSession()
+        if (shellState.authSession) {
+            auth.setSession(shellState.authSession)
+            if (shellState.balance) {
+                queryClient.setQueryData(balanceKeys.me(), shellState.balance)
+            }
+            queryClient.setQueryData(memoKeys.unread(), {
+                count: shellState.unreadMemoCount ?? 0,
+            })
+        }
+        setReady(true)
+
+        return () => {
+            const currentAuth = useAuthStore.getState()
+            currentAuth.clearSession()
+            if (
+                previousAuth.accessToken &&
+                previousAuth.refreshToken &&
+                previousAuth.accessExpiresAt
+            ) {
+                currentAuth.updateTokens({
+                    accessToken: previousAuth.accessToken,
+                    refreshToken: previousAuth.refreshToken,
+                    accessExpiresAt: previousAuth.accessExpiresAt,
+                })
+            }
+            if (previousAuth.user) currentAuth.setUser(previousAuth.user)
+
+            for (const { queryKey, state } of previousQueries) {
+                queryClient.removeQueries({ exact: true, queryKey })
+                if (!state) continue
+                queryClient.setQueryData(queryKey, state.data, {
+                    updatedAt: state.dataUpdatedAt,
+                })
+                queryClient
+                    .getQueryCache()
+                    .find({ exact: true, queryKey })
+                    ?.setState(state)
+            }
+        }
+    }, [fixture, queryClient])
+
+    if (!ready) return null
+    return children
 }
 
 function WorkbenchIndex() {

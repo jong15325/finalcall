@@ -9,6 +9,7 @@
     "sync-assets": "npm run sync-art && npm run sync-brand",
     "check:ui-system": "node scripts/check-ui-system.mjs && node scripts/check-workbench.mjs",
     "check:workbench:production": "node scripts/check-workbench-production.mjs",
+    "check:workbench:layout": "node scripts/check-workbench-layout.mjs",
     "predev": "npm run sync-assets",
     "dev": "vite",
     "prebuild": "npm run check:ui-system && npm run sync-assets",

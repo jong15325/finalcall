@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { relative, resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Color from 'color'
 import ts from 'typescript'
@@ -81,8 +81,12 @@ for (const file of walk(sourceRoot)) {
         continue
     if (!/\.(?:ts|tsx)$/u.test(file)) continue
     const source = readFileSync(file, 'utf8')
-    if (/from\s+['"]@\/workbench|import\(['"]@\/workbench/u.test(source)) {
-        failures.push(`${path}: production module의 workbench import 금지`)
+    for (const specifier of extractModuleSpecifiers(file, source)) {
+        if (resolvesToWorkbench(file, specifier)) {
+            failures.push(
+                `${path}: production module의 workbench import 금지 ${specifier}`,
+            )
+        }
     }
 }
 
@@ -93,11 +97,28 @@ if (!/@source not ['"]\.\/workbench['"];/u.test(indexCss)) {
 
 checkFixtureContrast()
 checkClassParserCoverage()
+checkImportResolverCoverage()
 
 const registrySource = readFileSync(
     resolve(workbenchRoot, 'registry.ts'),
     'utf8',
 )
+for (const specifier of extractModuleSpecifiers(
+    resolve(workbenchRoot, 'registry.ts'),
+    registrySource,
+)) {
+    if (
+        resolvesToDirectory(
+            resolve(workbenchRoot, 'registry.ts'),
+            specifier,
+            resolve(workbenchRoot, 'fixtures'),
+        )
+    ) {
+        failures.push(
+            `src/workbench/registry.ts: fixture eager import 금지 ${specifier}`,
+        )
+    }
+}
 const scenarioIds = [
     ...registrySource.matchAll(/\bid:\s*['"]([a-z0-9-]+)['"]/gu),
 ].map((match) => match[1])
@@ -222,6 +243,59 @@ function addTokens(tokens, value) {
     }
 }
 
+function extractModuleSpecifiers(file, source) {
+    const specifiers = []
+    const sourceFile = ts.createSourceFile(
+        file,
+        source,
+        ts.ScriptTarget.Latest,
+        true,
+        file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    )
+    visit(sourceFile)
+    return specifiers
+
+    function visit(node) {
+        if (
+            (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+            node.moduleSpecifier &&
+            ts.isStringLiteral(node.moduleSpecifier)
+        ) {
+            specifiers.push(node.moduleSpecifier.text)
+        }
+        if (
+            ts.isCallExpression(node) &&
+            node.arguments.length > 0 &&
+            ts.isStringLiteral(node.arguments[0]) &&
+            (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+                (ts.isIdentifier(node.expression) &&
+                    node.expression.text === 'require'))
+        ) {
+            specifiers.push(node.arguments[0].text)
+        }
+        ts.forEachChild(node, visit)
+    }
+}
+
+function resolvesToWorkbench(importer, specifier) {
+    return resolvesToDirectory(importer, specifier, workbenchRoot)
+}
+
+function resolvesToDirectory(importer, specifier, directory) {
+    const target = specifier.startsWith('@/')
+        ? resolve(sourceRoot, specifier.slice(2))
+        : specifier.startsWith('.')
+          ? resolve(dirname(importer), specifier)
+          : undefined
+    if (!target) return false
+    const normalizedTarget = normalize(target).toLowerCase()
+    const normalizedRoot = normalize(directory).toLowerCase()
+    return (
+        normalizedTarget === normalizedRoot ||
+        normalizedTarget.startsWith(`${normalizedRoot}/`)
+    )
+}
+
 function checkFixtureContrast() {
     const fixturePath = resolve(workbenchRoot, 'fixtures/colorSystem.ts')
     const source = readFileSync(fixturePath, 'utf8')
@@ -254,7 +328,7 @@ function checkFixtureContrast() {
             node.expression.text === 'palette'
         ) {
             paletteCount += 1
-            const id = stringArgument(node, 0)
+            const id = stringArgument(node, 2)
             const chromeBg = stringArgument(node, 4)
             const controlFocus = stringArgument(node, 6)
             if (id && chromeBg && chromeMuted) {
@@ -321,6 +395,34 @@ function checkClassParserCoverage() {
         if (!extracted.has(expected)) {
             failures.push(
                 `scripts/check-workbench.mjs: JSX class parser가 ${expected}를 검출하지 못함`,
+            )
+        }
+    }
+}
+
+function checkImportResolverCoverage() {
+    const cases = [
+        {
+            file: resolve(sourceRoot, 'app/example.ts'),
+            source: "import value from '../workbench/registry'",
+        },
+        {
+            file: resolve(sourceRoot, 'example.ts'),
+            source: "export { value } from './workbench/registry'",
+        },
+        {
+            file: resolve(sourceRoot, 'example.ts'),
+            source: "const module = import('@/workbench/registry')",
+        },
+    ]
+    for (const example of cases) {
+        const [specifier] = extractModuleSpecifiers(
+            example.file,
+            example.source,
+        )
+        if (!specifier || !resolvesToWorkbench(example.file, specifier)) {
+            failures.push(
+                `scripts/check-workbench.mjs: import resolver가 ${specifier ?? 'specifier 없음'}을 검출하지 못함`,
             )
         }
     }

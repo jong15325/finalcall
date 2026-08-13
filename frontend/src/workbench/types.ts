@@ -1,4 +1,6 @@
 import type { ComponentType, CSSProperties } from 'react'
+import type { BalanceResponse } from '@/lib/api/balance'
+import type { AuthSession } from '@/store/authStore'
 
 export type WorkbenchShell = 'app' | 'auth'
 export type WorkbenchScenarioId = string
@@ -21,6 +23,11 @@ export type SemanticTokenOverrides = Partial<
 
 export interface WorkbenchFixture {
     [key: string]: unknown
+    shellState?: {
+        authSession: AuthSession | null
+        balance?: BalanceResponse
+        unreadMemoCount?: number
+    }
     semanticOverridesByVariant?: Readonly<
         Record<string, SemanticTokenOverrides>
     >

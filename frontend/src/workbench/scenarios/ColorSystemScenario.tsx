@@ -28,6 +28,25 @@ interface ColorSystemFixture extends WorkbenchFixture {
 // eslint-disable-next-line react-refresh/only-export-components
 export const fixture = {
     palettes: COLOR_PALETTES,
+    shellState: {
+        authSession: {
+            accessToken: 'workbench-access-token',
+            refreshToken: 'workbench-refresh-token',
+            accessExpiresAt: '2099-01-01T00:00:00Z',
+            user: {
+                userPublicId: 'workbench-user',
+                nickname: '프리뷰 사용자',
+                isAdmin: false,
+            },
+        },
+        balance: {
+            gameMoneyBalance: 1_520_000,
+            gameMoneyAvailable: 1_240_000,
+            gameMoneyHeld: 280_000,
+            cashBalance: 50_000,
+        },
+        unreadMemoCount: 3,
+    },
     semanticOverridesByVariant: Object.fromEntries(
         COLOR_PALETTES.map((palette) => [palette.id, palette.overrides]),
     ),
@@ -52,22 +71,25 @@ export default function ColorSystemScenario({
     return (
         <div
             data-testid="color-system-scenario"
-            className="flex min-w-0 max-w-full flex-col gap-8"
+            className="flex w-full min-w-0 max-w-full flex-col gap-8"
         >
-            <header className="min-w-0">
+            <header className="w-full min-w-0 max-w-full">
                 <p className="text-sm font-bold text-control-action-hover">
                     실제 AppShell 기반 비교
                 </p>
-                <h1 className="mt-1 min-w-0 break-words text-2xl font-bold text-content-fg">
+                <h1 className="mt-1 w-full min-w-0 max-w-full break-all text-2xl font-bold text-content-fg">
                     내비게이션 · 푸터 · 버튼 메인 컬러 10안
                 </h1>
-                <p className="mt-2 max-w-[65ch] text-sm leading-6 text-content-muted">
+                <p className="mt-2 w-full min-w-0 max-w-full break-words text-sm leading-6 text-content-muted">
                     선택한 팔레트가 현재 화면의 실제 내비게이션, 푸터와 주요
                     행동 토큰에 함께 적용됩니다. 상태색은 변경하지 않습니다.
                 </p>
             </header>
 
-            <section aria-labelledby="palette-options-title">
+            <section
+                aria-labelledby="palette-options-title"
+                className="w-full min-w-0 max-w-full"
+            >
                 <div className="flex items-end justify-between gap-4">
                     <h2
                         id="palette-options-title"
@@ -81,7 +103,7 @@ export default function ColorSystemScenario({
                 </div>
                 <div
                     data-testid="palette-selector"
-                    className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1"
+                    className="mt-3 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto pb-1"
                 >
                     {scenarioFixture.palettes.map((palette) => {
                         const active = palette.id === selected.id
@@ -111,9 +133,9 @@ export default function ColorSystemScenario({
 
             <section
                 data-testid="palette-preview-grid"
-                className="grid min-w-0 gap-4 min-[1000px]:grid-cols-2"
+                className="grid w-full min-w-0 max-w-full gap-4 min-[1000px]:grid-cols-2"
             >
-                <article className="min-w-0 rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+                <article className="w-full min-w-0 max-w-full rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                             <h2 className="break-words text-lg font-bold">
@@ -129,21 +151,21 @@ export default function ColorSystemScenario({
                             </span>
                         )}
                     </div>
-                    <p className="mt-4 max-w-[65ch] text-sm leading-6 text-content-muted">
+                    <p className="mt-4 w-full min-w-0 max-w-full break-words text-sm leading-6 text-content-muted">
                         {selected.note}
                     </p>
-                    <dl className="mt-5 min-w-0 divide-y divide-content-line rounded-xl border border-content-line px-4">
+                    <dl className="mt-5 w-full min-w-0 max-w-full divide-y divide-content-line rounded-xl border border-content-line px-4">
                         {Object.entries(selected.overrides).map(
                             ([token, value]) => (
                                 <div
                                     key={token}
                                     data-testid="semantic-token-row"
-                                    className="flex min-w-0 flex-wrap items-center justify-between gap-4 py-2.5 text-xs"
+                                    className="flex w-full min-w-0 max-w-full flex-wrap items-center justify-between gap-4 py-2.5 text-xs"
                                 >
-                                    <dt className="min-w-0 break-words font-mono text-content-muted">
+                                    <dt className="min-w-0 max-w-full break-all font-mono text-content-muted">
                                         {token}
                                     </dt>
-                                    <dd className="shrink-0 font-bold text-content-fg">
+                                    <dd className="min-w-0 max-w-full break-all font-bold text-content-fg">
                                         {value}
                                     </dd>
                                 </div>
@@ -152,7 +174,7 @@ export default function ColorSystemScenario({
                     </dl>
                 </article>
 
-                <section className="min-w-0 rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+                <section className="w-full min-w-0 max-w-full rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
                     <h2 className="text-lg font-bold">UI 상태 선택</h2>
                     <p className="mt-1 text-xs text-content-subtle">
                         공용 ListFrame과 WalletSummaryCard의 실제 상태입니다.
@@ -182,7 +204,10 @@ export default function ColorSystemScenario({
                 </section>
             </section>
 
-            <section aria-labelledby="state-preview-title">
+            <section
+                aria-labelledby="state-preview-title"
+                className="w-full min-w-0 max-w-full"
+            >
                 <h2 id="state-preview-title" className="mb-3 text-lg font-bold">
                     실제 공용 상태와 주요 행동 ·{' '}
                     {PREVIEW_STATE_LABEL[previewState]}
@@ -212,7 +237,7 @@ export default function ColorSystemScenario({
                 </ListFrame>
             </section>
 
-            <section className="flex flex-wrap items-center gap-3 rounded-xl bg-content-soft p-4">
+            <section className="flex w-full min-w-0 max-w-full flex-wrap items-center gap-3 rounded-xl bg-content-soft p-4">
                 <span className="text-xs font-semibold text-content-muted">
                     금액 숫자 안정성
                 </span>

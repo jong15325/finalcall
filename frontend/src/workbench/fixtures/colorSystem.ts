@@ -1,4 +1,5 @@
 import type { SemanticTokenOverrides } from '../types'
+import { COLOR_PALETTE_VARIANTS } from '../scenarioMetadata'
 
 export interface ColorPaletteFixture {
     id: string
@@ -12,7 +13,7 @@ export interface ColorPaletteFixture {
 
 export const COLOR_PALETTES = [
     palette(
-        'fc-palette-cobalt',
+        COLOR_PALETTE_VARIANTS.cobalt,
         1,
         '선명한 코발트',
         '가장 추천',
@@ -22,7 +23,7 @@ export const COLOR_PALETTES = [
         '거래 신뢰와 실시간 서비스의 속도감을 균형 있게 전달합니다.',
     ),
     palette(
-        'fc-palette-navy-orange',
+        COLOR_PALETTE_VARIANTS.navyOrange,
         2,
         '브라이트 네이비 + 오렌지',
         '안전한 전환',
@@ -32,7 +33,7 @@ export const COLOR_PALETTES = [
         '기존 인지 자산을 지키면서 탁한 인상을 줄인 전환 비용이 낮은 안입니다.',
     ),
     palette(
-        'fc-palette-teal',
+        COLOR_PALETTE_VARIANTS.teal,
         3,
         '클린 틸',
         '추천',
@@ -42,7 +43,7 @@ export const COLOR_PALETTES = [
         '산뜻한 디지털 감각과 금융·거래 맥락의 안정감을 함께 유지합니다.',
     ),
     palette(
-        'fc-palette-royal',
+        COLOR_PALETTE_VARIANTS.royal,
         4,
         '로열 블루',
         '검토',
@@ -52,7 +53,7 @@ export const COLOR_PALETTES = [
         '게임 서비스의 개성이 강하고 선택 상태가 또렷한 안입니다.',
     ),
     palette(
-        'fc-palette-slate',
+        COLOR_PALETTE_VARIANTS.slate,
         5,
         '슬레이트 + 앰버',
         '검토',
@@ -62,7 +63,7 @@ export const COLOR_PALETTES = [
         '차분한 상거래 인상과 현재 골드 자산의 연결을 유지합니다.',
     ),
     palette(
-        'fc-palette-emerald',
+        COLOR_PALETTE_VARIANTS.emerald,
         6,
         '에메랄드',
         '검토',
@@ -72,7 +73,7 @@ export const COLOR_PALETTES = [
         '안전과 완료의 인상이 강하지만 승인 상태색과의 분리가 필요합니다.',
     ),
     palette(
-        'fc-palette-burgundy',
+        COLOR_PALETTE_VARIANTS.burgundy,
         7,
         '버건디',
         '개성안',
@@ -82,7 +83,7 @@ export const COLOR_PALETTES = [
         '프리미엄과 경매의 긴장감이 강해 위험 상태색과의 구분이 중요합니다.',
     ),
     palette(
-        'fc-palette-terracotta',
+        COLOR_PALETTE_VARIANTS.terracotta,
         8,
         '테라코타',
         '개성안',
@@ -92,7 +93,7 @@ export const COLOR_PALETTES = [
         '기존 오렌지의 활력을 성숙하게 확장한 따뜻한 안입니다.',
     ),
     palette(
-        'fc-palette-indigo',
+        COLOR_PALETTE_VARIANTS.indigo,
         9,
         '인디고',
         '주의',
@@ -102,7 +103,7 @@ export const COLOR_PALETTES = [
         '현 정본의 퍼플 금지 경계와 가까워 브랜드 합의가 선행돼야 합니다.',
     ),
     palette(
-        'fc-palette-plum',
+        COLOR_PALETTE_VARIANTS.plum,
         10,
         '플럼',
         '실험 · 비추천',
