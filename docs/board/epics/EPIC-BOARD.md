@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-222
 title: 커스텀 게시판 시스템 (커뮤니티·공지·이벤트 옵션화)
 state: done
-children: [FC-196, FC-197, FC-198, FC-199, FC-200, FC-201, FC-202, FC-203, FC-204]
+children: [FC-196, FC-197, FC-198, FC-199, FC-200, FC-201, FC-202, FC-203, FC-204, FC-297]
 gate: null
 ---
 
