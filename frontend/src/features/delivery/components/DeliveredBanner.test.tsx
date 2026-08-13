@@ -34,12 +34,17 @@ function applied(id: string, name: string): DeliverySummary {
 afterEach(() => sessionStorage.clear())
 
 describe('<DeliveredBanner>', () => {
-    it('닫기 아이콘은 success-soft 배경에서 불투명한 success-ink를 사용한다', () => {
+    it('닫기 버튼은 success-soft 배경에 success-ink 포커스 표시를 사용한다', () => {
         render(<DeliveredBanner arrived={[applied('D1', '테스트 아이템')]} />)
 
+        expect(screen.getByRole('status')).toHaveClass('bg-success-soft')
         const closeButton = screen.getByRole('button')
-        expect(closeButton).toHaveClass('text-success-ink')
-        expect(closeButton).not.toHaveClass('text-success-ink/70')
+        expect(closeButton).toHaveClass(
+            'focus-visible:outline',
+            'focus-visible:outline-2',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-success-ink',
+        )
     })
 
     it('도착이 없으면 렌더하지 않는다', () => {
