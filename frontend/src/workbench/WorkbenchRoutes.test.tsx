@@ -199,8 +199,11 @@ describe('WorkbenchRoutes', () => {
             expect(navigation).toHaveClass(
                 'w-full',
                 'max-w-[1440px]',
-                'overflow-hidden',
+                'rounded-xl',
+                'shadow-sm',
+                'transition-all',
             )
+            expect(navigation).not.toHaveClass('overflow-hidden')
             const contentStyle = getComputedStyle(content)
             const expectedRadius =
                 width === 1280
@@ -218,8 +221,10 @@ describe('WorkbenchRoutes', () => {
             expect(navigation.style.borderBottomRightRadius).toBe(
                 expectedRadius,
             )
-            expect(navigation.parentElement).toHaveClass('bg-chrome-strong')
-            expect(navigation.parentElement).not.toHaveClass('bg-content-soft')
+            expect(navigation.parentElement).toBe(frame)
+            expect(
+                view.container.querySelector('[data-workbench-nav-backing]'),
+            ).not.toBeInTheDocument()
             const navigationBounds = navigation.getBoundingClientRect()
             for (const target of [content, footer]) {
                 const bounds = target.getBoundingClientRect()

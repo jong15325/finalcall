@@ -76,6 +76,7 @@ try {
             'fc-nav-compact-dock',
             'fc-nav-direction-dock',
         ]
+        const navigationSnapshots = new Map()
         for (const variant of navigationVariants) {
             await cdp.send('Page.navigate', {
                 url: `${navigationPageUrl}?variant=${variant}`,
@@ -159,6 +160,7 @@ try {
                 )
             }
             const audits = [before, threshold, after, upward].filter(Boolean)
+            navigationSnapshots.set(variant, before)
             const selectedAtTop = variant === 'fc-nav-contact-dock'
             const selectedOffset = viewport.mobile ? 8 : 12
             const navigationFailed =
@@ -168,10 +170,8 @@ try {
                       threshold.navBounds.top !== selectedOffset ||
                       before.contentGap !== 0 ||
                       !before.radiusMatches ||
-                      !before.backingIsDarkChrome ||
-                      !before.cornerClipped ||
-                      !before.topCornersDarkChrome ||
-                      !before.bottomCornersDarkChrome ||
+                      before.hasBacking ||
+                      !before.surfaceDirectChildOfFrame ||
                       !dropdown?.dropdownUnclipped ||
                       !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
@@ -182,9 +182,8 @@ try {
                 after.navBounds.top !== (selectedAtTop ? selectedOffset : 0) ||
                 (selectedAtTop &&
                     (!after.radiusMatches ||
-                        !after.backingIsDarkChrome ||
-                        !after.topCornersDarkChrome ||
-                        !after.bottomCornersDarkChrome)) ||
+                        after.hasBacking ||
+                        !after.surfaceDirectChildOfFrame)) ||
                 before.frameHeight !== after.frameHeight ||
                 audits.some(
                     (entry) =>
@@ -221,6 +220,34 @@ try {
                 console.log(
                     `[workbench] ${viewport.width}px ${variant} top ${before.navBounds.top}→${threshold.navBounds.top}→${after.navBounds.top}px, gap ${before.contentGap}px, radius ${before.navRadius}/${before.contentRadius}, alignment ${after.delta.left}/${after.delta.right}/${after.delta.width}px`,
                 )
+            }
+        }
+        const contact = navigationSnapshots.get('fc-nav-contact-dock')
+        for (const referenceVariant of [
+            'fc-nav-compact-dock',
+            'fc-nav-direction-dock',
+        ]) {
+            const reference = navigationSnapshots.get(referenceVariant)
+            const sameSurrounding = Boolean(
+                contact &&
+                    reference &&
+                    !contact.hasBacking &&
+                    !reference.hasBacking &&
+                    contact.surfaceDirectChildOfFrame &&
+                    reference.surfaceDirectChildOfFrame &&
+                    contact.frameBackgroundColor === reference.frameBackgroundColor &&
+                    contact.surfaceBackgroundColor === reference.surfaceBackgroundColor &&
+                    contact.cornerSurroundingColors.join('|') ===
+                        reference.cornerSurroundingColors.join('|') &&
+                    contact.bottomCornerSurroundingColors.join('|') ===
+                        reference.bottomCornerSurroundingColors.join('|')
+            )
+            if (!sameSurrounding) {
+                console.error(
+                    `[workbench] ${viewport.width}px contact/${referenceVariant} corner surrounding guard 실패`,
+                )
+                console.error(JSON.stringify({ contact, reference }, null, 2))
+                process.exitCode = 1
             }
         }
     }
@@ -368,7 +395,6 @@ function navigationAuditExpression(mobile) {
         const frame = document.querySelector('[data-workbench-navigation-frame]')
         const sentinel = document.querySelector('[data-workbench-dock-sentinel]')
         const navTarget = document.querySelector('[data-workbench-nav-measure]')
-        const navBacking = document.querySelector('[data-workbench-nav-backing]')
         const footerTarget = document.querySelector('[data-workbench-footer-measure]')
         const contentTarget = document.querySelector('[data-workbench-content-measure]')
         const bounds = (element) => {
@@ -404,23 +430,9 @@ function navigationAuditExpression(mobile) {
         const frameBounds = bounds(frame)
         const expectedRadius = '${mobile ? '12px' : '16px'}'
         const header = navTarget?.querySelector('header')
+        const frameStyle = frame ? getComputedStyle(frame) : null
         const surfaceStyle = navTarget ? getComputedStyle(navTarget) : null
-        const backingStyle = navBacking ? getComputedStyle(navBacking) : null
         const contentStyle = contentTarget ? getComputedStyle(contentTarget) : null
-        const semanticBackground = (token) => {
-            const probe = document.createElement('span')
-            probe.style.backgroundColor = 'var(' + token + ')'
-            document.body.append(probe)
-            const color = getComputedStyle(probe).backgroundColor
-            probe.remove()
-            return color
-        }
-        const expectedBackingColor = semanticBackground('--chrome-bg-strong')
-        const excludedBackingColors = [
-            semanticBackground('--content-soft'),
-            semanticBackground('--content-surface'),
-            semanticBackground('--app-canvas'),
-        ]
         const menu = navTarget?.querySelector('[role="menu"]')
         const menuBounds = bounds(menu)
         const cornerElements = navBounds
@@ -432,6 +444,12 @@ function navigationAuditExpression(mobile) {
         const cornerColors = cornerElements.map((element) =>
             element ? getComputedStyle(element).backgroundColor : null
         )
+        const cornerSurroundingColors = cornerElements.map((element) => {
+            const surrounding = element === navTarget || navTarget?.contains(element)
+                ? frame
+                : element
+            return surrounding ? getComputedStyle(surrounding).backgroundColor : null
+        })
         const bottomCornerElements = navBounds
             ? [
                   document.elementFromPoint(navBounds.left + 2, navBounds.bottom - 2),
@@ -441,6 +459,12 @@ function navigationAuditExpression(mobile) {
         const bottomCornerColors = bottomCornerElements.map((element) =>
             element ? getComputedStyle(element).backgroundColor : null
         )
+        const bottomCornerSurroundingColors = bottomCornerElements.map((element) => {
+            const surrounding = element === navTarget || navTarget?.contains(element)
+                ? frame
+                : element
+            return surrounding ? getComputedStyle(surrounding).backgroundColor : null
+        })
         const mobileItems = mobileNav
             ? [...mobileNav.children].map(bounds).filter(Boolean)
             : []
@@ -475,35 +499,16 @@ function navigationAuditExpression(mobile) {
                 surfaceStyle.borderBottomLeftRadius === expectedRadius &&
                 surfaceStyle.borderBottomRightRadius === expectedRadius
             ),
-            backingIsDarkChrome: Boolean(
-                surfaceStyle &&
-                backingStyle &&
-                navBacking?.classList.contains('bg-chrome-strong') &&
-                backingStyle.backgroundColor === expectedBackingColor &&
-                !excludedBackingColors.includes(backingStyle.backgroundColor) &&
-                backingStyle.backgroundColor !== surfaceStyle.backgroundColor
+            hasBacking: Boolean(
+                document.querySelector('[data-workbench-nav-backing]')
             ),
-            topCornersDarkChrome: Boolean(
-                cornerElements.length === 2 &&
-                cornerElements.every((element) => element === navBacking) &&
-                cornerColors.every(
-                    (color) => color === expectedBackingColor
-                )
-            ),
+            surfaceDirectChildOfFrame: navTarget?.parentElement === frame,
+            frameBackgroundColor: frameStyle?.backgroundColor ?? null,
+            surfaceBackgroundColor: surfaceStyle?.backgroundColor ?? null,
             cornerColors,
-            bottomCornersDarkChrome: Boolean(
-                bottomCornerElements.length === 2 &&
-                bottomCornerElements.every((element) => element === navBacking) &&
-                bottomCornerColors.every(
-                    (color) => color === expectedBackingColor
-                )
-            ),
+            cornerSurroundingColors,
             bottomCornerColors,
-            cornerClipped: Boolean(
-                surfaceStyle &&
-                surfaceStyle.overflowX === 'hidden' &&
-                surfaceStyle.overflowY === 'hidden'
-            ),
+            bottomCornerSurroundingColors,
             rounded: Boolean(navTarget?.classList.contains('rounded-xl')),
             shadowed: Boolean(navTarget?.classList.contains('shadow-sm')),
             compact: Boolean(header?.classList.contains('h-12')),

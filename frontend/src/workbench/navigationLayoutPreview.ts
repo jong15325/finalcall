@@ -56,7 +56,6 @@ export function installNavigationLayoutPreview(
     const sentinel = document.createElement('div')
     const frame = document.createElement('div')
     const surface = document.createElement('div')
-    const backing = document.createElement('div')
     const compactSpacer = document.createElement('div')
 
     sentinel.dataset.workbenchDockSentinel = variant
@@ -65,7 +64,6 @@ export function installNavigationLayoutPreview(
     frame.dataset.workbenchDockDirection = 'expanded'
     frame.classList.add('sticky', 'top-0', 'z-30')
     surface.dataset.workbenchNavMeasure = variant
-    backing.dataset.workbenchNavBacking = variant
     surface.classList.add(
         'app-chrome',
         'mx-auto',
@@ -86,24 +84,14 @@ export function installNavigationLayoutPreview(
     footer.classList.add('px-3', 'sm:px-5', 'xl:px-8')
     header.classList.add('rounded-xl')
     horizontalNav?.classList.add('rounded-xl')
-    let dropdownObserver: MutationObserver | null = null
     let releaseSelectedOffset: () => void = () => undefined
 
-    if (variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock) {
-        surface.classList.add('transition-all', 'motion-reduce:transition-none')
-    } else {
+    surface.classList.add('transition-all', 'motion-reduce:transition-none')
+    if (variant === NAVIGATION_LAYOUT_VARIANTS.contactDock) {
         frame.classList.add('px-3', 'sm:px-5', 'xl:px-8')
         view.classList.remove('py-4', 'sm:py-5', 'xl:py-7')
         view.classList.add('pb-4')
-        header.classList.remove('rounded-xl')
-        horizontalNav?.classList.remove('rounded-xl')
         const contentRadius = getComputedStyle(contentPlane)
-        backing.classList.add(
-            'mx-auto',
-            'w-full',
-            'max-w-[1440px]',
-            'bg-chrome-strong',
-        )
         const applySelectedOffset = () => {
             const offset = desktopOffset.matches ? '12px' : '8px'
             const mobileRadius = '12px'
@@ -126,22 +114,12 @@ export function installNavigationLayoutPreview(
         desktopOffset.addEventListener('change', applySelectedOffset)
         releaseSelectedOffset = () =>
             desktopOffset.removeEventListener('change', applySelectedOffset)
-        surface.classList.add('overflow-hidden')
-        const preserveDropdown = () => {
-            const open = surface.querySelector('[role="menu"]') !== null
-            surface.classList.toggle('overflow-hidden', !open)
-            surface.classList.toggle('overflow-visible', open)
-        }
-        dropdownObserver = new MutationObserver(preserveDropdown)
-        dropdownObserver.observe(surface, { childList: true, subtree: true })
     }
-    if (
-        variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock &&
-        variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock
-    ) {
+    if (variant !== NAVIGATION_LAYOUT_VARIANTS.transitionDock) {
         surface.classList.add('rounded-xl')
     }
     if (
+        variant === NAVIGATION_LAYOUT_VARIANTS.contactDock ||
         variant === NAVIGATION_LAYOUT_VARIANTS.compactDock ||
         variant === NAVIGATION_LAYOUT_VARIANTS.directionDock
     ) {
@@ -150,12 +128,7 @@ export function installNavigationLayoutPreview(
 
     surface.append(header)
     if (horizontalNav) surface.append(horizontalNav)
-    if (selectedAtTop) {
-        backing.append(surface)
-        frame.append(backing, compactSpacer)
-    } else {
-        frame.append(surface, compactSpacer)
-    }
+    frame.append(surface, compactSpacer)
     footerInner.dataset.workbenchFooterMeasure = variant
     contentPlane.dataset.workbenchContentMeasure = variant
     if (selectedAtTop) {
@@ -223,7 +196,6 @@ export function installNavigationLayoutPreview(
     return () => {
         window.removeEventListener('scroll', onScroll)
         releaseSelectedOffset()
-        dropdownObserver?.disconnect()
         cancelAnimationFrame(animationFrame)
         shellColumn.insertBefore(header, view)
         if (horizontalNav) shellColumn.insertBefore(horizontalNav, view)
