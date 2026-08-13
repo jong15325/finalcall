@@ -35,7 +35,11 @@ export default function NavigationLayoutScenario({
         const apply = () => {
             release()
             cancelAnimationFrame(frame)
-            if (!media.matches) return
+            if (
+                !media.matches &&
+                selected.id !== NAVIGATION_LAYOUT_VARIANTS.contentCompanion
+            )
+                return
             frame = requestAnimationFrame(() => {
                 if (!scenarioRef.current) return
                 release = installNavigationLayoutPreview(
@@ -64,7 +68,7 @@ export default function NavigationLayoutScenario({
                     실제 AppShell · 브라이트 스틸
                 </p>
                 <h1 className="mt-1 break-words text-2xl font-bold text-content-fg">
-                    상단 네비게이션 레이아웃 3안
+                    상단 네비게이션 레이아웃 4안
                 </h1>
                 <p className="mt-2 max-w-[65ch] break-words text-sm leading-6 text-content-muted">
                     위의 실제 상단 바와 메뉴, 아래의 실제 푸터를 함께 보며 콘텐츠
@@ -75,7 +79,7 @@ export default function NavigationLayoutScenario({
 
             <nav
                 aria-label="상단 네비게이션 시안 선택"
-                className="grid min-w-0 gap-3 sm:grid-cols-3"
+                className="grid min-w-0 gap-3 sm:grid-cols-2"
             >
                 {scenarioFixture.layouts.map((layout) => {
                     const active = layout.id === selected.id
@@ -137,9 +141,23 @@ export default function NavigationLayoutScenario({
                 </dl>
             </section>
 
+            {selected.id === NAVIGATION_LAYOUT_VARIANTS.contentCompanion && (
+                <section className="min-h-screen rounded-xl border border-content-line bg-content-surface p-4">
+                    <h2 className="text-lg font-bold text-content-fg">
+                        스크롤 동작 확인 영역
+                    </h2>
+                    <p className="mt-2 max-w-[65ch] text-sm leading-6 text-content-muted">
+                        아래로 스크롤해도 실제 내비게이션은 콘텐츠와 같은 가로 폭을
+                        유지하며 화면 상단 12px 위치를 따라옵니다. 메뉴와 드롭다운은
+                        잘리지 않도록 열린 영역에 유지됩니다.
+                    </p>
+                </section>
+            )}
+
             <p className="rounded-lg border border-content-line bg-content-surface px-4 py-3 text-sm leading-6 text-content-muted">
                 390px에서는 기존 모바일 상단 바와 safe-area 하단 메뉴를 유지합니다.
-                데스크톱 전용 틀은 1280px 이상에서만 적용됩니다.
+                콘텐츠 동행형은 모바일에서도 같은 폭을 유지하고, 나머지 데스크톱
+                전용 틀은 1280px 이상에서만 적용됩니다.
             </p>
         </div>
     )

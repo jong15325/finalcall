@@ -29,7 +29,7 @@ export const WORKBENCH_SCENARIOS = [
     }),
     defineScenario({
         id: 'top-navigation-layouts',
-        title: '상단 네비게이션 레이아웃 3안',
+        title: '상단 네비게이션 레이아웃 4안',
         shell: 'app',
         routeContext: paths.auctions,
         variants: NAVIGATION_LAYOUT_VARIANT_IDS,

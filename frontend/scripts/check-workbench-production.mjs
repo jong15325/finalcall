@@ -13,6 +13,7 @@ const forbiddenMarkers = [
     'fc-nav-restrained',
     'fc-nav-balanced',
     'fc-nav-floating',
+    'fc-nav-content-companion',
     'fc-palette-cobalt',
     'fc-palette-navy-orange',
     'fc-palette-azure',

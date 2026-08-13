@@ -71,8 +71,13 @@ try {
         }
 
         const navigationVariants = viewport.mobile
-            ? ['fc-nav-balanced']
-            : ['fc-nav-restrained', 'fc-nav-balanced', 'fc-nav-floating']
+            ? ['fc-nav-balanced', 'fc-nav-content-companion']
+            : [
+                  'fc-nav-restrained',
+                  'fc-nav-balanced',
+                  'fc-nav-floating',
+                  'fc-nav-content-companion',
+              ]
         for (const variant of navigationVariants) {
             await cdp.send('Page.navigate', {
                 url: `${navigationPageUrl}?variant=${variant}`,
@@ -81,14 +86,28 @@ try {
                 cdp,
                 '[data-testid=navigation-layout-scenario]',
             )
-            if (!viewport.mobile) {
+            if (!viewport.mobile || variant === 'fc-nav-content-companion') {
                 await waitForScenario(cdp, '[data-workbench-nav-measure]')
+            }
+            const companion = variant === 'fc-nav-content-companion'
+            const initialNavigationResult = companion
+                ? await cdp.send('Runtime.evaluate', {
+                      expression: navigationAuditExpression(viewport.mobile),
+                      returnByValue: true,
+                  })
+                : null
+            if (companion) {
+                await cdp.send('Runtime.evaluate', {
+                    expression: 'window.scrollTo(0, 640)',
+                })
+                await delay(100)
             }
             const navigationResult = await cdp.send('Runtime.evaluate', {
                 expression: navigationAuditExpression(viewport.mobile),
                 returnByValue: true,
             })
             const navigationAudit = navigationResult.result.value
+            const initialNavigationAudit = initialNavigationResult?.result.value
             if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
                 console.log(
                     JSON.stringify(
@@ -98,19 +117,38 @@ try {
                     ),
                 )
             }
+            const companionFailed =
+                companion &&
+                (!navigationAudit.contentAligned ||
+                    navigationAudit.delta.left !== 0 ||
+                    navigationAudit.delta.right !== 0 ||
+                    navigationAudit.delta.width !== 0 ||
+                    navigationAudit.contentDelta.left !== 0 ||
+                    navigationAudit.contentDelta.right !== 0 ||
+                    navigationAudit.contentDelta.width !== 0 ||
+                    !navigationAudit.stickyMaintained ||
+                    navigationAudit.navBounds.top !==
+                        initialNavigationAudit.navBounds.top ||
+                    navigationAudit.scrollY === 0)
             const navigationFailed = viewport.mobile
                 ? !navigationAudit.documentFits ||
                   !navigationAudit.safeArea ||
-                  !navigationAudit.mobileUsable
+                  !navigationAudit.mobileUsable ||
+                  companionFailed
                 : !navigationAudit.documentFits ||
                   !navigationAudit.aligned ||
-                  navigationAudit.desktopMenuCount === 0
+                  navigationAudit.desktopMenuCount === 0 ||
+                  companionFailed
             if (navigationFailed) {
                 console.error(
                     `[workbench] ${viewport.width}px ${variant} navigation layout guard 실패`,
                 )
                 console.error(JSON.stringify(navigationAudit, null, 2))
                 process.exitCode = 1
+            } else if (companion) {
+                console.log(
+                    `[workbench] ${viewport.width}px ${variant} navigation/content/footer alignment ${navigationAudit.delta.left}/${navigationAudit.delta.right}/${navigationAudit.delta.width}px, sticky ${navigationAudit.navBounds.top}px`,
+                )
             } else if (viewport.mobile) {
                 console.log(
                     `[workbench] ${viewport.width}px mobile safe gutter·menu usability 통과`,
@@ -265,6 +303,7 @@ function navigationAuditExpression(mobile) {
         const mobileNav = document.querySelector('nav.fixed.inset-x-0')
         const navTarget = document.querySelector('[data-workbench-nav-measure]')
         const footerTarget = document.querySelector('[data-workbench-footer-measure]')
+        const contentTarget = document.querySelector('[data-workbench-content-measure]')
         const bounds = (element) => {
             if (!element) return null
             const rect = element.getBoundingClientRect()
@@ -273,15 +312,24 @@ function navigationAuditExpression(mobile) {
                 right: Math.round(rect.right * 100) / 100,
                 width: Math.round(rect.width * 100) / 100,
                 height: Math.round(rect.height * 100) / 100,
+                top: Math.round(rect.top * 100) / 100,
             }
         }
         const navBounds = bounds(navTarget)
         const footerBounds = bounds(footerTarget)
+        const contentBounds = bounds(contentTarget)
         const delta = navBounds && footerBounds
             ? {
                   left: Math.abs(navBounds.left - footerBounds.left),
                   right: Math.abs(navBounds.right - footerBounds.right),
                   width: Math.abs(navBounds.width - footerBounds.width),
+              }
+            : null
+        const contentDelta = navBounds && contentBounds
+            ? {
+                  left: Math.abs(navBounds.left - contentBounds.left),
+                  right: Math.abs(navBounds.right - contentBounds.right),
+                  width: Math.abs(navBounds.width - contentBounds.width),
               }
             : null
         const mobileBounds = bounds(mobileNav)
@@ -292,8 +340,13 @@ function navigationAuditExpression(mobile) {
             documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
             navBounds,
             footerBounds,
+            contentBounds,
             delta,
+            contentDelta,
             aligned: Boolean(delta && delta.left <= 1 && delta.right <= 1 && delta.width <= 1),
+            contentAligned: Boolean(contentDelta && contentDelta.left === 0 && contentDelta.right === 0 && contentDelta.width === 0),
+            stickyMaintained: Boolean(navBounds && navBounds.top === 12),
+            scrollY: window.scrollY,
             desktopMenuCount: document.querySelectorAll('[data-horizontal-root]:not([disabled])').length,
             safeArea: Boolean(mobileNav && String(mobileNav.className).includes('pb-[env(safe-area-inset-bottom)]')),
             mobileUsable: Boolean(

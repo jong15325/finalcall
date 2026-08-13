@@ -12,17 +12,23 @@ export function installNavigationLayoutPreview(
         ':scope > nav.app-chrome',
     )
     const footer = shellColumn?.querySelector<HTMLElement>(':scope > footer')
+    const contentPlane = view?.querySelector<HTMLElement>(
+        '[data-testid="app-content-plane"]',
+    )
     const headerInner = header?.firstElementChild as HTMLElement | null
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.firstElementChild as HTMLElement | null
+    const contentCompanion =
+        variant === NAVIGATION_LAYOUT_VARIANTS.contentCompanion
 
     if (
         !shellColumn ||
         !header ||
-        !horizontalNav ||
+        (!contentCompanion && !horizontalNav) ||
         !footer ||
+        !contentPlane ||
         !headerInner ||
-        !navigationInner ||
+        (!contentCompanion && !navigationInner) ||
         !footerInner
     ) {
         return () => undefined
@@ -36,24 +42,49 @@ export function installNavigationLayoutPreview(
             headerInner,
             navigationInner,
             footerInner,
-        ].map((element) => [element, element.className]),
+        ]
+            .filter((element): element is HTMLElement => element != null)
+            .map((element) => [element, element.className]),
     )
     const frame = document.createElement('div')
     frame.dataset.workbenchNavigationFrame = variant
-    frame.classList.add('sticky', 'top-0', 'z-30')
+    frame.classList.add('sticky', 'z-30')
+    frame.classList.add(contentCompanion ? 'top-3' : 'top-0')
 
     header.classList.remove('sticky', 'top-0', 'z-30')
-    horizontalNav.classList.remove('sticky', 'top-16', 'z-20', 'border-b')
+    horizontalNav?.classList.remove('sticky', 'top-16', 'z-20', 'border-b')
     headerInner.classList.remove('px-4')
-    navigationInner.classList.remove('px-6')
+    navigationInner?.classList.remove('px-6')
     headerInner.classList.add('px-5', 'sm:px-8', 'xl:px-10')
-    navigationInner.classList.add('px-5', 'sm:px-8', 'xl:px-10')
+    navigationInner?.classList.add('px-5', 'sm:px-8', 'xl:px-10')
 
     let measureTarget: HTMLElement
-    if (variant === NAVIGATION_LAYOUT_VARIANTS.floating) {
+    if (contentCompanion) {
+        const surface = document.createElement('div')
+        frame.classList.add('px-3', 'sm:px-5', 'xl:px-8')
+        footer.classList.add('px-3', 'sm:px-5', 'xl:px-8')
+        surface.classList.add(
+            'app-chrome',
+            'mx-auto',
+            'w-full',
+            'max-w-[1440px]',
+            'rounded-xl',
+            'border',
+            'border-chrome-selected',
+            'bg-chrome',
+            'shadow-sm',
+        )
+        header.classList.add('rounded-xl')
+        horizontalNav?.classList.add('rounded-xl')
+        surface.append(header)
+        if (horizontalNav) surface.append(horizontalNav)
+        frame.append(surface)
+        measureTarget = surface
+        contentPlane.dataset.workbenchContentMeasure = variant
+    } else if (variant === NAVIGATION_LAYOUT_VARIANTS.floating) {
         frame.classList.add('space-y-2', 'p-4')
         footer.classList.add('px-4')
-        for (const surface of [header, horizontalNav]) {
+        for (const surface of [header, horizontalNav!]) {
             surface.classList.add(
                 'mx-auto',
                 'w-full',
@@ -82,15 +113,15 @@ export function installNavigationLayoutPreview(
             footer.classList.add('px-3')
             surface.classList.add('rounded-xl', 'shadow-sm')
             header.classList.add('rounded-xl')
-            horizontalNav.classList.add('rounded-xl')
+            horizontalNav!.classList.add('rounded-xl')
         } else {
             frame.classList.add('p-2')
             footer.classList.add('px-2')
             surface.classList.add('rounded-lg')
             header.classList.add('rounded-lg')
-            horizontalNav.classList.add('rounded-lg')
+            horizontalNav!.classList.add('rounded-lg')
         }
-        surface.append(header, horizontalNav)
+        surface.append(header, horizontalNav!)
         frame.append(surface)
         measureTarget = surface
     }
@@ -101,12 +132,13 @@ export function installNavigationLayoutPreview(
 
     return () => {
         shellColumn.insertBefore(header, frame)
-        shellColumn.insertBefore(horizontalNav, frame)
+        if (horizontalNav) shellColumn.insertBefore(horizontalNav, frame)
         frame.remove()
         for (const [element, className] of originalClasses) {
             element.className = className
         }
         delete measureTarget.dataset.workbenchNavMeasure
         delete footerInner.dataset.workbenchFooterMeasure
+        delete contentPlane.dataset.workbenchContentMeasure
     }
 }

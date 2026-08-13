@@ -17,6 +17,7 @@ export const NAVIGATION_LAYOUT_VARIANTS = {
     restrained: 'fc-nav-restrained',
     balanced: 'fc-nav-balanced',
     floating: 'fc-nav-floating',
+    contentCompanion: 'fc-nav-content-companion',
 } as const
 
 export const NAVIGATION_LAYOUT_VARIANT_IDS = Object.values(

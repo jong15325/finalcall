@@ -153,7 +153,7 @@ describe('WorkbenchRoutes', () => {
             `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.balanced}`,
         )
         await screen.findByRole('heading', {
-            name: '상단 네비게이션 레이아웃 3안',
+            name: '상단 네비게이션 레이아웃 4안',
         })
 
         await waitFor(() => {
@@ -212,7 +212,7 @@ describe('WorkbenchRoutes', () => {
             `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.floating}`,
         )
         await screen.findByRole('heading', {
-            name: '상단 네비게이션 레이아웃 3안',
+            name: '상단 네비게이션 레이아웃 4안',
         })
 
         expect(
@@ -247,7 +247,7 @@ describe('WorkbenchRoutes', () => {
             `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.balanced}`,
         )
         await screen.findByRole('heading', {
-            name: '상단 네비게이션 레이아웃 3안',
+            name: '상단 네비게이션 레이아웃 4안',
         })
 
         expect(
@@ -269,6 +269,61 @@ describe('WorkbenchRoutes', () => {
             expect(option).toHaveClass('min-h-11', 'min-w-0')
         }
     })
+
+    it.each([390, 1280])(
+        '%ipx 콘텐츠 동행형은 navigation·content·footer의 동일 폭 sticky 구조를 제공한다',
+        async (width) => {
+            useViewport(width)
+            const view = renderWorkbench(
+                `/__design/top-navigation-layouts?variant=${NAVIGATION_LAYOUT_VARIANTS.contentCompanion}`,
+            )
+            await screen.findByRole('heading', {
+                name: '상단 네비게이션 레이아웃 4안',
+            })
+
+            await waitFor(() => {
+                expect(
+                    view.container.querySelector(
+                        '[data-workbench-navigation-frame]',
+                    ),
+                ).toBeInTheDocument()
+            })
+            const frame = view.container.querySelector<HTMLElement>(
+                '[data-workbench-navigation-frame]',
+            )!
+            const navigation = view.container.querySelector<HTMLElement>(
+                '[data-workbench-nav-measure]',
+            )!
+            const content = view.container.querySelector<HTMLElement>(
+                '[data-workbench-content-measure]',
+            )!
+            const footer = view.container.querySelector<HTMLElement>(
+                '[data-workbench-footer-measure]',
+            )!
+
+            expect(frame).toHaveClass('sticky', 'top-3', 'z-30', 'px-3')
+            expect(navigation).toHaveClass(
+                'w-full',
+                'max-w-[1440px]',
+                'rounded-xl',
+            )
+            expect(
+                screen.getByRole('heading', {
+                    name: '스크롤 동작 확인 영역',
+                }).parentElement,
+            ).toHaveClass('min-h-screen')
+
+            const navigationBounds = navigation.getBoundingClientRect()
+            for (const target of [content, footer]) {
+                const bounds = target.getBoundingClientRect()
+                expect([
+                    navigationBounds.left,
+                    navigationBounds.right,
+                    navigationBounds.width,
+                ]).toEqual([bounds.left, bounds.right, bounds.width])
+            }
+        },
+    )
 
     it.each([390, 1280])(
         '%ipx에서 팔레트 scroller 밖의 page-level intrinsic overflow를 만들지 않는다',

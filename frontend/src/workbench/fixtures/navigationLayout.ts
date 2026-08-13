@@ -32,6 +32,16 @@ export const NAVIGATION_LAYOUT_OPTIONS = [
             '존재감과 상단 점유가 커서 콘텐츠 중심 화면에서는 다소 무겁게 느껴질 수 있습니다.',
         recommended: false,
     },
+    {
+        id: NAVIGATION_LAYOUT_VARIANTS.contentCompanion,
+        name: '콘텐츠 동행형',
+        label: '동일 폭 · sticky',
+        summary:
+            '내비게이션, 콘텐츠, 푸터의 좌우 시작점과 끝점을 같은 폭으로 맞추고 스크롤 중에도 그 폭을 유지합니다.',
+        tradeoff:
+            '상단에 12px 간격을 둔 채 따라오므로 전체 폭 내비게이션보다 콘텐츠와의 결속감이 강합니다.',
+        recommended: false,
+    },
 ] as const
 
 export interface NavigationLayoutFixture extends WorkbenchFixture {
