@@ -201,8 +201,23 @@ describe('WorkbenchRoutes', () => {
                 'max-w-[1440px]',
                 'overflow-hidden',
             )
-            expect(navigation.style.borderTopLeftRadius).toBe('0px')
-            expect(navigation.style.borderTopRightRadius).toBe('0px')
+            const contentStyle = getComputedStyle(content)
+            const expectedRadius =
+                width === 1280
+                    ? contentStyle.borderTopLeftRadius
+                    : '12px'
+            expect(navigation.style.borderTopLeftRadius).toBe(
+                expectedRadius,
+            )
+            expect(navigation.style.borderTopRightRadius).toBe(
+                expectedRadius,
+            )
+            expect(navigation.style.borderBottomLeftRadius).toBe(
+                expectedRadius,
+            )
+            expect(navigation.style.borderBottomRightRadius).toBe(
+                expectedRadius,
+            )
             expect(navigation.parentElement).toHaveClass('bg-content-soft')
             const navigationBounds = navigation.getBoundingClientRect()
             for (const target of [content, footer]) {

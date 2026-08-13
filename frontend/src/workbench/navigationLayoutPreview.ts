@@ -98,12 +98,6 @@ export function installNavigationLayoutPreview(
         header.classList.remove('rounded-xl')
         horizontalNav?.classList.remove('rounded-xl')
         const contentRadius = getComputedStyle(contentPlane)
-        surface.style.borderTopLeftRadius = '0px'
-        surface.style.borderTopRightRadius = '0px'
-        surface.style.borderBottomLeftRadius =
-            contentRadius.borderBottomLeftRadius
-        surface.style.borderBottomRightRadius =
-            contentRadius.borderBottomRightRadius
         backing.classList.add(
             'mx-auto',
             'w-full',
@@ -112,8 +106,21 @@ export function installNavigationLayoutPreview(
         )
         const applySelectedOffset = () => {
             const offset = desktopOffset.matches ? '12px' : '8px'
+            const mobileRadius = '12px'
             frame.style.top = offset
             sentinel.style.height = offset
+            surface.style.borderTopLeftRadius = desktopOffset.matches
+                ? contentRadius.borderTopLeftRadius
+                : mobileRadius
+            surface.style.borderTopRightRadius = desktopOffset.matches
+                ? contentRadius.borderTopRightRadius
+                : mobileRadius
+            surface.style.borderBottomLeftRadius = desktopOffset.matches
+                ? contentRadius.borderBottomLeftRadius
+                : mobileRadius
+            surface.style.borderBottomRightRadius = desktopOffset.matches
+                ? contentRadius.borderBottomRightRadius
+                : mobileRadius
         }
         applySelectedOffset()
         desktopOffset.addEventListener('change', applySelectedOffset)

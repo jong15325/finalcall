@@ -168,6 +168,7 @@ try {
                       threshold.navBounds.top !== selectedOffset ||
                       before.contentGap !== 0 ||
                       !before.radiusMatches ||
+                      !before.silhouetteVisible ||
                       !before.cornerClipped ||
                       !before.topCornersChrome ||
                       before.whiteCornerPixels !== 0 ||
@@ -182,7 +183,9 @@ try {
                 after.dockState !== 'stuck' ||
                 after.navBounds.top !== (selectedAtTop ? selectedOffset : 0) ||
                 (selectedAtTop &&
-                    (!after.topCornersChrome ||
+                    (!after.radiusMatches ||
+                        !after.silhouetteVisible ||
+                        !after.topCornersChrome ||
                         after.whiteCornerPixels !== 0 ||
                         !after.bottomCornersBacked ||
                         after.bottomWhitePixels !== 0)) ||
@@ -403,8 +406,10 @@ function navigationAuditExpression(mobile) {
             : null
         const mobileBounds = bounds(mobileNav)
         const frameBounds = bounds(frame)
+        const expectedRadius = '${mobile ? '12px' : '16px'}'
         const header = navTarget?.querySelector('header')
         const surfaceStyle = navTarget ? getComputedStyle(navTarget) : null
+        const backingStyle = navBacking ? getComputedStyle(navBacking) : null
         const contentStyle = contentTarget ? getComputedStyle(contentTarget) : null
         const menu = navTarget?.querySelector('[role="menu"]')
         const menuBounds = bounds(menu)
@@ -455,11 +460,17 @@ function navigationAuditExpression(mobile) {
                 : null,
             radiusMatches: Boolean(
                 surfaceStyle &&
-                contentStyle &&
-                surfaceStyle.borderTopLeftRadius === '0px' &&
-                surfaceStyle.borderTopRightRadius === '0px' &&
-                surfaceStyle.borderBottomLeftRadius === contentStyle.borderBottomLeftRadius &&
-                surfaceStyle.borderBottomRightRadius === contentStyle.borderBottomRightRadius
+                surfaceStyle.borderTopLeftRadius === expectedRadius &&
+                surfaceStyle.borderTopRightRadius === expectedRadius &&
+                surfaceStyle.borderBottomLeftRadius === expectedRadius &&
+                surfaceStyle.borderBottomRightRadius === expectedRadius
+            ),
+            silhouetteVisible: Boolean(
+                surfaceStyle &&
+                backingStyle &&
+                backingStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+                backingStyle.backgroundColor !== 'rgb(255, 255, 255)' &&
+                backingStyle.backgroundColor !== surfaceStyle.backgroundColor
             ),
             topCornersChrome: Boolean(
                 cornerElements.length === 2 &&
