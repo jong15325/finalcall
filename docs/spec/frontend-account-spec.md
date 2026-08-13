@@ -16,7 +16,7 @@
 1. **계약 정합(D-030)**: 모노레포(D-098)이므로 **사본 폐기 → 단일 정본 직접 참조** 권고. 프론트 README가 참조하는 경로·버전·"사본을 둔다" 규약 3건이 모두 어긋났다(경로 `docs/api-contract.md`→실제 `docs/spec/api-contract.md`, 버전 v1.4→v1.5, 존재하지 않는 사본을 전제). [2절]
 2. **로그인 세션 하이드레이션(계약 정합 발견)**: 계약 §2 login 응답은 `{ accessToken, refreshToken, accessExpiresAt }`뿐 — **user 요약(nickname·isAdmin)이 없다.** 그런데 `authStore.setSession`은 `user: UserSummary`를 요구하고 레이아웃(헤더 닉네임·admin 가드)이 이를 읽는다. → **로그인은 반드시 `GET /me`(§2.5)로 user를 하이드레이션한 뒤 setSession** 해야 한다. 계약 변경은 불요(§2.5가 정본 출처). 이로 인해 `getMe`가 auth와 member 두 티켓에 공유된다. [4.4, 6절]
 3. **COMMON_005(탈퇴 주체 401) 처리**: 신규 분기 불요. 기존 `client.ts` 401 경로(refresh 회전 시도 → 실패 → `clearSession`)가 그대로 삼킨다(탈퇴 시 refresh 세션 전량 폐기이므로 회전은 반드시 실패). UI는 **"탈퇴된 계정" 같은 특정 카피 금지** — 미인증과 동일하게 로그인 리다이렉트(SEC-007 열거 방지). [3.3, 5절]
-4. **잔액 표시 위치 판정**: **마이페이지(`/me/profile`)에 표시**. `/me/wallet`은 placeholder 유지(충전·교환 = 별도 wallet 에픽). 근거: 탈퇴 확인 UI(D-080)가 이미 잔존 잔액 표시를 요구 → 같은 `GET /me/balance` 쿼리를 마이페이지에서 재사용. 헤더 상시 표시는 매 페이지 폴링 유발이라 보류. [4.5]
+4. **잔액 표시 위치 판정**: 마이페이지의 요약은 유지하고 `/me/wallet`에는 승인된 모바일 월렛형 상세를 운영 적용한다. 둘은 같은 `GET /me/balance` 쿼리를 재사용한다. 헤더 상시 표시는 매 페이지 폴링 유발이라 보류한다. [4.5]
 5. **팬아웃**: FC-013/014/015는 **쓰기 파일 집합이 쌍마다 교차**한다(getMe·authStore.updateUser·ProfilePage). **병렬 부적합 → 순차(013→014→015) 또는 단일 frontend-impl 세션 권고.** [6절]
 
 ---
@@ -258,10 +258,14 @@ login(body) → { accessToken, refreshToken, accessExpiresAt }
 
 ### 4.5 잔액 표시 위치 판정
 
-**판정: 마이페이지(`/me/profile`) 잔액 카드. `/me/wallet`은 placeholder 유지.**
+**판정(2026-08-14 승인으로 종전 placeholder 판정 대체): 마이페이지 요약 + `/me/wallet` 모바일 월렛형 상세.**
 
-- 근거: (a) 탈퇴 확인 UI(D-080)가 이미 잔존 잔액 표시를 요구 → `GET /me/balance`가 마이페이지에 필수. 같은 쿼리를 카드+탈퇴가 공유. (b) `/me/wallet`의 실제 정체성은 충전·교환(별도 wallet 에픽)이라, 표시-only를 위해 지금 wallet 화면을 실장하면 선착수·범위 이탈. (c) 헤더 상시 잔액은 매 페이지 balance 폴링 + MoneyAmount 4토큰(held/available)이 헤더 칩에 안 맞음 → 보류(향후 wallet 에픽에서 재판정).
-- FC-015 디자인 게이트: **신규 지갑 화면 아님 = 기존 마이페이지 내 표시 요소** → **디자인 게이트 불요(자동)**. 단 마이페이지 자체가 새 화면이므로 FC-014 디자인 게이트에 잔액 카드 레이아웃을 포함해 함께 제시한다.
+- 운영 상세는 DEV workbench `/__design/wallet-balance-studies`에서 승인된 모바일 월렛형을 이관한다. 총 보유·사용
+  가능·입찰 보류는 `code`, 캐시 잔액은 `cash`로 표시하며 `frontend-ui-system-contract.md` [2.4.1]을 따른다.
+- 마이페이지 요약·탈퇴 확인·지갑 상세는 같은 `GET /me/balance` 쿼리를 공유한다. 화면 이관은 API 호출 수,
+  API wire contract, DB 스키마를 변경하지 않는다. 헤더 상시 잔액은 종전대로 보류한다.
+- 디자인 게이트는 해당 workbench에서 완료됐다. 운영 이관 시 390px·1280px, 200% 텍스트 확대, 긴 안전정수
+  overflow와 production residue를 검증한다.
 
 ### 4.6 stub 세션 제거 계획 (FC-013)
 

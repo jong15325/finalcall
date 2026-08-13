@@ -1,6 +1,6 @@
-# 프론트 UI 시스템 계약 v1.2
+# 프론트 UI 시스템 계약 v1.3
 
-- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타·접점 고정형 navigation 디자인 승인 2026-08-13**
+- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타·접점 고정형 navigation 디자인 승인 2026-08-13, 지갑·화폐 표기 계약 승인 2026-08-14**
 - 적용 범위: `frontend/src/**`, `frontend/tailwind.config.cjs`, AppShell 아래 공개·보호·404 route
 - 제외: API wire contract, 백엔드, DB 스키마, `AuthLayout`의 독립 레이아웃 구조
 - 목적: 디자인 토큰, AppShell chrome, 목록 프레임, 아이템 카드의 단일 계약을 확정해 route·페이지별 시각/상호작용 포크를 막는다.
@@ -22,6 +22,8 @@
 6. 카드는 `ItemCardView`(표시), controlled flip(선택 상호작용), `ItemCardActionSurface`(이동/열기)를 분리한다.
    dialog·router·mutation 상태를 표시 컴포넌트에 넣지 않는다.
 7. 변경은 호환 adapter를 둔 단계적 이관으로 수행하고, 각 단계는 독립적으로 되돌릴 수 있어야 한다.
+8. 마이페이지 지갑은 승인된 모바일 월렛형을 운영에 적용하고, 공용 금액은 이미지 화폐 기호 대신 숫자 뒤의
+   `코드`·`캐시` 텍스트 단위와 코드 금액 구간색을 사용한다.
 
 이 문서는 위 범위에서 최상위 UI 구현 계약이다. `PRODUCT.md`와 `DESIGN.md`는 제품/도구 입력 요약이고,
 `docs/ux/design-system.md`는 디자인 참고 자료다. 토큰 값·소비 경계·컴포넌트 책임이 어긋나면 이 계약이 우선한다.
@@ -123,6 +125,45 @@ strong/raised `3.88:1`이다. 구현 guard는 이 여섯 조합을 하한 3:1로
 - radius: `sm 4`, `md 6`, `lg 8`, `xl 12px`, pill만 full.
 - motion: fast 120ms, base 200ms, slow 320ms. layout을 지속 애니메이션하지 않고 transform/opacity를 우선한다.
 - breakpoint는 현 `xs 576`, `sm 640`, `md 768`, `lg 1024`, `xl 1280`, `2xl 1536px`를 유지한다.
+
+#### 2.4.1 공용 화폐 금액
+
+- 공용 `CodeAmount`의 공개 prop은 `currency?: 'code' | 'cash'`다. 기본값은 `'code'`로 두어 기존 호출부를
+  하위 호환한다. `value`, `mode`, `className`, `style` 계약은 유지하며 API 응답·DB 화폐 모델은 바꾸지 않는다.
+- 유효한 금액은 시각 표시와 접근성 이름 모두 `${금액} 코드` 또는 `${금액} 캐시` 순서다. `compact`는 시각
+  숫자만 축약하고 접근성 이름은 기존처럼 full 숫자를 사용한다. null·undefined·비유한 값은 단위 없이 `-`다.
+- `code.png` 및 다른 화폐 이미지는 모든 금액 표기에서 제거한다. `G`·`C`·`골드` 같은 별칭도 사용하지 않는다.
+- `cashBalance`, 교환 입력·결과처럼 값의 화폐가 캐시인 호출부는 반드시 `currency="cash"`를 명시한다.
+  그 밖의 게임머니·가격·입찰·수수료·정산 금액은 기본 `'code'`를 사용해도 된다.
+- `code` 숫자 전경은 아래 구간 토큰을 사용한다. 레거시 JSP의 여섯 구간과 hue 의미는 유지하되, white와
+  `surface-sunken #F4F5F8`에서 일반 텍스트 WCAG AA 4.5:1을 충족하도록 세 값을 보정했다. 단위 텍스트는 같은
+  전경을 쓰며, 색은 금액의 유일한 의미 전달 수단이 아니다. `cash`에는 구간색을 적용하지 않고 `content-fg`를 쓴다.
+
+| code 범위 | semantic token | 승인값 | 레거시값 | 최소 대비(white / sunken) |
+|---:|---|---:|---:|---:|
+| `< 10,000` | `amount-code-tier-1` | `#607400` | `#8CAA00` | `5.26 / 4.82` |
+| `10,000~99,999` | `amount-code-tier-2` | `#0075A5` | 동일 | `5.14 / 4.71` |
+| `100,000~999,999` | `amount-code-tier-3` | `#CE00A5` | 동일 | `5.04 / 4.62` |
+| `1,000,000~9,999,999` | `amount-code-tier-4` | `#007D00` | `#008A00` | `5.34 / 4.90` |
+| `10,000,000~99,999,999` | `amount-code-tier-5` | `#A65A00` | `#EF8E00` | `5.14 / 4.72` |
+| `>= 100,000,000` | `amount-code-tier-6` | `#BD0000` | 동일 | `6.64 / 6.09` |
+
+이 토큰은 `tokens.css` 승인 registry에 두고 `CodeAmount`만 금액 구간 판정으로 소비한다. 임의 consumer가
+raw color 또는 동일 임계값을 복제하지 않는다. 대비 수치는 sRGB 상대휘도 기준이며 각 배경 조합의 낮은 값을
+4.5:1 이상으로 고정하는 테스트를 둔다.
+
+구현 파급은 다음 티켓 경계로 분리한다(식별자는 메인 보드가 할당한다).
+
+1. **공용 화폐 컴포넌트·토큰**: `CodeAmount`, `tokens.css`, Tailwind semantic mapping, 공용 단위·구간·대비 테스트,
+   `code.png` 런타임 참조와 동기화 스크립트 제거.
+2. **캐시 소비자 이관**: `WalletBalanceCard`, `WalletSummaryCard`, `ExchangeForm`, 승인 wallet workbench에서
+   `cashBalance`와 캐시 입력·결과 호출에 `currency="cash"` 명시 및 관련 테스트 갱신.
+3. **코드 소비자 회귀**: layout·auction·shop·order·item·market·compare의 전 `CodeAmount` 호출을 검사하고,
+   기본 `code` 하위 호환·이미지 부재·텍스트 단위·compact/full 접근성 이름 회귀 테스트 갱신.
+4. **모바일 월렛형 운영 적용**: `/__design/wallet-balance-studies` 승인 후보를 `WalletPage`와 member 지갑
+   컴포넌트에 이관하고 390px·1280px, 200% 확대, 긴 안전정수 overflow를 검증한다.
+5. **문서·정적 가드 정리**: 코드 아이콘 또는 금지 단위를 지시하는 주석·spec·workbench 문구를 갱신하고,
+   `code.png` 참조 및 구 화폐 단위 재유입 가드를 추가한다.
 
 ### 2.5 토큰 변경 절차
 
