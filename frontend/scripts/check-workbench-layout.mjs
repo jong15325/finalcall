@@ -160,15 +160,17 @@ try {
             }
             const audits = [before, threshold, after, upward].filter(Boolean)
             const selectedAtTop = variant === 'fc-nav-contact-dock'
+            const selectedOffset = viewport.mobile ? 8 : 12
             const navigationFailed =
                 (selectedAtTop
                     ? before.dockState !== 'stuck' ||
-                      before.navBounds.top !== 0 ||
-                      threshold.navBounds.top !== 0 ||
+                      before.navBounds.top !== selectedOffset ||
+                      threshold.navBounds.top !== selectedOffset ||
                       before.contentGap !== 0 ||
                       !before.radiusMatches ||
                       !before.cornerClipped ||
                       !before.topCornersChrome ||
+                      before.whiteCornerPixels !== 0 ||
                       !dropdown?.dropdownUnclipped ||
                       !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
@@ -176,7 +178,7 @@ try {
                       threshold.dockState !== 'stuck' ||
                       threshold.navBounds.top !== 0) ||
                 after.dockState !== 'stuck' ||
-                after.navBounds.top !== 0 ||
+                after.navBounds.top !== (selectedAtTop ? selectedOffset : 0) ||
                 before.frameHeight !== after.frameHeight ||
                 audits.some(
                     (entry) =>
@@ -360,6 +362,7 @@ function navigationAuditExpression(mobile) {
         const frame = document.querySelector('[data-workbench-navigation-frame]')
         const sentinel = document.querySelector('[data-workbench-dock-sentinel]')
         const navTarget = document.querySelector('[data-workbench-nav-measure]')
+        const navBacking = document.querySelector('[data-workbench-nav-backing]')
         const footerTarget = document.querySelector('[data-workbench-footer-measure]')
         const contentTarget = document.querySelector('[data-workbench-content-measure]')
         const bounds = (element) => {
@@ -398,6 +401,15 @@ function navigationAuditExpression(mobile) {
         const contentStyle = contentTarget ? getComputedStyle(contentTarget) : null
         const menu = navTarget?.querySelector('[role="menu"]')
         const menuBounds = bounds(menu)
+        const cornerElements = navBounds
+            ? [
+                  document.elementFromPoint(navBounds.left + 2, navBounds.top + 2),
+                  document.elementFromPoint(navBounds.right - 2, navBounds.top + 2),
+              ]
+            : []
+        const cornerColors = cornerElements.map((element) =>
+            element ? getComputedStyle(element).backgroundColor : null
+        )
         const mobileItems = mobileNav
             ? [...mobileNav.children].map(bounds).filter(Boolean)
             : []
@@ -428,18 +440,25 @@ function navigationAuditExpression(mobile) {
             radiusMatches: Boolean(
                 surfaceStyle &&
                 contentStyle &&
-                surfaceStyle.borderTopLeftRadius === '0px' &&
-                surfaceStyle.borderTopRightRadius === '0px' &&
-                surfaceStyle.borderBottomLeftRadius === contentStyle.borderBottomLeftRadius &&
-                surfaceStyle.borderBottomRightRadius === contentStyle.borderBottomRightRadius
+                surfaceStyle.borderTopLeftRadius === contentStyle.borderTopLeftRadius &&
+                surfaceStyle.borderTopRightRadius === contentStyle.borderTopRightRadius &&
+                surfaceStyle.borderBottomLeftRadius === '0px' &&
+                surfaceStyle.borderBottomRightRadius === '0px'
             ),
             topCornersChrome: Boolean(
-                navBounds &&
-                [
-                    document.elementFromPoint(navBounds.left + 2, navBounds.top + 2),
-                    document.elementFromPoint(navBounds.right - 2, navBounds.top + 2),
-                ].every((element) => element && (element === navTarget || navTarget?.contains(element)))
+                cornerElements.length === 2 &&
+                cornerElements.every(
+                    (element) =>
+                        element &&
+                        (element === navTarget ||
+                            navTarget?.contains(element) ||
+                            element === navBacking)
+                )
             ),
+            cornerColors,
+            whiteCornerPixels: cornerColors.filter(
+                (color) => color === 'rgb(255, 255, 255)'
+            ).length,
             cornerClipped: Boolean(
                 surfaceStyle &&
                 surfaceStyle.overflowX === 'hidden' &&

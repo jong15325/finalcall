@@ -19,6 +19,7 @@ export function installNavigationLayoutPreview(
     const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.firstElementChild as HTMLElement | null
     const selectedAtTop = variant === NAVIGATION_LAYOUT_VARIANTS.contactDock
+    const desktopOffset = window.matchMedia('(min-width: 1280px)')
 
     if (
         !view ||
@@ -55,6 +56,7 @@ export function installNavigationLayoutPreview(
     const sentinel = document.createElement('div')
     const frame = document.createElement('div')
     const surface = document.createElement('div')
+    const backing = document.createElement('div')
     const compactSpacer = document.createElement('div')
 
     sentinel.dataset.workbenchDockSentinel = variant
@@ -63,6 +65,7 @@ export function installNavigationLayoutPreview(
     frame.dataset.workbenchDockDirection = 'expanded'
     frame.classList.add('sticky', 'top-0', 'z-30')
     surface.dataset.workbenchNavMeasure = variant
+    backing.dataset.workbenchNavBacking = variant
     surface.classList.add(
         'app-chrome',
         'mx-auto',
@@ -84,6 +87,7 @@ export function installNavigationLayoutPreview(
     header.classList.add('rounded-xl')
     horizontalNav?.classList.add('rounded-xl')
     let dropdownObserver: MutationObserver | null = null
+    let releaseSelectedOffset: () => void = () => undefined
 
     if (variant !== NAVIGATION_LAYOUT_VARIANTS.contactDock) {
         surface.classList.add('transition-all', 'motion-reduce:transition-none')
@@ -94,12 +98,25 @@ export function installNavigationLayoutPreview(
         header.classList.remove('rounded-xl')
         horizontalNav?.classList.remove('rounded-xl')
         const contentRadius = getComputedStyle(contentPlane)
-        surface.style.borderTopLeftRadius = '0px'
-        surface.style.borderTopRightRadius = '0px'
-        surface.style.borderBottomLeftRadius =
-            contentRadius.borderBottomLeftRadius
-        surface.style.borderBottomRightRadius =
-            contentRadius.borderBottomRightRadius
+        surface.style.borderTopLeftRadius = contentRadius.borderTopLeftRadius
+        surface.style.borderTopRightRadius = contentRadius.borderTopRightRadius
+        surface.style.borderBottomLeftRadius = '0px'
+        surface.style.borderBottomRightRadius = '0px'
+        backing.classList.add(
+            'mx-auto',
+            'w-full',
+            'max-w-[1440px]',
+            'bg-content-soft',
+        )
+        const applySelectedOffset = () => {
+            const offset = desktopOffset.matches ? '12px' : '8px'
+            frame.style.top = offset
+            sentinel.style.height = offset
+        }
+        applySelectedOffset()
+        desktopOffset.addEventListener('change', applySelectedOffset)
+        releaseSelectedOffset = () =>
+            desktopOffset.removeEventListener('change', applySelectedOffset)
         surface.classList.add('overflow-hidden')
         const preserveDropdown = () => {
             const open = surface.querySelector('[role="menu"]') !== null
@@ -124,7 +141,12 @@ export function installNavigationLayoutPreview(
 
     surface.append(header)
     if (horizontalNav) surface.append(horizontalNav)
-    frame.append(surface, compactSpacer)
+    if (selectedAtTop) {
+        backing.append(surface)
+        frame.append(backing, compactSpacer)
+    } else {
+        frame.append(surface, compactSpacer)
+    }
     footerInner.dataset.workbenchFooterMeasure = variant
     contentPlane.dataset.workbenchContentMeasure = variant
     if (selectedAtTop) {
@@ -191,6 +213,7 @@ export function installNavigationLayoutPreview(
 
     return () => {
         window.removeEventListener('scroll', onScroll)
+        releaseSelectedOffset()
         dropdownObserver?.disconnect()
         cancelAnimationFrame(animationFrame)
         shellColumn.insertBefore(header, view)
