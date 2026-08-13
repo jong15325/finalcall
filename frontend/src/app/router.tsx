@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router'
+import { lazy, Suspense } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
 import AppShell from '@/components/layout/AppShell'
 import AuthLayout from '@/components/layout/AuthLayout'
 import ProtectedRoute from '@/components/route/ProtectedRoute'
@@ -29,6 +30,10 @@ import SignupPage from '@/pages/SignupPage'
 import OAuthCallbackPage from '@/pages/OAuthCallbackPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
+const DevelopmentWorkbench = import.meta.env.DEV
+    ? lazy(() => import('@/workbench/WorkbenchRoutes'))
+    : null
+
 /**
  * 라우트 트리 (FC-067 — rebuild-contract-map §1 라우트 지도).
  *
@@ -39,6 +44,28 @@ import NotFoundPage from '@/pages/NotFoundPage'
  * ★ 각 실연동 라우트는 지금 **빈 셸**(후속 티켓이 채움). 준비 중 라우트는 404 대신 안내를 낸다.
  */
 function AppRoutes() {
+    const { pathname } = useLocation()
+
+    if (
+        DevelopmentWorkbench !== null &&
+        (pathname === '/__design' || pathname.startsWith('/__design/'))
+    ) {
+        return (
+            <Suspense
+                fallback={
+                    <div
+                        role="status"
+                        className="grid min-h-screen place-items-center bg-content-soft text-sm font-semibold text-content-muted"
+                    >
+                        디자인 프리뷰를 불러오는 중입니다.
+                    </div>
+                }
+            >
+                <DevelopmentWorkbench />
+            </Suspense>
+        )
+    }
+
     return (
         <Routes>
             {/* 비로그인 전용 */}
