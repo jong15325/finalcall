@@ -5,7 +5,7 @@ jira_key: KAN-317
 title: 실제 프론트 기반 디자인 워크벤치 구축
 state: review
 children: [FC-283, FC-284, FC-285, FC-286, FC-287, FC-288, FC-290, FC-291, FC-292]
-gate: design
+gate: gate3
 ---
 
 ## 목표
@@ -32,4 +32,4 @@ gate: design
 
 - 통합 리뷰: PASS — critical 0 / major 0 / minor 0
 - 완료 직전 보안 리뷰: PASS — critical 0 / major 0 / minor 2(비차단 방어 심화)
-- 게이트3: 색상 목업 재정리와 재리뷰 후 사용자 승인 대기
+- 게이트3: 브라이트 스틸 전역 적용과 최종 리뷰 완료, 사용자 승인 대기
