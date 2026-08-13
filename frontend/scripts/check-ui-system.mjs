@@ -63,6 +63,9 @@ for (const match of tailwindSource.matchAll(/^\s*(?:navy|gold|orange|surface|lin
 if (!/'control-action-ink'\s*:\s*'var\(--control-action-ink\)'/u.test(tailwindSource)) {
     failures.push('tailwind.config.cjs: control-action-ink utility 매핑 누락')
 }
+if (!/'control-focus-on-dark'\s*:\s*'var\(--control-focus-on-dark\)'/u.test(tailwindSource)) {
+    failures.push('tailwind.config.cjs: control-focus-on-dark utility 매핑 누락')
+}
 
 const tokens = readFileSync(resolve(frontendRoot, tokenRegistry), 'utf8')
 const declarations = [...tokens.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/gu)]
@@ -72,6 +75,21 @@ for (const [, name] of declarations) {
     seen.add(name)
 }
 const tokenValues = new Map(declarations.map(([, name, value]) => [name, value.trim()]))
+for (const [name, expected] of [
+    ['--brand-navy', '#32475a'],
+    ['--brand-navy-900', '#273746'],
+    ['--brand-navy-800', '#273746'],
+    ['--brand-navy-700', '#32475a'],
+    ['--action', '#3d5f7c'],
+    ['--action-hover', '#2e485f'],
+    ['--control-action-ink', '#ffffff'],
+    ['--control-focus', '#c38000'],
+    ['--control-focus-on-dark', '#c78300'],
+]) {
+    if (tokenValues.get(name)?.toLowerCase() !== expected) {
+        failures.push(`${tokenRegistry}: ${name} 브라이트 스틸 계약값 불일치`)
+    }
+}
 for (const [ink, surface] of [
     ['--success-ink', '--success-soft'],
     ['--danger-ink', '--danger-soft'],
@@ -80,6 +98,22 @@ for (const [ink, surface] of [
 ]) {
     const ratio = contrast(resolveHex(ink), resolveHex(surface))
     if (ratio < 4.5) failures.push(`${tokenRegistry}: ${ink}/${surface} contrast ${ratio.toFixed(2)} < 4.5`)
+}
+for (const [focus, surface] of [
+    ['--control-focus', '--surface'],
+    ['--control-focus', '--surface-sunken'],
+    ['--control-focus-on-dark', '--brand-navy'],
+    ['--control-focus-on-dark', '--brand-navy-900'],
+    ['--control-focus-on-dark', '--brand-navy-800'],
+    ['--control-focus-on-dark', '--brand-navy-700'],
+]) {
+    const ratio = contrast(resolveHex(focus), resolveHex(surface))
+    if (ratio < 3) failures.push(`${tokenRegistry}: ${focus}/${surface} contrast ${ratio.toFixed(2)} < 3`)
+}
+
+const indexCss = sources.get('src/index.css') ?? ''
+if (!/\.app-chrome\s*\{\s*--control-focus:\s*var\(--control-focus-on-dark\);\s*\}/u.test(indexCss)) {
+    failures.push('src/index.css: dark chrome focus token 소비 누락')
 }
 
 for (const [path, source] of sources) {

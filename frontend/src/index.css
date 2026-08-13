@@ -68,6 +68,10 @@
 }
 
 @layer components {
+    .app-chrome {
+        --control-focus: var(--control-focus-on-dark);
+    }
+
     /* 100vh fallback을 먼저 두고 동적 viewport 단위를 최종 우선한다. */
     .app-shell-height {
         min-height: 100vh;

@@ -1,16 +1,16 @@
 @layer theme {
     :root {
         /* FinalCall 브랜드 팔레트 — frontend-ui-system-contract §2 정본. */
-        --brand-navy: #16213a;
-        --brand-navy-900: #101a2e;
-        --brand-navy-800: #1b2a47;
-        --brand-navy-700: #223458;
+        --brand-navy: #32475a;
+        --brand-navy-900: #273746;
+        --brand-navy-800: #273746;
+        --brand-navy-700: #32475a;
         --brand-gold: #c8a028;
         --brand-gold-bright: #dfc447;
         --brand-gold-deep: #8b6100;
         --brand-gold-soft: #f6edcd;
-        --action: #ef8a2c;
-        --action-hover: #d9741a;
+        --action: #3d5f7c;
+        --action-hover: #2e485f;
         --action-soft: #fdefe0;
 
         /* 콘텐츠 표면과 전경. */
@@ -76,8 +76,9 @@
         --control-action: var(--action);
         --control-action-hover: var(--action-hover);
         --control-action-soft: var(--action-soft);
-        --control-action-ink: var(--fg);
-        --control-focus: var(--brand-gold-bright);
+        --control-action-ink: #ffffff;
+        --control-focus: #c38000;
+        --control-focus-on-dark: #c78300;
         --brand-structure: var(--brand-navy);
         --brand-highlight: var(--brand-gold);
         --brand-highlight-bright: var(--brand-gold-bright);

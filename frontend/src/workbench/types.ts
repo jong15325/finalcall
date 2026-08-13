@@ -14,6 +14,7 @@ export const SEMANTIC_OVERRIDE_KEYS = [
     '--control-action-hover',
     '--control-action-ink',
     '--control-focus',
+    '--control-focus-on-dark',
 ] as const
 
 export type SemanticOverrideKey = (typeof SEMANTIC_OVERRIDE_KEYS)[number]

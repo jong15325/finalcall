@@ -23,7 +23,7 @@ try {
     if (!address || typeof address === 'string') {
         throw new Error('Vite 임시 포트를 확인할 수 없습니다.')
     }
-    const pageUrl = `http://127.0.0.1:${address.port}/__design/main-color-palettes?variant=fc-palette-cobalt&state=success`
+    const pageUrl = `http://127.0.0.1:${address.port}/__design/main-color-palettes?variant=fc-palette-steel-blue&state=success`
     edge = spawn(
         edgePath,
         [
@@ -39,33 +39,37 @@ try {
     const debugPort = await waitForDebugPort(profilePath)
     const page = await waitForPage(debugPort)
     const cdp = await connectCdp(page.webSocketDebuggerUrl)
-    await cdp.send('Emulation.setDeviceMetricsOverride', {
-        width: 390,
-        height: 844,
-        deviceScaleFactor: 1,
-        mobile: true,
-    })
-    await cdp.send('Page.navigate', { url: pageUrl })
-    await waitForScenario(cdp)
-    const result = await cdp.send('Runtime.evaluate', {
-        expression: layoutAuditExpression(),
-        returnByValue: true,
-    })
+    for (const viewport of [
+        { width: 390, height: 844, mobile: true },
+        { width: 1280, height: 900, mobile: false },
+    ]) {
+        await cdp.send('Emulation.setDeviceMetricsOverride', {
+            ...viewport,
+            deviceScaleFactor: 1,
+        })
+        await cdp.send('Page.navigate', { url: pageUrl })
+        await waitForScenario(cdp)
+        const result = await cdp.send('Runtime.evaluate', {
+            expression: layoutAuditExpression(),
+            returnByValue: true,
+        })
+        const audit = result.result.value
+        if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
+            console.log(JSON.stringify({ viewport, ...audit }, null, 2))
+        }
+        if (!audit.documentFits || audit.violations.length > 0) {
+            console.error(
+                `[workbench] ${viewport.width}px 실제 DOM overflow guard 실패`,
+            )
+            console.error(JSON.stringify(audit, null, 2))
+            process.exitCode = 1
+        } else {
+            console.log(
+                `[workbench] ${viewport.width}px 실제 DOM overflow 0건 (${audit.document.scrollWidth}/${audit.document.clientWidth}px)`,
+            )
+        }
+    }
     cdp.close()
-
-    const audit = result.result.value
-    if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
-        console.log(JSON.stringify(audit, null, 2))
-    }
-    if (!audit.documentFits || audit.violations.length > 0) {
-        console.error('[workbench] 390px 실제 DOM overflow guard 실패')
-        console.error(JSON.stringify(audit, null, 2))
-        process.exitCode = 1
-    } else {
-        console.log(
-            `[workbench] 390px 실제 DOM overflow 0건 (${audit.document.scrollWidth}/${audit.document.clientWidth}px)`,
-        )
-    }
 } finally {
     await stopEdge(edge)
     await vite.close()

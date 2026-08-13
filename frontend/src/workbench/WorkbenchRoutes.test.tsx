@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -118,6 +120,30 @@ describe('WorkbenchRoutes', () => {
         expect(
             screen.getByRole('button', { name: '경매 강제 종료' }),
         ).toHaveClass('bg-danger', 'text-on-strong')
+    })
+
+    it('브라이트 스틸 fixture가 production semantic token과 일치한다', () => {
+        const steel = COLOR_PALETTES.find(
+            ({ id }) => id === 'fc-palette-steel-blue',
+        )!
+        const source = readFileSync(
+            resolve(process.cwd(), 'src/styles/tokens.css'),
+            'utf8',
+        )
+        const declarations = new Map(
+            [...source.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/gu)].map(
+                ([, name, value]) => [name, value.trim()],
+            ),
+        )
+        const resolveToken = (name: string): string => {
+            const value = declarations.get(name) ?? ''
+            const reference = value.match(/^var\((--[\w-]+)\)$/u)?.[1]
+            return reference ? resolveToken(reference) : value
+        }
+
+        for (const [token, value] of Object.entries(steel.overrides)) {
+            expect(value.toLowerCase()).toBe(resolveToken(token).toLowerCase())
+        }
     })
 
     it.each([390, 1280])(

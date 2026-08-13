@@ -18,6 +18,7 @@ const allowlistedVariables = new Set([
     '--control-action-hover',
     '--control-action-ink',
     '--control-focus',
+    '--control-focus-on-dark',
 ])
 
 for (const file of walk(workbenchRoot)) {
@@ -347,6 +348,7 @@ function checkFixtureContrast() {
             const controlAction = stringArgument(node, 6)
             const controlActionHover = stringArgument(node, 7)
             const controlFocus = stringArgument(node, 8)
+            const controlFocusOnDark = stringArgument(node, 9)
             if (id && chromeBg && chromeMuted) {
                 checkContrast(
                     id,
@@ -365,20 +367,20 @@ function checkFixtureContrast() {
                     3,
                 )
             }
-            if (id && controlFocus && chromeBg) {
+            if (id && controlFocusOnDark && chromeBg) {
                 checkContrast(
                     id,
-                    '--control-focus / --chrome-bg',
-                    controlFocus,
+                    '--control-focus-on-dark / --chrome-bg',
+                    controlFocusOnDark,
                     chromeBg,
                     3,
                 )
             }
-            if (id && controlFocus && chromeBgStrong) {
+            if (id && controlFocusOnDark && chromeBgStrong) {
                 checkContrast(
                     id,
-                    '--control-focus / --chrome-bg-strong',
-                    controlFocus,
+                    '--control-focus-on-dark / --chrome-bg-strong',
+                    controlFocusOnDark,
                     chromeBgStrong,
                     3,
                 )
