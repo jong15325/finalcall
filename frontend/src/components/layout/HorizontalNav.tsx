@@ -204,7 +204,7 @@ export default function HorizontalNav() {
     return (
         <nav
             aria-label="주요 메뉴"
-            className="app-chrome hidden h-12 bg-chrome xl:block"
+            className="app-chrome hidden h-12 bg-chrome xl:block xl:rounded-b-2xl"
             onKeyDown={(event) => {
                 if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
                     return

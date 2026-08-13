@@ -54,7 +54,7 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
     }
 
     return (
-        <header className="app-chrome h-16 rounded-t-xl border-b border-chrome-selected bg-chrome text-chrome-fg xl:rounded-t-2xl">
+        <header className="app-chrome h-16 rounded-xl border-b border-chrome-selected bg-chrome text-chrome-fg xl:rounded-b-none xl:rounded-t-2xl">
             <div className="flex h-full w-full items-center gap-3 px-4">
                 <NavLink
                     to={paths.home}

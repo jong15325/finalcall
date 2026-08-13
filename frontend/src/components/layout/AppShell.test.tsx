@@ -138,6 +138,11 @@ describe('AppShell route-scoped 상세 배경', () => {
             'xl:rounded-2xl',
             'max-w-[1440px]',
         )
+        expect(view.container.querySelector('header')).toHaveClass(
+            'rounded-xl',
+            'xl:rounded-b-none',
+            'xl:rounded-t-2xl',
+        )
         expect(surface?.parentElement).toBe(frame)
         expect(view.container.querySelector('#view')).toHaveClass('px-3')
         expect(view.container.querySelector('footer')).toHaveClass('px-3')
@@ -423,6 +428,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.container.querySelector('aside')).toBeNull()
         expect(view.getByRole('navigation', { name: '주요 메뉴' })).toHaveClass(
             'h-12',
+            'xl:rounded-b-2xl',
         )
         expect(
             view.container.querySelector('[data-app-navigation-frame]'),

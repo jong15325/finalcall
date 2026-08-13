@@ -173,6 +173,8 @@ try {
                       !before.radiusMatches ||
                       before.hasBacking ||
                       !before.surfaceDirectChildOfFrame ||
+                      !before.bottomChildRadiusMatches ||
+                      !before.bottomCornerSamplesTransparent ||
                       !dropdown?.dropdownUnclipped ||
                       !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
@@ -184,7 +186,9 @@ try {
                 (selectedAtTop &&
                     (!after.radiusMatches ||
                         after.hasBacking ||
-                        !after.surfaceDirectChildOfFrame)) ||
+                        !after.surfaceDirectChildOfFrame ||
+                        !after.bottomChildRadiusMatches ||
+                        !after.bottomCornerSamplesTransparent)) ||
                 before.frameHeight !== after.frameHeight ||
                 audits.some(
                     (entry) =>
@@ -313,6 +317,14 @@ try {
             productionAfter.navRadius.some(
                 (radius) => radius !== expectedRadius,
             ) ||
+            productionBefore.bottomOwnerRadius.some(
+                (radius) => radius !== expectedRadius,
+            ) ||
+            productionAfter.bottomOwnerRadius.some(
+                (radius) => radius !== expectedRadius,
+            ) ||
+            !productionBefore.bottomCornerSamplesTransparent ||
+            !productionAfter.bottomCornerSamplesTransparent ||
             productionBefore.hasBacking ||
             productionBefore.frameBackgroundColor !== 'rgba(0, 0, 0, 0)' ||
             productionBefore.contentGap !== 0 ||
@@ -490,6 +502,8 @@ function productionNavigationAuditExpression() {
         const content = document.querySelector('[data-testid="app-content-plane"]')
         const footer = document.querySelector('[data-app-footer-surface]')
         const menu = surface?.querySelector('[role="menu"]')
+        const header = surface?.querySelector('header')
+        const horizontalNav = surface?.querySelector('nav[aria-label="주요 메뉴"]')
         const bounds = (element) => {
             if (!element) return null
             const rect = element.getBoundingClientRect()
@@ -523,6 +537,17 @@ function productionNavigationAuditExpression() {
             : null
         const surfaceStyle = surface ? getComputedStyle(surface) : null
         const frameStyle = frame ? getComputedStyle(frame) : null
+        const horizontalStyle = horizontalNav ? getComputedStyle(horizontalNav) : null
+        const bottomOwner = !horizontalNav || horizontalStyle?.display === 'none'
+            ? header
+            : horizontalNav
+        const bottomOwnerStyle = bottomOwner ? getComputedStyle(bottomOwner) : null
+        const bottomCornerElements = navBounds
+            ? [
+                  document.elementFromPoint(navBounds.left + 2, navBounds.bottom - 2),
+                  document.elementFromPoint(navBounds.right - 2, navBounds.bottom - 2),
+              ]
+            : []
         return {
             documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
             dockState: frame?.dataset.dockState,
@@ -545,6 +570,24 @@ function productionNavigationAuditExpression() {
                       surfaceStyle.borderBottomLeftRadius,
                   ]
                 : [],
+            bottomOwnerRadius: bottomOwnerStyle
+                ? [
+                      bottomOwnerStyle.borderBottomLeftRadius,
+                      bottomOwnerStyle.borderBottomRightRadius,
+                  ]
+                : [],
+            bottomCornerSamplesTransparent: Boolean(
+                bottomCornerElements.length === 2 &&
+                bottomCornerElements.every(
+                    (element) =>
+                        element &&
+                        getComputedStyle(element).backgroundColor ===
+                            'rgba(0, 0, 0, 0)'
+                )
+            ),
+            bottomCornerColors: bottomCornerElements.map((element) =>
+                element ? getComputedStyle(element).backgroundColor : null
+            ),
             hasBacking: Boolean(document.querySelector('[data-app-navigation-backing]')),
             frameBackgroundColor: frameStyle?.backgroundColor ?? null,
             dropdownUnclipped: Boolean(
@@ -598,8 +641,14 @@ function navigationAuditExpression(mobile) {
         const frameBounds = bounds(frame)
         const expectedRadius = '${mobile ? '12px' : '16px'}'
         const header = navTarget?.querySelector('header')
+        const horizontalNav = navTarget?.querySelector('nav[aria-label="주요 메뉴"]')
         const frameStyle = frame ? getComputedStyle(frame) : null
         const surfaceStyle = navTarget ? getComputedStyle(navTarget) : null
+        const horizontalStyle = horizontalNav ? getComputedStyle(horizontalNav) : null
+        const bottomOwner = !horizontalNav || horizontalStyle?.display === 'none'
+            ? header
+            : horizontalNav
+        const bottomOwnerStyle = bottomOwner ? getComputedStyle(bottomOwner) : null
         const contentStyle = contentTarget ? getComputedStyle(contentTarget) : null
         const menu = navTarget?.querySelector('[role="menu"]')
         const menuBounds = bounds(menu)
@@ -667,6 +716,20 @@ function navigationAuditExpression(mobile) {
                 surfaceStyle.borderTopRightRadius === expectedRadius &&
                 surfaceStyle.borderBottomLeftRadius === expectedRadius &&
                 surfaceStyle.borderBottomRightRadius === expectedRadius
+            ),
+            bottomChildRadiusMatches: Boolean(
+                bottomOwnerStyle &&
+                bottomOwnerStyle.borderBottomLeftRadius === expectedRadius &&
+                bottomOwnerStyle.borderBottomRightRadius === expectedRadius
+            ),
+            bottomCornerSamplesTransparent: Boolean(
+                bottomCornerElements.length === 2 &&
+                bottomCornerElements.every(
+                    (element) =>
+                        element &&
+                        getComputedStyle(element).backgroundColor ===
+                            'rgba(0, 0, 0, 0)'
+                )
             ),
             hasBacking: Boolean(
                 document.querySelector('[data-workbench-nav-backing]')
