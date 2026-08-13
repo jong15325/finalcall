@@ -116,12 +116,12 @@ function SummaryRow({
     return (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
             <dt className="text-xs font-bold text-content-muted">{label}</dt>
-            <dd className="min-w-0 max-w-full">
+            <dd data-wallet-supporting-amount className="min-w-0 max-w-full">
                 <CodeAmount
                     currency={currency}
                     value={value}
                     mode="full"
-                    className="max-w-full min-w-0 flex-wrap break-all text-base font-bold"
+                    className="max-w-full min-w-0 flex-wrap break-all text-xl font-bold"
                 />
             </dd>
         </div>

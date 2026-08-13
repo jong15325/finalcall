@@ -132,6 +132,9 @@ strong/raised `3.88:1`이다. 구현 guard는 이 여섯 조합을 하한 3:1로
   하위 호환한다. `value`, `mode`, `className`, `style` 계약은 유지하며 API 응답·DB 화폐 모델은 바꾸지 않는다.
 - 유효한 금액은 시각 표시와 접근성 이름 모두 `${금액} 코드` 또는 `${금액} 캐시` 순서다. `compact`는 시각
   숫자만 축약하고 접근성 이름은 기존처럼 full 숫자를 사용한다. null·undefined·비유한 값은 단위 없이 `-`다.
+- 사용자 최신 승인에 따라 `MarketPage`·`AuctionListPage` 상단 가용잔액과 실제 목록 카드
+  `ItemCardView`·`AuctionCard`의 가격은 탐색면이어도 `full` 정수 원본을 표시한다. `TopNavbar`를 포함한 그 밖의
+  탐색면은 기존 `compact` 계약을 유지한다.
 - `code.png` 및 다른 화폐 이미지는 모든 금액 표기에서 제거한다. `G`·`C`·`골드` 같은 별칭도 사용하지 않는다.
 - `cashBalance`, 교환 입력·결과처럼 값의 화폐가 캐시인 호출부는 반드시 `currency="cash"`를 명시한다.
   그 밖의 게임머니·가격·입찰·수수료·정산 금액은 기본 `'code'`를 사용해도 된다.

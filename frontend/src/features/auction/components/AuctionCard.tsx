@@ -129,14 +129,17 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                     />
 
                     <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-content-line py-3">
-                        <span className="grid gap-0.5">
+                        <span
+                            data-listing-price
+                            className="grid min-w-0 gap-0.5"
+                        >
                             <span className="text-[10px] text-content-subtle">
                                 {price.label}
                             </span>
                             <CodeAmount
                                 value={price.amount}
-                                mode="compact"
-                                className="whitespace-nowrap text-[13px] font-bold text-content-fg"
+                                mode="full"
+                                className="max-w-full min-w-0 flex-wrap break-all text-[0.8125rem] font-bold text-content-fg"
                             />
                         </span>
                         <span className="grid justify-items-end gap-0.5">

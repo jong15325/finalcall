@@ -46,6 +46,7 @@ try {
     const debugPort = await waitForDebugPort(profilePath)
     const page = await waitForPage(debugPort)
     const cdp = await connectCdp(page.webSocketDebuggerUrl)
+    await cdp.send('Page.enable')
     for (const viewport of [
         { width: 390, height: 844, mobile: true },
         { width: 1280, height: 900, mobile: false },
@@ -483,6 +484,7 @@ try {
                 })
             ).result.value
             const expectedHeroSize = textZoom === 100 ? '32px' : '64px'
+            const expectedSupportingSize = textZoom === 100 ? '20px' : '40px'
             if (
                 !walletAudit.documentFits ||
                 !walletAudit.planeFits ||
@@ -490,7 +492,11 @@ try {
                 !walletAudit.amountsFit ||
                 !walletAudit.controlsFit ||
                 walletAudit.amountCount !== 9 ||
-                walletAudit.heroFontSize !== expectedHeroSize
+                walletAudit.heroFontSize !== expectedHeroSize ||
+                walletAudit.supportingFontSizes.length !== 6 ||
+                walletAudit.supportingFontSizes.some(
+                    (size) => size !== expectedSupportingSize,
+                )
             ) {
                 console.error(
                     `[production] ${viewport.width}px/${textZoom}% wallet layout guard 실패`,
@@ -499,10 +505,79 @@ try {
                 process.exitCode = 1
             } else {
                 console.log(
-                    `[production] ${viewport.width}px/${textZoom}% wallet overflow 0건, hero ${walletAudit.heroFontSize}`,
+                    `[production] ${viewport.width}px/${textZoom}% wallet overflow 0건, hero ${walletAudit.heroFontSize}, supporting ${expectedSupportingSize}`,
                 )
             }
         }
+
+        const listingFixtureScript = await cdp.send(
+            'Page.addScriptToEvaluateOnNewDocument',
+            { source: installListingFixtureExpression() },
+        )
+        for (const listing of [
+            { path: '/market', kind: 'market', fontSizes: ['14px', '28px'] },
+            {
+                path: '/auctions',
+                kind: 'auction',
+                fontSizes: ['13px', '26px'],
+            },
+        ]) {
+            await cdp.send('Runtime.evaluate', {
+                expression: establishListingSessionExpression(),
+            })
+            await cdp.send('Page.navigate', {
+                url: `http://127.0.0.1:${address.port}${listing.path}`,
+            })
+            await waitForScenario(cdp, '[data-testid="app-content-plane"]')
+            await delay(250)
+            if (process.env.WORKBENCH_LAYOUT_DEBUG === '1') {
+                const listingDebug = await cdp.send('Runtime.evaluate', {
+                    expression: `({ href: location.href, fixturePaths: window.__listingFixturePaths ?? [], body: document.body.innerText.slice(0, 500) })`,
+                    returnByValue: true,
+                })
+                console.log(JSON.stringify(listingDebug.result.value, null, 2))
+            }
+            await waitForScenario(cdp, '[data-testid="list-available-balance"]')
+            await waitForScenario(cdp, '[data-listing-price]')
+
+            for (const [zoomIndex, textZoom] of [100, 200].entries()) {
+                await cdp.send('Runtime.evaluate', {
+                    expression: `document.documentElement.style.fontSize = '${textZoom}%'`,
+                })
+                await delay(50)
+                const listingAudit = (
+                    await cdp.send('Runtime.evaluate', {
+                        expression: productionListingAuditExpression(),
+                        returnByValue: true,
+                    })
+                ).result.value
+                if (
+                    !listingAudit.documentFits ||
+                    !listingAudit.planeFits ||
+                    !listingAudit.availableFits ||
+                    !listingAudit.cardFits ||
+                    !listingAudit.priceFits ||
+                    !listingAudit.fullValuesVisible ||
+                    listingAudit.priceFontSize !== listing.fontSizes[zoomIndex]
+                ) {
+                    console.error(
+                        `[production] ${viewport.width}px/${textZoom}% ${listing.kind} full amount layout guard 실패`,
+                    )
+                    console.error(JSON.stringify(listingAudit, null, 2))
+                    process.exitCode = 1
+                } else {
+                    console.log(
+                        `[production] ${viewport.width}px/${textZoom}% ${listing.kind} full amount overflow 0건`,
+                    )
+                }
+            }
+        }
+        await cdp.send('Page.removeScriptToEvaluateOnNewDocument', {
+            identifier: listingFixtureScript.identifier,
+        })
+        await cdp.send('Runtime.evaluate', {
+            expression: `localStorage.removeItem('finalcall.session')`,
+        })
     }
     cdp.close()
 } finally {
@@ -1151,6 +1226,7 @@ function productionWalletAuditExpression() {
         const card = document.querySelector('[data-testid="wallet-balance-card"]')
         const amounts = plane ? [...plane.querySelectorAll('[aria-label$="코드"], [aria-label$="캐시"]')] : []
         const hero = card?.querySelector('[aria-label="8,607,199,254,740,000 코드"]')
+        const supporting = plane ? [...plane.querySelectorAll('[data-wallet-supporting-amount] > [aria-label]')] : []
         const controls = plane ? [...plane.querySelectorAll('a, button, input')] : []
         const bounds = (element) => {
             if (!element) return null
@@ -1180,6 +1256,7 @@ function productionWalletAuditExpression() {
             ),
             amountCount: amounts.length,
             heroFontSize: hero ? getComputedStyle(hero).fontSize : null,
+            supportingFontSizes: supporting.map((amount) => getComputedStyle(amount).fontSize),
             widths: {
                 document: [documentElement.scrollWidth, documentElement.clientWidth],
                 plane: plane ? [plane.scrollWidth, plane.clientWidth] : null,
@@ -1187,6 +1264,132 @@ function productionWalletAuditExpression() {
                 amounts: amounts.map((amount) => [amount.scrollWidth, amount.clientWidth]),
                 planeBounds: bounds(plane),
                 amountBounds: amounts.map(bounds),
+            },
+        }
+    })()`
+}
+
+function installListingFixtureExpression() {
+    return `(() => {
+        window.__listingFixturePaths = []
+        const originalFetch = window.fetch.bind(window)
+        const response = (data) => Promise.resolve(new Response(
+            JSON.stringify({ success: true, data, timestamp: '2026-08-14T00:00:00Z' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ))
+        const item = {
+            typeCode: 1121, mainCategory: 1, subGroup: 1, element: 2,
+            kind: 1, level: 3, skill1: 11, skill2: 202,
+            skill1Name: '공격시간 3 감소', skill2Name: '트리플샷',
+            skillPercent: 33, goldforceExpireAt: null,
+            nameSnapshot: '불의 전투도끼', specSnapshot: '공격력이 높은 한손 도끼',
+        }
+        window.fetch = (input, init) => {
+            const requestUrl = typeof input === 'string' ? input : input.url
+            const path = new URL(requestUrl, location.origin).pathname
+            window.__listingFixturePaths.push(path)
+            if (path.endsWith('/me/balance')) {
+                return response({
+                    cashBalance: 120000,
+                    gameMoneyBalance: 9000000000,
+                    gameMoneyHeld: 234567891,
+                    gameMoneyAvailable: 8765432109,
+                })
+            }
+            if (path.endsWith('/me/memos/unread-count')) {
+                return response({ count: 0 })
+            }
+            if (path.endsWith('/item-templates')) {
+                return response({
+                    content: [], page: 0, size: 100, totalElements: 0,
+                    totalPages: 0, first: true, last: true,
+                })
+            }
+            if (path.endsWith('/shops')) {
+                return response({
+                    content: [{
+                        shopPublicId: '01JMARKETLAYOUT1', status: 'ACTIVE', item,
+                        price: 9876543210, endAt: '2099-01-01T00:00:00Z',
+                        sellerNickname: '레이아웃상점', sellerCompletedSales: 128,
+                    }],
+                    nextCursor: null, hasNext: false,
+                })
+            }
+            if (path.endsWith('/auctions')) {
+                return response({
+                    content: [{
+                        auctionPublicId: '01JAUCTIONLAYOUT1', status: 'ACTIVE', item,
+                        startPrice: 9000000000, buyNowPrice: null,
+                        highestBidAmount: 9876543210, bidCount: 3, startAt: null,
+                        endAt: '2099-01-01T00:00:00Z', sellerNickname: '레이아웃상점',
+                    }],
+                    nextCursor: null, hasNext: false,
+                })
+            }
+            return originalFetch(input, init)
+        }
+    })()`
+}
+
+function establishListingSessionExpression() {
+    return `localStorage.setItem('finalcall.session', JSON.stringify({
+        state: {
+            accessToken: 'layout-fixture-access',
+            refreshToken: 'layout-fixture-refresh',
+            accessExpiresAt: '2099-01-01T00:00:00Z',
+            user: {
+                userPublicId: 'layout-fixture-user',
+                nickname: '레이아웃 검증',
+                isAdmin: false,
+            },
+        },
+        version: 0,
+    }))`
+}
+
+function productionListingAuditExpression() {
+    return `(() => {
+        const documentElement = document.documentElement
+        const plane = document.querySelector('[data-testid="app-content-plane"]')
+        const available = document.querySelector('[data-testid="list-available-balance"]')
+        const availableAmount = available?.querySelector('[aria-label="8,765,432,109 코드"]')
+        const priceRegion = document.querySelector('[data-listing-price]')
+        const price = priceRegion?.querySelector('[aria-label="9,876,543,210 코드"]')
+        const card = priceRegion?.closest('article, a')
+        const bounds = (element) => {
+            if (!element) return null
+            const rect = element.getBoundingClientRect()
+            return { left: rect.left, right: rect.right, width: rect.width }
+        }
+        const fits = (element, owner) => {
+            if (!element || !owner) return false
+            const elementBounds = bounds(element)
+            const ownerBounds = bounds(owner)
+            return element.scrollWidth <= element.clientWidth + 1 &&
+                elementBounds.left >= ownerBounds.left - 1 &&
+                elementBounds.right <= ownerBounds.right + 1
+        }
+        const isWithin = (element, owner) => {
+            if (!element || !owner) return false
+            const elementBounds = bounds(element)
+            const ownerBounds = bounds(owner)
+            return elementBounds.left >= ownerBounds.left - 1 &&
+                elementBounds.right <= ownerBounds.right + 1
+        }
+        return {
+            documentFits: documentElement.scrollWidth <= documentElement.clientWidth,
+            planeFits: Boolean(plane && plane.scrollWidth <= plane.clientWidth + 1),
+            availableFits: fits(available, plane) && fits(availableAmount, available),
+            cardFits: isWithin(card, plane) && fits(priceRegion, card),
+            priceFits: fits(priceRegion, card) && fits(price, priceRegion),
+            fullValuesVisible: Boolean(availableAmount && price),
+            priceFontSize: price ? getComputedStyle(price).fontSize : null,
+            widths: {
+                document: [documentElement.scrollWidth, documentElement.clientWidth],
+                plane: plane ? [plane.scrollWidth, plane.clientWidth] : null,
+                available: available ? [available.scrollWidth, available.clientWidth] : null,
+                card: card ? [card.scrollWidth, card.clientWidth] : null,
+                price: price ? [price.scrollWidth, price.clientWidth] : null,
             },
         }
     })()`

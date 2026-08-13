@@ -49,6 +49,13 @@ describe('<WalletSummaryCard>', () => {
         )
         expect(screen.getByText('총 보유')).toBeInTheDocument()
         expect(screen.getByText('입찰 보류')).toBeInTheDocument()
+        for (const label of [
+            '6,000,000 코드',
+            '280,000 코드',
+            '120,000 캐시',
+        ]) {
+            expect(screen.getByLabelText(label)).toHaveClass('text-xl')
+        }
     })
 
     it('충전은 DOM disabled 속성으로 비활성이다', () => {

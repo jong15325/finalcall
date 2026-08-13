@@ -49,6 +49,13 @@ describe('<WalletBalanceCard>', () => {
             'href',
             '#exchange-form',
         )
+        for (const label of [
+            '6,000,000 코드',
+            '1,500,000 코드',
+            '120,000 캐시',
+        ]) {
+            expect(screen.getByLabelText(label)).toHaveClass('text-xl')
+        }
     })
 
     it('홀드 미터가 홀드/총 비율을 aria-valuenow 로 노출한다', () => {

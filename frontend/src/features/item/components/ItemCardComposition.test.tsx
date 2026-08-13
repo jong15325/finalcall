@@ -27,7 +27,14 @@ describe('아이템 카드 composition', () => {
         expect(
             screen.getByRole('heading', { name: item.name }),
         ).toBeInTheDocument()
-        expect(screen.getByText('248만')).toBeInTheDocument()
+        expect(screen.getByText('2,480,000')).toBeInTheDocument()
+        expect(screen.queryByText('248만')).not.toBeInTheDocument()
+        expect(screen.getByLabelText('2,480,000 코드')).toHaveClass(
+            'max-w-full',
+            'min-w-0',
+            'flex-wrap',
+            'break-all',
+        )
         expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
     })
 

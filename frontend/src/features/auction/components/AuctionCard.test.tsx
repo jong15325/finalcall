@@ -178,6 +178,14 @@ describe('<AuctionCard>', () => {
     it('입찰이 있으면 "현재가" 라벨 + 입찰 N회', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
         expect(screen.getByText('현재가')).toBeInTheDocument()
+        expect(screen.getByText('2,480,000')).toBeInTheDocument()
+        expect(screen.queryByText('248만')).not.toBeInTheDocument()
+        expect(screen.getByLabelText('2,480,000 코드')).toHaveClass(
+            'max-w-full',
+            'min-w-0',
+            'flex-wrap',
+            'break-all',
+        )
         expect(screen.getByText('3회')).toBeInTheDocument()
     })
 

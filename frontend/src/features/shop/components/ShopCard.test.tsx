@@ -54,6 +54,8 @@ describe('<ShopCard>', () => {
         })
         expect(opener).toHaveClass('item-card__primary-action--content')
         expect(opener.closest('.item-card__market-info')).not.toBeNull()
+        expect(screen.getByText('2,480,000')).toBeInTheDocument()
+        expect(screen.queryByText('248만')).not.toBeInTheDocument()
         expect(opener).toBeEmptyDOMElement()
         expect(opener.querySelector('button')).toBeNull()
         // 키보드 대표 열기 + 포인터용 아트 열기 + 스킬 플립 + 비교 담기.
@@ -75,9 +77,7 @@ describe('<ShopCard>', () => {
         const trigger = screen.getByRole('button', {
             name: '불의 전투도끼 스킬 보기',
         })
-        expect(trigger.parentElement).toHaveClass(
-            'item-card__artwork-controls',
-        )
+        expect(trigger.parentElement).toHaveClass('item-card__artwork-controls')
         const controls = trigger.getAttribute('aria-controls')
         expect(controls).toBeTruthy()
         expect(
@@ -103,9 +103,11 @@ describe('<ShopCard>', () => {
         )
         expect(trigger).toHaveAttribute('data-card-hit-area', 'flip')
         expect(
-            screen.getByRole('button', {
-                name: '불의 전투도끼 비교에 담기',
-            }).closest('[data-card-hit-area="compare"]'),
+            screen
+                .getByRole('button', {
+                    name: '불의 전투도끼 비교에 담기',
+                })
+                .closest('[data-card-hit-area="compare"]'),
         ).not.toBeNull()
     })
 

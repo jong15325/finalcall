@@ -153,11 +153,11 @@ export default function AuctionListPage() {
                 }
                 resultBar={
                     <>
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
                             {/* ★ 검색·필터 결과 수는 aria-live 로 알린다(스크린리더 결과 안내) */}
                             <p
                                 aria-live="polite"
-                                className="text-xs text-content-muted"
+                                className="min-w-0 flex-1 text-xs text-content-muted"
                             >
                                 {status === 'ready'
                                     ? filters.q
@@ -167,8 +167,9 @@ export default function AuctionListPage() {
                             </p>
                             {balanceQuery.data && (
                                 <Link
+                                    data-testid="list-available-balance"
                                     to={paths.wallet}
-                                    className="flex items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-medium text-content-muted hover:border-brand-structure"
+                                    className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-medium text-content-muted hover:border-brand-structure"
                                 >
                                     <TbWallet
                                         aria-hidden
@@ -179,8 +180,8 @@ export default function AuctionListPage() {
                                         value={
                                             balanceQuery.data.gameMoneyAvailable
                                         }
-                                        mode="compact"
-                                        className="font-bold text-content-fg"
+                                        mode="full"
+                                        className="max-w-full min-w-0 flex-wrap break-all font-bold text-content-fg"
                                     />
                                 </Link>
                             )}

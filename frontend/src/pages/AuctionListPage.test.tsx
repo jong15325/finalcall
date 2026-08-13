@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 import AuctionListPage from './AuctionListPage'
 
-const mocks = vi.hoisted(() => ({ browse: vi.fn() }))
+const mocks = vi.hoisted(() => ({ balance: vi.fn(), browse: vi.fn() }))
 
 vi.mock('@/lib/queries/auctions', () => ({ useAuctionBrowse: mocks.browse }))
 vi.mock('@/lib/queries/itemTemplates', () => ({
     useItemTemplates: () => ({ data: { content: [] } }),
 }))
 vi.mock('@/lib/queries/balance', () => ({
-    useMyBalance: () => ({ data: undefined }),
+    useMyBalance: mocks.balance,
 }))
 vi.mock('@/features/auction/lib/useNow', () => ({ useNow: () => new Date() }))
 vi.mock('@/features/auction/lib/useInfiniteScroll', () => ({
@@ -49,7 +49,25 @@ function renderPage(withScene = false) {
 }
 
 describe('AuctionListPage 밝은 region', () => {
-    beforeEach(() => mocks.browse.mockReturnValue(baseQuery))
+    beforeEach(() => {
+        mocks.browse.mockReturnValue(baseQuery)
+        mocks.balance.mockReturnValue({ data: undefined })
+    })
+
+    it('상단 가용잔액을 축약 없이 전체 정수로 표시한다', () => {
+        mocks.balance.mockReturnValue({
+            data: { gameMoneyAvailable: 2_480_000 },
+        })
+        renderPage()
+
+        expect(screen.getByText('2,480,000')).toBeInTheDocument()
+        expect(screen.queryByText('248만')).not.toBeInTheDocument()
+        expect(screen.getByTestId('list-available-balance')).toHaveClass(
+            'min-w-0',
+            'max-w-full',
+            'flex-wrap',
+        )
+    })
 
     it.each([
         ['loading', { ...baseQuery, isPending: true }, 'busy'],
@@ -93,11 +111,7 @@ describe('AuctionListPage 밝은 region', () => {
         const view = renderPage(true)
         const scene = view.container.querySelector('.element-detail__scene')
         const region = screen.getByTestId('auction-list-region')
-        expect(region.firstElementChild).toHaveClass(
-            'min-w-0',
-            'flex',
-            'gap-5',
-        )
+        expect(region.firstElementChild).toHaveClass('min-w-0', 'flex', 'gap-5')
         expect(region).not.toHaveClass(
             'bg-content-surface',
             'border',

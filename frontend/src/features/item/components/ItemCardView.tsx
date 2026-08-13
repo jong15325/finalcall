@@ -94,10 +94,14 @@ export default function ItemCardView({
                         skills={item.skills}
                     />
                     {item.price && (
-                        <div className="item-card__market-price">
+                        <div
+                            data-listing-price
+                            className="item-card__market-price min-w-0"
+                        >
                             <CodeAmount
                                 value={item.price.amount}
-                                mode="compact"
+                                mode="full"
+                                className="max-w-full min-w-0 flex-wrap break-all text-sm"
                             />
                         </div>
                     )}
@@ -110,7 +114,10 @@ export default function ItemCardView({
                         {item.name}
                     </h3>
                     {item.price && (
-                        <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
+                        <div
+                            data-listing-price
+                            className="mt-auto flex min-w-0 flex-wrap items-baseline gap-1.5 pt-1"
+                        >
                             {item.price.label && (
                                 <span className="text-label text-content-subtle">
                                     {item.price.label}
@@ -118,8 +125,8 @@ export default function ItemCardView({
                             )}
                             <CodeAmount
                                 value={item.price.amount}
-                                mode="compact"
-                                className="text-body font-bold text-content-fg xs:text-sm"
+                                mode="full"
+                                className="max-w-full min-w-0 flex-wrap break-all text-body font-bold text-content-fg xs:text-sm"
                             />
                         </div>
                     )}
@@ -135,7 +142,10 @@ export default function ItemCardView({
                         {item.description || ' '}
                     </p>
                     {item.price && (
-                        <div className="mt-auto flex items-baseline gap-1.5 whitespace-nowrap pt-1">
+                        <div
+                            data-listing-price
+                            className="mt-auto flex min-w-0 flex-wrap items-baseline gap-1.5 pt-1"
+                        >
                             {item.price.label && (
                                 <span className="text-label text-content-subtle xs:text-xs">
                                     {item.price.label}
@@ -143,8 +153,8 @@ export default function ItemCardView({
                             )}
                             <CodeAmount
                                 value={item.price.amount}
-                                mode="compact"
-                                className="text-body font-bold text-content-fg xs:text-sm"
+                                mode="full"
+                                className="max-w-full min-w-0 flex-wrap break-all text-body font-bold text-content-fg xs:text-sm"
                             />
                         </div>
                     )}
