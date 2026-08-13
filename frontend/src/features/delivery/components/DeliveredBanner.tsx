@@ -83,7 +83,7 @@ export default function DeliveredBanner({ arrived }: DeliveredBannerProps) {
             <button
                 type="button"
                 aria-label="게임 도착 알림 닫기"
-                className="-mr-1 -mt-0.5 shrink-0 rounded-md p-1 text-success-ink/70 hover:bg-success/10 hover:text-success-ink"
+                className="-mr-1 -mt-0.5 shrink-0 rounded-md p-1 text-success-ink hover:bg-success/10"
                 onClick={dismiss}
             >
                 <TbX aria-hidden className="size-4" />

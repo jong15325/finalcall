@@ -57,6 +57,8 @@ describe('<AuctionCard>', () => {
 
         const link = screen.getByRole('link')
         expect(link).toHaveClass('min-h-[256px]')
+        expect(link).toHaveClass('focus-visible:ring-control-focus')
+        expect(link).not.toHaveClass('focus-visible:ring-control-action')
         expect(link.parentElement).toHaveClass('min-h-[256px]')
     })
 

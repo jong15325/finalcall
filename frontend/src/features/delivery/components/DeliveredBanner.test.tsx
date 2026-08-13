@@ -34,6 +34,14 @@ function applied(id: string, name: string): DeliverySummary {
 afterEach(() => sessionStorage.clear())
 
 describe('<DeliveredBanner>', () => {
+    it('닫기 아이콘은 success-soft 배경에서 불투명한 success-ink를 사용한다', () => {
+        render(<DeliveredBanner arrived={[applied('D1', '테스트 아이템')]} />)
+
+        const closeButton = screen.getByRole('button')
+        expect(closeButton).toHaveClass('text-success-ink')
+        expect(closeButton).not.toHaveClass('text-success-ink/70')
+    })
+
     it('도착이 없으면 렌더하지 않는다', () => {
         const { container } = render(<DeliveredBanner arrived={[]} />)
         expect(container).toBeEmptyDOMElement()

@@ -82,7 +82,7 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
             <Link
                 to={auctionDetailPath(auction.auctionPublicId)}
                 aria-label={`${item.nameSnapshot} 경매 상세 보기`}
-                className="grid min-h-[256px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-content-line bg-content-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-control-action focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
+                className="grid min-h-[256px] grid-cols-[102px_minmax(0,1fr)] overflow-hidden rounded-xl border border-content-line bg-content-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2 xs:grid-cols-[112px_minmax(0,1fr)]"
             >
                 {/* 아트 열 — 스프라이트 스테이지가 영역 전체를 채우고 72×134 프레임을 가운데(§3·§4). */}
                 <ItemFrame
