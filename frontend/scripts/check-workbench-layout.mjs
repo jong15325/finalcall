@@ -171,6 +171,8 @@ try {
                       !before.cornerClipped ||
                       !before.topCornersChrome ||
                       before.whiteCornerPixels !== 0 ||
+                      !before.bottomCornersBacked ||
+                      before.bottomWhitePixels !== 0 ||
                       !dropdown?.dropdownUnclipped ||
                       !dropdown?.menuEscapesSurface
                     : before.dockState !== 'flow' ||
@@ -179,6 +181,11 @@ try {
                       threshold.navBounds.top !== 0) ||
                 after.dockState !== 'stuck' ||
                 after.navBounds.top !== (selectedAtTop ? selectedOffset : 0) ||
+                (selectedAtTop &&
+                    (!after.topCornersChrome ||
+                        after.whiteCornerPixels !== 0 ||
+                        !after.bottomCornersBacked ||
+                        after.bottomWhitePixels !== 0)) ||
                 before.frameHeight !== after.frameHeight ||
                 audits.some(
                     (entry) =>
@@ -410,6 +417,15 @@ function navigationAuditExpression(mobile) {
         const cornerColors = cornerElements.map((element) =>
             element ? getComputedStyle(element).backgroundColor : null
         )
+        const bottomCornerElements = navBounds
+            ? [
+                  document.elementFromPoint(navBounds.left + 2, navBounds.bottom - 2),
+                  document.elementFromPoint(navBounds.right - 2, navBounds.bottom - 2),
+              ]
+            : []
+        const bottomCornerColors = bottomCornerElements.map((element) =>
+            element ? getComputedStyle(element).backgroundColor : null
+        )
         const mobileItems = mobileNav
             ? [...mobileNav.children].map(bounds).filter(Boolean)
             : []
@@ -440,10 +456,10 @@ function navigationAuditExpression(mobile) {
             radiusMatches: Boolean(
                 surfaceStyle &&
                 contentStyle &&
-                surfaceStyle.borderTopLeftRadius === contentStyle.borderTopLeftRadius &&
-                surfaceStyle.borderTopRightRadius === contentStyle.borderTopRightRadius &&
-                surfaceStyle.borderBottomLeftRadius === '0px' &&
-                surfaceStyle.borderBottomRightRadius === '0px'
+                surfaceStyle.borderTopLeftRadius === '0px' &&
+                surfaceStyle.borderTopRightRadius === '0px' &&
+                surfaceStyle.borderBottomLeftRadius === contentStyle.borderBottomLeftRadius &&
+                surfaceStyle.borderBottomRightRadius === contentStyle.borderBottomRightRadius
             ),
             topCornersChrome: Boolean(
                 cornerElements.length === 2 &&
@@ -457,6 +473,20 @@ function navigationAuditExpression(mobile) {
             ),
             cornerColors,
             whiteCornerPixels: cornerColors.filter(
+                (color) => color === 'rgb(255, 255, 255)'
+            ).length,
+            bottomCornersBacked: Boolean(
+                bottomCornerElements.length === 2 &&
+                bottomCornerElements.every(
+                    (element) =>
+                        element &&
+                        (element === navTarget ||
+                            navTarget?.contains(element) ||
+                            element === navBacking)
+                )
+            ),
+            bottomCornerColors,
+            bottomWhitePixels: bottomCornerColors.filter(
                 (color) => color === 'rgb(255, 255, 255)'
             ).length,
             cornerClipped: Boolean(

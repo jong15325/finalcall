@@ -98,10 +98,12 @@ export function installNavigationLayoutPreview(
         header.classList.remove('rounded-xl')
         horizontalNav?.classList.remove('rounded-xl')
         const contentRadius = getComputedStyle(contentPlane)
-        surface.style.borderTopLeftRadius = contentRadius.borderTopLeftRadius
-        surface.style.borderTopRightRadius = contentRadius.borderTopRightRadius
-        surface.style.borderBottomLeftRadius = '0px'
-        surface.style.borderBottomRightRadius = '0px'
+        surface.style.borderTopLeftRadius = '0px'
+        surface.style.borderTopRightRadius = '0px'
+        surface.style.borderBottomLeftRadius =
+            contentRadius.borderBottomLeftRadius
+        surface.style.borderBottomRightRadius =
+            contentRadius.borderBottomRightRadius
         backing.classList.add(
             'mx-auto',
             'w-full',
