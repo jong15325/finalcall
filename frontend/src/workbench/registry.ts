@@ -8,6 +8,8 @@ import {
     WATER_PARTICLE_VARIANT_IDS,
 } from './scenarioMetadata'
 import type { WorkbenchFixture, WorkbenchScenarioDefinition } from './types'
+import { SELL_STUDY_VARIANTS } from './candidates/SellPageCandidate'
+import { SELL_DIRECTION_VARIANTS } from './candidates/SellPageDirectionCandidate'
 
 function defineScenario(
     definition: WorkbenchScenarioDefinition<WorkbenchFixture>,
@@ -16,6 +18,22 @@ function defineScenario(
 }
 
 export const WORKBENCH_SCENARIOS = [
+    defineScenario({
+        id: 'sell-page-directions',
+        title: '판매 등록 신규 디자인 3안',
+        shell: 'app',
+        routeContext: paths.sell,
+        variants: SELL_DIRECTION_VARIANTS,
+        load: () => import('./scenarios/SellPageDirectionsScenario'),
+    }),
+    defineScenario({
+        id: 'sell-page-studies',
+        title: '판매 등록 페이지 디자인 7안',
+        shell: 'app',
+        routeContext: paths.sell,
+        variants: SELL_STUDY_VARIANTS,
+        load: () => import('./scenarios/SellPageStudiesScenario'),
+    }),
     defineScenario({
         id: 'main-color-palettes',
         title: '밝고 선명한 메인 컬러 10안',

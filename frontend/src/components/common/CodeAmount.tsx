@@ -12,17 +12,9 @@
  */
 import type { CSSProperties } from 'react'
 import { formatCodeCompact, formatCodeFull } from './codeFormat'
+import { codeTierClass } from './codeTier'
 
 type Currency = 'code' | 'cash'
-
-const CODE_TIER_CLASS = [
-    'text-amount-code-tier-1',
-    'text-amount-code-tier-2',
-    'text-amount-code-tier-3',
-    'text-amount-code-tier-4',
-    'text-amount-code-tier-5',
-    'text-amount-code-tier-6',
-] as const
 
 interface CodeAmountProps {
     /** 원본 정수 금액(long). null/undefined 는 값 없음("-")으로 표시(입찰 0건 등). */
@@ -78,15 +70,6 @@ function CodeAmount({
             </span>
         </span>
     )
-}
-
-function codeTierClass(value: number) {
-    if (value < 10_000) return CODE_TIER_CLASS[0]
-    if (value < 100_000) return CODE_TIER_CLASS[1]
-    if (value < 1_000_000) return CODE_TIER_CLASS[2]
-    if (value < 10_000_000) return CODE_TIER_CLASS[3]
-    if (value < 100_000_000) return CODE_TIER_CLASS[4]
-    return CODE_TIER_CLASS[5]
 }
 
 export default CodeAmount

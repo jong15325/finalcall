@@ -1,18 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { TbId, TbX } from 'react-icons/tb'
-import ItemFrame from '@/features/item/components/ItemFrame'
-import {
-    goldforceRemainingDays,
-    resolveFrameType,
-} from '@/features/item/components/frame'
-import {
-    resolveSkillSlots,
-    skillLabelOf,
-} from '@/features/item/components/skillSlots'
-import { itemArt } from '@/features/item/lib/itemArt'
-import { toElementKey, elementLabelOf } from '@/features/item/lib/element'
-import { subGroupLabelOf } from '@/features/item/lib/itemCode'
-import { channelLimitOf } from '@/features/item/lib/channelLimit'
+import CardInfoContent from './CardInfoContent'
 import './CardInfoDialog.css'
 
 /**
@@ -145,24 +133,6 @@ function CardInfoDialog({
         }
     }, [])
 
-    const referenceNow = now ?? Date.now()
-    const isGoldforce =
-        resolveFrameType({ goldforceExpireAt }, referenceNow) === 'GOLDFORCE'
-    const frameLabel = isGoldforce ? '골드' : '블랙'
-    const typeLine = `${frameLabel} - ${subGroupLabelOf(subGroup)}`
-    const channelLimit = channelLimitOf(level)
-    const elementLabel = elementLabelOf(element)
-    const elementKey = toElementKey(element)
-    const goldforceDays = goldforceRemainingDays(
-        goldforceExpireAt,
-        referenceNow,
-    )
-    const art = itemArt({ subGroup, kind, element, level }, 'l', 2)
-    const skills = resolveSkillSlots(skill1, skill2, {
-        skill1Name,
-        skill2Name,
-    })
-
     return (
         <div
             className="shop-cardinfo-overlay"
@@ -198,88 +168,22 @@ function CardInfoDialog({
                 </div>
 
                 <div className="ci-scroll" inert={backgroundInert}>
-                    <div className="ci-head">
-                        <div className="ci-thumb">
-                            <ItemFrame
-                                fill
-                                showGoldforceDays
-                                size="stage"
-                                imageUrl={art?.src}
-                                spriteUrl={art?.src}
-                                name={name}
-                                visual={{ goldforceExpireAt }}
-                                hasSkill={skills.length > 0}
-                                now={now}
-                                className="[--art-scale:2]"
-                            />
-                        </div>
-
-                        <dl className="ci-attrs">
-                            <div className="ci-row">
-                                <dt className="k">타입</dt>
-                                <dd className="v">{typeLine}</dd>
-                            </div>
-                            <div className="ci-row">
-                                <dt className="k">명칭</dt>
-                                <dd className="v">{name}</dd>
-                            </div>
-                            <div className="ci-row">
-                                <dt className="k">채널제한</dt>
-                                <dd className="v">{channelLimit}</dd>
-                            </div>
-                            <div className="ci-row">
-                                <dt className="k">속성</dt>
-                                <dd
-                                    className={`v ${elementKey ? `el-${elementKey}` : ''}`.trim()}
-                                >
-                                    {elementLabel}
-                                </dd>
-                            </div>
-                            <div className="ci-row">
-                                <dt className="k">남은 골드 포스</dt>
-                                <dd
-                                    className={`v ${goldforceDays ? '' : 'gf-off'}`.trim()}
-                                >
-                                    {goldforceDays
-                                        ? `${goldforceDays}일`
-                                        : '없음'}
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
-
-                    {/* 특수 스킬 — 탭 없이 직접 노출(랭크·탭 제거) */}
-                    <div className="ci-panel">
-                        <h3>특수 스킬</h3>
-                        {skills.length > 0 ? (
-                            <ul className="skill-list" aria-label="특수 스킬">
-                                {skills.map((skill) => {
-                                    const showPercent =
-                                        skill.slot === 2 && skillPercent > 0
-                                    return (
-                                        <li key={skill.slot}>
-                                            <span aria-hidden className="n">
-                                                {skill.slot}
-                                            </span>
-                                            <span>
-                                                {skillLabelOf(skill)}
-                                                {showPercent && (
-                                                    <span className="pct">
-                                                        {' '}
-                                                        ({skillPercent}%)
-                                                    </span>
-                                                )}
-                                            </span>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        ) : (
-                            <p className="muted-note">
-                                보유한 특수 스킬이 없습니다.
-                            </p>
-                        )}
-                    </div>
+                    <CardInfoContent
+                        {...{
+                            subGroup,
+                            kind,
+                            element,
+                            level,
+                            goldforceExpireAt,
+                            name,
+                            skill1,
+                            skill2,
+                            skillPercent,
+                            skill1Name,
+                            skill2Name,
+                            now,
+                        }}
+                    />
 
                     {belowScroll}
                 </div>

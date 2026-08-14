@@ -56,6 +56,46 @@ function useViewport(width: number) {
 }
 
 describe('WorkbenchRoutes', () => {
+    it('판매 등록 신규 디자인 3안을 실제 AppShell에서 연다', async () => {
+        const view = renderWorkbench(
+            '/__design/sell-page-directions?variant=document',
+        )
+
+        expect(
+            await screen.findByRole('heading', {
+                name: '판매 등록 신규 디자인 3안',
+            }),
+        ).toBeVisible()
+        expect(
+            view.container.querySelector('[data-sell-direction="document"]'),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('link', { name: 'B 문서 편집형' }),
+        ).toHaveAttribute('aria-current', 'page')
+    })
+
+    it('판매 등록 디자인 7안을 실제 AppShell의 판매 경로에서 연다', async () => {
+        const view = renderWorkbench(
+            '/__design/sell-page-studies?variant=time-first',
+        )
+
+        expect(
+            await screen.findByRole('heading', {
+                name: '판매 등록 페이지 디자인 7안',
+            }),
+        ).toBeVisible()
+        expect(view.getByTestId('app-content-plane')).toHaveAttribute(
+            'data-content-plane',
+            'default',
+        )
+        expect(
+            view.container.querySelector('[data-sell-study="time-first"]'),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('link', { name: '시간 중심형' }),
+        ).toHaveAttribute('aria-current', 'page')
+    })
+
     it('renders a known scenario inside the real AppShell route context', async () => {
         const teal = COLOR_PALETTES.find(({ id }) => id === 'fc-palette-teal')!
         const view = renderWorkbench(

@@ -1,20 +1,17 @@
-import { useMemo, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { TbAlertTriangle, TbArchiveOff, TbLock, TbTag } from 'react-icons/tb'
+import { TbAlertTriangle, TbArchiveOff, TbClock, TbTag } from 'react-icons/tb'
 import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
-import ItemFrame from '@/features/item/components/ItemFrame'
-import SellFeeEstimate from '@/features/auction/components/SellFeeEstimate'
+import { codeTierClass } from '@/components/common/codeTier'
+import CardInfoContent from '@/features/item/components/CardInfoContent'
+import '@/features/item/components/CardInfoDialog.css'
 import SellConfirmDialog from '@/features/auction/components/SellConfirmDialog'
 import ShopSellConfirmDialog from '@/features/shop/components/ShopSellConfirmDialog'
-import { itemArt } from '@/features/item/lib/itemArt'
-import { decodeTypeCode, itemTypeLabel } from '@/features/item/lib/itemCode'
-import { elementBadgeLabelOf } from '@/features/item/lib/element'
+import { decodeTypeCode } from '@/features/item/lib/itemCode'
 import { parseAmount, validateSellForm } from '@/features/auction/lib/sellForm'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useCreateAuction } from '@/lib/queries/auctions'
 import { useCreateShop } from '@/lib/queries/shop'
-import type { InventoryItem } from '@/lib/api/inventory'
 import type { CreateAuctionRequest } from '@/lib/api/auctions'
 import type {
     SellField,
@@ -38,16 +35,6 @@ import type {
  * ★ 색은 브랜드 팔레트(§2.9) — 목업 Vuexy 잔재색 미사용. 금액은 `CodeAmount`(`G` 단위 텍스트 금지).
  * ★ 미구현(즉시구매 판매 방식)은 **DOM 비활성 자리**로만(§5) — 클릭해도 404 없음.
  */
-
-/** 소프트클로즈 선택지(목업 옵션 + "사용 안 함"). 값은 초 단위 또는 null. */
-const SOFT_CLOSE_WINDOW_OPTIONS: readonly { label: string; value: number }[] = [
-    { label: '마감 60초 전', value: 60 },
-    { label: '마감 120초 전', value: 120 },
-]
-const SOFT_CLOSE_EXTEND_OPTIONS: readonly { label: string; value: number }[] = [
-    { label: '120초', value: 120 },
-    { label: '300초', value: 300 },
-]
 
 /** 검증 필드 → 입력 요소 id(초점 되돌림용). */
 const FIELD_INPUT_ID: Record<SellField, string> = {
@@ -73,16 +60,11 @@ export default function SellPage() {
 
     const [startPrice, setStartPrice] = useState('')
     const [buyNowPrice, setBuyNowPrice] = useState('')
-    const [startAt, setStartAt] = useState('')
-    const [endAt, setEndAt] = useState('')
-    const [maxEndAt, setMaxEndAt] = useState('')
-    const [softCloseWindowSec, setSoftCloseWindowSec] = useState<number | null>(
-        null,
+    const [buyNowEnabled, setBuyNowEnabled] = useState(false)
+    const [durationDays, setDurationDays] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(
+        3,
     )
-    const [softCloseExtendSec, setSoftCloseExtendSec] = useState<number | null>(
-        null,
-    )
-
+    const [clockNow, setClockNow] = useState(() => Date.now())
     /** 고정가 판매가(입력 문자열). 서버는 기한을 자동 계산하므로 판매자 입력은 가격 하나뿐(§3.1). */
     const [shopPrice, setShopPrice] = useState('')
     const [shopPriceError, setShopPriceError] = useState<string | null>(null)
@@ -95,7 +77,6 @@ export default function SellPage() {
     const [pendingShopPrice, setPendingShopPrice] = useState<number | null>(
         null,
     )
-
     const items = useMemo(
         () => inventoryQuery.data?.items ?? [],
         [inventoryQuery.data],
@@ -117,27 +98,58 @@ export default function SellPage() {
     const parsedStartPrice = parseAmount(startPrice) ?? 0
     const parsedBuyNowPrice = pendingRequest?.buyNowPrice ?? null
     const parsedShopPrice = parseAmount(shopPrice) ?? 0
-
     const errorFor = (field: SellField): string | undefined =>
         errors.find((error) => error.field === field)?.message
 
     const selectedName = preemptedItem?.summary.displayName ?? ''
 
+    useEffect(() => {
+        const intervalId = setInterval(() => setClockNow(Date.now()), 60_000)
+        return () => clearInterval(intervalId)
+    }, [])
+
     const handleOpenConfirm = () => {
-        const result = validateSellForm({
-            itemInstancePublicId: selectedId,
-            startPrice,
-            buyNowPrice,
-            startAt,
-            endAt,
-            softCloseWindowSec,
-            softCloseExtendSec,
-            maxEndAt,
-        })
+        const capturedNow = Math.floor(Date.now() / 1000) * 1000
+        const end = new Date(capturedNow + durationDays * 24 * 60 * 60 * 1000)
+        const localEnd = toLocalDateTimeValue(end)
+        const result = validateSellForm(
+            {
+                itemInstancePublicId: selectedId,
+                startPrice,
+                buyNowPrice: buyNowEnabled ? buyNowPrice : '',
+                startAt: '',
+                endAt: localEnd,
+                softCloseWindowSec: null,
+                softCloseExtendSec: null,
+                maxEndAt: localEnd,
+            },
+            capturedNow,
+        )
+
+        if (buyNowEnabled && buyNowPrice.trim() === '') {
+            const buyNowError: SellValidationError = {
+                field: 'buyNowPrice',
+                message: '즉시구매가를 입력해 주세요.',
+            }
+            setErrors([buyNowError, ...(result.ok ? [] : result.errors)])
+            document.getElementById(FIELD_INPUT_ID.buyNowPrice)?.focus()
+            return
+        }
 
         if (!result.ok) {
-            setErrors(result.errors)
-            const first = result.errors[0]
+            const visibleErrors = result.errors.map((error) =>
+                error.field === 'buyNowPrice'
+                    ? {
+                          ...error,
+                          message: error.message.replace(
+                              '즉시구매 참고가',
+                              '즉시구매가',
+                          ),
+                      }
+                    : error,
+            )
+            setErrors(visibleErrors)
+            const first = visibleErrors[0]
             if (first) {
                 document.getElementById(FIELD_INPUT_ID[first.field])?.focus()
             }
@@ -205,11 +217,19 @@ export default function SellPage() {
         setShopPriceError(null)
     }
 
+    const selectMethod = (method: SellMethod, target: HTMLButtonElement) => {
+        switchMethod(method)
+        target.focus()
+    }
+
     return (
         <div className="flex flex-col gap-5">
             <header>
                 <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                    <TbTag aria-hidden className="size-6 text-brand-structure" />
+                    <TbTag
+                        aria-hidden
+                        className="size-6 text-brand-structure"
+                    />
                     아이템 판매
                 </h1>
                 <p className="mt-1 text-sm text-content-subtle">
@@ -272,18 +292,11 @@ export default function SellPage() {
             )}
 
             {inventoryQuery.isSuccess && preemptedItem && (
-                <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,65fr)_minmax(280px,35fr)] lg:items-stretch">
                     {/* 좌: 폼 */}
-                    <section className="rounded-2xl border border-content-line bg-content-surface p-5 lg:p-6">
-                        {/* 1. 판매할 아이템 — 인벤토리에서 선점한 아이템만 잠금 카드로 고정(FC-177) */}
+                    <section className="order-2 min-w-0 rounded-2xl border border-content-line bg-content-surface p-5 lg:order-1 lg:p-6">
                         <h2 className="text-base font-bold text-content-fg">
-                            1. 판매할 아이템
-                        </h2>
-                        <PreemptedItemCard item={preemptedItem} />
-
-                        {/* 2. 판매 방식 — 목업 §sell "판매 방식"(경매/고정가) */}
-                        <h2 className="mt-6 text-base font-bold text-content-fg">
-                            2. 판매 방식
+                            판매 조건 설정
                         </h2>
                         <div
                             role="radiogroup"
@@ -291,27 +304,31 @@ export default function SellPage() {
                             className="mt-3 grid grid-cols-2 gap-2.5"
                         >
                             <MethodOption
+                                id="sell-method-auction"
                                 label="경매"
                                 description="입찰 경쟁으로 최고가에 판매"
+                                method="auction"
                                 checked={sellMethod === 'auction'}
-                                onSelect={() => switchMethod('auction')}
+                                onSelect={selectMethod}
                             />
                             <MethodOption
+                                id="sell-method-shop"
                                 label="고정가"
                                 description="정한 가격에 바로 판매"
+                                method="shop"
                                 checked={sellMethod === 'shop'}
-                                onSelect={() => switchMethod('shop')}
+                                onSelect={selectMethod}
                             />
                         </div>
 
                         {sellMethod === 'auction' ? (
                             <>
-                                {/* 3. 가격 설정 */}
-                                <h2 className="mt-6 text-base font-bold text-content-fg">
-                                    3. 가격 설정
+                                <h2 className="mt-6 text-lg font-bold text-content-fg">
+                                    가격 설정
                                 </h2>
-                                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                                <div className="mt-3 grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:gap-4">
                                     <NumberField
+                                        primary
                                         id="sellStartPrice"
                                         label="시작가"
                                         value={startPrice}
@@ -320,67 +337,132 @@ export default function SellPage() {
                                         onChange={setStartPrice}
                                     />
                                     <NumberField
-                                        optional
+                                        primary
                                         id="sellBuyNowPrice"
-                                        label="즉시구매 참고가"
+                                        label="즉시구매가 입력"
+                                        displayLabel="즉시구매가"
                                         value={buyNowPrice}
                                         error={errorFor('buyNowPrice')}
-                                        placeholder="시작가보다 높게"
+                                        placeholder="금액 입력"
+                                        disabled={!buyNowEnabled}
+                                        activationControl={
+                                            <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-content-muted">
+                                                <input
+                                                    type="checkbox"
+                                                    aria-label="즉시구매가 사용"
+                                                    checked={buyNowEnabled}
+                                                    className="size-4 shrink-0 accent-control-action focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                                                    onChange={(event) => {
+                                                        const enabled =
+                                                            event.target.checked
+                                                        setBuyNowEnabled(
+                                                            enabled,
+                                                        )
+                                                        if (!enabled) {
+                                                            setErrors(
+                                                                (current) =>
+                                                                    current.filter(
+                                                                        (
+                                                                            item,
+                                                                        ) =>
+                                                                            item.field !==
+                                                                            'buyNowPrice',
+                                                                    ),
+                                                            )
+                                                        }
+                                                    }}
+                                                />
+                                                사용
+                                            </label>
+                                        }
                                         onChange={setBuyNowPrice}
                                     />
                                 </div>
 
-                                {/* 4. 경매 시간 */}
                                 <h2 className="mt-6 text-base font-bold text-content-fg">
-                                    4. 경매 시간
+                                    경매 시간
                                 </h2>
-                                <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                                    <DateTimeField
-                                        optional
-                                        id="sellStartAt"
-                                        label="시작 시각"
-                                        value={startAt}
-                                        error={errorFor('startAt')}
-                                        onChange={setStartAt}
-                                    />
-                                    <DateTimeField
-                                        id="sellEndAt"
-                                        label="마감 시각"
-                                        value={endAt}
-                                        error={errorFor('endAt')}
-                                        onChange={setEndAt}
-                                    />
-                                    <SelectField
-                                        id="sellSoftWindow"
-                                        label="마감 임박 연장 기준"
-                                        options={SOFT_CLOSE_WINDOW_OPTIONS}
-                                        value={softCloseWindowSec}
-                                        onChange={setSoftCloseWindowSec}
-                                    />
-                                    <SelectField
-                                        id="sellSoftExtend"
-                                        label="1회 연장 시간"
-                                        options={SOFT_CLOSE_EXTEND_OPTIONS}
-                                        value={softCloseExtendSec}
-                                        onChange={setSoftCloseExtendSec}
-                                    />
-                                    <DateTimeField
-                                        id="sellMaxEndAt"
-                                        label="최대 연장 시각"
-                                        value={maxEndAt}
-                                        error={errorFor('maxEndAt')}
-                                        onChange={setMaxEndAt}
-                                    />
+                                <div className="mt-3 grid min-w-0 gap-3">
+                                    <p className="text-sm text-content-muted">
+                                        <strong className="text-content-fg">
+                                            즉시 시작
+                                        </strong>
+                                        {' · '}등록이 완료되는 즉시 경매가
+                                        시작됩니다.
+                                    </p>
+                                    <div
+                                        className="grid grid-cols-4 gap-2 sm:grid-cols-7"
+                                        aria-label="경매 기간"
+                                    >
+                                        {([1, 2, 3, 4, 5, 6, 7] as const).map(
+                                            (days) => (
+                                                <button
+                                                    key={days}
+                                                    type="button"
+                                                    aria-pressed={
+                                                        durationDays === days
+                                                    }
+                                                    className={`min-h-11 rounded-lg border px-3 py-2 text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2 ${durationDays === days ? 'border-control-action bg-content-soft text-control-action-hover' : 'border-content-line text-content-fg hover:border-control-action'}`}
+                                                    onClick={() =>
+                                                        setDurationDays(days)
+                                                    }
+                                                >
+                                                    {days}일{' '}
+                                                    <span className="block text-xs font-normal text-content-muted">
+                                                        {days * 24}시간
+                                                    </span>
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
+                                    <div
+                                        className="min-w-0 rounded-xl border border-content-line bg-content-soft px-4 py-3"
+                                        role="group"
+                                        aria-labelledby="sellEstimateDate"
+                                        aria-describedby="sellEstimateTime"
+                                    >
+                                        <div className="flex items-center justify-between gap-3 text-xs font-bold text-content-muted">
+                                            <span id="sellEstimateDate">
+                                                예상 종료{' '}
+                                                {formatEstimateDate(
+                                                    clockNow +
+                                                        durationDays *
+                                                            86_400_000,
+                                                )}
+                                            </span>
+                                            <span
+                                                aria-hidden="true"
+                                                className="inline-flex items-center gap-1.5"
+                                            >
+                                                <span className="size-1.5 rounded-full bg-success" />
+                                                실시간
+                                            </span>
+                                        </div>
+                                        <strong
+                                            id="sellEstimateTime"
+                                            className="mt-1 flex items-center gap-2 text-2xl font-bold tabular-nums text-content-fg sm:text-3xl"
+                                        >
+                                            <TbClock
+                                                aria-hidden
+                                                className="size-5 shrink-0 text-content-muted"
+                                            />
+                                            {formatEstimateTime(
+                                                clockNow +
+                                                    durationDays * 86_400_000,
+                                            )}
+                                        </strong>
+                                    </div>
                                 </div>
                             </>
                         ) : (
                             <>
                                 {/* 3. 판매 가격 — 고정가는 가격 하나(기한은 서버 자동, §3.1) */}
-                                <h2 className="mt-6 text-base font-bold text-content-fg">
-                                    3. 판매 가격
+                                <h2 className="mt-6 text-lg font-bold text-content-fg">
+                                    판매 가격
                                 </h2>
-                                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                                <div className="mt-3 min-w-0">
                                     <NumberField
+                                        primary
                                         id="sellShopPrice"
                                         label="판매가"
                                         value={shopPrice}
@@ -394,58 +476,17 @@ export default function SellPage() {
                                         }}
                                     />
                                 </div>
-                                <p className="mt-3 text-xs leading-relaxed text-content-subtle">
-                                    판매 기한은 서버가 자동으로 정합니다.
-                                    판매되기 전에는 언제든 취소할 수 있어요.
-                                </p>
+                                <ul className="mt-4 grid gap-1.5 text-xs leading-relaxed text-content-subtle">
+                                    <li>등록 즉시 판매 목록에 노출됩니다.</li>
+                                    <li>판매 기간은 서버가 정합니다.</li>
+                                    <li>
+                                        판매되지 않으면 임시 보관함으로 자동
+                                        회수됩니다.
+                                    </li>
+                                </ul>
                             </>
                         )}
-                    </section>
-
-                    {/* 우: 등록 전 확인 aside */}
-                    <aside>
-                        <div className="sticky top-24 rounded-2xl border border-content-line bg-content-surface p-5">
-                            <h2 className="text-base font-bold text-content-fg">
-                                등록 전 확인
-                            </h2>
-                            <ul className="mt-3 flex list-disc flex-col gap-2 pl-4 text-xs leading-relaxed text-content-subtle">
-                                {sellMethod === 'auction' ? (
-                                    <>
-                                        <li>
-                                            입찰이 시작되면 가격을 변경할 수
-                                            없습니다.
-                                        </li>
-                                        <li>
-                                            입찰이 없을 때만 취소할 수 있습니다.
-                                        </li>
-                                        <li>
-                                            마감 직전 입찰 시 종료 시각이 연장될
-                                            수 있습니다.
-                                        </li>
-                                    </>
-                                ) : (
-                                    <>
-                                        <li>등록 즉시 고정가로 노출됩니다.</li>
-                                        <li>
-                                            판매되기 전에는 언제든 취소할 수
-                                            있습니다.
-                                        </li>
-                                        <li>
-                                            기한이 지나면 임시 보관함으로
-                                            돌아갑니다.
-                                        </li>
-                                    </>
-                                )}
-                            </ul>
-
-                            <SellFeeEstimate
-                                startPrice={
-                                    sellMethod === 'auction'
-                                        ? parsedStartPrice
-                                        : parsedShopPrice
-                                }
-                            />
-
+                        <div className="mt-6 border-t border-content-line pt-5">
                             {(sellMethod === 'auction'
                                 ? errors.length > 0
                                 : shopPriceError !== null ||
@@ -462,16 +503,64 @@ export default function SellPage() {
 
                             <button
                                 type="button"
-                                className="mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
+                                className="mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover lg:hidden"
                                 onClick={
                                     sellMethod === 'auction'
                                         ? handleOpenConfirm
                                         : handleOpenShopConfirm
                                 }
                             >
-                                {sellMethod === 'auction'
-                                    ? '경매 등록하기'
-                                    : '고정가 등록하기'}
+                                판매 등록
+                            </button>
+                        </div>
+                    </section>
+
+                    <aside
+                        className="shop-cardinfo order-1 flex min-w-0 flex-col overflow-hidden shadow-sm lg:order-2"
+                        style={{ maxWidth: 'none', maxHeight: 'none' }}
+                        aria-labelledby="sellCardInfoTitle"
+                    >
+                        <div className="ci-title">
+                            <h2 id="sellCardInfoTitle">
+                                카드정보 <small>CARD INFO</small>
+                            </h2>
+                            <Link
+                                to={paths.inventory}
+                                className="ml-auto rounded-lg border border-content-line px-3 py-2 text-xs font-bold text-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus"
+                            >
+                                다시 선택
+                            </Link>
+                        </div>
+                        <div className="ci-scroll min-h-0 flex-1">
+                            <CardInfoContent
+                                {...decodeTypeCode(
+                                    preemptedItem.summary.typeCode,
+                                )}
+                                level={preemptedItem.summary.level}
+                                goldforceExpireAt={
+                                    preemptedItem.summary.goldforceExpireAt
+                                }
+                                name={preemptedItem.summary.displayName}
+                                skill1={preemptedItem.summary.skill1Code}
+                                skill2={preemptedItem.summary.skill2Code}
+                                skillPercent={
+                                    preemptedItem.summary.skillPercent
+                                }
+                                skill1Name={preemptedItem.summary.skill1Name}
+                                skill2Name={preemptedItem.summary.skill2Name}
+                            />
+                        </div>
+                        <div className="hidden border-t border-content-line bg-content-surface p-5 lg:block">
+                            <button
+                                type="button"
+                                className="w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
+                                onClick={
+                                    sellMethod === 'auction'
+                                        ? handleOpenConfirm
+                                        : handleOpenShopConfirm
+                                }
+                            >
+                                판매 등록
                             </button>
                         </div>
                     </aside>
@@ -483,8 +572,16 @@ export default function SellPage() {
                 itemName={selectedName}
                 startPrice={parsedStartPrice}
                 buyNowPrice={parsedBuyNowPrice}
-                endAtLabel={formatLocalLabel(endAt)}
-                maxEndAtLabel={formatLocalLabel(maxEndAt)}
+                endAtLabel={formatKstDateTime(
+                    pendingRequest
+                        ? Date.parse(pendingRequest.endAt)
+                        : Date.now(),
+                )}
+                maxEndAtLabel={formatKstDateTime(
+                    pendingRequest
+                        ? Date.parse(pendingRequest.maxEndAt)
+                        : Date.now(),
+                )}
                 isSubmitting={createMutation.isPending}
                 submitError={createMutation.error}
                 onClose={() => setConfirmOpen(false)}
@@ -506,18 +603,42 @@ export default function SellPage() {
 
 /** 판매 방식 선택 타일(라디오) — 선택은 DOM 속성(`aria-checked`)으로 전달(WCAG 4.1.2). */
 function MethodOption({
+    id,
     label,
     description,
+    method,
     checked,
     onSelect,
 }: {
+    id: string
     label: string
     description: string
+    method: SellMethod
     checked: boolean
-    onSelect: () => void
+    onSelect: (method: SellMethod, target: HTMLButtonElement) => void
 }) {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        let next: SellMethod | null = null
+        const current: SellMethod = id.endsWith('auction') ? 'auction' : 'shop'
+        if (event.key === 'Home') next = 'auction'
+        if (event.key === 'End') next = 'shop'
+        if (['ArrowLeft', 'ArrowUp'].includes(event.key)) {
+            next = current === 'auction' ? 'shop' : 'auction'
+        }
+        if (['ArrowRight', 'ArrowDown'].includes(event.key)) {
+            next = current === 'auction' ? 'shop' : 'auction'
+        }
+        if (!next) return
+        event.preventDefault()
+        const target = document.getElementById(
+            `sell-method-${next}`,
+        ) as HTMLButtonElement | null
+        if (target) onSelect(next, target)
+    }
+
     return (
         <button
+            id={id}
             type="button"
             role="radio"
             aria-checked={checked}
@@ -526,83 +647,13 @@ function MethodOption({
                     ? 'border-control-action bg-control-action-soft ring-1 ring-control-action'
                     : 'border-content-line bg-content-surface hover:border-brand-structure/40'
             }`}
-            onClick={onSelect}
+            tabIndex={checked ? 0 : -1}
+            onClick={(event) => onSelect(method, event.currentTarget)}
+            onKeyDown={handleKeyDown}
         >
             <span className="text-sm font-bold text-content-fg">{label}</span>
             <span className="text-xs text-content-subtle">{description}</span>
         </button>
-    )
-}
-
-/**
- * 선점 아이템 잠금 카드 (FC-177 — 목업 `.picked`).
- *
- * ★ 인벤토리에서 선택해 넘어온 아이템만 노출한다(전체 picker 그리드 대체). 여기서 바꿀 수 없고,
- *   "인벤토리에서 다시 선택"으로 인벤토리에 돌아가 다른 아이템을 고른다(선점 = URL 쿼리 정본).
- */
-function PreemptedItemCard({ item }: { item: InventoryItem }) {
-    const axes = decodeTypeCode(item.summary.typeCode)
-    const art = itemArt(
-        {
-            subGroup: axes.subGroup,
-            kind: axes.kind,
-            element: axes.element,
-            level: item.summary.level,
-        },
-        'l',
-        1,
-    )
-    const hasSkill =
-        item.summary.skill1Code !== null || item.summary.skill2Code !== null
-
-    return (
-        <div className="mt-3 flex items-center gap-4 rounded-xl border border-control-action bg-control-action-soft p-3">
-            <span
-                className="item-sprite-stage flex h-[134px] w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg"
-                style={
-                    art?.src
-                        ? ({
-                              '--item-sprite': `url("${art.src}")`,
-                          } as CSSProperties)
-                        : undefined
-                }
-            >
-                <ItemFrame
-                    imageUrl={art?.src}
-                    spriteUrl={art?.src}
-                    name={item.summary.displayName}
-                    visual={{
-                        goldforceExpireAt: item.summary.goldforceExpireAt,
-                    }}
-                    hasSkill={hasSkill}
-                    size="frame"
-                />
-            </span>
-            <div className="min-w-0 flex-1">
-                <h3 className="truncate text-base font-bold text-content-fg">
-                    {item.summary.displayName}
-                </h3>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <span className="rounded-md bg-content-surface px-2 py-1 text-[11px] font-bold text-brand-structure">
-                        {elementBadgeLabelOf(axes.element)}
-                    </span>
-                    <span className="rounded-md bg-brand-structure px-2 py-1 text-[11px] font-bold text-on-strong">
-                        {itemTypeLabel(axes.subGroup, axes.kind)} · Lv.
-                        {item.summary.level}
-                    </span>
-                </div>
-                <Link
-                    to={paths.inventory}
-                    className="mt-2 inline-block text-xs font-bold text-control-action-hover underline underline-offset-2 hover:text-control-action"
-                >
-                    인벤토리에서 다시 선택
-                </Link>
-            </div>
-            <span className="ml-auto hidden shrink-0 items-center gap-1 self-start rounded-full border border-control-action bg-content-surface px-2.5 py-1 text-[11px] font-bold text-control-action-hover sm:inline-flex">
-                <TbLock aria-hidden className="size-3" />
-                선점됨
-            </span>
-        </div>
     )
 }
 
@@ -615,6 +666,12 @@ function NumberField({
     error,
     optional,
     placeholder,
+    description,
+    primary = false,
+    labelClassName = '',
+    displayLabel,
+    disabled = false,
+    activationControl,
 }: {
     id: string
     label: string
@@ -623,139 +680,166 @@ function NumberField({
     error?: string
     optional?: boolean
     placeholder?: string
+    description?: string
+    primary?: boolean
+    labelClassName?: string
+    displayLabel?: string
+    disabled?: boolean
+    activationControl?: React.ReactNode
 }) {
-    return (
-        <div>
-            <label htmlFor={id} className="text-sm font-semibold text-content-fg">
-                {label}
-                {optional && (
-                    <span className="ml-1 text-xs font-normal text-content-subtle">
-                        (선택)
-                    </span>
-                )}
-            </label>
-            <input
-                id={id}
-                inputMode="numeric"
-                autoComplete="off"
-                placeholder={placeholder}
-                className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3 py-2.5 text-sm font-semibold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
-                    error
-                        ? 'border-danger focus:ring-danger/30'
-                        : 'border-content-line focus:border-control-action focus:ring-control-action/30'
-                }`}
-                aria-invalid={error !== undefined || undefined}
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-            />
-            <FieldError message={error} />
-        </div>
-    )
-}
+    const inputRef = useRef<HTMLInputElement>(null)
+    const pendingCaret = useRef<number | null>(null)
+    const descriptionId = description ? `${id}-description` : undefined
+    const errorId = error ? `${id}-error` : undefined
+    useLayoutEffect(() => {
+        if (pendingCaret.current === null) return
+        inputRef.current?.setSelectionRange(
+            pendingCaret.current,
+            pendingCaret.current,
+        )
+        pendingCaret.current = null
+    }, [value])
 
-/** 시각 입력(datetime-local). 값은 로컬 문자열 — 전송 시 sellForm 이 UTC ISO 로 변환. */
-function DateTimeField({
-    id,
-    label,
-    value,
-    onChange,
-    error,
-    optional,
-}: {
-    id: string
-    label: string
-    value: string
-    onChange: (value: string) => void
-    error?: string
-    optional?: boolean
-}) {
-    return (
-        <div>
-            <label htmlFor={id} className="text-sm font-semibold text-content-fg">
-                {label}
-                {optional && (
-                    <span className="ml-1 text-xs font-normal text-content-subtle">
-                        (선택)
-                    </span>
-                )}
-            </label>
-            <input
-                id={id}
-                type="datetime-local"
-                className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3 py-2.5 text-sm text-content-fg focus:outline-none focus:ring-2 ${
-                    error
-                        ? 'border-danger focus:ring-danger/30'
-                        : 'border-content-line focus:border-control-action focus:ring-control-action/30'
-                }`}
-                aria-invalid={error !== undefined || undefined}
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-            />
-            <FieldError message={error} />
-        </div>
-    )
-}
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = event.target.value
+        const digitsBeforeCaret = raw
+            .slice(0, event.target.selectionStart ?? raw.length)
+            .replace(/[^0-9]/g, '').length
+        const formatted = formatAmountInput(raw)
+        pendingCaret.current = caretAfterDigits(formatted, digitsBeforeCaret)
+        onChange(formatted)
+    }
 
-/** 소프트클로즈 선택(초|null). "사용 안 함" 이 기본. */
-function SelectField({
-    id,
-    label,
-    options,
-    value,
-    onChange,
-}: {
-    id: string
-    label: string
-    options: readonly { label: string; value: number }[]
-    value: number | null
-    onChange: (value: number | null) => void
-}) {
     return (
-        <div>
-            <label htmlFor={id} className="text-sm font-semibold text-content-fg">
-                {label}
-            </label>
-            <select
-                id={id}
-                className="mt-1.5 w-full rounded-lg border border-content-line bg-content-surface px-3 py-2.5 text-sm text-content-fg focus:border-control-action focus:outline-none focus:ring-2 focus:ring-control-action/30"
-                value={value === null ? '' : String(value)}
-                onChange={(event) =>
-                    onChange(
-                        event.target.value === ''
-                            ? null
-                            : Number(event.target.value),
-                    )
-                }
+        <div className="min-w-0">
+            <div className="flex min-w-0 items-center justify-between gap-2">
+                <label
+                    htmlFor={id}
+                    className={`min-w-0 text-sm font-semibold text-content-fg ${labelClassName}`}
+                >
+                    {displayLabel ?? label}
+                    {optional && (
+                        <span className="ml-1 text-xs font-normal text-content-subtle">
+                            (선택)
+                        </span>
+                    )}
+                </label>
+                {activationControl}
+            </div>
+            {description && (
+                <p
+                    id={descriptionId}
+                    className="mt-1 text-xs text-content-muted"
+                >
+                    {description}
+                </p>
+            )}
+            <div
+                className={`relative min-w-0 ${labelClassName === 'sr-only' ? '' : 'mt-2'}`}
             >
-                <option value="">사용 안 함</option>
-                {options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                        {option.label}
-                    </option>
-                ))}
-            </select>
+                <input
+                    ref={inputRef}
+                    id={id}
+                    disabled={disabled}
+                    aria-label={displayLabel ? label : undefined}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder={placeholder}
+                    className={`w-full min-w-0 rounded-xl border bg-content-surface py-3 pl-3 pr-12 font-bold tabular-nums transition-colors hover:border-control-action disabled:cursor-not-allowed disabled:border-content-line disabled:bg-content-soft disabled:opacity-70 disabled:hover:border-content-line focus:outline-none focus:ring-2 sm:pl-4 sm:pr-16 ${amountTierClass(value)} ${primary ? 'text-lg sm:text-3xl' : 'text-xl sm:text-2xl'} ${
+                        error
+                            ? 'border-danger focus:ring-danger/30'
+                            : 'border-content-line focus:border-control-action focus:ring-control-action/30'
+                    }`}
+                    aria-invalid={error !== undefined || undefined}
+                    aria-describedby={
+                        [descriptionId, errorId].filter(Boolean).join(' ') ||
+                        undefined
+                    }
+                    value={value}
+                    onChange={handleChange}
+                />
+                <span
+                    className={`pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-bold ${amountTierClass(value)}`}
+                >
+                    코드
+                </span>
+            </div>
+            <FieldError id={errorId} message={error} />
         </div>
     )
 }
 
-function FieldError({ message }: { message?: string }) {
+function amountTierClass(value: string): string {
+    const amount = parseAmount(value)
+    return amount === null ? 'text-content-fg' : codeTierClass(amount)
+}
+
+function FieldError({ id, message }: { id?: string; message?: string }) {
     if (!message) return null
     return (
-        <p role="alert" className="mt-1.5 text-xs text-danger-ink">
+        <p id={id} role="alert" className="mt-1.5 text-xs text-danger-ink">
             {message}
         </p>
     )
 }
 
-/** 로컬 datetime-local 값을 사람이 읽는 라벨로(확인 다이얼로그 표시용). */
-function formatLocalLabel(local: string): string {
-    if (!local) return ''
-    const ms = new Date(local).getTime()
-    if (!Number.isFinite(ms)) return local
-    return new Date(ms).toLocaleString('ko-KR', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    })
+function formatAmountInput(raw: string): string {
+    const digits = raw.replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '')
+    if (digits === '') return ''
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
+
+function caretAfterDigits(value: string, digitCount: number): number {
+    if (digitCount === 0) return 0
+    let seen = 0
+    for (let index = 0; index < value.length; index += 1) {
+        if (/\d/.test(value[index])) seen += 1
+        if (seen === digitCount) return index + 1
+    }
+    return value.length
+}
+
+function toLocalDateTimeValue(date: Date): string {
+    const offset = date.getTimezoneOffset() * 60_000
+    return new Date(date.getTime() - offset).toISOString().slice(0, 19)
+}
+
+function formatKstDateTime(value: number): string {
+    const parts = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(value)
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((entry) => entry.type === type)?.value ?? ''
+    return `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}:${part('second')}`
+}
+
+function formatEstimateDate(value: number): string {
+    return new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long',
+    }).format(value)
+}
+
+function formatEstimateTime(value: number): string {
+    const parts = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(value)
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((entry) => entry.type === type)?.value ?? ''
+    return `${part('hour')}시 ${part('minute')}분`
 }
 
 function SellSkeleton() {

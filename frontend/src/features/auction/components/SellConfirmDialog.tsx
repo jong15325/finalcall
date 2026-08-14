@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { TbX } from 'react-icons/tb'
 import CodeAmount from '@/components/common/CodeAmount'
 import SellFeeEstimate from './SellFeeEstimate'
 import { createAuctionErrorViewOf } from '@/features/auction/lib/sellErrors'
+import useDesktopLayout from '@/components/layout/useDesktopLayout'
 
 /**
  * 경매 등록 확인 다이얼로그 (FC-073 — FC-072 `BidDialog` 배선 패턴 이식).
@@ -47,11 +48,48 @@ function SellConfirmDialog({
     onConfirm,
 }: SellConfirmDialogProps) {
     const dialogRef = useRef<HTMLDivElement>(null)
+    const closeRef = useRef<HTMLButtonElement>(null)
     const confirmRef = useRef<HTMLButtonElement>(null)
     const previousFocusRef = useRef<HTMLElement | null>(null)
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const desktop = useDesktopLayout()
+    const [reviewed, setReviewed] = useState(desktop)
     /** 최신 onClose — effect 의존에서 빼기 위한 콜백 ref */
     const onCloseRef = useRef(onClose)
     onCloseRef.current = onClose
+
+    useLayoutEffect(() => {
+        if (!open || desktop) {
+            setReviewed(desktop)
+            return
+        }
+
+        const scroll = scrollRef.current
+        if (!scroll) return
+        const measure = () =>
+            setReviewed(
+                scroll.scrollHeight - scroll.scrollTop <=
+                    scroll.clientHeight + 1,
+            )
+        measure()
+        window.addEventListener('resize', measure)
+        const observer =
+            typeof ResizeObserver === 'undefined'
+                ? null
+                : new ResizeObserver(measure)
+        observer?.observe(scroll)
+        const mutationObserver = new MutationObserver(measure)
+        mutationObserver.observe(scroll, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        })
+        return () => {
+            window.removeEventListener('resize', measure)
+            observer?.disconnect()
+            mutationObserver.disconnect()
+        }
+    }, [desktop, open, submitError])
 
     /**
      * ★★ **초점·스크롤잠금·키보드 — 의존은 `[open]` 뿐이다.** (BidDialog 와 동일 구조)
@@ -67,9 +105,11 @@ function SellConfirmDialog({
         const previousOverflow = document.body.style.overflow
         document.body.style.overflow = 'hidden'
 
-        const focusRaf = requestAnimationFrame(() =>
-            confirmRef.current?.focus(),
-        )
+        const focusRaf = requestAnimationFrame(() => {
+            const confirm = confirmRef.current
+            if (confirm && !confirm.disabled) confirm.focus()
+            else closeRef.current?.focus()
+        })
 
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -91,6 +131,13 @@ function SellConfirmDialog({
             const last = list[list.length - 1]
             const active = document.activeElement
 
+            if (!active || !list.includes(active as HTMLElement)) {
+                event.preventDefault()
+                if (event.shiftKey) last?.focus()
+                else first?.focus()
+                return
+            }
+
             if (event.shiftKey && active === first) {
                 event.preventDefault()
                 last?.focus()
@@ -109,6 +156,16 @@ function SellConfirmDialog({
         }
     }, [open])
 
+    useEffect(() => {
+        if (!open) return
+        const confirm = confirmRef.current
+        if (reviewed && confirm && !confirm.disabled) {
+            confirm.focus()
+        } else if (document.activeElement === confirm) {
+            closeRef.current?.focus()
+        }
+    }, [desktop, isSubmitting, open, reviewed])
+
     if (!open) return null
 
     const errorView =
@@ -121,7 +178,7 @@ function SellConfirmDialog({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-chrome-strong/60 xl:items-center xl:px-4"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose()
@@ -132,10 +189,14 @@ function SellConfirmDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="sellConfirmTitle"
-                className="max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
+                className="w-full max-w-[520px] overflow-hidden rounded-t-2xl bg-content-surface shadow-[var(--shadow-dialog)] xl:rounded-2xl"
                 onMouseDown={(event) => event.stopPropagation()}
             >
-                <form noValidate onSubmit={handleSubmit}>
+                <form
+                    noValidate
+                    className="flex max-h-[90vh] flex-col"
+                    onSubmit={handleSubmit}
+                >
                     <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
                         <div>
                             <span className="text-[11px] font-bold uppercase tracking-wide text-control-action-hover">
@@ -149,6 +210,7 @@ function SellConfirmDialog({
                             </h4>
                         </div>
                         <button
+                            ref={closeRef}
                             type="button"
                             aria-label="닫기"
                             className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
@@ -158,10 +220,25 @@ function SellConfirmDialog({
                         </button>
                     </div>
 
-                    <div className="px-5 py-5">
+                    <div
+                        ref={scrollRef}
+                        className="ci-scroll min-h-0 overflow-y-auto px-5 py-5"
+                        onScroll={() => {
+                            const scroll = scrollRef.current
+                            if (
+                                scroll &&
+                                scroll.scrollHeight - scroll.scrollTop <=
+                                    scroll.clientHeight + 1
+                            ) {
+                                setReviewed(true)
+                            }
+                        }}
+                    >
                         <dl className="rounded-lg bg-content-soft p-3.5 text-sm">
                             <div className="flex items-center justify-between">
-                                <dt className="text-content-subtle">판매 방식</dt>
+                                <dt className="text-content-subtle">
+                                    판매 방식
+                                </dt>
                                 <dd className="font-semibold text-content-fg">
                                     경매
                                 </dd>
@@ -179,7 +256,7 @@ function SellConfirmDialog({
                             {buyNowPrice !== null && (
                                 <div className="mt-2 flex items-center justify-between">
                                     <dt className="text-content-subtle">
-                                        즉시구매 참고가
+                                        즉시구매가
                                     </dt>
                                     <dd>
                                         <CodeAmount
@@ -208,8 +285,6 @@ function SellConfirmDialog({
                             </div>
                         </dl>
 
-                        <SellFeeEstimate startPrice={startPrice} />
-
                         <ul className="mt-4 flex flex-col gap-1.5 rounded-lg bg-control-action-soft px-4 py-3 text-xs text-control-action-hover">
                             <li>입찰이 시작되면 가격을 변경할 수 없습니다.</li>
                             <li>입찰이 없을 때만 취소할 수 있습니다.</li>
@@ -234,6 +309,8 @@ function SellConfirmDialog({
                                 )}
                             </div>
                         )}
+
+                        <SellFeeEstimate startPrice={startPrice} />
                     </div>
 
                     <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
@@ -247,10 +324,10 @@ function SellConfirmDialog({
                         <button
                             ref={confirmRef}
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || (!desktop && !reviewed)}
                             className="detail-cta rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {isSubmitting ? '등록 중…' : '경매 등록 확정'}
+                            {isSubmitting ? '등록 중…' : '판매 등록'}
                         </button>
                     </div>
                 </form>

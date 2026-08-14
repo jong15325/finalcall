@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import CodeAmount from './CodeAmount'
+import { codeTierClass } from './codeTier'
 import { formatCodeCompact, formatCodeFull } from './codeFormat'
 
 /**
@@ -33,6 +34,17 @@ describe('formatCodeFull', () => {
 })
 
 describe('<CodeAmount>', () => {
+    it.each([
+        [9_999, 'text-amount-code-tier-1'],
+        [10_000, 'text-amount-code-tier-2'],
+        [100_000, 'text-amount-code-tier-3'],
+        [1_000_000, 'text-amount-code-tier-4'],
+        [10_000_000, 'text-amount-code-tier-5'],
+        [100_000_000, 'text-amount-code-tier-6'],
+    ] as const)('공용 tier helper가 %s 경계를 판정한다', (value, className) => {
+        expect(codeTierClass(value)).toBe(className)
+    })
+
     it('aria-label과 시각 표시는 숫자 뒤에 코드 단위를 둔다', () => {
         const { rerender } = render(
             <CodeAmount value={2480000} mode="compact" />,
