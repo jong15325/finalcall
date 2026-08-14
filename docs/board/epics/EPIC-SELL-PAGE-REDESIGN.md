@@ -3,7 +3,7 @@ id: EPIC-SELL-PAGE-REDESIGN
 type: epic
 jira_key: KAN-348
 title: 판매 등록 페이지 재설계
-state: doing
+state: done
 children: [FC-306, FC-307, FC-308, FC-309, FC-310]
 gate: null
 ---

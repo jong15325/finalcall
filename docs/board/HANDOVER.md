@@ -1,84 +1,51 @@
 # 총괄 세션 핸드오버
 
-> 갱신: 2026-08-14 퇴근 / 원격·로컬 `master` HEAD `1832bf8`
+> 갱신: 2026-08-15 01:42 KST / 브랜치 `master`
 
-## 현재 결론
+## Git·환경
 
-- 사용자가 `git push`를 완료해 로컬과 원격 `master`가 `1832bf8`로 동기화됐다.
-- 작업 트리는 clean이다.
-- Jira는 에픽과 파생 task 전건을 미러한다. Jira task 제목은 반드시 `FC-NNN · <title>` 형식이며 해당 에픽의 child로 연결한다.
-- 2026-08-14 전수 감사에서 `FC-283~304` 22건의 미발급을 발견해 `KAN-325~346`으로 백필했다. 전건 제목·완료 상태·에픽 parent를 보정하고 파일 `jira_key`에 역기록했다.
-- 파일 보드는 에픽 38개 + task 300개 = 338개이며 전건 유효한 `jira_key`를 보유한다. Jira 프로젝트에는 역사·폐기 이슈를 포함해 총 346개가 있다.
-- 미완료 항목은 `FC-116`/`KAN-254` 한 건뿐이며 양쪽 모두 `todo`/`해야 할 일`로 일치한다.
-- 퇴근 시점 서비스는 frontend `5173`, backend `8080` 모두 LISTEN 상태다.
-- 포트폴리오는 매 작업마다 작성하지 않는다. 프로젝트의 중요하고 기술적인 선택만 에픽 완료 또는 사용자 요청 시 정리한다.
-- 세션 경계 명령을 영속화했다. `퇴근`은 반드시 검증·잔여 작업·git/Jira·서비스 상태를 정리해 이 파일을 덮어쓴 뒤 브리핑하고, `출근`은 이 파일과 규약을 확인한 뒤 상태 및 작업 목록을 브리핑한다.
+- 로컬 HEAD: `829e17c920b2df1f9c4b41f7bb9723cc28fe760d`
+- upstream 원격 HEAD: `829e17c920b2df1f9c4b41f7bb9723cc28fe760d`
+- unpushed commit: 0
+- 작업 트리: dirty — 판매 등록 에픽·FC-307~310 완료 상태와 이 핸드오버 문서 갱신
+- 실행 서비스: frontend `5173` LISTEN, backend `8080` LISTEN
 
-## 8월 13~14일 완료 작업
+## 완료
 
-### 디자인 워크벤치와 배경
+- 판매 등록 페이지 재설계 에픽을 완료했다. 정본은 `docs/spec/sell-page-ui-contract.md`, 운영 구현은 `frontend/src/pages/SellPage.tsx`다.
+- 경매·고정가 반응형 등록 화면, 공용 카드정보 본문, PC 중앙형·모바일 bottom-sheet 확인 모달을 적용했다.
+- 가격 입력 천 단위 콤마·금액 등급 색상·즉시구매가 활성화와 실시간 예상 종료 시각을 적용했다.
+- PC에서는 확인 모달 최종 등록을 즉시 활성화하고, 모바일에서는 내용을 끝까지 확인한 뒤 활성화한다.
+- 판매 수수료 안내를 페이지에서 제거하고 경매·고정가 확인 모달의 검토 내용 하단으로 이동했다.
+- 디자인 워크벤치 후보와 운영 residue 가드를 포함한 커밋 `829e17c`를 사용자가 원격 `master`에 push했다.
+- 사용자 완료 승인에 따라 파일 보드 `EPIC-SELL-PAGE-REDESIGN`, `FC-307~310`을 done/passed로 보정했다.
+- Jira `KAN-348`, `KAN-350~353`을 완료로 전환하고 gate 라벨을 정본에 맞게 제거했다. `KAN-349`는 이미 완료였다.
 
-- 실제 AppShell·provider·공용 컴포넌트를 재사용하는 DEV 전용 `/__design/*` 워크벤치를 구축했다.
-- production build에는 route·scenario·fixture·marker가 남지 않도록 정적/빌드 가드를 적용했다.
-- 바람 파티클 10안, 불 10안, 물 10안을 제작했다.
-- 운영 배경에는 사용자가 선택한 `겹친 비단 리본형 + 돌풍 펄스` 바람 효과만 왼쪽 하단 wind 영역에 적용했다.
-- 불·물 운영 효과는 사용자가 기존 상태 유지를 선택해 변경하지 않았다.
-- 회전 원뿔형 스포트라이트는 제거했고 나머지 파티클은 유지한다.
+## 진행 중
 
-### AppShell과 게시글
+- 없음.
 
-- 접점 고정형 상단 navigation을 운영 AppShell에 적용했다.
-- navigation·content·footer의 공통 가로 경계와 라운드 처리를 정합화했다.
-- 게시글 상세 페이지의 콘텐츠 폭을 다른 페이지와 동일한 공통 영역으로 교정했다.
+## 남은 일
 
-### 지갑과 화폐 표기 — FC-303~304
+- 독립 백로그 `FC-116` / `KAN-254`가 파일 `todo`·Jira `해야 할 일` 상태로 남아 있다.
+- 이번 핸드오버와 파일 보드 상태 보정은 아직 미커밋이다. 사용자 승인 후 문서 커밋하고 push는 사용자가 수행한다.
 
-- 지갑 디자인 5안을 `/__design/wallet-balance-studies`에 제작했다.
-- 사용자 선택인 `모바일 월렛형`을 `WalletBalanceCard`와 `WalletSummaryCard` 운영 화면에 적용했다.
-- 핵심 가용액은 32px, 총 보유·입찰 보류·캐시 보조 금액은 20px다.
-- 공용 `CodeAmount`에서 `code.png` 이미지를 전면 제거했다.
-- 숫자 뒤에 `코드` 또는 `캐시` 텍스트 단위를 표시한다. `currency` 기본값은 `code`, 캐시 소비자는 `currency="cash"`를 명시한다.
-- 코드 숫자는 레거시 JSP의 6개 금액 구간 의미를 보존한 WCAG 보정색을 사용한다.
-  - `< 10,000`: `#607400`
-  - `10,000~99,999`: `#0075A5`
-  - `100,000~999,999`: `#CE00A5`
-  - `1,000,000~9,999,999`: `#007D00`
-  - `10,000,000~99,999,999`: `#A65A00`
-  - `>= 100,000,000`: `#BD0000`
-- 아이템 마켓과 경매 목록의 상단 가용 잔액 및 카드 가격은 `만/억` 축약 없이 전체 정수로 표시한다.
-- 공간이 제한된 글로벌 `TopNavbar`만 `compact` 표기를 유지한다.
+## 검증
 
-## 최종 검증
+- 프론트 전체 테스트: 111 files / 912 tests 통과(FC-313 시점).
+- 최종 판매 페이지 회귀 테스트: 21/21 통과.
+- `typecheck`, 대상 ESLint 0 warning/error, production build, UI/workbench guard, production residue 0건 통과.
+- 최종 reviewer: critical 0 / major 0 / minor 0, PASS.
+- `git diff --check` 통과, 운영 빌드의 기존 500 kB 초과 chunk 경고만 유지.
+- 템플릿·컨벤션 준수: 확인 — `docs/common/templates.md [8]`, Conventional Commits, 사용자 커밋 승인 절차 적용.
 
-- frontend 전체 테스트: **106 files / 846 tests 통과**
-- `typecheck`, UI/workbench guard, asset sync 통과
-- lint 오류 0건, 기존 범위 밖 경고 2건만 유지
-- 390px·1280px 및 200% 확대에서 wallet·market·auction overflow 0건
-- production build와 workbench residue 0건 가드 통과
-- FC-304 reviewer 최종 판정: Critical 0 / Major 0 / Minor 0, PASS
+## Jira 미러 패리티
 
-## 최근 핵심 커밋
+- 파일 보드: 에픽 39개 + task 306개 = 345개, 템플릿 제외 전건 `jira_key` 형식 가드 통과.
+- 신규 판매 등록 에픽 `KAN-348~353`: key·summary·완료 상태·에픽 parent 일치. gate 라벨 드리프트 보정 완료.
+- 미완료 항목은 `FC-116` / `KAN-254` 한 건뿐이며 파일 `todo`와 Jira `해야 할 일`이 일치한다.
+- Atlassian 연결 정상. 이번 세션에서 신규 에픽의 관계 링크 전체를 재생성하지 않았으며, 기존 parent 연결은 조회로 확인했다.
 
-- `c607bde` 지갑과 화폐 금액 UI 계약 확정
-- `f892f10` 모바일 월렛과 텍스트 화폐 표기 적용
-- `42f2b33` 지갑 보조 금액과 목록 전체 표기 정합화
-- `b16e3d8` FC-304 완료 기록
-- `ea40e6c` 모바일 월렛 작업 상태 핸드오버 갱신
-- `9f2eca9` 출퇴근 핸드오버 절차 영속화
+## 다음 첫 행동
 
-## 다음 세션 이어받는 순서
-
-1. `AGENTS.md`, `docs/PROJECT-HANDOFF.md`, 이 파일을 읽는다.
-2. `git status --short`, `git log --oneline -12`, `git rev-list --count origin/master..HEAD`를 확인한다.
-3. 필요하면 frontend `5173`, backend `8080` 실행 상태를 확인한다.
-4. Jira 연결 후 파일 에픽·task 전건의 key·`FC-NNN · <title>` summary·상태·에픽 귀속·관계 링크 패리티를 확인한다.
-5. 새 사용자 요청을 기다린다. 현재 승인 대기나 미완료 구현은 없고, 독립 백로그 `FC-116`만 `todo`다.
-6. 새 화면·주요 UI는 디자인 게이트를 거치고, 단순 수정은 자동 진행한다. 목업 리뷰는 최소화하되 운영 변경은 reviewer PASS 후 완료한다.
-
-## 주의
-
-- push는 사용자만 수행한다.
-- 이 퇴근 핸드오버 갱신 커밋은 사용자 push가 필요하다.
-- `logs/`, `mockups/`와 사용자 제외 파일은 커밋하지 않는다.
-- 워크벤치 후보를 운영에 채택할 때는 이동하거나 직접 이관하고, production과 후보 사본을 정본처럼 병존시키지 않는다.
-- 기존 `InventoryItemCard.test.tsx` lint 경고 2건은 이번 작업 범위 밖이다.
+1. `git status --short`로 핸드오버·보드 상태 보정 6개 파일을 확인하고, 사용자 승인 여부에 따라 `docs(handover): 판매 등록 에픽 완료 상태를 인계` 커밋을 처리한다.
