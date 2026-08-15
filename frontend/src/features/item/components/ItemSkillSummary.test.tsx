@@ -44,13 +44,14 @@ describe('<ItemSkillSummary>', () => {
     it('슬롯 라벨과 스킬 이름 사이에 접근 가능한 공백을 둔다', () => {
         render(
             <ItemSkillSummary
+                showSlotLabels
                 skill1={11}
                 skill2={null}
                 skill1Name="공격시간 3 감소"
             />,
         )
 
-        expect(screen.getAllByRole('listitem')[0]).toHaveTextContent(
+        expect(screen.getByRole('listitem')).toHaveTextContent(
             '스킬 1 공격시간 3 감소',
         )
     })
@@ -76,18 +77,12 @@ describe('<ItemSkillSummary>', () => {
     it('마법(skill1 부재)은 skill2 만 표기하고 "스킬 #{skill1}" 을 만들지 않는다', () => {
         render(<ItemSkillSummary skill1={null} skill2={7} />)
         expect(screen.getByText('스킬 #7')).toBeInTheDocument()
-        const items = screen.getAllByRole('listitem')
-        expect(items).toHaveLength(2)
-        expect(items[0]).toHaveTextContent('스킬 1 -')
-        expect(items[1]).toHaveTextContent('스킬 2 스킬 #7')
+        expect(screen.getAllByRole('listitem')).toHaveLength(1)
     })
 
-    it('스킬이 없으면 두 슬롯 모두 대시로 표시한다', () => {
+    it('스킬 없음이면 emptyLabel(행 높이 통일)', () => {
         render(<ItemSkillSummary skill1={null} skill2={null} />)
-        const items = screen.getAllByRole('listitem')
-        expect(items).toHaveLength(2)
-        expect(items[0]).toHaveTextContent('스킬 1 -')
-        expect(items[1]).toHaveTextContent('스킬 2 -')
+        expect(screen.getByText('스킬 없음')).toBeInTheDocument()
     })
 
     it('스킬명을 두 줄로 낸다(스킬1 줄 / 스킬2 줄)', () => {
@@ -132,10 +127,9 @@ describe('<ItemSkillSummary>', () => {
             />,
         )
         const items = screen.getAllByRole('listitem')
-        expect(items).toHaveLength(2)
-        expect(items[0]).toHaveTextContent('스킬 1 -')
-        expect(items[1]).toHaveTextContent('스킬 2 트리플샷')
-        expect(items[1]).toHaveTextContent('33%')
+        expect(items).toHaveLength(1)
+        expect(items[0]).toHaveTextContent('트리플샷')
+        expect(items[0]).toHaveTextContent('33%')
     })
 
     it('발동확률 0·부재면 요약에 %를 싣지 않는다', () => {
