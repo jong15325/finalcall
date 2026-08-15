@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -16,6 +18,10 @@ import type { AuctionSummary } from '@/lib/api/auctions'
  */
 
 const NOW = Date.parse('2026-07-21T00:00:00Z')
+const itemFrameCss = readFileSync(
+    resolve(process.cwd(), 'src/features/item/components/ItemFrame.css'),
+    'utf8',
+)
 
 const baseAuction: AuctionSummary = {
     auctionPublicId: '01J3AUCTION0001',
@@ -46,6 +52,31 @@ const baseAuction: AuctionSummary = {
 }
 
 describe('<AuctionCard>', () => {
+    it.each([
+        ['스킬 없음', null, null],
+        ['스킬 1개', 131, null],
+        ['스킬 2개', 131, 202],
+    ] as const)(
+        '%s 카드도 동일한 두 행 높이를 유지한다',
+        (_, skill1, skill2) => {
+            renderWithProviders(
+                <AuctionCard
+                    auction={{
+                        ...baseAuction,
+                        item: { ...baseAuction.item, skill1, skill2 },
+                    }}
+                    now={NOW}
+                />,
+            )
+
+            expect(screen.getByRole('list', { name: '스킬' })).toHaveClass(
+                'item-card__market-skills',
+                'grid-rows-2',
+            )
+            expect(screen.getAllByRole('listitem')).toHaveLength(2)
+        },
+    )
+
     it('블랙 타입 제목만 표시하고 레벨·시각 이름은 숨긴 채 256px 높이를 유지한다', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
 
@@ -144,13 +175,23 @@ describe('<AuctionCard>', () => {
         )
 
         const skillList = screen.getByRole('list', { name: '스킬' })
-        expect(skillList).toHaveClass(
-            '[&_li]:bg-brand-structure/5',
-            '[&_li]:text-chrome-selected',
-            '[&_li]:!whitespace-normal',
-            '[&_li]:!overflow-visible',
-            '[&_.item-skill-summary__slot]:mr-1.5',
-            '[&_.item-skill-summary__slot]:inline',
+        expect(skillList).toHaveClass('item-card__market-skills', 'grid-rows-2')
+        expect(itemFrameCss).toMatch(
+            /\.item-card__market-skills\s*\{[^}]*min-height:\s*98px[^}]*gap:\s*7px/s,
+        )
+        expect(itemFrameCss).toMatch(
+            /\.item-card__market-skills li\s*\{[^}]*padding:\s*7px 8px[^}]*var\(--brand-structure\) 16%[^}]*border-radius:\s*8px[^}]*var\(--brand-structure\) 7%[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s,
+        )
+        expect(itemFrameCss).toContain(
+            '.item-card__market-skills .item-skill-summary__slot',
+        )
+        screen.getAllByRole('listitem').forEach((row) => {
+            expect(row).toHaveClass('flex', 'items-center', 'min-h-0')
+        })
+        expect(screen.getByText(longSkill)).toHaveClass(
+            'item-skill-summary__name',
+            'min-w-0',
+            'truncate',
         )
         expect(screen.getByText(longSkill).closest('li')).toHaveTextContent(
             `스킬 1 ${longSkill}`,
@@ -231,9 +272,14 @@ describe('<AuctionCard>', () => {
             />,
         )
 
-        expect(screen.queryByText('스킬 1')).not.toBeInTheDocument()
+        expect(screen.getAllByRole('listitem')[0]).toHaveAccessibleName(
+            '스킬 1 없음',
+        )
         expect(screen.getByText('스킬 2')).toBeInTheDocument()
-        expect(screen.getByText('33%')).toBeInTheDocument()
+        expect(screen.getByText('33%')).toHaveClass(
+            'item-skill-summary__percent',
+            'text-brand-highlight-deep',
+        )
     })
 
     it('스킬명이 없으면 코드로 중립 표기한다', () => {
@@ -255,7 +301,7 @@ describe('<AuctionCard>', () => {
         expect(screen.getByText('스킬 #22')).toBeInTheDocument()
     })
 
-    it('스킬이 없으면 빈 상태를 표시한다', () => {
+    it('스킬이 없으면 두 슬롯을 없음으로 표시한다', () => {
         renderWithProviders(
             <AuctionCard
                 auction={{
@@ -272,7 +318,10 @@ describe('<AuctionCard>', () => {
             />,
         )
 
-        expect(screen.getByText('스킬 없음')).toBeInTheDocument()
+        const skills = screen.getAllByRole('listitem')
+        expect(skills).toHaveLength(2)
+        expect(skills[0]).toHaveAccessibleName('스킬 1 없음')
+        expect(skills[1]).toHaveAccessibleName('스킬 2 없음')
     })
 
     it('활성 골드포스 잔여일을 카드 접근성 트리에 포함한다', () => {

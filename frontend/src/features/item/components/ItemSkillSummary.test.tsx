@@ -44,14 +44,13 @@ describe('<ItemSkillSummary>', () => {
     it('슬롯 라벨과 스킬 이름 사이에 접근 가능한 공백을 둔다', () => {
         render(
             <ItemSkillSummary
-                showSlotLabels
                 skill1={11}
                 skill2={null}
                 skill1Name="공격시간 3 감소"
             />,
         )
 
-        expect(screen.getByRole('listitem')).toHaveTextContent(
+        expect(screen.getAllByRole('listitem')[0]).toHaveTextContent(
             '스킬 1 공격시간 3 감소',
         )
     })
@@ -77,12 +76,18 @@ describe('<ItemSkillSummary>', () => {
     it('마법(skill1 부재)은 skill2 만 표기하고 "스킬 #{skill1}" 을 만들지 않는다', () => {
         render(<ItemSkillSummary skill1={null} skill2={7} />)
         expect(screen.getByText('스킬 #7')).toBeInTheDocument()
-        expect(screen.getAllByRole('listitem')).toHaveLength(1)
+        const items = screen.getAllByRole('listitem')
+        expect(items).toHaveLength(2)
+        expect(items[0]).toHaveAccessibleName('스킬 1 없음')
+        expect(items[1]).toHaveAccessibleName('스킬 2 스킬 #7')
     })
 
-    it('스킬 없음이면 emptyLabel(행 높이 통일)', () => {
+    it('스킬이 없으면 두 슬롯 모두 없음으로 구분한다', () => {
         render(<ItemSkillSummary skill1={null} skill2={null} />)
-        expect(screen.getByText('스킬 없음')).toBeInTheDocument()
+        const items = screen.getAllByRole('listitem')
+        expect(items).toHaveLength(2)
+        expect(items[0]).toHaveAccessibleName('스킬 1 없음')
+        expect(items[1]).toHaveAccessibleName('스킬 2 없음')
     })
 
     it('스킬명을 두 줄로 낸다(스킬1 줄 / 스킬2 줄)', () => {
@@ -117,6 +122,29 @@ describe('<ItemSkillSummary>', () => {
         expect(items[1]).toHaveTextContent('33%')
     })
 
+    it('긴 스킬2 이름만 말줄임하고 퍼센트는 별도 고정 영역에 유지한다', () => {
+        const longName = '매우 긴 이름의 연속 폭발 화염 관통 스킬'
+        render(
+            <ItemSkillSummary
+                skill1={null}
+                skill2={202}
+                skill2Name={longName}
+                skillPercent={33}
+            />,
+        )
+
+        expect(screen.getByText(longName)).toHaveClass(
+            'item-skill-summary__name',
+            'min-w-0',
+            'truncate',
+        )
+        expect(screen.getByText('33%')).toHaveClass(
+            'item-skill-summary__percent',
+            'shrink-0',
+            'text-brand-highlight-deep',
+        )
+    })
+
     it('마법(스킬2만·스킬1 부재)은 스킬2 줄에 % — 슬롯2 유지', () => {
         render(
             <ItemSkillSummary
@@ -127,9 +155,13 @@ describe('<ItemSkillSummary>', () => {
             />,
         )
         const items = screen.getAllByRole('listitem')
-        expect(items).toHaveLength(1)
-        expect(items[0]).toHaveTextContent('트리플샷')
-        expect(items[0]).toHaveTextContent('33%')
+        expect(items).toHaveLength(2)
+        expect(items[0]).toHaveAccessibleName('스킬 1 없음')
+        expect(items[1]).toHaveAccessibleName('스킬 2 트리플샷 33%')
+        expect(screen.getByText('33%')).toHaveClass(
+            'item-skill-summary__percent',
+            'text-brand-highlight-deep',
+        )
     })
 
     it('발동확률 0·부재면 요약에 %를 싣지 않는다', () => {
@@ -143,6 +175,9 @@ describe('<ItemSkillSummary>', () => {
             />,
         )
         expect(screen.queryByText('0%')).not.toBeInTheDocument()
+        expect(screen.getByText('트리플샷')).not.toHaveClass(
+            'text-brand-highlight-deep',
+        )
     })
 
     it('이름이 null 이면 중립 코드로 폴백(미등록·마법 스킬1 부재)', () => {

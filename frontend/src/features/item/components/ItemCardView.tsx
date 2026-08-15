@@ -192,19 +192,19 @@ export function ItemCardArtwork({
 }: {
     item: ItemCardViewModel
     overlay?: ReactNode
-    mode?: 'card' | 'preview'
+    mode?: 'card' | 'preview' | 'fill'
 }) {
     const frame = (
         <ItemFrame
             showGoldforceDays
-            fill={mode === 'preview'}
+            fill={mode !== 'card'}
             className="item-card__artwork-frame"
             imageUrl={item.artUrl}
             spriteUrl={item.artUrl}
             name={item.name}
             visual={{ goldforceExpireAt: item.goldforceExpireAt }}
             hasSkill={item.skills.length > 0}
-            size={mode === 'preview' ? 'stage' : undefined}
+            size={mode === 'card' ? undefined : 'stage'}
             now={item.referenceNow}
             overlay={overlay}
         />

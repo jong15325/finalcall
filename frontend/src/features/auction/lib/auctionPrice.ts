@@ -14,6 +14,11 @@ import type { AuctionSummary } from '@/lib/api/auctions'
  */
 
 const gameMoney = new Intl.NumberFormat('ko-KR')
+const compactUnits = [
+    { value: 1_000_000_000_000, suffix: '조' },
+    { value: 100_000_000, suffix: '억' },
+    { value: 10_000, suffix: '만' },
+] as const
 
 /** 게임머니 표기. 단위는 화면에서 별도로 붙인다(숫자만 낸다). */
 export function formatGameMoney(amount: number): string {
@@ -45,4 +50,25 @@ export function auctionPriceOf(auction: AuctionSummary): AuctionPriceView {
 /** "입찰 3건" / "입찰 없음" — 0을 "0건"으로 적지 않는다(없음이 더 빨리 읽힌다). */
 export function bidCountLabelOf(bidCount: number): string {
     return bidCount > 0 ? `입찰 ${gameMoney.format(bidCount)}건` : '입찰 없음'
+}
+
+export interface BidCountBadgeLabel {
+    visible: string
+    full: string
+}
+
+/** 좁은 경매 카드에는 축약값을, 접근성 이름에는 전체 값을 제공한다. */
+export function bidCountBadgeLabelOf(bidCount: number): BidCountBadgeLabel {
+    const full = bidCountLabelOf(bidCount)
+    if (bidCount < 10_000) return { visible: full, full }
+
+    const unit = compactUnits.find(({ value }) => bidCount >= value)!
+    const whole = Math.floor(bidCount / unit.value)
+    const firstDecimal = Math.floor((bidCount % unit.value) / (unit.value / 10))
+    const compactNumber = `${gameMoney.format(whole)}${whole < 1_000 && firstDecimal > 0 ? `.${firstDecimal}` : ''}`
+
+    return {
+        visible: `입찰 ${compactNumber}${unit.suffix}건`,
+        full,
+    }
 }

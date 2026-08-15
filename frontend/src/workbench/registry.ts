@@ -19,6 +19,13 @@ function defineScenario(
 
 export const WORKBENCH_SCENARIOS = [
     defineScenario({
+        id: 'auction-card',
+        title: '경매 목록 세로 카드',
+        shell: 'app',
+        routeContext: paths.auctions,
+        load: () => import('./scenarios/AuctionCardScenario'),
+    }),
+    defineScenario({
         id: 'sell-page-directions',
         title: '판매 등록 신규 디자인 3안',
         shell: 'app',

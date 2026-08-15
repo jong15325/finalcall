@@ -1,10 +1,36 @@
 import { describe, expect, it } from 'vitest'
 import {
     auctionPriceOf,
+    bidCountBadgeLabelOf,
     bidCountLabelOf,
     formatGameMoney,
 } from './auctionPrice'
 import type { AuctionSummary } from '@/lib/api/auctions'
+
+describe('bidCountBadgeLabelOf', () => {
+    it('1만 미만은 전체, 이상은 결정적 한국어 축약값을 쓴다', () => {
+        expect(bidCountBadgeLabelOf(0)).toEqual({
+            visible: '입찰 없음',
+            full: '입찰 없음',
+        })
+        expect(bidCountBadgeLabelOf(9_999)).toEqual({
+            visible: '입찰 9,999건',
+            full: '입찰 9,999건',
+        })
+        expect(bidCountBadgeLabelOf(10_000)).toEqual({
+            visible: '입찰 1만건',
+            full: '입찰 10,000건',
+        })
+        expect(bidCountBadgeLabelOf(12_500)).toEqual({
+            visible: '입찰 1.2만건',
+            full: '입찰 12,500건',
+        })
+        expect(bidCountBadgeLabelOf(Number.MAX_SAFE_INTEGER)).toEqual({
+            visible: '입찰 9,007조건',
+            full: '입찰 9,007,199,254,740,991건',
+        })
+    })
+})
 
 const base = {
     startPrice: 10_000,

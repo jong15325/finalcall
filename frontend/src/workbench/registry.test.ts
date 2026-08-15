@@ -37,6 +37,19 @@ describe('workbench registry', () => {
         }
     })
 
+    it('registers the auction card gate in the real AppShell', async () => {
+        const scenario = WORKBENCH_SCENARIOS.find(
+            ({ id }) => id === 'auction-card',
+        )!
+
+        expect(scenario.shell).toBe('app')
+        expect(scenario.routeContext).toBe(paths.auctions)
+        const module = await scenario.load()
+        expect(
+            (module.fixture as { auctions: readonly unknown[] }).auctions,
+        ).toHaveLength(6)
+    })
+
     it('keeps fixture overrides inside the semantic allowlist', async () => {
         const allowlist = new Set<string>(SEMANTIC_OVERRIDE_KEYS)
         for (const scenario of WORKBENCH_SCENARIOS) {

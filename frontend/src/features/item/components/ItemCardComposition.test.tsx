@@ -115,6 +115,26 @@ describe('아이템 카드 composition', () => {
         )
     })
 
+    it('fill mode는 preview wrapper 없이 부모 block-size를 채우는 stage를 제공한다', () => {
+        const { container } = render(
+            <div data-fill-parent style={{ height: 296 }}>
+                <ItemCardArtwork item={item} mode="fill" />
+            </div>,
+        )
+        const parent = container.querySelector('[data-fill-parent]')!
+        const frame = parent.firstElementChild
+
+        expect(frame).toHaveClass(
+            'item-frame',
+            'item-frame--fill',
+            'item-frame--stage',
+            'item-card__artwork-frame',
+        )
+        expect(frame?.querySelector('.item-frame__stage')).toBeInTheDocument()
+        expect(frame?.parentElement).toBe(parent)
+        expect(container.getElementsByClassName('h-[158px]')).toHaveLength(0)
+    })
+
     it('controlled flip은 자기 focus 범위의 Escape만 처리한다', () => {
         const onFlippedChange = vi.fn()
         const { container } = render(

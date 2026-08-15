@@ -595,4 +595,47 @@ describe('WorkbenchRoutes', () => {
             screen.getAllByRole('button', { name: '충전 준비 중' })[0],
         ).toBeDisabled()
     })
+
+    it.each([390, 1280])(
+        '%ipx 경매 카드 게이트는 catalog 열 계약과 상세 hit area를 노출한다',
+        async (width) => {
+            useViewport(width)
+            const view = renderWorkbench('/__design/auction-card')
+            await screen.findByRole('heading', {
+                name: '경매 목록 세로 카드 디자인 게이트',
+            })
+
+            expect(view.getByTestId('app-content-plane')).toBeInTheDocument()
+            expect(
+                screen.getByRole('region', { name: '경매 카드 후보' }),
+            ).toHaveClass(
+                'grid',
+                'grid-cols-2',
+                'gap-3',
+                'xs:grid-cols-3',
+                'min-[1200px]:grid-cols-6',
+            )
+            expect(
+                view.container.querySelectorAll(
+                    '[data-auction-card-candidate]',
+                ),
+            ).toHaveLength(6)
+            expect(
+                view.container.querySelectorAll(
+                    '[data-card-hit-area="artwork"]',
+                ),
+            ).toHaveLength(6)
+            expect(
+                view.container.querySelectorAll('[data-auction-bid-badge]'),
+            ).toHaveLength(6)
+            expect(
+                within(view.getByTestId('auction-card-scenario')).queryByRole(
+                    'button',
+                ),
+            ).not.toBeInTheDocument()
+            expect(
+                screen.getAllByRole('link', { name: /경매 상세 보기/ }),
+            ).toHaveLength(6)
+        },
+    )
 })

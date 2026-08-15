@@ -1,6 +1,6 @@
-# 프론트 UI 시스템 계약 v1.3
+# 프론트 UI 시스템 계약 v1.4
 
-- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타·접점 고정형 navigation 디자인 승인 2026-08-13, 지갑·화폐 표기 계약 승인 2026-08-14**
+- 상태: **DECIDED — 게이트2 사용자 승인 2026-08-12, 브라이트 스틸 델타·접점 고정형 navigation 디자인 승인 2026-08-13, 지갑·화폐 표기 계약 승인 2026-08-14, 경매 목록 세로 카드 composition 확장 승인 2026-08-16**
 - 적용 범위: `frontend/src/**`, `frontend/tailwind.config.cjs`, AppShell 아래 공개·보호·404 route
 - 제외: API wire contract, 백엔드, DB 스키마, `AuthLayout`의 독립 레이아웃 구조
 - 목적: 디자인 토큰, AppShell chrome, 목록 프레임, 아이템 카드의 단일 계약을 확정해 route·페이지별 시각/상호작용 포크를 막는다.
@@ -420,11 +420,114 @@ type ItemCardAction =
 
 ### 6.5 과일반화 경계
 
-- 가로 `AuctionCard`, 주문 행, 임시보관 행은 별도 형태로 유지한다. `ItemCardView`에 거대한 layout switch를 넣지 않는다.
+- 주문 행과 임시보관 행은 별도 형태로 유지한다. `ItemCardView`에 거대한 layout switch를 넣지 않는다.
+- **FC-313 델타:** 경매 **목록** `AuctionCard`는 가로 전용 형태를 폐기하고 아이템마켓과 같은 세로
+  `ItemCardView density="compact"` composition을 재사용한다. 홈의 `AuctionPreviewCard`, 경매 상세 hero와
+  입찰 panel은 목록 카드가 아니므로 이 델타의 적용 대상이 아니다.
 - 공통화 대상은 `ItemFrame`, `ItemSkillSummary`, 금액/상태 표시와 list state shell이다.
 - 구매·판매·배송 mutation을 item 카드 커널로 올리지 않는다.
 - boolean prop을 추가해 기능을 조합하지 않는다. 서로 독립인 축은 data, geometry, interaction component, slot으로
   분리한다.
+
+### 6.6 경매 목록 세로 카드 델타
+
+#### 6.6.1 재사용 경계와 extension seam
+
+- `AuctionCard`는 `AuctionSummary`를 `toItemCardViewModel()`에 매핑하고 경매 전용 표시 조각을 named slot에
+  주입하는 얇은 feature adapter다. 카드 chrome, 아트 stage, 두 스킬 행, 가격·판매자 기본행을 다시 작성하지 않는다.
+- 공용 재사용 대상은 `ItemCardView density="compact"`, `ItemCardArtwork`, `ItemFrame`,
+  `ItemCardActionSurface`, `toItemCardViewModel`, `ListFrame`이다.
+- 경매 전용 extension은 `auctionPhaseOf`, `auctionPriceOf`, 경매 feature의 공용 bid-count 표시 helper,
+  `Countdown` 결과뿐이다.
+  phase badge와 입찰 수 badge는 artwork의 비상호작용 leading/trailing overlay slot, 카운트다운은 compact 본문의
+  generic `trailing` slot으로 조립한다. `ItemCardView`는 `AuctionSummary`·`Countdown`·경매 상태 enum을 import하지
+  않는다.
+- 기존 generic `meta`·`trailing`·`footer` slot이 compact density에서 필요한 위치에 렌더되지 않는 경우 그 slot
+  소비 위치만 확장한다. `auction`, `hasBids`, `showCountdown` 같은 도메인 boolean prop은 추가하지 않는다.
+- 경매 artwork는 기존 generic `artwork` slot에 feature-owned geometry wrapper를 주입해 아이템마켓 compact
+  artwork의 계산된 block-size보다 정확히 `44px` 크게 만든다. 공용 `ItemCardView`에 `auction` boolean을 넣거나
+  아이템마켓 기준 절대 높이를 복제하지 않는다. 내부 72×134 frame의 비율·scale은 바꾸지 않고 확장된 stage 안에서
+  중앙 정렬한다.
+- 경매 목록은 이미지 클릭이 상세 이동이어야 하므로 목록 adapter에는 flip을 조립하지 않는다. 공용 composition
+  재사용은 geometry·표시·action surface 재사용을 뜻하며 마켓의 dialog/hover-flip interaction까지 복제하지 않는다.
+
+#### 6.6.2 앞면 정보 위계와 레이아웃
+
+위에서 아래 순서를 모든 카드에서 고정한다.
+
+1. artwork: 아이템마켓 compact stage보다 세로 `44px` 확장된 공용 frame·sprite 영역. 좌상단에는 phase badge
+   (`진행 중`·`시작 전`·`마감`), 우상단에는 bid badge(`입찰 없음`·`입찰 N건`)를 둔다.
+2. identity: `typeLabel`과 element badge, 다음 행 `kindLabel · Lv.{level}`.
+3. skills: `스킬 1`, `스킬 2` 두 행. 값이 없으면 각 행에 `없음`을 표시하고 0·1·2개가
+   같은 높이를 갖는다. 스킬2 확률은 스킬명과 분리된 고정 영역에 두고 기존 brand highlight를 쓴다.
+4. price: 첫 번째 경매 사실로 full 정수 `CodeAmount`를 표시한다. 라벨은 [6.6.4]를 따른다.
+5. countdown: 가격 다음 독립 행에 `Countdown`을 표시한다. 입찰 수는 artwork badge가 단독 소유하므로 본문에
+   중복 행을 만들지 않는다.
+6. seller: 마지막 행에 `판매자` label과 닉네임을 두며 닉네임만 한 줄 말줄임한다. 전체값은 `title` 또는
+   동등한 접근 가능한 이름으로 보존한다.
+
+phase·가격·마감 시간은 핵심 탐색 정보이고, 경매 ID 뒷자리 같은 내부 식별 장식은 앞면에서 제거한다. 상태·속성은
+색만으로 전달하지 않고 항상 텍스트 label을 병기한다.
+
+#### 6.6.3 action·hit-area
+
+- 카드의 유일한 keyboard 주 action은 `${item.nameSnapshot} 경매 상세 보기` link다. 정보 본문에서
+  `ItemCardActionSurface`가 소유한다.
+- artwork와 control gap에는 같은 상세 link의 pointer 보조 surface를 둘 수 있으나 `keyboard={false}`로 접근성
+  트리에 중복 노출하지 않는다. 이미지 자체를 클릭하면 상세로 이동한다.
+- 경매 **목록** `AuctionCard`에는 compare button·`CardCompareOverlay`·`aria-pressed`·compare-store 구독을
+  렌더하지 않는다. 아이템마켓·홈 preview·경매 상세 등 다른 기존 compare 소비자는 이 델타의 영향을 받지 않는다.
+- phase·bid badge는 비상호작용 text이므로 `pointer-events: none` 또는 동등한 hit-area 투과를 보장한다. 상세
+  pointer action 위에 시각적으로 겹쳐도 이미지 클릭을 가로막지 않고 focus order에 들어가지 않는다.
+- bid badge는 chrome과 독립된 content semantic token으로 4.5:1 text 대비를 만족하고 숫자에는
+  `font-num`·`tabular-nums`를 쓴다. 시각 label은 최대 2행으로 제한하며 badge가 phase badge를 덮거나 카드 밖으로
+  overflow하면 안 된다. 전체 건수 정확성은 [6.6.4]의 accessible label 계약으로 보존한다.
+- 중첩 link/button이나 invisible overlay가 status·bid badge·seller text를 덮는 구조는 금지한다.
+
+#### 6.6.4 가격·상태·시간 의미
+
+- `auctionPriceOf()`가 유일한 목록 가격 파생이다. `highestBidAmount == null`이면 `시작가` + `startPrice`,
+  값이 있으면 `현재가` + `highestBidAmount`다. `bidCount`로 가격 의미를 다시 추론하지 않는다.
+- artwork 우상단 입찰 badge는 경매 feature의 단일 순수 helper(예: `bidCountBadgeOf`)에서 다음 두 값을 함께
+  파생한다. 운영 `AuctionCard`와 `/__design/auction-card` Candidate는 이 helper를 함께 import하고 `Intl`·임계값·
+  접미사 조합을 각자 구현하지 않는다.
+  - `visualLabel`: 0은 `입찰 없음`, 1~9,999는 ko-KR 일반 표기 `입찰 N건`, 10,000 이상은 ko-KR compact
+    notation을 사용한 `입찰 1.2만건`·`입찰 9,007조건` 같은 일관 형식이다. 최대 2행이며 ellipsis를 쓰지 않는다.
+  - `accessibleLabel`: 0은 `입찰 없음`, 양수는 축약하지 않은 ko-KR 천 단위 전체값
+    `입찰 9,007,199,254,740,991건`이다. badge `title`과 `aria-label` 또는 동등한 visually-hidden accessible text에
+    이 값을 제공한다.
+- compact 전환 임계값과 반올림은 위 helper의 결정적 규칙이며 DOM 폭 측정으로 바꾸지 않는다. 본문에는 입찰 수를
+  다시 표시하지 않고, 이 helper나 경매 표시 규칙을 `ItemCardView`로 올리지 않는다.
+- phase는 서버 status 단독 표기가 아니라 목록 공통 `now`와 `auctionPhaseOf()`로 파생한다. 종료 status,
+  `now >= endAt`, 파싱 불가 시 `마감`; 유효한 미래 `startAt` 이전이면 `시작 전`; 나머지는 `진행 중`이다.
+- 시간은 공용 `Countdown` 형식을 유지한다: 1일 이상 `N일 N시간`, 1시간 이상 `N시간 N분`, 1시간 미만
+  `mm:ss`, 종료 `마감`. `곧 마감`·`초읽기` text를 색과 함께 제공하며 `aria-label`은 완전 문장이다.
+- 카드마다 timer를 만들지 않는다. `AuctionListPage`의 단일 `useNow()` 값을 주입하며 네트워크 polling이나
+  “실시간 갱신” 문구를 추가하지 않는다.
+
+#### 6.6.5 grid·overflow·디자인 게이트
+
+- 경매 목록은 아이템마켓과 **동일한 공용 `catalog` preset**을 직접 소비한다:
+  `grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6`. 별도 `auction-vertical` preset이나 같은 class의
+  복제는 만들지 않는다. 따라서 320px·`390×844`은 2열, `xs(576px)`부터 3열, 1200px·`1280×800`은
+  6열이고 gap도 catalog와 같은 `gap-3`이다.
+- `AuctionListPage` ready와 loading `ItemListSkeleton` 모두 `layout="catalog"`를 사용한다. 기존 112px 아트 열을
+  가진 가로 `auction` skeleton은 제거하고, 공용 catalog skeleton을 그대로 소비한다.
+- catalog는 320px에서도 2열이므로 경매 카드에 고정 `min-width`를 두지 않는다. grid child·본문·금액 wrapper는
+  `min-w-0`를 유지하고, 본문은 가격→countdown→판매자 순서로 세로 적층한다. full 정수 금액은 wrap할 수 있어야 하며
+  seller·스킬명만 말줄임한다. 상태·가격 label, 입찰 수, countdown은 의미가 사라지는 truncate를 금지한다.
+  320px·390px·1280px·200% 확대에서 가로 overflow와 카드별 높이 흔들림이 없어야 한다.
+- 구현 전 dev-only `/__design/auction-card`를 `shell: 'app'`으로 등록한다. 실제 AppShell·토큰·공용
+  composition을 재사용하고, 0/1/2 skill, 긴 한글 이름·판매자, 시작 전/진행 중/마감, 입찰 0/양수,
+  compact 임계 전후와 매우 큰 입찰 수, 긴 안전정수 가격, market compact 기준/+44px artwork stage를 한 화면에서
+  검증한다. visual compact label과 full `title`·accessible label을 함께 단정하고 경매 목록 compare selected/full
+  fixture는 제거한다.
+- 디자인 게이트는 `390×844` 2열과 `1280×800` 6열에서 information hierarchy, artwork +44px, phase/bid badge
+  대비·최대 2행 compact 표기·전체 accessible 값, 좁은 카드의 가격→countdown→판매자 적층, 금액 wrap,
+  overflow, image/detail hit-area, focus 순서와 production residue 0건을 1회 확인한다. 정적 HTML 목업은 만들지 않는다.
+
+이 델타는 `AuctionSummary`의 현재 필드만 소비한다. API endpoint·응답 필드·query key·백엔드·DB·신규 asset·dependency는
+변경하지 않으며, scene·Canvas·RAF·네트워크 요청을 추가하지 않는다.
 
 ## 7. 단계적 마이그레이션·되돌리기
 
