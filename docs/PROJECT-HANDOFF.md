@@ -264,7 +264,7 @@ architect(계약 확정, 게이트2)
 - 에픽 파일: `type: epic` + `children: [...]`, `state`는 하위 롤업.
 
 ### Jira 미러 (사용자 대시보드)
-- **파일 → Jira 단방향**. Jira(Atlassian MCP, KAN 프로젝트)는 **사용자 전용 읽기 미러**. 에이전트는 Jira를 읽지 않음(서브에이전트 도구셋에서 Atlassian MCP 제외, **메인세션만** 미러).
+- **파일 → Jira 단방향**. Jira Cloud(KAN 프로젝트)는 **사용자 전용 읽기 미러**이며 `scripts/jira-sync.mjs`가 REST API로 전송한다. 메인세션만 미러·패리티 대조를 위해 Jira를 읽고 쓰며, 서브에이전트는 Jira에 접근하지 않는다.
 - ⚠️ **미러 규율**: 에픽·task 전건을 생성하고 생성·상태 전이 **때마다 즉시** 반영. Jira task summary는 반드시 `FC-NNN · <title>`. "비차단"은 실패 허용이지 **생략 허용 아님**. jira_key 없으면 생성 후 프론트매터 기록(불변), 있으면 전이.
 - **좌표**: KAN 프로젝트(팀관리형), cloudId `aa1e251d-04f2-43ee-bbe6-4ca5195150ca`. 전이 ID: 21=진행중, 31=검토중, 41=완료. 매핑: state→status, owner→라벨 `agent:<owner>`, task의 epic→Jira parent(또는 Epic Link), derived_from→relates to, depends_on/blocks→방향을 보존한 Blocks 링크, gate→라벨 `gate:*`.
 - **인수 시 백필**: 상태와 무관하게 `jira_key: null`인 에픽·task를 스캔해 백필하고 key·summary·상태·에픽 귀속·관계 링크를 전건 대조한다.
@@ -319,7 +319,7 @@ architect(계약 확정, 게이트2)
 
 ### 프로세스 규율 (feedback)
 - **출근/마감**: 사용자 "출근" → `docs/board/HANDOVER.md` 읽고 "다음 수"부터 재개. 마감 지시 → 총괄이 HANDOVER 전면 갱신(덮어씀) + Jira 패리티 전수 검토 + 미push 목록 명시.
-- **Jira 미러 규율**: 상태 전이마다 즉시. 비차단=실패 허용이지 생략 아님. 인수 시 백필. (섹션 9)
+- **Jira 미러 규율**: 상태 전이마다 REST API로 즉시 반영. 비차단=실패 허용이지 생략 아님. 인수 시 `--check`로 패리티를 대조하고 누락은 `--apply`로 백필한다. (섹션 9)
 - **포트폴리오 프로세스 로그**: 개선·트러블슈팅·논의(결정+미결 모두)를 `docs/portfolio/process-log.md`에 상시 축적. 미결(OPEN)은 "채택됨"으로 쓰지 말고 재개 가능하게 근거·다음 절차까지.
 - **git mv 선스테이징 누출**: 서브에이전트가 `git mv`로 파일 이동하면 rename이 인덱스에 선-스테이징됨. "문서만" 커밋하면 rename이 딸려가 깨진 커밋. **커밋 직전 `git diff --cached --name-only`로 스테이징 목록 눈으로 확인**. 분리 커밋은 경로 명시.
 - **게이트웨이 auth 경로 rate-limit**: 앱은 `INCLUDE_RATE_LIMITER=false`(게이트웨이 전담). 신규 permitAll auth 엔드포인트는 `backend/gateway/src/main/resources/application.yml`의 `auth-rate-limited` 라우트 `Path=` predicate에 등재해야 스로틀됨(안 하면 무제한 노출). **2회 누락 이력** → 신규 permitAll auth 경로 DoD에 "게이트웨이 predicate 등재" 명문화. (2026-07-30 등재: `/auth/login,/signup,/refresh,/nickname/availability,/oauth/**,/login-id/availability`)
@@ -476,7 +476,7 @@ Spring Boot 3.5 / Java 21 백엔드 + React/Vite 프론트의 모노레포다.
 
 [상태 파악 규율]
 - 티켓 보드는 docs/board/(파일이 정본), Jira(KAN)는 사용자 전용 읽기 미러다. 상태 전이 때마다
-  Jira 미러를 즉시 반영하되, 미러 실패는 파일 작업을 멈추지 않는다(하지만 생략하지는 마라).
+  `scripts/jira-sync.mjs`로 REST 미러를 즉시 반영하되, 미러 실패는 파일 작업을 멈추지 않는다(하지만 생략하지는 마라).
 
 먼저 위 문서들을 읽고, 현재 상태 요약 + 다음 수 후보를 나에게 보고한 뒤 내 지시를 기다려라.
 지금은 "관리자 게시판 CRUD UI" 에픽이 유력한 다음 수다.

@@ -3,6 +3,29 @@
 파일 티켓이 **canonical 진실원**이다. Jira(KAN)는 사용자 전용 읽기 미러다.
 상세 규약은 CLAUDE.md 섹션 11(티켓)·섹션 12(Jira 미러). 이 문서는 운영 요약이다.
 
+## REST API 미러 실행
+
+Jira 전송은 `scripts/jira-sync.mjs`를 사용한다. 스크립트는 프로젝트의 기존 환경변수 정본인
+`backend/.env`를 자동으로 읽으며 이미 설정된 프로세스 환경변수를 우선한다. 실제 파일은 `.gitignore`
+대상이고 `backend/.env.example`만 추적한다.
+
+```powershell
+# 인증 없이 파일 보드만 검사
+node scripts/jira-sync.mjs --local
+
+# Jira와 단일 티켓 패리티 검사
+node scripts/jira-sync.mjs --check --only=FC-116
+
+# 파일을 정본으로 단일 티켓 보정
+node scripts/jira-sync.mjs --apply --only=FC-116
+```
+
+필수 환경변수는 `JIRA_CLOUD_ID`, `JIRA_API_TOKEN`이며 `JIRA_PROJECT_KEY` 기본값은 `KAN`이다.
+개인 Atlassian 계정 이메일 또는 서비스 계정 자동 생성 이메일을 `JIRA_ACCOUNT_EMAIL`에 설정하면
+이메일+토큰 Basic 인증을 사용하고, 비어 있으면 scoped token Bearer 인증을 사용한다.
+전체 전건 검사는 `--only`를 생략한다. `--check`는 읽기 전용이고, `--apply`만 Jira를 변경하며 신규 이슈를
+생성한 경우에만 파일의 `jira_key`를 기록한다.
+
 ## 구조
 ```
 docs/board/
