@@ -11,7 +11,8 @@
  * 정책(fee-policy-spec §2·§3, 판매자 단독 부담):
  *  - **구간별 누진(marginal)** 6/5/4/3% — 각 구간에 속하는 부분에만 해당 요율.
  *  - **원(=G) 단위 사사오입** 을 누진 합계 직후 1회.
- *  - **상한(cap) 300,000** → **최소 100** 순으로 클램프(판매가 0 이면 수수료 0).
+ *  - **상한(cap) 300,000** → **최소 100** → **판매가 상한** 순으로 클램프
+ *    (판매가 0 이면 수수료 0, 정산액은 항상 0 이상).
  *  - `settle = P − fee`.
  *
  * ★ 계산 순서(§3)를 그대로 인코딩한다. 순서를 바꾸면 경계값이 어긋난다. 워크드 예시
@@ -59,6 +60,8 @@ export function computeSellerFee(price: number): SellerFeeEstimate {
     fee = Math.min(fee, FEE_CAP)
     // 4. 최소(판매가 0 이면 수수료 없음).
     fee = Math.max(fee, P > 0 ? FEE_MIN : 0)
+    // 5. 수수료는 판매가를 넘지 않는다(FC-176: settle >= 0).
+    fee = Math.min(fee, P)
 
     return { fee, settle: P - fee }
 }

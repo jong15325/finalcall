@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { TbAlertTriangle, TbArchiveOff, TbClock, TbTag } from 'react-icons/tb'
+import { TbAlertTriangle, TbArchiveOff, TbTag } from 'react-icons/tb'
 import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
+import CodeAmount from '@/components/common/CodeAmount'
 import { codeTierClass } from '@/components/common/codeTier'
 import CardInfoContent from '@/features/item/components/CardInfoContent'
 import '@/features/item/components/CardInfoDialog.css'
@@ -9,6 +10,7 @@ import SellConfirmDialog from '@/features/auction/components/SellConfirmDialog'
 import ShopSellConfirmDialog from '@/features/shop/components/ShopSellConfirmDialog'
 import { decodeTypeCode } from '@/features/item/lib/itemCode'
 import { parseAmount, validateSellForm } from '@/features/auction/lib/sellForm'
+import { computeSellerFee } from '@/features/auction/lib/sellerFee'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useCreateAuction } from '@/lib/queries/auctions'
 import { useCreateShop } from '@/lib/queries/shop'
@@ -64,7 +66,6 @@ export default function SellPage() {
     const [durationDays, setDurationDays] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(
         3,
     )
-    const [clockNow, setClockNow] = useState(() => Date.now())
     /** 고정가 판매가(입력 문자열). 서버는 기한을 자동 계산하므로 판매자 입력은 가격 하나뿐(§3.1). */
     const [shopPrice, setShopPrice] = useState('')
     const [shopPriceError, setShopPriceError] = useState<string | null>(null)
@@ -95,18 +96,24 @@ export default function SellPage() {
     )
     const selectedId = preemptedItem?.itemInstancePublicId ?? null
 
-    const parsedStartPrice = parseAmount(startPrice) ?? 0
+    const liveStartPrice = parseAmount(startPrice)
+    const parsedLiveBuyNowPrice = buyNowEnabled
+        ? parseAmount(buyNowPrice)
+        : null
+    const liveBuyNowPrice =
+        parsedLiveBuyNowPrice !== null &&
+        liveStartPrice !== null &&
+        parsedLiveBuyNowPrice > liveStartPrice
+            ? parsedLiveBuyNowPrice
+            : null
+    const liveShopPrice = parseAmount(shopPrice)
+    const parsedStartPrice = liveStartPrice ?? 0
     const parsedBuyNowPrice = pendingRequest?.buyNowPrice ?? null
     const parsedShopPrice = parseAmount(shopPrice) ?? 0
     const errorFor = (field: SellField): string | undefined =>
         errors.find((error) => error.field === field)?.message
 
     const selectedName = preemptedItem?.summary.displayName ?? ''
-
-    useEffect(() => {
-        const intervalId = setInterval(() => setClockNow(Date.now()), 60_000)
-        return () => clearInterval(intervalId)
-    }, [])
 
     const handleOpenConfirm = () => {
         const capturedNow = Math.floor(Date.now() / 1000) * 1000
@@ -415,43 +422,6 @@ export default function SellPage() {
                                             ),
                                         )}
                                     </div>
-                                    <div
-                                        className="min-w-0 rounded-xl border border-content-line bg-content-soft px-4 py-3"
-                                        role="group"
-                                        aria-labelledby="sellEstimateDate"
-                                        aria-describedby="sellEstimateTime"
-                                    >
-                                        <div className="flex items-center justify-between gap-3 text-xs font-bold text-content-muted">
-                                            <span id="sellEstimateDate">
-                                                예상 종료{' '}
-                                                {formatEstimateDate(
-                                                    clockNow +
-                                                        durationDays *
-                                                            86_400_000,
-                                                )}
-                                            </span>
-                                            <span
-                                                aria-hidden="true"
-                                                className="inline-flex items-center gap-1.5"
-                                            >
-                                                <span className="size-1.5 rounded-full bg-success" />
-                                                실시간
-                                            </span>
-                                        </div>
-                                        <strong
-                                            id="sellEstimateTime"
-                                            className="mt-1 flex items-center gap-2 text-2xl font-bold tabular-nums text-content-fg sm:text-3xl"
-                                        >
-                                            <TbClock
-                                                aria-hidden
-                                                className="size-5 shrink-0 text-content-muted"
-                                            />
-                                            {formatEstimateTime(
-                                                clockNow +
-                                                    durationDays * 86_400_000,
-                                            )}
-                                        </strong>
-                                    </div>
                                 </div>
                             </>
                         ) : (
@@ -479,13 +449,18 @@ export default function SellPage() {
                                 <ul className="mt-4 grid gap-1.5 text-xs leading-relaxed text-content-subtle">
                                     <li>등록 즉시 판매 목록에 노출됩니다.</li>
                                     <li>판매 기간은 서버가 정합니다.</li>
-                                    <li>
-                                        판매되지 않으면 임시 보관함으로 자동
-                                        회수됩니다.
-                                    </li>
                                 </ul>
                             </>
                         )}
+                        <SellSettlementSummary
+                            method={sellMethod}
+                            primaryPrice={
+                                sellMethod === 'auction'
+                                    ? liveStartPrice
+                                    : liveShopPrice
+                            }
+                            buyNowPrice={liveBuyNowPrice}
+                        />
                         <div className="mt-6 border-t border-content-line pt-5">
                             {(sellMethod === 'auction'
                                 ? errors.length > 0
@@ -598,6 +573,82 @@ export default function SellPage() {
                 onConfirm={handleShopConfirm}
             />
         </div>
+    )
+}
+
+interface SellSettlementSummaryProps {
+    method: SellMethod
+    primaryPrice: number | null
+    buyNowPrice: number | null
+}
+
+function SellSettlementSummary({
+    method,
+    primaryPrice,
+    buyNowPrice,
+}: SellSettlementSummaryProps) {
+    const primaryEstimate = primaryPrice ? computeSellerFee(primaryPrice) : null
+    const buyNowEstimate = buyNowPrice ? computeSellerFee(buyNowPrice) : null
+
+    return (
+        <section
+            aria-labelledby="sell-settlement-summary-title"
+            className="mt-6 border-t border-content-line pt-5"
+        >
+            <h2
+                id="sell-settlement-summary-title"
+                className="text-sm font-bold text-content-fg"
+            >
+                예상 정산 요약
+            </h2>
+            {primaryEstimate ? (
+                <dl className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 text-sm">
+                    <dt className="text-content-muted">
+                        {method === 'auction'
+                            ? '시작가 기준 예상 수수료'
+                            : '예상 수수료'}
+                    </dt>
+                    <dd className="text-right font-semibold text-content-fg">
+                        <CodeAmount value={primaryEstimate.fee} mode="full" />
+                    </dd>
+                    <dt className="text-content-muted">
+                        {method === 'auction'
+                            ? '시작가 기준 예상 정산액'
+                            : '예상 정산액'}
+                    </dt>
+                    <dd className="text-right font-semibold text-content-fg">
+                        <CodeAmount
+                            value={primaryEstimate.settle}
+                            mode="full"
+                        />
+                    </dd>
+                    {method === 'auction' && buyNowEstimate && (
+                        <>
+                            <dt className="text-content-muted">
+                                즉시구매가 기준 예상 정산액
+                            </dt>
+                            <dd className="text-right font-semibold text-content-fg">
+                                <CodeAmount
+                                    value={buyNowEstimate.settle}
+                                    mode="full"
+                                />
+                            </dd>
+                        </>
+                    )}
+                </dl>
+            ) : (
+                <p className="mt-2 text-sm text-content-muted">
+                    {method === 'auction'
+                        ? '시작가를 입력하면 예상 정산액을 확인할 수 있습니다.'
+                        : '판매가를 입력하면 예상 정산액을 확인할 수 있습니다.'}
+                </p>
+            )}
+            <p className="mt-3 text-xs leading-relaxed text-content-subtle">
+                {method === 'auction'
+                    ? '실제 수수료와 정산액은 최종 낙찰가를 기준으로 서버에서 확정됩니다.'
+                    : '실제 수수료와 정산액은 판매가를 기준으로 서버에서 확정됩니다. 판매되지 않으면 임시 보관함으로 자동 회수됩니다.'}
+            </p>
+        </section>
     )
 }
 
@@ -818,28 +869,6 @@ function formatKstDateTime(value: number): string {
     const part = (type: Intl.DateTimeFormatPartTypes) =>
         parts.find((entry) => entry.type === type)?.value ?? ''
     return `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}:${part('second')}`
-}
-
-function formatEstimateDate(value: number): string {
-    return new Intl.DateTimeFormat('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long',
-    }).format(value)
-}
-
-function formatEstimateTime(value: number): string {
-    const parts = new Intl.DateTimeFormat('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        hour: '2-digit',
-        minute: '2-digit',
-        hourCycle: 'h23',
-    }).formatToParts(value)
-    const part = (type: Intl.DateTimeFormatPartTypes) =>
-        parts.find((entry) => entry.type === type)?.value ?? ''
-    return `${part('hour')}시 ${part('minute')}분`
 }
 
 function SellSkeleton() {

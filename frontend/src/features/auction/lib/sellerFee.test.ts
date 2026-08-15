@@ -46,6 +46,12 @@ describe('computeSellerFee — fee-policy-spec §4 검산', () => {
         expect(computeSellerFee(0)).toEqual({ fee: 0, settle: 0 })
     })
 
+    it('극소액은 최소 수수료 적용 뒤 판매가로 clamp해 정산액을 음수로 만들지 않는다', () => {
+        expect(computeSellerFee(1)).toEqual({ fee: 1, settle: 0 })
+        expect(computeSellerFee(99)).toEqual({ fee: 99, settle: 0 })
+        expect(computeSellerFee(100)).toEqual({ fee: 100, settle: 0 })
+    })
+
     it('원단위 사사오입은 누진 합계 직후 1회 — 소수 부분을 반올림한다', () => {
         // 0.06 × 1,666 = 99.96 → round 100 → max(100,100) = 100.
         expect(computeSellerFee(1_666).fee).toBe(100)

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SellPage from './SellPage'
 import {
@@ -272,16 +272,11 @@ describe('SellPage 선점 모드 (FC-177)', () => {
             screen.getByText('판매 기간은 서버가 정합니다.'),
         ).toBeInTheDocument()
         expect(
-            screen.getByText(
-                '판매되지 않으면 임시 보관함으로 자동 회수됩니다.',
-            ),
+            screen.getByText(/판매되지 않으면 임시 보관함으로 자동 회수됩니다/),
         ).toBeInTheDocument()
     })
 
-    it('기간 선택에 따라 시간 요약과 종료 시각을 갱신한다', async () => {
-        vi.spyOn(Date, 'now').mockReturnValue(
-            Date.parse('2026-08-15T00:00:00Z'),
-        )
+    it('예상 종료 시각 없이 경매 기간 선택을 유지한다', async () => {
         mockInventory([sword])
         renderWithProviders(<SellPage />, { route: '/sell?item=INST-1' })
 
@@ -292,13 +287,8 @@ describe('SellPage 선점 모드 (FC-177)', () => {
         expect(sevenDays).toHaveAttribute('aria-pressed', 'true')
         expect(screen.queryByText('선택 7일 (168시간)')).toBeNull()
         expect(screen.queryByRole('status')).toBeNull()
-        const liveEnd = screen.getByRole('group', {
-            name: '예상 종료 2026년 8월 22일 토요일',
-            description: '09시 00분',
-        })
-        expect(liveEnd).not.toHaveAttribute('aria-live')
-        expect(liveEnd).toHaveTextContent('2026년 8월 22일 토요일')
-        expect(liveEnd).toHaveTextContent('09시 00분')
+        expect(screen.queryByText(/예상 종료/)).toBeNull()
+        expect(screen.queryByText('실시간')).toBeNull()
     })
 
     it('즉시구매 입력은 항상 같은 가격 행에 있으며 off에서 draft를 보존하고 오류를 제거한다', async () => {
@@ -484,12 +474,6 @@ describe('SellPage 선점 모드 (FC-177)', () => {
             target: { value: '1000' },
         })
         fireEvent.click(screen.getByRole('button', { name: '1일 24시간' }))
-        expect(
-            screen.getByRole('group', {
-                name: '예상 종료 2026년 8월 16일 일요일',
-                description: '09시 00분',
-            }),
-        ).toBeInTheDocument()
         dateNowSpy.mockImplementation(() => {
             if (new Error().stack?.includes('handleOpenConfirm')) {
                 submissionNowCalls += 1
@@ -522,38 +506,6 @@ describe('SellPage 선점 모드 (FC-177)', () => {
         )
     })
 
-    it('예상 종료를 1분마다 갱신하고 날짜 rollover와 interval cleanup을 처리한다', async () => {
-        vi.useFakeTimers({
-            shouldAdvanceTime: true,
-            toFake: ['Date', 'setInterval', 'clearInterval'],
-        })
-        vi.setSystemTime(new Date('2026-08-15T14:59:30Z'))
-        mockInventory([sword])
-        const view = renderWithProviders(<SellPage />, {
-            route: '/sell?item=INST-1',
-        })
-
-        await screen.findByRole('heading', { name: /카드정보/ })
-        fireEvent.click(screen.getByRole('button', { name: '1일 24시간' }))
-        expect(screen.queryByRole('status')).toBeNull()
-        expect(
-            screen.getByRole('group', {
-                name: '예상 종료 2026년 8월 16일 일요일',
-                description: '23시 59분',
-            }),
-        ).not.toHaveAttribute('aria-live')
-        await act(() => vi.advanceTimersByTimeAsync(60_000))
-        expect(
-            screen.getByRole('group', {
-                name: '예상 종료 2026년 8월 17일 월요일',
-                description: '00시 00분',
-            }),
-        ).toBeInTheDocument()
-
-        view.unmount()
-        expect(vi.getTimerCount()).toBe(0)
-    })
-
     it('가격 영역은 좁은 화면에서 넘침을 막는 구조 클래스를 갖는다', async () => {
         mockInventory([sword])
         renderWithProviders(<SellPage />, { route: '/sell?item=INST-1' })
@@ -583,6 +535,90 @@ describe('SellPage 선점 모드 (FC-177)', () => {
         }
         // 판매 방식 등 이후 폼은 유지된다.
         expect(screen.getByRole('radio', { name: /경매/ })).toBeInTheDocument()
+    })
+
+    it('입력 전에는 0 대신 예상 정산 안내 상태를 표시한다', async () => {
+        mockInventory([sword])
+        renderWithProviders(<SellPage />, { route: '/sell?item=INST-1' })
+
+        const summary = await screen.findByRole('region', {
+            name: '예상 정산 요약',
+        })
+        expect(
+            within(summary).getByText(
+                '시작가를 입력하면 예상 정산액을 확인할 수 있습니다.',
+            ),
+        ).toBeInTheDocument()
+        expect(within(summary).queryByLabelText('0 코드')).toBeNull()
+    })
+
+    it('경매 시작가와 유효한 즉시구매가 기준 예상 정산을 함께 표시한다', async () => {
+        mockInventory([sword])
+        renderWithProviders(<SellPage />, { route: '/sell?item=INST-1' })
+
+        fireEvent.change(await screen.findByLabelText('시작가'), {
+            target: { value: '1000' },
+        })
+        fireEvent.click(
+            screen.getByRole('checkbox', { name: '즉시구매가 사용' }),
+        )
+        fireEvent.change(screen.getByLabelText('즉시구매가 입력'), {
+            target: { value: '2000' },
+        })
+
+        const summary = screen.getByRole('region', { name: '예상 정산 요약' })
+        expect(
+            within(summary).getByText('시작가 기준 예상 수수료'),
+        ).toBeInTheDocument()
+        expect(
+            within(summary).getByText('시작가 기준 예상 정산액'),
+        ).toBeInTheDocument()
+        expect(
+            within(summary).getByText('즉시구매가 기준 예상 정산액'),
+        ).toBeInTheDocument()
+        expect(within(summary).getByLabelText('100 코드')).toBeInTheDocument()
+        expect(within(summary).getByLabelText('900 코드')).toBeInTheDocument()
+        expect(within(summary).getByLabelText('1,880 코드')).toBeInTheDocument()
+        expect(
+            within(summary).getByText(
+                '실제 수수료와 정산액은 최종 낙찰가를 기준으로 서버에서 확정됩니다.',
+            ),
+        ).toBeInTheDocument()
+    })
+
+    it('고정가 판매가 기준 예상 정산과 미판매 자동 회수를 안내한다', async () => {
+        mockInventory([sword])
+        renderWithProviders(<SellPage />, { route: '/sell?item=INST-1' })
+
+        await screen.findByLabelText('시작가')
+        fireEvent.click(screen.getByRole('radio', { name: /고정가/ }))
+        fireEvent.change(screen.getByLabelText('판매가'), {
+            target: { value: '2480000' },
+        })
+
+        const summary = screen.getByRole('region', { name: '예상 정산 요약' })
+        expect(
+            within(summary).getByLabelText('110,200 코드'),
+        ).toBeInTheDocument()
+        expect(
+            within(summary).getByLabelText('2,369,800 코드'),
+        ).toBeInTheDocument()
+        expect(
+            within(summary).getByText(/임시 보관함으로 자동 회수됩니다/),
+        ).toBeInTheDocument()
+    })
+
+    it('1코드 극소액도 판매가 clamp 결과를 정상 노출한다', async () => {
+        mockInventory([sword])
+        renderWithProviders(<SellPage />, { route: '/sell?item=INST-1' })
+
+        fireEvent.change(await screen.findByLabelText('시작가'), {
+            target: { value: '1' },
+        })
+
+        const summary = screen.getByRole('region', { name: '예상 정산 요약' })
+        expect(within(summary).getByLabelText('1 코드')).toBeInTheDocument()
+        expect(within(summary).getByLabelText('0 코드')).toBeInTheDocument()
     })
 
     it('판매 등록 CTA를 반응형 위치에 하나씩 두고 폼 상태와 무관하게 활성화한다', async () => {
