@@ -21,7 +21,7 @@ import type { ShopDetail } from '@/lib/api/shop'
  *
  * ★ **스킬명은 item 블록의 skill1Name/skill2Name 으로 표시**(계약 §3.3 델타 — EPIC-MARKET-DATA).
  *   이름이 없으면 `스킬 #{code}` 중립 표기로 폴백. 슬롯은 `resolveSkillSlots` 가 매겨 마법(subGroup 3,
- *   skill1 부재) 오표기를 막는다. 발동확률은 전용 "발동 확률" 행으로 낸다(승인 목업 레이아웃 유지).
+ *   skill1 부재) 오표기를 막는다. 발동확률은 슬롯2 값이 있을 때 해당 행에 함께 표시한다.
  * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만). 색은 브랜드 팔레트(navy/gold).
  */
 
@@ -54,6 +54,10 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
         skill1Name: item.skill1Name,
         skill2Name: item.skill2Name,
     })
+    const skillRows = ([1, 2] as const).map((slot) => ({
+        slot,
+        skill: skills.find((skill) => skill.slot === slot),
+    }))
     const hasSkill = skills.length > 0
     const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
     const badgeClass =
@@ -107,34 +111,24 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
                 </p>
 
                 <dl className="mt-auto">
-                    {skills.map((skill) => (
+                    {skillRows.map(({ slot, skill }) => (
                         <div
-                            key={skill.slot}
-                            className="flex items-center justify-between border-b border-content-line py-2.5 text-sm"
+                            key={slot}
+                            className="flex h-10 min-w-0 items-center justify-between gap-3 border-b border-content-line text-sm"
                         >
-                            <dt className="font-medium text-content-subtle">
-                                스킬 {skill.slot}
+                            <dt className="shrink-0 font-medium text-content-subtle">
+                                스킬 {slot}
                             </dt>
-                            <dd className="font-semibold text-content-fg">
-                                {skillLabelOf(skill)}
+                            <dd className="min-w-0 truncate font-semibold text-content-fg">
+                                {skill ? skillLabelOf(skill) : '-'}
+                                {slot === 2 &&
+                                    skill &&
+                                    item.skillPercent > 0 && (
+                                        <span> {item.skillPercent}%</span>
+                                    )}
                             </dd>
                         </div>
                     ))}
-                    {item.skillPercent > 0 && (
-                        <div className="flex items-center justify-between border-b border-content-line py-2.5 text-sm">
-                            <dt className="font-medium text-content-subtle">
-                                발동 확률
-                            </dt>
-                            <dd className="font-semibold text-content-fg">
-                                +{item.skillPercent}%
-                            </dd>
-                        </div>
-                    )}
-                    {skills.length === 0 && item.skillPercent <= 0 && (
-                        <div className="py-2.5 text-sm text-content-subtle">
-                            스킬 없음
-                        </div>
-                    )}
                 </dl>
             </div>
         </section>

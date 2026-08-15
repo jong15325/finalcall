@@ -61,6 +61,10 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
         skill1Name: item.skill1Name,
         skill2Name: item.skill2Name,
     })
+    const skillRows = ([1, 2] as const).map((slot) => ({
+        slot,
+        skill: skills.find((skill) => skill.slot === slot),
+    }))
     const hasSkill = skills.length > 0
     const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
     const frameType = resolveFrameType(
@@ -153,46 +157,41 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     <h3 className="text-sm font-bold text-content-fg">
                         특수 스킬
                     </h3>
-                    {skills.length > 0 ? (
-                        <ul
-                            className="mt-2 flex flex-col gap-2"
-                            aria-label="특수 스킬"
-                        >
-                            {skills.map((skill) => {
-                                const showPercent =
-                                    skill.slot === 2 &&
-                                    Number.isFinite(item.skillPercent) &&
-                                    item.skillPercent > 0
+                    <ul
+                        className="mt-2 grid grid-rows-2 gap-1"
+                        aria-label="특수 스킬"
+                    >
+                        {skillRows.map(({ slot, skill }) => {
+                            const showPercent =
+                                slot === 2 &&
+                                skill !== undefined &&
+                                Number.isFinite(item.skillPercent) &&
+                                item.skillPercent > 0
 
-                                return (
-                                    <li
-                                        key={skill.slot}
-                                        className="flex min-w-0 items-start gap-2 py-1 text-sm"
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            className="grid size-5 shrink-0 place-items-center rounded border border-content-line bg-content-surface text-xs font-bold text-brand-structure"
-                                        >
-                                            {skill.slot}
+                            return (
+                                <li
+                                    key={slot}
+                                    className="flex h-7 min-w-0 items-center gap-2 text-sm"
+                                >
+                                    <span className="grid size-5 shrink-0 place-items-center rounded border border-content-line bg-content-surface text-xs font-bold text-brand-structure">
+                                        <span className="sr-only">
+                                            스킬 {slot}
                                         </span>
-                                        <span className="min-w-0 break-words font-semibold text-content-fg">
-                                            {skillLabelOf(skill)}
-                                            {showPercent && (
-                                                <span className="whitespace-nowrap font-extrabold text-brand-highlight-deep">
-                                                    {' '}
-                                                    ({item.skillPercent}%)
-                                                </span>
-                                            )}
-                                        </span>
-                                    </li>
-                                )
-                            })}
-                        </ul>
-                    ) : (
-                        <p className="mt-2 py-2.5 text-sm text-content-subtle">
-                            보유한 특수 스킬이 없습니다.
-                        </p>
-                    )}
+                                        <span aria-hidden="true">{slot}</span>
+                                    </span>
+                                    <span className="min-w-0 truncate font-semibold text-content-fg">
+                                        {skill ? skillLabelOf(skill) : '-'}
+                                        {showPercent && (
+                                            <span className="whitespace-nowrap font-extrabold text-brand-highlight-deep">
+                                                {' '}
+                                                ({item.skillPercent}%)
+                                            </span>
+                                        )}
+                                    </span>
+                                </li>
+                            )
+                        })}
+                    </ul>
                 </div>
             </div>
         </section>

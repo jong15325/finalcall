@@ -119,13 +119,12 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                     </span>
 
                     <ItemSkillSummary
-                        showSlotLabels
                         skill1={item.skill1}
                         skill2={item.skill2}
                         skill1Name={item.skill1Name}
                         skill2Name={item.skill2Name}
                         skillPercent={item.skillPercent}
-                        className="mt-2 min-h-[48px] justify-center gap-1 [&_li]:!overflow-visible [&_li]:!whitespace-normal [&_li]:!text-clip [&_li]:rounded-md [&_li]:bg-brand-structure/5 [&_li]:px-2 [&_li]:py-1 [&_li]:leading-snug [&_li]:text-chrome-selected [&_.item-skill-summary__slot]:mr-1.5 [&_.item-skill-summary__slot]:inline [&_.item-skill-summary__slot]:text-brand-structure [&_.item-skill-summary__slot]:opacity-100"
+                        className="mt-2 h-[56px] min-h-[56px] min-w-0 gap-1 overflow-hidden [&_li]:flex [&_li]:h-[26px] [&_li]:items-center [&_li]:overflow-hidden [&_li]:rounded-md [&_li]:bg-brand-structure/5 [&_li]:px-2 [&_li]:py-1 [&_li]:leading-[18px] [&_li]:text-chrome-selected [&_.item-skill-summary__slot]:mr-1.5 [&_.item-skill-summary__slot]:shrink-0 [&_.item-skill-summary__slot]:text-brand-structure [&_.item-skill-summary__slot]:opacity-100"
                     />
 
                     <span className="my-3 grid grid-cols-[1fr_auto] gap-2.5 border-y border-content-line py-3">

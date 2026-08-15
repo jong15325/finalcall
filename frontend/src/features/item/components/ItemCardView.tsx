@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import CodeAmount from '@/components/common/CodeAmount'
+import { channelLimitOf } from '@/features/item/lib/channelLimit'
 import { elementLabelOf } from '@/features/item/lib/element'
 import type { ElementKey } from '@/features/item/lib/element'
+import { goldforceRemainingDays } from './frame'
 import ItemFrame from './ItemFrame'
 
 export interface ItemSkillView {
@@ -89,7 +91,6 @@ export default function ItemCardView({
                         {item.kindLabel} · Lv.{item.level}
                     </p>
                     <ItemSkillList
-                        showSlotLabels
                         className="item-card__market-skills"
                         skills={item.skills}
                     />
@@ -104,6 +105,17 @@ export default function ItemCardView({
                                 className="max-w-full min-w-0 flex-wrap break-all text-sm"
                             />
                         </div>
+                    )}
+                    {item.seller && (
+                        <p
+                            className="item-card__seller-row min-w-0 text-label text-content-subtle xs:text-xs"
+                            title={`판매자 ${item.seller}`}
+                        >
+                            <span>판매자</span>
+                            <strong className="min-w-0 truncate">
+                                {item.seller}
+                            </strong>
+                        </p>
                     )}
                     {action}
                 </div>
@@ -209,56 +221,73 @@ export function ItemCardBackView({ item }: { item: ItemCardViewModel }) {
                 {item.kindLabel} · Lv.{item.level}
             </span>
             <ItemSkillList
-                showSlotLabels
                 className="item-card__skill-list"
                 skills={item.skills}
             />
-            {item.seller && (
-                <small>
-                    판매자 <b>{item.seller}</b>
-                </small>
-            )}
         </div>
+    )
+}
+
+export function ItemCardPropertyBackView({
+    item,
+}: {
+    item: ItemCardViewModel
+}) {
+    const goldforceDays = goldforceRemainingDays(
+        item.goldforceExpireAt,
+        item.referenceNow,
+    )
+    const rows = [
+        ['타입', item.typeLabel],
+        ['명칭', item.name],
+        ['채널제한', channelLimitOf(item.level)],
+        ['속성', elementLabelOf(elementNumberOf(item.element))],
+        [
+            '남은 골드 포스',
+            goldforceDays === null ? '없음' : `${goldforceDays}일`,
+        ],
+    ] as const
+
+    return (
+        <dl className="item-card__property-table">
+            {rows.map(([label, value]) => (
+                <div key={label} className="item-card__property-row">
+                    <dt>{label}</dt>
+                    <dd title={value}>{value}</dd>
+                </div>
+            ))}
+        </dl>
     )
 }
 
 function ItemSkillList({
     skills,
-    showSlotLabels = false,
     className = '',
 }: {
     skills: readonly ItemSkillView[]
-    showSlotLabels?: boolean
     className?: string
 }) {
-    if (skills.length === 0) {
-        return (
-            <p
-                className={`text-label text-content-subtle xs:text-xs ${className}`}
-            >
-                스킬 없음
-            </p>
-        )
-    }
+    const rows = ([1, 2] as const).map((slot) => ({
+        slot,
+        skill: skills.find((skill) => skill.slot === slot),
+    }))
 
     return (
         <ul
             aria-label="스킬"
-            className={`flex flex-col gap-0.5 ${className}`.trim()}
+            className={`item-card__skill-rows ${className}`.trim()}
         >
-            {skills.map((skill) => (
+            {rows.map(({ slot, skill }) => (
                 <li
-                    key={skill.slot}
-                    className="truncate text-label font-medium text-brand-structure xs:text-xs"
+                    key={slot}
+                    className="item-card__skill-row text-label font-medium text-brand-structure xs:text-xs"
                 >
-                    {showSlotLabels && (
-                        <span className="item-skill-summary__slot">
-                            스킬 {skill.slot}
-                        </span>
-                    )}{' '}
-                    {skill.label}
-                    {skill.percent ? (
-                        <span className="ml-1 font-bold text-control-action-hover">
+                    <span className="item-skill-summary__slot">
+                        스킬 {slot}
+                    </span>{' '}
+                    {skill?.label ?? '-'}
+                    {skill?.percent ? (
+                        <span className="item-card__skill-percent ml-1 font-bold text-control-action-hover">
                             {skill.percent}%
                         </span>
                     ) : null}

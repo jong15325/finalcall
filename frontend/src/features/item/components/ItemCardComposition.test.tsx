@@ -6,6 +6,46 @@ import ItemCardFlip from './ItemCardFlip'
 import ItemCardView, { ItemCardArtwork } from './ItemCardView'
 import type { ItemCardViewModel } from './ItemCardView'
 
+describe('compact ItemCardView', () => {
+    it('판매자 정보가 없으면 판매자 행을 표시하지 않는다', () => {
+        render(<ItemCardView density="compact" item={item} />)
+
+        expect(screen.queryByText(/^판매자 /)).not.toBeInTheDocument()
+    })
+
+    it('0·1·2개 스킬 모두 동일한 두 행 레이아웃 계약을 사용한다', () => {
+        const fixtures: ItemCardViewModel[] = [
+            { ...item, skills: [] },
+            item,
+            {
+                ...item,
+                skills: [
+                    ...item.skills,
+                    { slot: 2, label: '연속 폭발', percent: 18 },
+                ],
+            },
+        ]
+
+        fixtures.forEach((fixture) => {
+            const { container, unmount } = render(
+                <ItemCardView density="compact" item={fixture} />,
+            )
+            const list = container.querySelector('.item-card__market-skills')
+            const rows = list?.querySelectorAll('.item-card__skill-row')
+
+            expect(list).toHaveClass('item-card__skill-rows')
+            expect(rows).toHaveLength(2)
+            expect(rows?.[0]).toHaveTextContent(
+                `스킬 1 ${fixture.skills[0]?.label ?? '-'}`,
+            )
+            expect(rows?.[1]).toHaveTextContent(
+                `스킬 2 ${fixture.skills[1]?.label ?? '-'}`,
+            )
+            unmount()
+        })
+    })
+})
+
 const item: ItemCardViewModel = {
     name: '불의 전투도끼',
     description: '공격력이 높은 한손 도끼',
@@ -77,7 +117,7 @@ describe('아이템 카드 composition', () => {
 
     it('controlled flip은 자기 focus 범위의 Escape만 처리한다', () => {
         const onFlippedChange = vi.fn()
-        render(
+        const { container } = render(
             <ItemCardFlip
                 flipped
                 back={<span>뒷면</span>}
@@ -86,6 +126,10 @@ describe('아이템 카드 composition', () => {
                 onFlippedChange={onFlippedChange}
             />,
         )
+
+        expect(
+            container.querySelector('.item-card__artwork-composition'),
+        ).not.toHaveClass('is-hover-latch')
 
         fireEvent.keyDown(window, { key: 'Escape' })
         expect(onFlippedChange).not.toHaveBeenCalled()

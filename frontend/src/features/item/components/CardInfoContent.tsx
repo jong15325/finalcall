@@ -42,6 +42,10 @@ export default function CardInfoContent(props: CardInfoContentProps) {
         skill1Name: props.skill1Name,
         skill2Name: props.skill2Name,
     })
+    const skillRows = ([1, 2] as const).map((slot) => ({
+        slot,
+        skill: skills.find((skill) => skill.slot === slot),
+    }))
 
     return (
         <>
@@ -81,29 +85,27 @@ export default function CardInfoContent(props: CardInfoContentProps) {
             </div>
             <div className="ci-panel">
                 <h3>특수 스킬</h3>
-                {skills.length > 0 ? (
-                    <ul className="skill-list" aria-label="특수 스킬">
-                        {skills.map((skill) => (
-                            <li key={skill.slot}>
-                                <span aria-hidden className="n">
-                                    {skill.slot}
-                                </span>
-                                <span>
-                                    {skillLabelOf(skill)}
-                                    {skill.slot === 2 &&
-                                        props.skillPercent > 0 && (
-                                            <span className="pct">
-                                                {' '}
-                                                ({props.skillPercent}%)
-                                            </span>
-                                        )}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p className="muted-note">보유한 특수 스킬이 없습니다.</p>
-                )}
+                <ul className="skill-list" aria-label="특수 스킬">
+                    {skillRows.map(({ slot, skill }) => (
+                        <li key={slot}>
+                            <span className="n">
+                                <span className="sr-only">스킬 {slot}</span>
+                                <span aria-hidden="true">{slot}</span>
+                            </span>
+                            <span>
+                                {skill ? skillLabelOf(skill) : '-'}
+                                {slot === 2 &&
+                                    skill &&
+                                    props.skillPercent > 0 && (
+                                        <span className="pct">
+                                            {' '}
+                                            ({props.skillPercent}%)
+                                        </span>
+                                    )}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
             </div>
         </>
     )

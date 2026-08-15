@@ -433,7 +433,11 @@
     flex-direction: column;
     padding: 16px;
     color: white;
-    background: linear-gradient(160deg, var(--chrome-bg-raised), var(--chrome-bg-strong));
+    background: linear-gradient(
+        160deg,
+        var(--chrome-bg-raised),
+        var(--chrome-bg-strong)
+    );
     transform: rotateY(180deg);
 }
 
@@ -442,10 +446,15 @@
     width: 36px;
     height: 36px;
     place-items: center;
-    border: 1px solid color-mix(in srgb, var(--brand-highlight-bright) 42%, transparent);
+    border: 1px solid
+        color-mix(in srgb, var(--brand-highlight-bright) 42%, transparent);
     border-radius: 10px;
     color: var(--brand-highlight-bright);
-    background: color-mix(in srgb, var(--brand-highlight-bright) 10%, transparent);
+    background: color-mix(
+        in srgb,
+        var(--brand-highlight-bright) 10%,
+        transparent
+    );
     font-size: 12px;
     font-weight: 800;
 }
@@ -467,6 +476,20 @@
 .item-card__skill-list {
     margin-top: 12px;
     gap: 7px;
+}
+
+.item-card__skill-rows {
+    display: grid;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.item-card__skill-row {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    line-height: 1.25rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .item-card__skill-list li {
@@ -493,6 +516,48 @@
     font-size: 9px;
 }
 
+.item-card__property-table {
+    display: grid;
+    height: 100%;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    margin: 0;
+}
+
+.item-card__property-row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgb(255 255 255 / 12%);
+}
+
+.item-card__property-row:last-child {
+    border-bottom: 0;
+}
+
+.item-card__property-row dt,
+.item-card__property-row dd {
+    min-width: 0;
+    margin: 0;
+}
+
+.item-card__property-row dt {
+    color: var(--chrome-muted);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.item-card__property-row dd {
+    overflow: hidden;
+    color: var(--chrome-fg);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .item-card__skill-flip-trigger {
     position: relative;
     flex: 0 0 44px;
@@ -502,8 +567,32 @@
     touch-action: manipulation;
 }
 
-.item-card__skill-flip.is-enabled:hover .item-card__skill-flip-inner,
-.shop-card:hover .item-card__skill-flip.is-enabled .item-card__skill-flip-inner,
+.item-card__artwork-composition.is-hover-latch
+    > .item-card__skill-flip-trigger {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px 12px 0 0;
+}
+
+.item-card__artwork-composition.is-hover-latch > .item-card__artwork-controls {
+    z-index: 3;
+    pointer-events: none;
+}
+
+.item-card__artwork-composition.is-hover-latch .item-card__secondary-actions {
+    pointer-events: auto;
+}
+
+.item-card__artwork-composition:not(.is-hover-latch)
+    .item-card__skill-flip.is-enabled:hover
+    .item-card__skill-flip-inner,
+.shop-card:hover
+    .item-card__artwork-composition:not(.is-hover-latch)
+    .item-card__skill-flip.is-enabled
+    .item-card__skill-flip-inner,
 .item-card__skill-flip.is-enabled[data-flipped='true']
     .item-card__skill-flip-inner {
     transform: rotateY(180deg);
@@ -511,11 +600,14 @@
 
 /* 터치 기기에서는 이미지 영역 전체가 명시적인 토글이다. */
 @media (hover: none) {
-    .item-card__skill-flip.is-enabled:hover .item-card__skill-flip-inner {
+    .item-card__artwork-composition:not(.is-hover-latch)
+        .item-card__skill-flip.is-enabled:hover
+        .item-card__skill-flip-inner {
         transform: none;
     }
 
     .shop-card:hover
+        .item-card__artwork-composition:not(.is-hover-latch)
         .item-card__skill-flip.is-enabled
         .item-card__skill-flip-inner {
         transform: none;
@@ -667,17 +759,28 @@
 .item-card__market-skills li {
     padding: 7px 8px;
     overflow: hidden;
+    border: 1px solid
+        color-mix(in srgb, var(--brand-structure) 16%, transparent);
     border-radius: 8px;
     color: var(--chrome-bg-selected);
-    background: var(--content-soft);
+    background: color-mix(
+        in srgb,
+        var(--brand-structure) 7%,
+        var(--content-surface)
+    );
     font-size: 12px;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.item-card__market-skills li > span:not(.item-skill-summary__slot) {
-    color: var(--control-action-hover);
+.item-card__market-skills .item-skill-summary__slot {
+    color: var(--content-muted);
+    opacity: 1;
+}
+
+.item-card__market-skills li > .item-card__skill-percent {
+    color: var(--brand-highlight-deep);
     font-size: 13px;
 }
 
@@ -687,6 +790,21 @@
     color: var(--content-fg);
     font-size: 14px;
     font-weight: 800;
+}
+
+.item-card__seller-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--content-line);
+}
+
+.item-card__seller-row strong {
+    color: var(--content-fg);
+    font-weight: 700;
 }
 
 .item-card__skill-flip-trigger:focus-visible {

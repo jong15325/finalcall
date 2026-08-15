@@ -78,16 +78,23 @@ describe('<ItemInstanceDetail>', () => {
         )
         // 슬롯 2 라벨이 그대로 남고, 슬롯 1 로 재번호되지 않는다.
         expect(screen.getByText('스킬 2')).toBeInTheDocument()
-        expect(screen.queryByText('스킬 1')).not.toBeInTheDocument()
+        const skill1Row = screen.getByText('스킬 1').closest('div')
+        expect(skill1Row).not.toBeNull()
+        expect(
+            within(skill1Row as HTMLElement).getByText('-'),
+        ).toBeInTheDocument()
         expect(screen.getByText('빙결')).toBeInTheDocument()
     })
 
-    it('스킬이 없으면 "없음"으로 표기한다', () => {
+    it('스킬이 없으면 두 슬롯을 대시로 표기한다', () => {
         renderDetail(makeItem({ skill1: null, skill2: null }))
-        const skillRow = screen.getByText('스킬').closest('div')
-        expect(skillRow).not.toBeNull()
+        const skill1Row = screen.getByText('스킬 1').closest('div')
+        const skill2Row = screen.getByText('스킬 2').closest('div')
         expect(
-            within(skillRow as HTMLElement).getByText('없음'),
+            within(skill1Row as HTMLElement).getByText('-'),
+        ).toBeInTheDocument()
+        expect(
+            within(skill2Row as HTMLElement).getByText('-'),
         ).toBeInTheDocument()
     })
 

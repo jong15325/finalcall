@@ -3,7 +3,7 @@ import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurf
 import ItemCardFlip from '@/features/item/components/ItemCardFlip'
 import ItemCardView, {
     ItemCardArtwork,
-    ItemCardBackView,
+    ItemCardPropertyBackView,
 } from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import CardCompareOverlay from '@/features/item/components/CardCompareOverlay'
@@ -60,7 +60,11 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
         onPress: () => onOpen(shop),
     }
     const artworkAction = (
-        <ItemCardActionSurface area="artwork" keyboard={false} action={action} />
+        <ItemCardActionSurface
+            area="artwork"
+            keyboard={false}
+            action={action}
+        />
     )
     const controlGapAction = (
         <ItemCardActionSurface
@@ -78,13 +82,13 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
                 artwork={
                     item.skills.length > 0 ? (
                         <ItemCardFlip
-                            back={<ItemCardBackView item={item} />}
+                            back={<ItemCardPropertyBackView item={item} />}
+                            contentLabel="아이템 정보"
                             flipped={flipped}
                             front={<ItemCardArtwork item={item} />}
+                            interaction="hover-latch"
                             label={item.name}
                             overlay={compare}
-                            artworkAction={artworkAction}
-                            controlGapAction={controlGapAction}
                             onFlippedChange={setFlipped}
                         />
                     ) : (
@@ -107,12 +111,7 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
                         </div>
                     )
                 }
-                action={
-                    <ItemCardActionSurface
-                        opensDialog
-                        action={action}
-                    />
-                }
+                action={<ItemCardActionSurface opensDialog action={action} />}
             />
         </div>
     )

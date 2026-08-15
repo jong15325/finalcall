@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import InventoryCardInfoDialog from './InventoryCardInfoDialog'
 import type { InventoryItem } from '@/lib/api/inventory'
 
@@ -100,7 +100,7 @@ describe('<InventoryCardInfoDialog>', () => {
         expect(onClose).toHaveBeenCalledTimes(2)
     })
 
-    it('보유 스킬이 없으면 빈 안내를 보인다', () => {
+    it('보유 스킬이 없으면 두 슬롯을 대시로 보인다', () => {
         renderDialog({
             item: {
                 ...target,
@@ -111,8 +111,11 @@ describe('<InventoryCardInfoDialog>', () => {
                 },
             },
         })
-        expect(
-            screen.getByText('보유한 특수 스킬이 없습니다.'),
-        ).toBeInTheDocument()
+        const skills = screen.getAllByRole('listitem')
+        expect(skills).toHaveLength(2)
+        expect(within(skills[0]).getByText('-')).toBeVisible()
+        expect(within(skills[1]).getByText('-')).toBeVisible()
+        expect(skills[0].querySelector('.sr-only')).toHaveTextContent('스킬 1')
+        expect(skills[1].querySelector('.sr-only')).toHaveTextContent('스킬 2')
     })
 })

@@ -70,6 +70,10 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
         },
     )
     const hasSkill = skills.length > 0
+    const skillRows = ([1, 2] as const).map((slot) => ({
+        slot,
+        skill: skills.find((skill) => skill.slot === slot),
+    }))
 
     // 골드포스 잔여(클라 파생) — 활성일 때만 값이 있다(미적용·만료는 null).
     const gfDays = goldforceRemainingDays(item.goldforceExpireAt, resolvedNow)
@@ -139,24 +143,22 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                         </SpecRow>
 
                         {/* 스킬 — 슬롯 번호 유지, 이름 표시(없으면 중립 코드) */}
-                        {hasSkill ? (
-                            skills.map((skill) => (
-                                <SpecRow
-                                    key={skill.slot}
-                                    term={`스킬 ${skill.slot}`}
+                        {skillRows.map(({ slot, skill }) => (
+                            <SpecRow key={slot} term={`스킬 ${slot}`}>
+                                <span
+                                    className={
+                                        skill ? '' : 'text-content-subtle'
+                                    }
                                 >
-                                    {skillLabelOf(skill)}
-                                </SpecRow>
-                            ))
-                        ) : (
-                            <SpecRow term="스킬">
-                                <span className="text-content-subtle">없음</span>
+                                    {skill ? skillLabelOf(skill) : '-'}
+                                    {slot === 2 &&
+                                        skill &&
+                                        item.skillPercent > 0 && (
+                                            <span> {item.skillPercent}%</span>
+                                        )}
+                                </span>
                             </SpecRow>
-                        )}
-
-                        <SpecRow term="스킬 발동확률">
-                            {item.skillPercent}%
-                        </SpecRow>
+                        ))}
 
                         {gfDays !== null && (
                             <SpecRow term="골드포스 잔여">

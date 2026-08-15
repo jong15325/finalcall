@@ -46,6 +46,66 @@ const baseAuction: AuctionSummary = {
 }
 
 describe('<AuctionCard>', () => {
+    it('스킬 개수와 관계없이 고정 높이 스킬 영역을 사용한다', () => {
+        const { unmount } = renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        skill2: null,
+                        skill2Name: null,
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.getByRole('list')).toHaveClass(
+            'h-[56px]',
+            'min-h-[56px]',
+            'overflow-hidden',
+            '[&_li]:flex',
+            '[&_li]:items-center',
+            '[&_li]:overflow-hidden',
+            '[&_.item-skill-summary__slot]:shrink-0',
+        )
+        unmount()
+
+        const twoSkillView = renderWithProviders(
+            <AuctionCard auction={baseAuction} now={NOW} />,
+        )
+        expect(screen.getByRole('list')).toHaveClass(
+            'h-[56px]',
+            'min-h-[56px]',
+            'overflow-hidden',
+        )
+
+        twoSkillView.unmount()
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: {
+                        ...baseAuction.item,
+                        skill1: null,
+                        skill2: null,
+                        skill1Name: null,
+                        skill2Name: null,
+                    },
+                }}
+                now={NOW}
+            />,
+        )
+        expect(screen.getByRole('list')).toHaveClass(
+            'h-[56px]',
+            'min-h-[56px]',
+            'overflow-hidden',
+        )
+        expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('스킬 1 -')
+        expect(screen.getAllByRole('listitem')[1]).toHaveTextContent('스킬 2 -')
+    })
+
     it('블랙 타입 제목만 표시하고 레벨·시각 이름은 숨긴 채 256px 높이를 유지한다', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
 
@@ -147,10 +207,18 @@ describe('<AuctionCard>', () => {
         expect(skillList).toHaveClass(
             '[&_li]:bg-brand-structure/5',
             '[&_li]:text-chrome-selected',
-            '[&_li]:!whitespace-normal',
-            '[&_li]:!overflow-visible',
+            'h-[56px]',
+            'overflow-hidden',
+            '[&_li]:flex',
+            '[&_li]:items-center',
+            '[&_li]:overflow-hidden',
+            '[&_.item-skill-summary__slot]:shrink-0',
             '[&_.item-skill-summary__slot]:mr-1.5',
-            '[&_.item-skill-summary__slot]:inline',
+            '[&_.item-skill-summary__slot]:shrink-0',
+        )
+        expect(screen.getByText(longSkill)).toHaveClass(
+            'item-skill-summary__value',
+            'truncate',
         )
         expect(screen.getByText(longSkill).closest('li')).toHaveTextContent(
             `스킬 1 ${longSkill}`,
@@ -231,7 +299,9 @@ describe('<AuctionCard>', () => {
             />,
         )
 
-        expect(screen.queryByText('스킬 1')).not.toBeInTheDocument()
+        expect(screen.getByText('스킬 1').closest('li')).toHaveTextContent(
+            '스킬 1 -',
+        )
         expect(screen.getByText('스킬 2')).toBeInTheDocument()
         expect(screen.getByText('33%')).toBeInTheDocument()
     })
@@ -272,7 +342,9 @@ describe('<AuctionCard>', () => {
             />,
         )
 
-        expect(screen.getByText('스킬 없음')).toBeInTheDocument()
+        const skills = screen.getAllByRole('listitem')
+        expect(skills[0]).toHaveTextContent('스킬 1 -')
+        expect(skills[1]).toHaveTextContent('스킬 2 -')
     })
 
     it('활성 골드포스 잔여일을 카드 접근성 트리에 포함한다', () => {
