@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-65
 title: 프론트 전면 재구축 — Ecme 템플릿 기반
 state: superseded
-children: [FC-055, FC-056, FC-057, FC-058, FC-059, FC-064, FC-060, FC-061, FC-065, FC-063]
+children: [FC-055, FC-056, FC-057, FC-058, FC-059, FC-064, FC-065]
 gate: null
 ---
 ## ★★ SUPERSEDED (2026-07-20) → `EPIC-FE-REBUILD`
