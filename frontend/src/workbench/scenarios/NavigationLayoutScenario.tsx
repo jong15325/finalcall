@@ -63,9 +63,10 @@ export default function NavigationLayoutScenario({
                     상단 네비게이션 레이아웃 4안
                 </h1>
                 <p className="mt-2 max-w-[65ch] break-words text-sm leading-6 text-content-muted">
-                    실제 상단 바와 메뉴가 콘텐츠 경계까지 일반 흐름으로 이동한 뒤
-                    고정되는 네 가지 방식을 비교합니다. 내비게이션·콘텐츠·푸터의
-                    가로 폭과 실제 인증·잔액·키보드 동작은 그대로 유지합니다.
+                    실제 상단 바와 메뉴가 콘텐츠 경계까지 일반 흐름으로 이동한
+                    뒤 고정되는 네 가지 방식을 비교합니다.
+                    내비게이션·콘텐츠·푸터의 가로 폭과 실제 인증·잔액·키보드
+                    동작은 그대로 유지합니다.
                 </p>
             </header>
 
@@ -138,16 +139,17 @@ export default function NavigationLayoutScenario({
                     임계점과 도킹 상태 확인 영역
                 </h2>
                 <p className="mt-2 max-w-[65ch] text-sm leading-6 text-content-muted">
-                    처음에는 내비게이션이 문서와 함께 움직입니다. 콘텐츠 상단 경계가
-                    화면 상단에 닿은 뒤에는 같은 가로 폭을 유지한 채 고정되며, 선택한
-                    안에 따라 표면·높이·스크롤 방향 반응만 달라집니다.
+                    처음에는 내비게이션이 문서와 함께 움직입니다. 콘텐츠 상단
+                    경계가 화면 상단에 닿은 뒤에는 같은 가로 폭을 유지한 채
+                    고정되며, 선택한 안에 따라 표면·높이·스크롤 방향 반응만
+                    달라집니다.
                 </p>
             </section>
 
             <p className="rounded-lg border border-content-line bg-content-surface px-4 py-3 text-sm leading-6 text-content-muted">
-                390px에서는 실제 모바일 상단 바와 safe-area 하단 메뉴를 유지합니다.
-                어떤 안에서도 드롭다운과 메뉴를 자르는 overflow 컨테이너는 만들지
-                않습니다.
+                390px에서는 실제 모바일 상단 바와 safe-area 하단 메뉴를
+                유지합니다. 어떤 안에서도 드롭다운과 메뉴를 자르는 overflow
+                컨테이너는 만들지 않습니다.
             </p>
         </div>
     )

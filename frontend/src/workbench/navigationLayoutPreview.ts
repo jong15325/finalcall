@@ -17,15 +17,15 @@ export function installNavigationLayoutPreview(
         '[data-app-navigation-sentinel]',
     )
     const header = productionSurface?.querySelector<HTMLElement>('header')
-    const horizontalNav = productionSurface?.querySelector<HTMLElement>(
-        'nav.app-chrome',
-    )
+    const horizontalNav =
+        productionSurface?.querySelector<HTMLElement>('nav.app-chrome')
     const footer = shellColumn?.querySelector<HTMLElement>(':scope > footer')
     const contentPlane = view?.querySelector<HTMLElement>(
         '[data-testid="app-content-plane"]',
     )
     const headerInner = header?.firstElementChild as HTMLElement | null
-    const navigationInner = horizontalNav?.firstElementChild as HTMLElement | null
+    const navigationInner =
+        horizontalNav?.firstElementChild as HTMLElement | null
     const footerInner = footer?.querySelector<HTMLElement>(
         '[data-app-footer-surface]',
     )
@@ -65,7 +65,9 @@ export function installNavigationLayoutPreview(
         headerInner.querySelectorAll<HTMLElement>(
             '.sm\\:block, .sm\\:flex, .lg\\:flex',
         ),
-    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
+    ).filter(
+        (element): element is HTMLElement => element instanceof HTMLElement,
+    )
     const originalClasses = new Map<HTMLElement, string>(
         [
             header,
@@ -142,7 +144,8 @@ export function installNavigationLayoutPreview(
 
     const restoreAuxiliaries = () => {
         for (const element of auxiliaries) {
-            element.className = originalClasses.get(element) ?? element.className
+            element.className =
+                originalClasses.get(element) ?? element.className
         }
     }
     const setCompact = (compact: boolean) => {

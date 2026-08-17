@@ -140,10 +140,7 @@ export default function ElementParticleCanvas<
 
         return () => {
             window.cancelAnimationFrame(animationFrame)
-            document.removeEventListener(
-                'visibilitychange',
-                onVisibilityChange,
-            )
+            document.removeEventListener('visibilitychange', onVisibilityChange)
         }
     }, [
         colors,
