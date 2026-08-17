@@ -26,6 +26,13 @@ export const WORKBENCH_SCENARIOS = [
         load: () => import('./scenarios/AuctionCardScenario'),
     }),
     defineScenario({
+        id: 'auction-countdown-tags',
+        title: '경매 시간 표시 12안',
+        shell: 'app',
+        routeContext: paths.auctions,
+        load: () => import('./scenarios/AuctionCountdownTagsScenario'),
+    }),
+    defineScenario({
         id: 'sell-page-directions',
         title: '판매 등록 신규 디자인 3안',
         shell: 'app',

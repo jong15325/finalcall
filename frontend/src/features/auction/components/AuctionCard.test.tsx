@@ -1,28 +1,10 @@
-import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/renderWithProviders'
-import { useCompareStore } from '@/store/compareStore'
 import AuctionCard from './AuctionCard'
 import type { AuctionSummary } from '@/lib/api/auctions'
 
-/**
- * 경매 카드 (FC-071).
- *
- * 고정하는 것:
- *  1. **마감 판정은 클라(`now >= endAt`)** — 서버 status 가 ACTIVE 여도 endAt 이 지났으면 "마감".
- *  2. 가격 라벨은 입찰 유무로 갈린다(현재가/시작가).
- *  3. 카드 전체가 `auctionPublicId` 상세 링크(경매 item 블록엔 인스턴스 ID 가 없다).
- */
-
 const NOW = Date.parse('2026-07-21T00:00:00Z')
-const itemFrameCss = readFileSync(
-    resolve(process.cwd(), 'src/features/item/components/ItemFrame.css'),
-    'utf8',
-)
-
 const baseAuction: AuctionSummary = {
     auctionPublicId: '01J3AUCTION0001',
     status: 'ACTIVE',
@@ -56,337 +38,168 @@ describe('<AuctionCard>', () => {
         ['스킬 없음', null, null],
         ['스킬 1개', 131, null],
         ['스킬 2개', 131, 202],
-    ] as const)(
-        '%s 카드도 동일한 두 행 높이를 유지한다',
-        (_, skill1, skill2) => {
-            renderWithProviders(
-                <AuctionCard
-                    auction={{
-                        ...baseAuction,
-                        item: { ...baseAuction.item, skill1, skill2 },
-                    }}
-                    now={NOW}
-                />,
-            )
+    ] as const)('%s도 두 스킬 행을 유지한다', (_, skill1, skill2) => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    item: { ...baseAuction.item, skill1, skill2 },
+                }}
+                now={NOW}
+            />,
+        )
 
-            expect(screen.getByRole('list', { name: '스킬' })).toHaveClass(
-                'item-card__market-skills',
-                'grid-rows-2',
-            )
-            expect(screen.getAllByRole('listitem')).toHaveLength(2)
-        },
-    )
+        expect(screen.getByRole('list', { name: '스킬' })).toHaveClass(
+            'item-card__market-skills',
+        )
+        expect(screen.getAllByRole('listitem')).toHaveLength(2)
+        if (skill1 === null)
+            expect(screen.getAllByText('없음')).not.toHaveLength(0)
+    })
 
-    it('블랙 타입 제목만 표시하고 레벨·시각 이름은 숨긴 채 256px 높이를 유지한다', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
+    it('아이템마켓 compact identity와 경매 사실 순서를 조립한다', () => {
+        const { container } = renderWithProviders(
+            <AuctionCard auction={baseAuction} now={NOW} />,
+        )
 
         expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
-        expect(screen.queryByText('Lv.3')).not.toBeInTheDocument()
+        expect(screen.getByText(/도끼 · Lv\.3/)).toBeInTheDocument()
+        expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
+        expect(screen.getByText('33%')).toBeInTheDocument()
+        expect(screen.getByText('현재가')).toBeInTheDocument()
+        expect(screen.getByText('2,480,000')).toBeInTheDocument()
+        expect(screen.getByLabelText('1시간 0분 남음')).toBeInTheDocument()
+        expect(screen.getByText('판매자').parentElement).toHaveTextContent(
+            '판매자토르',
+        )
+
+        const price = container.querySelector('[data-listing-price]')
+        const countdown = screen.getByLabelText('1시간 0분 남음')
+        const seller = screen.getByText('판매자').parentElement
+        expect(price?.compareDocumentPosition(seller as HTMLElement) ?? 0).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        )
+        const rail = countdown.closest('[data-auction-info-rail]')
+        expect(rail).toHaveClass('pointer-events-none', 'auction-info-rail')
+        expect(countdown).toHaveClass(
+            'auction-time-display',
+            'auction-time-display--bare',
+            'ml-auto',
+        )
+        expect(countdown.querySelector('time')).toHaveClass(
+            'auction-time-display__digits',
+        )
+        expect(countdown.closest('[data-auction-artwork]')).toBeNull()
         expect(
-            screen.queryByText(baseAuction.item.nameSnapshot),
+            container.querySelector('[data-auction-countdown-overlay]'),
         ).not.toBeInTheDocument()
-
-        const link = screen.getByRole('link')
-        expect(link).toHaveClass('min-h-[256px]')
-        expect(link).toHaveClass('focus-visible:ring-control-focus')
-        expect(link).not.toHaveClass('focus-visible:ring-control-action')
-        expect(link.parentElement).toHaveClass('min-h-[256px]')
+        const artwork = container.querySelector('[data-auction-artwork]')
+        expect(artwork?.compareDocumentPosition(rail as HTMLElement)).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        )
+        expect(rail?.compareDocumentPosition(price as HTMLElement)).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        )
+        expect(price?.parentElement).not.toContainElement(countdown)
     })
 
-    it('만료 골드포스는 블랙, 활성 골드포스는 골드 타입 제목을 표시한다', () => {
-        const { unmount } = renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        goldforceExpireAt: '2026-07-20T00:00:00Z',
-                    },
-                }}
-                now={NOW}
-            />,
+    it('artwork를 마켓 기준보다 44px 확장한다', () => {
+        const { container } = renderWithProviders(
+            <AuctionCard auction={baseAuction} now={NOW} />,
         )
-        expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
-        unmount()
+        const artwork = container.querySelector('[data-auction-artwork]')
 
-        renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        goldforceExpireAt: '2026-07-24T00:00:00Z',
-                    },
-                }}
-                now={NOW}
-            />,
-        )
-        expect(screen.getByText('골드 - 무기')).toBeInTheDocument()
+        expect(artwork).toHaveClass('h-[296px]')
+        expect(artwork).toHaveAttribute('data-market-artwork-height', '252')
     })
 
-    it('미등록 대분류 코드는 타입 제목에서 안전하게 대체 표시한다', () => {
-        renderWithProviders(
+    it('phase와 전체값을 보존한 입찰 badge를 artwork에 표시한다', () => {
+        const { container } = renderWithProviders(
             <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: { ...baseAuction.item, subGroup: 99 },
-                }}
+                auction={{ ...baseAuction, bidCount: Number.MAX_SAFE_INTEGER }}
                 now={NOW}
             />,
         )
 
-        expect(screen.getByText('블랙 - 대분류 99')).toBeInTheDocument()
-    })
-
-    it('시각 제목에서 숨긴 아이템 이름은 링크·이미지·비교 식별에 유지한다', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
-
-        expect(
-            screen.getByRole('link', {
-                name: `${baseAuction.item.nameSnapshot} 경매 상세 보기`,
-            }),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByRole('img', { name: baseAuction.item.nameSnapshot }),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByRole('button', {
-                name: `${baseAuction.item.nameSnapshot} 비교에 담기`,
-            }),
-        ).toBeInTheDocument()
-    })
-
-    it('긴 한글 스킬도 슬롯 라벨과 카드 전용 가시성 스타일로 자연스럽게 확장한다', () => {
-        const longSkill =
-            '공격 성공 시 일정 확률로 상대의 방어력을 오랫동안 감소시킨다'
-        renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        skill1Name: longSkill,
-                        skill2Name:
-                            '연속 공격이 적중하면 추가 피해량이 크게 증가한다',
-                    },
-                }}
-                now={NOW}
-            />,
-        )
-
-        const skillList = screen.getByRole('list', { name: '스킬' })
-        expect(skillList).toHaveClass('item-card__market-skills', 'grid-rows-2')
-        expect(itemFrameCss).toMatch(
-            /\.item-card__market-skills\s*\{[^}]*min-height:\s*98px[^}]*gap:\s*7px/s,
-        )
-        expect(itemFrameCss).toMatch(
-            /\.item-card__market-skills li\s*\{[^}]*padding:\s*7px 8px[^}]*var\(--brand-structure\) 16%[^}]*border-radius:\s*8px[^}]*var\(--brand-structure\) 7%[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s,
-        )
-        expect(itemFrameCss).toContain(
-            '.item-card__market-skills .item-skill-summary__slot',
-        )
-        screen.getAllByRole('listitem').forEach((row) => {
-            expect(row).toHaveClass('flex', 'items-center', 'min-h-0')
-        })
-        expect(screen.getByText(longSkill)).toHaveClass(
-            'item-skill-summary__name',
-            'min-w-0',
-            'truncate',
-        )
-        expect(screen.getByText(longSkill).closest('li')).toHaveTextContent(
-            `스킬 1 ${longSkill}`,
-        )
-        expect(screen.getByText('스킬 2')).toBeInTheDocument()
-    })
-
-    it('진행 중(now < endAt)이면 "진행 중" 배지 + 카운트다운', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
         expect(screen.getByText('진행 중')).toBeInTheDocument()
-        expect(screen.queryByText('마감')).not.toBeInTheDocument()
+        expect(
+            screen.getByLabelText('입찰 9,007,199,254,740,991건'),
+        ).toHaveTextContent('입찰 9,007조건')
+        const stack = container.querySelector('[data-auction-badge-stack]')
+        const phase = container.querySelector('[data-auction-phase-badge]')
+        const bid = container.querySelector('[data-auction-bid-count]')
+        const rail = container.querySelector('[data-auction-info-rail]')
+        const time = container.querySelector('[data-auction-time-display]')
+        expect(stack).toHaveClass(
+            'pointer-events-none',
+            'right-2',
+            'top-2',
+            'flex-col',
+            'items-end',
+            'max-w-[calc(100%-1rem)]',
+        )
+        expect(phase?.closest('[data-auction-artwork]')).not.toBeNull()
+        expect(bid?.closest('[data-auction-info-rail]')).not.toBeNull()
+        expect(bid?.closest('[data-auction-artwork]')).toBeNull()
+        expect(rail?.children).toHaveLength(2)
+        expect(rail?.firstElementChild).toBe(bid?.parentElement)
+        expect(rail?.lastElementChild).toBe(time)
+        expect(time).toHaveClass('auction-time-display--bare')
     })
 
-    it('★ 서버 status=ACTIVE 여도 endAt 이 지났으면 "마감"(클라 판정)', () => {
-        const ended: AuctionSummary = {
-            ...baseAuction,
-            endAt: '2026-07-20T23:00:00Z', // NOW 이전
-        }
-        renderWithProviders(<AuctionCard auction={ended} now={NOW} />)
-        // 상태 배지·카운트다운 두 채널 모두 마감을 알린다.
-        expect(screen.getAllByText('마감').length).toBeGreaterThanOrEqual(1)
+    it('입찰이 없으면 시작가만 표시하고 입찰 badge는 렌더하지 않는다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{
+                    ...baseAuction,
+                    highestBidAmount: null,
+                    bidCount: 0,
+                }}
+                now={NOW}
+            />,
+        )
+
+        expect(screen.getByText('시작가')).toBeInTheDocument()
+        expect(screen.queryByText('입찰 없음')).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('입찰 없음')).not.toBeInTheDocument()
+        expect(screen.queryByTitle('입찰 없음')).not.toBeInTheDocument()
+    })
+
+    it('마감 시각이 지나면 서버 ACTIVE 상태도 마감으로 표시한다', () => {
+        renderWithProviders(
+            <AuctionCard
+                auction={{ ...baseAuction, endAt: '2026-07-20T23:00:00Z' }}
+                now={NOW}
+            />,
+        )
+        expect(screen.getAllByText('마감')).toHaveLength(2)
         expect(screen.queryByText('진행 중')).not.toBeInTheDocument()
     })
 
-    it('입찰이 있으면 "현재가" 라벨 + 입찰 N회', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
-        expect(screen.getByText('현재가')).toBeInTheDocument()
-        expect(screen.getByText('2,480,000')).toBeInTheDocument()
-        expect(screen.queryByText('248만')).not.toBeInTheDocument()
-        expect(screen.getByLabelText('2,480,000 코드')).toHaveClass(
-            'max-w-full',
-            'min-w-0',
-            'flex-wrap',
-            'break-all',
-        )
-        expect(screen.getByText('3회')).toBeInTheDocument()
-    })
-
-    it('입찰이 없으면 "시작가" 라벨 + 0회', () => {
-        const noBids: AuctionSummary = {
-            ...baseAuction,
-            highestBidAmount: null,
-            bidCount: 0,
-        }
-        renderWithProviders(<AuctionCard auction={noBids} now={NOW} />)
-        expect(screen.getByText('시작가')).toBeInTheDocument()
-        expect(screen.getByText('0회')).toBeInTheDocument()
-    })
-
-    it('속성 라벨(가로 카드 element-dot)을 표시한다', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
-        // element 2 = 불
-        expect(screen.getByText('불')).toBeInTheDocument()
-    })
-
-    it('두 스킬의 슬롯 라벨과 슬롯2 발동확률을 표시한다', () => {
+    it('keyboard 주 action은 하나이며 비교 control을 렌더하지 않는다', () => {
         renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
 
-        expect(screen.getByText('스킬 1')).toBeInTheDocument()
-        expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
-        expect(screen.getByText('스킬 2')).toBeInTheDocument()
-        expect(screen.getByText('트리플샷')).toBeInTheDocument()
-        expect(screen.getByText('33%')).toBeInTheDocument()
+        const links = screen.getAllByRole('link')
+        expect(links).toHaveLength(1)
+        expect(links[0]).toHaveAccessibleName('불의 전투도끼 경매 상세 보기')
+        expect(links[0]).toHaveAttribute('href', '/auctions/01J3AUCTION0001')
+        expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })
 
-    it('skill1이 없어도 skill2를 슬롯 2로 유지한다', () => {
-        renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        skill1: null,
-                        skill1Name: null,
-                    },
-                }}
-                now={NOW}
-            />,
+    it('이미지는 pointer 보조 상세 link를 가지며 접근성 트리에는 중복되지 않는다', () => {
+        const { container } = renderWithProviders(
+            <AuctionCard auction={baseAuction} now={NOW} />,
+        )
+        const artworkLink = container.querySelector(
+            '[data-card-hit-area="artwork"]',
         )
 
-        expect(screen.getAllByRole('listitem')[0]).toHaveAccessibleName(
-            '스킬 1 없음',
-        )
-        expect(screen.getByText('스킬 2')).toBeInTheDocument()
-        expect(screen.getByText('33%')).toHaveClass(
-            'item-skill-summary__percent',
-            'text-brand-highlight-deep',
-        )
-    })
-
-    it('스킬명이 없으면 코드로 중립 표기한다', () => {
-        renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        skill1Name: null,
-                        skill2Name: null,
-                    },
-                }}
-                now={NOW}
-            />,
-        )
-
-        expect(screen.getByText('스킬 #11')).toBeInTheDocument()
-        expect(screen.getByText('스킬 #22')).toBeInTheDocument()
-    })
-
-    it('스킬이 없으면 두 슬롯을 없음으로 표시한다', () => {
-        renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        skill1: null,
-                        skill2: null,
-                        skill1Name: null,
-                        skill2Name: null,
-                    },
-                }}
-                now={NOW}
-            />,
-        )
-
-        const skills = screen.getAllByRole('listitem')
-        expect(skills).toHaveLength(2)
-        expect(skills[0]).toHaveAccessibleName('스킬 1 없음')
-        expect(skills[1]).toHaveAccessibleName('스킬 2 없음')
-    })
-
-    it('활성 골드포스 잔여일을 카드 접근성 트리에 포함한다', () => {
-        renderWithProviders(
-            <AuctionCard
-                auction={{
-                    ...baseAuction,
-                    item: {
-                        ...baseAuction.item,
-                        goldforceExpireAt: '2026-07-24T00:00:00Z',
-                    },
-                }}
-                now={NOW}
-            />,
-        )
-
-        expect(screen.getByLabelText('골드포스 잔여 3일')).toBeInTheDocument()
-    })
-
-    it('카드 전체가 auctionPublicId 상세 링크다', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
-        const link = screen.getByRole('link', {
-            name: '불의 전투도끼 경매 상세 보기',
-        })
-        expect(link).toHaveAttribute('href', '/auctions/01J3AUCTION0001')
-    })
-
-    it('상세 링크와 비교 버튼을 형제 인터랙션으로 분리한다', () => {
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
-
-        const link = screen.getByRole('link', {
-            name: '불의 전투도끼 경매 상세 보기',
-        })
-        const compareButton = screen.getByRole('button', {
-            name: '불의 전투도끼 비교에 담기',
-        })
-
-        expect(link).not.toContainElement(compareButton)
-        expect(link.parentElement).toBe(
-            compareButton.parentElement?.parentElement?.parentElement,
-        )
-    })
-
-    it('비교 버튼 클릭은 링크 이동 없이 비교 상태만 토글한다', async () => {
-        const user = userEvent.setup()
-        useCompareStore.getState().clear()
-        renderWithProviders(<AuctionCard auction={baseAuction} now={NOW} />)
-
-        const compareButton = screen.getByRole('button', {
-            name: '불의 전투도끼 비교에 담기',
-        })
-        await user.click(compareButton)
-
-        expect(compareButton).toHaveAttribute('aria-pressed', 'true')
+        expect(artworkLink).toHaveAttribute('aria-hidden', 'true')
+        expect(artworkLink).toHaveAttribute('tabindex', '-1')
+        expect(artworkLink).toHaveAttribute('href', '/auctions/01J3AUCTION0001')
+        expect(artworkLink).toHaveClass('!inset-0')
         expect(
-            useCompareStore
-                .getState()
-                .items.some(
-                    (item) => item.listingId === baseAuction.auctionPublicId,
-                ),
-        ).toBe(true)
-        expect(screen.getByRole('link')).toHaveAttribute(
-            'href',
-            '/auctions/01J3AUCTION0001',
-        )
-        useCompareStore.getState().clear()
+            container.querySelector('[aria-label="입찰 3건"]'),
+        ).toHaveAttribute('title', '입찰 3건')
     })
 })

@@ -119,7 +119,7 @@ export default function AuctionListPage() {
         <div data-testid="auction-list-region" className="auction-list-region">
             <ListFrame
                 state={listState}
-                layout="auction"
+                layout="catalog"
                 label="경매 목록"
                 heading={
                     <header className="flex min-w-0 flex-wrap items-start justify-between gap-3">
@@ -205,7 +205,13 @@ export default function AuctionListPage() {
                         onLoadMore={() => void fetchNextPage()}
                     />
                 }
-                renderSkeleton={() => <ItemListSkeleton layout="auction" />}
+                renderSkeleton={() => (
+                    <ItemListSkeleton
+                        extendedFacts
+                        layout="catalog"
+                        artworkClassName="h-[296px]"
+                    />
+                )}
             >
                 {auctions.map((auction) => (
                     <AuctionCard

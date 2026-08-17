@@ -50,6 +50,19 @@ describe('workbench registry', () => {
         ).toHaveLength(6)
     })
 
+    it('registers 12 auction time display candidates in the real AppShell', async () => {
+        const scenario = WORKBENCH_SCENARIOS.find(
+            ({ id }) => id === 'auction-countdown-tags',
+        )!
+
+        expect(scenario.shell).toBe('app')
+        expect(scenario.routeContext).toBe(paths.auctions)
+        const module = await scenario.load()
+        expect(
+            (module.fixture as { variants: readonly unknown[] }).variants,
+        ).toHaveLength(12)
+    })
+
     it('keeps fixture overrides inside the semantic allowlist', async () => {
         const allowlist = new Set<string>(SEMANTIC_OVERRIDE_KEYS)
         for (const scenario of WORKBENCH_SCENARIOS) {

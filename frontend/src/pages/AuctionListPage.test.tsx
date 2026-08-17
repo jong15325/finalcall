@@ -105,6 +105,39 @@ describe('AuctionListPage 밝은 region', () => {
         )
         expect(readyRegion).toContainElement(screen.getByTestId('auction-card'))
         expect(readyRegion).toContainElement(screen.getByRole('status'))
+        expect(screen.getByRole('region', { name: '경매 목록' })).toHaveClass(
+            'grid-cols-2',
+            'gap-3',
+            'xs:grid-cols-3',
+            'min-[1200px]:grid-cols-6',
+        )
+    })
+
+    it('loading도 catalog grid와 296px artwork skeleton을 공유한다', () => {
+        mocks.browse.mockReturnValue({ ...baseQuery, isPending: true })
+        const { container } = renderPage()
+
+        const grid = container.querySelector('[aria-hidden="true"].grid')
+        expect(grid).toHaveClass(
+            'grid-cols-2',
+            'gap-3',
+            'xs:grid-cols-3',
+            'min-[1200px]:grid-cols-6',
+        )
+        expect(grid?.querySelector('.h-\\[296px\\]')).not.toBeNull()
+        expect(
+            grid?.querySelector('[data-skeleton-extended-facts]'),
+        ).not.toBeNull()
+        expect(grid?.querySelector('[data-skeleton-skills]')).toHaveClass(
+            'h-[98px]',
+            'grid-rows-2',
+        )
+        expect(
+            grid?.querySelector('[data-skeleton-auction-info-rail]'),
+        ).not.toBeNull()
+        expect(
+            grid?.querySelector('[data-skeleton-auction-info-rail] .border-y'),
+        ).toBeNull()
     })
 
     it('scene 바깥 뒤에 불투명 region을 두고 stacking/overflow context를 만들지 않는다', () => {

@@ -1,0 +1,105 @@
+.auction-time-display {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--chrome-fg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    pointer-events: none;
+}
+
+.auction-time-display--timecode {
+    padding: 0.125rem 0.5rem;
+    border: 1px solid var(--item-stage-line);
+    border-radius: var(--radius-sm);
+    background: var(--chrome-bg-strong);
+    box-shadow: var(--shadow-control);
+}
+
+.auction-time-display--quiet {
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+    color: var(--content-fg);
+    background: var(--content-surface);
+}
+
+.auction-time-display--bare {
+    padding-block: 0.125rem;
+    border-bottom: 1px solid var(--brand-highlight);
+    text-shadow: 0 1px 2px var(--chrome-bg-strong);
+}
+
+.auction-time-display__digits {
+    flex: 0 0 auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.auction-time-display__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.auction-info-rail {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.625rem;
+    border-top: 1px solid var(--item-stage-line);
+    color: var(--chrome-fg);
+    background: var(--chrome-bg-strong);
+    pointer-events: none;
+}
+
+.auction-info-rail--soft {
+    border-color: var(--brand-highlight-deep);
+    color: var(--content-fg);
+    background: var(--content-surface);
+}
+
+.auction-info-rail__group {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auction-time-catalog {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.auction-time-showcase {
+    width: 100%;
+    min-width: 0;
+    max-width: 21.375rem;
+}
+
+@media (min-width: 40rem) {
+    .auction-time-showcase {
+        max-width: 100%;
+    }
+}
+
+@media (min-width: 48rem) {
+    .auction-time-catalog {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 68.75rem) {
+    .auction-time-catalog {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

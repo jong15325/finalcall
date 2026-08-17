@@ -1,0 +1,77 @@
+.vuexy-badge {
+    box-sizing: border-box;
+    display: inline-flex;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    padding: 0.125rem 0.625rem;
+    border: 0 solid transparent;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.53846154;
+    white-space: nowrap;
+    color: var(--content-fg);
+    background: var(--content-soft);
+    box-shadow: none;
+}
+
+.vuexy-badge--medium {
+    min-width: 2rem;
+    height: 2rem;
+    padding-inline: 0.75rem;
+}
+
+.vuexy-badge--pill {
+    border-radius: 31.25rem;
+}
+
+.vuexy-badge--solid {
+    color: var(--chrome-fg);
+    background: var(--brand-structure);
+}
+
+.vuexy-badge--tonal {
+    color: var(--brand-highlight-deep);
+    background: var(--brand-highlight-soft);
+}
+
+.vuexy-badge--outlined {
+    padding: calc(0.125rem - 1px) calc(0.625rem - 1px);
+    border-width: 1px;
+    border-color: var(--brand-highlight);
+    color: var(--content-fg);
+    background: transparent;
+}
+
+.vuexy-badge__icon {
+    display: inline-flex;
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 1rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.vuexy-badge__icon > svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.vuexy-badge__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex: 0 0 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.vuexy-badge__label {
+    flex: 0 0 auto;
+    overflow: visible;
+    text-overflow: clip;
+}

@@ -13,11 +13,10 @@ export type ListFrameState =
     | { kind: 'ready' }
 
 export type ListLayoutPreset =
-    'catalog' | 'auction' | 'inventory' | 'preview' | 'two-column'
+    'catalog' | 'inventory' | 'preview' | 'two-column'
 
 const GRID_CLASS: Record<ListLayoutPreset, string> = {
     catalog: 'grid grid-cols-2 gap-3 xs:grid-cols-3 min-[1200px]:grid-cols-6',
-    auction: 'grid grid-cols-1 gap-4 xs:grid-cols-2 min-[1200px]:grid-cols-3',
     inventory: 'grid grid-cols-2 gap-2 xs:grid-cols-3 min-[1200px]:grid-cols-6',
     preview: 'grid grid-cols-2 gap-3 xs:grid-cols-3 md:grid-cols-6',
     'two-column': 'grid grid-cols-1 gap-4 min-[1000px]:grid-cols-2',
@@ -43,7 +42,7 @@ export function ListGrid({
         <Tag
             aria-label={label}
             aria-hidden={hidden || undefined}
-            className={GRID_CLASS[layout]}
+            className={`${GRID_CLASS[layout]} [&>*]:min-w-0`}
         >
             {children}
         </Tag>
@@ -79,10 +78,7 @@ export default function ListFrame({
     const loading = state.kind === 'loading'
 
     return (
-        <div
-            data-ui-list-frame="root"
-            className="flex min-w-0 flex-col gap-5"
-        >
+        <div data-ui-list-frame="root" className="flex min-w-0 flex-col gap-5">
             {heading}
             {filters}
             {resultBar}

@@ -13,6 +13,7 @@ import { COLOR_PALETTES } from './fixtures/colorSystem'
 import { WIND_PARTICLE_OPTIONS } from './fixtures/windParticles'
 import { WALLET_BALANCE_OPTIONS } from './fixtures/walletBalance'
 import { NAVIGATION_LAYOUT_VARIANTS } from './scenarioMetadata'
+import { auditAuctionCountdownLayout } from './scenarios/auctionCountdownLayout'
 import WorkbenchRoutes from './WorkbenchRoutes'
 
 beforeEach(() => {
@@ -636,6 +637,41 @@ describe('WorkbenchRoutes', () => {
             expect(
                 screen.getAllByRole('link', { name: /경매 상세 보기/ }),
             ).toHaveLength(6)
+        },
+    )
+
+    it.each([390, 1280])(
+        '%ipx 경매 시간 표시 게이트는 12개 후보를 실제 artwork에 표시한다',
+        async (width) => {
+            useViewport(width)
+            const view = renderWorkbench('/__design/auction-countdown-tags')
+            await screen.findByRole('heading', {
+                name: '경매 시간 표시 12안',
+            })
+
+            expect(view.getByTestId('app-content-plane')).toBeInTheDocument()
+            expect(
+                screen.getByRole('region', {
+                    name: '경매 시간 표시 후보',
+                }),
+            ).toHaveClass('auction-time-catalog')
+            expect(
+                view.container.querySelectorAll('[data-countdown-candidate]'),
+            ).toHaveLength(12)
+            expect(
+                screen.getAllByLabelText('진행중, 경매 마감까지 12분 48초'),
+            ).toHaveLength(12)
+            expect(
+                view.container.querySelectorAll('details[open]'),
+            ).toHaveLength(0)
+            const layout = auditAuctionCountdownLayout()
+            expect(layout.documentFits).toBe(true)
+            expect(layout.cardsFit).toBe(true)
+            expect(layout.badgesFit).toBe(true)
+            expect(layout.timeDisplaysFit).toBe(true)
+            expect(layout.cardCount).toBe(12)
+            expect(layout.badgeCount).toBe(12)
+            expect(layout.timeDisplayCount).toBe(13)
         },
     )
 })

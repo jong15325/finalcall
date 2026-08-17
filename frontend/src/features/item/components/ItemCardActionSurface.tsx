@@ -9,13 +9,16 @@ export default function ItemCardActionSurface({
     opensDialog = false,
     area = 'content',
     keyboard = true,
+    className = '',
 }: {
     action: ItemCardAction
     opensDialog?: boolean
     area?: 'content' | 'artwork' | 'control-gap' | 'footer'
     keyboard?: boolean
+    className?: string
 }) {
-    const className = `item-card__primary-action item-card__primary-action--${area} focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2`
+    const actionClassName =
+        `item-card__primary-action item-card__primary-action--${area} focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2 ${className}`.trim()
     const accessibility = keyboard
         ? { 'aria-label': action.label }
         : { 'aria-hidden': true as const, tabIndex: -1 }
@@ -26,7 +29,7 @@ export default function ItemCardActionSurface({
                 to={action.to}
                 {...accessibility}
                 data-card-hit-area={area}
-                className={className}
+                className={actionClassName}
             />
         )
     }
@@ -37,7 +40,7 @@ export default function ItemCardActionSurface({
             {...accessibility}
             data-card-hit-area={area}
             aria-haspopup={opensDialog ? 'dialog' : undefined}
-            className={className}
+            className={actionClassName}
             onClick={action.onPress}
         />
     )

@@ -99,6 +99,11 @@ export default function ItemCardView({
                             data-listing-price
                             className="item-card__market-price min-w-0"
                         >
+                            {item.price.label && (
+                                <span className="mb-1 block text-label font-medium text-content-muted">
+                                    {item.price.label}
+                                </span>
+                            )}
                             <CodeAmount
                                 value={item.price.amount}
                                 mode="full"
@@ -106,6 +111,7 @@ export default function ItemCardView({
                             />
                         </div>
                     )}
+                    {trailing}
                     {item.seller && (
                         <p
                             className="item-card__seller-row min-w-0 text-label text-content-subtle xs:text-xs"

@@ -40,7 +40,7 @@ describe('<ListFrame>', () => {
                     message: '잠시 후 다시 시도',
                     onRetry: retry,
                 }}
-                layout="auction"
+                layout="catalog"
                 label="경매 목록"
                 renderSkeleton={() => null}
             />,
@@ -55,7 +55,7 @@ describe('<ListFrame>', () => {
                     title: '결과가 없어요',
                     action: <button>초기화</button>,
                 }}
-                layout="auction"
+                layout="catalog"
                 label="경매 목록"
                 renderSkeleton={() => null}
             />,
