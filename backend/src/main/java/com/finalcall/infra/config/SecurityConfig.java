@@ -46,7 +46,7 @@ public class SecurityConfig {
                 //   아이디 가용성 조회도 회원가입 중 비로그인 호출이라 동일하게 permitAll(EPIC-LOGINID-CHECK v1.18).
                 .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/refresh",
                     "/api/v1/auth/oauth/**", "/api/v1/auth/nickname/availability",
-                    "/api/v1/auth/login-id/availability", "/actuator/**", "/error")
+                    "/api/v1/auth/login-id/availability", "/ws/chat", "/actuator/**", "/error")
                 .permitAll()
                 // 데모/참조(sample)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
                 //   (notice 참조 구현은 board 로 흡수·제거됨 — FC-201. 게시판 공개 경로는 아래 /api/v1/boards 참조.)

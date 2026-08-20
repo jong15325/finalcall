@@ -16,6 +16,21 @@ gateway:
   internal:
     secret: ${GATEWAY_INTERNAL_SECRET:finalcall-local-gateway-shared-secret-change-me}
 
+# FC-320: local frontend exact Origin. wildcard는 ChatRealtimeProperties 검증에서 부팅 실패한다.
+chat:
+  fast-path:
+    workers: ${CHAT_FAST_PATH_WORKERS:2}
+    queue-capacity: ${CHAT_FAST_PATH_QUEUE_CAPACITY:256}
+    shutdown-timeout: ${CHAT_FAST_PATH_SHUTDOWN_TIMEOUT:3s}
+  realtime:
+    allowed-origins: ${CHAT_ALLOWED_ORIGINS:http://localhost:5173}
+  kafka:
+    topic:
+      replication-factor: 1
+      min-in-sync-replicas: 1
+    consumer:
+      enabled: ${CHAT_KAFKA_CONSUMER_ENABLED:false}
+
 # FC-154(EPIC-OAUTH): 소셜 로그인 client-id/secret·redirect-uri 는 local 더미 기본값으로 부팅을 보장한다
 #   (@NotBlank 라 빈 값이면 부팅 실패 — 실키 없이도 컨텍스트가 뜨게 더미를 둔다. 라이브 교환은 실키 env 주입 시).
 #   redirect-uri 는 프론트 /oauth/callback 값과 동일(OAUTH_REDIRECT_URI). ★ 실 client-secret 은 커밋 금지·env only.
@@ -48,6 +63,9 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+  # FC-321: optional local CDC stack. 기본 app/test 부팅은 Kafka 없이 유지하고 full stack에서 명시 활성화한다.
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
 
 # FC-200(EPIC-BOARD): 게시글 이미지 스토리지 자격증명 — local MinIO 루트 계정(일회성 더미). ★ 시크릿은 커밋 금지 원칙이나
 #   로컬 MinIO 는 일회성 개발 계정이라 더미 기본값을 둔다(jwt.secret·gateway.internal.secret 선례). 운영 S3 는 이 값을

@@ -38,6 +38,20 @@ spring:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
     connection-timeout: 2s
     socket-timeout: 5s
+  # EPIC-CHAT(FC-321): 수동 ack는 Redis 재발행 성공 전에 consumer offset이 전진하지 않게 한다.
+  #   record 단위 listener라 실패 record만 nack/replay하고 Kafka auto commit은 금지한다.
+  kafka:
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        isolation.level: read_committed
+        max.poll.records: 50
+        allow.auto.create.topics: false
+    listener:
+      ack-mode: manual_immediate
   # EPIC-EMAIL-VERIFY(FC-130): 회원가입 이메일 인증 발송(JavaMailSender, 네이버 SMTP 465 SSL, spec §6.2).
   #   username/password 는 공통 yml 에 기본값을 두지 않는다 — 기본값을 두면 prod fail-fast 가 무력화된다(섹션 4).
   #   ★ 시크릿(비밀번호)은 커밋 금지 — 사용자가 env(MAIL_USERNAME/MAIL_PASSWORD)로만 주입한다(spec §6.2·섹션 2).
@@ -73,6 +87,15 @@ management:
       # 공통 태그. ★ 고카디널리티 금지: userId, path variable(/orders/{id}의 id), 요청 UUID 등
       #   고유값을 태그로 쓰지 말 것(시계열 카디널리티 폭발 → Prometheus 성능/저장 장애).
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        chat.message.persist.duration: true
+        chat.room.lock.wait.duration: true
+        chat.realtime.delivery.delay: true
+      slo:
+        chat.message.persist.duration: 200ms,500ms
+        chat.room.lock.wait.duration: 100ms
+        chat.realtime.delivery.delay: 500ms
   tracing:
     propagation:
       type: W3C            # 전파 포맷(W3C traceparent)
@@ -274,6 +297,47 @@ board:
 gateway:
   internal:
     enforced: ${GATEWAY_INTERNAL_ENFORCED:true}
+
+# EPIC-CHAT(FC-320): STOMP는 server→client best-effort push 전용이다. Redis session guard 장애는
+# node-local quota로 fail-open하며, WebSocket heartbeat보다 긴 lease TTL로 node crash 고아 lease를 정리한다.
+chat:
+  fast-path:
+    workers: ${CHAT_FAST_PATH_WORKERS:4}
+    queue-capacity: ${CHAT_FAST_PATH_QUEUE_CAPACITY:1024}
+    shutdown-timeout: ${CHAT_FAST_PATH_SHUTDOWN_TIMEOUT:5s}
+  # FC-326: 메시지 180일·신고 snapshot 3년·outbox 7일 보존. 각 tick은 데이터별 최대 batch-size만 삭제한다.
+  # outbox는 최신 CDC checkpoint와 (7일+1일) 이상의 MySQL binlog 여유가 모두 확인될 때만 삭제한다.
+  retention:
+    enabled: ${CHAT_RETENTION_ENABLED:true}
+    fixed-delay-ms: ${CHAT_RETENTION_FIXED_DELAY_MS:60000}
+    batch-size: ${CHAT_RETENTION_BATCH_SIZE:200}
+    message-age: 180d
+    report-age: 1095d
+    outbox-age: 7d
+    cdc-checkpoint-max-age: 5m
+    binlog-safety-margin: 1d
+  realtime:
+    connect-timeout: 5s
+    heartbeat-interval: 10s
+    inactivity-timeout: 30s
+    socket-lease-ttl: 45s
+    max-sockets-per-user: 3
+    connect-rate-per-minute: 20
+  # FC-321: production topic 전제는 replica 3/min ISR 2, metadata 7일 보존이다.
+  #   local 단일 broker 값은 application-local.yml에서만 1/1로 내린다.
+  kafka:
+    topic:
+      name: finalcall.chat.events.v1
+      partitions: ${CHAT_KAFKA_TOPIC_PARTITIONS:12}
+      replication-factor: ${CHAT_KAFKA_TOPIC_REPLICATION_FACTOR:3}
+      min-in-sync-replicas: ${CHAT_KAFKA_TOPIC_MIN_ISR:2}
+      retention: 7d
+    consumer:
+      enabled: false
+      group-id: finalcall-chat-fanout-v1
+      retry-backoff: 1s
+      monitor-interval: 10s
+      monitor-timeout: 5s
 
 # 주의: app.* 값은 공통에 두지 않는다. 프로파일별(application-<profile>.yml)에서 주입한다.
 #       공통에 기본값을 두면 prod 도 상속받아 fail-fast 가 무력화되기 때문.

@@ -25,6 +25,7 @@ class HmacTokenProviderUnitTest {
         assertThat(claims.userId()).isEqualTo("42");
         assertThat(claims.publicId()).isEqualTo("01HXPUBLICID0000000000000A");
         assertThat(claims.admin()).isTrue();
+        assertThat(claims.expiresAt()).isAfter(java.time.Instant.now().plusSeconds(29 * 60L));
     }
 
     @Test

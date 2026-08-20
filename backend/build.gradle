@@ -22,6 +22,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	// Stage 2: @ConfigurationProperties 의 @Validated/@NotBlank 검증을 실제 동작시키기 위한 Bean Validation
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	// Stage 4: 구조화 로깅 + 분산추적
@@ -46,6 +47,8 @@ dependencies {
 	// Stage E1: Redis — 캐시=Lettuce, 분산락=Redisson 역할 분담(Redisson 을 캐시 백엔드로 쓰지 않음)
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'  // Lettuce, 캐시/기본 연산
 	implementation 'org.springframework.boot:spring-boot-starter-cache'       // Spring Cache 추상화
+	// EPIC-CHAT(FC-321): Debezium outbox metadata를 소비해 Redis broadcast로 복구하는 Kafka adapter.
+	implementation 'org.springframework.kafka:spring-kafka'
 	// 분산락 전용. starter 대신 코어 라이브러리를 쓴다: redisson-spring-boot-starter 는 커넥션 팩토리를
 	// Redisson 으로 교체해 Lettuce 를 밀어내므로("캐시=Lettuce" 규칙 위배), 코어만 넣고 RedissonClient 만 직접 등록.
 	implementation 'org.redisson:redisson:3.50.0'
@@ -57,6 +60,7 @@ dependencies {
 	implementation 'io.github.resilience4j:resilience4j-micrometer:2.3.0'      // 메트릭을 Stage 5 Prometheus 로 노출
 	// Stage F1: 보안(JWT 인증 뼈대)
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.security:spring-security-messaging'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'

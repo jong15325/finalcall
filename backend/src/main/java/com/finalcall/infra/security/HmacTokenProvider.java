@@ -71,6 +71,7 @@ public class HmacTokenProvider implements TokenProvider {
         return new TokenClaims(
             payload.getSubject(),
             payload.get(CLAIM_PUBLIC_ID, String.class),
-            Boolean.TRUE.equals(payload.get(CLAIM_IS_ADMIN, Boolean.class)));
+            Boolean.TRUE.equals(payload.get(CLAIM_IS_ADMIN, Boolean.class)),
+            payload.getExpiration().toInstant());
     }
 }

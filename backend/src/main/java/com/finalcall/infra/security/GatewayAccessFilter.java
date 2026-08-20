@@ -1,8 +1,9 @@
 package com.finalcall.infra.security;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,10 +36,12 @@ public class GatewayAccessFilter extends OncePerRequestFilter {
 
     private final GatewayInternalProperties properties;
     private final ObjectMapper objectMapper;
+    private final byte[] expectedSecret;
 
     public GatewayAccessFilter(GatewayInternalProperties properties, ObjectMapper objectMapper) {
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.expectedSecret = properties.secret().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -54,12 +57,19 @@ public class GatewayAccessFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
         throws ServletException, IOException {
         String token = request.getHeader(properties.header());
-        if (!StringUtils.hasText(token) || !properties.secret().equals(token)) {
+        if (!matchesSecret(token)) {
             log.warn("[GatewayAccess] 직접접근 차단 — 공유비밀 불일치/부재. uri={}", request.getRequestURI());
             writeForbidden(response);
             return;
         }
         chain.doFilter(request, response);
+    }
+
+    private boolean matchesSecret(String actualSecret) {
+        byte[] actual = actualSecret == null
+            ? new byte[0]
+            : actualSecret.getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(expectedSecret, actual);
     }
 
     private void writeForbidden(HttpServletResponse response) throws IOException {

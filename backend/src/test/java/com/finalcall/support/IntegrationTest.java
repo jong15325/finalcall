@@ -39,7 +39,8 @@ import org.springframework.test.web.servlet.MockMvc;
 //   BoardImageStorageIntegrationTest 가 전담하고, 바인딩·인가는 StoragePort 를 @MockBean 으로 대체해 검증한다.
 @TestPropertySource(properties = {
     "gateway.internal.enforced=false", "closing.worker.enabled=false", "shop.expiry.worker.enabled=false",
-    "delivery.worker.enabled=false", "demo.seed.enabled=false", "search.reconciliation.enabled=false",
+    "delivery.worker.enabled=false", "chat.retention.enabled=false", "demo.seed.enabled=false",
+    "search.reconciliation.enabled=false",
     "search.reindex-on-startup=false", "management.health.elasticsearch.enabled=false",
     "board.image.storage.ensure-bucket-on-startup=false"})
 public abstract class IntegrationTest {
