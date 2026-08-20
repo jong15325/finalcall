@@ -33,3 +33,12 @@
 - passed (2026-08-20)
 - job-level `runner.*`를 제거하고 checkout 직후 `$RUNNER_TEMP` 기반 경로를 `$GITHUB_ENV`로 전달하도록 보정했다.
 - actionlint v1.7.7과 reviewer context 위치 재감사에서 critical/major/minor 0건을 확인했다.
+
+## 원격 실행 재개
+- workflow dispatch와 parse는 성공했으나 Linux checkout에서 `gradlew` 실행 비트가 없어 bootJar 단계가 exit 126으로 실패했다.
+- 실제 인프라·부하 단계는 시작되지 않았으며 파일 모드 비의존 실행으로 보정한다.
+
+## Linux 파일 모드 보정 재리뷰
+- passed (2026-08-20)
+- `bash ./gradlew`로 실행 비트 의존을 제거했고 저장소의 shell/python/PowerShell 호출이 모두 명시적 interpreter를 사용하는지 확인했다.
+- reviewer critical/major 0건, actionlint·Gradle dry-run 통과.
