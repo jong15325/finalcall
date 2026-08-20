@@ -1,0 +1,307 @@
+name: Chat performance diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "diagnostic은 GitHub-hosted, extended는 전용 self-hosted runner에서만 실행"
+        required: true
+        default: diagnostic
+        type: choice
+        options:
+          - diagnostic
+          - extended
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chat-performance
+  cancel-in-progress: false
+
+jobs:
+  performance:
+    runs-on: ${{ inputs.profile == 'extended' && fromJSON('["self-hosted","linux","chat-performance"]') || 'ubuntu-latest' }}
+    timeout-minutes: ${{ inputs.profile == 'extended' && 90 || 45 }}
+    env:
+      COMPOSE_FILE: backend/docker-compose.local.yml
+      RUN_DIR: ${{ runner.temp }}/chat-performance
+      FIXTURE_FILE: ${{ runner.temp }}/chat-performance/fixture.json
+      SOCKET_FIXTURE_FILE: ${{ runner.temp }}/chat-performance/socket-fixture.json
+      RAW_LOG_DIR: ${{ runner.temp }}/chat-performance/raw
+      ARTIFACT_DIR: ${{ runner.temp }}/chat-performance/artifact
+      RESULT_DIR: ${{ runner.temp }}/chat-performance/artifact/k6
+      BACKEND_JAR: ${{ github.workspace }}/backend/build/libs/backend-0.0.1-SNAPSHOT.jar
+      GATEWAY_JAR: ${{ github.workspace }}/backend/gateway/build/libs/gateway-0.0.1-SNAPSHOT.jar
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-java@v4.7.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: 런타임 비밀 생성
+        shell: bash
+        run: |
+          set -euo pipefail
+          jwt_secret="$(openssl rand -hex 48)"
+          gateway_secret="$(openssl rand -hex 48)"
+          load_password="$(openssl rand -hex 24)Aa1!"
+          echo "::add-mask::$jwt_secret"
+          echo "::add-mask::$gateway_secret"
+          echo "::add-mask::$load_password"
+          {
+            echo "JWT_SECRET=$jwt_secret"
+            echo "GATEWAY_INTERNAL_SECRET=$gateway_secret"
+            echo "CHAT_LOAD_PASSWORD=$load_password"
+          } >> "$GITHUB_ENV"
+
+      - name: 전용 프로젝트 잔여 상태 정리와 runner 전제 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$RUNNER_TEMP/chat-performance"
+          [[ "$RUN_DIR" == "$expected" ]]
+          if [[ -d "$RUN_DIR" ]]; then
+            find "$RUN_DIR" -depth -delete
+          fi
+          docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" \
+            down --volumes --remove-orphans || true
+          if [[ '${{ inputs.profile }}' == 'extended' ]]; then
+            fd_limit="$(ulimit -n)"
+            memory_kib="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+            docker_cpus="$(docker info --format '{{.NCPU}}')"
+            docker_memory="$(docker info --format '{{.MemTotal}}')"
+            echo "extended runner prerequisite: fd=$fd_limit memoryKiB=$memory_kib dockerCpu=$docker_cpus dockerMemory=$docker_memory"
+            if [[ "$fd_limit" != unlimited ]]; then
+              [[ "$fd_limit" =~ ^[0-9]+$ ]] || { echo 'RUNNER_PREREQUISITE_FAILED: ulimit -n 값이 숫자나 unlimited가 아닙니다.' >&2; exit 1; }
+              (( fd_limit >= 65536 )) || { echo 'RUNNER_PREREQUISITE_FAILED: ulimit -n은 65536 이상이어야 합니다.' >&2; exit 1; }
+            fi
+            (( memory_kib >= 16777216 )) || { echo 'RUNNER_PREREQUISITE_FAILED: runner memory는 16GiB 이상이어야 합니다.' >&2; exit 1; }
+            (( docker_cpus >= 8 )) || { echo 'RUNNER_PREREQUISITE_FAILED: Docker CPU는 8개 이상이어야 합니다.' >&2; exit 1; }
+            (( docker_memory >= 17179869184 )) || { echo 'RUNNER_PREREQUISITE_FAILED: Docker memory는 16GiB 이상이어야 합니다.' >&2; exit 1; }
+          fi
+
+      - name: bootJar 빌드
+        run: ./gradlew :backend:bootJar :backend:gateway:bootJar
+
+      - name: k6 0.57.0 설치
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://github.com/grafana/k6/releases/download/v0.57.0/k6-v0.57.0-linux-amd64.tar.gz \
+            --output "$RUNNER_TEMP/k6.tar.gz"
+          echo "49b1072c29d3682a1ea2ec98df9d17f2bd1cfabb27c1c5e01050766848925c74  $RUNNER_TEMP/k6.tar.gz" | \
+            sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/k6.tar.gz" -C "$RUNNER_TEMP"
+          echo "K6_BIN=$RUNNER_TEMP/k6-v0.57.0-linux-amd64/k6" >> "$GITHUB_ENV"
+
+      - name: 필수 인프라 기동과 health 대기
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RAW_LOG_DIR" "$ARTIFACT_DIR" "$RESULT_DIR"
+          touch "$RAW_LOG_DIR/app1.log" "$RAW_LOG_DIR/app2.log" \
+            "$RAW_LOG_DIR/gateway1.log" "$RAW_LOG_DIR/gateway2.log" \
+            "$RAW_LOG_DIR/compose.log" "$RAW_LOG_DIR/connector-status.json"
+          docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" up -d --build \
+            mysql redis kafka chat-kafka-topic-init chat-kafka-connect chat-outbox-connector-init minio
+          deadline=$((SECONDS + 300))
+          healthy=false
+          while (( SECONDS < deadline )); do
+            ps_json="$(docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" \
+              ps --all --format json)"
+            if jq -s -e --argjson required '["mysql","redis","kafka","chat-kafka-connect","minio"]' '
+              [.. | objects | select(has("Service"))] as $rows
+              | ([$rows[] | select(.Service as $service | $required | index($service))] | length) == 5
+              and all($required[]; . as $service
+                | any($rows[]; .Service == $service and .State == "running" and .Health == "healthy"))
+            ' <<< "$ps_json" >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 5
+          done
+          [[ "$healthy" == true ]] || {
+            docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" ps --all
+            exit 1
+          }
+
+          init_ready=false
+          for attempt in {1..60}; do
+            state="$(docker inspect --format '{{.State.Status}} {{.State.ExitCode}}' finalcall-chat-outbox-connector-init 2>/dev/null || true)"
+            if [[ "$state" == 'exited 0' ]]; then
+              init_ready=true
+              break
+            fi
+            [[ "$state" == exited\ * && "$state" != 'exited 0' ]] && break
+            sleep 2
+          done
+          [[ "$init_ready" == true ]] || { echo 'chat-outbox-connector-init가 성공 종료하지 않았습니다.' >&2; exit 1; }
+
+          connector_ready=false
+          for attempt in {1..60}; do
+            if curl --fail --silent http://localhost:8084/connectors/finalcall-chat-outbox-source/status \
+              --output "$RAW_LOG_DIR/connector-status.json"; then
+              if jq -e '.connector.state == "RUNNING" and (.tasks | length) > 0 and all(.tasks[]; .state == "RUNNING")' \
+                "$RAW_LOG_DIR/connector-status.json" >/dev/null; then
+                connector_ready=true
+                break
+              fi
+            fi
+            sleep 2
+          done
+          [[ "$connector_ready" == true ]] || { echo 'chat outbox connector 또는 task가 RUNNING이 아닙니다.' >&2; exit 1; }
+
+      - name: app과 gateway 2개 기동
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DB_URL=jdbc:mysql://localhost:3306/finalcall DB_USERNAME=finalcall DB_PASSWORD=finalcall
+          export REDIS_HOST=localhost REDIS_PORT=6379 KAFKA_BOOTSTRAP_SERVERS=localhost:29092
+          export CHAT_KAFKA_CONSUMER_ENABLED=true DEMO_SEED_ENABLED=false
+          export SEARCH_REINDEX_ON_STARTUP=false SEARCH_RECONCILIATION_CORRECT_ON_DRIFT=false
+          export MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED=false MANAGEMENT_HEALTH_MAIL_ENABLED=false
+          export BOARD_IMAGE_STORAGE_ENSURE_BUCKET_ON_STARTUP=false
+          backend_jar="$(realpath "$BACKEND_JAR")"
+          gateway_jar="$(realpath "$GATEWAY_JAR")"
+          [[ -f "$backend_jar" && "$backend_jar" == "$BACKEND_JAR" ]]
+          [[ -f "$gateway_jar" && "$gateway_jar" == "$GATEWAY_JAR" ]]
+          nohup java -Xms768m -Xmx768m -jar "$backend_jar" \
+            --spring.profiles.active=local --server.port=18088 > "$RAW_LOG_DIR/app1.log" 2>&1 &
+          echo $! > "$RUN_DIR/app1.pid"
+          nohup java -Xms768m -Xmx768m -jar "$backend_jar" \
+            --spring.profiles.active=local --server.port=18089 > "$RAW_LOG_DIR/app2.log" 2>&1 &
+          echo $! > "$RUN_DIR/app2.pid"
+          nohup java -Xms384m -Xmx384m -jar "$gateway_jar" \
+            --spring.profiles.active=local --server.port=18090 --service.uri=http://localhost:18088 \
+            --service.ws-uri=ws://localhost:18088 --gateway.client-ip.trusted-proxy-count=1 \
+            > "$RAW_LOG_DIR/gateway1.log" 2>&1 &
+          echo $! > "$RUN_DIR/gateway1.pid"
+          nohup java -Xms384m -Xmx384m -jar "$gateway_jar" \
+            --spring.profiles.active=local --server.port=18091 --service.uri=http://localhost:18089 \
+            --service.ws-uri=ws://localhost:18089 --gateway.client-ip.trusted-proxy-count=1 \
+            > "$RAW_LOG_DIR/gateway2.log" 2>&1 &
+          echo $! > "$RUN_DIR/gateway2.pid"
+          for port in 18088 18089 18090 18091; do
+            for attempt in {1..90}; do
+              curl --fail --silent "http://localhost:$port/actuator/health" >/dev/null && break
+              [[ "$attempt" -eq 90 ]] && exit 1
+              sleep 2
+            done
+          done
+
+      - name: fresh fixture 생성
+        shell: pwsh
+        run: |
+          ./scripts/chat/prepare-chat-load-fixtures.ps1 `
+            -UserCount 800 -BaseUrl http://localhost:18090 -OutputPath $env:FIXTURE_FILE
+          if ('${{ inputs.profile }}' -eq 'extended') {
+            $env:CHAT_JWT_SECRET = $env:JWT_SECRET
+            ./scripts/chat/prepare-chat-socket-fixtures.ps1 `
+              -UserCount 6667 -ExpiresInHours 2 -OutputPath $env:SOCKET_FIXTURE_FILE
+          }
+
+      - name: 단계 부하 실행
+        shell: bash
+        env:
+          CHAT_FIXTURE_FILE: ${{ runner.temp }}/chat-performance/fixture.json
+          CHAT_SOCKET_FIXTURE_FILE: ${{ runner.temp }}/chat-performance/socket-fixture.json
+          CHAT_RESULT_DIR: ${{ runner.temp }}/chat-performance/artifact/k6
+          CHAT_BASE_URLS: http://localhost:18090,http://localhost:18091
+        run: bash scripts/chat/run-linux-ci-load.sh '${{ inputs.profile }}'
+
+      - name: 로그와 핵심 metric 수집·redaction
+        id: collection
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RAW_LOG_DIR" "$ARTIFACT_DIR/logs" "$ARTIFACT_DIR/metrics"
+          raw_sources=(app1.log app2.log gateway1.log gateway2.log compose.log connector-status.json)
+          for name in "${raw_sources[@]}"; do
+            touch "$RAW_LOG_DIR/$name"
+          done
+          docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" logs --no-color \
+            > "$RAW_LOG_DIR/compose.log" 2>&1 || true
+          for port in 18088 18089; do
+            curl --silent "http://localhost:$port/actuator/prometheus" | \
+              grep -E '^(hikaricp_connections_(acquire|usage|pending)|chat_fast_path_|chat_redis_publish|chat_kafka_consumer_lag)' \
+              > "$ARTIFACT_DIR/metrics/app-$port.prom" || true
+          done
+          printf '%s\n' "${raw_sources[@]}" | sort > "$ARTIFACT_DIR/redaction-source-manifest.txt"
+          for name in "${raw_sources[@]}"; do
+            python3 scripts/chat/redact-ci-log.py "$RAW_LOG_DIR/$name" "$ARTIFACT_DIR/logs/$name"
+          done
+          find "$ARTIFACT_DIR/logs" -maxdepth 1 -type f -printf '%f\n' | sort \
+            > "$ARTIFACT_DIR/redaction-artifact-manifest.txt"
+          diff --unified "$ARTIFACT_DIR/redaction-source-manifest.txt" \
+            "$ARTIFACT_DIR/redaction-artifact-manifest.txt"
+          source_count="$(wc -l < "$ARTIFACT_DIR/redaction-source-manifest.txt")"
+          artifact_count="$(wc -l < "$ARTIFACT_DIR/redaction-artifact-manifest.txt")"
+          (( source_count > 0 && source_count == artifact_count ))
+
+      - name: artifact 비밀 검사
+        id: secret-scan
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ ! -e "$ARTIFACT_DIR/fixture.json" ]]
+          if grep -R -I -q -E 'Authorization|Bearer[[:space:]]+[A-Za-z0-9._-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' "$ARTIFACT_DIR"; then
+            echo "artifact에서 민감 인증 패턴을 발견했습니다." >&2
+            exit 1
+          fi
+          for name in JWT_SECRET GATEWAY_INTERNAL_SECRET CHAT_LOAD_PASSWORD; do
+            value="${!name}"
+            if grep -R -I -q -F -- "$value" "$ARTIFACT_DIR"; then
+              echo "artifact에서 runtime secret을 발견했습니다." >&2
+              exit 1
+            fi
+          done
+
+      - name: 검증 artifact 업로드
+        if: always() && steps.collection.outcome == 'success' && steps.secret-scan.outcome == 'success'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: chat-performance-${{ inputs.profile }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/chat-performance/artifact
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: teardown
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          stop_owned_process() {
+            local pid_file="$1" expected_jar="$2" expected_port="$3"
+            [[ -e "$pid_file" ]] || return 0
+            local pid
+            pid="$(cat "$pid_file")"
+            [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/cmdline" ]] || return 0
+            local cmdline
+            cmdline="$(tr '\0' ' ' < "/proc/$pid/cmdline")"
+            if [[ "$cmdline" != *"$expected_jar"* || "$cmdline" != *"--server.port=$expected_port"* ]]; then
+              echo "PID ownership 검증 실패로 종료하지 않습니다: pid=$pid port=$expected_port" >&2
+              return 1
+            fi
+            kill -TERM "$pid" 2>/dev/null || return 0
+            for attempt in {1..20}; do
+              kill -0 "$pid" 2>/dev/null || return 0
+              sleep 1
+            done
+            kill -KILL "$pid" 2>/dev/null || true
+          }
+          teardown_failed=false
+          stop_owned_process "$RUN_DIR/app1.pid" "$BACKEND_JAR" 18088 || teardown_failed=true
+          stop_owned_process "$RUN_DIR/app2.pid" "$BACKEND_JAR" 18089 || teardown_failed=true
+          stop_owned_process "$RUN_DIR/gateway1.pid" "$GATEWAY_JAR" 18090 || teardown_failed=true
+          stop_owned_process "$RUN_DIR/gateway2.pid" "$GATEWAY_JAR" 18091 || teardown_failed=true
+          docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" \
+            down --volumes --remove-orphans || teardown_failed=true
+          rm -f "$FIXTURE_FILE" "$SOCKET_FIXTURE_FILE"
+          [[ "$teardown_failed" == false ]]

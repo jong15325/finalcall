@@ -40,7 +40,7 @@ docker run --rm -i `
 단계 부하는 먼저 `CHAT_SOCKET_VUS=100`, `1,000`, `5,000`으로 올린 뒤 20,000을 실행한다. 순수 연결
 용량 측정은 `CHAT_SOCKETS_PER_USER=1`, 사용자당 최대 quota도 함께 검증할 때는 계약 상한인 `3`을 사용한다. 쓰기도
 `CHAT_SUSTAINED_RATE=50`, `150`, `300`과 `CHAT_BURST_RATE=300`, `600`, `1,000` 순서로 올린다.
-한 단계에서 socket 연결 성공률 99%, write 성공률 99%, DB p95 200ms/p99 500ms 또는 호스트 CPU·메모리
+한 단계에서 socket 연결 성공률 99% 초과, write 성공률 99% 초과, DB p95 200ms/p99 500ms 또는 호스트 CPU·메모리
 한도를 넘으면 다음 단계로 외삽하지 않고 병목을 기록한다.
 
 장애 창은 별도 셸에서 실행한다. 스크립트는 명시한 컨테이너 하나만 pause/unpause하며 `finally`에서 복구한다.
@@ -55,6 +55,35 @@ docker run --rm -i `
 Redis/Kafka/Connect 중단 중에도 REST 201 row 수와 outbox row 수가 일치해야 한다. 복구 뒤 connector lag가
 0으로 수렴하고 같은 `eventId`가 중복 수신돼도 클라이언트 timeline은 `roomSequence` 기준 한 행이어야 한다.
 실행 결과 JSON은 `k6 run --summary-export <경로>`로 작업 외부에 저장하고 시크릿 fixture는 삭제한다.
+
+## Linux CI 성능 진단
+
+`.github/workflows/chat-performance.yml`은 `workflow_dispatch`로만 실행한다. 기본 `diagnostic`은
+GitHub-hosted Linux runner에서 2 gateway/2 app 클러스터 합산 기준으로 10/s warmup 후 50→150→300/s를 실행하며,
+한 단계라도 실패하면 다음 단계로 진행하지 않는다. keep-alive와 fixture별 client IP 통제가 기본값이다.
+
+`extended`는 `self-hosted`, `linux`, `chat-performance` 라벨을 모두 가진 전용 runner에서만 선택할 수 있다.
+공유 runner에서는 300/s 5분, 1,000/s burst, 20,000 socket 단계를 실행하지 않는다. 전용 runner에는 Docker,
+Java 21, PowerShell, curl, jq, Python 3, `ulimit -n` 65,536 이상, CPU 8개 이상, runner/Docker memory 16GiB 이상이
+준비돼 있어야 한다. socket은 100→1,000→5,000→20,000 순서로 실행하고 각 단계 실패 시 즉시 중단한다.
+전용 runner는 작업마다 폐기되는 ephemeral 구성을 권장한다. persistent runner라면 workflow 강제 종료 뒤 외부 workspace와
+Docker 자원 및 이전 app/gateway process 정리는 runner 운영자가 보장해야 한다. workflow 시작 시 stale PID 파일은 종료에
+사용하지 않고 전용 temp guard 아래에서 삭제한다. 종료 시에는 PID의 `/proc` command line이 예상 절대 jar 경로와 port에 모두
+일치할 때만 TERM 후 bounded wait/KILL한다. Compose는 모든 명령에 전용 project name
+`finalcall-chat-performance`를 사용한다. workflow는 이 project와 `runner.temp/chat-performance`만 정리하며 다른
+project·process·경로는 삭제하지 않는다.
+
+workflow는 runtime secret을 매번 생성·mask하고 fixture를 runner 임시 디렉터리에만 둔다. k6 summary, redaction된
+app/gateway/compose log와 핵심 actuator metric만 7일 artifact로 보존하며 fixture와 token은 업로드하지 않는다.
+로컬에서 동일 단계만 확인할 때는 다음처럼 실행한다.
+
+```bash
+CHAT_FIXTURE_FILE=/secure/fixture.json \
+CHAT_RESULT_DIR=/tmp/chat-results \
+CHAT_BASE_URLS=http://localhost:18090,http://localhost:18091 \
+K6_BIN=/opt/k6-v0.57.0/k6 \
+bash scripts/chat/run-linux-ci-load.sh diagnostic
+```
 
 ## FC-327 CDC 실제 장애 자동 검증
 
