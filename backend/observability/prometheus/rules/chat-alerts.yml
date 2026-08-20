@@ -1,0 +1,96 @@
+groups:
+  - name: finalcall-chat-recording
+    rules:
+      - record: chat_event_pipeline_head_lag_seconds
+        expr: max(max(chat_kafka_consumer_lag_duration_seconds) or max(chat_debezium_source_lag_seconds))
+
+  - name: finalcall-chat-alerts
+    rules:
+      - alert: ChatPersistP95High
+        expr: histogram_quantile(0.95, sum by (le) (rate(chat_message_persist_duration_seconds_bucket[5m]))) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 메시지 DB 저장 p95가 200ms를 초과했습니다.
+      - alert: ChatPersistP99High
+        expr: histogram_quantile(0.99, sum by (le) (rate(chat_message_persist_duration_seconds_bucket[5m]))) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 채팅 메시지 DB 저장 p99가 500ms를 초과했습니다.
+      - alert: ChatRoomLockWaitHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(chat_room_lock_wait_duration_seconds_bucket[5m]))) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅방 행 잠금 대기 p95가 100ms를 초과했습니다.
+      - alert: ChatRoomDeadlockDetected
+        expr: increase(chat_room_lock_deadlocks_total[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: 채팅방 transaction deadlock이 발생했습니다.
+      - alert: ChatPipelineHeadLagWarning
+        expr: chat_event_pipeline_head_lag_seconds > 30
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 CDC pipeline head lag가 30초를 초과했습니다.
+      - alert: ChatPipelineHeadLagCritical
+        expr: chat_event_pipeline_head_lag_seconds > 300
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 채팅 CDC pipeline head lag가 5분을 초과했습니다.
+      - alert: ChatKafkaConsumerLag
+        expr: max(chat_kafka_consumer_lag) > 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 Kafka consumer group lag가 30초 동안 해소되지 않았습니다.
+      - alert: ChatKafkaLagCollectionFailed
+        expr: increase(chat_kafka_consumer_lag_collection_failures_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 Kafka consumer group lag 수집에 실패했습니다.
+      - alert: ChatDebeziumConnectorDown
+        expr: absent(chat_debezium_connector_connected) or max(chat_debezium_connector_connected) == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 채팅 Debezium connector가 없거나 MySQL 연결을 잃었습니다.
+      - alert: ChatRedisPublishFailureRatioHigh
+        expr: sum(rate(chat_redis_publish_total{result="failed"}[5m])) / clamp_min(sum(rate(chat_redis_publish_total[5m])), 0.001) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 Redis publish 실패율이 1%를 초과했습니다.
+      - alert: ChatWebSocketAbnormalCloseRatioHigh
+        expr: sum(rate(chat_websocket_closes_total{reason!="normal"}[5m])) / clamp_min(sum(rate(chat_websocket_closes_total[5m])), 0.001) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 WebSocket 비정상 종료율이 5%를 초과했습니다.
+      - alert: ChatWebSocketSendBufferExceeded
+        expr: increase(chat_websocket_send_buffer_exceeded_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 느린 채팅 client가 WebSocket send buffer 상한을 초과했습니다.
+      - alert: ChatGatewayHandshakeRateLimited
+        expr: sum(rate(spring_cloud_gateway_requests_seconds_count{routeId="chat-ws",httpStatusCode="429"}[2m])) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 채팅 WebSocket handshake 429가 급증했습니다.

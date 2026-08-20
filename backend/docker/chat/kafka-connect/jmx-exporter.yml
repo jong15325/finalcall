@@ -1,0 +1,18 @@
+startDelaySeconds: 0
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+
+rules:
+  - pattern: 'debezium.mysql<type=connector-metrics, context=streaming, server=finalcall-chat-outbox><>MilliSecondsBehindSource'
+    name: chat_debezium_source_lag_seconds
+    help: Debezium이 MySQL source event를 처리하기까지의 지연
+    valueFactor: 0.001
+    type: GAUGE
+  - pattern: 'debezium.mysql<type=connector-metrics, context=streaming, server=finalcall-chat-outbox><>Connected'
+    name: chat_debezium_connector_connected
+    help: 채팅 Debezium connector의 MySQL 연결 상태
+    type: GAUGE
+  - pattern: 'debezium.mysql<type=connector-metrics, context=streaming, server=finalcall-chat-outbox><>NumberOfCommittedTransactions'
+    name: chat_debezium_committed_transactions_total
+    help: 채팅 Debezium connector가 관측한 committed transaction 수
+    type: COUNTER

@@ -20,6 +20,7 @@ services:
       - "9090:9090"
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules:/etc/prometheus/rules:ro
       - finalcall-prometheus-data:/prometheus
     # 컨테이너 → 호스트(앱) 접근을 위해 host.docker.internal 를 host-gateway 로 매핑(Linux 대응, Docker Desktop 은 자동).
     extra_hosts:

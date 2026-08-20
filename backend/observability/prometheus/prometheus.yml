@@ -2,6 +2,9 @@
 global:
   scrape_interval: 10s          # 개발용 적정값(5~15s). 운영은 부하/보존 고려해 조정.
 
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
 scrape_configs:
   - job_name: 'finalcall'
     metrics_path: '/actuator/prometheus'
@@ -9,3 +12,8 @@ scrape_configs:
       # ★ 앱은 컴포즈 밖(호스트)에서 실행되므로 host.docker.internal 로 호스트에 접근한다.
       - targets: ['host.docker.internal:8080']
     # ★ prod 에서는 management 포트 분리(Stage 5, 8081)에 맞춰 target 포트를 8081 로 조정하라.
+
+  - job_name: 'finalcall-chat-debezium'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:9404']

@@ -40,6 +40,8 @@ services:
       - --server-id=1
       - --gtid-mode=ON
       - --enforce-gtid-consistency=ON
+      # FC-321: outbox/Kafka 7일 보존보다 긴 14일 binlog 여유로 Connect 중단 backlog를 재생한다.
+      - --binlog-expire-logs-seconds=1209600
       # ★ 운영 인스턴스 스펙 시뮬레이션(기본 무제한). 로컬 Docker 는 호스트 리소스를 다 써서
       #   "로컬은 되는데 작은 RDS 에선 커넥션 부족" 괴리가 생긴다. 타깃 인스턴스가 정해지면 주석을 풀어 시뮬레이션하라.
       #   예) db.t3.micro(1GB): max_connections≈66, buffer_pool 256M
@@ -116,6 +118,7 @@ services:
     container_name: finalcall-kafka
     ports:
       - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -134,6 +137,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # EPIC-CHAT(FC-321): metadata-only 채팅 topic. local 단일 broker라 replica/min ISR은 1이며,
+  #   dev/prod는 app 설정과 인프라에서 replica 3/min ISR 2를 강제한다(chat-domain-spec §7.2).
+  chat-kafka-topic-init:
+    image: apache/kafka:3.8.0
+    container_name: finalcall-chat-kafka-topic-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -ec
+      - >-
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092
+        --create --if-not-exists --topic finalcall.chat.events.v1
+        --partitions 12 --replication-factor 1
+        --config retention.ms=604800000 --config min.insync.replicas=1
+        --config cleanup.policy=delete
+    restart: "no"
 
   # EPIC-SEARCH(FC-107): 커넥터 런타임. Debezium MySQL source(내장) + Confluent ES sink(Dockerfile 에서 추가).
   kafka-connect:
@@ -168,6 +190,55 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+
+  # EPIC-CHAT(FC-321): 검색 connector와 worker/offset/schema-history를 공유하지 않는 outbox 전용 Connect.
+  #   Elasticsearch sink plugin도 싣지 않아 검색 SMT·sink 장애와 채팅 복구 경로를 격리한다.
+  chat-kafka-connect:
+    build:
+      context: ./docker/chat/kafka-connect
+    image: finalcall-chat-kafka-connect:2.7
+    container_name: finalcall-chat-kafka-connect
+    ports:
+      - "8084:8083"
+      - "9404:9404"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: finalcall-chat-connect
+      CONFIG_STORAGE_TOPIC: chat-connect-configs
+      OFFSET_STORAGE_TOPIC: chat-connect-offsets
+      STATUS_STORAGE_TOPIC: chat-connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      KAFKA_OPTS: >-
+        -javaagent:/kafka/jmx/jmx_prometheus_javaagent.jar=9404:/kafka/jmx/config.yml
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      chat-kafka-topic-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # PUT 등록이라 compose 재실행·connector 설정 변경에도 멱등 갱신된다.
+  chat-outbox-connector-init:
+    image: curlimages/curl:8.10.1
+    container_name: finalcall-chat-outbox-connector-init
+    entrypoint: ["/bin/sh", "/config/register-connector.sh"]
+    volumes:
+      - ./docker/chat/connectors:/config:ro
+    depends_on:
+      chat-kafka-connect:
+        condition: service_healthy
+    restart: "no"
 
   # EPIC-BOARD(FC-200): 게시글 이미지 오브젝트 스토리지(로컬 = MinIO, S3 API 호환). board-domain-spec §7.6 규격.
   #   비공개 버킷 finalcall-board-images 에 원본을 PUT 하고, 노출은 앱이 읽기 시점에 만드는 presigned GET URL 로만 한다
