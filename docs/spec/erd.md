@@ -1,12 +1,14 @@
 # FinalCall ERD (데이터 모델)
 
-상태: v1.5 — G2 통과 (2026-07-13). 이후 D-070·B-012·D-073·**D-081**(soft delete 자연키 UK 생성 컬럼 패턴)·**게이트2 money_exchange 멱등 앵커**(SEC-004)·**게이트2 아이템 코드 축 배정 교정**(FC-044)·**게이트2 EPIC-CLOSING 정산 스키마**(FC-081 — sale_order NOT NULL·fee_policy_version·source UK·platform_revenue_ledger)·**게이트2 EPIC-PURCHASE**(FC-088 — 즉시구매+거래내역, **스키마 무변경**·semantic만)·**게이트2 EPIC-OAUTH**(FC-152 — user_social_account 신설·user.password_hash·login_id nullable화, V19) 반영. [6] 채번은 백엔드 실물 동기화분. api-contract(G3) 확정 → 구현 단계(G4-n). 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: **v2.1 — FC-332 outbox retention 인덱스 사용자 승인 확정(2026-08-19).** 기존 v2.0에 `chat_event_outbox(created_at,id)` retention 인덱스와 V27을 가법 반영했다. 기존 `(occurred_at,id)` pipeline 최신 사건 관측 인덱스는 유지한다. 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
-근거: domain-spec v0.5, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
+근거: domain-spec v0.5, chat-domain-spec v1.1, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v2.1 | 2026-08-19 | **FC-332 게이트2 승인.** 실제 purge 조건·정렬(`created_at < cutoff AND id <= CDC safe checkpoint ORDER BY created_at,id`)에 맞춘 `(created_at,id)` 인덱스를 append-only V27로 추가한다. `(occurred_at,id)`는 pipeline 최신 사건 관측용으로 유지한다. 7일 보존·CDC checkpoint·binlog guard·REST/STOMP 계약은 불변이다. |
+| v2.0 | 2026-08-18 | **EPIC-CHAT(FC-316) — G2-CHAT-1~6 사용자 승인 확정.** [2]·[3] 채팅 엔티티/관계, [4.6] 6테이블, [5] 보조 인덱스, [6] V25 예약을 추가했다. `chat_room`은 정렬된 사용자 쌍 UK와 `last_sequence`, `chat_message`는 방별 sequence UK·client UUID 멱등 UK, member state는 단조 읽음 위치, block은 방향성 쌍 UK, report는 원문 purge와 독립된 snapshot, outbox는 metadata-only CDC 정본이다. association 2종은 전역 규약에 맞춰 `id` 대리 PK + 논리 복합 UK로 확정했다. 정본 = `chat-domain-spec.md` v1.0·api-contract v1.27 §2.7. 실제 migration은 후속 backend 티켓 소유. |
 | v0 | 2026-07-13 | 골격 착수 — 네이밍 선언부·엔티티 개요·Mermaid |
 | v0.1 | 2026-07-13 | 테이블 정의(§4, 14개)·인덱스 표(§5)·Flyway(§6) 작성. 네이밍(auction/shop/sale_order)·위치 디스크리미네이터 확정. G2 검수 대기 |
 | v0.2 | 2026-07-13 | G2 통과. D-067 반영 — 시드 '가상' 제약 해제(원게임 실제 데이터·코드), skill_code 원게임 대응 정식화. G2 관찰: shop(item_instance_id) 인덱스 추가 |
@@ -102,6 +104,14 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 - `comment_reaction` — 댓글 공감/비공감(EPIC-COMMENT-V2, v1.9). comment·user 귀속·`reaction_type` LIKE/DISLIKE·UK(comment_id,user_id)로 유저당 댓글당 1행(전환 UPDATE·취소 DELETE).
 - `post_image` — 게시글 이미지 첨부. 2단계 업로드(고아→바인딩). 파일 실체는 오브젝트 스토리지(MinIO 로컬·S3 운영), 표는 메타·object key만 보유.
 
+대화·안전 (EPIC-CHAT, v2.0 — G2-CHAT-1~6 승인 확정)
+- `chat_room` — 정렬된 두 사용자 쌍당 1개인 1:1 대화방. 방별 메시지 sequence와 최근 활동 시각 정본.
+- `chat_room_member_state` — 방 참여자 2명의 단조 읽음 위치·사용자별 archive 상태.
+- `chat_message` — immutable 텍스트 메시지. 방별 sequence 순서와 client UUID 멱등을 DB UK로 강제.
+- `chat_user_block` — 방향성 사용자 차단. 어느 방향이든 있으면 양쪽 신규 전송 불가.
+- `chat_report` — 상대 메시지 신고와 장기 보존 증거 snapshot. 원 메시지 purge 시 FK만 NULL 전이.
+- `chat_event_outbox` — 같은 TX에 쓰는 metadata-only 채팅 사건. Debezium→Kafka 내구 전파 정본.
+
 아이템 (D-044~047·D-062·D-066)
 - `item_template` — 아이템 정의 마스터. 타입코드 정규화(상품군·대분류·속성·종류) + 표시명(원게임 시드). 등급 축 없음(D-073). 코드값 정본은 api-contract §3.3.1.
 - `skill_definition` — 특수스킬 정의 마스터(가상 시드). 인스턴스 스킬 슬롯이 참조.
@@ -127,6 +137,17 @@ erDiagram
     user ||--o{ bid : "입찰"
     user ||--o{ sale_order : "구매자/판매자"
     user ||--o{ item_instance : "소유자"
+    user ||--o{ chat_room : "참여(member_low/high)"
+    user ||--o{ chat_room_member_state : "읽음 상태"
+    user ||--o{ chat_message : "발신"
+    user ||--o{ chat_user_block : "차단자/피차단자"
+    user ||--o{ chat_report : "신고자/피신고자"
+
+    chat_room ||--|{ chat_room_member_state : "참여자 정확히 2행"
+    chat_room ||--o{ chat_message : "방별 순서"
+    chat_room ||--o{ chat_report : "신고"
+    chat_message ||--o{ chat_report : "대상(삭제 시 NULL)"
+    chat_room ||--o{ chat_event_outbox : "논리 aggregate(no FK)"
 
     auction ||--o{ bid : "입찰 수집"
     bid ||--|| money_hold : "게임머니 홀드"
@@ -568,6 +589,116 @@ table `post_image` — 게시글 이미지 첨부. 2단계 업로드(업로드=�
 
 주: `created_at`만 보유(append·`updated_at` 미도입 — item_ownership_history 선례). soft delete 없음(게시글 삭제 시 함께 정리·고아는 sweeper). `public_id`는 대리키라 D-081 불요.
 
+### 4.6 1:1 채팅 (EPIC-CHAT, v2.0 — G2-CHAT-1~6 승인 확정 2026-08-18)
+
+정본 = `chat-domain-spec.md` v1.0. MySQL이 메시지·순서·읽음·차단·신고·outbox의 내구 정본이며
+Redis Pub/Sub과 Kafka는 정확성 수단이 아니다. 1차 범위는 사용자 1:1 텍스트 채팅이다.
+
+table `chat_room` — 정렬된 두 사용자 쌍당 하나인 direct room. row lock으로 방별 sequence와 send/block
+경합만 직렬화한다.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 내부 대리키 |
+| public_id | CHAR(26) | N | UK | 외부 room ULID |
+| member_low_id | BIGINT | N | FK→user | 두 참여자 중 작은 user.id |
+| member_high_id | BIGINT | N | FK→user | 두 참여자 중 큰 user.id |
+| last_sequence | BIGINT | N | | 마지막 메시지 순번, 기본 0 |
+| last_activity_at | DATETIME(6) | N | | 방 목록 최신 활동 정렬 키 |
+| created_at | DATETIME(6) | N | | 방 생성 시각 |
+| updated_at | DATETIME(6) | N | | 마지막 상태 변경 시각 |
+
+주: **UK(member_low_id, member_high_id)** + `CHECK(member_low_id < member_high_id)`로 같은 사용자 쌍의
+중복 방과 자기 대화를 DB에서 차단한다. `last_sequence`는 메시지 TX가 room을 `FOR UPDATE`한 뒤 1씩 증가시킨다.
+
+table `chat_room_member_state` — 방 참여자별 단조 읽음 위치와 사용자별 목록 상태.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 내부 대리키 |
+| room_id | BIGINT | N | FK→chat_room | 소속 방 |
+| user_id | BIGINT | N | FK→user | 참여자 |
+| last_read_sequence | BIGINT | N | | 단조 증가 읽음 위치, 기본 0 |
+| last_read_at | DATETIME(6) | Y | | 실제 전진한 마지막 시각 |
+| archived_at | DATETIME(6) | Y | | 사용자별 목록 숨김(1차 API 미제공) |
+| created_at | DATETIME(6) | N | | 생성 시각 |
+| updated_at | DATETIME(6) | N | | 읽음/상태 갱신 시각 |
+
+주: **UK(room_id, user_id)**. room 생성 TX가 두 참여자 행을 정확히 2개 만든다. unread는
+`chat_room.last_sequence - last_read_sequence`이며 발신도 자기 읽음 위치를 새 sequence까지 전진시킨다.
+
+table `chat_message` — immutable 텍스트 메시지. 수정·사용자 삭제 없이 180일 보존 후 배치 물리 삭제한다.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 내부 대리키 |
+| public_id | CHAR(26) | N | UK | 외부 message ULID |
+| room_id | BIGINT | N | UK(복합), FK→chat_room | 소속 방·방별 sequence UK 선두 |
+| room_sequence | BIGINT | N | UK(복합) | 방별 엄격 증가 순번 |
+| sender_id | BIGINT | N | UK(복합), FK→user | 발신자·멱등 UK 구성 |
+| sender_nickname_snapshot | VARCHAR(30) | N | | 발신 당시 user.nickname |
+| client_message_id | CHAR(36) | N | UK(복합) | 클라이언트 UUID v4 멱등 키 |
+| body | VARCHAR(1000) | N | | NFC 텍스트, 최대 1,000 code point/UTF-8 4,000 byte |
+| created_at | DATETIME(6) | N | | DB 저장 시각 |
+
+주: **UK(room_id, room_sequence)**가 방별 순서를, **UK(room_id, sender_id, client_message_id)**가
+180일 멱등 기간을 강제한다. 같은 멱등 키·같은 본문은 원 응답 200, 다른 본문은 `CHAT_004`다.
+
+table `chat_user_block` — 방향성 사용자 차단. 어느 방향의 행이든 존재하면 양쪽 신규 전송이 불가하다.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 내부 대리키 |
+| blocker_id | BIGINT | N | UK(복합), FK→user | 차단한 사용자 |
+| blocked_id | BIGINT | N | UK(복합), FK→user | 차단된 사용자 |
+| created_at | DATETIME(6) | N | | 차단 시각 |
+
+주: **UK(blocker_id, blocked_id)** + `CHECK(blocker_id <> blocked_id)`. 해제는 물리 DELETE이며
+send/block/unblock은 같은 `chat_room` row를 먼저 잠가 경합 결과를 선형화한다.
+
+table `chat_report` — 상대방 메시지 신고와 보존 독립 증거 snapshot.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | 내부 대리키 |
+| public_id | CHAR(26) | N | UK | 외부 report ULID |
+| room_id | BIGINT | N | FK→chat_room | 신고 당시 방 |
+| message_id | BIGINT | Y | FK→chat_message, ON DELETE SET NULL | 원문 보존 중 대상 메시지 |
+| message_public_id | CHAR(26) | N | UK(복합) | purge 뒤에도 남는 대상 ID snapshot |
+| reporter_id | BIGINT | N | UK(복합), FK→user | 신고자·중복신고 UK 구성 |
+| reported_user_id | BIGINT | N | FK→user | 피신고자 |
+| reason | VARCHAR(30) | N | | SPAM/ABUSE/FRAUD/OTHER |
+| detail | VARCHAR(500) | Y | | 사용자 신고 설명 |
+| message_body_snapshot | VARCHAR(1000) | N | | 3년 보존 증거 원문 |
+| sender_nickname_snapshot | VARCHAR(30) | N | | 신고 당시 발신 표시명 |
+| status | VARCHAR(20) | N | | PENDING/REVIEWED/DISMISSED/ACTIONED |
+| created_at | DATETIME(6) | N | | 신고 시각 |
+| updated_at | DATETIME(6) | N | | 상태 변경 시각 |
+| resolved_at | DATETIME(6) | Y | | 처리 완료 시각 |
+
+주: **UK(reporter_id, message_public_id)**로 같은 메시지 중복 신고를 차단한다. 신고자는 같은 방 참여자이며
+상대가 보낸 메시지만 신고할 수 있다. 일반 메시지 purge는 `message_id`만 NULL로 만들고 snapshot은 유지한다.
+
+table `chat_event_outbox` — message/read/block TX와 함께 적재하는 metadata-only 사건. Debezium Outbox Event
+Router가 Kafka `finalcall.chat.events.v1`로 전달하며 앱 consumer가 Redis fan-out을 보강한다.
+
+| 컬럼 | 타입 | 널 | 키 | 설명 |
+|---|---|---|---|---|
+| id | BIGINT | N | PK | append/cleanup 내부 키 |
+| event_id | CHAR(26) | N | UK | 전 구간 dedup ULID |
+| aggregate_type | VARCHAR(30) | N | | CHAT_ROOM |
+| aggregate_id | CHAR(26) | N | | room public ID, Kafka key(물리 FK 없음) |
+| event_type | VARCHAR(40) | N | | MESSAGE_CREATED/READ_UPDATED/BLOCK_CHANGED |
+| event_version | INT | N | | 초기값 1 |
+| payload | JSON | N | | ID·sequence·recipient metadata, 메시지 원문/토큰 금지 |
+| occurred_at | DATETIME(6) | N | | 도메인 사건 시각 |
+| created_at | DATETIME(6) | N | | outbox 행 생성 시각 |
+
+주: **INDEX(created_at,id)**는 7일 retention의 age 필터·정렬을, **INDEX(occurred_at,id)**는 pipeline
+최신 도메인 사건 관측을 각각 담당한다. CDC safe checkpoint의 `id` 상한과 binlog guard를 통과한 소배치만
+삭제한다. outbox는 append-only이며 publish 상태를 업데이트하지 않는다. `aggregate_id`는 논리 연결이므로
+chat_room FK를 걸지 않는다.
+
 ### [4] 말미 주 — soft delete 자연키 스윕 결과 (074-3, D-081)
 
 **D-081 패턴 적용 대상 = `user` 1건. 그 외 0건.**
@@ -612,6 +743,11 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | item_delivery | (recipient_user_id, status) | 접속 시 claim(플레이어별 대기 배송) + Redis 신호 수신 시 조회 + 구매자 배송 상태 조회(`GET /me/deliveries` recipient 스코프) |
 | user_memo | (receiver_id, is_deleted, id DESC) | 받은함 커서 조회(`receiver_id=me AND is_deleted=false`, id desc 안정정렬) + 미열람 개수 집계 커버(EPIC-MEMO, v1.6) |
 | user_memo | (sender_id, is_deleted, id DESC) | 보낸함 커서 조회(`sender_id=me AND is_deleted=false`, id desc) |
+| chat_room | (member_low_id, last_activity_at, id) | 정렬된 쌍의 low 참여자 방 목록 최신순 조회(EPIC-CHAT v2.0) |
+| chat_room | (member_high_id, last_activity_at, id) | 정렬된 쌍의 high 참여자 방 목록 최신순 조회. low/high 양 역할을 대칭 커버 |
+| chat_room_member_state | (user_id, archived_at, room_id) | 내 참여방·사용자별 archive 필터 후 room join. 방 목록 scope와 unread 상태 조회 |
+| chat_event_outbox | (created_at, id) | 7일 retention: age 필터·`created_at,id` 정렬 소배치. CDC safe ID 상한·binlog guard는 그대로 적용 |
+| chat_event_outbox | (occurred_at, id) | pipeline 최신 도메인 사건과 head lag 관측. V25 인덱스를 유지하며 retention 용도로 대체하지 않음 |
 | charge | (user_id, status) | 사용자 충전 내역·진행 상태 |
 | money_hold | (user_id, status) | 사용자 홀드 합계·해제 대상 조회 |
 | item_ownership_history | (instance_id, transferred_at) | 인스턴스 소유 체인 조회(최초=첫 행) |
@@ -632,6 +768,9 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 - money_exchange (user_id, idempotency_key) 복합 UK로 교환 멱등(SEC-004). 클라이언트 공급 키라 사용자 스코프(charge.pg_tx_id 선례 동류).
 - user_social_account (provider, provider_user_id) 복합 UK로 소셜 신원 1:1 매핑·중복가입 DB 차단(find-or-create 조회 앵커, EPIC-OAUTH).
 - item_delivery.sale_order_id UK로 정산당 배송 이중 생성 DB 차단(낙찰·즉시구매 양 경로 공통 꼬리, platform_revenue_ledger 선례). item_delivery.item_uuid UK로 게임 인벤 중복 apply 차단(at-least-once 전달 + exactly-once 효과, EPIC-ITEM-DELIVERY). 상태 전이(claim/apply/재청구)는 조건부 CAS(WHERE 현재상태[+claim_token])로 단일 승자.
+- chat_room (member_low_id,member_high_id) UK + CHECK(low<high)로 1:1 방·자기대화 차단, chat_room_member_state (room_id,user_id) UK로 참여자당 1행 보장. 방당 정확히 2행은 room 생성 TX와 테스트가 강제한다.
+- chat_message (room_id,room_sequence) UK로 방별 순서, (room_id,sender_id,client_message_id) UK로 180일 멱등을 보장한다. 첫 UK B-tree의 정·역방향 스캔이 메시지 이력 조회를 커버하므로 같은 컬럼 보조 인덱스는 중복 생성하지 않는다.
+- chat_user_block (blocker_id,blocked_id) UK + CHECK(서로 다름), chat_report (reporter_id,message_public_id) UK로 방향성 차단·중복 신고를 차단한다. report.message_id는 원문 purge 시 ON DELETE SET NULL이다.
 
 ## 6. Flyway 매핑 (D-036, B-012 정정)
 
@@ -658,5 +797,8 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
    - 7-a. 게시판·게시글·댓글·이미지 — `board`·`post`·`comment`·`post_image` 신설 + 인덱스 5종(§5) + `board` 시드 3건(공지·커뮤니티·이벤트) = 백엔드 **`V22`**(현재 최신 V21, append-only). `board` → `post`(board_id FK) → `comment`(post_id FK)·`post_image`(post_id FK) 순서. `user`(author_id·uploader_id FK) 선행 필요. FC-197 소유. (이미지 파일 실체는 오브젝트 스토리지 — DB 스키마 밖, MinIO 로컬 인프라는 FC-200 docker-compose.)
    - 7-b. 공지 흡수 — 기존 `notice`(V1) 활성 행을 공지 게시판 `post`로 이관(`INSERT INTO post (...) SELECT <공지board_id>, NULL, '공지사항', title, content, (type='URGENT'), created_at, updated_at FROM notice WHERE is_deleted=false`) = 백엔드 **`V23`**. `notice` 테이블 DROP은 **1버전 유예 후 별도 마이그레이션**(롤백 안전, board-spec §8.2). FC-201 소유(+ notice 도메인 코드·CLAUDE.md §1 참조구현 bullet 갱신 동반).
    - 7-c. 댓글 v2 확장(EPIC-COMMENT-V2, FC-207) — `comment` ALTER(`mentioned_nickname` 추가·`like_count`/`dislike_count`/`reply_count` 추가 DEFAULT 0·`parent_comment_id` 활성화는 컬럼 존치라 DDL 무변경) + `comment_reaction` 신설 + 인덱스 재편(구 `ix_comment_post_list (post_id,is_deleted,id)` DROP → 신 3종 `(post_id,parent_comment_id,id)`·`(parent_comment_id,is_deleted,id)`·`(post_id,parent_comment_id,like_count)` + `comment_reaction` UK) = 백엔드 **`V24`**(현재 최신 V23, append-only). `comment`(V22)·`user`(V3, comment_reaction.user_id FK) 선행. FC-207 소유. **게이트2 3건 사용자 승인 확정(board-spec §14, 2026-08-06)** — (a) 답글 1단계 저장·@멘션 (b) comment_reaction 유저당 1행·전환·카운트 비정규화 (c) 기존 댓글 API 형상 교체 파급. 기본 정렬 = LATEST.
+8. 1:1 채팅 — `chat_room`·`chat_room_member_state`·`chat_message`·`chat_user_block`·`chat_report`·`chat_event_outbox` + §5 인덱스(EPIC-CHAT, v2.0)
+   - 8-a. 6개 테이블을 FK 순서(`chat_room` → `chat_room_member_state`·`chat_message`·`chat_user_block` → `chat_report`·`chat_event_outbox`)로 신설하고 UK/CHECK/FK/보조 인덱스를 함께 생성 = 백엔드 **`V25__chat.sql` 예약**(현재 최신 V24, append-only). `user`(V3) 선행, report의 message FK는 `ON DELETE SET NULL`, outbox aggregate는 물리 FK 없음. 실제 migration 작성은 후속 backend 구현 티켓 소유. **G2-CHAT-1~6 사용자 승인 확정(2026-08-18)** — 방 row lock sequence·UUID 멱등·Redis Pub/Sub fast-path·별도 Debezium outbox→Kafka fallback·180일 메시지/3년 신고/7일 event 보존.
+   - 8-b. `chat_event_outbox (created_at,id)` retention 인덱스 가법 추가 = 백엔드 **`V27`**(V25·V26 수정 금지, append-only). 기존 `(occurred_at,id)`는 pipeline 관측용으로 유지한다. 운영 적용 전 MySQL 8 online secondary-index DDL 지원, metadata lock·장기 TX, 디스크 여유를 확인하고 지원 환경에서는 `ALGORITHM=INPLACE, LOCK=NONE`을 명시한다. rollback은 V27 수정/삭제가 아니라 후속 append-only migration에서 신규 인덱스만 DROP한다. 검증은 fresh/upgrade migration, 두 인덱스 공존, retention `EXPLAIN ANALYZE`, cutoff·CDC safe ID 경계, 멀티노드 purge와 online SLO·lock/IO·replica lag를 포함한다. **FC-332 게이트2 승인(2026-08-19).** 7일 보존·CDC checkpoint·binlog guard와 REST/STOMP 계약은 불변이다.
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

@@ -1,12 +1,13 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.26 — FC-221 댓글·답글 응답 `ownedByMe` 가법 추가(2026-08-07, 게이트2 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.27 — EPIC-CHAT 1:1 채팅 REST/STOMP 계약 확정(2026-08-18, G2-CHAT-1~6 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
-근거: domain-spec v0.5, erd v0.7, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
+근거: domain-spec v0.5, chat-domain-spec v1.0, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.27 | 2026-08-18 | **EPIC-CHAT(FC-316) — G2-CHAT-1~6 권고안 전건 사용자 승인 확정.** **§2.7 채팅 신설**: 1:1 direct room 생성/목록/상세, 방별 sequence 메시지 최신·과거·gap 조회, REST 멱등 전송, 단조 읽음, 차단/해제, 신고, 전체 unread의 REST 10종 + `/ws/chat` STOMP 1.2 user-destination push 계약. 영속 명령/replay는 REST+MySQL 정본, STOMP는 server push only(`SEND` 금지). CONNECT bearer JWT·strict Origin·JWT exp 강제종료·SecurityContext 주체·IDOR 404 통일·IP/user rate limit을 확정했다. **§5 `CHAT_001`~`009` 등재.** 스키마 = erd v2.0(6테이블·V25 예약), 도메인/장애/보존/성능 정본 = `chat-domain-spec.md` v1.0. 직접 기존 티켓 파급 = FC-317(Vuexy 승인 UI가 본 계약 소비), 공용 JWT 검증 결과에 `expiresAt` 가법 노출 및 후속 backend/frontend·CDC·부하 티켓 필요. 기존 auth/auction/bid/settlement/delivery/memo API 형상은 불변(additive). |
 | v1.26 | 2026-08-07 | **FC-221 — 댓글·답글 응답에 `ownedByMe: boolean` 가법 추가(게이트2 사용자 승인).** `SecurityContext.userId == comment.authorId`일 때만 `true`; 비로그인·관리자가 작성하지 않은 타인 댓글·tombstone은 `false`. 판정은 닉네임 스냅샷과 무관하므로 닉네임 변경·재사용에도 안정적이며 `authorId`는 외부에 노출하지 않는다. 기존 `editable`(작성자 또는 관리자에게 수정·삭제 UI 허용)과 의미를 분리하고, 자기 댓글 반응은 계속 서버가 `authorId`로 차단해 `COMMENT_003`(422)을 반환한다. **직접 구현 파급 = FC-222(backend)·FC-223(frontend). 기존 완료 티켓 FC-207~FC-212의 댓글 응답 생산·소비 계약에는 가법 파급만 있으며 재개하지 않고 FC-222·FC-223이 흡수한다.** 엔드포인트·요청·스키마·에러코드 무변경. 정본 = `board-domain-spec.md` v1.3 §13.2. |
 | v0 | 2026-07-13 | 골격 착수 — 공통 규약 + auth 섹션 |
 | v0.1 | 2026-07-13 | 전 섹션 초안 완성 — §3 경매·고정가·입찰, §4 아이템·인벤토리·주문·화폐, §5 에러코드. G3 검수 대기 |
@@ -265,6 +266,219 @@
 - 동작: soft delete(`is_deleted=true`·`deleted_at=now`). **게임 `memo_del` 단일 플래그 계승** — 한쪽 삭제가 양쪽 박스에서 사라진다(당사자별 개별 삭제는 범위 밖, memo-domain-spec §4.2).
 - 응답 204
 - 에러: `MEMO_002` 메모 없음(404), `MEMO_003` 당사자 아님(403), 401
+
+### 2.7 1:1 채팅 (chat) — EPIC-CHAT, v1.27(G2-CHAT-1~6 승인 확정 2026-08-18)
+
+사용자 간 1:1 텍스트 채팅. **REST+MySQL이 영속 명령·조회·replay 정본**이고 STOMP/WebSocket은
+server→client best-effort push 전용이다. Redis Pub/Sub·Kafka·STOMP 전달 실패는 성공한 DB 메시지를
+취소하지 않으며 클라이언트는 방별 `roomSequence`로 gap을 복구한다. 도메인/장애/보존/성능 정본 =
+`chat-domain-spec.md` v1.0, 스키마 = `erd.md` §4.6(v2.0).
+
+전 REST 엔드포인트 **인증 필요**, 주체 = `SecurityContext`. sender/reporter/reader user ID를 요청으로 받지
+않는다. 미존재 room과 비참여 room은 모두 `CHAT_001` 404로 통일하고 내부 BIGINT ID는 노출하지 않는다.
+
+#### POST /api/v1/me/chat-rooms/direct — direct room 생성/재사용
+
+- 요청(body): `ChatDirectRoomCreateRequest = { counterpartNickname }`
+  - `counterpartNickname`: 활성 회원 nickname, `@NotBlank`, 최대 30자.
+- 동작: 현재 주체와 상대의 내부 ID를 정렬해 같은 사용자 쌍의 room을 생성하거나 기존 room을 반환한다.
+  기존 room은 차단 상태여도 history 접근을 위해 `canSend=false` 형상으로 반환한다. room이 없을 때 어느
+  방향이든 차단됐거나 상대가 비활성이면 새 room을 만들지 않는다. 비활성 상대는 `CHAT_002`, 차단은 방향을
+  숨긴 `CHAT_005`다.
+- 응답: 신규 생성 `201`, 기존 room 재사용 `200`, data=`ChatRoomResponse`.
+- 에러: `CHAT_002` 상대 없음(404), `CHAT_003` 자기대화(422), `CHAT_005` 대화 불가(409), 검증 400, 401.
+
+#### GET /api/v1/me/chat-rooms — 내 방 목록
+
+- 요청(query): `?cursor=<opaque>&size=<n>`, 기본 20·최대 100.
+- 정렬: `(lastActivityAt DESC, 내부 room id DESC)` 안정 keyset. cursor는 versioned
+  `(lastActivityAt,id)` Base64URL 문자열이며 손상 시 `COMMON_001` 400.
+- 응답 200: `CursorResponse<ChatRoomResponse, String>`.
+- 에러: 401.
+
+#### GET /api/v1/me/chat-rooms/unread-count — 전체 unread
+
+- 응답 200: `{ count: long }` — 모든 참여 room의 `lastSequence-lastReadSequence` 합.
+- 에러: 401.
+
+#### GET /api/v1/me/chat-rooms/{roomPublicId} — 방 상세
+
+- 응답 200: `ChatRoomResponse` — 현재 차단/상대 활성 상태를 다시 읽는 권위 응답.
+- 에러: `CHAT_001`(404), 401.
+
+`ChatRoomResponse`:
+
+```json
+{
+  "roomPublicId": "01K...",
+  "counterpart": {
+    "memberPublicId": "01K...",
+    "nickname": "판매자닉네임"
+  },
+  "lastMessage": {
+    "messagePublicId": "01K...",
+    "roomSequence": 42,
+    "senderNickname": "구매자닉네임",
+    "bodyPreview": "안녕하세요",
+    "createdAt": "2026-08-18T10:00:00Z"
+  },
+  "lastSequence": 42,
+  "lastReadSequence": 40,
+  "counterpartLastReadSequence": 38,
+  "unreadCount": 2,
+  "blockedByMe": false,
+  "canSend": true,
+  "createdAt": "2026-08-17T10:00:00Z",
+  "lastActivityAt": "2026-08-18T10:00:00Z"
+}
+```
+
+- `lastMessage`는 메시지가 없거나 180일 보존 만료로 남은 행이 없으면 `null`, `bodyPreview`는 최대
+  80 code point다.
+- `lastReadSequence`는 현재 주체, `counterpartLastReadSequence`는 상대의 단조 읽음 위치다. 후자의
+  sequence 이하인 내가 보낸 메시지는 상대가 읽은 것으로 표시할 수 있다.
+- `blockedByMe`는 본인이 만든 차단 해제 UI용이다. `canSend=false`는 어느 방향 차단·상대 비활성 등을
+  합친 값이며 상대가 나를 차단했는지 별도 사유로 노출하지 않는다.
+- 탈퇴한 상대 nickname은 `탈퇴한 사용자`, `canSend=false`로 반환한다.
+
+#### GET /api/v1/me/chat-rooms/{roomPublicId}/messages — 메시지 최신/과거/gap 조회
+
+- 요청(query), 기본 50·최대 100:
+  - `?beforeSequence=<long>&size=`: 해당 sequence 미포함, 더 오래된 메시지.
+  - `?afterSequence=<long>&size=`: 해당 sequence 미포함, 재접속 gap/새 메시지.
+  - 둘 다 없으면 최신 메시지. 둘을 동시에 보내면 `COMMON_001` 400.
+- 응답 200: `CursorResponse<ChatMessageResponse, Long>`. 어떤 모드든 `roomSequence ASC`.
+- 채팅은 순서 복구가 공개 계약이므로 공통 opaque cursor의 가법적 예외로 숫자 sequence를 쓴다.
+  최신/과거의 `nextCursor`는 반환된 최소 sequence, gap 조회는 최대 sequence다.
+- 에러: `CHAT_001`(404), 검증 400, 401.
+
+`ChatMessageResponse`:
+
+```json
+{
+  "messagePublicId": "01K...",
+  "clientMessageId": "c96278a5-f102-4b76-a09d-4dfe30caa243",
+  "roomSequence": 42,
+  "sender": {
+    "memberPublicId": "01K...",
+    "nickname": "구매자닉네임"
+  },
+  "body": "안녕하세요",
+  "sentByMe": true,
+  "createdAt": "2026-08-18T10:00:00Z"
+}
+```
+
+#### POST /api/v1/me/chat-rooms/{roomPublicId}/messages — 메시지 전송
+
+- 요청(body): `ChatMessageSendRequest = { clientMessageId, body }`.
+  - `clientMessageId`: canonical UUID v4 문자열(36자), 발신 client가 생성한다.
+  - `body`: NFC 정규화 후 `@NotBlank`, 최대 1,000 code point와 UTF-8 4,000 byte를 모두 만족.
+    NUL 및 `\n`·`\t` 이외 C0 control 문자를 허용하지 않는다. HTML/Markdown은 해석하지 않는다.
+- 동작: room row를 `FOR UPDATE`, 참여자·차단을 검증하고 `roomSequence=lastSequence+1`로 저장한다.
+  발신자의 읽음도 새 sequence까지 전진한다. 같은 TX에 metadata-only outbox를 쓴다.
+- 멱등: `(room,sender,clientMessageId)` 같은 본문 재시도는 원 메시지를 `200`과
+  `deduplicated=true`로 반환한다. 다른 본문 재사용은 `CHAT_004`. 최초 저장은 `201`.
+- 응답 data: `ChatMessageSendResponse = { message: ChatMessageResponse, deduplicated }`.
+- 에러: `CHAT_001`(404), `CHAT_004`(409), `CHAT_005`(409), `CHAT_009`(429), 검증 400, 401.
+
+#### PUT /api/v1/me/chat-rooms/{roomPublicId}/read — 읽음 위치 갱신
+
+- 요청(body): `ChatReadUpdateRequest = { throughSequence: long }`, 0 이상.
+- 동작: `lastReadSequence=max(current,throughSequence)` 단조 갱신. 실제 전진할 때만 `readAt`과
+  `READ_UPDATED` event를 갱신한다. `throughSequence > room.lastSequence`는 거절한다.
+- 응답 200: `ChatReadResponse = { lastReadSequence, readAt }`.
+- 에러: `CHAT_001`(404), `CHAT_006`(422), 검증 400, 401.
+
+#### PUT /api/v1/me/chat-rooms/{roomPublicId}/block — 상대 차단
+
+- 동작: room 상대에 대한 방향성 차단을 멱등 생성. 어느 방향의 차단이든 양쪽 신규 전송을 막고 기존
+  history/신고 접근은 유지한다. send/block은 같은 room row를 먼저 잠근다.
+- 응답 204.
+- 에러: `CHAT_001`(404), 401.
+
+#### DELETE /api/v1/me/chat-rooms/{roomPublicId}/block — 내 차단 해제
+
+- 동작: 본인이 만든 방향성 차단만 멱등 삭제한다. 상대 방향 차단이 남으면 `canSend=false`다.
+- 응답 204.
+- 에러: `CHAT_001`(404), 401.
+
+#### POST /api/v1/me/chat-rooms/{roomPublicId}/reports — 상대 메시지 신고
+
+- 요청(body): `ChatReportCreateRequest = { messagePublicId, reason, detail? }`.
+  - `reason`: `SPAM` | `ABUSE` | `FRAUD` | `OTHER`.
+  - `detail`: 최대 500자.
+- 동작: 같은 room에서 상대가 보낸 메시지만 신고 가능. 당시 본문·발신 nickname snapshot을 보존하며
+  일반 메시지 purge 뒤에도 증거를 3년 유지한다. 자동 삭제/정지는 하지 않는다.
+- 응답 201: `ChatReportResponse = { reportPublicId, createdAt }`.
+- 에러: `CHAT_001`(404), `CHAT_007`(422), `CHAT_008`(409), `CHAT_009`(429), 검증 400, 401.
+
+#### 2.7.1 WebSocket/STOMP 실시간 계약
+
+- 외부 WebSocket endpoint: `GET /ws/chat` HTTP Upgrade. gateway `ws://` 전용 route를 경유하고
+  `X-Gateway-Token` 검증을 유지한다.
+- handshake query/cookie에 JWT를 넣지 않는다. 브라우저는 연결 후 5초 안에 STOMP 1.2 `CONNECT`를 보낸다.
+
+```text
+accept-version:1.2
+heart-beat:10000,10000
+Authorization:Bearer <access-token>
+```
+
+- JWT `ChannelInterceptor`가 공용 `TokenProvider`로 검증해 `Principal=userId`를 설정하고 message 인가보다
+  먼저 실행된다. Origin은 운영 frontend exact allowlist다.
+- 서버는 검증된 JWT `exp`에 socket을 강제 종료한다. refresh 후 새 access token으로 재연결해야 한다.
+  logout은 frontend가 즉시 disconnect하며 별도 장기 chat session은 없다.
+- `SUBSCRIBE /user/queue/chat.events` 하나만 허용한다. `SEND`, room topic, 임의 user destination,
+  `ACK/NACK`, transaction frame은 거절한다. subscription ack는 `auto`다.
+- heartbeat 10초/10초, 30초 무응답 종료. application frame 최대 8KiB, transport buffer 16KiB,
+  session send buffer 512KiB·send time limit 10초. 느린 client는 끊고 REST replay로 복구한다.
+
+`ChatEventResponse`:
+
+```json
+{
+  "eventId": "01K...",
+  "eventType": "MESSAGE_CREATED",
+  "eventVersion": 1,
+  "occurredAt": "2026-08-18T10:00:00Z",
+  "roomPublicId": "01K...",
+  "payload": {
+    "message": {
+      "messagePublicId": "01K...",
+      "clientMessageId": "c96278a5-f102-4b76-a09d-4dfe30caa243",
+      "roomSequence": 42,
+      "sender": { "memberPublicId": "01K...", "nickname": "구매자닉네임" },
+      "body": "안녕하세요",
+      "sentByMe": false,
+      "createdAt": "2026-08-18T10:00:00Z"
+    }
+  }
+}
+```
+
+| eventType | recipient | payload |
+|---|---|---|
+| `MESSAGE_CREATED` | 두 참여자의 모든 활성 session | recipient 관점 `ChatMessageResponse` |
+| `READ_UPDATED` | 두 참여자의 모든 활성 session | `{ readerMemberPublicId, throughSequence, readAt }` |
+| `BLOCK_CHANGED` | 두 참여자의 모든 활성 session | `{ changedAt }`; room detail query invalidate 지시 |
+
+Kafka/outbox/Redis에는 원문을 넣지 않고 local app node가 DB 정본을 읽어 TLS STOMP frame을 만든다.
+STOMP event는 at-most-once UI 갱신 신호이며 성공/영속 ACK가 아니다.
+
+#### 2.7.2 재접속·순서·rate limit
+
+- 순서 권위는 `roomSequence`뿐이다. event 중복은 `eventId`, 메시지 중복은
+  `(roomPublicId,roomSequence)`/`messagePublicId`로 제거한다.
+- 연결 순서: 방 목록 동기화 → STOMP subscribe → 각 방 `afterSequence` gap 조회. subscribe 전후 race도
+  이 gap 조회로 닫는다. 재연결은 full-jitter 1·2·4·8·16초, 최대 30초 backoff.
+- REST 전송 재시도는 같은 `clientMessageId`를 사용한다. 멱등 보장 기간은 메시지 보존과 같은 180일.
+- rate limit 확정값: handshake IP 10/분 burst 5, STOMP CONNECT user 20/분, 메시지 IP 120/분,
+  메시지 user 5/초 burst 10·60/분, 방 생성 20/시간, 신고 10/일, user 활성 socket 최대 3개.
+- 서비스 Redis limiter 장애는 gateway IP 제한을 남기고 fail-open한다. REST `CHAT_009`는 `Retry-After`,
+  STOMP quota 초과는 가능한 경우 같은 code body 후 close 1008.
+- CONNECT 인증 실패는 기존 `COMMON_005` 401-shaped STOMP `ERROR`를 보낼 수 있으면 보낸 뒤 close 1008.
+  ERROR frame 수신 자체는 보장하지 않는다.
 
 ---
 
@@ -723,6 +937,15 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 | MEMO_002 | 메모 없음(존재하지 않는 public_id, §2.6) | 404 |
 | MEMO_003 | 당사자 아님(남의 메모 열람·삭제, IDOR, §2.6) | 403 |
 | MEMO_004 | 자기 자신에게 발신 불가(§2.6) | 422 |
+| CHAT_001 | 채팅방/메시지 없음 또는 요청자가 당사자가 아님(열거 방지 통일, §2.7) | 404 |
+| CHAT_002 | 대화 상대 없음·비활성(§2.7 direct room) | 404 |
+| CHAT_003 | 자기 자신과 direct room 생성 불가 | 422 |
+| CHAT_004 | 같은 clientMessageId를 다른 정규화 본문에 재사용 | 409 |
+| CHAT_005 | 차단 등으로 현재 대화할 수 없는 상태(차단 방향 비노출) | 409 |
+| CHAT_006 | 읽음 throughSequence가 room 범위를 벗어남 | 422 |
+| CHAT_007 | 신고 대상이 같은 방 상대방 발신 메시지가 아님 | 422 |
+| CHAT_008 | 같은 메시지 중복 신고 | 409 |
+| CHAT_009 | 서비스 사용자 채팅 rate limit·socket quota 초과 | 429 |
 | EMAIL_001 | 인증 코드 불일치(§2 이메일 인증) | 422 |
 | EMAIL_002 | 코드 만료·미발송(존재 여부 비노출 통일) | 422 |
 | EMAIL_003 | 시도 횟수 초과(코드 폐기) | 429 |
