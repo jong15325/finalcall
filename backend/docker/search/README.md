@@ -33,7 +33,8 @@ cd backend
 # 1) 스택 기동(첫 실행은 ES/Connect 이미지 빌드로 수 분 소요)
 docker compose -f docker-compose.local.yml up -d --build
 
-# 2) Debezium 캡처 계정 생성(기존 MySQL 볼륨 보존 → initdb 자동 실행 안 되므로 수동 1회)
+# 2) fresh volume은 Debezium 캡처 계정을 initdb에서 자동 생성한다.
+#    기존 MySQL 볼륨에 계정이 없다면 아래 SQL을 수동 1회 적용한다.
 docker exec -i finalcall-mysql mysql -uroot -proot < docker/search/mysql/debezium-user.sql
 
 # 3) 인덱스 템플릿(listings*) 등록 + listings_v1 + alias 생성 — ★ 앱 부팅 재색인/커넥터 전에 실행

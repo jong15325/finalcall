@@ -32,8 +32,8 @@ services:
       # EPIC-SEARCH(FC-107): Debezium CDC 를 위한 binlog 활성화(search-spec §12.1). ROW 포맷 + full row image 로
       #   변경 전/후 전체 컬럼을 캡처한다. server-id 는 복제 토폴로지 유일값(Debezium 이 replica 로 붙는다).
       #   ★ command 옵션이라 기존 데이터 볼륨(finalcall-mysql-data)을 보존한 채 재기동만으로 적용된다(초기화 없음).
-      #   Debezium 캡처 계정 생성·권한 부여(REPLICATION SLAVE/CLIENT)는 docker/search/mysql/debezium-user.sql 을
-      #   기존 볼륨에 수동 적용한다(초기 볼륨이 아니라 docker-entrypoint-initdb.d 자동 실행이 안 되므로, 런북 참조).
+      #   fresh volume은 docker-entrypoint-initdb.d의 SQL로 Debezium 캡처 계정과 권한을 자동 생성한다.
+      #   기존 볼륨은 initdb를 재실행하지 않으므로 계정이 없다면 런북에 따라 SQL을 수동 1회 적용한다.
       - --log-bin=mysql-bin
       - --binlog-format=ROW
       - --binlog-row-image=full
@@ -54,6 +54,7 @@ services:
     #       memory: 1g
     volumes:
       - finalcall-mysql-data:/var/lib/mysql
+      - ./docker/search/mysql/debezium-user.sql:/docker-entrypoint-initdb.d/10-debezium-user.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
