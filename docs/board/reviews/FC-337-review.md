@@ -42,3 +42,19 @@
 - passed (2026-08-20)
 - `bash ./gradlew`로 실행 비트 의존을 제거했고 저장소의 shell/python/PowerShell 호출이 모두 명시적 interpreter를 사용하는지 확인했다.
 - reviewer critical/major 0건, actionlint·Gradle dry-run 통과.
+
+## 원격 fresh-infra 재개
+- changes-requested (2026-08-20)
+- GitHub Actions run `32376609307`에서 빌드와 k6 설치는 통과했으나 connector init이 HTTP 400으로 실패했다.
+- redacted compose log에서 MySQL이 `debezium` 계정 로그인을 거부한 사실을 확인했다.
+- 계정 생성 SQL은 저장소에 존재하지만 MySQL의 `/docker-entrypoint-initdb.d`에 연결되지 않아 fresh volume에서 실행되지 않는다.
+
+## fresh MySQL 초기화 보정 구현
+- MySQL service가 기존 Debezium 계정 SQL을 read-only initdb script로 mount하도록 보정했다.
+- fresh volume의 계정·필수 권한 생성을 실제 임시 MySQL로 검증했고, 기존 volume에서는 init script가 재실행되지 않음을 확인했다.
+- 기존 volume의 수동 1회 절차는 호환 경로로 유지하며 운영 시크릿·connector 계약·SQL 권한은 변경하지 않았다.
+
+## fresh MySQL 초기화 보정 재리뷰
+- passed (2026-08-20)
+- critical 0건, major 0건, minor 0건.
+- local-only credential과 최소 CDC 권한은 기존 계약을 유지하고, fresh volume 자동 초기화 및 기존 volume 비재실행 동작이 안전함을 확인했다.
