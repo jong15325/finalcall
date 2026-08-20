@@ -24,3 +24,12 @@
 - passed (2026-08-20)
 - critical 0건, major 0건, minor 0건
 - 절대 jar 경로 기동과 teardown 소유권 검증이 일치하며, connector readiness·단계별 socket·전용 Compose project·artifact/secret gate의 회귀가 없음을 확인했다.
+
+## 원격 검증 재개
+- GitHub workflow dispatch가 job-level `env`의 `${{ runner.temp }}`를 인식하지 못해 parse 단계에서 실패했다.
+- 실제 부하 job은 시작되지 않았으며, GitHub context 사용 위치를 보정한 뒤 재리뷰한다.
+
+## 원격 parse 보정 재리뷰
+- passed (2026-08-20)
+- job-level `runner.*`를 제거하고 checkout 직후 `$RUNNER_TEMP` 기반 경로를 `$GITHUB_ENV`로 전달하도록 보정했다.
+- actionlint v1.7.7과 reviewer context 위치 재감사에서 critical/major/minor 0건을 확인했다.
