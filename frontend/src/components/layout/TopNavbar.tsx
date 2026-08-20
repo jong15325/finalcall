@@ -6,6 +6,7 @@ import {
     TbGavel,
     TbBackpack,
     TbMail,
+    TbMessages,
     TbChevronRight,
     TbUser,
     TbSettings,
@@ -14,6 +15,7 @@ import {
 import useAuth from '@/auth/useAuth'
 import { useMyBalance } from '@/lib/queries/balance'
 import { useUnreadMemoCount } from '@/lib/queries/memos'
+import { useUnreadChatCount } from '@/lib/queries/chat'
 import CodeAmount from '@/components/common/CodeAmount'
 import Dropdown from '@/components/common/Dropdown'
 import { paths } from '@/app/paths'
@@ -43,10 +45,12 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
     const { authenticated, user, signOut } = useAuth()
     const { data: balance } = useMyBalance()
     const { data: unreadMemo } = useUnreadMemoCount()
+    const { data: unreadChat } = useUnreadChatCount()
     const { title, icon: PageIcon } = usePageContext()
     const navigate = useNavigate()
 
     const unreadCount = unreadMemo?.count ?? 0
+    const unreadChatCount = unreadChat?.count ?? 0
 
     const handleSignOut = async () => {
         await signOut()
@@ -139,6 +143,30 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                                 aria-hidden
                                 className="hidden size-4 text-chrome-muted sm:block"
                             />
+                        </NavLink>
+                    )}
+
+                    {/* 채팅 — 로그인 시, 전체 unread 뱃지(계약 §2.7) */}
+                    {authenticated && (
+                        <NavLink
+                            to={paths.chat}
+                            aria-label={
+                                unreadChatCount > 0
+                                    ? `채팅 · 안 읽음 ${unreadChatCount}건`
+                                    : '채팅'
+                            }
+                            className="relative flex size-9 items-center justify-center rounded-lg text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg"
+                        >
+                            <TbMessages aria-hidden className="size-5" />
+                            {unreadChatCount > 0 && (
+                                <span
+                                    className={`absolute -right-0.5 -top-0.5 grid min-w-[16px] place-items-center rounded-full px-1 text-[10px] leading-4 ring-2 ring-chrome ${UNREAD_BADGE_CLASS}`}
+                                >
+                                    {unreadChatCount > 99
+                                        ? '99+'
+                                        : unreadChatCount}
+                                </span>
+                            )}
                         </NavLink>
                     )}
 

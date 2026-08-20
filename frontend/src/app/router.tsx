@@ -14,6 +14,7 @@ import SellPage from '@/pages/SellPage'
 import MePage from '@/pages/MePage'
 import OrdersPage from '@/pages/OrdersPage'
 import MessagesPage from '@/pages/MessagesPage'
+import ChatPage from '@/pages/ChatPage'
 import InventoryPage from '@/pages/InventoryPage'
 import TempStoragePage from '@/pages/TempStoragePage'
 import ItemDetailPage from '@/pages/ItemDetailPage'
@@ -126,6 +127,7 @@ function AppRoutes() {
                         path={paths.messages}
                         element={<MessagesPage />}
                     />
+                    <Route path={paths.chat} element={<ChatPage />} />
                     <Route path={paths.inventory} element={<InventoryPage />} />
                     <Route
                         path={paths.tempStorage}

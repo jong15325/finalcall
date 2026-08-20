@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router'
-import { TbChevronDown, TbHeadset, TbX } from 'react-icons/tb'
+import { TbChevronDown, TbHeadset, TbMessages, TbX } from 'react-icons/tb'
 import BrandLogo from '@/components/brand/BrandLogo'
 import { paths } from '@/app/paths'
 import { useUnreadMemoCount } from '@/lib/queries/memos'
+import { useUnreadChatCount } from '@/lib/queries/chat'
 import { sidebarNav } from './navItems'
 import type { NavGroup } from './navItems'
 
@@ -74,6 +75,8 @@ function MobileGroup({
 
 export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
     const { data: unreadMemo } = useUnreadMemoCount()
+    const { data: unreadChat } = useUnreadChatCount()
+    const unreadChatCount = unreadChat?.count ?? 0
     const asideRef = useRef<HTMLElement>(null)
 
     useEffect(() => {
@@ -145,7 +148,28 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                         )}
                     </ul>
                 </nav>
-                <div className="border-t border-chrome-selected p-3">
+                <div className="space-y-1 border-t border-chrome-selected p-3">
+                    <NavLink
+                        to={paths.chat}
+                        aria-label={
+                            unreadChatCount > 0
+                                ? `채팅 · 안 읽음 ${unreadChatCount}건`
+                                : '채팅'
+                        }
+                        className={`${row} text-chrome-fg hover:bg-chrome-raised`}
+                        onClick={onCloseMobile}
+                    >
+                        <TbMessages aria-hidden className="size-5" />
+                        채팅
+                        {unreadChatCount > 0 && (
+                            <span
+                                aria-hidden
+                                className="ml-auto rounded-full bg-control-action px-2 py-0.5 text-xs font-bold text-control-action-ink"
+                            >
+                                {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                            </span>
+                        )}
+                    </NavLink>
                     <NavLink
                         to={paths.messages}
                         className={`${row} text-chrome-fg hover:bg-chrome-raised`}

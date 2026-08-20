@@ -36,6 +36,7 @@ export const paths = {
     inventory: '/me/inventory',
     tempStorage: '/me/temp-storage',
     messages: '/me/messages', // 메모/쪽지 (FC-172 — /me/memos 실기능)
+    chat: '/me/chat', // 1:1 실시간 채팅 (FC-322 — REST 정본 + STOMP push)
     itemDetail: '/items/:id',
 
     /* 지갑 */

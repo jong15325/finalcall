@@ -36,6 +36,18 @@ export default defineConfig({
                         'finalcall-local-gateway-shared-secret-change-me',
                 },
             },
+            '/ws': {
+                target:
+                    process.env.VITE_DEV_API_TARGET ?? 'http://localhost:8080',
+                changeOrigin: true,
+                secure: false,
+                ws: true,
+                headers: {
+                    'X-Gateway-Token':
+                        process.env.VITE_DEV_GATEWAY_TOKEN ??
+                        'finalcall-local-gateway-shared-secret-change-me',
+                },
+            },
         },
     },
     build: {

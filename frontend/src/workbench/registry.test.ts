@@ -10,6 +10,17 @@ import {
 import { SEMANTIC_OVERRIDE_KEYS } from './types'
 
 describe('workbench registry', () => {
+    it('registers the Vuexy chat gate in the real AppShell', async () => {
+        const scenario = WORKBENCH_SCENARIOS.find(({ id }) => id === 'chat')!
+
+        expect(scenario.shell).toBe('app')
+        expect(scenario.routeContext).toBe(paths.messages)
+        const module = await scenario.load()
+        expect(
+            (module.fixture as { contacts: readonly unknown[] }).contacts,
+        ).toHaveLength(4)
+    })
+
     it('uses unique URL-safe scenario and variant ids', () => {
         const ids = WORKBENCH_SCENARIOS.map(({ id }) => id)
         expect(new Set(ids).size).toBe(ids.length)

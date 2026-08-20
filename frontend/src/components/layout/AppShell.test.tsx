@@ -22,6 +22,9 @@ vi.mock('@/lib/queries/balance', () => ({
 vi.mock('@/lib/queries/memos', () => ({
     useUnreadMemoCount: () => ({ data: { count: 0 } }),
 }))
+vi.mock('@/lib/queries/chat', () => ({
+    useUnreadChatCount: () => ({ data: { count: 0 } }),
+}))
 
 beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)

@@ -19,6 +19,13 @@ function defineScenario(
 
 export const WORKBENCH_SCENARIOS = [
     defineScenario({
+        id: 'chat',
+        title: 'Vuexy 채팅 디자인 게이트',
+        shell: 'app',
+        routeContext: paths.messages,
+        load: () => import('./scenarios/ChatScenario'),
+    }),
+    defineScenario({
         id: 'auction-card',
         title: '경매 목록 세로 카드',
         shell: 'app',

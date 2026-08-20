@@ -8,8 +8,8 @@ module.exports = {
     theme: {
         fontFamily: {
             sans: [
+                '"Pretendard Variable"',
                 'Pretendard',
-                'Pretendard Variable',
                 '"Noto Sans KR"',
                 'ui-sans-serif',
                 'system-ui',

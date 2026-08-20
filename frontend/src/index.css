@@ -19,7 +19,7 @@
     }
 
     body {
-        @apply bg-app-canvas text-content-fg text-sm font-medium leading-normal antialiased;
+        @apply bg-app-canvas font-sans text-sm font-medium leading-normal text-content-fg antialiased;
         /* 외부 가로 오버플로 차단(HANDOVER §3.4) */
         overflow-x: hidden;
     }

@@ -7,6 +7,7 @@ const buildRoot = resolve(frontendRoot, 'build')
 const forbiddenMarkers = [
     '/__design',
     'FC_WORKBENCH_MARKER_284',
+    'FC_CHAT_WORKBENCH_317',
     'main-color-palettes',
     'auth-layout',
     'top-navigation-layouts',
@@ -74,16 +75,21 @@ const forbiddenMarkers = [
     'fc-wallet-mobile-wallet',
     'fc-wallet-balanced-metrics',
 ]
+const forbiddenAssetMarkers = ['vuexy-chat-avatar-']
 const failures = []
 
 for (const file of walk(buildRoot)) {
+    const path = normalize(relative(frontendRoot, file))
+    for (const marker of forbiddenAssetMarkers) {
+        if (path.includes(marker)) {
+            failures.push(`${path}: production asset 잔존 ${marker}`)
+        }
+    }
     if (!/\.(?:js|css|html|map)$/u.test(file)) continue
     const source = readFileSync(file, 'utf8')
     for (const marker of forbiddenMarkers) {
         if (source.includes(marker)) {
-            failures.push(
-                `${normalize(relative(frontendRoot, file))}: production 잔존 ${marker}`,
-            )
+            failures.push(`${path}: production 잔존 ${marker}`)
         }
     }
 }
