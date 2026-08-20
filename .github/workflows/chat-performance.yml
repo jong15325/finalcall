@@ -93,7 +93,7 @@ jobs:
           fi
 
       - name: bootJar 빌드
-        run: ./gradlew :backend:bootJar :backend:gateway:bootJar
+        run: bash ./gradlew :backend:bootJar :backend:gateway:bootJar
 
       - name: k6 0.57.0 설치
         shell: bash
