@@ -25,16 +25,24 @@ jobs:
     timeout-minutes: ${{ inputs.profile == 'extended' && 90 || 45 }}
     env:
       COMPOSE_FILE: backend/docker-compose.local.yml
-      RUN_DIR: ${{ runner.temp }}/chat-performance
-      FIXTURE_FILE: ${{ runner.temp }}/chat-performance/fixture.json
-      SOCKET_FIXTURE_FILE: ${{ runner.temp }}/chat-performance/socket-fixture.json
-      RAW_LOG_DIR: ${{ runner.temp }}/chat-performance/raw
-      ARTIFACT_DIR: ${{ runner.temp }}/chat-performance/artifact
-      RESULT_DIR: ${{ runner.temp }}/chat-performance/artifact/k6
       BACKEND_JAR: ${{ github.workspace }}/backend/build/libs/backend-0.0.1-SNAPSHOT.jar
       GATEWAY_JAR: ${{ github.workspace }}/backend/gateway/build/libs/gateway-0.0.1-SNAPSHOT.jar
     steps:
       - uses: actions/checkout@v4.2.2
+
+      - name: runner 임시 경로 설정
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_dir="$RUNNER_TEMP/chat-performance"
+          {
+            echo "RUN_DIR=$run_dir"
+            echo "FIXTURE_FILE=$run_dir/fixture.json"
+            echo "SOCKET_FIXTURE_FILE=$run_dir/socket-fixture.json"
+            echo "RAW_LOG_DIR=$run_dir/raw"
+            echo "ARTIFACT_DIR=$run_dir/artifact"
+            echo "RESULT_DIR=$run_dir/artifact/k6"
+          } >> "$GITHUB_ENV"
 
       - uses: actions/setup-java@v4.7.1
         with:
