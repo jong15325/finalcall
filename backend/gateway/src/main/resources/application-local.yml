@@ -4,6 +4,7 @@
 # 하류 서비스 주소(라우트 uri 가 참조하는 스칼라 변수).
 service:
   uri: ${SERVICE_URI:http://localhost:8080}
+  ws-uri: ${SERVICE_WS_URI:ws://localhost:8080}
 
 spring:
   # RequestRateLimiter 용 Redis(Lettuce, 리액티브) — local 은 ${ENV:기본값}.

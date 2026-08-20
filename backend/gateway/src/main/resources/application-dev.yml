@@ -9,6 +9,7 @@
 # 하류 서비스 주소 — dev 는 기본값 없이 ${ENV}(미해결 placeholder 는 부팅 시 실패).
 service:
   uri: ${SERVICE_URI}
+  ws-uri: ${SERVICE_WS_URI}
 
 spring:
   # RequestRateLimiter 용 Redis — dev 는 기본값 없이 ${ENV}.

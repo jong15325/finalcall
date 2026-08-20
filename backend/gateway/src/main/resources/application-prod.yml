@@ -9,6 +9,7 @@
 # 하류 서비스 주소 — prod 는 반드시 기본값 없이 ${ENV}.
 service:
   uri: ${SERVICE_URI}
+  ws-uri: ${SERVICE_WS_URI}
 
 spring:
   # RequestRateLimiter 용 Redis — prod 는 반드시 기본값 없이 ${ENV}.
