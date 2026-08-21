@@ -1,6 +1,6 @@
 # Chat 도메인 스펙
 
-> 상태: **v1.5 — APPROVED** (2026-08-21, FC-340 채팅 burst DB connection capacity 게이트2 승인 반영)
+> 상태: **v1.6 — APPROVED** (2026-08-22, FC-341 send 응답 후속 DB 조회 제거 게이트2 승인 반영)
 >
 > EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.27,
 > 스키마 정본은 `docs/spec/erd.md` v2.1이다.
@@ -401,6 +401,20 @@ fast-path 전용 bounded executor**에서 실행한다.
 
 이 변경은 내부 실행·실패 의미론만 보정한다. 외부 REST/STOMP 계약, Redis/Kafka event schema와 version,
 `chat_event_outbox` 스키마 및 전체 ERD는 변경하지 않는다.
+
+### 7.5 send 응답 조립 DB 경계
+
+- `ChatCommandService.sendMessage`는 write transaction 안에서 이미 조회한 sender의 `publicId`를
+  `ChatMessagePersistence.senderPublicId`로 반환한다. 신규 저장과 멱등 재확인 모두 같은 내부 결과 계약을 따른다.
+- controller는 `ChatMessagePersistence`의 message·senderPublicId·deduplicated만으로 기존
+  `ChatMessageSendResponse`를 조립한다. write transaction 종료 뒤 `ChatQueryService.getMessageResponse`를 호출해
+  sender `User`를 다시 조회하거나 별도 read transaction을 여는 것을 금지한다.
+- 최초 저장 201, 같은 본문 멱등 재확인 200, 응답 JSON field와 `sentByMe`, nickname snapshot 의미는 불변이다.
+  room IDOR, room row lock, sequence, block 검증, message/outbox 원자 저장과 fast-path 경계도 변경하지 않는다.
+- history/gap replay와 fan-out hydration은 기존 `User` 기반 `ChatMessageResponse` factory를 유지한다.
+  이번 보정은 send HTTP 응답 직후의 중복 사용자 조회 1회만 제거하며 다른 query나 fan-out DB 경계를 합치지 않는다.
+
+외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다.
 
 ---
 
@@ -952,6 +966,11 @@ messageId, eventId, nickname은 모든 metric tag로 쓰지 않는다. 고카디
     drop 0·HTTP 201 100%·§14.2 SLO를 통과한 뒤에만 100→1,000→5,000→20,000 socket 단계로 진행한다.
     pool 32에서 burst가 실패하면 pool을 추가 증설하지 않고 DB CPU·lock·I/O 또는 send 응답 후속 조회 제거안을
     게이트2에 다시 상신한다.
+29. §7.5 적용 뒤에도 app별 pool 32·`connection-timeout=1s`를 유지하고 추가 증설하지 않는다. 동일 extended를
+    10→50→150→300/s, 300/s 5분, 1,000/s 60초 burst 순서로 처음부터 실행한다. burst가 drop 0,
+    HTTP 201 100%, p95 < 200ms, p99 < 500ms, Hikari timeout 0을 모두 충족해야 socket 단계로 진행한다.
+    실패하면 즉시 중단하고 query count·Hikari/MySQL 시계열·slow query/lock/I/O를 근거로 command TX 내부
+    query 축약 또는 DB capacity 변경을 게이트2에 다시 상신한다.
 
 ---
 
@@ -1059,6 +1078,17 @@ Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/f
 pool 32는 추가 증설 전 재상신이 필요한 단일 bounded 후보이며, 실패 시 B 또는 DB 병목 분석으로 돌아간다.
 외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다.
 
+### G2-CHAT-11 — send 응답 후속 사용자 조회 제거 — APPROVED
+
+| 선택지 | 내용 | 장단점 |
+|---|---|---|
+| A (승인) | write TX가 senderPublicId를 내부 결과로 반환하고 controller가 동일 응답을 직접 조립 | 요청당 별도 user SELECT/read TX 1회 제거, 외부 계약·정확성 경계 불변 |
+| B | command TX의 검증 query를 projection/join으로 함께 축약 | 추가 round-trip 감소 가능, lock·IDOR·block 검증 순서 변경 위험과 반경이 큼 |
+| C | DB scale-up/sharding 또는 burst 목표 완화 | 인프라·성능 계약 변경이 크고 현재 확인된 중복 조회를 남김 |
+
+**승인:** A와 §7.5·§14.3의 제한된 내부 조회 제거 및 재검증 계약을 2026-08-22 승인했다.
+pool 32·timeout 1초는 유지하고 추가 pool 증설은 금지한다. 외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다.
+
 ---
 
 ## 16. 확정 영향 티켓/산출물
@@ -1073,6 +1103,7 @@ pool 32는 추가 증설 전 재상신이 필요한 단일 bounded 후보이며,
 | `FC-338` | §13.4의 monitor 독립 설정·단일 active collector·stale/failure 관측과 Linux topology assert를 구현 |
 | `FC-339` | §14.3에 따라 hosted diagnostic을 10/s smoke로 한정하고 self-hosted extended의 출시 판정 경계를 구현 |
 | `FC-340` | §14.3의 app별 Hikari fixed pool 32·MySQL reserve/assert·connection telemetry와 burst 재검증을 구현 |
+| `FC-341` | §7.5의 senderPublicId 내부 결과·send 응답 직접 조립과 후속 user SELECT/read TX 제거를 구현 |
 | `FC-329` | §14.3의 self-hosted 10→50→150→300/s release topology 재검증과 출시 판정을 수행 |
 | `FC-324` | FC-335 구현 및 FC-329 재검증 결과를 reviewer 변경 요청 해소의 근거로 재검토 |
 
@@ -1112,6 +1143,7 @@ pool 32는 추가 증설 전 재상신이 필요한 단일 bounded 후보이며,
 
 | 버전 | 날짜 | 상태 | 변경 |
 |---|---|---|---|
+| v1.6 | 2026-08-22 | **APPROVED** | G2-CHAT-11 권고안 A 승인 반영. `ChatMessagePersistence.senderPublicId`로 send 응답 후속 user SELECT/read TX 1회만 제거하고 신규/멱등 상태·JSON·IDOR·lock·outbox 및 history/fan-out factory는 불변으로 확정. pool 32·timeout 1초 유지, 추가 증설 금지와 동일 extended 종료선 명시. FC-341·FC-329·FC-324 영향. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.5 | 2026-08-21 | **APPROVED** | G2-CHAT-10 권고안 A 승인 반영. app별 Hikari min/max 32 fixed pool·connection timeout 1초, MySQL `@@max_connections` 96 이상과 32 connection reserve/assert·운영 telemetry를 확정. 동일 extended 전체 재검증과 burst 통과 후 socket 진입, 실패 시 추가 pool 증설 금지·재상신 조건 명시. FC-340·FC-329·FC-324 영향. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.4 | 2026-08-21 | **APPROVED** | G2-CHAT-9 권고안 A 승인 반영. hosted diagnostic은 topology·prewarm·단일 monitor·10/s smoke로 한정하고, 격리된 self-hosted extended에서 10→50→150→300/s 출시 판정을 수행하도록 runner 경계를 확정. SLO·실패 즉시 중단은 불변이며 host/container 자원·Hikari 시계열·Kafka lag artifact를 추가. FC-337·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.3 | 2026-08-21 | **APPROVED** | G2-CHAT-8 권고안 A 승인 반영. consumer는 양 app에서 유지하되 전역 outbox/Kafka lag collector는 배포당 1개만 활성화하고 stale/failure 관측·alert·runbook 및 Linux 10→50→150→300/s 중단 조건을 확정. FC-338·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |

@@ -18,14 +18,22 @@ public record ChatMessageResponse(
     boolean sentByMe,
     Instant createdAt) {
 
+    public static ChatMessageResponse from(ChatMessage message, String senderPublicId) {
+        return from(message, senderPublicId, true);
+    }
+
     public static ChatMessageResponse from(ChatMessage message, User sender, Long subjectId) {
+        return from(message, sender.getPublicId(), message.getSenderId().equals(subjectId));
+    }
+
+    private static ChatMessageResponse from(ChatMessage message, String senderPublicId, boolean sentByMe) {
         return ChatMessageResponse.builder()
             .messagePublicId(message.getPublicId())
             .clientMessageId(message.getClientMessageId())
             .roomSequence(message.getRoomSequence())
-            .sender(new Sender(sender.getPublicId(), message.getSenderNicknameSnapshot()))
+            .sender(new Sender(senderPublicId, message.getSenderNicknameSnapshot()))
             .body(message.getBody())
-            .sentByMe(message.getSenderId().equals(subjectId))
+            .sentByMe(sentByMe)
             .createdAt(message.getCreatedAt())
             .build();
     }

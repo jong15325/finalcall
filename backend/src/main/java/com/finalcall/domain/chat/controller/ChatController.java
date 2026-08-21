@@ -99,7 +99,7 @@ public class ChatController {
         rateLimitService.checkMessageSend();
         ChatMessagePersistence result = commandService.sendMessage(
             roomPublicId, request.clientMessageId(), request.body());
-        ChatMessageResponse message = queryService.getMessageResponse(result.message());
+        ChatMessageResponse message = ChatMessageResponse.from(result.message(), result.senderPublicId());
         HttpStatus status = result.deduplicated() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status)
             .body(ApiResponse.success(ChatMessageSendResponse.from(message, result.deduplicated())));

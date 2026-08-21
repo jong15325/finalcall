@@ -106,13 +106,15 @@ public class ChatCommandService {
         String normalizedBody = normalizeBody(body);
         Long senderId = currentUserId();
         ChatRoom room = loadLockedRoom(roomPublicId, senderId);
+        User sender = userRepository.findByIdAndIsDeletedFalse(senderId)
+            .orElseThrow(() -> new BusinessException(CommonErrorCode.UNAUTHORIZED));
 
         ChatMessage existing = messageRepository.findByRoomIdAndSenderIdAndClientMessageId(
             room.getId(), senderId, clientMessageId).orElse(null);
         if (existing != null) {
             Preconditions.validate(existing.getBody().equals(normalizedBody),
                 ChatErrorCode.CHAT_IDEMPOTENCY_CONFLICT);
-            return new ChatMessagePersistence(existing, true);
+            return new ChatMessagePersistence(existing, sender.getPublicId(), true);
         }
 
         Long counterpartId = room.counterpartId(senderId);
@@ -120,9 +122,6 @@ public class ChatCommandService {
             ChatErrorCode.CHAT_UNAVAILABLE);
         Preconditions.validate(!blockRepository.existsBetween(senderId, counterpartId),
             ChatErrorCode.CHAT_UNAVAILABLE);
-        User sender = userRepository.findByIdAndIsDeletedFalse(senderId)
-            .orElseThrow(() -> new BusinessException(CommonErrorCode.UNAUTHORIZED));
-
         Instant now = Instant.now();
         long roomSequence = room.advanceSequence(now);
         ChatMessage message = messageRepository.save(ChatMessage.builder()
@@ -141,7 +140,7 @@ public class ChatCommandService {
         if (readAdvanced) {
             appendReadUpdated(room, senderId, roomSequence, now);
         }
-        return new ChatMessagePersistence(message, false);
+        return new ChatMessagePersistence(message, sender.getPublicId(), false);
     }
 
     /** 읽음 위치를 {@code max(current, throughSequence)}로만 전진시킨다. */

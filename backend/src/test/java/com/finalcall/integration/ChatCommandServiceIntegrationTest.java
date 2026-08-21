@@ -195,6 +195,7 @@ class ChatCommandServiceIntegrationTest extends IntegrationTest {
         assertThat(outcomes).hasSize(12);
         assertThat(outcomes.stream().filter(outcome -> !outcome.deduplicated())).hasSize(1);
         assertThat(outcomes.stream().map(outcome -> outcome.message().getPublicId()).distinct()).hasSize(1);
+        assertThat(outcomes).allSatisfy(outcome -> assertThat(outcome.senderPublicId()).isEqualTo(alice.getPublicId()));
         assertThat(messageRepository.countByRoomId(room.getId())).isEqualTo(1);
         assertThat(outboxRepository.findAll()).hasSize(2)
             .allSatisfy(event -> {
@@ -206,6 +207,7 @@ class ChatCommandServiceIntegrationTest extends IntegrationTest {
         ChatMessagePersistence retry = callAs(alice,
             () -> commandService.sendMessage(room.getPublicId(), clientMessageId, "멱등 본문"));
         assertThat(retry.deduplicated()).isTrue();
+        assertThat(retry.senderPublicId()).isEqualTo(alice.getPublicId());
         assertThatThrownBy(() -> callAs(alice,
             () -> commandService.sendMessage(room.getPublicId(), clientMessageId, "다른 본문")))
             .isInstanceOfSatisfying(BusinessException.class,

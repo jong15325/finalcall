@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finalcall.domain.chat.repository.ChatMessageRepository;
 import com.finalcall.domain.chat.service.ChatRateLimitService;
@@ -59,15 +60,26 @@ class ChatApiIntegrationTest extends IntegrationTest {
         String roomPublicId = createRoom(alice, bob, status().isCreated());
         assertThat(createRoom(alice, bob, status().isOk())).isEqualTo(roomPublicId);
 
-        send(bob, roomPublicId, FIRST_MESSAGE_ID, "e\u0301 첫 메시지")
+        String firstSendBody = send(bob, roomPublicId, FIRST_MESSAGE_ID, "e\u0301 첫 메시지")
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.message.roomSequence").value(1))
             .andExpect(jsonPath("$.data.message.body").value("é 첫 메시지"))
             .andExpect(jsonPath("$.data.message.sentByMe").value(true))
-            .andExpect(jsonPath("$.data.deduplicated").value(false));
-        send(bob, roomPublicId, FIRST_MESSAGE_ID, "é 첫 메시지")
+            .andExpect(jsonPath("$.data.deduplicated").value(false))
+            .andReturn().getResponse().getContentAsString();
+        String retrySendBody = send(bob, roomPublicId, FIRST_MESSAGE_ID, "é 첫 메시지")
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.deduplicated").value(true));
+            .andExpect(jsonPath("$.data.deduplicated").value(true))
+            .andReturn().getResponse().getContentAsString();
+        JsonNode firstSendData = objectMapper.readTree(firstSendBody).path("data");
+        JsonNode retrySendData = objectMapper.readTree(retrySendBody).path("data");
+        assertThat(retrySendData.path("message")).isEqualTo(firstSendData.path("message"));
+        assertThat(firstSendData.path("message").path("sender").path("memberPublicId").asText())
+            .isEqualTo(bob.getPublicId());
+        assertThat(firstSendData.path("message").path("sender").path("nickname").asText())
+            .isEqualTo(bob.getNickname());
+        assertThat(firstSendData.path("deduplicated").asBoolean()).isFalse();
+        assertThat(retrySendData.path("deduplicated").asBoolean()).isTrue();
         send(bob, roomPublicId, FIRST_MESSAGE_ID, "다른 본문")
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("CHAT_004"));
