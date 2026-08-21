@@ -20,3 +20,13 @@
 ## 양호
 - CONNECT JWT, strict Origin/query token 차단, user destination only, REST IDOR 404, room lock/sequence/멱등, Kafka ACK-after-Redis, metadata-only 본문 비노출, React text rendering과 dialog focus 처리는 적절하다.
 
+## 최종 재판정 (2026-08-22)
+
+- 판정: `CHANGES REQUESTED / RELEASE BLOCKED`
+- FC-341 전송 응답 후속 조회 제거 구현 자체는 기능·보안·동시성 회귀 없이 통과했다.
+- self-hosted run `32503805495`에서 10→50→150→300/s와 300/s 5분은 모두 통과했다.
+- 1,000/s burst는 완료 57,757건, drop 2,243건, HTTP 실패 1,479건, p95 3,799ms,
+  p99 4,184ms, Hikari timeout 1,351건으로 §14.3을 위반했다.
+- burst 실패로 socket 100→1,000→5,000→20,000 단계는 계약대로 실행하지 않았다.
+- FC-329가 최종 성능 DoD를 충족하지 못했으므로 FC-324와 EPIC-CHAT 출시는 차단한다.
+- 사용자 지시에 따라 추가 최적화·재진단 루프는 시작하지 않는다.

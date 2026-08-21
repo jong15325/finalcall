@@ -378,3 +378,30 @@ host 측정은 폐기하고 150→300/s를 이어간다. Linux host에서도 재
 
 근거 summary는 저장소 밖 `D:\tmp\fc329-fc335-recheck\timing-native-10s.json`,
 `timing-native-50s.json`에 보존했다.
+
+## 9. 최종 self-hosted extended 판정 (2026-08-22)
+
+FC-341의 전송 응답 후속 사용자 조회 제거가 반영된 커밋 `9ae6670`으로 전용 Linux runner에서
+workflow run `32503805495`를 실행했다. 2-Gateway/2-app, Kafka consumer 2개/active monitor 1개,
+app별 Hikari fixed pool 32개와 connection timeout 1초를 유지했다. MySQL은
+`max_connections=151`, app pool 외 reserve 87로 topology 사전 조건을 충족했다.
+
+| 단계 | 완료 / drop | HTTP 201 | p95 / p99 | 판정 |
+|---|---:|---:|---:|---|
+| 10/s | 101 / 0 | 101/101 | 52 / 55ms | 통과 |
+| 50/s | 1,501 / 0 | 1,501/1,501 | 31 / 42ms | 통과 |
+| 150/s | 4,501 / 0 | 4,501/4,501 | 54 / 75ms | 통과 |
+| 300/s | 9,001 / 0 | 9,001/9,001 | 73 / 94ms | 통과 |
+| 300/s 5분 | 90,001 / 0 | 90,001/90,001 | 59 / 84ms | 통과 |
+| 1,000/s 60초 burst | 57,757 / 2,243 | 56,278/57,757 | 3,799 / 4,184ms | 실패 |
+
+burst에서는 HTTP 실패 1,479건, Hikari pending 최대 app1 167/app2 168, timeout 누적
+app1 646/app2 705가 발생했다. MySQL connection은 67/151로 상한에 닿지 않았지만
+`Threads_running`은 최대 67이었다. FC-341 적용 전 run `32497501834`의 성공 42,121건보다
+성공 처리량은 56,278건으로 개선됐으나, 계약의 drop 0, HTTP 201 100%, p95 200ms 미만,
+p99 500ms 미만, Hikari timeout 0을 충족하지 못했다.
+
+실패 즉시 중단 계약에 따라 socket 100→1,000→5,000→20,000 단계는 실행하지 않았다.
+따라서 지속 300/s 용량은 검증됐지만 1,000/s burst와 socket 출시 용량은 미검증/실패 상태다.
+최종 reviewer는 `changes-requested / release blocked`로 판정했다. 사용자 지시에 따라 이번 결과 이후
+추가 최적화나 재진단 루프를 자동으로 시작하지 않는다.
