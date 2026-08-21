@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongSupplier;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import io.micrometer.core.instrument.Counter;
@@ -26,6 +27,7 @@ public class ChatEventPipelineMetrics {
     private final MeterRegistry meterRegistry;
     private final LongSupplier nanoTime;
 
+    @Autowired
     public ChatEventPipelineMetrics(MeterRegistry meterRegistry) {
         this(meterRegistry, System::nanoTime);
     }
