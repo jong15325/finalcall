@@ -55,7 +55,7 @@ class ChatKafkaLagReaderTest {
     void setUp() {
         ChatKafkaProperties properties = new ChatKafkaProperties(
             new ChatKafkaProperties.Topic(TOPIC, 1, (short)1, (short)1, Duration.ofDays(7)),
-            new ChatKafkaProperties.Consumer(true, GROUP_ID, Duration.ofSeconds(1),
+            new ChatKafkaProperties.Consumer(true, true, GROUP_ID, Duration.ofSeconds(1),
                 Duration.ofSeconds(10), Duration.ofSeconds(5)));
         reader = new ChatKafkaLagReader(admin, probeConsumer, properties, Clock.fixed(NOW, ZoneOffset.UTC));
 

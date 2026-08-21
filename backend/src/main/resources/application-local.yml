@@ -30,6 +30,7 @@ chat:
       min-in-sync-replicas: 1
     consumer:
       enabled: ${CHAT_KAFKA_CONSUMER_ENABLED:false}
+      monitor-enabled: ${CHAT_KAFKA_CONSUMER_MONITOR_ENABLED:false}
 
 # FC-154(EPIC-OAUTH): 소셜 로그인 client-id/secret·redirect-uri 는 local 더미 기본값으로 부팅을 보장한다
 #   (@NotBlank 라 빈 값이면 부팅 실패 — 실키 없이도 컨텍스트가 뜨게 더미를 둔다. 라이브 교환은 실키 env 주입 시).

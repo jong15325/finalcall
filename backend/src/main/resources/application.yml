@@ -334,6 +334,7 @@ chat:
       retention: 7d
     consumer:
       enabled: false
+      monitor-enabled: false
       group-id: finalcall-chat-fanout-v1
       retry-backoff: 1s
       monitor-interval: 10s

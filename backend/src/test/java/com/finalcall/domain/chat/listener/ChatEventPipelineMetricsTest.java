@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.Test;
 
@@ -52,5 +53,22 @@ class ChatEventPipelineMetricsTest {
 
         assertThat(registry.get("chat.kafka.consumer.lag.collection.failures").counter().count())
             .isEqualTo(1.0);
+    }
+
+    @Test
+    void 마지막_성공_수집_이후_경과시간을_gauge로_남긴다() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        AtomicLong nanoTime = new AtomicLong();
+        ChatEventPipelineMetrics metrics = new ChatEventPipelineMetrics(registry, nanoTime::get);
+
+        assertThat(registry.find("chat.kafka.consumer.lag.collection.age").gauge()).isNull();
+        metrics.activateCollector();
+        assertThat(registry.get("chat.kafka.consumer.lag.collection.age").gauge().value()).isNaN();
+
+        nanoTime.set(Duration.ofSeconds(7).toNanos());
+        metrics.recordCollectionSuccess();
+        nanoTime.addAndGet(Duration.ofSeconds(3).toNanos());
+        assertThat(registry.get("chat.kafka.consumer.lag.collection.age").gauge().value())
+            .isEqualTo(3.0);
     }
 }

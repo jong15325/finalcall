@@ -35,6 +35,7 @@ public record ChatKafkaProperties(
     /** Redis 재발행 실패 때 offset을 커밋하지 않고 재전달받기 위한 consumer 설정. */
     public record Consumer(
         boolean enabled,
+        boolean monitorEnabled,
         @NotBlank String groupId,
         @NotNull Duration retryBackoff,
         @NotNull Duration monitorInterval,

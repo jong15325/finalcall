@@ -179,10 +179,12 @@ jobs:
           [[ -f "$backend_jar" && "$backend_jar" == "$BACKEND_JAR" ]]
           [[ -f "$gateway_jar" && "$gateway_jar" == "$GATEWAY_JAR" ]]
           nohup java -Xms768m -Xmx768m -jar "$backend_jar" \
-            --spring.profiles.active=local --server.port=18088 > "$RAW_LOG_DIR/app1.log" 2>&1 &
+            --spring.profiles.active=local --server.port=18088 \
+            --chat.kafka.consumer.monitor-enabled=true > "$RAW_LOG_DIR/app1.log" 2>&1 &
           echo $! > "$RUN_DIR/app1.pid"
           nohup java -Xms768m -Xmx768m -jar "$backend_jar" \
-            --spring.profiles.active=local --server.port=18089 > "$RAW_LOG_DIR/app2.log" 2>&1 &
+            --spring.profiles.active=local --server.port=18089 \
+            --chat.kafka.consumer.monitor-enabled=false > "$RAW_LOG_DIR/app2.log" 2>&1 &
           echo $! > "$RUN_DIR/app2.pid"
           nohup java -Xms384m -Xmx384m -jar "$gateway_jar" \
             --spring.profiles.active=local --server.port=18090 --service.uri=http://localhost:18088 \
@@ -201,6 +203,34 @@ jobs:
               sleep 2
             done
           done
+
+          mkdir -p "$ARTIFACT_DIR/metrics"
+          for port in 18088 18089; do
+            curl --fail --silent "http://localhost:$port/actuator/prometheus" \
+              > "$ARTIFACT_DIR/metrics/topology-app-$port.prom"
+          done
+          grep -q '^chat_kafka_consumer_lag_collection_age_seconds ' \
+            "$ARTIFACT_DIR/metrics/topology-app-18088.prom"
+          if grep -q '^chat_kafka_consumer_lag_collection_age_seconds ' \
+            "$ARTIFACT_DIR/metrics/topology-app-18089.prom"; then
+            echo 'TOPOLOGY_FAILED: active monitor는 정확히 1개여야 합니다.' >&2
+            exit 1
+          fi
+          consumer_count=0
+          for attempt in {1..30}; do
+            docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" exec -T kafka \
+              /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server kafka:9092 \
+              --group finalcall-chat-fanout-v1 --describe --members --verbose \
+              > "$ARTIFACT_DIR/metrics/topology-consumers.txt" || true
+            consumer_count="$(awk '$1 == "finalcall-chat-fanout-v1" {print $2}' \
+              "$ARTIFACT_DIR/metrics/topology-consumers.txt" | sort -u | wc -l)"
+            (( consumer_count == 2 )) && break
+            sleep 2
+          done
+          (( consumer_count == 2 )) || {
+            echo "TOPOLOGY_FAILED: active Kafka consumer는 2개여야 합니다. actual=$consumer_count" >&2
+            exit 1
+          }
 
       - name: fresh fixture 생성
         shell: pwsh

@@ -42,7 +42,7 @@ import jakarta.annotation.PreDestroy;
 
 /** consumer group의 전역 committed offset과 topic end offset을 비교하는 read-only probe. */
 @Component
-@ConditionalOnProperty(prefix = "chat.kafka.consumer", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "chat.kafka.consumer", name = "monitor-enabled", havingValue = "true")
 public class ChatKafkaLagReader {
 
     private static final String PROBE_CLIENT_ID = "finalcall-chat-lag-probe";

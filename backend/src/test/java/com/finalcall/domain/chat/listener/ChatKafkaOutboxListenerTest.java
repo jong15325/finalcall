@@ -42,7 +42,7 @@ class ChatKafkaOutboxListenerTest {
         ChatKafkaProperties properties = new ChatKafkaProperties(
             new ChatKafkaProperties.Topic("finalcall.chat.events.v1", 12, (short)3, (short)2,
                 Duration.ofDays(7)),
-            new ChatKafkaProperties.Consumer(true, "finalcall-chat-fanout-v1", RETRY_BACKOFF,
+            new ChatKafkaProperties.Consumer(true, true, "finalcall-chat-fanout-v1", RETRY_BACKOFF,
                 Duration.ofSeconds(10), Duration.ofSeconds(5)));
         listener = new ChatKafkaOutboxListener(objectMapper, fanoutPublisher, properties, meterRegistry);
     }
