@@ -58,3 +58,19 @@
 - passed (2026-08-20)
 - critical 0건, major 0건, minor 0건.
 - local-only credential과 최소 CDC 권한은 기존 계약을 유지하고, fresh volume 자동 초기화 및 기존 volume 비재실행 동작이 안전함을 확인했다.
+
+## 원격 diagnostic latency 재개
+- changes-requested (2026-08-20)
+- run `32379511392`는 fresh infra·앱·fixture까지 통과했으나 첫 10/s 단계에서 성공률 100%에도 p95 1.43초, p99 2.34초로 중단됐다.
+- receiving p95는 28ms이고 waiting p95가 1.41초였으며, fixture가 app1만 예열한 뒤 app2 최초 요청이 0.7~2.0초를 기록하고 수십 ms대로 수렴한 비대칭 cold-path 형상을 확인했다.
+- 성능 threshold는 유지하고 두 Gateway의 비채점 prewarm 후 기존 10/s 측정을 재실행하는 orchestration 보정이 필요하다.
+
+## 대칭 prewarm 구현
+- 각 Gateway를 기존 k6 scenario로 `2/s × 5초` 비채점 prewarm하고, gateway별 HTTP 201과 응답 data 성공이 각각 최소 5건이며 실패 0건인지 검증한다.
+- 두 Gateway 조건을 만족하지 못하면 정식 측정 전에 중단하며, 기존 10→50→150→300/s와 p95·p99 threshold는 변경하지 않았다.
+- 성공·실패 dry-run, URL 개수 guard, Bash 문법 및 secret 출력 경로를 검증했다.
+
+## 대칭 prewarm 재리뷰
+- passed (2026-08-20)
+- critical 0건, major 0건, minor 0건.
+- 비채점 옵션은 gateway별 prewarm에만 한정되고, 성공 검증·fail-fast·artifact secret scan과 기존 정식 threshold가 유지됨을 확인했다.
