@@ -1,6 +1,6 @@
 # Chat 도메인 스펙
 
-> 상태: **v1.3 — APPROVED** (2026-08-21, FC-338 전역 lag collector 단일 실행 게이트2 승인 반영)
+> 상태: **v1.4 — APPROVED** (2026-08-21, FC-329 출시 성능 판정 runner 경계 게이트2 승인 반영)
 >
 > EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.27,
 > 스키마 정본은 `docs/spec/erd.md` v2.1이다.
@@ -930,14 +930,19 @@ messageId, eventId, nickname은 모든 metric tag로 쓰지 않는다. 고카디
 23. worker publish 실패에서 동기 fallback·내부 retry 없이 outbox→Kafka와 gap replay로 수렴
 24. bounded shutdown drain 완료와 timeout 뒤 잔여 drop/shutdown metric 검증
 25. fast-path와 CDC의 중복·역순·gap이 eventId/roomSequence dedup 및 REST replay로 최종 수렴
-26. 동일 멀티노드 topology에서 50→150→300 message write/s 단계별 회귀 검증. 각 단계는 drop·처리율,
-    REST p95/p99, DB connection acquire/usage, queue depth/rejection, publish failure와 §14.2 SLO를 기록하고,
-    이전 단계 실패 시 상위 단계 및 20k socket·장시간 시험을 진행하지 않음
-27. 2-app Linux release topology에서 Kafka consumer는 양 app에 활성화하고 active monitor는 정확히 1개인지
-    부하 전에 assert한다. monitor를 활성화한 상태로 먼저 10/s에서 101/101 성공, REST p95 < 200ms,
-    p99 < 500ms를 모두 만족해야 50→150→300/s를 순서대로 진행한다. 어느 단계든 실패하면 즉시 중단하고
-    상위 단계로 진행하지 않으며, HTTP timing·collector 실행 시각·app/gateway/infra metric과 로그를 artifact로
-    남긴다. 모든 monitor를 꺼서 SLO를 판정하는 것은 허용하지 않는다.
+26. 전용 self-hosted Linux runner의 동일 멀티노드 topology에서 10→50→150→300 message write/s 단계별
+    출시 회귀를 검증한다. runner는 CPU 8개 이상, memory 16GiB 이상, file descriptor 65,536 이상이며
+    시험 중 다른 workload를 실행하지 않는다. 각 단계는 drop·처리율, REST p95/p99, DB connection
+    acquire/usage/pending 시계열, queue depth/rejection, publish failure, Kafka lag와 §14.2 SLO를 기록하고,
+    이전 단계 실패 시 상위 단계 및 20k socket·장시간 시험을 진행하지 않는다.
+27. GitHub-hosted diagnostic은 topology/readiness, 양 gateway prewarm, Kafka consumer 2개와 active monitor 1개,
+    keep-alive와 fixture별 client IP 분산을 assert한 뒤 10/s smoke까지만 수행한다. scheduled iteration drop 0,
+    HTTP 201 100%, REST p95 < 200ms, p99 < 500ms를 검증하지만 가변 공유 host 결과는 release capacity
+    evidence로 사용하지 않는다. self-hosted extended는 같은 assert와 10/s 검증부터 다시 시작하고 통과한 뒤에만
+    50→150→300/s를 순서대로 출시 판정한다. 어느 환경에서든 실패하면 즉시 중단하고 상위 단계로 진행하지 않는다.
+    HTTP timing·collector 실행 시각·app/gateway/infra metric과 로그, host/container CPU·memory·I/O,
+    Hikari acquire/usage/pending 시계열, Kafka lag를 artifact로 남긴다. 모든 monitor를 꺼서 SLO를 판정하거나
+    hosted 10/s smoke를 self-hosted 10/s 출시 검증 대신 사용하는 것은 허용하지 않는다.
 
 ---
 
@@ -1021,6 +1026,18 @@ outbox·Kafka·Redis에는 원문을 넣지 않고 local DB hydration 뒤 TLS ST
 Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/failure metric·alert·runbook으로 보완한다.
 외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다. C는 장기 운영 고도화 선택지로 남긴다.
 
+### G2-CHAT-9 — hosted smoke와 self-hosted 출시 판정 경계 — APPROVED
+
+| 선택지 | 내용 | 장단점 |
+|---|---|---|
+| A (승인) | hosted는 10/s smoke, self-hosted extended는 10→50→150→300/s 출시 판정 | hosted wiring 회귀를 빠르게 찾으면서 출시 수치는 격리된 자원에서 재현 |
+| B | diagnostic 전체를 self-hosted로 이전 | 환경은 일관되나 모든 진단이 희소 전용 runner에 의존하고 hosted smoke를 잃음 |
+| C | hosted에서 자원·container를 조정해 50/s 이상 판정 유지 | 공유 host CPU·I/O와 noisy neighbor를 통제할 수 없어 출시 근거가 재현되지 않음 |
+
+**승인:** A와 §14.3의 runner 책임 경계를 2026-08-21 승인했다. §14.2 SLO와 10→50→150→300/s
+순서, 단계 실패 즉시 중단 조건은 불변이다. hosted smoke는 출시 용량 증거가 아니며 self-hosted extended가
+10/s부터 독립적으로 판정한다. 외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다.
+
 ---
 
 ## 16. 확정 영향 티켓/산출물
@@ -1033,7 +1050,8 @@ Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/f
 | `FC-317` | 승인된 Vuexy 방 목록·대화·차단·신고 UX가 REST/STOMP DTO와 reconnect/gap 계약을 소비 |
 | `FC-335` | §7.4 bounded executor 구현·단위/통합 테스트와 fast-path 저카디널리티 metric을 소비 |
 | `FC-338` | §13.4의 monitor 독립 설정·단일 active collector·stale/failure 관측과 Linux topology assert를 구현 |
-| `FC-329` | §14.3의 10/s 선행 판정 후 50→150→300/s 단계별 release topology 재검증과 출시 판정을 수행 |
+| `FC-339` | §14.3에 따라 hosted diagnostic을 10/s smoke로 한정하고 self-hosted extended의 출시 판정 경계를 구현 |
+| `FC-329` | §14.3의 self-hosted 10→50→150→300/s release topology 재검증과 출시 판정을 수행 |
 | `FC-324` | FC-335 구현 및 FC-329 재검증 결과를 reviewer 변경 요청 해소의 근거로 재검토 |
 
 메인세션이 발급할 구현 티켓 입력은 다음과 같다. `CHAT-*`는 발급 전 임시 키다.
@@ -1072,6 +1090,7 @@ Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/f
 
 | 버전 | 날짜 | 상태 | 변경 |
 |---|---|---|---|
+| v1.4 | 2026-08-21 | **APPROVED** | G2-CHAT-9 권고안 A 승인 반영. hosted diagnostic은 topology·prewarm·단일 monitor·10/s smoke로 한정하고, 격리된 self-hosted extended에서 10→50→150→300/s 출시 판정을 수행하도록 runner 경계를 확정. SLO·실패 즉시 중단은 불변이며 host/container 자원·Hikari 시계열·Kafka lag artifact를 추가. FC-337·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.3 | 2026-08-21 | **APPROVED** | G2-CHAT-8 권고안 A 승인 반영. consumer는 양 app에서 유지하되 전역 outbox/Kafka lag collector는 배포당 1개만 활성화하고 stale/failure 관측·alert·runbook 및 Linux 10→50→150→300/s 중단 조건을 확정. FC-338·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.2 | 2026-08-20 | **APPROVED** | G2-CHAT-7 권고안 A 승인 반영. commit 이후 metadata-only snapshot을 전용 bounded executor에 non-blocking enqueue하고 포화·실패·종료는 metric/drop, outbox→Kafka는 내구 fallback으로 확정. FC-335·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event schema·ERD 불변 |
 | v1.1 | 2026-08-19 | **APPROVED** | FC-332 outbox retention 인덱스 게이트2 승인 반영. V27 `(created_at,id)` 가법 인덱스와 배포·롤백·검증 계약 확정 |

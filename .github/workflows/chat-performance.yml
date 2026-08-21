@@ -78,16 +78,28 @@ jobs:
           docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" \
             down --volumes --remove-orphans || true
           if [[ '${{ inputs.profile }}' == 'extended' ]]; then
+            running_containers="$(docker ps --quiet | wc -l)"
+            (( running_containers == 0 )) || {
+              echo "RUNNER_PREREQUISITE_FAILED: 동시 Docker workload가 없어야 합니다. running=$running_containers" >&2
+              exit 1
+            }
+            if pgrep -x k6 >/dev/null || \
+              pgrep -f '[b]ackend-0.0.1-SNAPSHOT.jar|[g]ateway-0.0.1-SNAPSHOT.jar' >/dev/null; then
+              echo 'RUNNER_PREREQUISITE_FAILED: 동시 k6/app/gateway workload가 없어야 합니다.' >&2
+              exit 1
+            fi
             fd_limit="$(ulimit -n)"
+            host_cpus="$(nproc)"
             memory_kib="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
             docker_cpus="$(docker info --format '{{.NCPU}}')"
             docker_memory="$(docker info --format '{{.MemTotal}}')"
-            echo "extended runner prerequisite: fd=$fd_limit memoryKiB=$memory_kib dockerCpu=$docker_cpus dockerMemory=$docker_memory"
+            echo "extended runner prerequisite: fd=$fd_limit hostCpu=$host_cpus memoryKiB=$memory_kib dockerCpu=$docker_cpus dockerMemory=$docker_memory"
             if [[ "$fd_limit" != unlimited ]]; then
               [[ "$fd_limit" =~ ^[0-9]+$ ]] || { echo 'RUNNER_PREREQUISITE_FAILED: ulimit -n 값이 숫자나 unlimited가 아닙니다.' >&2; exit 1; }
               (( fd_limit >= 65536 )) || { echo 'RUNNER_PREREQUISITE_FAILED: ulimit -n은 65536 이상이어야 합니다.' >&2; exit 1; }
             fi
             (( memory_kib >= 16777216 )) || { echo 'RUNNER_PREREQUISITE_FAILED: runner memory는 16GiB 이상이어야 합니다.' >&2; exit 1; }
+            (( host_cpus >= 8 )) || { echo 'RUNNER_PREREQUISITE_FAILED: runner CPU는 8개 이상이어야 합니다.' >&2; exit 1; }
             (( docker_cpus >= 8 )) || { echo 'RUNNER_PREREQUISITE_FAILED: Docker CPU는 8개 이상이어야 합니다.' >&2; exit 1; }
             (( docker_memory >= 17179869184 )) || { echo 'RUNNER_PREREQUISITE_FAILED: Docker memory는 16GiB 이상이어야 합니다.' >&2; exit 1; }
           fi
@@ -247,7 +259,38 @@ jobs:
           CHAT_SOCKET_FIXTURE_FILE: ${{ runner.temp }}/chat-performance/socket-fixture.json
           CHAT_RESULT_DIR: ${{ runner.temp }}/chat-performance/artifact/k6
           CHAT_BASE_URLS: http://localhost:18090,http://localhost:18091
-        run: bash scripts/chat/run-linux-ci-load.sh '${{ inputs.profile }}'
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR/timeseries"
+          collect_timeseries() {
+            while true; do
+              timestamp="$(date --iso-8601=seconds)"
+              {
+                echo "timestamp=$timestamp"
+                grep -E '^(cpu |MemTotal:|MemAvailable:|SwapTotal:|SwapFree:)' /proc/stat /proc/meminfo 2>/dev/null || true
+                cat /proc/diskstats
+              } >> "$ARTIFACT_DIR/timeseries/host-resource.log"
+              docker stats --no-stream --format '{{json .}}' 2>/dev/null | \
+                sed "s/^/timestamp=$timestamp /" \
+                >> "$ARTIFACT_DIR/timeseries/container-resource.log" || true
+              for port in 18088 18089; do
+                {
+                  echo "# timestamp=$timestamp port=$port"
+                  curl --silent "http://localhost:$port/actuator/prometheus" | \
+                    grep -E '^(hikaricp_connections_(acquire|usage|pending)|chat_kafka_consumer_lag)'
+                } >> "$ARTIFACT_DIR/timeseries/app-$port.prom" || true
+              done
+              sleep 5
+            done
+          }
+          collect_timeseries &
+          collector_pid=$!
+          stop_collector() {
+            kill "$collector_pid" 2>/dev/null || true
+            wait "$collector_pid" 2>/dev/null || true
+          }
+          trap stop_collector EXIT
+          bash scripts/chat/run-linux-ci-load.sh '${{ inputs.profile }}'
 
       - name: 로그와 핵심 metric 수집·redaction
         id: collection

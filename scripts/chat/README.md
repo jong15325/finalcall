@@ -40,7 +40,8 @@ docker run --rm -i `
 단계 부하는 먼저 `CHAT_SOCKET_VUS=100`, `1,000`, `5,000`으로 올린 뒤 20,000을 실행한다. 순수 연결
 용량 측정은 `CHAT_SOCKETS_PER_USER=1`, 사용자당 최대 quota도 함께 검증할 때는 계약 상한인 `3`을 사용한다. 쓰기도
 `CHAT_SUSTAINED_RATE=50`, `150`, `300`과 `CHAT_BURST_RATE=300`, `600`, `1,000` 순서로 올린다.
-한 단계에서 socket 연결 성공률 99% 초과, write 성공률 99% 초과, DB p95 200ms/p99 500ms 또는 호스트 CPU·메모리
+한 단계에서 socket 연결 성공률 99% 초과, write HTTP 201 성공률 100%·scheduled iteration drop 0,
+DB p95 200ms/p99 500ms 또는 호스트 CPU·메모리
 한도를 넘으면 다음 단계로 외삽하지 않고 병목을 기록한다.
 
 장애 창은 별도 셸에서 실행한다. 스크립트는 명시한 컨테이너 하나만 pause/unpause하며 `finally`에서 복구한다.
@@ -59,15 +60,18 @@ Redis/Kafka/Connect 중단 중에도 REST 201 row 수와 outbox row 수가 일�
 ## Linux CI 성능 진단
 
 `.github/workflows/chat-performance.yml`은 `workflow_dispatch`로만 실행한다. 기본 `diagnostic`은
-GitHub-hosted Linux runner에서 2 gateway/2 app 클러스터 합산 기준으로 각 gateway에 2/s로 5초간 비채점
-prewarm을 먼저 수행한다. 각 gateway에서 HTTP 201과 응답 data가 5건 이상 확인돼야 정식 10/s→50→150→300/s
-측정을 실행하며, 한 단계라도 실패하면 다음 단계로 진행하지 않는다. prewarm은 cold-path만 분리하며 정식 측정의
-p95 200ms/p99 500ms threshold에는 영향을 주지 않는다. keep-alive와 fixture별 client IP 통제가 기본값이다.
+GitHub-hosted Linux runner에서 topology/readiness와 consumer 2개·monitor 1개를 확인하고, 각 gateway에 2/s로
+5초간 비채점 prewarm을 수행한 뒤 10/s smoke까지만 실행한다. hosted 결과는 출시 용량 근거로 사용하지 않는다.
+10/s smoke는 scheduled iteration drop 0, HTTP 201 100%, p95 200ms 미만·p99 500ms 미만을 모두 만족해야 한다.
+keep-alive 활성화와 모든 fixture의 client IP 존재·2개 이상 분산도 부하 전에 검증한다.
 
 `extended`는 `self-hosted`, `linux`, `chat-performance` 라벨을 모두 가진 전용 runner에서만 선택할 수 있다.
-공유 runner에서는 300/s 5분, 1,000/s burst, 20,000 socket 단계를 실행하지 않는다. 전용 runner에는 Docker,
+`extended`도 hosted 결과를 이어받지 않고 prewarm과 10/s부터 독립적으로 시작해 50→150→300/s 출시 단계를
+순서대로 실행한 뒤 기존 300/s 5분, 1,000/s burst, socket 단계를 수행한다. 공유 runner에서는 이 확장 단계를
+실행하지 않는다. 전용 runner에는 Docker,
 Java 21, PowerShell, curl, jq, Python 3, `ulimit -n` 65,536 이상, CPU 8개 이상, runner/Docker memory 16GiB 이상이
-준비돼 있어야 한다. socket은 100→1,000→5,000→20,000 순서로 실행하고 각 단계 실패 시 즉시 중단한다.
+준비돼 있어야 하며 시작 시 실행 중인 다른 Docker workload가 없어야 한다. socket은
+100→1,000→5,000→20,000 순서로 실행하고 각 단계 실패 시 즉시 중단한다.
 전용 runner는 작업마다 폐기되는 ephemeral 구성을 권장한다. persistent runner라면 workflow 강제 종료 뒤 외부 workspace와
 Docker 자원 및 이전 app/gateway process 정리는 runner 운영자가 보장해야 한다. workflow 시작 시 stale PID 파일은 종료에
 사용하지 않고 전용 temp guard 아래에서 삭제한다. 종료 시에는 PID의 `/proc` command line이 예상 절대 jar 경로와 port에 모두
@@ -76,7 +80,8 @@ Docker 자원 및 이전 app/gateway process 정리는 runner 운영자가 보�
 project·process·경로는 삭제하지 않는다.
 
 workflow는 runtime secret을 매번 생성·mask하고 fixture를 runner 임시 디렉터리에만 둔다. k6 summary, redaction된
-app/gateway/compose log와 핵심 actuator metric만 7일 artifact로 보존하며 fixture와 token은 업로드하지 않는다.
+app/gateway/compose log, host/container CPU·memory·I/O와 Hikari/Kafka lag 5초 시계열을 7일 artifact로 보존하며
+fixture와 token은 업로드하지 않는다.
 로컬에서 동일 단계만 확인할 때는 다음처럼 실행한다.
 
 ```bash

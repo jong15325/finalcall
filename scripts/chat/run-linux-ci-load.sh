@@ -9,6 +9,25 @@ base_urls="${CHAT_BASE_URLS:-http://localhost:18090,http://localhost:18091}"
 
 mkdir -p "$output_dir"
 
+verify_wiring() {
+    grep -Eq 'noConnectionReuse:[[:space:]]*false' scripts/chat/k6-chat-load.js || {
+        echo "LOAD_WIRING_FAILED: k6 keep-alive가 활성화되어야 합니다." >&2
+        exit 1
+    }
+    python3 - "$fixture" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as source:
+    users = json.load(source).get("users", [])
+client_ips = [user.get("clientIp") for user in users]
+if len(client_ips) < 2 or any(not isinstance(ip, str) or not ip for ip in client_ips):
+    raise SystemExit("LOAD_WIRING_FAILED: 모든 fixture에 clientIp가 필요합니다.")
+if len(set(client_ips)) < 2:
+    raise SystemExit("LOAD_WIRING_FAILED: fixture clientIp는 2개 이상으로 분산되어야 합니다.")
+PY
+}
+
 verify_prewarm() {
     local summary="$1"
     python3 - "$summary" <<'PY'
@@ -55,6 +74,28 @@ run_sustained() {
         -e CHAT_SUSTAINED_PRE_VUS="$pre_vus" \
         -e CHAT_SUSTAINED_MAX_VUS="$max_vus" \
         scripts/chat/k6-chat-load.js
+    verify_sustained "$output_dir/$name.json"
+}
+
+verify_sustained() {
+    local summary="$1"
+    python3 - "$summary" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as source:
+    metrics = json.load(source).get("metrics", {})
+dropped = metrics.get("dropped_iterations", {}).get("values", {}).get("count", 0)
+checks = metrics.get("checks", {}).get("values", {})
+write_success = metrics.get("chat_write_success", {}).get("values", {})
+duration = metrics.get("chat_write_duration", {}).get("values", {})
+if dropped != 0:
+    raise SystemExit(f"LOAD_THRESHOLD_FAILED: scheduled iteration drop={dropped}")
+if checks.get("fails", 0) != 0 or write_success.get("rate") != 1:
+    raise SystemExit("LOAD_THRESHOLD_FAILED: HTTP 201 성공률은 100%여야 합니다.")
+if duration.get("p(95)", float("inf")) >= 200 or duration.get("p(99)", float("inf")) >= 500:
+    raise SystemExit("LOAD_THRESHOLD_FAILED: REST p95/p99 기준을 초과했습니다.")
+PY
 }
 
 IFS=',' read -r -a gateways <<< "$base_urls"
@@ -62,13 +103,11 @@ if [[ "${#gateways[@]}" -ne 2 || -z "${gateways[0]}" || -z "${gateways[1]}" ]]; 
     echo "CHAT_BASE_URLS에는 두 gateway가 필요합니다." >&2
     exit 2
 fi
+verify_wiring
 run_prewarm prewarm-gateway-1 "${gateways[0]}"
 run_prewarm prewarm-gateway-2 "${gateways[1]}"
 
-run_sustained warmup-10s 10 10s 30 100
-run_sustained diagnostic-50s 50 30s 100 400
-run_sustained diagnostic-150s 150 30s 300 1200
-run_sustained diagnostic-300s 300 30s 600 2400
+run_sustained smoke-10s 10 10s 30 100
 
 if [[ "$mode" == "diagnostic" ]]; then
     exit 0
@@ -77,6 +116,10 @@ if [[ "$mode" != "extended" ]]; then
     echo "지원하지 않는 실행 mode입니다." >&2
     exit 2
 fi
+
+run_sustained release-50s 50 30s 100 400
+run_sustained release-150s 150 30s 300 1200
+run_sustained release-300s 300 30s 600 2400
 
 run_sustained sustained-300s-5m 300 5m 600 2400
 
@@ -90,6 +133,7 @@ run_sustained sustained-300s-5m 300 5m 600 2400
     -e CHAT_BURST_PRE_VUS=2000 \
     -e CHAT_BURST_MAX_VUS=6000 \
     scripts/chat/k6-chat-load.js
+verify_sustained "$output_dir/burst-1000s-60s.json"
 
 run_socket() {
     local name="$1" vus="$2" duration="$3"
