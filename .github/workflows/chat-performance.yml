@@ -192,10 +192,16 @@ jobs:
           [[ -f "$gateway_jar" && "$gateway_jar" == "$GATEWAY_JAR" ]]
           nohup java -Xms768m -Xmx768m -jar "$backend_jar" \
             --spring.profiles.active=local --server.port=18088 \
+            --spring.datasource.hikari.minimum-idle=32 \
+            --spring.datasource.hikari.maximum-pool-size=32 \
+            --spring.datasource.hikari.connection-timeout=1000 \
             --chat.kafka.consumer.monitor-enabled=true > "$RAW_LOG_DIR/app1.log" 2>&1 &
           echo $! > "$RUN_DIR/app1.pid"
           nohup java -Xms768m -Xmx768m -jar "$backend_jar" \
             --spring.profiles.active=local --server.port=18089 \
+            --spring.datasource.hikari.minimum-idle=32 \
+            --spring.datasource.hikari.maximum-pool-size=32 \
+            --spring.datasource.hikari.connection-timeout=1000 \
             --chat.kafka.consumer.monitor-enabled=false > "$RAW_LOG_DIR/app2.log" 2>&1 &
           echo $! > "$RUN_DIR/app2.pid"
           nohup java -Xms384m -Xmx384m -jar "$gateway_jar" \
@@ -217,9 +223,52 @@ jobs:
           done
 
           mkdir -p "$ARTIFACT_DIR/metrics"
+          for app in app1 app2; do
+            pid="$(cat "$RUN_DIR/$app.pid")"
+            cmdline="$(tr '\0' ' ' < "/proc/$pid/cmdline")"
+            for expected_arg in \
+              '--spring.datasource.hikari.minimum-idle=32' \
+              '--spring.datasource.hikari.maximum-pool-size=32' \
+              '--spring.datasource.hikari.connection-timeout=1000'; do
+              grep -Fq -- "$expected_arg" <<< "$cmdline" || {
+                echo "DB_CAPACITY_FAILED: $app Hikari 설정 증거가 없습니다. arg=$expected_arg" >&2
+                exit 1
+              }
+            done
+          done
+          mysql_max_connections="$(docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" \
+            exec -T mysql mysql -ufinalcall -pfinalcall -Nse 'SELECT @@GLOBAL.max_connections')"
+          [[ "$mysql_max_connections" =~ ^[0-9]+$ ]] || {
+            echo 'DB_CAPACITY_FAILED: MySQL max_connections를 숫자로 조회하지 못했습니다.' >&2
+            exit 1
+          }
+          mysql_reserve=$((mysql_max_connections - 64))
+          (( mysql_max_connections >= 96 && mysql_reserve >= 32 )) || {
+            echo "DB_CAPACITY_FAILED: MySQL connection capacity가 부족합니다. max=$mysql_max_connections pool=64 reserve=$mysql_reserve" >&2
+            exit 1
+          }
+          printf 'app1_pool=32\napp2_pool=32\ntotal_pool=64\nmysql_max_connections=%s\nmysql_reserve=%s\n' \
+            "$mysql_max_connections" "$mysql_reserve" \
+            > "$ARTIFACT_DIR/metrics/db-capacity.txt"
           for port in 18088 18089; do
-            curl --fail --silent "http://localhost:$port/actuator/prometheus" \
-              > "$ARTIFACT_DIR/metrics/topology-app-$port.prom"
+            pool_ready=false
+            for attempt in {1..30}; do
+              curl --fail --silent "http://localhost:$port/actuator/prometheus" \
+                > "$ARTIFACT_DIR/metrics/topology-app-$port.prom"
+              pool_max="$(awk '$1 ~ /^hikaricp_connections_max(\{|$)/ {print $2; exit}' \
+                "$ARTIFACT_DIR/metrics/topology-app-$port.prom")"
+              pool_min="$(awk '$1 ~ /^hikaricp_connections_min(\{|$)/ {print $2; exit}' \
+                "$ARTIFACT_DIR/metrics/topology-app-$port.prom")"
+              if awk -v max="$pool_max" -v min="$pool_min" 'BEGIN {exit !(max == 32 && min == 32)}'; then
+                pool_ready=true
+                break
+              fi
+              sleep 2
+            done
+            [[ "$pool_ready" == true ]] || {
+              echo "DB_CAPACITY_FAILED: app port $port Hikari fixed pool 32를 확인하지 못했습니다. max=${pool_max:-missing} min=${pool_min:-missing}" >&2
+              exit 1
+            }
           done
           consumer_count=0
           for attempt in {1..30}; do
@@ -277,9 +326,15 @@ jobs:
                 {
                   echo "# timestamp=$timestamp port=$port"
                   curl --silent "http://localhost:$port/actuator/prometheus" | \
-                    grep -E '^(hikaricp_connections_(acquire|usage|pending)|chat_kafka_consumer_lag)'
+                    grep -E '^(hikaricp_connections_(acquire|usage|pending|timeout)|chat_kafka_consumer_lag)'
                 } >> "$ARTIFACT_DIR/timeseries/app-$port.prom" || true
               done
+              {
+                echo "# timestamp=$timestamp"
+                docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" \
+                  exec -T mysql mysql -ufinalcall -pfinalcall -Nse \
+                  "SHOW GLOBAL STATUS WHERE Variable_name IN ('Threads_connected','Threads_running','Connections','Aborted_connects')"
+              } >> "$ARTIFACT_DIR/timeseries/mysql-connections.tsv" 2>/dev/null || true
               sleep 5
             done
           }
@@ -307,7 +362,7 @@ jobs:
             > "$RAW_LOG_DIR/compose.log" 2>&1 || true
           for port in 18088 18089; do
             curl --silent "http://localhost:$port/actuator/prometheus" | \
-              grep -E '^(hikaricp_connections_(acquire|usage|pending)|chat_fast_path_|chat_redis_publish|chat_kafka_consumer_lag)' \
+              grep -E '^(hikaricp_connections_(acquire|usage|pending|timeout)|chat_fast_path_|chat_redis_publish|chat_kafka_consumer_lag)' \
               > "$ARTIFACT_DIR/metrics/app-$port.prom" || true
           done
           printf '%s\n' "${raw_sources[@]}" | sort > "$ARTIFACT_DIR/redaction-source-manifest.txt"

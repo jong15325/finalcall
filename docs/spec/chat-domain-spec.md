@@ -1,6 +1,6 @@
 # Chat 도메인 스펙
 
-> 상태: **v1.4 — APPROVED** (2026-08-21, FC-329 출시 성능 판정 runner 경계 게이트2 승인 반영)
+> 상태: **v1.5 — APPROVED** (2026-08-21, FC-340 채팅 burst DB connection capacity 게이트2 승인 반영)
 >
 > EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.27,
 > 스키마 정본은 `docs/spec/erd.md` v2.1이다.
@@ -943,6 +943,15 @@ messageId, eventId, nickname은 모든 metric tag로 쓰지 않는다. 고카디
     HTTP timing·collector 실행 시각·app/gateway/infra metric과 로그, host/container CPU·memory·I/O,
     Hikari acquire/usage/pending 시계열, Kafka lag를 artifact로 남긴다. 모든 monitor를 꺼서 SLO를 판정하거나
     hosted 10/s smoke를 self-hosted 10/s 출시 검증 대신 사용하는 것은 허용하지 않는다.
+28. 2-app release topology의 Hikari pool은 app별 `minimum-idle=32`, `maximum-pool-size=32`인 fixed pool,
+    전체 64 connection으로 검증한다. `connection-timeout=1s`로 acquisition wait를 제한하며 timeout으로
+    성공률이나 latency 실패를 숨기지 않는다. MySQL `@@max_connections`는 96 이상이고 app pool 합계 64 외에
+    Connect·worker·관리 connection을 위한 32 이상의 reserve가 남는지 부하 전에 assert한다. 단계별로
+    `Threads_connected`, `Threads_running`, `Connections`, `Aborted_connects`와 Hikari timeout을 수집한다.
+    동일 extended를 10→50→150→300/s, 300/s 5분, 1,000/s 60초 burst 순서로 처음부터 재검증하고 burst가
+    drop 0·HTTP 201 100%·§14.2 SLO를 통과한 뒤에만 100→1,000→5,000→20,000 socket 단계로 진행한다.
+    pool 32에서 burst가 실패하면 pool을 추가 증설하지 않고 DB CPU·lock·I/O 또는 send 응답 후속 조회 제거안을
+    게이트2에 다시 상신한다.
 
 ---
 
@@ -1038,6 +1047,18 @@ Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/f
 순서, 단계 실패 즉시 중단 조건은 불변이다. hosted smoke는 출시 용량 증거가 아니며 self-hosted extended가
 10/s부터 독립적으로 판정한다. 외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다.
 
+### G2-CHAT-10 — 1,000/s burst DB connection capacity — APPROVED
+
+| 선택지 | 내용 | 장단점 |
+|---|---|---|
+| A (승인) | app별 Hikari fixed pool 32, 전체 64와 MySQL connection reserve를 bounded 검증 | 확인된 acquisition queue를 최소 설정으로 해소, DB 병목 전이를 telemetry로 통제 |
+| B | send 결과에 sender public ID를 담아 응답 후속 사용자 조회 제거 | 요청당 DB 작업을 줄이나 내부 서비스 계약·코드 변경이며 pool 10으로 burst 충족 보장 없음 |
+| C | app replica를 4개 이상으로 수평 확장 | app CPU/pool은 늘지만 중앙 MySQL connection·CPU 부하와 운영 topology 변경 반경이 큼 |
+
+**승인:** A와 §14.3의 fixed pool·MySQL reserve·전체 extended 재검증 계약을 2026-08-21 승인했다.
+pool 32는 추가 증설 전 재상신이 필요한 단일 bounded 후보이며, 실패 시 B 또는 DB 병목 분석으로 돌아간다.
+외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다.
+
 ---
 
 ## 16. 확정 영향 티켓/산출물
@@ -1051,6 +1072,7 @@ Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/f
 | `FC-335` | §7.4 bounded executor 구현·단위/통합 테스트와 fast-path 저카디널리티 metric을 소비 |
 | `FC-338` | §13.4의 monitor 독립 설정·단일 active collector·stale/failure 관측과 Linux topology assert를 구현 |
 | `FC-339` | §14.3에 따라 hosted diagnostic을 10/s smoke로 한정하고 self-hosted extended의 출시 판정 경계를 구현 |
+| `FC-340` | §14.3의 app별 Hikari fixed pool 32·MySQL reserve/assert·connection telemetry와 burst 재검증을 구현 |
 | `FC-329` | §14.3의 self-hosted 10→50→150→300/s release topology 재검증과 출시 판정을 수행 |
 | `FC-324` | FC-335 구현 및 FC-329 재검증 결과를 reviewer 변경 요청 해소의 근거로 재검토 |
 
@@ -1090,6 +1112,7 @@ Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/f
 
 | 버전 | 날짜 | 상태 | 변경 |
 |---|---|---|---|
+| v1.5 | 2026-08-21 | **APPROVED** | G2-CHAT-10 권고안 A 승인 반영. app별 Hikari min/max 32 fixed pool·connection timeout 1초, MySQL `@@max_connections` 96 이상과 32 connection reserve/assert·운영 telemetry를 확정. 동일 extended 전체 재검증과 burst 통과 후 socket 진입, 실패 시 추가 pool 증설 금지·재상신 조건 명시. FC-340·FC-329·FC-324 영향. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.4 | 2026-08-21 | **APPROVED** | G2-CHAT-9 권고안 A 승인 반영. hosted diagnostic은 topology·prewarm·단일 monitor·10/s smoke로 한정하고, 격리된 self-hosted extended에서 10→50→150→300/s 출시 판정을 수행하도록 runner 경계를 확정. SLO·실패 즉시 중단은 불변이며 host/container 자원·Hikari 시계열·Kafka lag artifact를 추가. FC-337·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.3 | 2026-08-21 | **APPROVED** | G2-CHAT-8 권고안 A 승인 반영. consumer는 양 app에서 유지하되 전역 outbox/Kafka lag collector는 배포당 1개만 활성화하고 stale/failure 관측·alert·runbook 및 Linux 10→50→150→300/s 중단 조건을 확정. FC-338·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.2 | 2026-08-20 | **APPROVED** | G2-CHAT-7 권고안 A 승인 반영. commit 이후 metadata-only snapshot을 전용 bounded executor에 non-blocking enqueue하고 포화·실패·종료는 metric/drop, outbox→Kafka는 내구 fallback으로 확정. FC-335·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event schema·ERD 불변 |

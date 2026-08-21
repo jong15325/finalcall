@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-359
 title: 사용자 간 실시간 채팅 설계 및 구현
 state: doing
-children: [FC-316, FC-317, FC-318, FC-319, FC-320, FC-321, FC-322, FC-323, FC-324, FC-325, FC-326, FC-327, FC-328, FC-329, FC-330, FC-331, FC-332, FC-333, FC-334, FC-335, FC-336, FC-337, FC-338, FC-339]
+children: [FC-316, FC-317, FC-318, FC-319, FC-320, FC-321, FC-322, FC-323, FC-324, FC-325, FC-326, FC-327, FC-328, FC-329, FC-330, FC-331, FC-332, FC-333, FC-334, FC-335, FC-336, FC-337, FC-338, FC-339, FC-340]
 gate: null
 ---
 
