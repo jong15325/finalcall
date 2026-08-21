@@ -333,7 +333,7 @@ jobs:
 
       - name: 검증 artifact 업로드
         if: always() && steps.collection.outcome == 'success' && steps.secret-scan.outcome == 'success'
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: chat-performance-${{ inputs.profile }}-${{ github.run_id }}
           path: ${{ runner.temp }}/chat-performance/artifact
