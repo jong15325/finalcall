@@ -85,13 +85,28 @@ import sys
 
 with open(sys.argv[1], encoding="utf-8") as source:
     metrics = json.load(source).get("metrics", {})
-dropped = metrics.get("dropped_iterations", {}).get("values", {}).get("count", 0)
-checks = metrics.get("checks", {}).get("values", {})
-write_success = metrics.get("chat_write_success", {}).get("values", {})
-duration = metrics.get("chat_write_duration", {}).get("values", {})
+dropped_metric = metrics.get("dropped_iterations", {})
+dropped = dropped_metric.get("values", dropped_metric).get("count", 0)
+checks_metric = metrics.get("checks", {})
+checks = checks_metric.get("values", checks_metric)
+write_metric = metrics.get("chat_write_success", {})
+write_success = write_metric.get("values", write_metric)
+duration_metric = metrics.get("chat_write_duration", {})
+duration = duration_metric.get("values", duration_metric)
 if dropped != 0:
     raise SystemExit(f"LOAD_THRESHOLD_FAILED: scheduled iteration drop={dropped}")
-if checks.get("fails", 0) != 0 or write_success.get("rate") != 1:
+write_passes = write_success.get("passes")
+write_fails = write_success.get("fails")
+write_rate = write_success.get("rate", write_success.get("value"))
+write_is_complete = (
+    write_fails == 0 and write_passes is not None and write_passes > 0
+) if write_fails is not None else write_rate == 1
+checks_are_complete = (
+    checks.get("fails") == 0
+    and checks.get("passes") is not None
+    and checks.get("passes") > 0
+)
+if not checks_are_complete or not write_is_complete:
     raise SystemExit("LOAD_THRESHOLD_FAILED: HTTP 201 성공률은 100%여야 합니다.")
 if duration.get("p(95)", float("inf")) >= 200 or duration.get("p(99)", float("inf")) >= 500:
     raise SystemExit("LOAD_THRESHOLD_FAILED: REST p95/p99 기준을 초과했습니다.")

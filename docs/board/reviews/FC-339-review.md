@@ -25,3 +25,12 @@
 - workflow YAML 파싱 통과
 - diagnostic 종료점과 extended 단계 순서 정적 검증 통과
 - 로컬 환경 제약으로 reviewer의 shell 동적 실행은 생략했으며 backend-impl의 Bash 문법 검증은 통과
+
+## Hosted smoke 후속 검증
+
+- GitHub Actions run `32450659844`에서 topology·fixture·artifact scan·teardown을 통과했다.
+- 10/s smoke는 101/101 HTTP 201, scheduled iteration drop 0, p95 140ms, p99 194ms로 실제 SLO를 통과했다.
+- 최초 실행 실패는 k6 0.57 summary의 최상위 `passes`·`fails` 구조를 `values.rate`로 읽은 검증기 오류였다.
+- parser를 실제 구조와 wrapper 구조 모두 지원하도록 보정하고, aggregate checks와 write가 `passes > 0`,
+  `fails == 0`을 만족하도록 fail-closed 처리했다.
+- 실제 artifact 성공과 metric 누락·passes 0·value-only·fails 1 실패 회귀를 reviewer가 재확인했으며 최종 판정은 `passed`다.
