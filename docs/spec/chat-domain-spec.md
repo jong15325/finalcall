@@ -1,6 +1,6 @@
 # Chat 도메인 스펙
 
-> 상태: **v1.2 — APPROVED** (2026-08-20, FC-334 Redis fast-path 비동기 전달 게이트2 승인 반영)
+> 상태: **v1.3 — APPROVED** (2026-08-21, FC-338 전역 lag collector 단일 실행 게이트2 승인 반영)
 >
 > EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.27,
 > 스키마 정본은 `docs/spec/erd.md` v2.1이다.
@@ -836,7 +836,8 @@ REST `CHAT_009` 응답은 가능한 재시도까지의 초를 `Retry-After` head
 - `chat.fast_path.queue.depth`, `chat.fast_path.active.workers`
 - `chat.fast_path.shutdown.dropped`
 - `chat.outbox.rows`, `chat.event.pipeline.head.lag`
-- `chat.kafka.consumer.lag`, `chat.kafka.republish.failures`, `chat.debezium.source.lag`
+- `chat.kafka.consumer.lag`, `chat.kafka.consumer.lag.collection.failures`
+- `chat.kafka.consumer.lag.collection.age`, `chat.kafka.republish.failures`, `chat.debezium.source.lag`
 - `chat.realtime.delivery.delay`, `chat.reconnect.gap.messages`
 - `chat.rate_limit.rejections{scope}`, `chat.block.total`, `chat.report.total{reason}`
 
@@ -859,6 +860,21 @@ messageId, eventId, nickname은 모든 metric tag로 쓰지 않는다. 고카디
 - Kafka consumer lag 시간 > 30초, Redis publish failure > 1%
 - WebSocket abnormal close ratio > 5%, send buffer exceeded 발생
 - gateway handshake 429 비율 급증 또는 단일 IP reconnect storm
+
+### 13.4 멀티 replica 전역 backlog/lag collector
+
+- Kafka fan-out consumer는 메시지 분산 처리와 장애 복구를 위해 모든 app replica에서 활성화한다.
+- `chat.outbox.rows`와 consumer group 전체의 `chat.kafka.consumer.lag`는 전역 지표이므로 배포 전체에서
+  정확히 1개의 active app replica만 수집한다. consumer 활성화와 collector 활성화는
+  `chat.kafka.consumer.monitor-enabled`로 독립 제어하며, 배포 설정은 active collector 수가 1인지 검증한다.
+- active collector 장애 시 마지막 성공 수집 이후 경과를 `chat.kafka.consumer.lag.collection.age`로,
+  수집 실패를 `chat.kafka.consumer.lag.collection.failures`로 관측한다. collection age가 monitor interval의
+  3배를 넘거나 failure가 증가하면 alert하고, runbook에 지정 replica 복구 또는 다른 replica로 collector를
+  이전하는 절차를 둔다.
+- collector leader 선출에 Redis 분산락을 사용하지 않는다. 고정 임대와 Redis 장애 전파가 정확성·가용성
+  기준에 맞지 않는다. 단일 관측 작업을 위해 DB lock/별도 lock table도 추가하지 않는다.
+- 장기적으로는 Kafka exporter 또는 전용 observability collector로 전역 lag 수집을 app 밖으로 이관할 수 있다.
+  이관 전까지 단일 active app collector가 정본이며 replica별 중복 수집이나 단순 위상 분산은 허용하지 않는다.
 
 ---
 
@@ -917,6 +933,11 @@ messageId, eventId, nickname은 모든 metric tag로 쓰지 않는다. 고카디
 26. 동일 멀티노드 topology에서 50→150→300 message write/s 단계별 회귀 검증. 각 단계는 drop·처리율,
     REST p95/p99, DB connection acquire/usage, queue depth/rejection, publish failure와 §14.2 SLO를 기록하고,
     이전 단계 실패 시 상위 단계 및 20k socket·장시간 시험을 진행하지 않음
+27. 2-app Linux release topology에서 Kafka consumer는 양 app에 활성화하고 active monitor는 정확히 1개인지
+    부하 전에 assert한다. monitor를 활성화한 상태로 먼저 10/s에서 101/101 성공, REST p95 < 200ms,
+    p99 < 500ms를 모두 만족해야 50→150→300/s를 순서대로 진행한다. 어느 단계든 실패하면 즉시 중단하고
+    상위 단계로 진행하지 않으며, HTTP timing·collector 실행 시각·app/gateway/infra metric과 로그를 artifact로
+    남긴다. 모든 monitor를 꺼서 SLO를 판정하는 것은 허용하지 않는다.
 
 ---
 
@@ -988,6 +1009,18 @@ outbox·Kafka·Redis에는 원문을 넣지 않고 local DB hydration 뒤 TLS ST
 **승인:** A와 §7.4의 실패·포화·종료 의미론을 2026-08-20 승인했다. rejection/worker failure는 요청 실패나
 동기 fallback이 아니며 DB outbox→Kafka가 내구성 fallback이다. 외부 REST/STOMP/event schema와 ERD는 불변이다.
 
+### G2-CHAT-8 — 전역 backlog/Kafka lag collector 단일 실행 — APPROVED
+
+| 선택지 | 내용 | 장단점 |
+|---|---|---|
+| A (승인) | consumer와 monitor를 분리하고 배포당 1개 active app collector 운영 | 중복 전역 조회 제거와 최소 변경, collector 장애 시 stale 감시·이전 runbook 필요 |
+| B | 모든 replica에서 수집하되 initial delay/jitter 적용 | 동시 충돌은 줄지만 replica 수에 비례한 중복과 개별 probe 간섭이 남음 |
+| C | Kafka exporter/전용 observability collector로 즉시 이관 | 책임 분리와 고가용성은 우수하나 FC-329 해소 범위를 넘는 배포·metric 변경 필요 |
+
+**승인:** A와 §13.4·§14.3의 단일 active collector 및 단계별 Linux 검증 계약을 2026-08-21 승인했다.
+Kafka consumer는 양 app replica에서 유지하고 collector 장애는 stale/failure metric·alert·runbook으로 보완한다.
+외부 REST/STOMP/event 계약과 DB schema·ERD는 불변이다. C는 장기 운영 고도화 선택지로 남긴다.
+
 ---
 
 ## 16. 확정 영향 티켓/산출물
@@ -999,7 +1032,8 @@ outbox·Kafka·Redis에는 원문을 넣지 않고 local DB hydration 뒤 TLS ST
 | `FC-316` | 본 문서 v1.0, `api-contract.md` v1.27, `erd.md` v2.0 정본 확정 |
 | `FC-317` | 승인된 Vuexy 방 목록·대화·차단·신고 UX가 REST/STOMP DTO와 reconnect/gap 계약을 소비 |
 | `FC-335` | §7.4 bounded executor 구현·단위/통합 테스트와 fast-path 저카디널리티 metric을 소비 |
-| `FC-329` | §14.3의 50→150→300/s 단계별 release topology 재검증과 출시 판정을 수행 |
+| `FC-338` | §13.4의 monitor 독립 설정·단일 active collector·stale/failure 관측과 Linux topology assert를 구현 |
+| `FC-329` | §14.3의 10/s 선행 판정 후 50→150→300/s 단계별 release topology 재검증과 출시 판정을 수행 |
 | `FC-324` | FC-335 구현 및 FC-329 재검증 결과를 reviewer 변경 요청 해소의 근거로 재검토 |
 
 메인세션이 발급할 구현 티켓 입력은 다음과 같다. `CHAT-*`는 발급 전 임시 키다.
@@ -1038,6 +1072,7 @@ outbox·Kafka·Redis에는 원문을 넣지 않고 local DB hydration 뒤 TLS ST
 
 | 버전 | 날짜 | 상태 | 변경 |
 |---|---|---|---|
+| v1.3 | 2026-08-21 | **APPROVED** | G2-CHAT-8 권고안 A 승인 반영. consumer는 양 app에서 유지하되 전역 outbox/Kafka lag collector는 배포당 1개만 활성화하고 stale/failure 관측·alert·runbook 및 Linux 10→50→150→300/s 중단 조건을 확정. FC-338·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.2 | 2026-08-20 | **APPROVED** | G2-CHAT-7 권고안 A 승인 반영. commit 이후 metadata-only snapshot을 전용 bounded executor에 non-blocking enqueue하고 포화·실패·종료는 metric/drop, outbox→Kafka는 내구 fallback으로 확정. FC-335·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event schema·ERD 불변 |
 | v1.1 | 2026-08-19 | **APPROVED** | FC-332 outbox retention 인덱스 게이트2 승인 반영. V27 `(created_at,id)` 가법 인덱스와 배포·롤백·검증 계약 확정 |
 | v1.0 | 2026-08-18 | **APPROVED** | G2-CHAT-1~6 권고안 전건 사용자 승인. API v1.27·ERD v2.0 정본 반영. 전역 ERD 규약에 따라 association 2종에 내부 대리 PK 추가(논리 UK 불변) |
