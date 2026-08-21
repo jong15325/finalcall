@@ -209,13 +209,6 @@ jobs:
             curl --fail --silent "http://localhost:$port/actuator/prometheus" \
               > "$ARTIFACT_DIR/metrics/topology-app-$port.prom"
           done
-          grep -q '^chat_kafka_consumer_lag_collection_age_seconds ' \
-            "$ARTIFACT_DIR/metrics/topology-app-18088.prom"
-          if grep -q '^chat_kafka_consumer_lag_collection_age_seconds ' \
-            "$ARTIFACT_DIR/metrics/topology-app-18089.prom"; then
-            echo 'TOPOLOGY_FAILED: active monitor는 정확히 1개여야 합니다.' >&2
-            exit 1
-          fi
           consumer_count=0
           for attempt in {1..30}; do
             docker compose --project-name finalcall-chat-performance -f "$COMPOSE_FILE" exec -T kafka \
@@ -231,6 +224,10 @@ jobs:
             echo "TOPOLOGY_FAILED: active Kafka consumer는 2개여야 합니다. actual=$consumer_count" >&2
             exit 1
           }
+          bash scripts/chat/verify-ci-topology.sh \
+            "$ARTIFACT_DIR/metrics/topology-app-18088.prom" \
+            "$ARTIFACT_DIR/metrics/topology-app-18089.prom" \
+            "$ARTIFACT_DIR/metrics/topology-consumers.txt"
 
       - name: fresh fixture 생성
         shell: pwsh
@@ -289,17 +286,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ ! -e "$ARTIFACT_DIR/fixture.json" ]]
-          if grep -R -I -q -E 'Authorization|Bearer[[:space:]]+[A-Za-z0-9._-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' "$ARTIFACT_DIR"; then
-            echo "artifact에서 민감 인증 패턴을 발견했습니다." >&2
-            exit 1
-          fi
-          for name in JWT_SECRET GATEWAY_INTERNAL_SECRET CHAT_LOAD_PASSWORD; do
-            value="${!name}"
-            if grep -R -I -q -F -- "$value" "$ARTIFACT_DIR"; then
-              echo "artifact에서 runtime secret을 발견했습니다." >&2
-              exit 1
-            fi
-          done
+          python3 scripts/chat/scan-ci-artifact.py "$ARTIFACT_DIR"
 
       - name: 검증 artifact 업로드
         if: always() && steps.collection.outcome == 'success' && steps.secret-scan.outcome == 'success'
