@@ -20,3 +20,11 @@
 - 관련 단위 테스트 5개 클래스 통과.
 - `checkstyleMain`, `checkstyleTest`, `spotlessCheck` 통과.
 - backend-impl의 `bootJar`, `git diff --check` 통과 증거를 확인했다.
+
+## 원격 부팅 회귀와 재판정
+- run `32444494562`에서 두 backend가 `ChatEventPipelineMetrics` 생성자를 선택하지 못해 `No default constructor found`로 부팅 실패했다. fixture와 부하는 실행되지 않았다.
+- production 생성자에 `@Autowired`를 명시하고 실제 `ApplicationContextRunner` 기반 설정 조합 테스트로 교체했다.
+- monitor 설정 누락·consumer-only에서는 monitor 빈과 age gauge가 없고, monitor-only에서는 빈과 gauge가 생성됨을 확인했다.
+- fan-out consumer의 독립 `chat.kafka.consumer.enabled` 계약과 workflow의 monitor 1개·consumer 2개 assertion은 유지된다.
+- 재리뷰 결과 critical 0건, major 0건, minor 0건으로 passed다.
+- 관련 채팅 테스트 4개 클래스와 `checkstyleMain`, `checkstyleTest`, `spotlessCheck`를 캐시 없이 재실행해 통과했다.
