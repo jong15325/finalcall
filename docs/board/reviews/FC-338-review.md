@@ -28,3 +28,11 @@
 - fan-out consumer의 독립 `chat.kafka.consumer.enabled` 계약과 workflow의 monitor 1개·consumer 2개 assertion은 유지된다.
 - 재리뷰 결과 critical 0건, major 0건, minor 0건으로 passed다.
 - 관련 채팅 테스트 4개 클래스와 `checkstyleMain`, `checkstyleTest`, `spotlessCheck`를 캐시 없이 재실행해 통과했다.
+
+## 원격 topology 검증기 재판정
+- run `32445323757`에서 backend 생성자 부팅 회귀는 해소됐으나, 라벨이 붙은 Prometheus metric을 라벨 없는 형식으로만 검사해 topology 단계가 실패했다.
+- 같은 run의 artifact scan은 실제 값이 없는 `Authorization` 문구까지 탐지하는 오탐으로 artifact 업로드를 차단했다.
+- `verify-ci-topology.sh`는 metric family 뒤 라벨 유무를 모두 허용하고 app1 monitor 1개·app2 0개·Kafka consumer 2개를 수치로 검증한다.
+- `scan-ci-artifact.py`는 실제 Authorization header 값·Bearer·JWT·runtime secret만 bytes로 탐지하고 실패 시 파일명·패턴 종류만 출력한다.
+- secret scan과 teardown의 `always()` 계약, scan 성공 후에만 artifact를 업로드하는 계약은 유지된다.
+- 재리뷰 결과 critical 0건, major 0건, minor 0건으로 passed다.
