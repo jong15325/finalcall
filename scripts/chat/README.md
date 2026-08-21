@@ -59,8 +59,10 @@ Redis/Kafka/Connect 중단 중에도 REST 201 row 수와 outbox row 수가 일�
 ## Linux CI 성능 진단
 
 `.github/workflows/chat-performance.yml`은 `workflow_dispatch`로만 실행한다. 기본 `diagnostic`은
-GitHub-hosted Linux runner에서 2 gateway/2 app 클러스터 합산 기준으로 10/s warmup 후 50→150→300/s를 실행하며,
-한 단계라도 실패하면 다음 단계로 진행하지 않는다. keep-alive와 fixture별 client IP 통제가 기본값이다.
+GitHub-hosted Linux runner에서 2 gateway/2 app 클러스터 합산 기준으로 각 gateway에 2/s로 5초간 비채점
+prewarm을 먼저 수행한다. 각 gateway에서 HTTP 201과 응답 data가 5건 이상 확인돼야 정식 10/s→50→150→300/s
+측정을 실행하며, 한 단계라도 실패하면 다음 단계로 진행하지 않는다. prewarm은 cold-path만 분리하며 정식 측정의
+p95 200ms/p99 500ms threshold에는 영향을 주지 않는다. keep-alive와 fixture별 client IP 통제가 기본값이다.
 
 `extended`는 `self-hosted`, `linux`, `chat-performance` 라벨을 모두 가진 전용 runner에서만 선택할 수 있다.
 공유 runner에서는 300/s 5분, 1,000/s burst, 20,000 socket 단계를 실행하지 않는다. 전용 runner에는 Docker,

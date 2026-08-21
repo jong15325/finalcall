@@ -9,6 +9,40 @@ base_urls="${CHAT_BASE_URLS:-http://localhost:18090,http://localhost:18091}"
 
 mkdir -p "$output_dir"
 
+verify_prewarm() {
+    local summary="$1"
+    python3 - "$summary" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as source:
+    summary = json.load(source)
+
+checks = summary.get("root_group", {}).get("checks", {})
+required = ("message write 201", "ApiResponse data 존재")
+for name in required:
+    check = checks.get(name)
+    if check is None or check.get("fails") != 0 or check.get("passes", 0) < 5:
+        raise SystemExit(f"prewarm 응답 검증 실패: {name}")
+PY
+}
+
+run_prewarm() {
+    local name="$1" gateway="$2"
+    local summary="$output_dir/$name.json"
+    "$k6_bin" run --no-thresholds --summary-export "$summary" \
+        -e CHAT_FIXTURE_FILE="$fixture" \
+        -e CHAT_BASE_URLS="$gateway" \
+        -e CHAT_FORWARD_CLIENT_IP=true \
+        -e CHAT_MODE=sustained \
+        -e CHAT_SUSTAINED_RATE=2 \
+        -e CHAT_SUSTAINED_DURATION=5s \
+        -e CHAT_SUSTAINED_PRE_VUS=2 \
+        -e CHAT_SUSTAINED_MAX_VUS=10 \
+        scripts/chat/k6-chat-load.js
+    verify_prewarm "$summary"
+}
+
 run_sustained() {
     local name="$1" rate="$2" duration="$3" pre_vus="$4" max_vus="$5"
     "$k6_bin" run --summary-export "$output_dir/$name.json" \
@@ -22,6 +56,14 @@ run_sustained() {
         -e CHAT_SUSTAINED_MAX_VUS="$max_vus" \
         scripts/chat/k6-chat-load.js
 }
+
+IFS=',' read -r -a gateways <<< "$base_urls"
+if [[ "${#gateways[@]}" -ne 2 || -z "${gateways[0]}" || -z "${gateways[1]}" ]]; then
+    echo "CHAT_BASE_URLS에는 두 gateway가 필요합니다." >&2
+    exit 2
+fi
+run_prewarm prewarm-gateway-1 "${gateways[0]}"
+run_prewarm prewarm-gateway-2 "${gateways[1]}"
 
 run_sustained warmup-10s 10 10s 30 100
 run_sustained diagnostic-50s 50 30s 100 400
