@@ -14,7 +14,8 @@ import type { InventoryItem } from '@/lib/api/inventory'
  *   마켓과 동일한 `ItemCard`(variant="market"·가격/판매자 없음) 카드로 교체하고, 클릭 시 카드정보 모달을
  *   연다. 빈 슬롯은 카드 높이에 맞춰 늘어난다(그리드 stretch + `h-full`, 마켓 카드가 더 큼).
  * ★ **capacity·used 는 서버값이 정본**(계약 §4.2) — 클라가 파생하지 않는다. 슬롯 1..capacity 를
- *   `slotNo` 로 채우고 나머지는 빈 슬롯으로 둔다. 페이지네이션은 두지 않는다(승인 목업 = 단일 그리드).
+ *   `slotNo` 로 채우고 나머지는 빈 슬롯으로 둔다. 부모가 선택한 페이지에 해당하는 24칸만 그리며,
+ *   페이지 내비게이션은 페이지 셸(`InventoryPage`)이 담당한다.
  * ★ **채운 슬롯 클릭 → 카드정보 모달**(부모가 `onItemClick` 으로 받는다). 스킬 플립은 마켓 카드가
  *   hover 로 그대로 제공한다.
  */
@@ -29,6 +30,10 @@ interface InventorySlotGridProps {
     now?: number
     /** 배송 교차 조회 맵(FC-190, 계약 §4.6). 카드가 `itemInstancePublicId` 로 배송 상태를 얹는다. */
     deliveries?: DeliveryLookup
+    /** 1부터 시작하는 슬롯 페이지. */
+    page?: number
+    /** 한 페이지에 표시할 슬롯 수. 기본 24. */
+    pageSize?: number
 }
 
 function InventorySlotGrid({
@@ -38,14 +43,20 @@ function InventorySlotGrid({
     onItemClick,
     now,
     deliveries,
+    page = 1,
+    pageSize = 24,
 }: InventorySlotGridProps) {
     // slotNo → 아이템 (1-based 배치). 같은 슬롯 중복은 나중 값이 이긴다(정상 데이터엔 없음).
     const bySlot = new Map<number, InventoryItem>()
     for (const item of items) bySlot.set(item.slotNo, item)
 
     const slotCount = Math.max(capacity, used)
+    const firstSlot = (page - 1) * pageSize + 1
+    const lastSlot = Math.min(page * pageSize, slotCount)
     const slotNumbers: number[] = []
-    for (let slot = 1; slot <= slotCount; slot += 1) slotNumbers.push(slot)
+    for (let slot = firstSlot; slot <= lastSlot; slot += 1) {
+        slotNumbers.push(slot)
+    }
 
     return (
         <Fragment>
@@ -83,7 +94,7 @@ function EmptySlot({ slotNo }: { slotNo: number }) {
     return (
         <div
             aria-label={`빈 슬롯 ${slotNo}`}
-            className="relative flex h-full min-h-[210px] w-full items-center justify-center rounded-xl border border-dashed border-content-line bg-content-soft"
+            className="inventory-empty-slot relative flex h-full min-h-[447px] w-full items-center justify-center rounded-xl border border-dashed border-content-line bg-content-soft"
         >
             <span
                 aria-hidden

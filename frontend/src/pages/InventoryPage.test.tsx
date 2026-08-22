@@ -41,11 +41,11 @@ const sword: InventoryItem = {
     },
 }
 
-function mockInventory(items: InventoryItem[]) {
+function mockInventory(items: InventoryItem[], capacity = 24) {
     fetchMock.mockImplementation(async (url: string) => {
         const u = String(url)
         if (u.includes('/me/inventory')) {
-            return okEnvelope({ capacity: 24, used: items.length, items })
+            return okEnvelope({ capacity, used: items.length, items })
         }
         return okEnvelope(null)
     })
@@ -94,5 +94,23 @@ describe('InventoryPage (FC-177)', () => {
         // 판매 등록 → 선점 쿼리로 이동.
         fireEvent.click(screen.getByRole('button', { name: '판매 등록' }))
         expect(await screen.findByText('SELL item=INST-1')).toBeInTheDocument()
+    })
+
+    it('96칸을 24칸씩 네 개 탭으로 나누고 선택한 슬롯 범위만 표시한다', async () => {
+        mockInventory([], 96)
+        renderInventory()
+
+        expect(
+            await screen.findByRole('navigation', {
+                name: '인벤토리 슬롯 페이지',
+            }),
+        ).toBeInTheDocument()
+        expect(screen.getByLabelText('빈 슬롯 24')).toBeInTheDocument()
+        expect(screen.queryByLabelText('빈 슬롯 25')).toBeNull()
+
+        fireEvent.click(screen.getByRole('button', { name: '인벤토리 탭 2' }))
+        expect(screen.getByLabelText('빈 슬롯 25')).toBeInTheDocument()
+        expect(screen.getByLabelText('빈 슬롯 48')).toBeInTheDocument()
+        expect(screen.queryByLabelText('빈 슬롯 24')).toBeNull()
     })
 })

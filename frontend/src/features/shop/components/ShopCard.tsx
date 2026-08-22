@@ -1,10 +1,6 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
-import ItemCardFlip from '@/features/item/components/ItemCardFlip'
-import ItemCardView, {
-    ItemCardArtwork,
-    ItemCardPropertyBackView,
-} from '@/features/item/components/ItemCardView'
+import ItemCardView, { ItemCardArtwork } from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import CardCompareOverlay from '@/features/item/components/CardCompareOverlay'
 import type { ShopSummary } from '@/lib/api/shop'
@@ -42,7 +38,6 @@ interface ShopCardProps {
 //    props(shop=react-query 캐시 안정 참조·now=마운트 고정·onOpen=useCallback)가 안정적이라
 //    얕은 비교로 충분하다.
 function ShopCard({ shop, now, onOpen }: ShopCardProps) {
-    const [flipped, setFlipped] = useState(false)
     const item = toItemCardViewModel(shop.item, now, {
         price: { amount: shop.price },
         seller: shop.sellerNickname,
@@ -80,36 +75,23 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
                 density="compact"
                 item={item}
                 artwork={
-                    item.skills.length > 0 ? (
-                        <ItemCardFlip
-                            back={<ItemCardPropertyBackView item={item} />}
-                            contentLabel="아이템 정보"
-                            flipped={flipped}
-                            front={<ItemCardArtwork item={item} />}
-                            interaction="hover-latch"
-                            label={item.name}
-                            overlay={compare}
-                            onFlippedChange={setFlipped}
-                        />
-                    ) : (
-                        <div className="item-card__artwork-composition">
-                            <div className="item-card__skill-flip is-market">
-                                <ItemCardArtwork item={item} />
-                            </div>
-                            <div className="item-card__artwork-controls">
-                                <div className="item-card__control-gap">
-                                    {controlGapAction}
-                                </div>
-                                <div
-                                    className="item-card__secondary-actions"
-                                    data-card-hit-area="compare"
-                                >
-                                    {compare}
-                                </div>
-                            </div>
-                            {artworkAction}
+                    <div className="item-card__artwork-composition">
+                        <div className="item-card__skill-flip is-market">
+                            <ItemCardArtwork item={item} />
                         </div>
-                    )
+                        <div className="item-card__artwork-controls">
+                            <div className="item-card__control-gap">
+                                {controlGapAction}
+                            </div>
+                            <div
+                                className="item-card__secondary-actions"
+                                data-card-hit-area="compare"
+                            >
+                                {compare}
+                            </div>
+                        </div>
+                        {artworkAction}
+                    </div>
                 }
                 action={<ItemCardActionSurface opensDialog action={action} />}
             />

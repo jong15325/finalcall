@@ -1,11 +1,7 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { TbLock } from 'react-icons/tb'
 import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
-import ItemCardFlip from '@/features/item/components/ItemCardFlip'
-import ItemCardView, {
-    ItemCardArtwork,
-    ItemCardBackView,
-} from '@/features/item/components/ItemCardView'
+import ItemCardView, { ItemCardArtwork } from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import type { ItemCardSource } from '@/features/item/components/itemCardModel'
 import { decodeTypeCode } from '@/features/item/lib/itemCode'
@@ -70,7 +66,6 @@ function InventoryItemCard({
     onOpen,
     deliveryStatus,
 }: InventoryItemCardProps) {
-    const [flipped, setFlipped] = useState(false)
     const shipping = deliveryStatus !== undefined && isShipping(deliveryStatus)
     const failed = deliveryStatus !== undefined && isFailed(deliveryStatus)
 
@@ -115,38 +110,25 @@ function InventoryItemCard({
                 density="compact"
                 item={viewModel}
                 artwork={
-                    viewModel.skills.length > 0 ? (
-                        <ItemCardFlip
-                            back={<ItemCardBackView item={viewModel} />}
-                            flipped={flipped}
-                            front={<ItemCardArtwork item={viewModel} />}
-                            label={viewModel.name}
-                            leading={badge}
-                            artworkAction={artworkAction}
-                            controlGapAction={controlGapAction}
-                            onFlippedChange={setFlipped}
-                        />
-                    ) : (
-                        <div className="item-card__artwork-composition">
-                            <div className="item-card__skill-flip is-market">
-                                <ItemCardArtwork item={viewModel} />
-                            </div>
-                            <div className="item-card__artwork-controls">
-                                <div className="item-card__control-gap">
-                                    {controlGapAction}
-                                </div>
-                            </div>
-                            {badge ? (
-                                <div
-                                    className="item-card__leading-status"
-                                    data-card-overlay="badge"
-                                >
-                                    {badge}
-                                </div>
-                            ) : null}
-                            {artworkAction}
+                    <div className="item-card__artwork-composition">
+                        <div className="item-card__skill-flip is-market">
+                            <ItemCardArtwork item={viewModel} />
                         </div>
-                    )
+                        <div className="item-card__artwork-controls">
+                            <div className="item-card__control-gap">
+                                {controlGapAction}
+                            </div>
+                        </div>
+                        {badge ? (
+                            <div
+                                className="item-card__leading-status"
+                                data-card-overlay="badge"
+                            >
+                                {badge}
+                            </div>
+                        ) : null}
+                        {artworkAction}
+                    </div>
                 }
                 action={
                     <ItemCardActionSurface

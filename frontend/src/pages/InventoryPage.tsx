@@ -32,6 +32,8 @@ export default function InventoryPage() {
     const deliveryQuery = useDeliveryLookup()
     const deliveries = deliveryQuery.data
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
+    const [slotPage, setSlotPage] = useState(1)
+    const slotsPerPage = 24
     // 게임 도착(APPLIED) 배송 — 상단 배너로 세션 1회 알린다. APPLIED 아이템은 IN_GAME 으로 빠져
     // 인벤 목록엔 없으므로 배송 lookup 에서 직접 뽑는다.
     const arrived = useMemo(
@@ -113,10 +115,57 @@ export default function InventoryPage() {
                         used={inventoryQuery.data.used}
                         items={inventoryQuery.data.items}
                         deliveries={deliveries}
+                        page={slotPage}
+                        pageSize={slotsPerPage}
                         onItemClick={setSelectedItem}
                     />
                 )}
             </ListFrame>
+
+            {inventoryQuery.data &&
+                Math.ceil(
+                    Math.max(
+                        inventoryQuery.data.capacity,
+                        inventoryQuery.data.used,
+                    ) / slotsPerPage,
+                ) > 1 && (
+                    <nav
+                        className="inventory-page-tabs"
+                        aria-label="인벤토리 슬롯 페이지"
+                    >
+                        {Array.from(
+                            {
+                                length: Math.ceil(
+                                    Math.max(
+                                        inventoryQuery.data.capacity,
+                                        inventoryQuery.data.used,
+                                    ) / slotsPerPage,
+                                ),
+                            },
+                            (_, index) => index + 1,
+                        ).map((page) => (
+                            <button
+                                key={page}
+                                type="button"
+                                className="inventory-page-tab"
+                                aria-current={
+                                    slotPage === page ? 'page' : undefined
+                                }
+                                aria-label={`인벤토리 탭 ${page}`}
+                                onClick={() => setSlotPage(page)}
+                            >
+                                <span>탭 {page}</span>
+                                <small>
+                                    {(page - 1) * slotsPerPage + 1}–
+                                    {Math.min(
+                                        page * slotsPerPage,
+                                        inventoryQuery.data.capacity,
+                                    )}
+                                </small>
+                            </button>
+                        ))}
+                    </nav>
+                )}
 
             {selectedItem && (
                 <InventoryCardInfoDialog
@@ -132,4 +181,3 @@ export default function InventoryPage() {
         </div>
     )
 }
-

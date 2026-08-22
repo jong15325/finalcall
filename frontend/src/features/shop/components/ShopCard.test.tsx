@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { createEvent, fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { useLocation } from 'react-router'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import ShopCard from './ShopCard'
@@ -20,16 +20,6 @@ const itemFrameCss = readFileSync(
     resolve(process.cwd(), 'src/features/item/components/ItemFrame.css'),
     'utf8',
 )
-
-function pointerEvent(
-    target: Element,
-    type: 'pointerOver' | 'pointerOut',
-    pointerType: 'mouse' | 'touch',
-) {
-    const event = createEvent[type](target)
-    Object.defineProperty(event, 'pointerType', { value: pointerType })
-    fireEvent(target, event)
-}
 
 const baseShop: ShopSummary = {
     shopPublicId: '01JMARKET0001',
@@ -77,28 +67,17 @@ describe('<ShopCard>', () => {
         expect(screen.queryByText('248만')).not.toBeInTheDocument()
         expect(opener).toBeEmptyDOMElement()
         expect(opener.querySelector('button')).toBeNull()
-        // 키보드 대표 열기 + 포인터용 아트 열기 + 스킬 플립 + 비교 담기.
+        // 키보드 대표 열기 + 포인터용 아트 열기 + 비교 담기. 이미지 플립은 제거됐다.
         const controlGapOpeners = container.querySelectorAll(
             '[data-card-hit-area="control-gap"]',
         )
-        expect(controlGapOpeners).toHaveLength(0)
+        expect(controlGapOpeners).toHaveLength(1)
         const artworkOpener = container.querySelector(
             '.item-card__primary-action--artwork',
         )
-        expect(artworkOpener).toBeNull()
-        // disclosure(m3): 스킬 플립 트리거는 뒷면 region 을 aria-controls 로 가리킨다.
-        const trigger = screen.getByRole('button', {
-            name: '불의 전투도끼 아이템 정보 보기',
-        })
-        expect(trigger.parentElement).toHaveClass(
-            'item-card__artwork-composition',
-            'is-hover-latch',
-        )
-        const controls = trigger.getAttribute('aria-controls')
-        expect(controls).toBeTruthy()
-        expect(
-            container.querySelector('.item-card__skill-flip-back'),
-        ).toHaveAttribute('id', controls)
+        expect(artworkOpener).not.toBeNull()
+        expect(container.querySelector('.item-card__skill-flip-back')).toBeNull()
+        expect(container.querySelector('[data-card-hit-area="flip"]')).toBeNull()
         expect(
             container.querySelector('.item-card__skill-flip'),
         ).not.toContainElement(
@@ -113,7 +92,6 @@ describe('<ShopCard>', () => {
                 name: '불의 전투도끼 비교에 담기',
             }),
         )
-        expect(trigger).toHaveAttribute('data-card-hit-area', 'flip')
         expect(
             screen
                 .getByRole('button', {
@@ -145,99 +123,13 @@ describe('<ShopCard>', () => {
         expect(onOpen).toHaveBeenCalledWith(baseShop)
     })
 
-    it('이미지 뒷면은 모달과 같은 순서의 5행 속성표를 표시한다', () => {
+    it('스킬 보유 카드도 이미지 뒷면이나 플립 트리거를 렌더하지 않는다', () => {
         const { container } = renderWithProviders(
             <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
         )
-        const back = container.querySelector(
-            '.item-card__skill-flip-back',
-        ) as HTMLElement
-        const rows = back.querySelectorAll('.item-card__property-row')
-
-        expect(rows).toHaveLength(5)
-        expect(
-            Array.from(rows, (row) => row.querySelector('dt')?.textContent),
-        ).toEqual(['타입', '명칭', '채널제한', '속성', '남은 골드 포스'])
-        expect(
-            within(rows[0] as HTMLElement).getByText('블랙 - 무기'),
-        ).toBeInTheDocument()
-        expect(
-            within(rows[1] as HTMLElement).getByText('불의 전투도끼'),
-        ).toHaveAttribute('title', '불의 전투도끼')
-        expect(
-            within(rows[2] as HTMLElement).getByText('초보채널 이상'),
-        ).toBeInTheDocument()
-        expect(
-            within(rows[3] as HTMLElement).getByText('불'),
-        ).toBeInTheDocument()
-        expect(
-            within(rows[4] as HTMLElement).getByText('없음'),
-        ).toBeInTheDocument()
-        expect(back.querySelector('.item-card__skill-list')).toBeNull()
-        expect(back).not.toHaveTextContent('판매자')
-    })
-
-    it('스킬 보유 카드의 이미지 토글은 모달을 열지 않는다', () => {
-        const onOpen = vi.fn()
-        renderWithProviders(
-            <ShopCard shop={baseShop} now={NOW} onOpen={onOpen} />,
-        )
-
-        fireEvent.click(
-            screen.getByRole('button', {
-                name: '불의 전투도끼 아이템 정보 보기',
-            }),
-        )
-        expect(
-            screen.getByRole('button', {
-                name: '불의 전투도끼 아이템 정보 닫기',
-            }),
-        ).toHaveAttribute('aria-expanded', 'true')
-        expect(onOpen).not.toHaveBeenCalled()
-    })
-
-    it('마우스 hover와 클릭 고정 토글을 분리하고 재클릭 시 hover를 억제한다', () => {
-        const { container } = renderWithProviders(
-            <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
-        )
-        const composition = container.querySelector(
-            '.item-card__artwork-composition.is-hover-latch',
-        ) as HTMLElement
-        const trigger = screen.getByRole('button', {
-            name: '불의 전투도끼 아이템 정보 보기',
-        })
-        const flip = container.querySelector('.item-card__skill-flip')
-
-        pointerEvent(composition, 'pointerOver', 'mouse')
-        expect(trigger).toHaveAttribute('aria-expanded', 'true')
-        expect(flip).toHaveAttribute('data-flipped', 'true')
-
-        fireEvent.click(trigger)
-        expect(trigger).toHaveAttribute('aria-expanded', 'true')
-        fireEvent.click(trigger)
-        expect(trigger).toHaveAttribute('aria-expanded', 'false')
-        expect(flip).toHaveAttribute('data-flipped', 'false')
-
-        pointerEvent(composition, 'pointerOut', 'mouse')
-        pointerEvent(composition, 'pointerOver', 'mouse')
-        expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    })
-
-    it('touch pointer는 hover 없이 탭으로 토글한다', () => {
-        const { container } = renderWithProviders(
-            <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
-        )
-        const composition = container.querySelector(
-            '.item-card__artwork-composition.is-hover-latch',
-        ) as HTMLElement
-        const trigger = screen.getByRole('button', {
-            name: '불의 전투도끼 아이템 정보 보기',
-        })
-
-        pointerEvent(composition, 'pointerOver', 'touch')
-        expect(trigger).toHaveAttribute('aria-expanded', 'false')
-        fireEvent.click(trigger)
-        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+        expect(container.querySelector('.item-card__skill-flip-back')).toBeNull()
+        expect(container.querySelector('[data-card-hit-area="flip"]')).toBeNull()
+        expect(screen.getByRole('img', { name: '불의 전투도끼' })).toBeInTheDocument()
     })
 
     it('전면 판매자 행을 유지하고 전면 스킬 퍼센트만 강조한다', () => {
@@ -358,12 +250,6 @@ describe('<ShopCard>', () => {
         expect(
             screen.getByRole('img', { name: '골드포스 잔여 7일' }),
         ).toBeInTheDocument()
-        expect(
-            within(
-                container.querySelector(
-                    '.item-card__skill-flip-back',
-                ) as HTMLElement,
-            ).getByText('7일'),
-        ).toBeInTheDocument()
+        expect(container.querySelector('.item-card__skill-flip-back')).toBeNull()
     })
 })

@@ -11,7 +11,7 @@ import type { InventoryItem } from '@/lib/api/inventory'
  *  1. ListFrame이 소유한 마켓 동형 전체폭 그리드(2/3/6열).
  *  2. 채운 슬롯 = 클릭 시 `onItemClick(item)` 을 부르는 버튼(이름은 aria-label 로만).
  *  3. 빈 슬롯 = 번호 라벨(상호작용 없음). capacity 까지 슬롯을 채운다.
- *  4. 페이지네이션·타이틀바·확장 자리는 제거됐다(승인 목업 = 단일 그리드).
+ *  4. 부모가 선택한 24칸 페이지 슬롯만 렌더하고, 페이지 내비게이션은 그리드 밖에서 소유한다.
  */
 
 function item(slotNo: number, id: string, name: string): InventoryItem {
@@ -92,9 +92,7 @@ describe('<InventorySlotGrid>', () => {
             deliveries,
         })
 
-        const controls = container.querySelector(
-            '.item-card__artwork-controls',
-        )
+        const controls = container.querySelector('.item-card__artwork-controls')
         const badge = container.querySelector('[data-card-overlay="badge"]')
         const gapAction = container.querySelector(
             '[data-card-hit-area="control-gap"]',
@@ -123,7 +121,57 @@ describe('<InventorySlotGrid>', () => {
         expect(screen.queryByLabelText('빈 슬롯 25')).toBeNull()
     })
 
-    it('페이지 탭·확장 버튼은 제거됐다', () => {
+    it('선택한 페이지의 24개 슬롯만 렌더한다', () => {
+        renderGrid({ capacity: 96, page: 4 })
+        expect(screen.getByLabelText('빈 슬롯 73')).toBeInTheDocument()
+        expect(screen.getByLabelText('빈 슬롯 96')).toBeInTheDocument()
+        expect(screen.queryByLabelText('빈 슬롯 72')).toBeNull()
+    })
+
+    it.each([
+        [24, 1],
+        [25, 2],
+        [48, 2],
+        [73, 4],
+        [96, 4],
+    ])('slotNo %i는 %i페이지에만 귀속된다', (slotNo, page) => {
+        const target = item(slotNo, `INST-${slotNo}`, `경계 아이템 ${slotNo}`)
+        const view = renderGrid({
+            capacity: 96,
+            used: 96,
+            items: [target],
+            page,
+        })
+
+        expect(
+            screen.getByRole('button', {
+                name: `경계 아이템 ${slotNo} 카드정보 보기`,
+            }),
+        ).toBeInTheDocument()
+
+        view.unmount()
+        renderGrid({
+            capacity: 96,
+            used: 96,
+            items: [target],
+            page: page === 1 ? 2 : page - 1,
+        })
+        expect(
+            screen.queryByRole('button', {
+                name: `경계 아이템 ${slotNo} 카드정보 보기`,
+            }),
+        ).toBeNull()
+    })
+
+    it('capacity가 24의 배수가 아니면 마지막 페이지는 capacity에서 끝난다', () => {
+        renderGrid({ capacity: 73, page: 4 })
+
+        expect(screen.getByLabelText('빈 슬롯 73')).toBeInTheDocument()
+        expect(screen.queryByLabelText('빈 슬롯 74')).toBeNull()
+        expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    })
+
+    it('슬롯 그리드 자체에는 페이지 내비게이션·확장 버튼을 두지 않는다', () => {
         renderGrid({ capacity: 96 })
         expect(screen.queryByRole('button', { name: '슬롯 확장' })).toBeNull()
         expect(

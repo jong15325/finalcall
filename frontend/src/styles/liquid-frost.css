@@ -2285,3 +2285,221 @@ section > ul.rounded-xl,
             filter 0.18s ease;
     }
 }
+
+/* Inventory paging: 96 slots become four compact 24-slot views. */
+.inventory-page-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: min(100%, 520px);
+    margin: 18px auto 0;
+    padding: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 14px;
+    background: linear-gradient(
+        145deg,
+        rgba(18, 47, 61, 0.72),
+        rgba(5, 23, 33, 0.82)
+    );
+    box-shadow:
+        0 16px 34px rgba(0, 0, 0, 0.24),
+        inset 0 1px rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+.inventory-page-tab {
+    display: flex;
+    min-width: 0;
+    min-height: 48px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 12px;
+    font-weight: 800;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+}
+.inventory-page-tab small {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 9px;
+    font-weight: 700;
+}
+.inventory-page-tab:hover {
+    border-color: rgba(142, 231, 242, 0.22);
+    background: rgba(142, 231, 242, 0.07);
+    color: rgba(255, 255, 255, 0.86);
+}
+.inventory-page-tab[aria-current='page'] {
+    border-color: rgba(142, 231, 242, 0.42);
+    background: linear-gradient(
+        145deg,
+        rgba(142, 231, 242, 0.2),
+        rgba(51, 130, 149, 0.2)
+    );
+    color: #fff;
+    box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.14),
+        0 6px 18px rgba(0, 0, 0, 0.18);
+}
+.inventory-page-tab[aria-current='page'] small {
+    color: var(--frost-accent);
+}
+@media (max-width: 639px) {
+    .inventory-page-tabs {
+        margin-top: 14px;
+    }
+    .inventory-page-tab {
+        min-height: 44px;
+    }
+    .inventory-page-tab small {
+        display: none;
+    }
+}
+
+/* Inventory cards reuse the market card silhouette and information deck. */
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯']) .shop-card,
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯']) .item-card {
+    transform: none !important;
+    overflow: visible !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__artwork-composition {
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-info {
+    z-index: 2;
+    gap: 0 !important;
+    margin-top: -3px;
+    padding: 14px !important;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 18px 18px;
+    background: linear-gradient(
+        155deg,
+        rgba(20, 34, 46, 0.91),
+        rgba(26, 46, 57, 0.82)
+    ) !important;
+    box-shadow:
+        0 -4px 0 #172c39,
+        0 16px 30px rgba(8, 19, 28, 0.25) !important;
+    color: #f7fbfc !important;
+    backdrop-filter: blur(24px) saturate(118%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(118%) !important;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-heading {
+    align-items: center;
+    gap: 10px;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-heading
+    h3 {
+    color: #fff !important;
+    font-size: 15px;
+    font-weight: 850;
+    letter-spacing: -0.02em;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-info
+    > p {
+    margin-top: 4px;
+    color: rgba(229, 239, 243, 0.68) !important;
+    font-weight: 600;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__element-badge {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-skills,
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__skill-rows {
+    min-height: 104px;
+    margin-top: 12px;
+    padding: 4px 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    background: rgba(5, 15, 23, 0.24) !important;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__skill-row {
+    min-height: 47px;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #f2f8fa !important;
+    line-height: 1.35;
+}
+[data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__skill-row:last-child {
+    border-bottom: 0 !important;
+}
+
+/* Inventory cards must read as one surface: no bright compositor outline. */
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .shop-card,
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+}
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card::after {
+    display: none !important;
+    content: none !important;
+    box-shadow: none !important;
+}
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-info {
+    border: 0 !important;
+    box-shadow:
+        0 -4px 0 #172c39,
+        0 16px 30px rgba(8, 19, 28, 0.25) !important;
+}
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .inventory-empty-slot {
+    min-height: 447px;
+    border-color: rgba(142, 231, 242, 0.16) !important;
+    background: linear-gradient(
+        155deg,
+        rgba(18, 42, 54, 0.62),
+        rgba(8, 26, 36, 0.68)
+    ) !important;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.045);
+}
+
+/* Market and inventory metadata decks use depth, not a fine bright outline. */
+#view [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
+    .item-card,
+#view [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
+    .item-card__market-info,
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card__market-info {
+    border: 0 !important;
+    outline: 0 !important;
+}
+#view [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
+    .item-card::after,
+#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+    .item-card::after {
+    display: none !important;
+    content: none !important;
+    box-shadow: none !important;
+}
