@@ -89,6 +89,10 @@ demo:
     active-auctions:
       enabled: ${DEMO_SEED_ACTIVE_AUCTIONS:false}
       target: ${DEMO_SEED_ACTIVE_AUCTIONS_TARGET:100}
+    # 기존 판매 데이터를 변경하지 않고 demo1~demo4의 활성 마켓 리스팅 부족분만 보충한다.
+    active-shops:
+      enabled: ${DEMO_SEED_ACTIVE_SHOPS:false}
+      target-per-seller: ${DEMO_SEED_ACTIVE_SHOPS_TARGET_PER_SELLER:5}
 
 # EPIC-SEARCH(FC-107, MAJOR-1): 로컬 데모는 부팅 시 전체 enrichment 재색인을 켠다 — CDC(스냅샷 필드)에 더해
 #   앱이 코드축·join 필드까지 채운 문서를 보장해 런북 스모크(GET /api/v1/auctions?q=...)가 실제 결과를 낸다.
