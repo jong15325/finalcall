@@ -68,7 +68,7 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
     const countdown = countdownFrom(auction.endAt, now)
 
     return (
-        <div className="relative h-full min-w-0">
+        <div data-auction-list-card className="relative h-full min-w-0">
             <ItemCardView
                 fullHeight
                 density="compact"
@@ -105,9 +105,9 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                             />
                         </div>
                         <AuctionInfoRail>
-                            {auction.bidCount > 0 && (
-                                <AuctionInfoGroup>
-                                    <TbGavel aria-hidden />
+                            <AuctionInfoGroup>
+                                <TbGavel aria-hidden />
+                                {auction.bidCount > 0 ? (
                                     <span
                                         data-auction-bid-count
                                         aria-label={bidLabel.full}
@@ -117,8 +117,10 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                                             ? `입찰 ${formatGameMoney(auction.bidCount)}`
                                             : bidLabel.visible}
                                     </span>
-                                </AuctionInfoGroup>
-                            )}
+                                ) : (
+                                    <span>첫 입찰 대기</span>
+                                )}
+                            </AuctionInfoGroup>
                             <AuctionTimeDisplay
                                 ariaLabel={countdown.ariaText}
                                 className="ml-auto"
@@ -137,3 +139,4 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
 }
 
 export default AuctionCard
+

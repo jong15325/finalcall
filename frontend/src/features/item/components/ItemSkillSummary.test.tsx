@@ -138,7 +138,7 @@ describe('<ItemSkillSummary>', () => {
             'min-w-0',
             'truncate',
         )
-        expect(screen.getByText('33%')).toHaveClass(
+        expect(screen.getByText('(33%)')).toHaveClass(
             'item-skill-summary__percent',
             'shrink-0',
             'text-brand-highlight-deep',
@@ -157,8 +157,8 @@ describe('<ItemSkillSummary>', () => {
         const items = screen.getAllByRole('listitem')
         expect(items).toHaveLength(2)
         expect(items[0]).toHaveAccessibleName('스킬 1 없음')
-        expect(items[1]).toHaveAccessibleName('스킬 2 트리플샷 33%')
-        expect(screen.getByText('33%')).toHaveClass(
+        expect(items[1]).toHaveAccessibleName('스킬 2 트리플샷(33%)')
+        expect(screen.getByText('(33%)')).toHaveClass(
             'item-skill-summary__percent',
             'text-brand-highlight-deep',
         )

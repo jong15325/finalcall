@@ -1,5 +1,6 @@
 import { TbX } from 'react-icons/tb'
 import ListSearchBar from '@/components/common/ListSearchBar'
+import ListFilterSelect from '@/components/common/ListFilterSelect'
 import { elementLabelOf } from '@/features/item/lib/element'
 import {
     AUCTION_SORT_OPTIONS,
@@ -37,9 +38,6 @@ interface AuctionFiltersProps {
     templates: readonly ItemTemplate[]
 }
 
-const SELECT_CLASS =
-    'w-full min-w-0 rounded-lg border border-content-line bg-content-surface px-3 py-2 text-sm font-medium text-content-fg focus:border-control-action focus:outline-none focus:ring-2 focus:ring-control-action/30'
-
 function AuctionFilters({
     filters,
     onChange,
@@ -75,7 +73,10 @@ function AuctionFilters({
 
     return (
         <section aria-label="경매 필터" className="flex flex-col gap-3">
-            <div className="rounded-2xl border border-content-line bg-content-surface p-4">
+            <div
+                data-list-filter-surface
+                className="rounded-2xl border border-content-line bg-content-surface p-4"
+            >
                 {/* 자유문 검색(FC-108) — 페이지 내 목록 검색. 상단 전역검색 아님(mockup §5.2) */}
                 <ListSearchBar
                     value={filters.q ?? ''}
@@ -95,72 +96,52 @@ function AuctionFilters({
 
                     {/* 속성·상태·정렬 — 목업 filter-secondary */}
                     <div className="grid min-w-0 grid-cols-1 gap-2 xs:grid-cols-3">
-                        <label className="grid min-w-0 gap-1 text-[11px] font-bold text-content-subtle">
-                            <span>속성</span>
-                            <select
-                                className={SELECT_CLASS}
-                                value={filters.element ?? ''}
-                                onChange={(event) =>
-                                    onChange({
-                                        element: event.target.value
-                                            ? Number(event.target.value)
-                                            : null,
-                                    })
-                                }
-                            >
-                                <option value="">전체 속성</option>
-                                {elements.map((option) => (
-                                    <option
-                                        key={option.code}
-                                        value={option.code}
-                                    >
-                                        {elementLabelOf(option.code)}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <ListFilterSelect
+                            label="속성"
+                            value={filters.element ?? ''}
+                            onChange={(event) =>
+                                onChange({
+                                    element: event.target.value
+                                        ? Number(event.target.value)
+                                        : null,
+                                })
+                            }
+                        >
+                            <option value="">전체 속성</option>
+                            {elements.map((option) => (
+                                <option key={option.code} value={option.code}>
+                                    {elementLabelOf(option.code)}
+                                </option>
+                            ))}
+                        </ListFilterSelect>
 
-                        <label className="grid min-w-0 gap-1 text-[11px] font-bold text-content-subtle">
-                            <span>상태</span>
-                            <select
-                                className={SELECT_CLASS}
-                                value={filters.status ?? ''}
-                                onChange={(event) =>
-                                    onChange({
-                                        status: event.target.value || null,
-                                    })
-                                }
-                            >
-                                {AUCTION_STATUS_OPTIONS.map((option) => (
-                                    <option
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <ListFilterSelect
+                            label="상태"
+                            value={filters.status ?? ''}
+                            onChange={(event) =>
+                                onChange({ status: event.target.value || null })
+                            }
+                        >
+                            {AUCTION_STATUS_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </ListFilterSelect>
 
-                        <label className="grid min-w-0 gap-1 text-[11px] font-bold text-content-subtle">
-                            <span>정렬</span>
-                            <select
-                                className={SELECT_CLASS}
-                                value={filters.sort}
-                                onChange={(event) =>
-                                    onChange({ sort: event.target.value })
-                                }
-                            >
-                                {sortOptions.map((option) => (
-                                    <option
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <ListFilterSelect
+                            label="정렬"
+                            value={filters.sort}
+                            onChange={(event) =>
+                                onChange({ sort: event.target.value })
+                            }
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </ListFilterSelect>
                     </div>
                 </div>
             </div>
@@ -194,3 +175,4 @@ function AuctionFilters({
 }
 
 export default AuctionFilters
+

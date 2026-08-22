@@ -141,7 +141,7 @@ function AppShellContent() {
             )}
 
             <div
-                className={`flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden' : ''}`}
+                className={`flex min-w-0 flex-1 flex-col pb-[calc(5.75rem+env(safe-area-inset-bottom))] xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden' : ''}`}
             >
                 <div
                     ref={navigationSentinelRef}
@@ -192,3 +192,4 @@ function AppShellContent() {
 }
 
 export default AppShell
+

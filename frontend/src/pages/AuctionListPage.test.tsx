@@ -4,14 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ElementDetailBackground from '@/features/item/components/ElementDetailBackground'
 import AuctionListPage from './AuctionListPage'
 
-const mocks = vi.hoisted(() => ({ balance: vi.fn(), browse: vi.fn() }))
+const mocks = vi.hoisted(() => ({ browse: vi.fn() }))
 
 vi.mock('@/lib/queries/auctions', () => ({ useAuctionBrowse: mocks.browse }))
 vi.mock('@/lib/queries/itemTemplates', () => ({
     useItemTemplates: () => ({ data: { content: [] } }),
-}))
-vi.mock('@/lib/queries/balance', () => ({
-    useMyBalance: mocks.balance,
 }))
 vi.mock('@/features/auction/lib/useNow', () => ({ useNow: () => new Date() }))
 vi.mock('@/features/auction/lib/useInfiniteScroll', () => ({
@@ -51,22 +48,14 @@ function renderPage(withScene = false) {
 describe('AuctionListPage 밝은 region', () => {
     beforeEach(() => {
         mocks.browse.mockReturnValue(baseQuery)
-        mocks.balance.mockReturnValue({ data: undefined })
     })
 
-    it('상단 가용잔액을 축약 없이 전체 정수로 표시한다', () => {
-        mocks.balance.mockReturnValue({
-            data: { gameMoneyAvailable: 2_480_000 },
-        })
+    it('마켓과 같은 페이지 소개 구조를 사용하고 가용잔액은 표시하지 않는다', () => {
         renderPage()
 
-        expect(screen.getByText('2,480,000')).toBeInTheDocument()
-        expect(screen.queryByText('248만')).not.toBeInTheDocument()
-        expect(screen.getByTestId('list-available-balance')).toHaveClass(
-            'min-w-0',
-            'max-w-full',
-            'flex-wrap',
-        )
+        expect(screen.getByText('REALTIME AUCTION')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: '경매 등록' })).toBeInTheDocument()
+        expect(screen.queryByTestId('list-available-balance')).not.toBeInTheDocument()
     })
 
     it.each([
@@ -160,3 +149,4 @@ describe('AuctionListPage 밝은 region', () => {
         expect(region.closest('.element-detail')).toHaveClass('element-detail')
     })
 })
+

@@ -1,0 +1,1259 @@
+:root {
+    --frost-bg: linear-gradient(
+        145deg,
+        rgb(18 33 45 / 92%),
+        rgb(27 49 61 / 84%)
+    );
+    --frost-bg-strong: linear-gradient(
+        150deg,
+        rgb(13 27 39 / 96%),
+        rgb(24 45 57 / 91%)
+    );
+    --frost-bg-inset: rgb(3 14 22 / 34%);
+    --frost-bg-control: rgb(255 255 255 / 8%);
+    --frost-line: rgb(255 255 255 / 18%);
+    --frost-line-strong: rgb(255 255 255 / 30%);
+    --frost-highlight: rgb(255 255 255 / 48%);
+    --frost-shadow:
+        0 18px 40px rgb(7 18 27 / 24%), inset 0 1px 0 rgb(255 255 255 / 17%);
+    --frost-blur: blur(24px) saturate(118%);
+    --frost-fg: #f7fbfc;
+    --frost-muted: rgb(215 231 236 / 72%);
+    --frost-subtle: rgb(194 214 222 / 58%);
+    --frost-accent: #8ee7f2;
+    --frost-focus: rgb(142 231 242 / 72%);
+    --frost-radius: 20px;
+    --frost-control-radius: 12px;
+}
+
+/* Reusable dark-frost surface. Add this class to any future liquid panel. */
+.liquid-frost {
+    --content-fg: var(--frost-fg);
+    --content-muted: var(--frost-muted);
+    --content-subtle: var(--frost-subtle);
+    border: 1px solid var(--frost-line);
+    background: var(--frost-bg);
+    box-shadow: var(--frost-shadow);
+    color: var(--frost-fg);
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
+}
+
+.liquid-frost--strong {
+    background: var(--frost-bg-strong);
+}
+
+.liquid-frost-inset {
+    border: 1px solid var(--frost-line);
+    border-radius: var(--frost-control-radius);
+    background: var(--frost-bg-inset);
+    color: var(--frost-fg);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+@media (max-width: 639px) {
+    :root {
+        --frost-bg: linear-gradient(
+            145deg,
+            rgb(18 33 45 / 96%),
+            rgb(27 49 61 / 90%)
+        );
+        --frost-bg-strong: linear-gradient(
+            150deg,
+            rgb(13 27 39 / 98%),
+            rgb(24 45 57 / 94%)
+        );
+        --frost-blur: blur(18px) saturate(112%);
+        --frost-radius: 18px;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    :root {
+        --frost-bg: #172c39;
+        --frost-bg-strong: #102532;
+        --frost-bg-inset: #0d202b;
+        --frost-blur: none;
+    }
+}
+
+/* Liquid-glass skin: original layout and information architecture stay intact. */
+:root{--liquid-surface:rgba(255,255,255,.68);--liquid-surface-strong:rgba(255,255,255,.82);--liquid-surface-dark:rgba(39,55,70,.78);--liquid-line:rgba(255,255,255,.74);--liquid-shadow:0 20px 55px rgba(35,48,60,.14),inset 0 1px 0 rgba(255,255,255,.9);--liquid-blur:blur(22px) saturate(138%)}
+body{background:var(--app-canvas)}
+[data-app-navigation-surface]{border-color:rgba(255,255,255,.22)!important;background:linear-gradient(115deg,rgba(39,55,70,.88),rgba(50,71,90,.68))!important;box-shadow:0 18px 45px rgba(24,36,48,.22),inset 0 1px 0 rgba(255,255,255,.2)!important;backdrop-filter:var(--liquid-blur);-webkit-backdrop-filter:var(--liquid-blur)}
+[data-app-navigation-frame][data-dock-state="flow"] [data-app-navigation-surface]{border-radius:24px!important}
+[data-testid="app-content-plane"]{background:linear-gradient(125deg,var(--liquid-surface-strong),rgba(255,255,255,.48))!important;border-color:var(--liquid-line)!important;box-shadow:var(--liquid-shadow)!important;backdrop-filter:var(--liquid-blur);-webkit-backdrop-filter:var(--liquid-blur)}
+.item-card{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(255,255,255,.5))!important;border-color:var(--liquid-line)!important;box-shadow:0 12px 30px rgba(35,48,60,.10),inset 0 1px 0 white!important;backdrop-filter:blur(15px) saturate(128%);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}.item-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.95)!important;box-shadow:0 22px 42px rgba(35,48,60,.18),inset 0 1px 0 white!important}.item-card__market-info,.item-card>div:not(.item-card__artwork-frame){background:transparent!important}.item-card__market-skills,.item-card__skill-rows{border-radius:10px;background:rgba(255,255,255,.42);padding:6px;border:1px solid rgba(255,255,255,.64)}
+.home-recommend-card{border-radius:18px}.home-recommend-card .item-card{border-radius:18px!important}.home-recommend-card:hover{transform:none!important}
+[aria-roledescription="캐러셀"]{border:1px solid rgba(255,255,255,.32);box-shadow:0 24px 55px rgba(24,38,55,.20),inset 0 1px 0 rgba(255,255,255,.22);backdrop-filter:blur(16px);border-radius:24px!important}
+.bg-content-surface{background-color:var(--liquid-surface-strong)!important}.bg-content-soft{background-color:rgba(244,245,248,.58)!important}.border-content-line{border-color:rgba(255,255,255,.72)!important}
+section>div.rounded-xl,section>ul.rounded-xl,.rounded-xl.border.bg-content-surface,.rounded-lg.border.bg-content-surface{background:var(--liquid-surface)!important;border-color:var(--liquid-line)!important;box-shadow:0 12px 32px rgba(35,48,60,.09),inset 0 1px 0 white;backdrop-filter:blur(18px) saturate(130%)}
+input,select,textarea,[role="combobox"]{background-color:rgba(255,255,255,.72)!important;border-color:rgba(255,255,255,.88)!important;box-shadow:inset 0 1px 0 white,0 6px 18px rgba(35,48,60,.06)}
+table{border-collapse:separate;border-spacing:0;background:rgba(255,255,255,.52);border-radius:16px;overflow:hidden;box-shadow:inset 0 1px 0 white}thead{background:rgba(255,255,255,.5)}
+[data-auction-artwork]{overflow:hidden;border-radius:12px 12px 0 0}.auction-list-region .item-card{border-radius:18px!important}
+@media(max-width:1279px){[data-app-navigation-surface]{border-radius:20px!important}}
+@media(max-width:639px){:root{--liquid-surface:rgba(255,255,255,.76);--liquid-surface-strong:rgba(255,255,255,.88);--liquid-blur:blur(16px) saturate(130%)}[data-testid="app-content-plane"]{border-radius:20px!important;border:1px solid var(--liquid-line)!important;margin-top:4px;padding-inline:12px!important}.item-card{border-radius:16px!important}.home-recommend-card .item-card{border-radius:16px!important}[aria-roledescription="캐러셀"]{border-radius:20px!important}}
+@media(prefers-reduced-motion:reduce){.item-card{transition:none!important}}
+
+/* High-contrast glass pass — visibly translucent even on mobile. */
+[data-app-navigation-surface]{position:relative;overflow:hidden;background:linear-gradient(120deg,rgba(31,48,62,.72),rgba(50,71,90,.46))!important;border:1px solid rgba(255,255,255,.38)!important;box-shadow:0 16px 38px rgba(15,29,42,.28),inset 0 1px 0 rgba(255,255,255,.34)!important}
+[data-app-navigation-surface]::after{content:"";position:absolute;z-index:-1;left:8%;right:8%;top:-1px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.82),transparent)}
+[data-testid="app-content-plane"]{position:relative;background:linear-gradient(135deg,rgba(255,255,255,.48),rgba(240,246,248,.24))!important;border:1px solid rgba(255,255,255,.76)!important;box-shadow:0 24px 60px rgba(22,39,52,.18),inset 0 1px 0 rgba(255,255,255,.95)!important}
+[data-testid="app-content-plane"]::before{content:"";position:absolute;pointer-events:none;inset:0;border-radius:inherit;background:linear-gradient(125deg,rgba(255,255,255,.34),transparent 22%,transparent 70%,rgba(255,255,255,.18));z-index:-1}
+.item-card{position:relative;background:linear-gradient(145deg,rgba(255,255,255,.65),rgba(244,249,250,.38))!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:0 14px 30px rgba(20,38,50,.16),inset 0 1px 0 white!important;backdrop-filter:blur(20px) saturate(145%)}.item-card::after{content:"";position:absolute;pointer-events:none;inset:0;border-radius:inherit;box-shadow:inset 1px 1px 0 rgba(255,255,255,.75),inset -1px -1px 0 rgba(90,110,120,.08)}
+.home-recommend-card:nth-child(2n) .item-card{background:linear-gradient(150deg,rgba(255,255,255,.72),rgba(226,244,241,.36))!important}
+section>ul.rounded-xl,section>div.rounded-xl{background:rgba(255,255,255,.42)!important;backdrop-filter:blur(20px) saturate(140%);border:1px solid rgba(255,255,255,.8)!important}
+@media(max-width:639px){[data-testid="app-content-plane"]{background:linear-gradient(145deg,rgba(255,255,255,.44),rgba(240,246,248,.20))!important;border-color:rgba(255,255,255,.84)!important;box-shadow:0 18px 42px rgba(22,39,52,.2),inset 0 1px 0 white!important}.item-card{background:linear-gradient(145deg,rgba(255,255,255,.62),rgba(244,249,250,.34))!important}.item-card__market-info,.item-card>div:last-child{background:rgba(255,255,255,.16)!important}[data-app-navigation-surface]{background:linear-gradient(120deg,rgba(31,48,62,.68),rgba(50,71,90,.42))!important}}
+
+/* Modern navigation architecture: clustered desktop bars + floating mobile dock. */
+@media(min-width:1280px){[data-app-navigation-surface]{overflow:visible;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}[data-app-navigation-surface]::after{display:none}[data-app-navigation-surface]>header{border:1px solid rgba(255,255,255,.32)!important;border-radius:24px!important;background:linear-gradient(120deg,rgba(31,48,62,.78),rgba(50,71,90,.55))!important;box-shadow:0 16px 38px rgba(15,29,42,.22),inset 0 1px 0 rgba(255,255,255,.3);backdrop-filter:blur(22px) saturate(140%)}[data-app-navigation-surface]>nav{width:max-content;max-width:calc(100% - 48px);height:50px!important;margin:8px auto 0;padding:5px 8px;border:1px solid rgba(255,255,255,.3);border-radius:18px!important;background:linear-gradient(120deg,rgba(31,48,62,.72),rgba(50,71,90,.48))!important;box-shadow:0 12px 30px rgba(15,29,42,.18),inset 0 1px 0 rgba(255,255,255,.25);backdrop-filter:blur(22px) saturate(140%)}[data-app-navigation-surface]>nav ul{padding:0!important;gap:4px}[data-horizontal-root]{height:40px!important;border:0!important;border-radius:13px;padding-inline:15px!important}[data-horizontal-root][aria-expanded="true"],a[data-horizontal-root][aria-current="page"]{background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}[data-testid="app-content-plane"]{margin-top:16px;background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.38)!important;box-shadow:0 18px 45px rgba(22,39,52,.10)!important;backdrop-filter:blur(8px) saturate(115%)}}
+@media(max-width:1279px){nav[aria-label="모바일 주요 메뉴"]{left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;border:1px solid rgba(255,255,255,.48)!important;border-radius:24px!important;background:linear-gradient(120deg,rgba(31,48,62,.78),rgba(50,71,90,.55))!important;box-shadow:0 18px 44px rgba(14,28,40,.3),inset 0 1px 0 rgba(255,255,255,.28)!important;backdrop-filter:blur(24px) saturate(150%);padding:6px 8px!important;overflow:hidden}nav[aria-label="모바일 주요 메뉴"] a,nav[aria-label="모바일 주요 메뉴"] button{min-height:50px;border-radius:16px;transition:background .2s ease,color .2s ease,transform .2s ease}nav[aria-label="모바일 주요 메뉴"] a[aria-current="page"]{color:white!important;background:rgba(255,255,255,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.17)}nav[aria-label="모바일 주요 메뉴"] a[aria-current="page"] svg{color:#dfc447;transform:translateY(-1px)}[data-app-navigation-surface]>header{border-radius:20px!important}}
+
+/* Catalog surface cleanup: one card surface, no nested liquid layers. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]),[data-testid="app-content-plane"]:has([aria-label="경매 목록"]){background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"])::before,[data-testid="app-content-plane"]:has([aria-label="경매 목록"])::before{display:none!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card{background:#f7f8f7!important;background-image:none!important;border:1px solid rgba(50,71,90,.16)!important;box-shadow:0 10px 24px rgba(27,43,54,.12)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card::after,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card::after{display:none!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{background:transparent!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-skills,[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-rows,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-skills,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__skill-rows{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-row,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__skill-row{padding:7px 0!important;border-radius:0!important;border-bottom:1px solid rgba(50,71,90,.1)!important;background:transparent!important}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-row:last-child,[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__skill-row:last-child{border-bottom:0!important}
+
+/* Market cards have an extra ShopCard wrapper that must stay layout-only. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .shop-card{
+  background:transparent!important;
+  background-image:none!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* List cards: artwork stays untouched; only the structured information deck is glass. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card{
+  overflow:visible!important;
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card:hover,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card:hover{
+  box-shadow:none!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.78)!important;
+  border-top-color:rgba(255,255,255,.92)!important;
+  border-radius:0 0 18px 18px;
+  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(239,247,248,.42))!important;
+  box-shadow:0 14px 28px rgba(23,41,53,.14),inset 0 1px 0 rgba(255,255,255,.88)!important;
+  backdrop-filter:blur(18px) saturate(140%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail]{
+  border-inline:1px solid rgba(255,255,255,.78)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.58),rgba(235,245,247,.38))!important;
+  color:var(--content-fg)!important;
+  backdrop-filter:blur(18px) saturate(140%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail] + .item-card__market-info{
+  border-top:0!important;
+  border-radius:0 0 18px 18px;
+}
+@media(max-width:639px){
+  [data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+  [data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+    background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(239,247,248,.46))!important;
+    backdrop-filter:blur(14px) saturate(132%)!important;
+    -webkit-backdrop-filter:blur(14px) saturate(132%)!important;
+  }
+}
+
+/* Seamless catalog composition: artwork flows directly into the metadata deck. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  border-top:0!important;
+  box-shadow:0 16px 30px rgba(8,19,28,.25)!important;
+}
+
+/* Keep the artwork/deck join stable while the artwork hover lighting animates. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  z-index:2;
+  margin-top:-3px;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card:hover .item-frame__stage,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card:hover .item-frame__stage{
+  box-shadow:inset 0 0 28px rgba(96,143,204,.14)!important;
+}
+
+/* A transformed wrapper plus transformed glass child creates a transient GPU seam. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .shop-card,
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .shop-card:hover,
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card,
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card:hover{
+  transform:none!important;
+}
+
+/* Never expose a compositor edge while the market artwork/skill face returns. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-frame__stage,
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-frame__stage::before,
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-frame__stage::after,
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-flip-inner{
+  transition:none!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info{
+  box-shadow:0 -4px 0 #172c39,0 16px 30px rgba(8,19,28,.25)!important;
+}
+
+/* Solid backing plane prevents the world scene leaking through sibling layers. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card{
+  overflow:hidden!important;
+  border-radius:12px 12px 18px 18px!important;
+  background:#172c39!important;
+  background-image:none!important;
+  isolation:isolate;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card{
+  overflow:hidden!important;
+  border-radius:12px 12px 18px 18px!important;
+  background:#172c39!important;
+  background-image:none!important;
+  isolation:isolate;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info{
+  margin-top:-3px;
+  box-shadow:0 16px 30px rgba(8,19,28,.25)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  margin-top:-3px;
+  box-shadow:0 16px 30px rgba(8,19,28,.25)!important;
+}
+
+/* The unified card backplate owns the outside edge; avoid a second side outline. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  border-right:0!important;
+  border-bottom:0!important;
+  border-left:0!important;
+}
+
+/* One continuous liquid surface per card: artwork covers it, metadata reveals it. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card{
+  border:1px solid rgba(255,255,255,.16)!important;
+  background:linear-gradient(145deg,rgba(16,34,47,.80),rgba(34,63,74,.66))!important;
+  box-shadow:0 18px 34px rgba(5,17,26,.24),inset 0 1px 0 rgba(255,255,255,.15)!important;
+  backdrop-filter:blur(24px) saturate(118%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(118%)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  background:linear-gradient(155deg,rgba(14,31,43,.42),rgba(30,56,67,.24))!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+@media(max-width:639px){
+  [data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card,
+  [data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card{
+    background:linear-gradient(145deg,rgba(16,34,47,.86),rgba(34,63,74,.74))!important;
+    backdrop-filter:blur(18px) saturate(112%)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(112%)!important;
+  }
+}
+
+/* Auction status HUD: bidding activity and countdown float over the artwork. */
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card>.relative{
+  isolation:isolate;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail]{
+  position:absolute;
+  z-index:4;
+  right:10px;
+  bottom:10px;
+  left:10px;
+  width:auto;
+  min-height:38px;
+  padding:7px 10px;
+  border:1px solid var(--frost-line)!important;
+  border-radius:12px;
+  color:var(--frost-fg)!important;
+  background:var(--frost-bg-strong)!important;
+  box-shadow:0 10px 24px rgba(3,12,20,.36),inset 0 1px 0 rgba(255,255,255,.14)!important;
+  backdrop-filter:blur(16px) saturate(116%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(116%)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail] .auction-info-rail__group{
+  gap:6px;
+  color:var(--frost-muted);
+  font-size:11px;
+  font-weight:750;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail] .auction-info-rail__group svg{
+  width:15px;
+  height:15px;
+  color:var(--frost-accent);
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail] .auction-time-display--bare{
+  padding:0;
+  border:0;
+  color:var(--frost-fg);
+  font-size:11px;
+  font-weight:800;
+  text-shadow:none;
+}
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail] .auction-time-display__digits{
+  letter-spacing:-.01em;
+}
+@media(max-width:639px){
+  [data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-auction-info-rail]{
+    right:8px;
+    bottom:8px;
+    left:8px;
+    min-height:36px;
+    padding:6px 9px;
+    border-radius:11px;
+  }
+}
+
+/* Dark-frost system bindings. New liquid surfaces should reuse .liquid-frost. */
+[data-app-navigation-surface]>header,
+[data-app-navigation-surface]>nav,
+nav[aria-label="모바일 주요 메뉴"],
+[aria-roledescription="캐러셀"],
+[aria-label="마켓 필터"] [data-list-filter-surface],
+[aria-label="경매 필터"] [data-list-filter-surface],
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  border-color:var(--frost-line)!important;
+  background:var(--frost-bg)!important;
+  box-shadow:var(--frost-shadow)!important;
+  backdrop-filter:var(--frost-blur)!important;
+  -webkit-backdrop-filter:var(--frost-blur)!important;
+}
+[aria-roledescription="캐러셀"]{
+  color:var(--frost-fg);
+}
+
+/* Rebuilt select: a single inset control with a stable custom chevron. */
+[data-list-filter-select]>span:first-child{
+  color:var(--frost-subtle)!important;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.065em;
+}
+[data-list-filter-select-control]{
+  position:relative;
+  display:flex;
+  min-width:0;
+  align-items:center;
+  overflow:hidden;
+  border:1px solid var(--frost-line);
+  border-radius:var(--frost-control-radius);
+  background:var(--frost-bg-inset);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / 5%);
+  transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease;
+}
+[data-list-filter-select-control]:hover{
+  border-color:rgb(142 231 242 / 38%);
+  background:rgb(5 18 27 / 48%);
+}
+[data-list-filter-select-control]:focus-within{
+  border-color:var(--frost-focus);
+  background:rgb(4 16 25 / 54%);
+  box-shadow:0 0 0 3px rgb(142 231 242 / 12%),inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+[data-list-filter-select-control] select{
+  position:relative;
+  z-index:1;
+  min-height:44px!important;
+  margin:0;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  color:var(--frost-fg)!important;
+  cursor:pointer;
+  font-weight:700!important;
+}
+[data-list-filter-select-icon]{
+  position:absolute;
+  z-index:2;
+  right:12px;
+  width:17px;
+  height:17px;
+  color:var(--frost-accent);
+  pointer-events:none;
+  transition:transform .2s ease;
+}
+[data-list-filter-select-control]:focus-within [data-list-filter-select-icon]{
+  transform:translateY(1px);
+}
+
+/* Generic liquid panels use the same main dark frost without changing plain content. */
+section>div.rounded-xl:not([data-list-filter-surface]):not(.shop-card):not(.item-card),
+section>ul.rounded-xl,
+.rounded-xl.border.bg-content-surface:not(.item-card),
+.rounded-lg.border.bg-content-surface{
+  border-color:var(--frost-line)!important;
+  background:var(--frost-bg)!important;
+  box-shadow:var(--frost-shadow)!important;
+  backdrop-filter:var(--frost-blur)!important;
+  -webkit-backdrop-filter:var(--frost-blur)!important;
+  --content-fg:var(--frost-fg);
+  --content-muted:var(--frost-muted);
+  --content-subtle:var(--frost-subtle);
+}
+
+/* Market and auction command deck: same dark-frost language as card metadata. */
+[aria-label="마켓 필터"] [data-list-filter-surface],
+[aria-label="경매 필터"] [data-list-filter-surface]{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(255,255,255,.19)!important;
+  background:linear-gradient(145deg,rgba(20,34,46,.91),rgba(27,48,60,.82))!important;
+  box-shadow:0 18px 38px rgba(8,19,28,.22),inset 0 1px 0 rgba(255,255,255,.18)!important;
+  backdrop-filter:blur(24px) saturate(118%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(118%)!important;
+  color-scheme:dark;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface]::before,
+[aria-label="경매 필터"] [data-list-filter-surface]::before{
+  position:absolute;
+  inset:0 12% auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  content:"";
+  pointer-events:none;
+}
+[aria-label="마켓 필터"] [data-list-search-field],
+[aria-label="경매 필터"] [data-list-search-field]{
+  min-height:46px;
+  border-color:rgba(255,255,255,.14)!important;
+  border-radius:12px;
+  background:rgba(4,14,22,.28)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+  transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease;
+}
+[aria-label="마켓 필터"] [data-list-search-field]:focus-within,
+[aria-label="경매 필터"] [data-list-search-field]:focus-within{
+  border-color:rgba(142,231,242,.72)!important;
+  background:rgba(4,14,22,.42)!important;
+  box-shadow:0 0 0 3px rgba(142,231,242,.12),inset 0 1px 0 rgba(255,255,255,.07)!important;
+}
+[aria-label="마켓 필터"] [data-list-search-field] svg,
+[aria-label="경매 필터"] [data-list-search-field] svg{
+  color:rgba(188,218,226,.72)!important;
+}
+[aria-label="마켓 필터"] [data-list-search-field] input,
+[aria-label="경매 필터"] [data-list-search-field] input{
+  border:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  color:#f7fbfc!important;
+  font-weight:600;
+}
+[aria-label="마켓 필터"] [data-list-search-field] input::placeholder,
+[aria-label="경매 필터"] [data-list-search-field] input::placeholder{
+  color:rgba(194,214,222,.56)!important;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] label>span,
+[aria-label="경매 필터"] [data-list-filter-surface] label>span{
+  color:rgba(200,219,226,.68)!important;
+  letter-spacing:.035em;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] select,
+[aria-label="경매 필터"] [data-list-filter-surface] select{
+  min-height:42px;
+  border-color:rgba(255,255,255,.14)!important;
+  border-radius:11px;
+  background:rgba(5,16,24,.38)!important;
+  background-image:none!important;
+  color:#f1f7f9!important;
+  font-weight:650;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] select:focus,
+[aria-label="경매 필터"] [data-list-filter-surface] select:focus{
+  border-color:rgba(142,231,242,.72)!important;
+  box-shadow:0 0 0 3px rgba(142,231,242,.12)!important;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] option,
+[aria-label="경매 필터"] [data-list-filter-surface] option{
+  background:#172b38;
+  color:#f4f9fa;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] button[aria-pressed],
+[aria-label="경매 필터"] [data-list-filter-surface] button[aria-pressed]{
+  border-color:rgba(255,255,255,.13)!important;
+  background:rgba(255,255,255,.065)!important;
+  color:rgba(223,235,239,.78)!important;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] button[aria-pressed]:hover,
+[aria-label="경매 필터"] [data-list-filter-surface] button[aria-pressed]:hover{
+  border-color:rgba(142,231,242,.42)!important;
+  color:#fff!important;
+}
+[aria-label="마켓 필터"] [data-list-filter-surface] button[aria-pressed="true"],
+[aria-label="경매 필터"] [data-list-filter-surface] button[aria-pressed="true"]{
+  border-color:rgba(142,231,242,.7)!important;
+  background:linear-gradient(135deg,rgba(142,231,242,.2),rgba(75,143,158,.14))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 5px 14px rgba(4,15,23,.18);
+  color:#fff!important;
+}
+@media(max-width:639px){
+  [aria-label="마켓 필터"] [data-list-filter-surface],
+  [aria-label="경매 필터"] [data-list-filter-surface]{
+    padding:13px!important;
+    border-radius:18px!important;
+    background:linear-gradient(145deg,rgba(20,34,46,.95),rgba(27,48,60,.88))!important;
+    backdrop-filter:blur(18px) saturate(112%)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(112%)!important;
+  }
+}
+
+/* Match market artwork's top silhouette to the auction artwork frame. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__artwork-composition{
+  overflow:hidden;
+  border-radius:12px 12px 0 0;
+}
+
+/* High-legibility dark frost deck: stable contrast over every scene colour. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  gap:0!important;
+  padding:14px!important;
+  border-color:rgba(255,255,255,.18)!important;
+  border-top-color:rgba(255,255,255,.32)!important;
+  background:linear-gradient(155deg,rgba(20,34,46,.91),rgba(26,46,57,.82))!important;
+  box-shadow:0 16px 30px rgba(8,19,28,.25),inset 0 1px 0 rgba(255,255,255,.18)!important;
+  color:#f7fbfc!important;
+  backdrop-filter:blur(24px) saturate(118%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(118%)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-heading,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-heading{
+  align-items:center;
+  gap:10px;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-heading h3,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-heading h3{
+  color:#fff!important;
+  font-size:15px;
+  font-weight:850;
+  letter-spacing:-.02em;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info>p,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info>p{
+  margin-top:4px;
+  color:rgba(229,239,243,.68)!important;
+  font-weight:600;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__element-badge,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__element-badge{
+  border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.9)!important;
+  background:rgba(255,255,255,.08)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-skills,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-skills{
+  min-height:104px;
+  margin-top:12px;
+  padding:4px 10px!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:12px!important;
+  background:rgba(5,15,23,.24)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-row,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__skill-row{
+  min-height:47px;
+  padding:8px 0!important;
+  border-bottom-color:rgba(255,255,255,.1)!important;
+  color:#f2f8fa!important;
+  line-height:1.35;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-row .item-skill-summary__slot,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__skill-row .item-skill-summary__slot{
+  display:block;
+  margin-bottom:3px;
+  color:rgba(194,214,222,.6)!important;
+  font-size:9px;
+  font-weight:750;
+  letter-spacing:.04em;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__skill-percent,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__skill-percent{
+  color:#8ee7f2!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-price,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-price{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.14);
+  color:#fff!important;
+  font-size:15px;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) [data-listing-price]>span>span:first-child,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-listing-price]>span>span:first-child{
+  filter:brightness(1.32) saturate(.94);
+  text-shadow:0 1px 10px rgba(0,0,0,.26);
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) [data-listing-price] .text-content-muted,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) [data-listing-price] .text-content-muted{
+  color:rgba(226,237,241,.72)!important;
+  font-size:.78em;
+  font-weight:700;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__seller-row,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__seller-row{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.1)!important;
+  color:rgba(199,216,223,.62)!important;
+}
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__seller-row strong,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__seller-row strong{
+  color:rgba(245,250,251,.88)!important;
+}
+@media(max-width:639px){
+  [data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+  [data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+    padding:13px!important;
+    background:linear-gradient(155deg,rgba(20,34,46,.94),rgba(26,46,57,.87))!important;
+    backdrop-filter:blur(18px) saturate(112%)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(112%)!important;
+  }
+}
+
+/* Final catalog joins: no bright seam below artwork. */
+[data-testid="app-content-plane"]:has([aria-label="마켓 상품 목록"]) .item-card__market-info,
+[data-testid="app-content-plane"]:has([aria-label="경매 목록"]) .item-card__market-info{
+  border-top:0!important;
+  background:linear-gradient(155deg,rgba(14,31,43,.42),rgba(30,56,67,.24))!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Market page identity: compact information hierarchy above the command deck. */
+[data-market-page-intro]{
+  display:flex;
+  min-width:0;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px;
+  overflow:hidden;
+  border:1px solid var(--frost-line);
+  border-radius:var(--frost-radius);
+  color:var(--frost-fg);
+  background:var(--frost-bg);
+  box-shadow:var(--frost-shadow);
+  backdrop-filter:var(--frost-blur);
+  -webkit-backdrop-filter:var(--frost-blur);
+}
+
+/* Shared page identity contract used by list, account, board, wallet and sell routes. */
+[data-page-intro]{
+  --content-fg:var(--frost-fg);
+  --content-muted:var(--frost-muted);
+  --content-subtle:var(--frost-subtle);
+  position:relative;
+  display:flex;
+  min-width:0;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px;
+  overflow:hidden;
+  border:1px solid var(--frost-line);
+  border-radius:var(--frost-radius);
+  color:var(--frost-fg);
+  background:var(--frost-bg);
+  box-shadow:var(--frost-shadow);
+  backdrop-filter:var(--frost-blur);
+  -webkit-backdrop-filter:var(--frost-blur);
+}
+[data-page-intro]::before{
+  position:absolute;
+  inset:0 12% auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--frost-highlight),transparent);
+  content:"";
+  pointer-events:none;
+}
+[data-page-intro] h1{
+  color:var(--frost-fg)!important;
+  letter-spacing:-.035em;
+}
+[data-page-intro] h1 svg{
+  color:var(--frost-accent)!important;
+}
+[data-page-intro] p{
+  color:var(--frost-muted)!important;
+}
+[data-page-intro]>a,
+[data-page-intro]>button{
+  display:inline-flex;
+  min-height:44px;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 15px;
+  border:1px solid rgba(142,231,242,.34)!important;
+  border-radius:13px!important;
+  color:#fff!important;
+  background:linear-gradient(135deg,rgba(142,231,242,.19),rgba(65,128,145,.17))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 18px rgba(3,15,23,.18)!important;
+  font-size:13px;
+  font-weight:800;
+}
+
+/* App-wide dark-frost layer: reusable on every non-catalog page. */
+[data-testid="app-content-plane"][data-content-plane="default"]:not(:has([aria-label="마켓 상품 목록"])):not(:has([aria-label="경매 목록"])){
+  --content-fg:var(--frost-fg);
+  --content-muted:var(--frost-muted);
+  --content-subtle:var(--frost-subtle);
+  background:linear-gradient(145deg,rgba(12,28,40,.64),rgba(28,52,64,.48))!important;
+  border-color:var(--frost-line)!important;
+  box-shadow:var(--frost-shadow)!important;
+  backdrop-filter:blur(16px) saturate(112%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(112%)!important;
+}
+[data-testid="app-content-plane"] .rounded-2xl.border.bg-content-surface,
+[data-testid="app-content-plane"] .rounded-xl.border.bg-content-surface:not(.item-card),
+[data-testid="app-content-plane"] .rounded-lg.border.bg-content-surface,
+[data-testid="app-content-plane"] .detail-surface.bg-content-surface{
+  --content-fg:var(--frost-fg);
+  --content-muted:var(--frost-muted);
+  --content-subtle:var(--frost-subtle);
+  border-color:var(--frost-line)!important;
+  background:var(--frost-bg)!important;
+  box-shadow:var(--frost-shadow)!important;
+  color:var(--frost-fg);
+  backdrop-filter:var(--frost-blur)!important;
+  -webkit-backdrop-filter:var(--frost-blur)!important;
+}
+[data-testid="app-content-plane"] .rounded-2xl.border.bg-content-surface input,
+[data-testid="app-content-plane"] .rounded-xl.border.bg-content-surface:not(.item-card) input,
+[data-testid="app-content-plane"] .rounded-lg.border.bg-content-surface input,
+[data-testid="app-content-plane"] .rounded-2xl.border.bg-content-surface textarea,
+[data-testid="app-content-plane"] .rounded-xl.border.bg-content-surface:not(.item-card) textarea,
+[data-testid="app-content-plane"] .rounded-lg.border.bg-content-surface textarea{
+  border-color:var(--frost-line)!important;
+  background:var(--frost-bg-inset)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;
+  color:var(--frost-fg)!important;
+}
+[data-testid="app-content-plane"] input::placeholder,
+[data-testid="app-content-plane"] textarea::placeholder{
+  color:var(--frost-subtle)!important;
+}
+
+/* Shared item cards outside the full catalog reuse the same frost tokens. */
+[data-testid="app-content-plane"]:not(:has([aria-label="마켓 상품 목록"])):not(:has([aria-label="경매 목록"])) .item-card{
+  --content-fg:var(--frost-fg);
+  --content-muted:var(--frost-muted);
+  --content-subtle:var(--frost-subtle);
+  border-color:var(--frost-line)!important;
+  background:var(--frost-bg)!important;
+  box-shadow:var(--frost-shadow)!important;
+  color:var(--frost-fg);
+  backdrop-filter:var(--frost-blur)!important;
+  -webkit-backdrop-filter:var(--frost-blur)!important;
+}
+
+/* Home closing-soon uses the exact auction-list card composition. */
+[data-home-auction-list] .item-card{
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:12px 12px 18px 18px!important;
+  background:linear-gradient(145deg,rgba(16,34,47,.80),rgba(34,63,74,.66))!important;
+  box-shadow:0 18px 34px rgba(5,17,26,.24),inset 0 1px 0 rgba(255,255,255,.15)!important;
+  isolation:isolate;
+}
+[data-home-auction-list] .item-card__market-info{
+  z-index:2;
+  gap:0!important;
+  margin-top:-3px;
+  padding:14px!important;
+  border:0!important;
+  background:linear-gradient(155deg,rgba(14,31,43,.42),rgba(30,56,67,.24))!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+[data-home-auction-list] .item-card__market-heading h3{color:#fff!important;font-size:15px;font-weight:850}
+[data-home-auction-list] .item-card__market-info>p{color:var(--frost-muted)!important}
+[data-home-auction-list] .item-card__market-skills{
+  min-height:104px;
+  margin-top:12px;
+  padding:4px 10px!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:12px!important;
+  background:rgba(5,15,23,.24)!important;
+}
+[data-home-auction-list] .item-card__skill-row{
+  min-height:47px;
+  padding:8px 0!important;
+  border-bottom:1px solid rgba(255,255,255,.1)!important;
+  border-radius:0!important;
+  color:#f2f8fa!important;
+  background:transparent!important;
+}
+[data-home-auction-list] .item-card__skill-row:last-child{border-bottom:0!important}
+[data-home-auction-list] .item-card__market-price{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14);color:#fff!important}
+[data-home-auction-list] .item-card__seller-row{border-top-color:rgba(255,255,255,.1)!important;color:var(--frost-subtle)!important}
+[data-home-auction-list] .item-card>.relative{isolation:isolate}
+[data-home-auction-list] [data-auction-info-rail]{
+  position:absolute;
+  z-index:4;
+  right:10px;
+  bottom:10px;
+  left:10px;
+  width:auto;
+  min-height:38px;
+  padding:7px 10px;
+  border:1px solid var(--frost-line)!important;
+  border-radius:12px;
+  color:var(--frost-fg)!important;
+  background:var(--frost-bg-strong)!important;
+  box-shadow:0 10px 24px rgba(3,12,20,.36),inset 0 1px 0 rgba(255,255,255,.14)!important;
+  backdrop-filter:blur(16px) saturate(116%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(116%)!important;
+}
+[data-home-auction-list] [data-auction-info-rail] .auction-time-display--bare{padding:0;border:0;color:var(--frost-fg);text-shadow:none}
+
+/* AuctionCard owns its visual contract, independent of the page that renders it. */
+[data-auction-list-card] .item-card{
+  --content-fg:var(--frost-fg);
+  --content-muted:var(--frost-muted);
+  --content-subtle:var(--frost-subtle);
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:12px 12px 18px 18px!important;
+  background:linear-gradient(145deg,rgba(16,34,47,.80),rgba(34,63,74,.66))!important;
+  box-shadow:0 18px 34px rgba(5,17,26,.24),inset 0 1px 0 rgba(255,255,255,.15)!important;
+  color:var(--frost-fg);
+  backdrop-filter:blur(24px) saturate(118%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(118%)!important;
+  isolation:isolate;
+}
+[data-auction-list-card] [data-auction-artwork]{overflow:hidden;border-radius:12px 12px 0 0}
+[data-auction-list-card] .item-card__market-info{
+  z-index:2;
+  gap:0!important;
+  margin-top:-3px;
+  padding:14px!important;
+  border:0!important;
+  border-radius:0 0 18px 18px;
+  background:linear-gradient(155deg,rgba(14,31,43,.42),rgba(30,56,67,.24))!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+[data-auction-list-card] .item-card__market-heading{align-items:center;gap:10px}
+[data-auction-list-card] .item-card__market-heading h3{color:#fff!important;font-size:15px;font-weight:850;letter-spacing:-.02em}
+[data-auction-list-card] .item-card__market-info>p{margin-top:4px;color:var(--frost-muted)!important;font-weight:600}
+[data-auction-list-card] .item-card__element-badge{
+  border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.9)!important;
+  background:rgba(255,255,255,.08)!important;
+}
+[data-auction-list-card] .item-card__market-skills{
+  min-height:104px;
+  margin-top:12px;
+  padding:4px 10px!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:12px!important;
+  background:rgba(5,15,23,.24)!important;
+}
+[data-auction-list-card] .item-card__skill-row{
+  min-height:47px;
+  padding:8px 0!important;
+  border:0!important;
+  border-bottom:1px solid rgba(255,255,255,.1)!important;
+  border-radius:0!important;
+  color:#f2f8fa!important;
+  line-height:1.35;
+  background:transparent!important;
+}
+[data-auction-list-card] .item-card__skill-row:last-child{border-bottom:0!important}
+[data-auction-list-card] .item-card__skill-row .item-skill-summary__slot{
+  display:block;
+  margin-bottom:3px;
+  color:rgba(194,214,222,.6)!important;
+  font-size:9px;
+  font-weight:750;
+  letter-spacing:.04em;
+}
+[data-auction-list-card] .item-card__skill-percent{color:var(--frost-accent)!important}
+[data-auction-list-card] .item-card__market-price{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.14);
+  color:#fff!important;
+  font-size:15px;
+}
+[data-auction-list-card] [data-listing-price]>span>span:first-child{filter:brightness(1.32) saturate(.94);text-shadow:0 1px 10px rgba(0,0,0,.26)}
+[data-auction-list-card] [data-listing-price] .text-content-muted{color:rgba(226,237,241,.72)!important;font-size:.78em;font-weight:700}
+[data-auction-list-card] .item-card__seller-row{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.1)!important;
+  color:var(--frost-subtle)!important;
+}
+[data-auction-list-card] .item-card__seller-row strong{color:rgba(245,250,251,.88)!important}
+[data-auction-list-card] .item-card>.relative{isolation:isolate}
+[data-auction-list-card] [data-auction-info-rail]{
+  position:absolute;
+  z-index:4;
+  right:10px;
+  bottom:10px;
+  left:10px;
+  width:auto;
+  min-height:38px;
+  padding:7px 10px;
+  border:1px solid var(--frost-line)!important;
+  border-radius:12px;
+  color:var(--frost-fg)!important;
+  background:var(--frost-bg-strong)!important;
+  box-shadow:0 10px 24px rgba(3,12,20,.36),inset 0 1px 0 rgba(255,255,255,.14)!important;
+  backdrop-filter:blur(16px) saturate(116%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(116%)!important;
+}
+[data-auction-list-card] [data-auction-info-rail] .auction-info-rail__group{gap:6px;color:var(--frost-muted);font-size:11px;font-weight:750}
+[data-auction-list-card] [data-auction-info-rail] .auction-info-rail__group svg{width:15px;height:15px;color:var(--frost-accent)}
+[data-auction-list-card] [data-auction-info-rail] .auction-time-display--bare{padding:0;border:0;color:var(--frost-fg);font-size:11px;font-weight:800;text-shadow:none}
+[data-auction-list-card] [data-auction-info-rail] .auction-time-display__digits{letter-spacing:-.01em}
+@media(max-width:639px){
+  [data-auction-list-card] .item-card{backdrop-filter:blur(18px) saturate(112%)!important;-webkit-backdrop-filter:blur(18px) saturate(112%)!important}
+  [data-auction-list-card] .item-card__market-info{padding:13px!important}
+  [data-auction-list-card] [data-auction-info-rail]{right:8px;bottom:8px;left:8px;min-height:36px;padding:6px 9px;border-radius:11px}
+}
+[data-page-intro]>a:hover,
+[data-page-intro]>button:hover{
+  border-color:rgba(142,231,242,.66)!important;
+  background:linear-gradient(135deg,rgba(142,231,242,.27),rgba(65,128,145,.23))!important;
+}
+@media(max-width:639px){
+  [data-page-intro]{
+    align-items:stretch;
+    flex-direction:column;
+    gap:14px;
+    padding:16px;
+  }
+  [data-page-intro]>a,
+  [data-page-intro]>button{width:100%}
+}
+[data-market-page-identity]{
+  display:flex;
+  min-width:0;
+  align-items:center;
+  gap:14px;
+}
+[data-market-page-icon]{
+  display:grid;
+  width:48px;
+  height:48px;
+  flex:0 0 auto;
+  place-items:center;
+  border:1px solid rgba(142,231,242,.28);
+  border-radius:15px;
+  color:var(--frost-accent);
+  background:linear-gradient(145deg,rgba(142,231,242,.16),rgba(255,255,255,.05));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+}
+[data-market-page-eyebrow]{
+  display:block;
+  margin-bottom:3px;
+  color:var(--frost-accent);
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.13em;
+}
+[data-market-page-intro] h1{
+  margin:0;
+  color:#fff!important;
+  font-size:22px;
+  font-weight:850;
+  line-height:1.15;
+  letter-spacing:-.035em;
+}
+[data-market-page-intro] p{
+  margin:5px 0 0;
+  max-width:58ch;
+  color:var(--frost-muted)!important;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.5;
+}
+[data-market-sell-action]{
+  display:inline-flex;
+  min-height:44px;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 15px;
+  border:1px solid rgba(142,231,242,.36);
+  border-radius:13px;
+  color:#fff;
+  background:linear-gradient(135deg,rgba(142,231,242,.2),rgba(65,128,145,.18));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 18px rgba(3,15,23,.18);
+  font-size:13px;
+  font-weight:800;
+  transition:border-color .2s ease,background-color .2s ease,transform .2s ease;
+}
+[data-market-sell-action]:hover{
+  border-color:rgba(142,231,242,.68);
+  background:linear-gradient(135deg,rgba(142,231,242,.28),rgba(65,128,145,.24));
+  transform:translateY(-1px);
+}
+[data-market-sell-action] svg{
+  width:17px;
+  height:17px;
+  color:var(--frost-accent);
+}
+@media(max-width:639px){
+  [data-market-page-intro]{
+    align-items:stretch;
+    flex-direction:column;
+    gap:14px;
+    padding:16px;
+  }
+  [data-market-page-identity]{align-items:flex-start}
+  [data-market-page-icon]{width:44px;height:44px;border-radius:14px}
+  [data-market-page-intro] h1{font-size:20px}
+  [data-market-sell-action]{width:100%}
+}
+
+/* Final AuctionCard contract: page-level skins cannot change component visuals. */
+#view [data-auction-list-card] .item-card{
+  border-color:transparent!important;
+  background:var(--frost-bg)!important;
+  box-shadow:0 18px 34px rgba(5,17,26,.24)!important;
+}
+#view [data-auction-list-card] .item-card:hover{
+  border-color:transparent!important;
+  box-shadow:0 22px 42px rgba(5,17,26,.3)!important;
+}
+#view [data-auction-list-card] .item-card::after{
+  content:none!important;
+  box-shadow:none!important;
+}
+#view [data-auction-list-card] .item-card__market-info{
+  border:0!important;
+  background:linear-gradient(155deg,rgba(14,31,43,.42),rgba(30,56,67,.24))!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Shared outer glass contract: every page owns one consistent content surface. */
+#view [data-testid="app-content-plane"]{
+  background:linear-gradient(145deg,rgba(12,28,40,.64),rgba(28,52,64,.48))!important;
+  border-color:var(--frost-line)!important;
+  box-shadow:var(--frost-shadow)!important;
+  backdrop-filter:blur(16px) saturate(112%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(112%)!important;
+}
+#view [data-testid="app-content-plane"]::before{
+  content:""!important;
+  display:block!important;
+  background:linear-gradient(125deg,rgba(255,255,255,.12),transparent 22%,transparent 72%,rgba(142,231,242,.06))!important;
+}
+@media(max-width:639px){
+  #view [data-testid="app-content-plane"]{
+    background:linear-gradient(145deg,rgba(12,28,40,.74),rgba(28,52,64,.58))!important;
+    backdrop-filter:blur(14px) saturate(108%)!important;
+    -webkit-backdrop-filter:blur(14px) saturate(108%)!important;
+  }
+}
+
+/* Dark-frost palette bridge for legacy utility surfaces inside every page. */
+#view [data-testid="app-content-plane"] .bg-content-surface:not(.item-card){
+  border-color:var(--frost-line)!important;
+  background:linear-gradient(145deg,rgba(13,29,41,.88),rgba(25,48,60,.76))!important;
+  color:var(--frost-fg);
+}
+#view [data-testid="app-content-plane"] .bg-content-soft{
+  border-color:rgba(255,255,255,.1)!important;
+  background:rgba(3,14,22,.34)!important;
+  color:var(--frost-muted);
+}
+#view [data-testid="app-content-plane"] .text-brand-structure{
+  color:var(--frost-accent)!important;
+}
+#view [data-board-tabs]{
+  gap:4px!important;
+  padding:5px!important;
+  border:1px solid var(--frost-line)!important;
+  background:rgba(5,18,28,.58)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 24px rgba(3,12,20,.18)!important;
+  backdrop-filter:blur(14px) saturate(112%);
+  -webkit-backdrop-filter:blur(14px) saturate(112%);
+}
+#view [data-board-tabs] a{
+  min-height:36px;
+  display:inline-flex;
+  align-items:center;
+  color:var(--frost-muted)!important;
+}
+#view [data-board-tabs] a.bg-brand-structure{
+  border:1px solid rgba(142,231,242,.3)!important;
+  color:#fff!important;
+  background:linear-gradient(135deg,rgba(142,231,242,.22),rgba(65,128,145,.2))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+#view [data-board-tabs] a:not(.bg-brand-structure):hover{
+  color:var(--frost-accent)!important;
+  background:rgba(255,255,255,.055)!important;
+}
+
+/* Semantic colors keep their meaning without introducing pastel light-theme islands. */
+#view [data-testid="app-content-plane"] .bg-success-soft{
+  background:rgba(44,175,112,.16)!important;
+}
+#view [data-testid="app-content-plane"] .text-success-ink{
+  color:#9ce8be!important;
+}
+#view [data-testid="app-content-plane"] .bg-warning-soft{
+  background:rgba(224,181,70,.16)!important;
+}
+#view [data-testid="app-content-plane"] .text-warning,
+#view [data-testid="app-content-plane"] .text-warning-ink{
+  color:#f1d783!important;
+}
+#view [data-testid="app-content-plane"] .bg-danger-soft{
+  background:rgba(223,86,92,.15)!important;
+}
+#view [data-testid="app-content-plane"] .text-danger-ink{
+  color:#ffb0b4!important;
+}
+#view [data-testid="app-content-plane"] .bg-control-action-soft{
+  background:rgba(142,231,242,.13)!important;
+}
+#view [data-testid="app-content-plane"] .bg-brand-highlight-soft{
+  background:rgba(220,196,71,.15)!important;
+}
+#view [data-testid="app-content-plane"] .text-brand-highlight-deep{
+  color:#f0dc7e!important;
+}
+#view [data-testid="app-content-plane"] .item-card__skill-rows{
+  border-color:rgba(255,255,255,.1)!important;
+  background:rgba(3,14,22,.3)!important;
+}
+
+/* Navigation and page canvas share one outer-shell curvature system. */
+:root{--app-outer-radius:12px}
+[data-app-navigation-surface],
+[data-app-navigation-frame][data-dock-state="flow"] [data-app-navigation-surface],
+[data-app-navigation-frame][data-dock-state="docked"] [data-app-navigation-surface],
+[data-app-navigation-surface]>header,
+#view [data-testid="app-content-plane"]{
+  border-radius:var(--app-outer-radius)!important;
+}
+@media(max-width:639px){
+  :root{--app-outer-radius:20px}
+}
+@media(min-width:1280px){
+  :root{--app-outer-radius:16px}
+}
+
+/* Shared interaction palette: legacy Tailwind hover utilities stay inside dark frost. */
+#view [data-testid="app-content-plane"] .hover\:bg-content-soft:hover{
+  background:rgba(255,255,255,.065)!important;
+}
+#view [data-testid="app-content-plane"] .hover\:bg-content-surface:hover,
+#view [data-testid="app-content-plane"] .hover\:bg-content-surface\/60:hover,
+#view [data-testid="app-content-plane"] .hover\:bg-content-surface\/70:hover,
+#view [data-testid="app-content-plane"] .hover\:bg-content-surface\/80:hover{
+  background:rgba(21,44,57,.78)!important;
+}
+#view [data-testid="app-content-plane"] .hover\:bg-brand-highlight-soft:hover{
+  background:rgba(220,196,71,.2)!important;
+}
+#view [data-testid="app-content-plane"] .hover\:bg-brand-structure:hover,
+#view [data-testid="app-content-plane"] .hover\:bg-brand-structure\/10:hover{
+  background:rgba(142,231,242,.16)!important;
+}
+#view [data-testid="app-content-plane"] .hover\:bg-chrome-raised:hover,
+#view [data-testid="app-content-plane"] .hover\:bg-chrome-selected:hover{
+  background:rgba(65,128,145,.24)!important;
+}
+#view [data-testid="app-content-plane"] .hover\:border-brand-structure:hover,
+#view [data-testid="app-content-plane"] .hover\:border-brand-structure\/40:hover{
+  border-color:rgba(142,231,242,.48)!important;
+}
+#view [data-testid="app-content-plane"] .hover\:text-brand-structure:hover,
+#view [data-testid="app-content-plane"] .hover\:text-control-action:hover,
+#view [data-testid="app-content-plane"] .hover\:text-control-action-hover:hover{
+  color:var(--frost-accent)!important;
+}
+
+/* Shared border hierarchy: quiet dividers, readable surfaces, explicit focus/state. */
+#view [data-testid="app-content-plane"] .border-content-line{
+  border-color:rgba(255,255,255,.11)!important;
+}
+#view [data-testid="app-content-plane"] .border-content-soft{
+  border-color:rgba(255,255,255,.065)!important;
+}
+@media(min-width:640px){
+  #view [data-testid="app-content-plane"] .sm\:border-content-line{
+    border-color:rgba(255,255,255,.11)!important;
+  }
+}
+@media(min-width:1024px){
+  #view [data-testid="app-content-plane"] .lg\:border-content-line{
+    border-color:rgba(255,255,255,.11)!important;
+  }
+}
+#view [data-testid="app-content-plane"] .divide-content-line>:not([hidden])~:not([hidden]),
+#view [data-testid="app-content-plane"] .divide-content-line>:not(:last-child){
+  border-color:rgba(255,255,255,.095)!important;
+}
+#view [data-testid="app-content-plane"] .divide-content-soft>:not([hidden])~:not([hidden]),
+#view [data-testid="app-content-plane"] .divide-content-soft>:not(:last-child){
+  border-color:rgba(255,255,255,.055)!important;
+}
+#view [data-testid="app-content-plane"] .bg-content-surface.border,
+#view [data-testid="app-content-plane"] .bg-content-surface[class*="border-"]{
+  border-color:rgba(255,255,255,.15)!important;
+}
+#view [data-testid="app-content-plane"] .border-danger,
+#view [data-testid="app-content-plane"] .border-danger-soft{
+  border-color:rgba(223,86,92,.34)!important;
+}
+#view [data-testid="app-content-plane"] .border-warning,
+#view [data-testid="app-content-plane"] .border-warning-soft{
+  border-color:rgba(224,181,70,.32)!important;
+}
+#view [data-testid="app-content-plane"] .border-success,
+#view [data-testid="app-content-plane"] .border-success-soft{
+  border-color:rgba(44,175,112,.3)!important;
+}
+#view [data-testid="app-content-plane"] .focus\:border-control-action:focus,
+#view [data-testid="app-content-plane"] .focus-visible\:border-control-action:focus-visible,
+#view [data-testid="app-content-plane"] .focus-within\:border-control-action:focus-within{
+  border-color:rgba(142,231,242,.58)!important;
+}
+
+/* Shared item-skill color contract: copy stays white; probability alone is gold. */
+#view [data-testid="app-content-plane"] .item-skill-label,
+#view [data-testid="app-content-plane"] .item-skill-content,
+#view [data-testid="app-content-plane"] .item-skill-summary__slot,
+#view [data-testid="app-content-plane"] .item-skill-summary__value,
+#view [data-testid="app-content-plane"] .item-skill-summary__name{
+  color:#fff!important;
+}
+#view [data-testid="app-content-plane"] .item-skill-percent,
+#view [data-testid="app-content-plane"] .item-skill-summary__percent,
+#view [data-testid="app-content-plane"] .item-card__skill-percent{
+  color:var(--brand-highlight-bright)!important;
+}

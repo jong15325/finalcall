@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { TbGavel, TbWallet } from 'react-icons/tb'
+import { TbArrowUpRight, TbGavel } from 'react-icons/tb'
 import { paths } from '@/app/paths'
-import CodeAmount from '@/components/common/CodeAmount'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
 import CursorPagination from '@/components/common/CursorPagination'
@@ -20,7 +19,6 @@ import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useNow } from '@/features/auction/lib/useNow'
 import { useAuctionBrowse } from '@/lib/queries/auctions'
 import { useItemTemplates } from '@/lib/queries/itemTemplates'
-import { useMyBalance } from '@/lib/queries/balance'
 import type { AuctionFilterState } from '@/features/auction/lib/auctionFilters'
 
 /**
@@ -68,7 +66,6 @@ export default function AuctionListPage() {
     const templatesQuery = useItemTemplates()
     const templates = templatesQuery.data?.content ?? []
 
-    const balanceQuery = useMyBalance()
 
     const auctions = useMemo(
         () => data?.pages.flatMap((page) => page.content) ?? [],
@@ -122,24 +119,25 @@ export default function AuctionListPage() {
                 layout="catalog"
                 label="경매 목록"
                 heading={
-                    <header className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                                <TbGavel
-                                    aria-hidden
-                                    className="size-6 text-brand-structure"
-                                />
-                                실시간 경매
-                            </h1>
-                            <p className="mt-1 text-sm text-content-muted">
-                                조건을 비교하고 마감 전에 입찰하세요.
-                            </p>
+                    <header data-page-intro data-market-page-intro>
+                        <div data-market-page-identity>
+                            <span data-market-page-icon>
+                                <TbGavel aria-hidden className="size-6" />
+                            </span>
+                            <div className="min-w-0">
+                                <span data-market-page-eyebrow>
+                                    REALTIME AUCTION
+                                </span>
+                                <h1>실시간 경매</h1>
+                                <p>
+                                    핵심 스킬과 현재가를 비교하고 마감 전에
+                                    입찰하세요.
+                                </p>
+                            </div>
                         </div>
-                        <Link
-                            to={paths.sell}
-                            className="shrink-0 rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
-                        >
-                            경매 등록
+                        <Link to={paths.sell} data-market-sell-action>
+                            <span>경매 등록</span>
+                            <TbArrowUpRight aria-hidden />
                         </Link>
                     </header>
                 }
@@ -165,26 +163,6 @@ export default function AuctionListPage() {
                                         : `${auctions.length}건 표시 중`
                                     : '서버가 제공하는 가격·마감 기준'}
                             </p>
-                            {balanceQuery.data && (
-                                <Link
-                                    data-testid="list-available-balance"
-                                    to={paths.wallet}
-                                    className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-medium text-content-muted hover:border-brand-structure"
-                                >
-                                    <TbWallet
-                                        aria-hidden
-                                        className="size-4 text-brand-structure"
-                                    />
-                                    사용 가능
-                                    <CodeAmount
-                                        value={
-                                            balanceQuery.data.gameMoneyAvailable
-                                        }
-                                        mode="full"
-                                        className="max-w-full min-w-0 flex-wrap break-all font-bold text-content-fg"
-                                    />
-                                </Link>
-                            )}
                         </div>
                         {status === 'ready' && isError && (
                             <p
@@ -224,3 +202,4 @@ export default function AuctionListPage() {
         </div>
     )
 }
+

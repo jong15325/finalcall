@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
-import { TbBuildingStore, TbWallet } from 'react-icons/tb'
+import { TbArrowUpRight, TbBuildingStore } from 'react-icons/tb'
 import { paths } from '@/app/paths'
-import CodeAmount from '@/components/common/CodeAmount'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
 import CursorPagination from '@/components/common/CursorPagination'
@@ -86,7 +85,7 @@ export default function MarketPage() {
 
     const templatesQuery = useItemTemplates()
     const templates = templatesQuery.data?.content ?? []
-
+    // 구매 모달의 잔액 검증에는 유지하되 목록 상단에는 노출하지 않는다.
     const balanceQuery = useMyBalance()
 
     const shops = useMemo(
@@ -143,25 +142,28 @@ export default function MarketPage() {
                 layout="catalog"
                 label="마켓 상품 목록"
                 heading={
-                    <header className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
+                    <header data-page-intro data-market-page-intro>
+                        <div data-market-page-identity>
+                            <span data-market-page-icon>
                                 <TbBuildingStore
                                     aria-hidden
-                                    className="size-6 text-brand-structure"
+                                    className="size-6"
                                 />
-                                아이템 마켓
-                            </h1>
-                            <p className="mt-1 text-sm text-content-muted">
-                                검증된 판매자의 아이템을 고정가로 안전하게
-                                구매하세요.
-                            </p>
+                            </span>
+                            <div className="min-w-0">
+                                <span data-market-page-eyebrow>
+                                    FIXED PRICE MARKET
+                                </span>
+                                <h1>아이템 마켓</h1>
+                                <p>
+                                    핵심 스킬을 비교하고 검증된 판매자의
+                                    아이템을 고정가로 거래하세요.
+                                </p>
+                            </div>
                         </div>
-                        <Link
-                            to={paths.sell}
-                            className="rounded-md bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
-                        >
-                            아이템 판매
+                        <Link to={paths.sell} data-market-sell-action>
+                            <span>아이템 판매</span>
+                            <TbArrowUpRight aria-hidden />
                         </Link>
                     </header>
                 }
@@ -187,26 +189,6 @@ export default function MarketPage() {
                                         : `${shops.length}건 표시 중`
                                     : '검증된 판매자의 고정가 상품'}
                             </p>
-                            {balanceQuery.data && (
-                                <Link
-                                    data-testid="list-available-balance"
-                                    to={paths.wallet}
-                                    className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-3 py-1.5 text-xs font-medium text-content-muted hover:border-brand-structure"
-                                >
-                                    <TbWallet
-                                        aria-hidden
-                                        className="size-4 text-brand-structure"
-                                    />
-                                    사용 가능
-                                    <CodeAmount
-                                        value={
-                                            balanceQuery.data.gameMoneyAvailable
-                                        }
-                                        mode="full"
-                                        className="max-w-full min-w-0 flex-wrap break-all font-bold text-content-fg"
-                                    />
-                                </Link>
-                            )}
                         </div>
                         {status === 'ready' && isError && (
                             <p
@@ -256,3 +238,4 @@ export default function MarketPage() {
         </div>
     )
 }
+

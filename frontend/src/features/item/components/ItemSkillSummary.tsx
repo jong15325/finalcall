@@ -56,7 +56,7 @@ function ItemSkillSummary({
                 return (
                     <li
                         key={slot}
-                        aria-label={`스킬 ${slot} ${value}${showPercent ? ` ${skillPercent}%` : ''}`}
+                        aria-label={`스킬 ${slot} ${value}${showPercent ? `(${skillPercent}%)` : ''}`}
                         className="flex min-h-0 min-w-0 items-center text-[11px] font-medium text-chrome-selected xs:text-xs"
                     >
                         <span className="item-skill-summary__slot shrink-0">
@@ -67,8 +67,8 @@ function ItemSkillSummary({
                                 {value}
                             </span>
                             {showPercent && (
-                                <span className="item-skill-summary__percent ml-1 shrink-0 font-bold text-brand-highlight-deep">
-                                    {skillPercent}%
+                                <span className="item-skill-summary__percent shrink-0 font-bold text-brand-highlight-deep">
+                                    ({skillPercent}%)
                                 </span>
                             )}
                         </span>

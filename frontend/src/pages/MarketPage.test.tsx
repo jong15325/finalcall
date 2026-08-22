@@ -29,19 +29,19 @@ vi.mock('@/features/shop/components/ShopFilters', () => ({
 }))
 
 describe('<MarketPage>', () => {
-    it('상단 가용잔액을 축약 없이 전체 정수로 표시한다', () => {
+    it('목록 상단 잔액은 숨기고 공통 마켓 인트로를 표시한다', () => {
         render(
             <MemoryRouter initialEntries={['/market']}>
                 <MarketPage />
             </MemoryRouter>,
         )
 
-        expect(screen.getByText('2,480,000')).toBeInTheDocument()
-        expect(screen.queryByText('248만')).not.toBeInTheDocument()
-        expect(screen.getByTestId('list-available-balance')).toHaveClass(
-            'min-w-0',
-            'max-w-full',
-            'flex-wrap',
-        )
+        expect(screen.queryByText('2,480,000')).not.toBeInTheDocument()
+        expect(screen.queryByTestId('list-available-balance')).toBeNull()
+        expect(
+            screen.getByRole('heading', { name: '아이템 마켓' }),
+        ).toBeVisible()
+        expect(screen.getByText('FIXED PRICE MARKET')).toBeVisible()
     })
 })
+

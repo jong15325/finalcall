@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { TbAlertTriangle, TbArchiveOff, TbTag } from 'react-icons/tb'
+import PageIntro from '@/components/common/PageIntro'
 import { auctionDetailPath, marketDetailPath, paths } from '@/app/paths'
 import CodeAmount from '@/components/common/CodeAmount'
 import { codeTierClass } from '@/components/common/codeTier'
@@ -231,20 +232,16 @@ export default function SellPage() {
 
     return (
         <div className="flex flex-col gap-5">
-            <header>
-                <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                    <TbTag
-                        aria-hidden
-                        className="size-6 text-brand-structure"
-                    />
-                    아이템 판매
-                </h1>
-                <p className="mt-1 text-sm text-content-subtle">
-                    {sellMethod === 'auction'
+            <PageIntro
+                icon={TbTag}
+                eyebrow="SELL ITEM"
+                title="아이템 판매"
+                description={
+                    sellMethod === 'auction'
                         ? '인벤토리 아이템의 가격과 경매 시간을 설정하세요.'
-                        : '인벤토리 아이템을 고정가로 등록해 바로 판매하세요.'}
-                </p>
-            </header>
+                        : '인벤토리 아이템을 고정가로 등록해 바로 판매하세요.'
+                }
+            />
 
             {inventoryQuery.isPending && <SellSkeleton />}
 
@@ -905,3 +902,4 @@ function StateBlock({
         </section>
     )
 }
+

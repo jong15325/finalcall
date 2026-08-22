@@ -23,6 +23,7 @@ import { useCompareShops } from '@/lib/queries/shop'
 import { shopStatusLabelOf } from '@/features/shop/lib/shopStatus'
 import { MAX_COMPARE_ITEMS } from '@/store/compareSession'
 import { useCompareStore } from '@/store/compareStore'
+import PageIntro from '@/components/common/PageIntro'
 import type { AuctionItemBlock } from '@/lib/api/auctions'
 import type { CompareReference } from '@/store/compareSession'
 
@@ -170,7 +171,18 @@ export default function ComparePage() {
         }
     })
 
-    if (columns.length === 0) return <CompareEmpty />
+    if (columns.length === 0)
+        return (
+            <div className="flex flex-col gap-5">
+                <PageIntro
+                    icon={TbColumns3}
+                    eyebrow="ITEM COMPARISON"
+                    title="아이템 비교"
+                    description="가격과 스킬 1·2를 우선 확인하고 거래 방식을 나란히 비교하세요."
+                />
+                <CompareEmpty />
+            </div>
+        )
 
     const count = columns.length
     const gridStyle = {
@@ -180,26 +192,22 @@ export default function ComparePage() {
 
     return (
         <div className="flex flex-col gap-5">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                        <TbColumns3 aria-hidden className="size-6 text-brand-structure" />
-                        아이템 비교
-                    </h1>
-                    <p className="mt-1 text-sm text-content-subtle">
-                        가격과 스킬 1·2를 가장 먼저 확인하고 거래 방식을
-                        비교하세요.
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-content-line px-3 py-2 text-sm font-bold text-content-muted hover:bg-content-soft"
-                    onClick={clear}
-                >
-                    <TbX aria-hidden className="size-4" />
-                    전체 해제
-                </button>
-            </header>
+            <PageIntro
+                icon={TbColumns3}
+                eyebrow="ITEM COMPARISON"
+                title="아이템 비교"
+                description="가격과 스킬 1·2를 우선 확인하고 거래 방식을 나란히 비교하세요."
+                action={
+                    <button
+                        type="button"
+                        data-market-sell-action
+                        onClick={clear}
+                    >
+                        <TbX aria-hidden className="size-4" />
+                        <span>전체 해제</span>
+                    </button>
+                }
+            />
 
             <section className="overflow-hidden rounded-2xl border border-content-line bg-content-surface">
                 {/* 내부 가로 스크롤 — 모바일에서 표가 넘치면 여기서만 스크롤한다 */}
@@ -565,3 +573,4 @@ function CompareEmpty() {
         </section>
     )
 }
+

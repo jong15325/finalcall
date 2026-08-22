@@ -102,8 +102,8 @@ describe('<AuctionHeroCard>', () => {
         const items = within(list).getAllByRole('listitem')
         expect(items).toHaveLength(2)
         expect(items[0]).toHaveTextContent('1긴 이름의 화염 강타')
-        expect(items[1]).toHaveTextContent('2연속 폭발 (18%)')
-        expect(items[1].textContent).toBe('2연속 폭발 (18%)')
+        expect(items[1]).toHaveTextContent('2연속 폭발(18%)')
+        expect(items[1].textContent).toBe('2연속 폭발(18%)')
         const percent = within(items[1]).getByText('(18%)')
         // --gold-deep(#8b6100)은 surface-sunken(#f4f5f8)에서 5.06:1로 WCAG AA를 충족한다.
         expect(percent).toHaveClass(
@@ -138,7 +138,7 @@ describe('<AuctionHeroCard>', () => {
         expect(valueOf('타입')).toHaveTextContent('골드 - 마법')
         const list = screen.getByRole('list', { name: '특수 스킬' })
         const item = within(list).getByRole('listitem')
-        expect(item).toHaveTextContent('2스킬 #999 (7%)')
+        expect(item).toHaveTextContent('2스킬 #999(7%)')
         expect(within(item).getByText('(7%)')).toHaveClass(
             'whitespace-nowrap',
             'font-extrabold',

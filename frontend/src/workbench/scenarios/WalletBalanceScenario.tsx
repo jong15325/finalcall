@@ -203,7 +203,7 @@ export default function WalletBalanceScenario({
                     <h2 className="mt-1 break-words text-xl font-bold text-content-fg">
                         {selected.name}
                     </h2>
-                    <dl className="mt-5 divide-y divide-content-line border-y border-content-line">
+                    <dl className="mt-5 divide-y divide-content-line rounded-xl bg-content-soft px-4">
                         <DescriptionRow
                             label="추천 근거"
                             value={selected.recommendation}

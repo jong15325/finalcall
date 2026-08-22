@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { TbBackpack } from 'react-icons/tb'
+import { TbArchive, TbArrowUpRight, TbBackpack } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import TempStorageList from '@/features/member/components/TempStorageList'
 import { relocateErrorMessage } from '@/features/member/lib/relocateErrors'
 import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useMyTempStorage, useRelocateItem } from '@/lib/queries/tempStorage'
+import PageIntro from '@/components/common/PageIntro'
 
 /**
  * 임시 보관함 `/me/temp-storage` (FC-076 — 목업 `.storage-list` · design-brief B-10).
@@ -46,23 +47,19 @@ export default function TempStoragePage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold text-content-fg">
-                        임시 보관함
-                    </h1>
-                    <p className="mt-1 text-sm text-content-subtle">
-                        인벤토리 초과 아이템을 빈 슬롯으로 이동하세요.
-                    </p>
-                </div>
-                <Link
-                    to={paths.inventory}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-fg hover:bg-content-soft"
-                >
-                    <TbBackpack aria-hidden className="size-4" />
-                    인벤토리
-                </Link>
-            </header>
+            <PageIntro
+                icon={TbArchive}
+                eyebrow="TEMP STORAGE"
+                title="임시 보관함"
+                description="인벤토리 용량을 초과해 보관된 아이템을 빈 슬롯으로 이동하세요."
+                action={
+                    <Link to={paths.inventory} data-market-sell-action>
+                        <TbBackpack aria-hidden className="size-4" />
+                        <span>인벤토리</span>
+                        <TbArrowUpRight aria-hidden />
+                    </Link>
+                }
+            />
 
             {/* 만실 안내 — 인벤토리에 여유가 없으면. 서버가 최종 판정(선제 차단 아님) */}
             {isFull && (
@@ -137,3 +134,4 @@ export default function TempStoragePage() {
         </div>
     )
 }
+

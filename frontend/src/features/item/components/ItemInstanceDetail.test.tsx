@@ -138,6 +138,6 @@ describe('<ItemInstanceDetail>', () => {
     it('소유자 마스킹과 발동확률을 표시한다', () => {
         renderDetail(makeItem({ ownerMasked: '레***', skillPercent: 18 }))
         expect(screen.getByText('레***')).toBeInTheDocument()
-        expect(screen.getByText('18%')).toBeInTheDocument()
+        expect(screen.getByText('(18%)')).toBeInTheDocument()
     })
 })

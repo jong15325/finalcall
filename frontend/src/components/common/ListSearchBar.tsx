@@ -67,8 +67,11 @@ function ListSearchBar({
     }, [text, value])
 
     return (
-        <div className="mb-3">
-            <div className="flex items-center gap-2 rounded-lg border border-content-line bg-content-soft px-3 py-2 focus-within:border-control-action focus-within:ring-2 focus-within:ring-control-action/30">
+        <div data-list-search className="mb-3">
+            <div
+                data-list-search-field
+                className="flex items-center gap-2 rounded-lg border border-content-line bg-content-soft px-3 py-2 focus-within:border-control-action focus-within:ring-2 focus-within:ring-control-action/30"
+            >
                 <TbSearch
                     aria-hidden
                     className="size-4 shrink-0 text-content-subtle"
@@ -111,3 +114,4 @@ function ListSearchBar({
 }
 
 export default ListSearchBar
+

@@ -333,7 +333,10 @@ describe('AppShell route-scoped 상세 배경', () => {
         )
         expect(
             view.container.querySelector('#view')?.parentElement,
-        ).toHaveClass('pb-[calc(4rem+env(safe-area-inset-bottom))]', 'xl:pb-0')
+        ).toHaveClass(
+            'pb-[calc(5.75rem+env(safe-area-inset-bottom))]',
+            'xl:pb-0',
+        )
 
         const contentPlane = view.getByTestId('app-content-plane')
         expect(contentPlane).toHaveClass('w-full', 'min-w-0', 'px-3')

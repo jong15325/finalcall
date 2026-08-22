@@ -4,7 +4,7 @@ import { TbBuildingStore, TbFlame, TbPin, TbSpeakerphone } from 'react-icons/tb'
 import { boardPath, boardPostPath, paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
-import AuctionPreviewCard from '@/features/auction/components/AuctionPreviewCard'
+import AuctionCard from '@/features/auction/components/AuctionCard'
 import { auctionPhaseOf } from '@/features/auction/lib/auctionPhase'
 import { useNow } from '@/features/auction/lib/useNow'
 import { formatPostTime } from '@/features/board/lib/postView'
@@ -98,7 +98,7 @@ function ClosingSoonSection({ now }: { now: number }) {
             : { kind: 'ready' }
 
     return (
-        <section>
+        <section data-home-auction-list>
             <ListFrame
                 heading={
                     <HomeSectionHeading
@@ -109,12 +109,12 @@ function ClosingSoonSection({ now }: { now: number }) {
                     />
                 }
                 state={listState}
-                layout="preview"
+                layout="catalog"
                 label="마감 임박 경매 목록"
                 renderSkeleton={() => <ItemListSkeleton layout="preview" />}
             >
                 {auctions.map((auction) => (
-                    <AuctionPreviewCard
+                    <AuctionCard
                         key={auction.auctionPublicId}
                         auction={auction}
                         now={now}
@@ -254,3 +254,4 @@ function NoticeSection() {
         </HomeSection>
     )
 }
+

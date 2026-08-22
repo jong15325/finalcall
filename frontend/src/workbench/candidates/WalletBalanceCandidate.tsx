@@ -162,7 +162,7 @@ function BalanceStatement({ balance }: { balance: BalanceResponse }) {
             </div>
             <dl
                 data-wallet-metrics="statement"
-                className="mt-6 w-full min-w-0 divide-y divide-content-line border-y border-content-line"
+                className="mt-6 w-full min-w-0 divide-y divide-content-line rounded-xl bg-content-soft px-4"
             >
                 <StatementRow
                     label="사용 가능"

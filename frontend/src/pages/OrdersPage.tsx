@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { TbReceipt } from 'react-icons/tb'
+import PageIntro from '@/components/common/PageIntro'
 import CursorPagination from '@/components/common/CursorPagination'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
@@ -116,18 +117,12 @@ export default function OrdersPage() {
     return (
         <ListFrame
             heading={
-                <header>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                        <TbReceipt
-                            aria-hidden
-                            className="size-6 text-brand-structure"
-                        />
-                        거래 내역
-                    </h1>
-                    <p className="mt-1 text-sm text-content-subtle">
-                        구매·판매한 거래를 한 곳에서 확인하세요.
-                    </p>
-                </header>
+                <PageIntro
+                    icon={TbReceipt}
+                    eyebrow="ORDER HISTORY"
+                    title="거래 내역"
+                    description="구매·판매한 거래와 진행 상태를 한 곳에서 확인하세요."
+                />
             }
             filters={
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -147,37 +142,37 @@ export default function OrdersPage() {
                     />
                 </div>
             }
-                state={listState}
-                layout="two-column"
-                label="거래 내역 목록"
-                resultBar={
-                    orders.length > 0 && isError ? (
-                        <p
-                            role="alert"
-                            className="rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger-ink"
-                        >
-                            최신 내역을 불러오지 못했습니다. 표시된 거래는 이전
-                            결과입니다.
-                        </p>
-                    ) : undefined
-                }
-                pagination={
-                    <CursorPagination
-                        sentinelRef={sentinelRef}
-                        hasNext={Boolean(hasNextPage)}
-                        isFetchingNextPage={isFetchingNextPage}
-                        onLoadMore={() => void fetchNextPage()}
-                    />
-                }
-                renderSkeleton={() => <ItemListSkeleton layout="two-column" />}
-            >
-                {orders.map((order) => (
-                    <OrderCard
-                        key={order.orderPublicId}
-                        order={order}
-                        deliveryStatus={deliveryStatusFor(order, deliveries)}
-                    />
-                ))}
+            state={listState}
+            layout="two-column"
+            label="거래 내역 목록"
+            resultBar={
+                orders.length > 0 && isError ? (
+                    <p
+                        role="alert"
+                        className="rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger-ink"
+                    >
+                        최신 내역을 불러오지 못했습니다. 표시된 거래는 이전
+                        결과입니다.
+                    </p>
+                ) : undefined
+            }
+            pagination={
+                <CursorPagination
+                    sentinelRef={sentinelRef}
+                    hasNext={Boolean(hasNextPage)}
+                    isFetchingNextPage={isFetchingNextPage}
+                    onLoadMore={() => void fetchNextPage()}
+                />
+            }
+            renderSkeleton={() => <ItemListSkeleton layout="two-column" />}
+        >
+            {orders.map((order) => (
+                <OrderCard
+                    key={order.orderPublicId}
+                    order={order}
+                    deliveryStatus={deliveryStatusFor(order, deliveries)}
+                />
+            ))}
         </ListFrame>
     )
 }
@@ -197,7 +192,9 @@ function OrderFilterTabs<T extends string>({
 }) {
     return (
         <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-content-subtle">{title}</span>
+            <span className="text-xs font-bold text-content-subtle">
+                {title}
+            </span>
             <div
                 role="tablist"
                 aria-label={label}
@@ -226,3 +223,4 @@ function OrderFilterTabs<T extends string>({
         </div>
     )
 }
+

@@ -34,10 +34,22 @@ interface ItemInstanceDetailProps {
     now?: number
 }
 
-function SpecRow({ term, children }: { term: string; children: ReactNode }) {
+function SpecRow({
+    term,
+    children,
+    termClassName = '',
+}: {
+    term: string
+    children: ReactNode
+    termClassName?: string
+}) {
     return (
         <div className="flex items-center justify-between gap-4 border-b border-content-line py-3 last:border-b-0">
-            <dt className="text-sm font-medium text-content-subtle">{term}</dt>
+            <dt
+                className={`text-sm font-medium text-content-subtle ${termClassName}`.trim()}
+            >
+                {term}
+            </dt>
             <dd className="m-0 text-right text-sm font-semibold text-content-fg">
                 {children}
             </dd>
@@ -144,17 +156,25 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
 
                         {/* 스킬 — 슬롯 번호 유지, 이름 표시(없으면 중립 코드) */}
                         {skillRows.map(({ slot, skill }) => (
-                            <SpecRow key={slot} term={`스킬 ${slot}`}>
+                            <SpecRow
+                                key={slot}
+                                term={`스킬 ${slot}`}
+                                termClassName="item-skill-label"
+                            >
                                 <span
                                     className={
-                                        skill ? '' : 'text-content-subtle'
+                                        skill
+                                            ? 'item-skill-content'
+                                            : 'text-content-subtle'
                                     }
                                 >
                                     {skill ? skillLabelOf(skill) : '-'}
                                     {slot === 2 &&
                                         skill &&
                                         item.skillPercent > 0 && (
-                                            <span> {item.skillPercent}%</span>
+                                            <span className="item-skill-percent">
+                                                ({item.skillPercent}%)
+                                            </span>
                                         )}
                                 </span>
                             </SpecRow>

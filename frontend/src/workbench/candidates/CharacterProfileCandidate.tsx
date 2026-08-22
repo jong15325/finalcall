@@ -18,7 +18,7 @@ export default function CharacterProfileCandidate({
                 <ProfileAvatar
                     primaryCharacterId={selectedId}
                     name="캐릭터 수집가"
-                    className="size-24 rounded-2xl border border-content-line"
+                    className="size-20 rounded-2xl border border-content-line sm:size-24"
                 />
                 <div>
                     <h1 className="text-xl font-bold text-content-fg">

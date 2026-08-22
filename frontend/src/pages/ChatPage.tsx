@@ -1,5 +1,7 @@
 import ChatWorkspace from '@/features/chat/components/ChatWorkspace'
 import { useAuthStore } from '@/store/authStore'
+import { TbMessages } from 'react-icons/tb'
+import PageIntro from '@/components/common/PageIntro'
 
 export default function ChatPage() {
     const accessToken = useAuthStore((state) => state.accessToken)
@@ -13,5 +15,16 @@ export default function ChatPage() {
         )
     }
 
-    return <ChatWorkspace user={user} />
+    return (
+        <div className="flex min-w-0 flex-col gap-4">
+            <PageIntro
+                icon={TbMessages}
+                eyebrow="LIVE CONVERSATION"
+                title="대화"
+                description="거래 상대와 실시간으로 대화하고 진행 중인 거래를 빠르게 확인하세요."
+            />
+            <ChatWorkspace user={user} />
+        </div>
+    )
 }
+

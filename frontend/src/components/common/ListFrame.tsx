@@ -140,7 +140,7 @@ function StatePanel({
     action?: ReactNode
 }) {
     return (
-        <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed border-content-line bg-content-surface px-6 py-16 text-center">
+        <section className="liquid-frost liquid-frost--strong flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
             <h2 className="text-value font-bold text-content-fg">{title}</h2>
             {description && (
                 <p className="mt-1 max-w-[65ch] text-body text-content-muted">
@@ -151,3 +151,4 @@ function StatePanel({
         </section>
     )
 }
+

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { TbArchive, TbLayoutGrid } from 'react-icons/tb'
+import { TbArchive, TbArrowUpRight, TbLayoutGrid } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
@@ -12,6 +12,7 @@ import { isArrived } from '@/features/delivery/lib/deliveryView'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useDeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
+import PageIntro from '@/components/common/PageIntro'
 
 /**
  * 인벤토리 `/me/inventory` (FC-076 → FC-177 개편 → FC-178 마켓 카드 이식).
@@ -52,7 +53,8 @@ export default function InventoryPage() {
         : inventoryQuery.isError || !inventoryQuery.data
           ? {
                 kind: 'error',
-                message: '인벤토리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                message:
+                    '인벤토리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
                 onRetry: () => void inventoryQuery.refetch(),
             }
           : { kind: 'ready' }
@@ -64,44 +66,43 @@ export default function InventoryPage() {
                 layout="inventory"
                 as="ul"
                 label="인벤토리 슬롯"
-                heading={<><header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                        <TbLayoutGrid
-                            aria-hidden
-                            className="size-6 text-brand-structure"
+                heading={
+                    <>
+                        <PageIntro
+                            icon={TbLayoutGrid}
+                            eyebrow="MY INVENTORY"
+                            title="인벤토리"
+                            description="보유 아이템의 핵심 스킬을 확인하고 판매할 아이템을 선택하세요."
+                            action={
+                                <Link
+                                    to={paths.tempStorage}
+                                    data-market-sell-action
+                                >
+                                    <TbArchive aria-hidden className="size-4" />
+                                    <span>임시 보관함</span>
+                                    <TbArrowUpRight aria-hidden />
+                                </Link>
+                            }
                         />
-                        인벤토리
-                    </h1>
-                    <p className="mt-1 text-sm text-content-subtle">
-                        아이템 마켓과 같은 카드 목록입니다. 카드를 눌러
-                        카드정보를 보고 바로 판매 등록하세요.
-                    </p>
-                </div>
-                <Link
-                    to={paths.tempStorage}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-brand-structure hover:border-brand-structure"
-                >
-                    <TbArchive aria-hidden className="size-4" />
-                    임시 보관함
-                </Link>
-                </header><DeliveredBanner arrived={arrived} /></>}
+                        <DeliveredBanner arrived={arrived} />
+                    </>
+                }
                 resultBar={
                     inventoryQuery.data ? (
-                    <div className="flex items-center gap-2">
-                        <span className="rounded-lg bg-brand-structure/5 px-3 py-1.5 text-xs font-bold text-brand-structure">
-                            전체 아이템
-                        </span>
-                        <span className="rounded-full border border-content-line bg-content-soft px-3 py-1.5 text-xs font-bold text-brand-structure">
-                            {inventoryQuery.data.used} /{' '}
-                            {inventoryQuery.data.capacity} 사용
-                        </span>
-                        <span className="ml-auto text-xs text-content-subtle">
-                            {inventoryQuery.data.used === 0
-                                ? '보유한 아이템이 없습니다.'
-                                : '카드를 눌러 카드정보를 확인하세요.'}
-                        </span>
-                    </div>
+                        <div className="flex items-center gap-2">
+                            <span className="rounded-lg bg-brand-structure/5 px-3 py-1.5 text-xs font-bold text-brand-structure">
+                                전체 아이템
+                            </span>
+                            <span className="rounded-full border border-content-line bg-content-soft px-3 py-1.5 text-xs font-bold text-brand-structure">
+                                {inventoryQuery.data.used} /{' '}
+                                {inventoryQuery.data.capacity} 사용
+                            </span>
+                            <span className="ml-auto text-xs text-content-subtle">
+                                {inventoryQuery.data.used === 0
+                                    ? '보유한 아이템이 없습니다.'
+                                    : '카드를 눌러 카드정보를 확인하세요.'}
+                            </span>
+                        </div>
                     ) : undefined
                 }
                 renderSkeleton={() => <ItemListSkeleton layout="inventory" />}
@@ -131,3 +132,4 @@ export default function InventoryPage() {
         </div>
     )
 }
+

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 const frontendRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const sourceRoot = resolve(frontendRoot, 'src')
 const tokenRegistry = 'src/styles/tokens.css'
+const visualSkinRegistry = 'src/styles/liquid-frost.css'
 const rawColorPattern = /#[\da-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/giu
 const exactRawColorAllowlist = new Map([
     ['src/components/layout/WorldMapBackground.css', new Set([
@@ -51,7 +52,7 @@ for (const file of walk(sourceRoot)) {
     if (/\[data-(?:route-accent|detail-theme)[^\]]*\][^{]*\.app-chrome/u.test(source)) {
         failures.push(`${path}: 상세/route 색이 app chrome에 누수됨`)
     }
-    if (path === tokenRegistry || isTestFixture(path) || path.startsWith('src/workbench/fixtures/')) continue
+    if (path === tokenRegistry || path === visualSkinRegistry || isTestFixture(path) || path.startsWith('src/workbench/fixtures/')) continue
     const allowed = exactRawColorAllowlist.get(path) ?? new Set()
     for (const match of source.matchAll(rawColorPattern)) {
         if (!allowed.has(match[0])) failures.push(`${path}: registry 밖 raw color ${match[0]}`)

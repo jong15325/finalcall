@@ -65,7 +65,7 @@ describe('<AuctionCard>', () => {
         expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
         expect(screen.getByText(/도끼 · Lv\.3/)).toBeInTheDocument()
         expect(screen.getByText('공격시간 3 감소')).toBeInTheDocument()
-        expect(screen.getByText('33%')).toBeInTheDocument()
+        expect(screen.getByText('(33%)')).toBeInTheDocument()
         expect(screen.getByText('현재가')).toBeInTheDocument()
         expect(screen.getByText('2,480,000')).toBeInTheDocument()
         expect(screen.getByLabelText('1시간 0분 남음')).toBeInTheDocument()

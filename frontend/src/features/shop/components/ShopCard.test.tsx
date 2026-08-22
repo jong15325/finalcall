@@ -263,7 +263,7 @@ describe('<ShopCard>', () => {
                 row.querySelector('.item-skill-summary__slot'),
             ).toBeInTheDocument()
         })
-        const percent = within(marketSkills).getByText('33%')
+        const percent = within(marketSkills).getByText('(33%)')
         expect(percent).toHaveClass(
             'item-card__skill-percent',
             'text-control-action-hover',

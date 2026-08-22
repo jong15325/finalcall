@@ -171,15 +171,14 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                                     >
                                         <span
                                             aria-hidden="true"
-                                            className="grid size-5 shrink-0 place-items-center rounded border border-content-line bg-content-surface text-xs font-bold text-brand-structure"
+                                            className="item-skill-label grid size-5 shrink-0 place-items-center rounded border border-content-line bg-content-surface text-xs font-bold"
                                         >
                                             {skill.slot}
                                         </span>
-                                        <span className="min-w-0 break-words font-semibold text-content-fg">
+                                        <span className="item-skill-content min-w-0 break-words font-semibold">
                                             {skillLabelOf(skill)}
                                             {showPercent && (
-                                                <span className="whitespace-nowrap font-extrabold text-brand-highlight-deep">
-                                                    {' '}
+                                                <span className="item-skill-percent whitespace-nowrap font-extrabold text-brand-highlight-deep">
                                                     ({item.skillPercent}%)
                                                 </span>
                                             )}

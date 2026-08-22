@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { TbAlertTriangle, TbChevronRight, TbReceipt } from 'react-icons/tb'
+import { TbAlertTriangle, TbChevronRight, TbReceipt, TbUserCircle } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ProfileCard from '@/features/member/components/ProfileCard'
 import VerificationCard from '@/features/member/components/VerificationCard'
@@ -16,6 +16,7 @@ import {
 } from '@/lib/queries/me'
 import { useMyBalance } from '@/lib/queries/balance'
 import { resetSessionState } from '@/lib/api/session'
+import PageIntro from '@/components/common/PageIntro'
 
 /**
  * 마이페이지 통합 홈 `/me` (FC-074 — 목업 accountHub('profile')=accountOverview · design-brief B-7).
@@ -58,14 +59,12 @@ export default function MePage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <header>
-                <h1 className="text-2xl font-bold text-content-fg">
-                    마이페이지
-                </h1>
-                <p className="mt-1 text-sm text-content-subtle">
-                    계정 정보와 자산을 한 곳에서 관리하세요.
-                </p>
-            </header>
+            <PageIntro
+                icon={TbUserCircle}
+                eyebrow="MY ACCOUNT"
+                title="마이페이지"
+                description="계정 정보와 자산, 거래 활동을 한 곳에서 관리하세요."
+            />
 
             {meQuery.isPending ? (
                 <MeSkeleton />

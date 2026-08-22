@@ -291,10 +291,12 @@ function ItemSkillList({
                     <span className="item-skill-summary__slot">
                         스킬 {slot}
                     </span>{' '}
-                    {skill?.label ?? '-'}
+                    <span className="item-skill-content">
+                        {skill?.label ?? '-'}
+                    </span>
                     {skill?.percent ? (
-                        <span className="item-card__skill-percent ml-1 font-bold text-control-action-hover">
-                            {skill.percent}%
+                        <span className="item-card__skill-percent font-bold text-control-action-hover">
+                            ({skill.percent}%)
                         </span>
                     ) : null}
                 </li>

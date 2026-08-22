@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { TbAlertTriangle, TbMailOff, TbPencil } from 'react-icons/tb'
+import { TbAlertTriangle, TbMail, TbMailOff, TbPencil } from 'react-icons/tb'
+import PageIntro from '@/components/common/PageIntro'
 import MemoRow from '@/features/memo/components/MemoRow'
 import MemoDetailPane from '@/features/memo/components/MemoDetailPane'
 import MemoComposeDialog from '@/features/memo/components/MemoComposeDialog'
@@ -110,23 +111,22 @@ export default function MessagesPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold text-content-fg">쪽지</h1>
-                    <p className="mt-1 max-w-[60ch] text-sm text-content-subtle">
-                        받은 쪽지와 보낸 쪽지를 한 곳에서 봅니다. 여기서 보낸
-                        쪽지는 상대가 게임에서도 받습니다.
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
-                    onClick={() => openCompose()}
-                >
-                    <TbPencil aria-hidden className="size-4" />
-                    쪽지 쓰기
-                </button>
-            </header>
+            <PageIntro
+                icon={TbMail}
+                eyebrow="DIRECT MESSAGE"
+                title="쪽지"
+                description="받은 쪽지와 보낸 쪽지를 확인하고 게임 이용자와 메시지를 주고받으세요."
+                action={
+                    <button
+                        type="button"
+                        data-market-sell-action
+                        onClick={() => openCompose()}
+                    >
+                        <TbPencil aria-hidden className="size-4" />
+                        <span>쪽지 쓰기</span>
+                    </button>
+                }
+            />
 
             {deleteMutation.isError && (
                 <p
@@ -350,9 +350,12 @@ function ListState({
             <span className="flex size-12 items-center justify-center rounded-2xl bg-content-soft text-content-line">
                 <Icon aria-hidden className="size-6" />
             </span>
-            <h2 className="mt-1 text-base font-bold text-content-fg">{title}</h2>
+            <h2 className="mt-1 text-base font-bold text-content-fg">
+                {title}
+            </h2>
             <p className="text-sm text-content-subtle">{description}</p>
             {action && <div className="mt-3">{action}</div>}
         </div>
     )
 }
+

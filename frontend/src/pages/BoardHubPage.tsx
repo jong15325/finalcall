@@ -2,6 +2,7 @@ import { TbMessageCircle, TbAlertTriangle } from 'react-icons/tb'
 import { useBoards } from '@/lib/queries/boards'
 import BoardHubCard from '@/features/board/components/BoardHubCard'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
+import PageIntro from '@/components/common/PageIntro'
 
 /**
  * 게시판 허브 `/boards` (FC-202 — 디자인 게이트 승인 화면 A).
@@ -14,15 +15,12 @@ export default function BoardHubPage() {
     const { data: boards, isPending, isError, refetch } = useBoards()
     return (
         <div className="flex flex-col gap-5">
-            <header>
-                <h1 className="flex items-center gap-2 text-2xl font-bold text-content-fg">
-                    <TbMessageCircle aria-hidden className="size-6 text-brand-structure" />
-                    게시판
-                </h1>
-                <p className="mt-1 text-sm text-content-subtle">
-                    공지·커뮤니티·이벤트 소식을 확인하고 이야기를 나눠보세요.
-                </p>
-            </header>
+            <PageIntro
+                icon={TbMessageCircle}
+                eyebrow="COMMUNITY BOARD"
+                title="게시판"
+                description="공지·커뮤니티·이벤트 소식을 확인하고 이야기를 나눠보세요."
+            />
 
             {isPending && (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -70,3 +68,4 @@ export default function BoardHubPage() {
         </div>
     )
 }
+

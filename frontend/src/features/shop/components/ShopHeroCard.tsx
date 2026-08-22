@@ -116,15 +116,17 @@ function ShopHeroCard({ shop, now }: ShopHeroCardProps) {
                             key={slot}
                             className="flex h-10 min-w-0 items-center justify-between gap-3 border-b border-content-line text-sm"
                         >
-                            <dt className="shrink-0 font-medium text-content-subtle">
+                            <dt className="item-skill-label shrink-0 font-medium">
                                 스킬 {slot}
                             </dt>
-                            <dd className="min-w-0 truncate font-semibold text-content-fg">
+                            <dd className="item-skill-content min-w-0 truncate font-semibold">
                                 {skill ? skillLabelOf(skill) : '-'}
                                 {slot === 2 &&
                                     skill &&
                                     item.skillPercent > 0 && (
-                                        <span> {item.skillPercent}%</span>
+                                        <span className="item-skill-percent">
+                                            ({item.skillPercent}%)
+                                        </span>
                                     )}
                             </dd>
                         </div>

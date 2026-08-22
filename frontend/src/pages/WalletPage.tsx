@@ -2,6 +2,8 @@ import ExchangeForm from '@/features/member/components/ExchangeForm'
 import WalletBalanceCard from '@/features/member/components/WalletBalanceCard'
 import { useMyBalance } from '@/lib/queries/balance'
 import { useExchange } from '@/lib/queries/exchange'
+import { TbWallet } from 'react-icons/tb'
+import PageIntro from '@/components/common/PageIntro'
 
 /**
  * 지갑 `/me/wallet` (FC-075 — 목업 `.wallet-grid`(balance + exchange) · design-brief B-8).
@@ -17,12 +19,12 @@ export default function WalletPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <header>
-                <h1 className="text-2xl font-bold text-content-fg">지갑</h1>
-                <p className="mt-1 text-sm text-content-subtle">
-                    캐시와 게임머니, 입찰 중 보류 금액을 구분해 확인하세요.
-                </p>
-            </header>
+            <PageIntro
+                icon={TbWallet}
+                eyebrow="MY WALLET"
+                title="지갑"
+                description="캐시와 게임머니, 입찰 중 보류 금액을 구분해 확인하세요."
+            />
 
             <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
                 <WalletBalanceCard
@@ -43,3 +45,4 @@ export default function WalletPage() {
         </div>
     )
 }
+

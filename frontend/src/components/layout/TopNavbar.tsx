@@ -2,21 +2,16 @@ import { NavLink, useNavigate } from 'react-router'
 import {
     TbMenu2,
     TbBell,
-    TbCircleCheckFilled,
-    TbGavel,
     TbBackpack,
     TbMail,
     TbMessages,
-    TbChevronRight,
     TbUser,
     TbSettings,
     TbLogout,
 } from 'react-icons/tb'
 import useAuth from '@/auth/useAuth'
-import { useMyBalance } from '@/lib/queries/balance'
 import { useUnreadMemoCount } from '@/lib/queries/memos'
 import { useUnreadChatCount } from '@/lib/queries/chat'
-import CodeAmount from '@/components/common/CodeAmount'
 import Dropdown from '@/components/common/Dropdown'
 import { paths } from '@/app/paths'
 import { usePageContext } from './pageContext'
@@ -28,10 +23,8 @@ import type { RefObject } from 'react'
 /**
  * 상단 네비게이션 (FC-067 — HANDOVER §5.2). 검색바 없음.
  *
- * ★ PC: 페이지 문맥 · 거래 서버 상태 · 실시간 경매 · 인벤토리 · 보유 코드 · 알림 · 프로필.
- *   모바일: 문맥 아이콘 · 축약 보유 코드 · 알림 · 프로필(+햄버거).
- * ★ 보유 코드는 **로그인 시에만** — 잔액 쿼리는 `enabled: isAuthed` 라 손님 호출로 401 을
- *   깨우지 않는다(잔액 훅 주석). 값은 정수, 표기는 축약(`CodeAmount compact`).
+ * ★ PC: 페이지 문맥 · 인벤토리 · 대화 · 쪽지 · 알림 · 프로필.
+ *   모바일: 문맥 아이콘 · 대화 · 쪽지 · 알림 · 프로필(+햄버거).
  * ★ 알림은 [준비 중] — `/notifications` 컨트롤러 없음. 배지 없이 "준비 중" 자리 드롭다운으로,
  *   가짜 알림을 렌더하지 않는다(정직성·FC-048, rebuild-contract-map §5).
  */
@@ -44,7 +37,6 @@ interface TopNavbarProps {
 
 function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
     const { authenticated, user, signOut } = useAuth()
-    const { data: balance } = useMyBalance()
     const { data: unreadMemo } = useUnreadMemoCount()
     const { data: unreadChat } = useUnreadChatCount()
     const { title, icon: PageIcon } = usePageContext()
@@ -96,25 +88,6 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
 
                 {/* 우측 클러스터 */}
                 <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-                    {/* 거래 서버 상태 — PC 전용 */}
-                    <span className="hidden items-center gap-1.5 rounded-full border border-chrome-selected px-3 py-1.5 text-xs font-semibold text-chrome-muted lg:flex">
-                        <TbCircleCheckFilled
-                            aria-hidden
-                            className="size-4 text-success-ink"
-                        />
-                        거래 서버{' '}
-                        <strong className="text-chrome-fg">정상</strong>
-                    </span>
-
-                    {/* 실시간 경매 바로가기 — PC 전용 */}
-                    <NavLink
-                        to={paths.auctions}
-                        className="hidden items-center gap-1.5 rounded-full border border-chrome-selected px-3 py-1.5 text-xs font-semibold text-chrome-muted hover:border-control-action hover:text-control-action lg:flex"
-                    >
-                        <TbGavel aria-hidden className="size-4" />
-                        실시간 경매
-                    </NavLink>
-
                     {/* 인벤토리 바로가기 — PC 전용, 로그인 시 */}
                     {authenticated && (
                         <NavLink
@@ -123,27 +96,6 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                             className="hidden size-9 items-center justify-center rounded-lg text-chrome-muted hover:bg-chrome-raised hover:text-chrome-fg lg:flex"
                         >
                             <TbBackpack aria-hidden className="size-5" />
-                        </NavLink>
-                    )}
-
-                    {/* 보유 코드 — 로그인 시. 모바일(phone)에서는 숨김(상단 혼잡 완화), sm↑ 노출 */}
-                    {authenticated && (
-                        <NavLink
-                            to={paths.wallet}
-                            className="hidden items-center gap-2 rounded-full border border-chrome-selected px-3 py-1.5 hover:border-brand-highlight sm:flex"
-                        >
-                            <span className="hidden text-[11px] font-semibold text-chrome-muted sm:block">
-                                보유 코드
-                            </span>
-                            <CodeAmount
-                                value={balance?.gameMoneyBalance ?? null}
-                                mode="compact"
-                                className="text-sm font-bold text-chrome-fg"
-                            />
-                            <TbChevronRight
-                                aria-hidden
-                                className="hidden size-4 text-chrome-muted sm:block"
-                            />
                         </NavLink>
                     )}
 

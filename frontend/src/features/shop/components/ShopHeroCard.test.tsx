@@ -78,7 +78,7 @@ describe('<ShopHeroCard>', () => {
 
         const rows = skillRows()
         expect(rows[0]).toHaveTextContent('스킬 1-')
-        expect(rows[1]).toHaveTextContent('스킬 2트리플샷 33%')
+        expect(rows[1]).toHaveTextContent('스킬 2트리플샷(33%)')
     })
 
     it('스킬이 없으면 두 슬롯을 모두 대시로 표시한다', () => {

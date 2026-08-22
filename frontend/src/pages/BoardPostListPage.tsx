@@ -6,6 +6,7 @@ import {
     TbMessageOff,
     TbSearchOff,
     TbChevronLeft,
+    TbMessages,
 } from 'react-icons/tb'
 import { boardPath, boardWritePath, paths } from '@/app/paths'
 import { useBoard, useBoards, usePostList } from '@/lib/queries/boards'
@@ -21,6 +22,7 @@ import EventPostCard from '@/features/board/components/EventPostCard'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import PageIntro from '@/components/common/PageIntro'
 
 /**
  * 게시판 글 목록 `/boards/:slug` (FC-202 — 승인 화면 B).
@@ -103,7 +105,7 @@ export default function BoardPostListPage() {
 
             {/* 게시판 탭 — 게시판 간 이동 */}
             {boardsQuery.data && boardsQuery.data.length > 0 && (
-                <div className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-content-line bg-content-surface p-1">
+                <div data-board-tabs className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-content-line bg-content-surface p-1">
                     {boardsQuery.data.map((tab) => {
                         const active = tab.slug === slug
                         return (
@@ -124,24 +126,20 @@ export default function BoardPostListPage() {
             )}
 
             {/* 헤더 + 글쓰기 */}
-            <header className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0">
-                    <h1 className="text-2xl font-bold text-content-fg">
-                        {board?.name ?? '게시판'}
-                    </h1>
-                    {board?.description && (
-                        <p className="mt-1 text-sm text-content-subtle">
-                            {board.description}
-                        </p>
-                    )}
-                </div>
-                {showWrite ? (
+            <PageIntro
+                icon={TbMessages}
+                eyebrow="COMMUNITY BOARD"
+                title={board?.name ?? '게시판'}
+                description={
+                    board?.description ?? '새로운 소식과 이야기를 확인하세요.'
+                }
+                action={showWrite ? (
                     <Link
                         to={boardWritePath(slug)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
+                        data-market-sell-action
                     >
                         <TbPencilPlus aria-hidden className="size-4" />
-                        글쓰기
+                        <span>글쓰기</span>
                     </Link>
                 ) : (
                     board &&
@@ -151,7 +149,7 @@ export default function BoardPostListPage() {
                         </span>
                     )
                 )}
-            </header>
+            />
 
             {/* 로딩 */}
             {isPending && (
@@ -261,3 +259,4 @@ export default function BoardPostListPage() {
         </div>
     )
 }
+
