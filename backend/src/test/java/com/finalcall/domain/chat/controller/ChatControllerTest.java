@@ -14,6 +14,7 @@ import com.finalcall.domain.chat.dto.ChatMessageSendRequest;
 import com.finalcall.domain.chat.dto.ChatMessageSendResponse;
 import com.finalcall.domain.chat.entity.ChatMessage;
 import com.finalcall.domain.chat.service.ChatCommandService;
+import com.finalcall.domain.chat.service.ChatDirectMessageService;
 import com.finalcall.domain.chat.service.ChatMessagePersistence;
 import com.finalcall.domain.chat.service.ChatQueryService;
 import com.finalcall.domain.chat.service.ChatRateLimitService;
@@ -25,7 +26,9 @@ class ChatControllerTest {
         ChatCommandService commandService = mock(ChatCommandService.class);
         ChatQueryService queryService = mock(ChatQueryService.class);
         ChatRateLimitService rateLimitService = mock(ChatRateLimitService.class);
-        ChatController controller = new ChatController(commandService, queryService, rateLimitService);
+        ChatDirectMessageService directMessageService = mock(ChatDirectMessageService.class);
+        ChatController controller = new ChatController(commandService, directMessageService, queryService,
+            rateLimitService);
         ChatMessage message = ChatMessage.builder()
             .publicId("01JCHATCONTROLLERTEST001")
             .roomId(1L)

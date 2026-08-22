@@ -25,7 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finalcall.domain.chat.entity.ChatRoom;
+import com.finalcall.domain.chat.entity.ChatRoomMemberState;
 import com.finalcall.domain.chat.repository.ChatMessageRepository;
+import com.finalcall.domain.chat.repository.ChatRoomMemberStateRepository;
+import com.finalcall.domain.chat.repository.ChatRoomRepository;
 import com.finalcall.domain.chat.service.ChatRateLimitService;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
@@ -47,10 +51,45 @@ class ChatApiIntegrationTest extends IntegrationTest {
     private ChatMessageRepository messageRepository;
 
     @Autowired
+    private ChatRoomRepository roomRepository;
+
+    @Autowired
+    private ChatRoomMemberStateRepository memberStateRepository;
+
+    @Autowired
     private ChatRateLimitService rateLimitService;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    void 첫_메시지에서만_direct_room과_메시지가_함께_생성된다() throws Exception {
+        User alice = persistUser("direct_alice", "첫메시지앨리스");
+        User bob = persistUser("direct_bob", "첫메시지밥");
+
+        mockMvc.perform(post(ROOMS_URL + "/direct/messages").with(userId(alice))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new DirectMessageBody(
+                bob.getNickname(), FIRST_MESSAGE_ID, "첫 메시지"))))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.room.counterpart.memberPublicId").value(bob.getPublicId()))
+            .andExpect(jsonPath("$.data.message.body").value("첫 메시지"))
+            .andExpect(jsonPath("$.data.roomCreated").value(true))
+            .andExpect(jsonPath("$.data.deduplicated").value(false));
+
+        assertThat(roomRepository.count()).isEqualTo(1L);
+        assertThat(messageRepository.count()).isEqualTo(1L);
+
+        mockMvc.perform(post(ROOMS_URL + "/direct/messages").with(userId(alice))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new DirectMessageBody(
+                bob.getNickname(), FIRST_MESSAGE_ID, "첫 메시지"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.roomCreated").value(false))
+            .andExpect(jsonPath("$.data.deduplicated").value(true));
+        assertThat(roomRepository.count()).isEqualTo(1L);
+        assertThat(messageRepository.count()).isEqualTo(1L);
+    }
 
     @Test
     void REST_10종은_방생성부터_replay_읽음_차단_신고까지_계약대로_동작한다() throws Exception {
@@ -209,12 +248,13 @@ class ChatApiIntegrationTest extends IntegrationTest {
         User alice = persistUser("errors_alice", "오류앨리스");
         User bob = persistUser("errors_bob", "오류밥");
 
-        mockMvc.perform(post(ROOMS_URL + "/direct").with(userId(alice))
-            .contentType(MediaType.APPLICATION_JSON).content("{\"counterpartNickname\":\"없는상대\"}"))
+        mockMvc.perform(post(ROOMS_URL + "/direct/messages").with(userId(alice))
+            .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(
+                new DirectMessageBody("없는상대", FIRST_MESSAGE_ID, "본문"))))
             .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("CHAT_002"));
-        mockMvc.perform(post(ROOMS_URL + "/direct").with(userId(alice))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"counterpartNickname\":\"" + alice.getNickname() + "\"}"))
+        mockMvc.perform(post(ROOMS_URL + "/direct/messages").with(userId(alice))
+            .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(
+                new DirectMessageBody(alice.getNickname(), FIRST_MESSAGE_ID, "본문"))))
             .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.code").value("CHAT_003"));
 
         String roomPublicId = createRoom(alice, bob, status().isCreated());
@@ -279,13 +319,21 @@ class ChatApiIntegrationTest extends IntegrationTest {
 
     private String createRoom(User requester, User counterpart,
         org.springframework.test.web.servlet.ResultMatcher expectedStatus) throws Exception {
-        String body = mockMvc.perform(post(ROOMS_URL + "/direct").with(userId(requester))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"counterpartNickname\":\"" + counterpart.getNickname() + "\"}"))
-            .andExpect(expectedStatus)
-            .andExpect(jsonPath("$.data.counterpart.memberPublicId").value(counterpart.getPublicId()))
-            .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(body).path("data").path("roomPublicId").asText();
+        Long memberLowId = Math.min(requester.getId(), counterpart.getId());
+        Long memberHighId = Math.max(requester.getId(), counterpart.getId());
+        ChatRoom existing = roomRepository.findByMemberLowIdAndMemberHighId(memberLowId, memberHighId).orElse(null);
+        if (existing != null) {
+            return existing.getPublicId();
+        }
+        ChatRoom room = roomRepository.save(ChatRoom.builder()
+            .memberLowId(memberLowId)
+            .memberHighId(memberHighId)
+            .lastActivityAt(java.time.Instant.now())
+            .build());
+        memberStateRepository.saveAll(List.of(
+            ChatRoomMemberState.builder().roomId(room.getId()).userId(memberLowId).build(),
+            ChatRoomMemberState.builder().roomId(room.getId()).userId(memberHighId).build()));
+        return room.getPublicId();
     }
 
     private ResultActions send(User sender, String roomPublicId, String clientMessageId, String body)
@@ -323,5 +371,8 @@ class ChatApiIntegrationTest extends IntegrationTest {
         private static MapBody message(String clientMessageId, String body) {
             return new MapBody(clientMessageId, body);
         }
+    }
+
+    private record DirectMessageBody(String counterpartNickname, String clientMessageId, String body) {
     }
 }

@@ -189,17 +189,14 @@ class ChatRealtimeInteropIntegrationTest {
         assertThat(secondNode.getBean(SimpUserRegistry.class).getUser(String.valueOf(bob.getId())))
             .isNotNull();
 
-        ResponseEntity<JsonNode> createdRoom = post(firstNodePort, "/api/v1/me/chat-rooms/direct",
-            Map.of("counterpartNickname", bob.getNickname()), aliceToken);
-        assertThat(createdRoom.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        String roomPublicId = createdRoom.getBody().path("data").path("roomPublicId").asText();
-
         String clientMessageId = UUID.randomUUID().toString();
-        ResponseEntity<JsonNode> createdMessage = post(firstNodePort,
-            "/api/v1/me/chat-rooms/" + roomPublicId + "/messages",
-            Map.of("clientMessageId", clientMessageId, "body", "노드 간 전달"), aliceToken);
+        ResponseEntity<JsonNode> createdMessage = post(firstNodePort, "/api/v1/me/chat-rooms/direct/messages",
+            Map.of("counterpartNickname", bob.getNickname(), "clientMessageId", clientMessageId,
+                "body", "노드 간 전달"),
+            aliceToken);
         assertThat(createdMessage.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(createdMessage.getBody().path("data").path("deduplicated").asBoolean()).isFalse();
+        String roomPublicId = createdMessage.getBody().path("data").path("room").path("roomPublicId").asText();
 
         JsonNode delivered = awaitEvent(secondNodeEvents, ChatEventType.MESSAGE_CREATED.name());
         assertFrontendEnvelope(delivered, roomPublicId, clientMessageId, 1L, false);
@@ -260,9 +257,11 @@ class ChatRealtimeInteropIntegrationTest {
         User bob = persistUser("redis_bob", "Redis밥");
         String aliceToken = token(alice);
         String bobToken = token(bob);
-        ResponseEntity<JsonNode> room = post(firstNodePort, "/api/v1/me/chat-rooms/direct",
-            Map.of("counterpartNickname", bob.getNickname()), aliceToken);
-        String roomPublicId = room.getBody().path("data").path("roomPublicId").asText();
+        ResponseEntity<JsonNode> room = post(firstNodePort, "/api/v1/me/chat-rooms/direct/messages",
+            Map.of("counterpartNickname", bob.getNickname(), "clientMessageId", UUID.randomUUID().toString(),
+                "body", "Redis 중단 준비 메시지"),
+            aliceToken);
+        String roomPublicId = room.getBody().path("data").path("room").path("roomPublicId").asText();
         BlockingQueue<JsonNode> events = new LinkedBlockingQueue<>();
         connectStomp(firstNodePort, bobToken, events);
 
@@ -273,8 +272,8 @@ class ChatRealtimeInteropIntegrationTest {
                 Map.of("clientMessageId", UUID.randomUUID().toString(), "body", "Redis 중단 중 커밋"),
                 aliceToken);
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-            assertThat(messageRepository.count()).isEqualTo(1L);
-            assertThat(outboxRepository.count()).isEqualTo(2L);
+            assertThat(messageRepository.count()).isEqualTo(2L);
+            assertThat(outboxRepository.count()).isEqualTo(4L);
             assertThat(events.poll(700L, TimeUnit.MILLISECONDS)).isNull();
         } finally {
             redisContainer.getDockerClient().unpauseContainerCmd(redisContainer.getContainerId()).exec();
@@ -291,7 +290,7 @@ class ChatRealtimeInteropIntegrationTest {
         ResponseEntity<JsonNode> gap = get(firstNodePort,
             "/api/v1/me/chat-rooms/" + roomPublicId + "/messages?afterSequence=0", bobToken);
         assertThat(gap.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(gap.getBody().path("data").path("content")).hasSize(1);
+        assertThat(gap.getBody().path("data").path("content")).hasSize(2);
     }
 
     @Test
@@ -490,7 +489,7 @@ class ChatRealtimeInteropIntegrationTest {
     private ChatEventOutbox messageOutbox() {
         return outboxRepository.findAll().stream()
             .filter(event -> event.getEventType() == ChatEventType.MESSAGE_CREATED)
-            .findFirst()
+            .max(java.util.Comparator.comparing(ChatEventOutbox::getId))
             .orElseThrow();
     }
 

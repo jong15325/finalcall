@@ -39,8 +39,9 @@ import com.finalcall.domain.chat.repository.ChatRoomMemberStateRepository;
 import com.finalcall.domain.chat.repository.ChatRoomRepository;
 import com.finalcall.domain.chat.repository.ChatUserBlockRepository;
 import com.finalcall.domain.chat.service.ChatCommandService;
+import com.finalcall.domain.chat.service.ChatDirectMessagePersistence;
+import com.finalcall.domain.chat.service.ChatDirectMessageService;
 import com.finalcall.domain.chat.service.ChatMessagePersistence;
-import com.finalcall.domain.chat.service.ChatRoomCreation;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
 import com.finalcall.support.IntegrationTest;
@@ -55,6 +56,9 @@ class ChatCommandServiceIntegrationTest extends IntegrationTest {
 
     @Autowired
     private ChatCommandService commandService;
+
+    @Autowired
+    private ChatDirectMessageService directMessageService;
 
     @Autowired
     private ChatRoomRepository roomRepository;
@@ -107,19 +111,21 @@ class ChatCommandServiceIntegrationTest extends IntegrationTest {
     void 쌍방_동시_방생성은_한방과_참여상태_두행으로_수렴한다() throws Exception {
         User alice = persistUser("room_a", "채팅방앨리스");
         User bob = persistUser("room_b", "채팅방밥");
-        List<ChatRoomCreation> outcomes = Collections.synchronizedList(new ArrayList<>());
+        List<ChatDirectMessagePersistence> outcomes = Collections.synchronizedList(new ArrayList<>());
 
         List<Throwable> errors = runConcurrently(12, index -> {
             if (index % 2 == 0) {
-                outcomes.add(callAs(alice, () -> commandService.createDirectRoom(bob.getNickname())));
+                outcomes.add(callAs(alice, () -> directMessageService.send(
+                    bob.getNickname(), UUID.randomUUID().toString(), "동시 첫 메시지 " + index)));
             } else {
-                outcomes.add(callAs(bob, () -> commandService.createDirectRoom(alice.getNickname())));
+                outcomes.add(callAs(bob, () -> directMessageService.send(
+                    alice.getNickname(), UUID.randomUUID().toString(), "동시 첫 메시지 " + index)));
             }
         });
 
         assertThat(errors).isEmpty();
         assertThat(outcomes).hasSize(12);
-        assertThat(outcomes.stream().filter(ChatRoomCreation::created)).hasSize(1);
+        assertThat(outcomes.stream().filter(ChatDirectMessagePersistence::roomCreated)).hasSize(1);
         assertThat(roomRepository.count()).isEqualTo(1);
         ChatRoom room = roomRepository.findAll().getFirst();
         assertThat(memberStateRepository.findByRoomIdOrderByUserIdAsc(room.getId()))
@@ -386,7 +392,19 @@ class ChatCommandServiceIntegrationTest extends IntegrationTest {
     }
 
     private ChatRoom createRoom(User requester, User counterpart) {
-        return callAs(requester, () -> commandService.createDirectRoom(counterpart.getNickname())).room();
+        Long memberLowId = Math.min(requester.getId(), counterpart.getId());
+        Long memberHighId = Math.max(requester.getId(), counterpart.getId());
+        ChatRoom room = roomRepository.save(ChatRoom.builder()
+            .memberLowId(memberLowId)
+            .memberHighId(memberHighId)
+            .lastActivityAt(java.time.Instant.now())
+            .build());
+        memberStateRepository.saveAll(List.of(
+            com.finalcall.domain.chat.entity.ChatRoomMemberState.builder()
+                .roomId(room.getId()).userId(memberLowId).build(),
+            com.finalcall.domain.chat.entity.ChatRoomMemberState.builder()
+                .roomId(room.getId()).userId(memberHighId).build()));
+        return room;
     }
 
     private User persistUser(String suffix, String nickname) {

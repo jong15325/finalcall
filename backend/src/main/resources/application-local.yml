@@ -23,7 +23,7 @@ chat:
     queue-capacity: ${CHAT_FAST_PATH_QUEUE_CAPACITY:256}
     shutdown-timeout: ${CHAT_FAST_PATH_SHUTDOWN_TIMEOUT:3s}
   realtime:
-    allowed-origins: ${CHAT_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${CHAT_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   kafka:
     topic:
       replication-factor: 1

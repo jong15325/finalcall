@@ -63,11 +63,13 @@ public class ChatCommandService {
     private final ChatRateLimitService rateLimitService;
     private final ObjectMapper objectMapper;
 
-    /** 활성 회원 닉네임으로 direct room을 생성하거나 정렬된 사용자 쌍의 기존 room을 재사용한다. */
+    /** direct room을 생성 또는 재사용하고 첫 메시지와 outbox까지 한 트랜잭션에 커밋한다. */
     @Transactional
-    @ServiceLog
-    public ChatRoomCreation createDirectRoom(String counterpartNickname) {
+    public ChatDirectMessagePersistence sendDirectMessage(String counterpartNickname,
+        String clientMessageId, String body) {
         validateCounterpartNickname(counterpartNickname);
+        validateClientMessageId(clientMessageId);
+        String normalizedBody = normalizeBody(body);
         Long requesterId = currentUserId();
         User requester = userRepository.findByIdAndIsDeletedFalse(requesterId)
             .orElseThrow(() -> new BusinessException(CommonErrorCode.UNAUTHORIZED));
@@ -77,10 +79,6 @@ public class ChatCommandService {
 
         Long memberLowId = Math.min(requester.getId(), counterpart.getId());
         Long memberHighId = Math.max(requester.getId(), counterpart.getId());
-        ChatRoom existing = roomRepository.findByMemberLowIdAndMemberHighId(memberLowId, memberHighId).orElse(null);
-        if (existing != null) {
-            return new ChatRoomCreation(existing, false);
-        }
         Preconditions.validate(!blockRepository.existsBetween(memberLowId, memberHighId),
             ChatErrorCode.CHAT_UNAVAILABLE);
 
@@ -91,11 +89,13 @@ public class ChatCommandService {
             .orElseThrow(() -> new BusinessException(CommonErrorCode.INTERNAL_ERROR));
         boolean created = candidatePublicId.equals(room.getPublicId());
         if (created) {
-            memberStateRepository.saveAll(List.of(
-                ChatRoomMemberState.builder().roomId(room.getId()).userId(memberLowId).build(),
-                ChatRoomMemberState.builder().roomId(room.getId()).userId(memberHighId).build()));
+            rateLimitService.checkRoomCreation();
         }
-        return new ChatRoomCreation(room, created);
+        memberStateRepository.insertIfAbsent(room.getId(), memberLowId, now);
+        memberStateRepository.insertIfAbsent(room.getId(), memberHighId, now);
+        ChatMessagePersistence persistence = persistMessage(room, requester, clientMessageId, normalizedBody);
+        return new ChatDirectMessagePersistence(room, persistence.message(), persistence.senderPublicId(), created,
+            persistence.deduplicated());
     }
 
     /** 방 행 락 아래에서 순번을 배정하고 clientMessageId 멱등성·양방향 차단을 판정한다. */
@@ -109,6 +109,12 @@ public class ChatCommandService {
         User sender = userRepository.findByIdAndIsDeletedFalse(senderId)
             .orElseThrow(() -> new BusinessException(CommonErrorCode.UNAUTHORIZED));
 
+        return persistMessage(room, sender, clientMessageId, normalizedBody);
+    }
+
+    private ChatMessagePersistence persistMessage(ChatRoom room, User sender, String clientMessageId,
+        String normalizedBody) {
+        Long senderId = sender.getId();
         ChatMessage existing = messageRepository.findByRoomIdAndSenderIdAndClientMessageId(
             room.getId(), senderId, clientMessageId).orElse(null);
         if (existing != null) {
@@ -133,7 +139,8 @@ public class ChatCommandService {
             .body(normalizedBody)
             .build());
 
-        ChatRoomMemberState senderState = memberStateRepository.findByRoomIdAndUserId(room.getId(), senderId)
+        ChatRoomMemberState senderState = memberStateRepository
+            .findByRoomIdAndUserIdForUpdate(room.getId(), senderId)
             .orElseThrow(() -> new BusinessException(CommonErrorCode.INTERNAL_ERROR));
         boolean readAdvanced = senderState.advanceReadTo(roomSequence, now);
         appendMessageCreated(room, message, now);

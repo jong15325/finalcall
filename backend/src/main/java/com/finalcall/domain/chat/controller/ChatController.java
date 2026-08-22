@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.finalcall.common.response.ApiResponse;
 import com.finalcall.common.response.CursorResponse;
-import com.finalcall.domain.chat.dto.ChatDirectRoomCreateRequest;
+import com.finalcall.domain.chat.dto.ChatDirectMessageSendRequest;
+import com.finalcall.domain.chat.dto.ChatDirectMessageSendResponse;
 import com.finalcall.domain.chat.dto.ChatMessageResponse;
 import com.finalcall.domain.chat.dto.ChatMessageSendRequest;
 import com.finalcall.domain.chat.dto.ChatMessageSendResponse;
@@ -27,10 +28,11 @@ import com.finalcall.domain.chat.dto.ChatRoomResponse;
 import com.finalcall.domain.chat.dto.ChatUnreadCountResponse;
 import com.finalcall.domain.chat.entity.ChatReport;
 import com.finalcall.domain.chat.service.ChatCommandService;
+import com.finalcall.domain.chat.service.ChatDirectMessagePersistence;
+import com.finalcall.domain.chat.service.ChatDirectMessageService;
 import com.finalcall.domain.chat.service.ChatMessagePersistence;
 import com.finalcall.domain.chat.service.ChatQueryService;
 import com.finalcall.domain.chat.service.ChatRateLimitService;
-import com.finalcall.domain.chat.service.ChatRoomCreation;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,18 +48,22 @@ public class ChatController {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final ChatCommandService commandService;
+    private final ChatDirectMessageService directMessageService;
     private final ChatQueryService queryService;
     private final ChatRateLimitService rateLimitService;
 
-    /** nickname으로 direct room을 생성하거나 기존 room을 재사용한다. */
-    @PostMapping("/direct")
-    public ResponseEntity<ApiResponse<ChatRoomResponse>> createDirectRoom(
-        @Valid @RequestBody ChatDirectRoomCreateRequest request) {
-        rateLimitService.checkRoomCreation();
-        ChatRoomCreation result = commandService.createDirectRoom(request.counterpartNickname());
-        HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
-        return ResponseEntity.status(status)
-            .body(ApiResponse.success(queryService.getRoom(result.room().getPublicId())));
+    /** direct room을 생성 또는 재사용하고 첫 메시지를 원자적으로 전송한다. */
+    @PostMapping("/direct/messages")
+    public ResponseEntity<ApiResponse<ChatDirectMessageSendResponse>> sendDirectMessage(
+        @Valid @RequestBody ChatDirectMessageSendRequest request) {
+        rateLimitService.checkMessageSend();
+        ChatDirectMessagePersistence result = directMessageService.send(request.counterpartNickname(),
+            request.clientMessageId(), request.body());
+        ChatRoomResponse room = queryService.getRoom(result.room().getPublicId());
+        ChatMessageResponse message = ChatMessageResponse.from(result.message(), result.senderPublicId());
+        HttpStatus status = result.deduplicated() ? HttpStatus.OK : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(ApiResponse.success(ChatDirectMessageSendResponse.from(
+            room, message, result.roomCreated(), result.deduplicated())));
     }
 
     /** 내 방 목록을 최근 활동 역순의 opaque cursor로 조회한다. */

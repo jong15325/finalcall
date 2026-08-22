@@ -81,10 +81,14 @@ for ($index = 0; $index -lt $users.Count; $index += 2) {
     $counterpartIndex = if ($index + 1 -lt $users.Count) { $index + 1 } else { 0 }
     $roomHeaders = New-RequestHeaders -ClientIp $users[$index].clientIp `
         -Authorization "Bearer $($users[$index].accessToken)"
-    $body = @{ counterpartNickname = $users[$counterpartIndex].nickname } | ConvertTo-Json
-    $room = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/me/chat-rooms/direct" `
+    $body = @{
+        counterpartNickname = $users[$counterpartIndex].nickname
+        clientMessageId = [guid]::NewGuid().ToString()
+        body = 'load fixture room initialization'
+    } | ConvertTo-Json
+    $room = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/me/chat-rooms/direct/messages" `
         -Headers $roomHeaders -ContentType 'application/json' -Body $body
-    $roomPublicId = $room.data.roomPublicId
+    $roomPublicId = $room.data.room.roomPublicId
     $users[$index].roomPublicIds.Add($roomPublicId)
     $users[$counterpartIndex].roomPublicIds.Add($roomPublicId)
 }

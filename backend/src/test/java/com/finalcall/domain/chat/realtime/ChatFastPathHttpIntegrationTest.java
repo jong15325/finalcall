@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.repository.UserRepository;
 import com.finalcall.support.IntegrationTest;
@@ -33,9 +32,6 @@ class ChatFastPathHttpIntegrationTest extends IntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private DataSource dataSource;
 
     @MockBean
@@ -45,7 +41,6 @@ class ChatFastPathHttpIntegrationTest extends IntegrationTest {
     void Redis_publish가_5초_지연돼도_HTTP응답과_DB_connection반환은_기다리지_않는다() throws Exception {
         User sender = persistUser("fast_path_sender", "fast-path-sender");
         User recipient = persistUser("fast_path_recipient", "fast-path-recipient");
-        String roomPublicId = createRoom(sender, recipient);
         CountDownLatch publishEntered = new CountDownLatch(1);
         CountDownLatch publishCompleted = new CountDownLatch(1);
         AtomicLong publishDelayMillis = new AtomicLong();
@@ -62,10 +57,11 @@ class ChatFastPathHttpIntegrationTest extends IntegrationTest {
         });
 
         long requestStarted = System.nanoTime();
-        mockMvc.perform(post(ROOMS_URL + "/" + roomPublicId + "/messages")
+        mockMvc.perform(post(ROOMS_URL + "/direct/messages")
             .with(user(String.valueOf(sender.getId())))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"clientMessageId\":\"c96278a5-f102-4b76-a09d-4dfe30caa243\","
+            .content("{\"counterpartNickname\":\"" + recipient.getNickname() + "\","
+                + "\"clientMessageId\":\"c96278a5-f102-4b76-a09d-4dfe30caa243\","
                 + "\"body\":\"비동기 경계 검증\"}"))
             .andExpect(status().isCreated());
         long requestMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStarted);
@@ -75,16 +71,6 @@ class ChatFastPathHttpIntegrationTest extends IntegrationTest {
         assertThat(((HikariDataSource)dataSource).getHikariPoolMXBean().getActiveConnections()).isZero();
         assertThat(publishCompleted.await(6, TimeUnit.SECONDS)).isTrue();
         assertThat(publishDelayMillis.get()).isGreaterThanOrEqualTo(4_900L);
-    }
-
-    private String createRoom(User requester, User counterpart) throws Exception {
-        String response = mockMvc.perform(post(ROOMS_URL + "/direct")
-            .with(user(String.valueOf(requester.getId())))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"counterpartNickname\":\"" + counterpart.getNickname() + "\"}"))
-            .andExpect(status().isCreated())
-            .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(response).path("data").path("roomPublicId").asText();
     }
 
     private User persistUser(String loginId, String nickname) {
