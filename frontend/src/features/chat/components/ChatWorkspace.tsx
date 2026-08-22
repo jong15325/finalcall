@@ -147,28 +147,26 @@ export default function ChatWorkspace({
     return (
         <div
             data-chat-operational
-            className="flex min-h-0 min-w-0 flex-col gap-4"
+            className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden"
         >
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold text-content-fg">채팅</h1>
-                    <p className="mt-1 max-w-[65ch] text-sm leading-6 text-content-muted">
-                        거래 상대와 나눈 메시지는 저장 후 전송되며, 실시간
-                        연결이 끊겨도 다시 동기화됩니다.
-                    </p>
-                </div>
+            <header className="flex shrink-0 flex-wrap items-start justify-between gap-3">
+                <h1
+                    className={`${mobilePane === 'conversation' ? 'hidden lg:block' : 'block'} text-2xl font-bold text-content-fg`}
+                >
+                    채팅
+                </h1>
                 <ConnectionBadge status={chat.realtimeStatus} />
             </header>
 
             <section
                 aria-label="실시간 채팅"
-                className="relative h-[calc(100dvh-13rem)] min-h-[520px] max-h-[760px] min-w-0 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid lg:min-h-[640px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
+                className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid lg:max-h-[760px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] xl:min-h-[640px]"
             >
                 <aside
                     data-chat-list
                     aria-label="대화 목록"
                     aria-busy={chat.roomsLoading}
-                    className={`min-h-[520px] min-w-0 flex-col bg-content-surface lg:flex lg:min-h-0 lg:border-r lg:border-content-line ${
+                    className={`min-h-0 min-w-0 flex-col overflow-hidden bg-content-surface lg:flex lg:border-r lg:border-content-line ${
                         mobilePane === 'list' ? 'flex' : 'hidden'
                     }`}
                 >
@@ -361,7 +359,7 @@ export default function ChatWorkspace({
                 <div
                     data-chat-conversation
                     aria-label="선택한 대화"
-                    className={`min-h-[520px] min-w-0 flex-col bg-content-soft lg:flex lg:min-h-0 ${
+                    className={`min-h-0 min-w-0 flex-col overflow-hidden bg-content-soft lg:flex ${
                         mobilePane === 'conversation' ? 'flex' : 'hidden'
                     }`}
                 >
@@ -501,7 +499,7 @@ export default function ChatWorkspace({
                                     chat.conversationLoading ||
                                     chat.olderLoading
                                 }
-                                className="min-h-0 flex-1 overflow-y-auto px-3 py-5 sm:px-6"
+                                className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-3 py-5 sm:px-6"
                                 onScroll={(event) => {
                                     const nearBottom = isTimelineNearBottom(
                                         event.currentTarget,
@@ -587,7 +585,7 @@ export default function ChatWorkspace({
 
                             <form
                                 aria-label="메시지 작성"
-                                className="border-t border-content-line bg-content-surface p-3 sm:p-5"
+                                className="shrink-0 border-t border-content-line bg-content-surface p-3 sm:p-5"
                                 onSubmit={(event) => {
                                     event.preventDefault()
                                     submitMessage()
@@ -727,21 +725,23 @@ function ConnectionBadge({ status }: { status: ChatRealtimeStatus }) {
         offline: '오프라인 · 연결 후 자동 재전송',
         disconnected: '실시간 연결 종료',
     }
-    const live = status === 'connected'
+    const statusClasses: Record<ChatRealtimeStatus, string> = {
+        connected: 'border-success bg-success-soft [&>span]:bg-success',
+        connecting: 'border-warning bg-warning-soft [&>span]:bg-warning',
+        reconnecting: 'border-warning bg-warning-soft [&>span]:bg-warning',
+        offline:
+            'border-content-line bg-content-soft [&>span]:bg-content-subtle',
+        disconnected:
+            'border-content-line bg-content-soft [&>span]:bg-content-subtle',
+    }
     return (
         <p
             role="status"
-            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-bold ${
-                live
-                    ? 'border-success bg-success-soft text-success-ink'
-                    : 'border-content-line bg-content-soft text-content-muted'
-            }`}
+            aria-label={labels[status]}
+            title={labels[status]}
+            className={`inline-flex size-11 shrink-0 items-center justify-center rounded-full border ${statusClasses[status]}`}
         >
-            <span
-                aria-hidden
-                className={`size-2 rounded-full ${live ? 'bg-success' : 'bg-warning'}`}
-            />
-            {labels[status]}
+            <span aria-hidden className="size-2.5 rounded-full" />
         </p>
     )
 }

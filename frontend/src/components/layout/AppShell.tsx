@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
+import { paths } from '@/app/paths'
 import { resolveRouteUi } from '@/app/routeUi'
 import CompareBar from '@/features/item/components/CompareBar'
 import Sidebar from './Sidebar'
@@ -41,6 +42,7 @@ function AppShellContent() {
     const [mobileOpen, setMobileOpen] = useState(false)
     const desktop = useDesktopLayout()
     const { pathname } = useLocation()
+    const chatRoute = pathname === paths.chat
     const routeUi = resolveRouteUi(pathname)
     const menuButtonRef = useRef<HTMLButtonElement>(null)
     const navigationSentinelRef = useRef<HTMLDivElement>(null)
@@ -90,13 +92,18 @@ function AppShellContent() {
     }, [])
 
     return (
-        <div className="app-shell-height relative isolate flex bg-transparent">
+        <div
+            data-chat-shell={chatRoute || undefined}
+            className={`app-shell-height relative isolate flex bg-transparent ${chatRoute ? 'h-[100dvh] overflow-hidden xl:h-auto xl:overflow-visible' : ''}`}
+        >
             <WorldMapBackground accent={accent} />
             {!desktop && mobileOpen && (
                 <Sidebar mobileOpen onCloseMobile={closeMobile} />
             )}
 
-            <div className="flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0">
+            <div
+                className={`flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden xl:overflow-visible' : ''}`}
+            >
                 <div
                     ref={navigationSentinelRef}
                     aria-hidden
@@ -122,18 +129,20 @@ function AppShellContent() {
 
                 <main
                     id="view"
-                    className="min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7"
+                    className={`min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7 ${chatRoute ? 'flex min-h-0 overflow-hidden xl:block xl:overflow-visible' : ''}`}
                 >
                     <div
                         data-testid="app-content-plane"
                         data-content-plane={routeUi.contentPlane}
-                        className="mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl"
+                        className={`mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden xl:block xl:overflow-visible' : ''}`}
                     >
                         <Outlet />
                     </div>
                 </main>
 
-                <AppFooter variant={routeUi.footer} />
+                <div className={chatRoute ? 'hidden xl:block' : 'contents'}>
+                    <AppFooter variant={routeUi.footer} />
+                </div>
             </div>
 
             <CompareBar />

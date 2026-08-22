@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-386
 title: 채팅 대화 흐름과 실시간 목록 UX 보정
 state: done
-children: [FC-342, FC-343, FC-344, FC-345]
+children: [FC-342, FC-343, FC-344, FC-345, FC-346]
 gate: null
 ---
 
@@ -18,6 +18,7 @@ gate: null
 - FC-343: 승인 계약에 따른 채팅방·첫 메시지 원자 생성 백엔드 구현.
 - FC-344: 내부 스크롤·초안 대화·신규 방 실시간 반영 프론트 구현.
 - FC-345: 보안·동시성·QA·접근성 통합 리뷰.
+- FC-346: 모바일 채팅 높이·스크롤·입력창 및 연결 상태 표시 보정.
 
 ## 게이트
 - 게이트1: 2026-08-22 사용자 승인 완료.
@@ -26,3 +27,4 @@ gate: null
 - 게이트3: 구현·reviewer·온디맨드 보안 리뷰 후 사용자 Done·push 승인 필요.
 - reviewer와 별도 온디맨드 보안 리뷰를 통과했으며 Gate3 사용자 승인 대기다.
 - 게이트3: 2026-08-22 사용자 Done·atomic commit 승인 완료.
+- 게이트3: 2026-08-22 FC-346 후속 모바일 UX 보정 Done·atomic commit 사용자 승인 완료.

@@ -64,6 +64,12 @@ function renderShell(route: string) {
                         }
                     />
                     <Route path="/market" element={<main>아이템 목록</main>} />
+                    <Route
+                        path="/me/chat"
+                        element={
+                            <section data-testid="chat-page">채팅</section>
+                        }
+                    />
                     <Route path="/short" element={<CompactPage />} />
                     <Route
                         path="/long"
@@ -105,6 +111,48 @@ function renderShell(route: string) {
 }
 
 describe('AppShell route-scoped 상세 배경', () => {
+    it('모바일 채팅 route만 가용 높이 flex 체인과 footer 숨김을 적용한다', () => {
+        const chatView = renderShell('/me/chat')
+        const shell = chatView.container.querySelector('[data-chat-shell]')
+        const main = chatView.container.querySelector('#view')
+        const contentPlane = chatView.getByTestId('app-content-plane')
+        const footerWrapper =
+            chatView.container.querySelector('footer')!.parentElement
+
+        expect(shell).toHaveClass(
+            'h-[100dvh]',
+            'overflow-hidden',
+            'xl:h-auto',
+            'xl:overflow-visible',
+        )
+        expect(main?.parentElement).toHaveClass(
+            'min-h-0',
+            'overflow-hidden',
+            'xl:overflow-visible',
+        )
+        expect(main).toHaveClass('flex', 'min-h-0', 'overflow-hidden')
+        expect(contentPlane).toHaveClass(
+            'flex',
+            'min-h-0',
+            'flex-1',
+            'flex-col',
+            'overflow-hidden',
+        )
+        expect(footerWrapper).toHaveClass('hidden', 'xl:block')
+
+        chatView.unmount()
+        const marketView = renderShell('/market')
+        expect(
+            marketView.container.querySelector('[data-chat-shell]'),
+        ).toBeNull()
+        expect(marketView.container.querySelector('#view')).not.toHaveClass(
+            'overflow-hidden',
+        )
+        expect(
+            marketView.container.querySelector('footer')?.parentElement,
+        ).toHaveClass('contents')
+    })
+
     it('production 입력 CSS에서 100vh fallback 뒤에 100dvh를 선언한다', () => {
         const appCss = readFileSync(`${process.cwd()}/src/index.css`, 'utf8')
         expect(appCss.indexOf('min-height: 100vh')).toBeLessThan(
@@ -189,12 +237,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(view.queryByRole('navigation', { name: '주요 메뉴' })).toBeNull()
         expect(
             view.container.querySelector('[data-app-navigation-frame]'),
-        ).toHaveClass(
-            'sticky',
-            'z-30',
-            'top-2',
-            'xl:top-3',
-        )
+        ).toHaveClass('sticky', 'z-30', 'top-2', 'xl:top-3')
         expect(view.container.querySelector('header')).toHaveClass('bg-chrome')
         expect(view.container.querySelector('header')).not.toHaveClass('sticky')
         expect(

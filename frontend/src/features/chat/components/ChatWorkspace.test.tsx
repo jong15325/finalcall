@@ -17,6 +17,7 @@ import type {
 } from '@/lib/api/chat'
 import type {
     ChatRealtimeHandlers,
+    ChatRealtimeStatus,
     ChatRestAdapter,
     ChatRuntime,
 } from '../lib/chatRuntime'
@@ -199,6 +200,12 @@ function createMockRuntime({
         emit(event: ChatEventResponse) {
             act(() => realtimeHandlers?.onEvent(event))
         },
+        setRealtimeStatus(status: ChatRealtimeStatus) {
+            act(() => realtimeHandlers?.onStatus(status))
+        },
+        hasRealtimeConnection() {
+            return realtimeHandlers !== null
+        },
         setMessages(messages: ChatMessageResponse[], roomPublicId = 'room-1') {
             messagesByRoom[roomPublicId] = messages
         },
@@ -243,19 +250,69 @@ describe('ChatWorkspace', () => {
         const conversation = view.container.querySelector(
             '[data-chat-conversation]',
         )!
+        const workspace = view.container.querySelector(
+            '[data-chat-operational]',
+        )!
+        const pageHeading = screen.getByRole('heading', { name: '채팅' })
+        const connectionStatus = screen.getByRole('status', {
+            name: /실시간 연결/,
+        })
+        expect(workspace).toHaveClass(
+            'h-full',
+            'min-h-0',
+            'flex-1',
+            'overflow-hidden',
+        )
+        expect(screen.getByRole('region', { name: '실시간 채팅' })).toHaveClass(
+            'min-h-0',
+            'flex-1',
+            'xl:min-h-[640px]',
+            'overflow-hidden',
+        )
+        expect(
+            screen.getByRole('region', { name: '실시간 채팅' }),
+        ).not.toHaveClass('lg:min-h-[640px]')
+        expect(connectionStatus).toHaveTextContent('')
+        expect(connectionStatus).toHaveClass('bg-warning-soft')
+        await waitFor(() => expect(mock.rest.getMessages).toHaveBeenCalled())
+        await waitFor(() => expect(mock.hasRealtimeConnection()).toBe(true))
+        mock.setRealtimeStatus('connected')
+        expect(
+            screen.getByRole('status', { name: '실시간 연결됨' }),
+        ).toHaveClass('bg-success-soft')
+        mock.setRealtimeStatus('offline')
+        expect(
+            screen.getByRole('status', {
+                name: '오프라인 · 연결 후 자동 재전송',
+            }),
+        ).toHaveClass('bg-content-soft')
+        expect(
+            screen.queryByText(/거래 상대와 나눈 메시지는/),
+        ).not.toBeInTheDocument()
         expect(list).toHaveClass('flex')
         expect(conversation).toHaveClass('hidden')
-        await waitFor(() => expect(mock.rest.getMessages).toHaveBeenCalled())
         expect(mock.rest.updateRead).not.toHaveBeenCalled()
 
         await openConversation()
+        expect(pageHeading).toHaveClass('hidden', 'lg:block')
+        expect(connectionStatus).toBeInTheDocument()
         expect(list).toHaveClass('hidden')
         expect(conversation).toHaveClass('flex')
+        expect(conversation).toHaveClass('min-h-0', 'overflow-hidden')
         await waitFor(() =>
             expect(mock.rest.updateRead).toHaveBeenCalledWith('room-1', 1),
         )
 
         const form = screen.getByRole('form', { name: '메시지 작성' })
+        const timeline = screen.getByRole('log', {
+            name: '루나상점 메시지 기록',
+        })
+        expect(timeline).toHaveClass(
+            'flex-1',
+            'overflow-y-auto',
+            'overscroll-contain',
+        )
+        expect(form).toHaveClass('shrink-0')
         const input = within(form).getByRole('textbox', {
             name: '메시지 입력',
         })
