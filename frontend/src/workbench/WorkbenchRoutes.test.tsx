@@ -466,16 +466,22 @@ describe('WorkbenchRoutes', () => {
         renderWorkbench('/__design/auth-layout')
 
         const heading = await screen.findByRole('heading', { name: '로그인' })
-        const authCard = heading.parentElement?.parentElement
-        expect(authCard).toHaveClass('w-full', 'max-w-md')
+        const loginForm = heading.closest('.auth-form')
+        expect(loginForm).toHaveClass('mx-auto', 'w-full', 'max-w-md')
+        expect(document.querySelector('.auth-form-panel')).toContainElement(
+            loginForm as HTMLElement,
+        )
 
         const loginId = screen.getByRole('textbox', { name: '아이디' })
         const password = screen.getByLabelText('비밀번호')
         const submit = screen.getByRole('button', { name: '로그인' })
         expect(submit).toBeDisabled()
 
+        const homeLinks = screen.getAllByRole('link', { name: '장터 홈' })
         await user.tab()
-        expect(screen.getByRole('link', { name: '장터 홈' })).toHaveFocus()
+        expect(homeLinks[0]).toHaveFocus()
+        await user.tab()
+        expect(homeLinks[1]).toHaveFocus()
         await user.tab()
         expect(loginId).toHaveFocus()
         await user.tab()

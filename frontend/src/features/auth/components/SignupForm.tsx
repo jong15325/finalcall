@@ -72,7 +72,7 @@ function AvailabilityCheckButton({
             type="button"
             aria-label={ariaLabel}
             disabled={disabled || checking}
-            className="flex h-11 shrink-0 items-center justify-center rounded-lg border border-content-line bg-content-surface px-3 text-xs font-bold text-content-fg transition hover:border-control-action hover:text-control-action disabled:cursor-not-allowed disabled:opacity-60"
+            className="auth-secondary-action flex h-12 shrink-0 items-center justify-center rounded-xl border px-3 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onClick}
         >
             {checking ? '확인 중…' : '중복 확인'}
@@ -242,14 +242,18 @@ export default function SignupForm({
     }
 
     return (
-        <div>
-            <h1 className="text-center text-2xl font-bold text-content-fg">
+        <div className="auth-form mx-auto w-full max-w-xl">
+            <p className="auth-eyebrow">CREATE ACCOUNT</p>
+            <h1 className="auth-copy-strong mt-2 text-3xl font-black tracking-tight">
                 회원가입
             </h1>
+            <p className="auth-copy-muted mt-2 text-sm">
+                거래에 사용할 기본 계정 정보를 입력해 주세요.
+            </p>
 
             <form
                 noValidate
-                className="mt-6 grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-2"
+                className="mt-8 grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-2"
                 onSubmit={handleSubmit}
             >
                 <div className="sm:col-span-2">
@@ -407,7 +411,7 @@ export default function SignupForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="mt-1 h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+                    className="auth-primary-action mt-2 h-12 rounded-xl px-4 text-sm font-extrabold disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2"
                 >
                     {isSubmitting ? '가입 중…' : '회원가입'}
                 </button>

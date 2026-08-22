@@ -42,16 +42,16 @@ export default function AuthTextField({
     trailing,
 }: AuthTextFieldProps) {
     return (
-        <div>
+        <div className="auth-field">
             <label
                 htmlFor={id}
-                className="text-xs font-semibold text-content-muted"
+                className="auth-field-label text-xs font-bold"
             >
                 {label}
             </label>
             <div className="mt-1.5 flex gap-2">
                 <div
-                    className={`flex h-11 min-w-0 flex-1 items-center rounded-lg border bg-content-surface transition focus-within:ring-2 ${
+                    className={`auth-input flex h-12 min-w-0 flex-1 items-center rounded-xl border transition focus-within:ring-2 ${
                         invalid
                             ? 'border-danger focus-within:ring-danger/30'
                             : 'border-content-line focus-within:border-control-action focus-within:ring-control-action/30'

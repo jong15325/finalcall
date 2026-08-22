@@ -31,7 +31,7 @@ export default function LoginPage() {
             {handoff.signupSuccess && (
                 <p
                     role="status"
-                    className="mb-4 rounded-lg border border-success/40 bg-success-soft px-3.5 py-2.5 text-xs font-semibold text-success-ink"
+                    className="auth-status mb-5 rounded-xl border border-success/40 px-4 py-3 text-xs font-semibold text-success-ink"
                 >
                     회원가입이 완료되었습니다. 로그인해 주세요.
                 </p>

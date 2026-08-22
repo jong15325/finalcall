@@ -46,14 +46,18 @@ export default function LoginForm({
     }
 
     return (
-        <div>
-            <h1 className="text-center text-2xl font-bold text-content-fg">
+        <div className="auth-form mx-auto w-full max-w-md">
+            <p className="auth-eyebrow">WELCOME BACK</p>
+            <h1 className="auth-copy-strong mt-2 text-3xl font-black tracking-tight">
                 로그인
             </h1>
+            <p className="auth-copy-muted mt-2 text-sm">
+                계정에 로그인하고 거래를 계속하세요.
+            </p>
 
             <form
                 noValidate
-                className="mt-6 flex flex-col gap-4"
+                className="mt-8 flex flex-col gap-4"
                 onSubmit={handleSubmit}
             >
                 <AuthTextField
@@ -89,7 +93,7 @@ export default function LoginForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="mt-1 h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    className="auth-primary-action mt-2 h-12 rounded-xl px-4 text-sm font-extrabold disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {isSubmitting ? '로그인 중…' : '로그인'}
                 </button>
