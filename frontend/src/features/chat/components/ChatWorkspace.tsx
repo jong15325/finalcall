@@ -16,29 +16,29 @@ import ChatAvatar from './ChatAvatar'
 import { NewChatDialog, ReportChatDialog } from './ChatDialogs'
 import { browserChatRuntime } from '../lib/chatRuntime'
 import { useChatController } from '../lib/useChatController'
+import { useChatRealtime } from '../lib/ChatRealtimeProvider'
 import type { ChatRuntime, ChatRealtimeStatus } from '../lib/chatRuntime'
 import type { ChatTimelineMessage } from '../lib/chatTimeline'
 import type { ChatMessageResponse } from '@/lib/api/chat'
 import type { UserSummary } from '@/store/authStore'
 
 export default function ChatWorkspace({
-    accessToken,
     user,
     runtime = browserChatRuntime,
 }: {
-    accessToken: string
     user: UserSummary
     runtime?: ChatRuntime
 }) {
+    const realtime = useChatRealtime()
     const [mobilePane, setMobilePane] = useState<'list' | 'conversation'>(
         'list',
     )
     const wideLayout = useWideChatLayout()
     const chat = useChatController({
         runtime,
-        accessToken,
         user,
         conversationVisible: wideLayout || mobilePane === 'conversation',
+        realtime,
     })
     const [searchValue, setSearchValue] = useState('')
     const [draft, setDraft] = useState('')
@@ -149,18 +149,9 @@ export default function ChatWorkspace({
             data-chat-operational
             className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden"
         >
-            <header className="flex shrink-0 flex-wrap items-start justify-between gap-3">
-                <h1
-                    className={`${mobilePane === 'conversation' ? 'hidden lg:block' : 'block'} text-2xl font-bold text-content-fg`}
-                >
-                    채팅
-                </h1>
-                <ConnectionBadge status={chat.realtimeStatus} />
-            </header>
-
             <section
                 aria-label="실시간 채팅"
-                className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid lg:max-h-[760px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] xl:min-h-[640px]"
+                className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
             >
                 <aside
                     data-chat-list
@@ -365,7 +356,7 @@ export default function ChatWorkspace({
                 >
                     {chat.selectedRoom ? (
                         <>
-                            <header className="flex min-w-0 items-center justify-between gap-3 border-b border-content-line bg-content-surface px-3 py-3 sm:px-5">
+                            <header className="flex min-w-0 shrink-0 items-center justify-between gap-3 border-b border-content-line bg-content-surface px-3 py-3 sm:px-5">
                                 <div className="flex min-w-0 items-center gap-3">
                                     <button
                                         type="button"
@@ -385,12 +376,17 @@ export default function ChatWorkspace({
                                         }
                                     />
                                     <div className="min-w-0">
-                                        <h2 className="truncate text-base font-bold text-content-fg">
-                                            {
-                                                chat.selectedRoom.counterpart
-                                                    .nickname
-                                            }
-                                        </h2>
+                                        <div className="flex min-w-0 items-center gap-2">
+                                            <h2 className="truncate text-base font-bold text-content-fg">
+                                                {
+                                                    chat.selectedRoom
+                                                        .counterpart.nickname
+                                                }
+                                            </h2>
+                                            <ConnectionBadge
+                                                status={chat.realtimeStatus}
+                                            />
+                                        </div>
                                         <p className="truncate text-xs text-content-muted">
                                             {chat.selectedRoom.canSend
                                                 ? '대화 가능'
@@ -739,7 +735,7 @@ function ConnectionBadge({ status }: { status: ChatRealtimeStatus }) {
             role="status"
             aria-label={labels[status]}
             title={labels[status]}
-            className={`inline-flex size-11 shrink-0 items-center justify-center rounded-full border ${statusClasses[status]}`}
+            className={`inline-flex size-2.5 shrink-0 items-center justify-center rounded-full ${statusClasses[status]}`}
         >
             <span aria-hidden className="size-2.5 rounded-full" />
         </p>

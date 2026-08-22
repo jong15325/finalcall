@@ -12,7 +12,8 @@ import {
     upsertOptimisticMessage,
     validateChatBody,
 } from './chatTimeline'
-import type { ChatRuntime, ChatRealtimeStatus } from './chatRuntime'
+import type { ChatRuntime } from './chatRuntime'
+import type { useChatRealtime } from './ChatRealtimeProvider'
 import type { ChatTimelineMessage } from './chatTimeline'
 import type {
     ChatEventResponse,
@@ -34,14 +35,14 @@ const DRAFT_ROOM_PREFIX = 'draft:'
 
 export function useChatController({
     runtime,
-    accessToken,
     user,
     conversationVisible,
+    realtime,
 }: {
     runtime: ChatRuntime
-    accessToken: string
     user: UserSummary
     conversationVisible: boolean
+    realtime: ReturnType<typeof useChatRealtime>
 }) {
     const [rooms, setRooms] = useState<ChatRoomResponse[]>([])
     const [roomsNextCursor, setRoomsNextCursor] = useState<string | null>(null)
@@ -60,8 +61,7 @@ export function useChatController({
     const [actionError, setActionError] = useState<string | null>(null)
     const [notice, setNotice] = useState<string | null>(null)
     const [actionPending, setActionPending] = useState(false)
-    const [realtimeStatus, setRealtimeStatus] =
-        useState<ChatRealtimeStatus>('connecting')
+    const realtimeStatus = realtime.status
     const [online, setOnline] = useState(runtime.isOnline())
     const [bootstrapped, setBootstrapped] = useState(false)
 
@@ -442,6 +442,7 @@ export function useChatController({
                         ),
                     )
                 }
+                realtime.refreshUnread()
             } catch (error) {
                 updateMessages(roomPublicId, (current) =>
                     upsertOptimisticMessage(current, {
@@ -452,7 +453,7 @@ export function useChatController({
                 setSendError(chatSendErrorMessage(error))
             }
         },
-        [runtime, updateMessages, updateRooms],
+        [realtime, runtime, updateMessages, updateRooms],
     )
 
     const sendMessage = useCallback(
@@ -520,8 +521,7 @@ export function useChatController({
         () =>
             runtime.listenNetworkStatus((isOnline) => {
                 setOnline(isOnline)
-                if (!isOnline) setRealtimeStatus('offline')
-                else retryQueuedRef.current()
+                if (isOnline) retryQueuedRef.current()
             }),
         [runtime],
     )
@@ -664,23 +664,16 @@ export function useChatController({
     )
     handleEventRef.current = handleEvent
 
+    useEffect(
+        () => realtime.subscribe((event) => handleEventRef.current(event)),
+        [realtime],
+    )
+
     useEffect(() => {
-        if (!bootstrapped) return
-        const realtime = runtime.createRealtimeClient()
-        realtime.connect(accessToken, {
-            onEvent: (event) => handleEventRef.current(event),
-            onStatus: (status) => {
-                setRealtimeStatus(status)
-                if (status === 'connected') void syncOnConnectRef.current()
-            },
-            onError: () => {
-                // 상세 오류는 REST 정본을 가리지 않고 연결 상태 문구로만 안내한다.
-            },
-        })
-        return () => {
-            void realtime.disconnect()
+        if (bootstrapped && realtimeStatus === 'connected') {
+            void syncOnConnectRef.current()
         }
-    }, [accessToken, bootstrapped, runtime])
+    }, [bootstrapped, realtimeStatus])
 
     const toggleBlock = useCallback(async () => {
         const roomPublicId = selectedRoomRef.current

@@ -22,6 +22,26 @@ import type {
     ChatRuntime,
 } from '../lib/chatRuntime'
 
+const realtimeMock = vi.hoisted(() => ({
+    listener: null as ((event: ChatEventResponse) => void) | null,
+    refreshUnread: vi.fn(),
+}))
+
+vi.mock('../lib/ChatRealtimeProvider', () => ({
+    useChatRealtime: () => ({
+        status: 'connected' as const,
+        subscribe: (listener: (event: ChatEventResponse) => void) => {
+            realtimeMock.listener = listener
+            return () => {
+                if (realtimeMock.listener === listener) {
+                    realtimeMock.listener = null
+                }
+            }
+        },
+        refreshUnread: realtimeMock.refreshUnread,
+    }),
+}))
+
 const CURRENT_USER = {
     userPublicId: 'member-me',
     nickname: '나',
@@ -198,13 +218,16 @@ function createMockRuntime({
         runtime,
         rest,
         emit(event: ChatEventResponse) {
-            act(() => realtimeHandlers?.onEvent(event))
+            act(() => {
+                realtimeHandlers?.onEvent(event)
+                realtimeMock.listener?.(event)
+            })
         },
         setRealtimeStatus(status: ChatRealtimeStatus) {
             act(() => realtimeHandlers?.onStatus(status))
         },
         hasRealtimeConnection() {
-            return realtimeHandlers !== null
+            return realtimeMock.listener !== null
         },
         setMessages(messages: ChatMessageResponse[], roomPublicId = 'room-1') {
             messagesByRoom[roomPublicId] = messages
@@ -233,17 +256,15 @@ async function openConversation() {
 
 beforeEach(() => {
     Element.prototype.scrollIntoView = vi.fn()
+    realtimeMock.listener = null
+    realtimeMock.refreshUnread.mockClear()
 })
 
 describe('ChatWorkspace', () => {
     it('모바일 목록에서 대화로 이동하고 동일 clientMessageId로 optimistic 전송을 수렴한다', async () => {
         const mock = createMockRuntime()
         const view = render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
+            <ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />,
         )
 
         const list = view.container.querySelector('[data-chat-list]')!
@@ -253,10 +274,6 @@ describe('ChatWorkspace', () => {
         const workspace = view.container.querySelector(
             '[data-chat-operational]',
         )!
-        const pageHeading = screen.getByRole('heading', { name: '채팅' })
-        const connectionStatus = screen.getByRole('status', {
-            name: /실시간 연결/,
-        })
         expect(workspace).toHaveClass(
             'h-full',
             'min-h-0',
@@ -264,28 +281,13 @@ describe('ChatWorkspace', () => {
             'overflow-hidden',
         )
         expect(screen.getByRole('region', { name: '실시간 채팅' })).toHaveClass(
+            'grid',
             'min-h-0',
             'flex-1',
-            'xl:min-h-[640px]',
+            'lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]',
             'overflow-hidden',
         )
-        expect(
-            screen.getByRole('region', { name: '실시간 채팅' }),
-        ).not.toHaveClass('lg:min-h-[640px]')
-        expect(connectionStatus).toHaveTextContent('')
-        expect(connectionStatus).toHaveClass('bg-warning-soft')
-        await waitFor(() => expect(mock.rest.getMessages).toHaveBeenCalled())
         await waitFor(() => expect(mock.hasRealtimeConnection()).toBe(true))
-        mock.setRealtimeStatus('connected')
-        expect(
-            screen.getByRole('status', { name: '실시간 연결됨' }),
-        ).toHaveClass('bg-success-soft')
-        mock.setRealtimeStatus('offline')
-        expect(
-            screen.getByRole('status', {
-                name: '오프라인 · 연결 후 자동 재전송',
-            }),
-        ).toHaveClass('bg-content-soft')
         expect(
             screen.queryByText(/거래 상대와 나눈 메시지는/),
         ).not.toBeInTheDocument()
@@ -294,8 +296,12 @@ describe('ChatWorkspace', () => {
         expect(mock.rest.updateRead).not.toHaveBeenCalled()
 
         await openConversation()
-        expect(pageHeading).toHaveClass('hidden', 'lg:block')
+        const connectionStatus = screen.getByRole('status', {
+            name: /실시간 연결/,
+        })
         expect(connectionStatus).toBeInTheDocument()
+        expect(connectionStatus).toHaveTextContent('')
+        expect(connectionStatus).toHaveClass('size-2.5', 'bg-success-soft')
         expect(list).toHaveClass('hidden')
         expect(conversation).toHaveClass('flex')
         expect(conversation).toHaveClass('min-h-0', 'overflow-hidden')
@@ -352,13 +358,7 @@ describe('ChatWorkspace', () => {
 
     it('sequence gap을 afterSequence REST replay로 채우고 중복 event를 무시한다', async () => {
         const mock = createMockRuntime()
-        render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
-        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
         await openConversation()
         mock.setMessages([
             message(1, '안녕하세요.'),
@@ -423,13 +423,7 @@ describe('ChatWorkspace', () => {
             },
         })
         const mock = createMockRuntime({ rooms: [room(), secondRoom] })
-        render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
-        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
         await screen.findByRole('button', { name: /바람상점 대화 열기/ })
 
         const second = (sequence: number, body: string) => ({
@@ -504,13 +498,7 @@ describe('ChatWorkspace', () => {
 
     it('같은 gap 메시지의 중복 event는 replay 한 번과 timeline 한 건으로 수렴한다', async () => {
         const mock = createMockRuntime()
-        render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
-        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
         await openConversation()
         mock.setMessages([
             message(1, '안녕하세요.'),
@@ -564,13 +552,7 @@ describe('ChatWorkspace', () => {
 
     it('오프라인 메시지를 queued로 두었다가 같은 ID로 자동 재전송한다', async () => {
         const mock = createMockRuntime({ initiallyOnline: false })
-        render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
-        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
         await openConversation()
 
         const form = screen.getByRole('form', { name: '메시지 작성' })
@@ -620,13 +602,7 @@ describe('ChatWorkspace', () => {
 
     it('상대 선택은 서버 호출 없는 초안이며 첫 메시지에서만 방과 메시지를 생성한다', async () => {
         const mock = createMockRuntime({ rooms: [] })
-        render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
-        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
 
         await userEvent.click(
             await screen.findByRole('button', { name: '새 대화 시작' }),
@@ -672,13 +648,7 @@ describe('ChatWorkspace', () => {
         const mock = createMockRuntime()
 
         try {
-            render(
-                <ChatWorkspace
-                    accessToken="access-token"
-                    runtime={mock.runtime}
-                    user={CURRENT_USER}
-                />,
-            )
+            render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
             await openConversation()
             const log = screen.getByRole('log', {
                 name: '루나상점 메시지 기록',
@@ -742,13 +712,7 @@ describe('ChatWorkspace', () => {
 
     it('신고는 사유를 전송하고 차단 후에도 기존 대화와 신고 기능을 유지한다', async () => {
         const mock = createMockRuntime()
-        render(
-            <ChatWorkspace
-                accessToken="access-token"
-                runtime={mock.runtime}
-                user={CURRENT_USER}
-            />,
-        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
         await openConversation()
 
         await userEvent.click(

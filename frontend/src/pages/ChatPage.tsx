@@ -13,5 +13,5 @@ export default function ChatPage() {
         )
     }
 
-    return <ChatWorkspace accessToken={accessToken} user={user} />
+    return <ChatWorkspace user={user} />
 }

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type CSSProperties,
+} from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { paths } from '@/app/paths'
 import { resolveRouteUi } from '@/app/routeUi'
@@ -11,6 +17,7 @@ import useDesktopLayout from './useDesktopLayout'
 import WorldMapBackground from './WorldMapBackground'
 import AppFooter from './AppFooter'
 import { RouteAccentProvider, useRouteAccent } from './RouteAccentContext'
+import { ChatRealtimeProvider } from '@/features/chat/lib/ChatRealtimeProvider'
 
 /**
  * 앱 셸 (FC-067 — HANDOVER §5·§20).
@@ -30,9 +37,11 @@ import { RouteAccentProvider, useRouteAccent } from './RouteAccentContext'
 
 function AppShell() {
     return (
-        <RouteAccentProvider>
-            <AppShellContent />
-        </RouteAccentProvider>
+        <ChatRealtimeProvider>
+            <RouteAccentProvider>
+                <AppShellContent />
+            </RouteAccentProvider>
+        </ChatRealtimeProvider>
     )
 }
 
@@ -48,6 +57,29 @@ function AppShellContent() {
     const navigationSentinelRef = useRef<HTMLDivElement>(null)
     const previousPathRef = useRef(pathname)
     const [navigationStuck, setNavigationStuck] = useState(false)
+
+    useEffect(() => {
+        if (!chatRoute) return
+
+        const updateChatViewportHeight = () => {
+            const height = window.visualViewport?.height ?? window.innerHeight
+            document.documentElement.style.setProperty(
+                '--chat-viewport-height',
+                `${Math.round(height)}px`,
+            )
+        }
+        const viewport = window.visualViewport
+        updateChatViewportHeight()
+        viewport?.addEventListener('resize', updateChatViewportHeight)
+        window.addEventListener('resize', updateChatViewportHeight)
+        return () => {
+            viewport?.removeEventListener('resize', updateChatViewportHeight)
+            window.removeEventListener('resize', updateChatViewportHeight)
+            document.documentElement.style.removeProperty(
+                '--chat-viewport-height',
+            )
+        }
+    }, [chatRoute])
 
     const closeMobile = useCallback(
         (restoreFocus = true) => {
@@ -94,7 +126,14 @@ function AppShellContent() {
     return (
         <div
             data-chat-shell={chatRoute || undefined}
-            className={`app-shell-height relative isolate flex bg-transparent ${chatRoute ? 'h-[100dvh] overflow-hidden xl:h-auto xl:overflow-visible' : ''}`}
+            style={
+                chatRoute
+                    ? ({
+                          height: 'var(--chat-viewport-height, 100dvh)',
+                      } as CSSProperties)
+                    : undefined
+            }
+            className={`relative isolate flex bg-transparent ${chatRoute ? 'min-h-0 overflow-hidden' : 'app-shell-height'}`}
         >
             <WorldMapBackground accent={accent} />
             {!desktop && mobileOpen && (
@@ -102,7 +141,7 @@ function AppShellContent() {
             )}
 
             <div
-                className={`flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden xl:overflow-visible' : ''}`}
+                className={`flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden' : ''}`}
             >
                 <div
                     ref={navigationSentinelRef}
@@ -129,18 +168,18 @@ function AppShellContent() {
 
                 <main
                     id="view"
-                    className={`min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7 ${chatRoute ? 'flex min-h-0 overflow-hidden xl:block xl:overflow-visible' : ''}`}
+                    className={`min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7 ${chatRoute ? 'flex min-h-0 overflow-hidden' : ''}`}
                 >
                     <div
                         data-testid="app-content-plane"
                         data-content-plane={routeUi.contentPlane}
-                        className={`mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden xl:block xl:overflow-visible' : ''}`}
+                        className={`mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : ''}`}
                     >
                         <Outlet />
                     </div>
                 </main>
 
-                <div className={chatRoute ? 'hidden xl:block' : 'contents'}>
+                <div className={chatRoute ? 'hidden' : 'contents'}>
                     <AppFooter variant={routeUi.footer} />
                 </div>
             </div>

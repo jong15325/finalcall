@@ -25,6 +25,10 @@ vi.mock('@/lib/queries/memos', () => ({
 vi.mock('@/lib/queries/chat', () => ({
     useUnreadChatCount: () => ({ data: { count: 0 } }),
 }))
+vi.mock('@/features/chat/lib/ChatRealtimeProvider', () => ({
+    ChatRealtimeProvider: ({ children }: { children: React.ReactNode }) =>
+        children,
+}))
 
 beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
@@ -111,7 +115,7 @@ function renderShell(route: string) {
 }
 
 describe('AppShell route-scoped 상세 배경', () => {
-    it('모바일 채팅 route만 가용 높이 flex 체인과 footer 숨김을 적용한다', () => {
+    it('채팅 route는 PC와 모바일 모두 viewport 내부 flex 체인과 footer 숨김을 유지한다', () => {
         const chatView = renderShell('/me/chat')
         const shell = chatView.container.querySelector('[data-chat-shell]')
         const main = chatView.container.querySelector('#view')
@@ -119,17 +123,14 @@ describe('AppShell route-scoped 상세 배경', () => {
         const footerWrapper =
             chatView.container.querySelector('footer')!.parentElement
 
-        expect(shell).toHaveClass(
-            'h-[100dvh]',
-            'overflow-hidden',
-            'xl:h-auto',
-            'xl:overflow-visible',
-        )
-        expect(main?.parentElement).toHaveClass(
-            'min-h-0',
-            'overflow-hidden',
-            'xl:overflow-visible',
-        )
+        expect(shell).toHaveClass('min-h-0', 'overflow-hidden')
+        expect(shell).not.toHaveClass('app-shell-height')
+        expect(shell).not.toHaveClass('xl:h-auto', 'xl:overflow-visible')
+        expect(shell).toHaveStyle({
+            height: 'var(--chat-viewport-height, 100dvh)',
+        })
+        expect(main?.parentElement).toHaveClass('min-h-0', 'overflow-hidden')
+        expect(main?.parentElement).not.toHaveClass('xl:overflow-visible')
         expect(main).toHaveClass('flex', 'min-h-0', 'overflow-hidden')
         expect(contentPlane).toHaveClass(
             'flex',
@@ -138,13 +139,17 @@ describe('AppShell route-scoped 상세 배경', () => {
             'flex-col',
             'overflow-hidden',
         )
-        expect(footerWrapper).toHaveClass('hidden', 'xl:block')
+        expect(footerWrapper).toHaveClass('hidden')
+        expect(footerWrapper).not.toHaveClass('xl:block')
 
         chatView.unmount()
         const marketView = renderShell('/market')
         expect(
             marketView.container.querySelector('[data-chat-shell]'),
         ).toBeNull()
+        expect(marketView.container.firstElementChild).toHaveClass(
+            'app-shell-height',
+        )
         expect(marketView.container.querySelector('#view')).not.toHaveClass(
             'overflow-hidden',
         )
@@ -159,6 +164,52 @@ describe('AppShell route-scoped 상세 배경', () => {
             appCss.indexOf('@supports (min-height: 100dvh)'),
         )
         expect(appCss).toContain('min-height: 100dvh')
+    })
+
+    it('visualViewport 높이를 반영하고 채팅 shell 해제 시 전역 상태를 정리한다', () => {
+        const viewport = new EventTarget() as EventTarget & { height: number }
+        viewport.height = 640
+        const addEventListener = vi.spyOn(viewport, 'addEventListener')
+        const removeEventListener = vi.spyOn(viewport, 'removeEventListener')
+        vi.stubGlobal('visualViewport', viewport)
+
+        const view = renderShell('/me/chat')
+        try {
+            expect(
+                document.documentElement.style.getPropertyValue(
+                    '--chat-viewport-height',
+                ),
+            ).toBe('640px')
+            expect(addEventListener).toHaveBeenCalledWith(
+                'resize',
+                expect.any(Function),
+            )
+
+            viewport.height = 412
+            act(() => viewport.dispatchEvent(new Event('resize')))
+            expect(
+                document.documentElement.style.getPropertyValue(
+                    '--chat-viewport-height',
+                ),
+            ).toBe('412px')
+
+            view.unmount()
+            expect(removeEventListener).toHaveBeenCalledWith(
+                'resize',
+                expect.any(Function),
+            )
+            expect(
+                document.documentElement.style.getPropertyValue(
+                    '--chat-viewport-height',
+                ),
+            ).toBe('')
+        } finally {
+            view.unmount()
+            document.documentElement.style.removeProperty(
+                '--chat-viewport-height',
+            )
+            vi.unstubAllGlobals()
+        }
     })
 
     it('sentinel 임계에서 상단 navigation을 flow에서 stuck으로 전환한다', () => {

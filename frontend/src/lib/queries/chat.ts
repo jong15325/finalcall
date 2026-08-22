@@ -18,6 +18,7 @@ export function useUnreadChatCount() {
         enabled: isAuthenticated,
         staleTime: 15_000,
         refetchInterval: 30_000,
-        refetchOnWindowFocus: true,
+        // AppShell realtime coordinator가 focus 복귀를 coalesced refetch한다.
+        refetchOnWindowFocus: false,
     })
 }

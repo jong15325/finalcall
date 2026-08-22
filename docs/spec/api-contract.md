@@ -1,12 +1,13 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.29 — G2-CHAT-12 보정안 A nickname resolve 계약 확정(2026-08-22 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.30 — FC-347 전역 unread 동기화 계약 확정(2026-08-22 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
-근거: domain-spec v0.5, chat-domain-spec v1.8, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
+근거: domain-spec v0.5, chat-domain-spec v1.9, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.30 | 2026-08-22 | **FC-347 사용자 승인.** wire 변경 없이 로그인 브라우저 탭의 AppShell당 단일 STOMP 연결·구독과 unread client lifecycle을 확정했다. `MESSAGE_CREATED.sentByMe`는 수신 principal 관점이며 송신자 자기 배지는 증가시키지 않는다. MESSAGE_CREATED·본인 READ_UPDATED·REST 전송 성공·재연결에서 `/unread-count`를 서버 권위로 coalesced refetch하고 30초 polling을 fallback으로 유지한다. token 교체·logout·다중 탭·ChatWorkspace 중복 연결 제거 규약 포함. 영향 = FC-348~351. REST/STOMP/event/DB schema·ERD 불변. |
 | v1.29 | 2026-08-22 | **G2-CHAT-12 보정안 A 사용자 승인.** `direct/messages` 요청 상대 식별자를 `counterpartNickname`으로 교체한다. 서버 원자 TX가 현재 활성 nickname 소유자를 resolve한 시점의 내부 user ID를 권위로 고정하고 이후 nickname 재조회 금지, 변경·탈퇴 resolve 실패는 전부 rollback `CHAT_002`, 성공 응답 `room.counterpart`가 최종 publicId/nickname을 제공한다. 추가 회원 검색 API 없음. 영향 = FC-342~345·FC-329·FC-324. DB schema·ERD와 event schema 불변. |
 | v1.28 | 2026-08-22 | **G2-CHAT-12 권고안 A 사용자 승인.** `POST /api/v1/me/chat-rooms/direct/messages`가 기존 room 재사용 또는 room+첫 message를 원자 커밋하고 생성 전용 `/direct`를 대체한다. client draft·동시 생성·멱등·차단/rate-limit/IDOR, timeline 내부 스크롤, 미캐시 `MESSAGE_CREATED` hydration, local exact Origin 2종을 확정했다. 영향 = FC-342~345·FC-329·FC-324. DB schema·ERD와 STOMP/Redis/Kafka/outbox event schema는 불변. |
 | v1.27 | 2026-08-18 | **EPIC-CHAT(FC-316) — G2-CHAT-1~6 권고안 전건 사용자 승인 확정.** **§2.7 채팅 신설**: 1:1 direct room 생성/목록/상세, 방별 sequence 메시지 최신·과거·gap 조회, REST 멱등 전송, 단조 읽음, 차단/해제, 신고, 전체 unread의 REST 10종 + `/ws/chat` STOMP 1.2 user-destination push 계약. 영속 명령/replay는 REST+MySQL 정본, STOMP는 server push only(`SEND` 금지). CONNECT bearer JWT·strict Origin·JWT exp 강제종료·SecurityContext 주체·IDOR 404 통일·IP/user rate limit을 확정했다. **§5 `CHAT_001`~`009` 등재.** 스키마 = erd v2.0(6테이블·V25 예약), 도메인/장애/보존/성능 정본 = `chat-domain-spec.md` v1.0. 직접 기존 티켓 파급 = FC-317(Vuexy 승인 UI가 본 계약 소비), 공용 JWT 검증 결과에 `expiresAt` 가법 노출 및 후속 backend/frontend·CDC·부하 티켓 필요. 기존 auth/auction/bid/settlement/delivery/memo API 형상은 불변(additive). |
@@ -512,6 +513,24 @@ STOMP event는 at-most-once UI 갱신 신호이며 성공/영속 ACK가 아니�
   STOMP quota 초과는 가능한 경우 같은 code body 후 close 1008.
 - CONNECT 인증 실패는 기존 `COMMON_005` 401-shaped STOMP `ERROR`를 보낼 수 있으면 보낸 뒤 close 1008.
   ERROR frame 수신 자체는 보장하지 않는다.
+
+#### 2.7.3 클라이언트 연결 생명주기와 unread 수렴
+
+- 로그인한 브라우저 탭의 AppShell당 `ChatRealtimeClient`와 `/user/queue/chat.events` 구독은 하나다.
+  `ChatWorkspace`는 이를 공유하며 mount 시 별도 연결하지 않는다. 탭 간 socket 공유는 하지 않는다.
+- `MESSAGE_CREATED.payload.message.sentByMe`는 event 수신 principal 관점이다. 송신자에게는 `true`, 상대
+  수신자에게는 `false`이며 client가 nickname이나 현재 route로 방향을 다시 추론하지 않는다.
+- `MESSAGE_CREATED`, 본인의 `READ_UPDATED`, REST 메시지 전송 성공, 최초 연결·재연결·online/focus 복귀는
+  `GET /api/v1/me/chat-rooms/unread-count`를 invalidate/refetch하는 계기다. count의 최종 권위는 이 REST
+  응답이며 event payload나 로컬 `+1/-1`이 아니다. 상대의 `READ_UPDATED`는 전역 unread를 바꾸지 않는다.
+- 같은 unread query의 동시 refetch는 하나로 합치고 진행 중 새 사건은 완료 후 최대 한 번 추가 조회한다.
+  기존 30초 polling은 event 유실·socket 장애 fallback으로 유지한다.
+- access token 교체 시 이전 socket을 종료하고 새 token으로 재연결한다. logout·세션 폐기·사용자 변경은 socket과
+  채팅 cache를 즉시 제거하며 이전 session callback을 무시한다. REST unread 실패는 마지막 성공값을 유지하고
+  다음 event·focus·reconnect·poll에서 복구한다.
+
+이 절은 client lifecycle clarification이며 endpoint, request/response JSON, `ChatEventResponse` v1,
+Redis/Kafka/outbox payload, DB schema를 변경하지 않는다. 상세 실패·성능 계약은 chat-domain-spec §10.1.2다.
 
 ---
 

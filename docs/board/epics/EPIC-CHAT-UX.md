@@ -27,4 +27,6 @@ gate: null
 - 게이트3: 구현·reviewer·온디맨드 보안 리뷰 후 사용자 Done·push 승인 필요.
 - reviewer와 별도 온디맨드 보안 리뷰를 통과했으며 Gate3 사용자 승인 대기다.
 - 게이트3: 2026-08-22 사용자 Done·atomic commit 승인 완료.
-- 게이트3: 2026-08-22 FC-346 후속 모바일 UX 보정 Done·atomic commit 사용자 승인 완료.
+- FC-346 운영 재확인에서 PC·모바일 높이 회귀가 발생해 재작업한다.
+- FC-346 회귀 재작업은 reviewer 통과 후 사용자 Done·커밋 승인을 대기한다.
+- 게이트3: 2026-08-22 FC-346 회귀 수정 Done·통합 atomic commit 사용자 승인 완료.

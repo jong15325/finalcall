@@ -1,8 +1,8 @@
 # Chat 도메인 스펙
 
-> 상태: **v1.8 — APPROVED** (2026-08-22, G2-CHAT-12 보정안 A nickname resolve 승인 반영)
+> 상태: **v1.9 — APPROVED** (2026-08-22, FC-347 전역 unread 동기화 계약 승인 반영)
 >
-> EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.29,
+> EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.30,
 > 스키마 정본은 `docs/spec/erd.md` v2.1이다.
 > Vuexy 기반 채팅 워크벤치 디자인 게이트도 2026-08-18 승인됐으며 소비 티켓은 FC-317이다.
 
@@ -608,6 +608,43 @@ TTL로 제거한다. 반복 abuse는 차단·계정 제재 도메인으로 승�
   응답의 중복은 기존 `eventId`, `messagePublicId`, `(roomPublicId, roomSequence)` 규칙으로 제거한다.
 - 이 소비 계약은 `MESSAGE_CREATED` 외부 STOMP schema를 바꾸지 않는다. 첫 메시지 커밋의 기존 event만으로
   양 참여자에게 신규 room을 알리고, 상세 room 형상은 REST hydration으로 얻는다.
+
+### 10.1.2 AppShell 전역 연결과 unread 수렴 — APPROVED
+
+로그인한 브라우저 탭의 **AppShell 생명주기당 `ChatRealtimeClient` 인스턴스와
+`/user/queue/chat.events` 구독은 하나**만 둔다. 라우트 이동으로 끊지 않으며 `ChatWorkspace`는 이 연결의
+이벤트·상태를 소비할 뿐 별도 socket을 만들지 않는다. 다중 탭은 탭마다 한 연결을 허용하고 탭 간 leader
+선출·BroadcastChannel 공유는 범위 밖이다. 서버의 사용자당 활성 socket 최대 3개 규약은 그대로 적용한다.
+
+- AppShell coordinator는 인증 복원 뒤 `accessToken`과 `user.userPublicId`가 모두 있을 때 연결한다. logout,
+  세션 강제 폐기, 인증 사용자 변경 시 기존 연결을 먼저 종료하고 채팅 query/cache를 제거한다. access token이
+  refresh로 바뀌면 이전 token socket을 종료한 뒤 새 token으로 정확히 한 번 재연결한다. 이전 연결의 늦은
+  callback은 session generation이 다르면 폐기한다.
+- `MESSAGE_CREATED.payload.message.sentByMe`는 **event를 받은 principal 관점**이다. 내부
+  `message.sender_id == authenticated userId`일 때만 `true`다. `true`인 송신자 이벤트로 unread를 증가시키지
+  않고, `false`인 수신자 이벤트만 unread 증가 가능 신호로 취급한다. 다만 event는 best-effort이므로 어느
+  경우에도 로컬 증감값을 최종 권위로 삼지 않는다.
+- `MESSAGE_CREATED`를 받으면 coordinator는 `chatKeys.unread()`를 invalidate하고
+  `GET /api/v1/me/chat-rooms/unread-count`를 refetch한다. 따라서 송신자는 전송 TX에서 전진한 본인 read
+  sequence에 따라 `0` 또는 서버 합계로, 수신자는 증가한 서버 합계로 수렴한다. REST 전송 성공도 같은 query를
+  invalidate해 송신자 event 유실·지연을 닫는다.
+- `READ_UPDATED`는 `readerMemberPublicId == current user.userPublicId`일 때 본인 unread가 바뀔 수 있는
+  신호다. 이 경우 unread query를 invalidate/refetch한다. 상대의 read update는 내 unread를 바꾸지 않으므로
+  전역 unread refetch를 생략할 수 있고, 열린 room의 상대 읽음 표시는 event payload를 단조 `max` 병합한다.
+- 최초 연결 성공, 모든 재연결 성공, `online` 복귀, 브라우저 focus 복귀에는 unread query를 서버에서
+  refetch한다. 기존 30초 polling은 socket 장애·event 유실을 닫는 안전망으로 유지한다. WebSocket 연결 성공은
+  동기화 완료가 아니며 REST 성공 응답만 배지 권위다.
+- event burst에서는 같은 query key에 대한 invalidation/refetch를 **동시 1개로 coalesce**한다. 진행 중인
+  refetch 동안 새 invalidation이 오면 완료 뒤 최대 1회 추가 refetch하여 마지막 사건까지 닫는다. event마다
+  병렬 REST를 만들거나 로컬 count를 무제한 누적하지 않는다. 정상 연결 중 unread 반영 목표는 event 수신 후
+  p95 1초 이내, polling fallback의 최악 지연은 30초+REST latency다.
+- REST unread 실패 시 마지막 성공 count를 유지하고 socket을 끊지 않는다. 다음 event·focus·reconnect·poll
+  중 하나가 재시도한다. `401`로 세션이 정리되면 연결과 cache도 함께 폐기한다. 음수 count, 송신자 자기 증가,
+  이전 사용자의 count 재노출을 금지한다.
+
+`ChatWorkspace`의 room 목록·timeline·gap replay 규약은 §10.1과 §10.1.1을 유지한다. coordinator가 event를
+fan-out하므로 workspace mount/unmount가 전역 연결 수나 배지 갱신 여부를 바꾸지 않아야 한다. 기존 REST endpoint,
+`ChatEventResponse` v1, Redis/Kafka/outbox payload와 DB schema는 변경하지 않는다.
 
 ### 10.1 클라이언트 재접속 절차
 
@@ -1241,6 +1278,7 @@ wildcard, reflected Origin, query token, gateway-token 완화는 금지한다. �
 
 | 버전 | 날짜 | 상태 | 변경 |
 |---|---|---|---|
+| v1.9 | 2026-08-22 | **APPROVED** | FC-347 승인. 로그인 브라우저 탭의 AppShell당 단일 STOMP 연결·구독, ChatWorkspace 중복 연결 제거, principal 관점 `sentByMe`, MESSAGE_CREATED·본인 READ_UPDATED·REST 전송 성공·재연결에서 unread REST 서버 권위 수렴, refetch coalescing·30초 polling fallback·token/logout/multi-tab 생명주기·실패/성능 예산을 확정. FC-348~351 영향. 외부 REST·event·DB schema·ERD 불변 |
 | v1.8 | 2026-08-22 | **APPROVED** | G2-CHAT-12 보정안 A 승인. `direct/messages` 상대 입력을 `counterpartNickname`으로 교체하고 원자 TX의 활성 nickname resolve 시점 내부 user ID를 권위로 고정, 이후 nickname 재조회 금지, 변경·탈퇴 resolve 실패 시 전부 rollback `CHAT_002`, 성공 응답 `room.counterpart`로 최종 publicId/nickname 제공, 추가 회원 검색 API 없음으로 확정. FC-342~345·FC-329·FC-324 영향. DB schema·ERD·event schema 불변 |
 | v1.7 | 2026-08-22 | **APPROVED** | G2-CHAT-12 권고안 A 승인. 상대 선택을 client draft로 한정하고 첫 message에서 direct room·양측 state·message·outbox 원자 생성하는 REST 대체 계약, 기존 room/동시 생성/clientMessageId 멱등·차단/rate-limit/IDOR, timeline 내부 스크롤·anchor 보존·새 메시지 안내, 미캐시 `MESSAGE_CREATED` hydration, local exact Origin 2종을 확정. FC-342~345·FC-329·FC-324 영향. 외부 REST는 breaking, STOMP/event와 DB schema·ERD는 불변 |
 | v1.6 | 2026-08-22 | **APPROVED** | G2-CHAT-11 권고안 A 승인 반영. `ChatMessagePersistence.senderPublicId`로 send 응답 후속 user SELECT/read TX 1회만 제거하고 신규/멱등 상태·JSON·IDOR·lock·outbox 및 history/fan-out factory는 불변으로 확정. pool 32·timeout 1초 유지, 추가 증설 금지와 동일 extended 종료선 명시. FC-341·FC-329·FC-324 영향. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
