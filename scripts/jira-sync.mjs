@@ -351,8 +351,10 @@ function hasLink(issue, spec, currentKey) {
             const other = outward || inward;
             return other === (currentKey === spec.outward ? spec.inward : spec.outward);
         }
-        if (currentKey === spec.outward) return outward === spec.inward;
-        if (currentKey === spec.inward) return inward === spec.outward;
+        // Jira는 현재 issue가 outward 쪽이면 상대를 inwardIssue에,
+        // 현재 issue가 inward 쪽이면 상대를 outwardIssue에 담아 반환한다.
+        if (currentKey === spec.outward) return inward === spec.inward;
+        if (currentKey === spec.inward) return outward === spec.outward;
         return false;
     });
 }
