@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { TbArchive, TbBackpack, TbPencil } from 'react-icons/tb'
+import { TbArchive, TbBackpack, TbPencil, TbUserEdit } from 'react-icons/tb'
 import { paths } from '@/app/paths'
+import './ProfileCard.css'
+import CharacterProfileSelector from './CharacterProfileSelector'
+import ProfileAvatar from './ProfileAvatar'
 import { nicknameErrorMessage } from '@/features/member/lib/memberErrors'
 import type { MeResponse } from '@/lib/api/auth'
 
@@ -21,9 +24,12 @@ interface ProfileCardProps {
     profile: MeResponse
     /** 닉네임 저장 요청(부모가 변이 실행) */
     onSaveNickname: (nickname: string) => void
+    onSaveCharacter?: (primaryCharacterId: number) => void
     savePending: boolean
     /** 마지막 저장 실패(ApiError). 성공·초기화 시 null */
     saveError: unknown
+    characterSavePending?: boolean
+    characterSaveError?: unknown
 }
 
 const joinDateFormat = new Intl.DateTimeFormat('ko-KR', {
@@ -42,16 +48,33 @@ function formatJoinDate(iso: string): string {
 function ProfileCard({
     profile,
     onSaveNickname,
+    onSaveCharacter = () => undefined,
     savePending,
     saveError,
+    characterSavePending = false,
+    characterSaveError = null,
 }: ProfileCardProps) {
     const [editing, setEditing] = useState(false)
     const [draft, setDraft] = useState(profile.nickname)
     /** 제출 전 클라 검증 실패(빈 값 등) — 서버 응답과 별개 */
     const [localError, setLocalError] = useState<string | null>(null)
+    const [characterDraft, setCharacterDraft] = useState(
+        profile.primaryCharacterId ?? 1,
+    )
+    const [characterOpen, setCharacterOpen] = useState(false)
+    const [overlayPosition, setOverlayPosition] = useState({
+        left: 8,
+        top: 8,
+        width: 282,
+    })
     const inputRef = useRef<HTMLInputElement>(null)
+    const characterErrorRef = useRef<HTMLParagraphElement>(null)
+    const characterAnchorRef = useRef<HTMLDivElement>(null)
+    const characterTriggerRef = useRef<HTMLButtonElement>(null)
+    const characterOverlayRef = useRef<HTMLDivElement>(null)
     /** 직전 렌더의 pending — 성공 전이(pending→idle&무에러) 판정용 */
     const wasPendingRef = useRef(false)
+    const wasCharacterPendingRef = useRef(false)
 
     // 저장 성공 시 편집기 닫기 — 캐시 갱신이 새 nickname 을 prop 으로 흘려보낸다.
     useEffect(() => {
@@ -61,7 +84,94 @@ function ProfileCard({
         wasPendingRef.current = savePending
     }, [savePending, saveError])
 
+    useEffect(() => {
+        if (
+            wasCharacterPendingRef.current &&
+            !characterSavePending &&
+            !characterSaveError
+        ) {
+            setCharacterOpen(false)
+            characterTriggerRef.current?.focus()
+        }
+        if (
+            wasCharacterPendingRef.current &&
+            !characterSavePending &&
+            characterSaveError
+        ) {
+            characterErrorRef.current?.focus()
+        }
+        wasCharacterPendingRef.current = characterSavePending
+    }, [characterSaveError, characterSavePending])
+
+    useEffect(() => {
+        if (!characterOpen) return
+        const updateOverlayPosition = () => {
+            const rect = characterTriggerRef.current?.getBoundingClientRect()
+            if (!rect) return
+            const overlayHeight =
+                characterOverlayRef.current?.getBoundingClientRect().height ?? 0
+            const desktop = window.innerWidth >= 1280
+            const compactWidth = window.innerWidth >= 640 ? 384 : 320
+            const desiredLeft = desktop ? rect.right : rect.left
+            const width = desktop
+                ? Math.min(896, window.innerWidth - desiredLeft - 8)
+                : Math.min(compactWidth, window.innerWidth - 16)
+            const left = Math.max(
+                8,
+                Math.min(desiredLeft, window.innerWidth - width - 8),
+            )
+            const top = Math.max(
+                8,
+                Math.min(
+                    desktop ? rect.top : rect.bottom + 1,
+                    window.innerHeight - overlayHeight - 8,
+                ),
+            )
+            setOverlayPosition((current) =>
+                current.left === left &&
+                current.top === top &&
+                current.width === width
+                    ? current
+                    : { left, top, width },
+            )
+        }
+        updateOverlayPosition()
+        const resizeObserver =
+            typeof ResizeObserver === 'undefined'
+                ? null
+                : new ResizeObserver(updateOverlayPosition)
+        if (characterOverlayRef.current) {
+            resizeObserver?.observe(characterOverlayRef.current)
+        }
+        window.addEventListener('resize', updateOverlayPosition)
+        window.addEventListener('scroll', updateOverlayPosition, true)
+        const closeOnOutside = (event: PointerEvent) => {
+            if (!characterAnchorRef.current?.contains(event.target as Node)) {
+                setCharacterDraft(profile.primaryCharacterId ?? 1)
+                setCharacterOpen(false)
+            }
+        }
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setCharacterDraft(profile.primaryCharacterId ?? 1)
+                setCharacterOpen(false)
+                characterTriggerRef.current?.focus()
+            }
+        }
+        document.addEventListener('pointerdown', closeOnOutside)
+        document.addEventListener('keydown', closeOnEscape)
+        return () => {
+            window.removeEventListener('resize', updateOverlayPosition)
+            window.removeEventListener('scroll', updateOverlayPosition, true)
+            resizeObserver?.disconnect()
+            document.removeEventListener('pointerdown', closeOnOutside)
+            document.removeEventListener('keydown', closeOnEscape)
+        }
+    }, [characterOpen, profile.primaryCharacterId])
+
     const openEditor = () => {
+        setCharacterDraft(profile.primaryCharacterId ?? 1)
+        setCharacterOpen(false)
         setDraft(profile.nickname)
         setLocalError(null)
         setEditing(true)
@@ -92,18 +202,79 @@ function ProfileCard({
     const serverError =
         saveError != null ? nicknameErrorMessage(saveError) : null
     const errorMessage = localError ?? serverError
-    const initial = [...profile.nickname][0] ?? '?'
-
     return (
-        <section className="rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-                {/* 아바타 — 계약에 이미지 없음 → 닉네임 이니셜 중립 자리 */}
-                <span
-                    aria-hidden
-                    className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-brand-structure text-2xl font-bold text-brand-highlight-bright"
+        <section className="overflow-visible rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
+            <div className="flex flex-col gap-5 overflow-visible lg:flex-row lg:items-center">
+                <div
+                    ref={characterAnchorRef}
+                    className="relative z-20 w-fit shrink-0 overflow-visible"
                 >
-                    {initial}
-                </span>
+                    <button
+                        ref={characterTriggerRef}
+                        type="button"
+                        aria-controls="character-profile-selector"
+                        aria-expanded={characterOpen}
+                        aria-label="기본 캐릭터 변경"
+                        className="group relative w-fit shrink-0 rounded-2xl focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                        onClick={() => {
+                            if (!characterOpen) {
+                                setEditing(false)
+                                setCharacterDraft(
+                                    profile.primaryCharacterId ?? 1,
+                                )
+                            }
+                            setCharacterOpen((open) => !open)
+                        }}
+                    >
+                        <ProfileAvatar
+                            primaryCharacterId={characterDraft}
+                            name={profile.nickname}
+                            className="size-20 rounded-2xl border border-content-line sm:size-24 xl:size-28"
+                        />
+                        <span className="absolute inset-x-1 bottom-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand-structure/90 px-2 py-1 text-[11px] font-bold text-on-strong">
+                            <TbUserEdit aria-hidden className="size-3.5" />
+                            캐릭터 변경
+                        </span>
+                    </button>
+                    {characterOpen && (
+                        <div
+                            ref={characterOverlayRef}
+                            data-character-overlay
+                            id="character-profile-selector"
+                            role="region"
+                            aria-label="기본 캐릭터 선택"
+                            className="character-overlay fixed z-30 max-h-[calc(100dvh-1rem)] origin-top-left overflow-y-auto opacity-100 xl:origin-left"
+                            style={overlayPosition}
+                        >
+                            <CharacterProfileSelector
+                                value={characterDraft}
+                                disabled={characterSavePending}
+                                onChange={(id) => {
+                                    if (
+                                        id === (profile.primaryCharacterId ?? 1)
+                                    ) {
+                                        setCharacterOpen(false)
+                                        characterTriggerRef.current?.focus()
+                                        return
+                                    }
+                                    setCharacterDraft(id)
+                                    onSaveCharacter(id)
+                                }}
+                            />
+                            {characterSaveError != null && (
+                                <p
+                                    ref={characterErrorRef}
+                                    role="alert"
+                                    tabIndex={-1}
+                                    className="mt-1 text-sm text-danger-ink"
+                                >
+                                    캐릭터를 저장하지 못했습니다. 다시 시도해
+                                    주세요.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <div className="min-w-0 flex-1">
                     {editing ? (

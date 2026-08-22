@@ -19,19 +19,25 @@ public record ChatMessageResponse(
     Instant createdAt) {
 
     public static ChatMessageResponse from(ChatMessage message, String senderPublicId) {
-        return from(message, senderPublicId, true);
+        return from(message, senderPublicId, 1, true);
+    }
+
+    public static ChatMessageResponse from(ChatMessage message, String senderPublicId, int primaryCharacterId) {
+        return from(message, senderPublicId, primaryCharacterId, true);
     }
 
     public static ChatMessageResponse from(ChatMessage message, User sender, Long subjectId) {
-        return from(message, sender.getPublicId(), message.getSenderId().equals(subjectId));
+        return from(message, sender.getPublicId(), sender.isDeleted() ? null : sender.getPrimaryCharacterId(),
+            message.getSenderId().equals(subjectId));
     }
 
-    private static ChatMessageResponse from(ChatMessage message, String senderPublicId, boolean sentByMe) {
+    private static ChatMessageResponse from(ChatMessage message, String senderPublicId, Integer primaryCharacterId,
+        boolean sentByMe) {
         return ChatMessageResponse.builder()
             .messagePublicId(message.getPublicId())
             .clientMessageId(message.getClientMessageId())
             .roomSequence(message.getRoomSequence())
-            .sender(new Sender(senderPublicId, message.getSenderNicknameSnapshot()))
+            .sender(new Sender(senderPublicId, message.getSenderNicknameSnapshot(), primaryCharacterId))
             .body(message.getBody())
             .sentByMe(sentByMe)
             .createdAt(message.getCreatedAt())
@@ -39,6 +45,6 @@ public record ChatMessageResponse(
     }
 
     /** 발신자 내부 PK를 숨긴 외부 표시 형상. */
-    public record Sender(String memberPublicId, String nickname) {
+    public record Sender(String memberPublicId, String nickname, Integer primaryCharacterId) {
     }
 }

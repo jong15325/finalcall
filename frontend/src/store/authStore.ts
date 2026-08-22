@@ -23,6 +23,7 @@ import { ADMIN, USER } from '@/constants/roles.constant'
 export interface UserSummary {
     userPublicId: string
     nickname: string
+    primaryCharacterId?: number
     isAdmin: boolean
 }
 

@@ -20,22 +20,31 @@ public record MemoResponse(
     String memoPublicId,
     int type,
     String senderNickname,
+    @JsonInclude(JsonInclude.Include.ALWAYS) Integer senderPrimaryCharacterId,
     Integer senderLevel,
     Integer senderGender,
     String receiverNickname,
+    @JsonInclude(JsonInclude.Include.ALWAYS) Integer receiverPrimaryCharacterId,
     String body,
     boolean isRead,
     Instant readAt,
     Instant createdAt) {
 
     public static MemoResponse from(Memo memo) {
+        return from(memo, null, null);
+    }
+
+    public static MemoResponse from(Memo memo, Integer senderPrimaryCharacterId,
+        Integer receiverPrimaryCharacterId) {
         return MemoResponse.builder()
             .memoPublicId(memo.getPublicId())
             .type(memo.getMemoType())
             .senderNickname(memo.getSenderNickname())
+            .senderPrimaryCharacterId(senderPrimaryCharacterId)
             .senderLevel(memo.getSenderLevel())
             .senderGender(memo.getSenderGender())
             .receiverNickname(memo.getReceiverNickname())
+            .receiverPrimaryCharacterId(receiverPrimaryCharacterId)
             .body(memo.getBody())
             .isRead(memo.isRead())
             .readAt(memo.getReadAt())

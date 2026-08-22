@@ -477,6 +477,7 @@ export function useChatController({
                 sender: {
                     memberPublicId: user.userPublicId,
                     nickname: user.nickname,
+                    primaryCharacterId: user.primaryCharacterId,
                 },
                 body: validation.body,
                 sentByMe: true,

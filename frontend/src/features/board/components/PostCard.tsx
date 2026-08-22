@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { TbPhoto, TbPin, TbEye, TbMessage } from 'react-icons/tb'
 import { boardPostPath } from '@/app/paths'
 import { formatPostTime } from '@/features/board/lib/postView'
+import ProfileAvatar from '@/features/member/components/ProfileAvatar'
 import type { PostSummary } from '@/lib/api/boards'
 
 /**
@@ -62,6 +63,11 @@ export default function PostCard({ slug, post, showComments }: PostCardProps) {
                     )}
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-xs text-content-subtle">
+                    <ProfileAvatar
+                        primaryCharacterId={post.authorPrimaryCharacterId}
+                        name={post.authorNickname}
+                        className="size-5 rounded-full border border-content-line"
+                    />
                     <span className="truncate">{post.authorNickname}</span>
                     <span aria-hidden className="text-content-line">
                         ·

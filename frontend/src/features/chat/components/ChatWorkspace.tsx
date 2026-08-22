@@ -280,6 +280,10 @@ export default function ChatWorkspace({
                                                             room.counterpart
                                                                 .nickname
                                                         }
+                                                        primaryCharacterId={
+                                                            room.counterpart
+                                                                .primaryCharacterId
+                                                        }
                                                     />
                                                     <span className="min-w-0 flex-1">
                                                         <span className="block truncate text-sm font-bold">
@@ -373,6 +377,10 @@ export default function ChatWorkspace({
                                         nickname={
                                             chat.selectedRoom.counterpart
                                                 .nickname
+                                        }
+                                        primaryCharacterId={
+                                            chat.selectedRoom.counterpart
+                                                .primaryCharacterId
                                         }
                                     />
                                     <div className="min-w-0">
@@ -834,7 +842,13 @@ function MessageBubble({
                 mine ? '내가 보낸 메시지' : `${counterpartNickname}의 메시지`
             }
         >
-            {!mine && <ChatAvatar compact nickname={counterpartNickname} />}
+            {!mine && (
+                <ChatAvatar
+                    compact
+                    nickname={counterpartNickname}
+                    primaryCharacterId={message.sender.primaryCharacterId}
+                />
+            )}
             <div
                 className={`flex min-w-0 max-w-[min(78%,32rem)] flex-col gap-1 ${mine ? 'items-end' : 'items-start'}`}
             >
@@ -876,7 +890,13 @@ function MessageBubble({
                     )}
                 </div>
             </div>
-            {mine && <ChatAvatar compact nickname={message.sender.nickname} />}
+            {mine && (
+                <ChatAvatar
+                    compact
+                    nickname={message.sender.nickname}
+                    primaryCharacterId={message.sender.primaryCharacterId}
+                />
+            )}
         </article>
     )
 }

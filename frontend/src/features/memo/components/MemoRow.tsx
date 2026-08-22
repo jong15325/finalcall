@@ -44,8 +44,14 @@ function MemoRow({ memo, box, active, onSelect }: MemoRowProps) {
         >
             <MemoAvatar
                 initial={avatarInitial(name)}
+                name={name}
                 system={system}
                 className="size-10"
+                primaryCharacterId={
+                    box === 'received'
+                        ? memo.senderPrimaryCharacterId
+                        : memo.receiverPrimaryCharacterId
+                }
             />
 
             <span className="min-w-0 flex-1">

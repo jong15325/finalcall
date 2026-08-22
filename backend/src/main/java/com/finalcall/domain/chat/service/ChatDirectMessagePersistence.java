@@ -8,6 +8,12 @@ public record ChatDirectMessagePersistence(
     ChatRoom room,
     ChatMessage message,
     String senderPublicId,
+    int senderPrimaryCharacterId,
     boolean roomCreated,
     boolean deduplicated) {
+
+    public ChatDirectMessagePersistence(ChatRoom room, ChatMessage message, String senderPublicId,
+        boolean roomCreated, boolean deduplicated) {
+        this(room, message, senderPublicId, 1, roomCreated, deduplicated);
+    }
 }

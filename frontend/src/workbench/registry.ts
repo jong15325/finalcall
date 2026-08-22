@@ -19,6 +19,13 @@ function defineScenario(
 
 export const WORKBENCH_SCENARIOS = [
     defineScenario({
+        id: 'character-profile',
+        title: '기본 캐릭터 프로필 선택',
+        shell: 'app',
+        routeContext: paths.me,
+        load: () => import('./scenarios/CharacterProfileScenario'),
+    }),
+    defineScenario({
         id: 'chat',
         title: 'Vuexy 채팅 디자인 게이트',
         shell: 'app',

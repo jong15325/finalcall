@@ -23,6 +23,7 @@ import lombok.Builder;
 public record MemberProfileResponse(
     String userPublicId,
     String nickname,
+    int primaryCharacterId,
     // record 의 boolean 컴포넌트(isAdmin)가 Jackson 에서 'admin' 으로 오인 매핑되지 않도록 계약 키를 명시한다.
     @JsonProperty("isAdmin") boolean isAdmin,
     Instant createdAt,
@@ -33,6 +34,7 @@ public record MemberProfileResponse(
         return MemberProfileResponse.builder()
             .userPublicId(user.getPublicId())
             .nickname(user.getNickname())
+            .primaryCharacterId(user.getPrimaryCharacterId())
             .isAdmin(user.isAdmin())
             .createdAt(user.getCreatedAt())
             .emailVerified(user.isEmailVerified())

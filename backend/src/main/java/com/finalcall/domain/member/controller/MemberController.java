@@ -47,7 +47,8 @@ public class MemberController {
     /** 내 프로필 수정(nickname 한정) — 인증 필요. 성공 시 200(조회와 동일 스키마), 닉네임 중복은 MEMBER_001(계약 §2.5). */
     @PatchMapping
     public ApiResponse<MemberProfileResponse> updateProfile(@Valid @RequestBody MemberProfileUpdateRequest request) {
-        return ApiResponse.success(MemberProfileResponse.from(memberService.updateNickname(request.nickname())));
+        return ApiResponse.success(MemberProfileResponse.from(
+            memberService.updateProfile(request.nicknameValue(), request.primaryCharacterIdValue())));
     }
 
     /**

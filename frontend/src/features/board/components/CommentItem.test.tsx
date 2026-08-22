@@ -41,6 +41,7 @@ vi.mock('@/lib/queries/comments', () => ({
 const comment: RootCommentResponse = {
     commentPublicId: 'C-ROOT',
     authorNickname: '루트작성자',
+    authorPrimaryCharacterId: 2,
     content: '루트 댓글',
     createdAt: '2026-08-07T01:00:00Z',
     updatedAt: '2026-08-07T02:00:00Z',
@@ -65,6 +66,7 @@ function renderComment(
                         {
                             commentPublicId: 'C-REPLY',
                             authorNickname: '답글작성자',
+                            authorPrimaryCharacterId: 25,
                             content: '항상 보이는 답글',
                             createdAt: '2026-08-07T01:30:00Z',
                             updatedAt: '2026-08-07T01:30:00Z',
@@ -102,6 +104,28 @@ function renderComment(
 }
 
 describe('<CommentItem> FC-219·FC-223 댓글 UI', () => {
+    it('삭제 tombstone은 캐릭터 avatar 대신 기존 placeholder를 유지한다', () => {
+        renderComment({}, { deleted: true, content: null })
+
+        expect(
+            screen.queryByAltText('루트작성자 프로필'),
+        ).not.toBeInTheDocument()
+        expect(screen.getByText('삭제된 댓글입니다.')).toBeInTheDocument()
+    })
+
+    it('정상 루트와 답글 작성자는 계약 캐릭터 avatar를 표시한다', async () => {
+        renderComment()
+
+        expect(screen.getByAltText('루트작성자 프로필')).toHaveAttribute(
+            'src',
+            '/art/characters/profile/uc_02_shamoo.png',
+        )
+        expect(await screen.findByAltText('답글작성자 프로필')).toHaveAttribute(
+            'src',
+            '/art/characters/profile/uc_13_avatar.png',
+        )
+    })
+
     it('공백 없는 긴 댓글도 콘텐츠 영역 안에서 줄바꿈한다', () => {
         const longComment = '긴댓글'.repeat(160)
         renderComment({}, { content: longComment })

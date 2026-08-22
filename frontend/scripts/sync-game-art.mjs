@@ -30,6 +30,7 @@ import {
     mkdir,
     readdir,
     readFile,
+    rm,
     writeFile,
 } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -54,6 +55,10 @@ const TARGET = resolve(here, '../public/art/items')
  */
 const FRAMES_SOURCE = resolve(here, '../../docs/game_ui/item_info/frames')
 const FRAMES_TARGET = resolve(here, '../public/art/frames')
+const CHARACTER_SELECT_SOURCE = resolve(here, '../../docs/game_ui/char_select')
+const CHARACTER_PROFILE_SOURCE = resolve(here, '../../docs/game_ui/user_info')
+const CHARACTER_ILLUST_SOURCE = resolve(here, '../../docs/game_ui/char_illust')
+const CHARACTER_TARGET = resolve(here, '../public/art/characters')
 
 async function collectPngs(dir, acc = []) {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -109,6 +114,106 @@ async function main() {
     )
 
     await syncFrames()
+    await syncCharacterProfiles()
+    await syncCharacterIllustrations()
+}
+
+async function syncCharacterIllustrations() {
+    const available = new Set(await readdir(CHARACTER_ILLUST_SOURCE))
+    const allowlist = Array.from(
+        { length: 25 },
+        (_, index) => index + 1,
+    ).flatMap((id) =>
+        [
+            `illust_${id}.png`,
+            `illust_${id}_1.png`,
+            `illust_effect_${id}.png`,
+            `illust_name_${id}.png`,
+        ].filter((name) => available.has(name)),
+    )
+    const target = join(CHARACTER_TARGET, 'illust')
+    await mkdir(target, { recursive: true })
+    for (const name of allowlist)
+        await copyFile(join(CHARACTER_ILLUST_SOURCE, name), join(target, name))
+    console.log(
+        `[game-art] 캐릭터 일러스트 allowlist ${allowlist.length}개 동기화 완료`,
+    )
+}
+
+async function syncCharacterProfiles() {
+    const mobileNames = [
+        'ch_01_xyrho_nomal.png',
+        'ch_01_xyrho_nomal_click.png',
+        ...[
+            'shamoo',
+            'sven',
+            'cream',
+            'roland',
+            'aurelli',
+            'hawk',
+            'hazel',
+            'cara',
+        ].flatMap((name, index) => {
+            const id = String(index + 2).padStart(2, '0')
+            return [`ch_${id}_${name}_normal.png`, `ch_${id}_${name}_click.png`]
+        }),
+        'ch_10_warrior_c.png',
+        'ch_10_warrior_n.png',
+        'ch_11_lucy_c.png',
+        'ch_11_lucy_n.png',
+        'ch_12_darkelf_c.png',
+        'ch_12_darkelf_n.png',
+        ...Array.from({ length: 4 }, (_, index) => index + 25).flatMap((id) => [
+            `ch_${id}_avatar_normal.png`,
+            `ch_${id}_avatar_click.png`,
+        ]),
+    ]
+    const profileNames = Array.from({ length: 16 }, (_, index) => {
+        const id = String(index + 1).padStart(2, '0')
+        return `uc_${id}`
+    })
+    const availableProfiles = (await readdir(CHARACTER_PROFILE_SOURCE)).filter(
+        (name) => profileNames.some((prefix) => name.startsWith(`${prefix}_`)),
+    )
+
+    if (availableProfiles.length !== 16) {
+        throw new Error(
+            `[game-art] 프로필 원본은 정확히 16개여야 합니다: ${availableProfiles.length}`,
+        )
+    }
+    await mkdir(join(CHARACTER_TARGET, 'select'), { recursive: true })
+    await mkdir(join(CHARACTER_TARGET, 'profile'), { recursive: true })
+    const selectTarget = join(CHARACTER_TARGET, 'select')
+    for (const staleName of await readdir(selectTarget)) {
+        if (!mobileNames.includes(staleName)) {
+            await rm(join(selectTarget, staleName))
+        }
+    }
+    for (const name of mobileNames) {
+        await copyFile(
+            join(CHARACTER_SELECT_SOURCE, name),
+            join(CHARACTER_TARGET, 'select', name),
+        )
+    }
+    for (const name of availableProfiles) {
+        await copyFile(
+            join(CHARACTER_PROFILE_SOURCE, name),
+            join(CHARACTER_TARGET, 'profile', name),
+        )
+    }
+    const copied = await readdir(join(CHARACTER_TARGET, 'select'))
+    if (
+        copied.some(
+            (name) => name.includes('_btn_') || !mobileNames.includes(name),
+        )
+    ) {
+        throw new Error(
+            '[game-art] 허용되지 않은 캐릭터 선택 자산이 포함됐습니다.',
+        )
+    }
+    console.log(
+        `[game-art] 캐릭터 선택 ${mobileNames.length}개 · 프로필 16개 동기화 완료`,
+    )
 }
 
 /** 프레임 오버레이(RGBA 투명) 단순 복사 — 크로마키 없음(위 FRAMES_SOURCE 주석). */

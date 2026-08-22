@@ -1,12 +1,14 @@
 # FinalCall ERD (데이터 모델)
 
-상태: **v2.1 — FC-332 outbox retention 인덱스 사용자 승인 확정(2026-08-19).** 기존 v2.0에 `chat_event_outbox(created_at,id)` retention 인덱스와 V27을 가법 반영했다. 기존 `(occurred_at,id)` pipeline 최신 사건 관측 인덱스는 유지한다. 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: **v2.3 — FC-352 기본 캐릭터 sparse CHECK 확정(2026-08-22 사용자 승인).** 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, chat-domain-spec v1.1, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v2.3 | 2026-08-22 | **FC-352 변경 계약 사용자 승인 확정.** V28 `user.primary_character_id` CHECK를 종전 1..28에서 `(BETWEEN 1 AND 12) OR (BETWEEN 25 AND 28)`로 축소한다. premium 13..24는 저장 불가다. V28은 미커밋·미배포 상태에서 최종 정본을 수정하며 신규 V29는 만들지 않는다. 기본값·기존 행 backfill=1, 타입·인덱스 없음은 불변. 정본=`member-domain-spec.md` v1.1. 영향=FC-352~358. |
+| v2.2 | 2026-08-22 | **FC-352 Gate 2 사용자 승인 확정.** `user.primary_character_id TINYINT UNSIGNED NOT NULL DEFAULT 1`과 CHECK 1..28을 V28로 가법 추가한다. 기존 행은 1로 backfill한다. 프로필 스냅샷·인덱스는 추가하지 않는다. 정본=`member-domain-spec.md` v1.0. 영향=FC-353~358. |
 | v2.1 | 2026-08-19 | **FC-332 게이트2 승인.** 실제 purge 조건·정렬(`created_at < cutoff AND id <= CDC safe checkpoint ORDER BY created_at,id`)에 맞춘 `(created_at,id)` 인덱스를 append-only V27로 추가한다. `(occurred_at,id)`는 pipeline 최신 사건 관측용으로 유지한다. 7일 보존·CDC checkpoint·binlog guard·REST/STOMP 계약은 불변이다. |
 | v2.0 | 2026-08-18 | **EPIC-CHAT(FC-316) — G2-CHAT-1~6 사용자 승인 확정.** [2]·[3] 채팅 엔티티/관계, [4.6] 6테이블, [5] 보조 인덱스, [6] V25 예약을 추가했다. `chat_room`은 정렬된 사용자 쌍 UK와 `last_sequence`, `chat_message`는 방별 sequence UK·client UUID 멱등 UK, member state는 단조 읽음 위치, block은 방향성 쌍 UK, report는 원문 purge와 독립된 snapshot, outbox는 metadata-only CDC 정본이다. association 2종은 전역 규약에 맞춰 `id` 대리 PK + 논리 복합 UK로 확정했다. 정본 = `chat-domain-spec.md` v1.0·api-contract v1.27 §2.7. 실제 migration은 후속 backend 티켓 소유. |
 | v0 | 2026-07-13 | 골격 착수 — 네이밍 선언부·엔티티 개요·Mermaid |
@@ -219,6 +221,7 @@ table `user` — 단일 사용자(관리자=플래그). 인증 상세 필드는 
 | password_hash | VARCHAR | Y | | 비밀번호 해시. **소셜 전용 계정은 NULL**(비밀번호 로그인 불가 — 소셜 계정 비번 로그인 시도는 `AUTH_003`, EPIC-OAUTH V19) |
 | nickname | VARCHAR(30) | N | | 표시명(자연키). **원본에 UK를 걸지 않는다** — D-081 |
 | nickname_active | VARCHAR(30) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, nickname)) STORED` (D-081) |
+| primary_character_id | TINYINT UNSIGNED | N | CHECK 1..12 OR 25..28 | 사이트 기본 캐릭터. 기본값 1, 기존 회원 V28 backfill. premium 13..24 저장 금지. 프로필 16종 매핑은 member-domain-spec §3에서 파생 |
 | is_admin | BOOLEAN | N | | 관리자 권한 플래그(기본 false) |
 | is_deleted | BOOLEAN | N | | soft delete |
 | deleted_at | DATETIME(6) | Y | | 널 허용 유지 |
@@ -800,5 +803,6 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
 8. 1:1 채팅 — `chat_room`·`chat_room_member_state`·`chat_message`·`chat_user_block`·`chat_report`·`chat_event_outbox` + §5 인덱스(EPIC-CHAT, v2.0)
    - 8-a. 6개 테이블을 FK 순서(`chat_room` → `chat_room_member_state`·`chat_message`·`chat_user_block` → `chat_report`·`chat_event_outbox`)로 신설하고 UK/CHECK/FK/보조 인덱스를 함께 생성 = 백엔드 **`V25__chat.sql` 예약**(현재 최신 V24, append-only). `user`(V3) 선행, report의 message FK는 `ON DELETE SET NULL`, outbox aggregate는 물리 FK 없음. 실제 migration 작성은 후속 backend 구현 티켓 소유. **G2-CHAT-1~6 사용자 승인 확정(2026-08-18)** — 방 row lock sequence·UUID 멱등·Redis Pub/Sub fast-path·별도 Debezium outbox→Kafka fallback·180일 메시지/3년 신고/7일 event 보존.
    - 8-b. `chat_event_outbox (created_at,id)` retention 인덱스 가법 추가 = 백엔드 **`V27`**(V25·V26 수정 금지, append-only). 기존 `(occurred_at,id)`는 pipeline 관측용으로 유지한다. 운영 적용 전 MySQL 8 online secondary-index DDL 지원, metadata lock·장기 TX, 디스크 여유를 확인하고 지원 환경에서는 `ALGORITHM=INPLACE, LOCK=NONE`을 명시한다. rollback은 V27 수정/삭제가 아니라 후속 append-only migration에서 신규 인덱스만 DROP한다. 검증은 fresh/upgrade migration, 두 인덱스 공존, retention `EXPLAIN ANALYZE`, cutoff·CDC safe ID 경계, 멀티노드 purge와 online SLO·lock/IO·replica lag를 포함한다. **FC-332 게이트2 승인(2026-08-19).** 7일 보존·CDC checkpoint·binlog guard와 REST/STOMP 계약은 불변이다.
+9. 회원 기본 캐릭터 — `user.primary_character_id` 가법 추가 = 백엔드 **V28 예약**(현재 최신 V27, append-only). `TINYINT UNSIGNED NOT NULL DEFAULT 1`, CHECK `(primary_character_id BETWEEN 1 AND 12) OR (primary_character_id BETWEEN 25 AND 28)`, 기존 행 1 backfill. premium 13..24 저장 금지, 인덱스·프로필 스냅샷 없음. **FC-352 변경 계약 사용자 승인 확정(2026-08-22)**, 구현 FC-353 소유. V28은 미커밋·미배포라 최종 CHECK로 수정하며 V29를 추가하지 않는다.
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

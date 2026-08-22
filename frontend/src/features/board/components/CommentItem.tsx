@@ -20,7 +20,8 @@ import {
     useToggleReaction,
 } from '@/lib/queries/comments'
 import { useIsAuthenticated } from '@/store/authStore'
-import { avatarInitial, formatPostTime } from '@/features/board/lib/postView'
+import { formatPostTime } from '@/features/board/lib/postView'
+import ProfileAvatar from '@/features/member/components/ProfileAvatar'
 import { commentErrorMessage } from '@/features/board/lib/boardErrors'
 import type { CommentResponse, RootCommentResponse } from '@/lib/api/comments'
 
@@ -352,12 +353,11 @@ function CommentBody({
                     <TbTrash className="size-4" />
                 </span>
             ) : (
-                <span
-                    aria-hidden
-                    className={`grid ${avatarSize} shrink-0 place-items-center rounded-full bg-content-line font-bold text-content-muted`}
-                >
-                    {avatarInitial(comment.authorNickname ?? undefined)}
-                </span>
+                <ProfileAvatar
+                    primaryCharacterId={comment.authorPrimaryCharacterId}
+                    name={comment.authorNickname ?? '탈퇴 회원'}
+                    className={`${avatarSize} shrink-0 rounded-full`}
+                />
             )}
 
             <div className="min-w-0 flex-1">
@@ -511,7 +511,10 @@ function CommentBody({
                         role="alert"
                         className="mt-1.5 flex items-center gap-1.5 text-xs text-danger-ink"
                     >
-                        <TbAlertTriangle aria-hidden className="size-3.5 shrink-0" />
+                        <TbAlertTriangle
+                            aria-hidden
+                            className="size-3.5 shrink-0"
+                        />
                         {commentErrorMessage(reactionMutation.error)}
                     </p>
                 )}
@@ -636,7 +639,10 @@ function CommentEditMenu({
                             className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-content-muted hover:bg-content-soft sm:h-9 sm:text-xs"
                             onClick={() => choose(onEdit)}
                         >
-                            <TbPencil aria-hidden className="size-4 sm:size-3.5" />
+                            <TbPencil
+                                aria-hidden
+                                className="size-4 sm:size-3.5"
+                            />
                             수정
                         </button>
                         <button
@@ -645,7 +651,10 @@ function CommentEditMenu({
                             className="flex h-12 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm font-semibold text-danger-ink hover:bg-danger-soft sm:h-9 sm:text-xs"
                             onClick={() => choose(onDelete)}
                         >
-                            <TbTrash aria-hidden className="size-4 sm:size-3.5" />
+                            <TbTrash
+                                aria-hidden
+                                className="size-4 sm:size-3.5"
+                            />
                             삭제
                         </button>
                         <button

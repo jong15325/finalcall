@@ -12,10 +12,8 @@ import {
 } from 'react-icons/tb'
 import { boardPath, boardPostEditPath } from '@/app/paths'
 import { useBoard, usePostDetail, useDeletePost } from '@/lib/queries/boards'
-import {
-    avatarInitial,
-    formatPostTimeFull,
-} from '@/features/board/lib/postView'
+import { formatPostTimeFull } from '@/features/board/lib/postView'
+import ProfileAvatar from '@/features/member/components/ProfileAvatar'
 import { boardWriteErrorMessage } from '@/features/board/lib/boardErrors'
 import CommentSection from '@/features/board/components/CommentSection'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
@@ -192,9 +190,13 @@ export default function PostDetailPage() {
                     </h1>
                     <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-content-subtle">
                         <span className="inline-flex items-center gap-1.5 font-bold text-content-fg">
-                            <span className="grid size-6 place-items-center rounded-full bg-chrome-selected text-[11px] font-bold text-on-strong">
-                                {avatarInitial(post.authorNickname)}
-                            </span>
+                            <ProfileAvatar
+                                primaryCharacterId={
+                                    post.authorPrimaryCharacterId
+                                }
+                                name={post.authorNickname}
+                                className="size-6 rounded-full"
+                            />
                             {post.authorNickname}
                         </span>
                         <span aria-hidden className="text-content-line">

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="CharacterWnd">
+	<NAME_ID NAME="char_select_normalview" ID="124"/>
+	<SIZE X="35" Y="85" WIDTH="158" HEIGHT="286"/>
+	<STYLE>IWS_BACKMOST</STYLE>
+	<CHILD_LIST>
+		<STATIC>
+			<NAME_ID NAME="cs_title" ID="100"/>
+			<SIZE X="0" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\title.pgf"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="101"/>
+			<SIZE X="36" Y="136"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="back_abillity" ID="102"/>
+			<SIZE X="79" Y="158"/>
+                        <NORMAL_IMAGE NAME="room\char_select\back_abillity.pgf" DRAW_TYPE="DRAW_ALPHA_30"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="text_abillity" ID="104"/>
+			<SIZE X="79" Y="158"/>
+                        <NORMAL_IMAGE NAME="room\char_select\text_abillity.pgf"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="cs_btn" ID="105"/>
+			<SIZE X="36" Y="241"/>
+			<NORMAL_IMAGE NAME="room\char_select\back_btn.pgf"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="select_color1" ID="1"/>
+			<SIZE X="38" Y="243"/>
+                        <NORMAL_IMAGE NAME="room\char_select\btn_color1_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+                        <CLICK_IMAGE NAME="room\char_select\btn_color1_c.pgf"/>
+                        <OVER_IMAGE NAME="room\char_select\btn_color1_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZNOTIFY="캐릭터를 지정한 경우에 사용이 가능합니다."/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="select_color2" ID="2"/>
+			<SIZE X="38" Y="243"/>
+                        <NORMAL_IMAGE NAME="room\char_select\btn_color2_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+                        <CLICK_IMAGE NAME="room\char_select\btn_color2_c.pgf"/>
+                        <OVER_IMAGE NAME="room\char_select\btn_color2_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<EXTRA_INFO SZNOTIFY="캐릭터를 지정한 경우에 사용이 가능합니다."/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="select_btn" ID="3"/>
+			<SIZE X="36" Y="136" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="random" ID="4"/>
+			<SIZE X="36" Y="136"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_random_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+                        <CLICK_IMAGE NAME="room\char_select\ch_random_c.pgf"/>
+                        <OVER_IMAGE NAME="room\char_select\ch_random_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<STATIC>
+			<NAME_ID NAME="st_arrow" ID="106"/>
+			<SIZE X="70" Y="187"/>
+			<NORMAL_IMAGE NAME="room\char_select\cs_arrow_right.pgf"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+	</CHILD_LIST>
+</WINDOW>

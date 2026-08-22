@@ -94,8 +94,8 @@ public class ChatCommandService {
         memberStateRepository.insertIfAbsent(room.getId(), memberLowId, now);
         memberStateRepository.insertIfAbsent(room.getId(), memberHighId, now);
         ChatMessagePersistence persistence = persistMessage(room, requester, clientMessageId, normalizedBody);
-        return new ChatDirectMessagePersistence(room, persistence.message(), persistence.senderPublicId(), created,
-            persistence.deduplicated());
+        return new ChatDirectMessagePersistence(room, persistence.message(), persistence.senderPublicId(),
+            persistence.senderPrimaryCharacterId(), created, persistence.deduplicated());
     }
 
     /** 방 행 락 아래에서 순번을 배정하고 clientMessageId 멱등성·양방향 차단을 판정한다. */
@@ -120,7 +120,7 @@ public class ChatCommandService {
         if (existing != null) {
             Preconditions.validate(existing.getBody().equals(normalizedBody),
                 ChatErrorCode.CHAT_IDEMPOTENCY_CONFLICT);
-            return new ChatMessagePersistence(existing, sender.getPublicId(), true);
+            return new ChatMessagePersistence(existing, sender.getPublicId(), sender.getPrimaryCharacterId(), true);
         }
 
         Long counterpartId = room.counterpartId(senderId);
@@ -147,7 +147,7 @@ public class ChatCommandService {
         if (readAdvanced) {
             appendReadUpdated(room, senderId, roomSequence, now);
         }
-        return new ChatMessagePersistence(message, sender.getPublicId(), false);
+        return new ChatMessagePersistence(message, sender.getPublicId(), sender.getPrimaryCharacterId(), false);
     }
 
     /** 읽음 위치를 {@code max(current, throughSequence)}로만 전진시킨다. */

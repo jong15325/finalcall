@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="CharSelect">
+	<NAME_ID NAME="char_select_view" ID="15"/>
+	<SIZE X="71" Y="221" WIDTH="462" HEIGHT="104"/>
+	<STYLE>IWS_BACKMOST</STYLE>
+	<CHILD_LIST>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="113"/>
+			<SIZE X="0" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="101"/>
+			<SIZE X="42" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="102"/>
+			<SIZE X="84" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="103"/>
+			<SIZE X="126" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="104"/>
+			<SIZE X="168" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="105"/>
+			<SIZE X="210" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="106"/>
+			<SIZE X="252" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="107"/>
+			<SIZE X="294" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="108"/>
+			<SIZE X="336" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="109"/>
+			<SIZE X="378" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="110"/>
+			<SIZE X="420" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="111"/>
+			<SIZE X="462" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="112"/>
+			<SIZE X="546" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<STATIC>
+			<NAME_ID NAME="ch_back" ID="200"/>
+			<SIZE X="504" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_back.pgf" LOAD_TYPE="LOAD_SIZE"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</STATIC>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn1" ID="13"/>
+			<SIZE X="0" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn2" ID="1"/>
+			<SIZE X="42" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn3" ID="2"/>
+			<SIZE X="84" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn4" ID="3"/>
+			<SIZE X="126" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn5" ID="4"/>
+			<SIZE X="168" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn6" ID="5"/>
+			<SIZE X="210" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn7" ID="6"/>
+			<SIZE X="252" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn8" ID="7"/>
+			<SIZE X="294" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn9" ID="8"/>
+			<SIZE X="336" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn10" ID="9"/>
+			<SIZE X="378" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn11" ID="10"/>
+			<SIZE X="420" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn12" ID="11"/>
+			<SIZE X="462" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="CharBtn">
+			<NAME_ID NAME="CharBtn13" ID="12"/>
+			<SIZE X="504" Y="0" WIDTH="41" HEIGHT="104"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="random" ID="100"/>
+			<SIZE X="546" Y="0"/>
+                        <NORMAL_IMAGE NAME="room\char_select\ch_random_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+                        <CLICK_IMAGE NAME="room\char_select\ch_random_c.pgf"/>
+                        <OVER_IMAGE NAME="room\char_select\ch_random_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+	</CHILD_LIST>
+</WINDOW>

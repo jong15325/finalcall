@@ -103,7 +103,7 @@ class MemberServiceTest {
         when(userRepository.findByIdAndIsDeletedFalse(42L)).thenReturn(Optional.of(user));
         when(userRepository.existsByNicknameAndIsDeletedFalse("새닉네임")).thenReturn(false);
 
-        User result = memberService.updateNickname("새닉네임");
+        User result = memberService.updateProfile("새닉네임", null);
 
         assertThat(result.getNickname()).isEqualTo("새닉네임");
         verify(userRepository).existsByNicknameAndIsDeletedFalse("새닉네임");
@@ -115,11 +115,57 @@ class MemberServiceTest {
         User user = userWithId(42L, "그대로");
         when(userRepository.findByIdAndIsDeletedFalse(42L)).thenReturn(Optional.of(user));
 
-        User result = memberService.updateNickname("그대로");
+        User result = memberService.updateProfile("그대로", null);
 
         assertThat(result.getNickname()).isEqualTo("그대로");
         // 값이 안 바뀌면 자기 자신이 활성 UK 를 점유하므로 중복 검사를 건너뛴다.
         verify(userRepository, never()).existsByNicknameAndIsDeletedFalse(any());
+    }
+
+    @Test
+    void 기본_캐릭터만_부분_수정한다() {
+        authenticateAs("42");
+        User user = userWithId(42L, "그대로");
+        when(userRepository.findByIdAndIsDeletedFalse(42L)).thenReturn(Optional.of(user));
+
+        User result = memberService.updateProfile(null, 25);
+
+        assertThat(result.getPrimaryCharacterId()).isEqualTo(25);
+        assertThat(result.getNickname()).isEqualTo("그대로");
+        verify(userRepository, never()).existsByNicknameAndIsDeletedFalse(any());
+    }
+
+    @Test
+    void 기본_캐릭터_범위를_벗어나면_MEMBER_003이다() {
+        authenticateAs("42");
+        User user = userWithId(42L, "그대로");
+        when(userRepository.findByIdAndIsDeletedFalse(42L)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> memberService.updateProfile(null, 29))
+            .isInstanceOf(BusinessException.class)
+            .extracting(e -> ((BusinessException)e).getErrorCode())
+            .isEqualTo(MemberErrorCode.MEMBER_INVALID_PRIMARY_CHARACTER);
+
+        assertThat(user.getPrimaryCharacterId()).isEqualTo(1);
+    }
+
+    @Test
+    void 기본_캐릭터_sparse_경계값을_검증한다() {
+        authenticateAs("42");
+        User user = userWithId(42L, "그대로");
+        when(userRepository.findByIdAndIsDeletedFalse(42L)).thenReturn(Optional.of(user));
+
+        assertThat(memberService.updateProfile(null, 12).getPrimaryCharacterId()).isEqualTo(12);
+        assertThat(memberService.updateProfile(null, 25).getPrimaryCharacterId()).isEqualTo(25);
+        assertThat(memberService.updateProfile(null, 28).getPrimaryCharacterId()).isEqualTo(28);
+        assertThatThrownBy(() -> memberService.updateProfile(null, 13))
+            .isInstanceOf(BusinessException.class)
+            .extracting(e -> ((BusinessException)e).getErrorCode())
+            .isEqualTo(MemberErrorCode.MEMBER_INVALID_PRIMARY_CHARACTER);
+        assertThatThrownBy(() -> memberService.updateProfile(null, 24))
+            .isInstanceOf(BusinessException.class)
+            .extracting(e -> ((BusinessException)e).getErrorCode())
+            .isEqualTo(MemberErrorCode.MEMBER_INVALID_PRIMARY_CHARACTER);
     }
 
     @Test
@@ -145,7 +191,7 @@ class MemberServiceTest {
             "Duplicate entry '경쟁닉' for key 'uk_user_nickname_active'"))
             .when(userRepository).flush();
 
-        assertThatThrownBy(() -> memberService.updateNickname("경쟁닉"))
+        assertThatThrownBy(() -> memberService.updateProfile("경쟁닉", null))
             .isInstanceOf(BusinessException.class)
             .extracting(e -> ((BusinessException)e).getErrorCode())
             .isEqualTo(MemberErrorCode.MEMBER_DUPLICATE_NICKNAME);
@@ -158,7 +204,7 @@ class MemberServiceTest {
         when(userRepository.findByIdAndIsDeletedFalse(42L)).thenReturn(Optional.of(user));
         when(userRepository.existsByNicknameAndIsDeletedFalse("중복닉")).thenReturn(true);
 
-        assertThatThrownBy(() -> memberService.updateNickname("중복닉"))
+        assertThatThrownBy(() -> memberService.updateProfile("중복닉", null))
             .isInstanceOf(BusinessException.class)
             .extracting(e -> ((BusinessException)e).getErrorCode())
             .isEqualTo(MemberErrorCode.MEMBER_DUPLICATE_NICKNAME);

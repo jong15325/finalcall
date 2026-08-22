@@ -33,7 +33,8 @@ public record ChatRoomResponse(
         return ChatRoomResponse.builder()
             .roomPublicId(room.getPublicId())
             .counterpart(new Counterpart(counterpart.getPublicId(),
-                counterpart.isDeleted() ? DELETED_USER_NICKNAME : counterpart.getNickname()))
+                counterpart.isDeleted() ? DELETED_USER_NICKNAME : counterpart.getNickname(),
+                counterpart.isDeleted() ? null : counterpart.getPrimaryCharacterId()))
             .lastMessage(lastMessage != null ? LastMessage.from(lastMessage) : null)
             .lastSequence(room.getLastSequence())
             .lastReadSequence(lastReadSequence)
@@ -47,7 +48,7 @@ public record ChatRoomResponse(
     }
 
     /** 상대 회원의 외부 식별자와 현재 표시명. */
-    public record Counterpart(String memberPublicId, String nickname) {
+    public record Counterpart(String memberPublicId, String nickname, Integer primaryCharacterId) {
     }
 
     /** 방 목록에 노출하는 마지막 보존 메시지 미리보기. */

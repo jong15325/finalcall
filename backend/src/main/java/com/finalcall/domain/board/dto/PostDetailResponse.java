@@ -23,6 +23,7 @@ public record PostDetailResponse(
     String title,
     String content,
     String authorNickname,
+    Integer authorPrimaryCharacterId,
     @JsonProperty("isPinned") boolean isPinned,
     int viewCount,
     int commentCount,
@@ -38,12 +39,18 @@ public record PostDetailResponse(
      * @param images 첨부 갤러리(FC-200 배선 전에는 빈 리스트)
      */
     public static PostDetailResponse from(Post post, String boardSlug, boolean editable, List<ImageResponse> images) {
+        return from(post, boardSlug, editable, images, null);
+    }
+
+    public static PostDetailResponse from(Post post, String boardSlug, boolean editable, List<ImageResponse> images,
+        Integer authorPrimaryCharacterId) {
         return PostDetailResponse.builder()
             .postPublicId(post.getPublicId())
             .boardSlug(boardSlug)
             .title(post.getTitle())
             .content(post.getContent())
             .authorNickname(post.getAuthorNickname())
+            .authorPrimaryCharacterId(authorPrimaryCharacterId)
             .isPinned(post.isPinned())
             .viewCount(post.getViewCount())
             .commentCount(post.getCommentCount())

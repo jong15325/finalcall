@@ -1,12 +1,14 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.30 — FC-347 전역 unread 동기화 계약 확정(2026-08-22 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.32 — FC-352 기본 캐릭터 허용 집합 축소 확정(2026-08-22 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, chat-domain-spec v1.9, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.32 | 2026-08-22 | **FC-352 변경 계약 사용자 승인 확정.** `primaryCharacterId` 허용 집합을 종전 1..28에서 `{1..12,25..28}`로 축소하고 13..24는 `MEMBER_003`(400)으로 거부한다. 기본값 1, API wire, PATCH 부분 수정·원자성, 공개 프로필 노출 의미는 불변이다. 선택 UI·동기화에서 premium 13..24 자산을 제거한다. 정본=`member-domain-spec.md` v1.1, DB=`erd.md` v2.3/V28. 영향=FC-352~358. |
+| v1.31 | 2026-08-22 | **FC-352 Gate 2 사용자 승인 확정.** `GET/PATCH /me`에 `primaryCharacterId`를 가법 추가하고 PATCH를 nickname/character 부분 수정으로 확장한다. 채팅·게시판·쪽지의 당사자 프로필 응답에도 현재 `primaryCharacterId`를 가법 노출한다. 선택 ID 1..28, 기본값 1, 정적 자산 매핑 정본=`member-domain-spec.md` v1.0. DB=`erd.md` v2.2/V28. `ch_*_btn_2_*`는 전면 제외. 영향=FC-353~358. |
 | v1.30 | 2026-08-22 | **FC-347 사용자 승인.** wire 변경 없이 로그인 브라우저 탭의 AppShell당 단일 STOMP 연결·구독과 unread client lifecycle을 확정했다. `MESSAGE_CREATED.sentByMe`는 수신 principal 관점이며 송신자 자기 배지는 증가시키지 않는다. MESSAGE_CREATED·본인 READ_UPDATED·REST 전송 성공·재연결에서 `/unread-count`를 서버 권위로 coalesced refetch하고 30초 polling을 fallback으로 유지한다. token 교체·logout·다중 탭·ChatWorkspace 중복 연결 제거 규약 포함. 영향 = FC-348~351. REST/STOMP/event/DB schema·ERD 불변. |
 | v1.29 | 2026-08-22 | **G2-CHAT-12 보정안 A 사용자 승인.** `direct/messages` 요청 상대 식별자를 `counterpartNickname`으로 교체한다. 서버 원자 TX가 현재 활성 nickname 소유자를 resolve한 시점의 내부 user ID를 권위로 고정하고 이후 nickname 재조회 금지, 변경·탈퇴 resolve 실패는 전부 rollback `CHAT_002`, 성공 응답 `room.counterpart`가 최종 publicId/nickname을 제공한다. 추가 회원 검색 API 없음. 영향 = FC-342~345·FC-329·FC-324. DB schema·ERD와 event schema 불변. |
 | v1.28 | 2026-08-22 | **G2-CHAT-12 권고안 A 사용자 승인.** `POST /api/v1/me/chat-rooms/direct/messages`가 기존 room 재사용 또는 room+첫 message를 원자 커밋하고 생성 전용 `/direct`를 대체한다. client draft·동시 생성·멱등·차단/rate-limit/IDOR, timeline 내부 스크롤, 미캐시 `MESSAGE_CREATED` hydration, local exact Origin 2종을 확정했다. 영향 = FC-342~345·FC-329·FC-324. DB schema·ERD와 STOMP/Redis/Kafka/outbox event schema는 불변. |
@@ -206,18 +208,20 @@
 
 #### GET /api/v1/me — 내 프로필 조회
 - 인증: 필요
-- 응답 200: `{ userPublicId, nickname, isAdmin, createdAt, emailVerified, emailMasked? }`
+- 응답 200: `{ userPublicId, nickname, primaryCharacterId, isAdmin, createdAt, emailVerified, emailMasked? }`
+- `primaryCharacterId`: integer 허용 집합 `{1..12,25..28}`. 기본값 1. 프로필 자산 매핑 정본은 `member-domain-spec.md` §3이며 URL/파일명은 API가 반환하지 않는다.
 - 노출 범위: `loginId`·`passwordHash`는 응답에 싣지 않는다(노출 이득 없음, 열거 리스크 SEC-007). `isAdmin`은 관리자 UI 노출 제어용으로 포함하되 **인가는 서버 권위**다(§1.2 — 클라 플래그는 표시 제어일 뿐).
 - 이메일(v1.15, EPIC-EMAIL-VERIFY): `emailVerified`(bool)와 `emailMasked`(string, nullable — 예 `a***@naver.com`)로 노출한다. **이메일 원문은 싣지 않는다**(마스킹만). `emailMasked=null`이면 이메일 미설정, non-null이면 설정됨 — `emailVerified`와 조합해 프론트가 **미설정 / 설정·미인증 / 인증완료** 3상태를 구분한다. 이메일 설정·인증은 §2 이메일 엔드포인트(`PUT /me/email`·`.../verification-request`·`.../verify`).
 - 타인 프로필 조회(`/users/{publicId}`)는 **범위 밖**이다. 목록·상세의 소유자·최고입찰자 마스킹(§3.3)과 상충하고 회원 열거 노출면(SEC-007)을 넓힌다(domain-spec §6.1).
 - 에러: 401(미인증)
 
-#### PATCH /api/v1/me — 프로필 수정 (nickname 한정)
+#### PATCH /api/v1/me — 프로필 부분 수정
 - 인증: 필요
-- 요청(body): `{ nickname }` — 수정 가능 필드는 nickname뿐이다. 비밀번호 변경은 범위 밖(별도 안건). 이메일 설정·변경은 `PUT /me/email`(§2)로 분리한다.
-- 응답 200: `{ userPublicId, nickname, isAdmin, createdAt, emailVerified, emailMasked? }` (조회와 동일 스키마)
+- 요청(body): `{ nickname?, primaryCharacterId? }`. 최소 한 필드는 제공해야 하며 누락 필드는 유지한다. 명시적 `null`, 빈 body, 알 수 없는 필드는 400이다. `nickname`은 기존 검증, `primaryCharacterId`는 integer 허용 집합 `{1..12,25..28}`이며 13..24도 유효하지 않다. 비밀번호 변경은 범위 밖이고 이메일은 `PUT /me/email`로 분리한다.
+- 두 필드를 함께 제공하면 단일 트랜잭션으로 원자 변경한다. 닉네임 중복 등 한 필드가 실패하면 어느 필드도 적용하지 않는다.
+- 응답 200: `{ userPublicId, nickname, primaryCharacterId, isAdmin, createdAt, emailVerified, emailMasked? }` (조회와 동일 스키마)
 - 변경 빈도 제한 없음(domain-spec §6.1)
-- 에러: `MEMBER_001` 닉네임 중복(409), 검증 400, 401(미인증)
+- 에러: `MEMBER_001` 닉네임 중복(409), `MEMBER_003` 기본 캐릭터 범위 위반(400), 검증 400, 401(미인증)
 
 #### DELETE /api/v1/me — 탈퇴 (soft delete)
 - 인증: 필요
@@ -245,12 +249,12 @@
 
 #### GET /api/v1/me/memos/received — 받은함(커서)
 - 인증: 필요. 요청(query): `?cursor=<opaque>&size=<n>`(§1.3 cursor)
-- 응답 200: `CursorResponse<MemoSummary>` — `receiver_id=주체 AND is_deleted=false`, `id desc` 정렬. `MemoSummary` = `{ memoPublicId, type, senderNickname, senderLevel, senderGender, bodyPreview, isRead, createdAt }`(목록은 본문 미리보기 `bodyPreview`).
+- 응답 200: `CursorResponse<MemoSummary>` — `receiver_id=주체 AND is_deleted=false`, `id desc` 정렬. `MemoSummary` = `{ memoPublicId, type, senderNickname, senderPrimaryCharacterId, senderLevel, senderGender, bodyPreview, isRead, createdAt }`(목록은 본문 미리보기 `bodyPreview`). `senderPrimaryCharacterId`는 현재 활성 발신 회원의 값이며 삭제 회원이면 null이다.
 - 에러: 401
 
 #### GET /api/v1/me/memos/sent — 보낸함(커서)
 - 인증: 필요. 요청(query): `?cursor=&size=`
-- 응답 200: `CursorResponse<MemoSummary>` — `sender_id=주체 AND is_deleted=false`, `id desc`. 보낸함 `MemoSummary`는 상대가 수신자이므로 `receiverNickname`을 싣는다(sender 필드 자리에 receiver 노출).
+- 응답 200: `CursorResponse<MemoSummary>` — `sender_id=주체 AND is_deleted=false`, `id desc`. 보낸함 `MemoSummary`는 상대가 수신자이므로 `receiverNickname`, `receiverPrimaryCharacterId`를 싣는다(sender 필드 자리에 receiver 노출). 삭제 회원의 character ID는 null이다.
 - 에러: 401
 
 #### GET /api/v1/me/memos/unread-count — 미열람 개수
@@ -261,7 +265,7 @@
 #### GET /api/v1/me/memos/{memoPublicId} — 상세 열람(+읽음 전이)
 - 인증: 필요. 당사자(sender_id 또는 receiver_id=주체)만.
 - 동작: **호출자가 수신자이고 미열람이면** `is_read=true`·`read_at=now`로 1회 전이(보낸함 열람은 전이 없음).
-- 응답 200: `MemoResponse` = `{ memoPublicId, type, senderNickname, senderLevel, senderGender, receiverNickname, body, isRead, readAt?, createdAt }`
+- 응답 200: `MemoResponse` = `{ memoPublicId, type, senderNickname, senderPrimaryCharacterId?, senderLevel, senderGender, receiverNickname, receiverPrimaryCharacterId?, body, isRead, readAt?, createdAt }`. character ID는 현재 회원값이며 해당 회원 삭제 시 null이다.
 - 에러: `MEMO_002` 메모 없음(404), `MEMO_003` 당사자 아님(403), 401. (열거 민감 시 타인 메모를 404로 통일할지 reviewer FC-173 확인 — 초안 404/403 구분)
 
 #### DELETE /api/v1/me/memos/{memoPublicId} — 삭제(soft)
@@ -347,7 +351,8 @@ server→client best-effort push 전용이다. Redis Pub/Sub·Kafka·STOMP 전�
   "roomPublicId": "01K...",
   "counterpart": {
     "memberPublicId": "01K...",
-    "nickname": "판매자닉네임"
+    "nickname": "판매자닉네임",
+    "primaryCharacterId": 25
   },
   "lastMessage": {
     "messagePublicId": "01K...",
@@ -374,6 +379,7 @@ server→client best-effort push 전용이다. Redis Pub/Sub·Kafka·STOMP 전�
 - `blockedByMe`는 본인이 만든 차단 해제 UI용이다. `canSend=false`는 어느 방향 차단·상대 비활성 등을
   합친 값이며 상대가 나를 차단했는지 별도 사유로 노출하지 않는다.
 - 탈퇴한 상대 nickname은 `탈퇴한 사용자`, `canSend=false`로 반환한다.
+- 탈퇴한 상대 `primaryCharacterId`는 null이다. 활성 상대는 현재값 `{1..12,25..28}` 중 하나를 반환한다.
 
 #### GET /api/v1/me/chat-rooms/{roomPublicId}/messages — 메시지 최신/과거/gap 조회
 
@@ -395,7 +401,8 @@ server→client best-effort push 전용이다. Redis Pub/Sub·Kafka·STOMP 전�
   "roomSequence": 42,
   "sender": {
     "memberPublicId": "01K...",
-    "nickname": "구매자닉네임"
+    "nickname": "구매자닉네임",
+    "primaryCharacterId": 2
   },
   "body": "안녕하세요",
   "sentByMe": true,
@@ -985,6 +992,7 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 | AUTH_008 | 소셜 provider 통신 실패(토큰·userinfo 조회·타임아웃, §2 OAuth) | 502 |
 | MEMBER_001 | 닉네임 중복(프로필 수정, §2.5) | 409 |
 | MEMBER_002 | 진행 중 거래 보유로 탈퇴 불가(§2.5) | 409 |
+| MEMBER_003 | 기본 캐릭터 ID 허용 집합 위반(`{1..12,25..28}`, 13..24 포함, §2.5) | 400 |
 | MEMO_001 | 수신자(닉네임) 없음 — 활성 회원 아님(§2.6 발신) | 404 |
 | MEMO_002 | 메모 없음(존재하지 않는 public_id, §2.6) | 404 |
 | MEMO_003 | 당사자 아님(남의 메모 열람·삭제, IDOR, §2.6) | 403 |
@@ -1085,7 +1093,7 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 #### GET /api/v1/boards/{slug}/posts — 게시글 목록(커서)
 - 인증: 불요. 요청(query): `?cursor=<opaque>&size=<n>`(§1.3 cursor)
 - 응답 200: `CursorResponse<PostSummary>` — `board_id=slug게시판 AND is_deleted=false`, 정렬 **`is_pinned DESC, id DESC`**(고정 우선·최신순). 커서 키=`id`.
-- `PostSummary` = `{ postPublicId, title, authorNickname, isPinned, viewCount, commentCount, thumbnailUrl?, createdAt }`. `thumbnailUrl`=첫 첨부 이미지 url(없으면 null). `authorNickname`=작성 시점 스냅샷(흡수 공지·시스템 글은 시드 표시명).
+- `PostSummary` = `{ postPublicId, title, authorNickname, authorPrimaryCharacterId?, isPinned, viewCount, commentCount, thumbnailUrl?, createdAt }`. `thumbnailUrl`=첫 첨부 이미지 url(없으면 null). `authorNickname`=작성 시점 스냅샷(흡수 공지·시스템 글은 시드 표시명). `authorPrimaryCharacterId`는 활성 작성자의 현재값이며 시스템 글·탈퇴 회원은 null이다.
 - 에러: `BOARD_001`(404), 401 없음(공개)
 
 #### POST /api/v1/boards/{slug}/posts — 게시글 작성
@@ -1098,7 +1106,7 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 #### GET /api/v1/boards/{slug}/posts/{postPublicId} — 게시글 상세
 - 인증: 불요
 - 동작: 조회수 원자 증가(`UPDATE post SET view_count=view_count+1`, 디둡 없음 — board-spec §6.2).
-- 응답 200: `PostDetailResponse` = `{ postPublicId, boardSlug, title, content, authorNickname, isPinned, viewCount, commentCount, images: [ { imagePublicId, url, sortOrder } ], createdAt, updatedAt, editable }`. `editable`=요청 주체가 작성자이거나 관리자면 true(비로그인·타인 false — 프론트 수정/삭제 버튼 노출 제어, 인가 권위는 서버 §1.2).
+- 응답 200: `PostDetailResponse` = `{ postPublicId, boardSlug, title, content, authorNickname, authorPrimaryCharacterId?, isPinned, viewCount, commentCount, images: [ { imagePublicId, url, sortOrder } ], createdAt, updatedAt, editable }`. character ID는 목록과 동일한 현재값 규칙이다. `editable`=요청 주체가 작성자이거나 관리자면 true(비로그인·타인 false — 프론트 수정/삭제 버튼 노출 제어, 인가 권위는 서버 §1.2).
 - 에러: `POST_001` 게시글 없음·삭제됨(404), `BOARD_001`(404)
 
 #### PUT /api/v1/boards/{slug}/posts/{postPublicId} — 게시글 수정
@@ -1119,10 +1127,11 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 
 > **형상 교체(게이트2 (c) 확정)**: v1.0 `CommentResponse{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable }` → v1.24로 **하위호환 없이 교체**한다(FC-199/203 방금 배포·외부 소비자 없음·형상보존 예외 사용자 승인 2026-08-06). 아래가 신 계약이다.
 
-`CommentResponse`(루트 목록·답글 공통 코어) = `{ commentPublicId, authorNickname, content, createdAt, updatedAt, editable, ownedByMe, likeCount, dislikeCount, myReaction, deleted }`
+`CommentResponse`(루트 목록·답글 공통 코어) = `{ commentPublicId, authorNickname, authorPrimaryCharacterId?, content, createdAt, updatedAt, editable, ownedByMe, likeCount, dislikeCount, myReaction, deleted }`
 - `likeCount`·`dislikeCount`(int) = 비정규화 카운트. `myReaction` ∈ `LIKE`|`DISLIKE`|`null`(뷰어 종속 — 인증 시 뷰어의 반응, 비인증·미반응 `null`). `editable`·`ownedByMe`·`myReaction`은 optional-auth(토큰 있으면 부여, `getItemInstance` 선례).
 - `editable`(bool) = 요청 주체가 작성자이거나 `ROLE_ADMIN`이면 `true`(수정·삭제 UI 제어; 인가 권위는 서버). `ownedByMe`(bool) = **인증 주체의 회원 ID와 저장된 `comment.authorId`가 같을 때만** `true`; 비로그인·관리자가 작성하지 않은 타인 댓글은 `false`. 닉네임 표시 스냅샷을 비교하지 않으므로 닉네임 변경·재사용과 무관하며, 판정 근거인 `authorId` 자체는 응답에 노출하지 않는다. 따라서 관리자의 타인 댓글은 `editable=true`, `ownedByMe=false`일 수 있다.
-- `deleted`(bool) = tombstone 여부(board-spec §13.4). `true`면 `content`·`authorNickname`=`null`, `likeCount/dislikeCount`=0, `editable=false`, `ownedByMe=false`, `myReaction`=null(마스킹).
+- `authorPrimaryCharacterId`는 활성 작성자의 현재값 `{1..12,25..28}`, 탈퇴 회원·시스템 작성자·tombstone은 null이다. 목록은 작성자 ID 배치 조회로 조립하며 항목별 회원 조회를 금지한다.
+- `deleted`(bool) = tombstone 여부(board-spec §13.4). `true`면 `content`·`authorNickname`·`authorPrimaryCharacterId`=`null`, `likeCount/dislikeCount`=0, `editable=false`, `ownedByMe=false`, `myReaction`=null(마스킹).
 
 #### GET /api/v1/posts/{postPublicId}/comments — 루트 댓글 목록(offset)
 - 인증: 불요(인증 시 `myReaction`·`editable`·`ownedByMe` 부여). 요청(query): `?page=<n>&size=<n>`(기본 size 20·상한 100), `?sort=<LATEST|OLDEST|LIKES>`(기본 `LATEST`)

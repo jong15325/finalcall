@@ -42,6 +42,7 @@ export interface PostSummary {
     postPublicId: string
     title: string
     authorNickname: string
+    authorPrimaryCharacterId?: number | null
     isPinned: boolean
     viewCount: number
     commentCount: number
@@ -71,6 +72,7 @@ export interface PostDetailResponse {
     title: string
     content: string
     authorNickname: string
+    authorPrimaryCharacterId?: number | null
     isPinned: boolean
     viewCount: number
     commentCount: number

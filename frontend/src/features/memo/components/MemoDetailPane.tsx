@@ -106,8 +106,14 @@ function MemoDetailPane({
             <div className="flex items-start gap-3 border-b border-content-line px-5 py-4">
                 <MemoAvatar
                     initial={avatarInitial(name)}
+                    name={name}
                     system={system}
                     className="size-11"
+                    primaryCharacterId={
+                        box === 'sent'
+                            ? memo.receiverPrimaryCharacterId
+                            : memo.senderPrimaryCharacterId
+                    }
                 />
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

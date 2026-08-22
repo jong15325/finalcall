@@ -100,9 +100,11 @@ public class CommentService {
         Long viewerId = currentUserIdOrNull();
         boolean admin = viewerId != null && currentUserIsAdmin();
         Map<Long, ReactionType> myReactions = viewerReactions(page.getContent(), viewerId);
+        Map<Long, User> authors = authorsById(page.getContent());
         return CommentPageResponse.from(page,
             comment -> CommentResponse.fromRoot(comment, isEditable(comment, viewerId, admin),
-                comment.isOwnedBy(viewerId), myReactionOf(myReactions, comment)));
+                comment.isOwnedBy(viewerId), myReactionOf(myReactions, comment),
+                primaryCharacterId(authors.get(comment.getAuthorId()))));
     }
 
     /**
@@ -126,9 +128,11 @@ public class CommentService {
         Long viewerId = currentUserIdOrNull();
         boolean admin = viewerId != null && currentUserIsAdmin();
         Map<Long, ReactionType> myReactions = viewerReactions(page.getContent(), viewerId);
+        Map<Long, User> authors = authorsById(page.getContent());
         return ReplyPageResponse.from(page,
             reply -> ReplyResponse.from(reply, isEditable(reply, viewerId, admin),
-                reply.isOwnedBy(viewerId), myReactionOf(myReactions, reply)));
+                reply.isOwnedBy(viewerId), myReactionOf(myReactions, reply),
+                primaryCharacterId(authors.get(reply.getAuthorId()))));
     }
 
     /**
@@ -350,6 +354,17 @@ public class CommentService {
     private String myReactionOf(Map<Long, ReactionType> myReactions, Comment comment) {
         ReactionType type = myReactions.get(comment.getId());
         return type == null ? null : type.name();
+    }
+
+    private Map<Long, User> authorsById(List<Comment> comments) {
+        List<Long> authorIds = comments.stream().map(Comment::getAuthorId)
+            .filter(java.util.Objects::nonNull).distinct().toList();
+        return userRepository.findAllById(authorIds).stream()
+            .collect(Collectors.toMap(User::getId, java.util.function.Function.identity()));
+    }
+
+    private Integer primaryCharacterId(User user) {
+        return user == null || user.isDeleted() ? null : user.getPrimaryCharacterId();
     }
 
     /** 대상 댓글의 루트를 해석한다 — 루트면 자신, 답글이면 그 루트(1단계라 항상 존재). 답글 목록 앵커 정규화(§13.1). */

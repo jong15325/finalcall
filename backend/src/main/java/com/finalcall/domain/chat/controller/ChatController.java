@@ -60,7 +60,8 @@ public class ChatController {
         ChatDirectMessagePersistence result = directMessageService.send(request.counterpartNickname(),
             request.clientMessageId(), request.body());
         ChatRoomResponse room = queryService.getRoom(result.room().getPublicId());
-        ChatMessageResponse message = ChatMessageResponse.from(result.message(), result.senderPublicId());
+        ChatMessageResponse message = ChatMessageResponse.from(result.message(), result.senderPublicId(),
+            result.senderPrimaryCharacterId());
         HttpStatus status = result.deduplicated() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(ApiResponse.success(ChatDirectMessageSendResponse.from(
             room, message, result.roomCreated(), result.deduplicated())));
@@ -105,7 +106,8 @@ public class ChatController {
         rateLimitService.checkMessageSend();
         ChatMessagePersistence result = commandService.sendMessage(
             roomPublicId, request.clientMessageId(), request.body());
-        ChatMessageResponse message = ChatMessageResponse.from(result.message(), result.senderPublicId());
+        ChatMessageResponse message = ChatMessageResponse.from(result.message(), result.senderPublicId(),
+            result.senderPrimaryCharacterId());
         HttpStatus status = result.deduplicated() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status)
             .body(ApiResponse.success(ChatMessageSendResponse.from(message, result.deduplicated())));

@@ -10,6 +10,7 @@ export interface ChatCursorPage<T, Cursor extends string | number> {
 export interface ChatMemberResponse {
     memberPublicId: string
     nickname: string
+    primaryCharacterId?: number | null
 }
 
 export interface ChatLastMessageResponse {

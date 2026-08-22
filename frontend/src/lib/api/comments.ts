@@ -32,6 +32,7 @@ export type ReactionType = 'LIKE' | 'DISLIKE'
 export interface CommentResponse {
     commentPublicId: string
     authorNickname: string | null
+    authorPrimaryCharacterId?: number | null
     content: string | null
     createdAt: string
     updatedAt: string

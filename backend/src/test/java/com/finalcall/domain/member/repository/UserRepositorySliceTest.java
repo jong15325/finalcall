@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.jpa.JpaSystemException;
 
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.infra.config.JpaConfig;
@@ -45,6 +46,39 @@ class UserRepositorySliceTest {
         assertThat(saved.getUpdatedAt()).isNotNull();
         assertThat(saved.isAdmin()).isFalse();
         assertThat(saved.isDeleted()).isFalse();
+    }
+
+    @Test
+    void 기본_캐릭터_sparse_경계값은_DB에_저장된다() {
+        User normal = user("normal12", "노말12");
+        normal.changePrimaryCharacter(12);
+        User specialStart = user("special25", "스페셜25");
+        specialStart.changePrimaryCharacter(25);
+        User specialEnd = user("special28", "스페셜28");
+        specialEnd.changePrimaryCharacter(28);
+
+        assertThatCode(() -> userRepository.saveAllAndFlush(java.util.List.of(normal, specialStart, specialEnd)))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 기본_캐릭터_13은_DB_CHECK가_거부한다() {
+        User invalid = user("invalid13", "금지13");
+        invalid.changePrimaryCharacter(13);
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(invalid))
+            .isInstanceOf(JpaSystemException.class)
+            .hasMessageContaining("chk_user_primary_character");
+    }
+
+    @Test
+    void 기본_캐릭터_24는_DB_CHECK가_거부한다() {
+        User invalid = user("invalid24", "금지24");
+        invalid.changePrimaryCharacter(24);
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(invalid))
+            .isInstanceOf(JpaSystemException.class)
+            .hasMessageContaining("chk_user_primary_character");
     }
 
     @Test

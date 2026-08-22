@@ -1,19 +1,34 @@
+import ProfileAvatar from '@/features/member/components/ProfileAvatar'
+
 /**
  * 메모 아바타 (FC-172) — 닉네임 이니셜 원형. 시스템(운영자) 메모는 네이비 채움 + 골드 글자로
  * 회원 아바타와 구분한다(별도 이미지 자산 없음 · 정직성).
  */
 interface MemoAvatarProps {
     initial: string
+    name?: string
     system?: boolean
     /** 크기 유틸(예: `size-10`). 기본 `size-10`. */
     className?: string
+    primaryCharacterId?: number | null
 }
 
 function MemoAvatar({
     initial,
+    name = initial,
     system = false,
     className = 'size-10',
+    primaryCharacterId,
 }: MemoAvatarProps) {
+    if (!system) {
+        return (
+            <ProfileAvatar
+                primaryCharacterId={primaryCharacterId}
+                name={name}
+                className={`${className} rounded-full border border-content-line`}
+            />
+        )
+    }
     return (
         <span
             aria-hidden

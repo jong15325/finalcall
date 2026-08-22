@@ -90,6 +90,7 @@ class MemberControllerTest {
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.userPublicId").isNotEmpty())
             .andExpect(jsonPath("$.data.nickname").value("홍길동"))
+            .andExpect(jsonPath("$.data.primaryCharacterId").value(1))
             .andExpect(jsonPath("$.data.isAdmin").value(false)) // record boolean → 계약 키 'isAdmin' 유지
             .andExpect(jsonPath("$.data.createdAt").value("2026-07-17T00:00:00Z"));
     }
@@ -114,7 +115,7 @@ class MemberControllerTest {
 
     @Test
     void 프로필_수정_성공은_수정된_스키마를_반환한다() throws Exception {
-        when(memberService.updateNickname("새닉네임")).thenReturn(profileUser("새닉네임", false));
+        when(memberService.updateProfile("새닉네임", null)).thenReturn(profileUser("새닉네임", false));
 
         mockMvc.perform(patch(ME_URL).with(user("42"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -125,6 +126,77 @@ class MemberControllerTest {
     }
 
     @Test
+    void 기본_캐릭터만_부분_수정할_수_있다() throws Exception {
+        User user = profileUser("그대로", false);
+        user.changePrimaryCharacter(25);
+        when(memberService.updateProfile(null, 25)).thenReturn(user);
+
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"primaryCharacterId\":25}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.nickname").value("그대로"))
+            .andExpect(jsonPath("$.data.primaryCharacterId").value(25));
+    }
+
+    @Test
+    void 프로필_빈_요청과_명시적_null은_400이다() throws Exception {
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}"))
+            .andExpect(status().isBadRequest());
+
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"primaryCharacterId\":null}"))
+            .andExpect(status().isBadRequest());
+
+        verify(memberService, never()).updateProfile(any(), any());
+    }
+
+    @Test
+    void 프로필_알_수_없는_필드는_400이다() throws Exception {
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"primaryCharacterId\":12,\"unknown\":true}"))
+            .andExpect(status().isBadRequest());
+
+        verify(memberService, never()).updateProfile(any(), any());
+    }
+
+    @Test
+    void 기본_캐릭터_범위_위반은_MEMBER_003이다() throws Exception {
+        when(memberService.updateProfile(null, 29))
+            .thenThrow(new BusinessException(MemberErrorCode.MEMBER_INVALID_PRIMARY_CHARACTER));
+
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"primaryCharacterId\":29}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("MEMBER_003"));
+    }
+
+    @Test
+    void int_범위를_넘는_기본_캐릭터는_wrap하지_않고_MEMBER_003이다() throws Exception {
+        when(memberService.updateProfile(null, 0))
+            .thenThrow(new BusinessException(MemberErrorCode.MEMBER_INVALID_PRIMARY_CHARACTER));
+
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"primaryCharacterId\":4294967297}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("MEMBER_003"));
+
+        mockMvc.perform(patch(ME_URL).with(user("42"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"primaryCharacterId\":4294967321}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("MEMBER_003"));
+
+        verify(memberService, org.mockito.Mockito.times(2)).updateProfile(null, 0);
+    }
+
+    @Test
     void 프로필_수정_빈닉네임은_400이다() throws Exception {
         mockMvc.perform(patch(ME_URL).with(user("42"))
             .contentType(MediaType.APPLICATION_JSON)
@@ -132,12 +204,12 @@ class MemberControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("COMMON_001"));
 
-        verify(memberService, never()).updateNickname(any());
+        verify(memberService, never()).updateProfile(any(), any());
     }
 
     @Test
     void 프로필_수정_닉네임중복은_MEMBER_001이다() throws Exception {
-        when(memberService.updateNickname("중복닉"))
+        when(memberService.updateProfile("중복닉", null))
             .thenThrow(new BusinessException(MemberErrorCode.MEMBER_DUPLICATE_NICKNAME));
 
         mockMvc.perform(patch(ME_URL).with(user("42"))

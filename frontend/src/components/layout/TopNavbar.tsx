@@ -22,6 +22,7 @@ import { paths } from '@/app/paths'
 import { usePageContext } from './pageContext'
 import { UNREAD_BADGE_CLASS } from './unreadBadge'
 import BrandLogo from '@/components/brand/BrandLogo'
+import ProfileAvatar from '@/features/member/components/ProfileAvatar'
 import type { RefObject } from 'react'
 
 /**
@@ -218,19 +219,32 @@ function TopNavbar({ menuButtonRef, onOpenMobile }: TopNavbarProps) {
                             triggerLabel="사용자 메뉴 열기"
                             triggerClassName="flex items-center rounded-full"
                             trigger={
-                                <span className="flex size-9 items-center justify-center rounded-full bg-chrome-selected text-sm font-bold text-chrome-fg">
-                                    {user?.nickname?.slice(0, 1) ?? '?'}
-                                </span>
+                                <ProfileAvatar
+                                    primaryCharacterId={
+                                        user?.primaryCharacterId
+                                    }
+                                    name={user?.nickname ?? '회원'}
+                                    className="size-9 rounded-full"
+                                />
                             }
                             panelClassName="w-56"
                         >
-                            <div className="border-b border-chrome-selected px-4 py-3">
-                                <p className="truncate text-sm font-bold text-chrome-fg">
-                                    {user?.nickname ?? '회원'}
-                                </p>
-                                <p className="text-xs text-chrome-muted">
-                                    {user?.isAdmin ? '관리자' : '일반 회원'}
-                                </p>
+                            <div className="flex items-center gap-2.5 border-b border-chrome-selected px-4 py-3">
+                                <ProfileAvatar
+                                    primaryCharacterId={
+                                        user?.primaryCharacterId
+                                    }
+                                    name={user?.nickname ?? '회원'}
+                                    className="size-9 rounded-full"
+                                />
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-bold text-chrome-fg">
+                                        {user?.nickname ?? '회원'}
+                                    </p>
+                                    <p className="text-xs text-chrome-muted">
+                                        {user?.isAdmin ? '관리자' : '일반 회원'}
+                                    </p>
+                                </div>
                             </div>
                             <nav className="p-1.5">
                                 <NavLink

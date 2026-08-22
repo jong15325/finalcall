@@ -65,6 +65,7 @@ function AuthProvider({ children }: AuthProviderProps) {
                 setUser({
                     userPublicId: me.userPublicId,
                     nickname: me.nickname,
+                    primaryCharacterId: me.primaryCharacterId,
                     isAdmin: me.isAdmin,
                 })
             } catch (error) {

@@ -21,6 +21,7 @@ import lombok.Builder;
 public record ReplyResponse(
     String commentPublicId,
     String authorNickname,
+    Integer authorPrimaryCharacterId,
     String content,
     Instant createdAt,
     Instant updatedAt,
@@ -40,9 +41,15 @@ public record ReplyResponse(
      */
     public static ReplyResponse from(
         Comment comment, boolean editable, boolean ownedByMe, String myReaction) {
+        return from(comment, editable, ownedByMe, myReaction, null);
+    }
+
+    public static ReplyResponse from(
+        Comment comment, boolean editable, boolean ownedByMe, String myReaction, Integer authorPrimaryCharacterId) {
         return ReplyResponse.builder()
             .commentPublicId(comment.getPublicId())
             .authorNickname(comment.getAuthorNickname())
+            .authorPrimaryCharacterId(authorPrimaryCharacterId)
             .content(comment.getContent())
             .createdAt(comment.getCreatedAt())
             .updatedAt(comment.getUpdatedAt())

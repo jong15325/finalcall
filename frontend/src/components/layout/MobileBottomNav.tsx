@@ -3,6 +3,8 @@ import { paths } from '@/app/paths'
 import { useUnreadMemoCount } from '@/lib/queries/memos'
 import { mobileNav } from './navItems'
 import { UNREAD_BADGE_CLASS } from './unreadBadge'
+import useAuth from '@/auth/useAuth'
+import ProfileAvatar from '@/features/member/components/ProfileAvatar'
 
 /**
  * 모바일 하단 네비게이션 (FC-067 — HANDOVER §5.3).
@@ -13,6 +15,7 @@ import { UNREAD_BADGE_CLASS } from './unreadBadge'
  * ★ 준비 중(ready=false) 항목은 **`disabled` 버튼** — opacity 만의 비활성 금지(WCAG 4.1.2).
  */
 function MobileBottomNav() {
+    const { authenticated, user } = useAuth()
     const { data: unreadMemo } = useUnreadMemoCount()
     const unreadCount = unreadMemo?.count ?? 0
 
@@ -55,7 +58,17 @@ function MobileBottomNav() {
                         }
                     >
                         <span className="relative">
-                            {Icon && <Icon aria-hidden className="size-6" />}
+                            {item.to === paths.me && authenticated ? (
+                                <ProfileAvatar
+                                    primaryCharacterId={
+                                        user?.primaryCharacterId
+                                    }
+                                    name={user?.nickname ?? '회원'}
+                                    className="size-6 rounded-full"
+                                />
+                            ) : (
+                                Icon && <Icon aria-hidden className="size-6" />
+                            )}
                             {showBadge && (
                                 <span
                                     className={`absolute -right-2 -top-1 grid min-w-[15px] place-items-center rounded-full px-1 text-[9px] leading-[15px] ${UNREAD_BADGE_CLASS}`}

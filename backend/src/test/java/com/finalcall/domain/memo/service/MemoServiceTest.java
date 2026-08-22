@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -153,6 +154,29 @@ class MemoServiceTest {
 
         assertThat(memo.isRead()).isFalse(); // 보낸함 열람은 전이 없음(§4.1)
         assertThat(memo.getReadAt()).isNull();
+    }
+
+    @Test
+    void 받은함_프로필은_회원_한번의_배치조회로_조립한다() {
+        authenticateAs("20");
+        Memo first = memoBetween(10L, 20L);
+        Memo second = Memo.builder().publicId("PUB2").senderId(11L).senderNickname("발신자2")
+            .receiverId(20L).receiverNickname("수신자").memoType(Memo.TYPE_USER).body("본문2").build();
+        ReflectionTestUtils.setField(first, "id", 2L);
+        ReflectionTestUtils.setField(second, "id", 1L);
+        User firstSender = userWith(10L, "발신자");
+        firstSender.changePrimaryCharacter(12);
+        User secondSender = userWith(11L, "발신자2");
+        secondSender.changePrimaryCharacter(25);
+        when(memoRepository.findReceivedByCursor(org.mockito.ArgumentMatchers.eq(20L), any(),
+            org.mockito.ArgumentMatchers.eq(20))).thenReturn(List.of(first, second));
+        when(userRepository.findAllById(List.of(10L, 11L))).thenReturn(List.of(firstSender, secondSender));
+
+        var response = memoService.getReceived(null, 20);
+
+        assertThat(response.content()).extracting(item -> item.characterProfile().get("senderPrimaryCharacterId"))
+            .containsExactly(12, 25);
+        verify(userRepository).findAllById(List.of(10L, 11L));
     }
 
     /** JWT 필터가 적재하는 형태와 동일하게 principal=userId 로 SecurityContext 를 세팅한다(B-009). */

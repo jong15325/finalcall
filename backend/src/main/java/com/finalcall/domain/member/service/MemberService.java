@@ -76,15 +76,22 @@ public class MemberService {
      */
     @Transactional
     @ServiceLog
-    public User updateNickname(String nickname) {
+    public User updateProfile(String nickname, Integer primaryCharacterId) {
         User user = currentActiveUser();
-        boolean changed = !user.getNickname().equals(nickname);
+        Preconditions.validate(primaryCharacterId == null || isSelectablePrimaryCharacter(primaryCharacterId),
+            MemberErrorCode.MEMBER_INVALID_PRIMARY_CHARACTER);
+        boolean changed = nickname != null && !user.getNickname().equals(nickname);
         if (changed) {
             Preconditions.validate(
                 !userRepository.existsByNicknameAndIsDeletedFalse(nickname),
                 MemberErrorCode.MEMBER_DUPLICATE_NICKNAME);
         }
-        user.changeNickname(nickname);
+        if (nickname != null) {
+            user.changeNickname(nickname);
+        }
+        if (primaryCharacterId != null) {
+            user.changePrimaryCharacter(primaryCharacterId);
+        }
         if (changed) {
             try {
                 userRepository.flush(); // 커밋 전 강제 flush — 경쟁 중복 UK 위반을 이 계층에서 매핑하기 위함
@@ -106,6 +113,11 @@ public class MemberService {
             return new BusinessException(MemberErrorCode.MEMBER_DUPLICATE_NICKNAME);
         }
         throw ex;
+    }
+
+    private boolean isSelectablePrimaryCharacter(int primaryCharacterId) {
+        return primaryCharacterId >= 1 && primaryCharacterId <= 12
+            || primaryCharacterId >= 25 && primaryCharacterId <= 28;
     }
 
     /**

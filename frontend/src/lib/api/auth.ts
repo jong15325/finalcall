@@ -167,8 +167,13 @@ export function getMe(): Promise<MeResponse> {
 }
 
 /** 프로필 수정 — nickname 한정 (계약 §2.5). 실패: `MEMBER_001`(중복, 409) */
-export function updateMe(nickname: string): Promise<MeResponse> {
-    return apiClient.patch<MeResponse>('/me', { nickname })
+export interface UpdateMeRequest {
+    nickname?: string
+    primaryCharacterId?: number
+}
+
+export function updateMe(body: UpdateMeRequest): Promise<MeResponse> {
+    return apiClient.patch<MeResponse>('/me', body)
 }
 
 /**

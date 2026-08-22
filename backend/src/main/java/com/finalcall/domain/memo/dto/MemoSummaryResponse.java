@@ -1,7 +1,11 @@
 package com.finalcall.domain.memo.dto;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.finalcall.domain.memo.entity.Memo;
 
@@ -22,6 +26,7 @@ public record MemoSummaryResponse(
     int type,
     String senderNickname,
     String receiverNickname,
+    @JsonIgnore Map<String, Integer> characterProfile,
     Integer senderLevel,
     Integer senderGender,
     String bodyPreview,
@@ -33,15 +38,25 @@ public record MemoSummaryResponse(
 
     /** 받은함 항목 — 상대(발신자) 닉을 싣는다({@code receiverNickname} 은 null 로 응답에서 제외). */
     public static MemoSummaryResponse received(Memo memo) {
+        return received(memo, null);
+    }
+
+    public static MemoSummaryResponse received(Memo memo, Integer primaryCharacterId) {
         return base(memo)
             .senderNickname(memo.getSenderNickname())
+            .characterProfile(Collections.singletonMap("senderPrimaryCharacterId", primaryCharacterId))
             .build();
     }
 
     /** 보낸함 항목 — 상대(수신자) 닉을 싣는다({@code senderNickname} 은 null 로 응답에서 제외). */
     public static MemoSummaryResponse sent(Memo memo) {
+        return sent(memo, null);
+    }
+
+    public static MemoSummaryResponse sent(Memo memo, Integer primaryCharacterId) {
         return base(memo)
             .receiverNickname(memo.getReceiverNickname())
+            .characterProfile(Collections.singletonMap("receiverPrimaryCharacterId", primaryCharacterId))
             .build();
     }
 
@@ -54,6 +69,12 @@ public record MemoSummaryResponse(
             .bodyPreview(preview(memo.getBody()))
             .isRead(memo.isRead())
             .createdAt(memo.getCreatedAt());
+    }
+
+    /** 받은함/보낸함 방향에 해당하는 프로필 필드 하나만 JSON 최상위에 노출한다. */
+    @JsonAnyGetter
+    public Map<String, Integer> profileFields() {
+        return characterProfile;
     }
 
     private static String preview(String body) {

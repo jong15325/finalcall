@@ -31,6 +31,7 @@ const post = {
     title: longText,
     content: longText,
     authorNickname: '작성자',
+    authorPrimaryCharacterId: 2,
     isPinned: true,
     viewCount: 12,
     commentCount: 1,
@@ -101,6 +102,10 @@ describe('PostDetailPage 공통 콘텐츠 폭 계약', () => {
             expect(article).toContainElement(screen.getByLabelText('댓글'))
             expect(article).toContainElement(
                 screen.getByRole('button', { name: '댓글 등록' }),
+            )
+            expect(screen.getByAltText('작성자 프로필')).toHaveAttribute(
+                'src',
+                '/art/characters/profile/uc_02_shamoo.png',
             )
         },
     )

@@ -45,12 +45,14 @@ export interface MemoSummary {
     type: number
     /** 받은함 = 상대(발신자) 닉네임 */
     senderNickname?: string
+    senderPrimaryCharacterId?: number | null
     /** 받은함 = 발신자 레벨 스냅샷(현재 기본 1) */
     senderLevel?: number
     /** 받은함 = 발신자 성별 스냅샷(0=남·1=여, 현재 기본 0) */
     senderGender?: number
     /** 보낸함 = 상대(수신자) 닉네임 */
     receiverNickname?: string
+    receiverPrimaryCharacterId?: number | null
     /** 본문 미리보기(목록 전용) */
     bodyPreview: string
     isRead: boolean
@@ -66,9 +68,11 @@ export interface MemoResponse {
     memoPublicId: string
     type: number
     senderNickname: string
+    senderPrimaryCharacterId?: number | null
     senderLevel: number
     senderGender: number
     receiverNickname: string
+    receiverPrimaryCharacterId?: number | null
     body: string
     isRead: boolean
     readAt?: string | null

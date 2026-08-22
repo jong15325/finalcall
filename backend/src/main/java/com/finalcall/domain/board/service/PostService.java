@@ -3,6 +3,8 @@ package com.finalcall.domain.board.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -64,8 +66,12 @@ public class PostService {
         List<Post> fetched = postRepository.findByBoardCursor(board.getId(), PostCursor.decode(cursor), size);
         // 글당 첫 첨부 이미지 presigned 썸네일을 배치로 조립(N+1 회피). 첨부 없는 글은 맵에 없어 null 로 렌더된다.
         Map<Long, String> thumbnails = postImageService.thumbnailsOf(fetched.stream().map(Post::getId).toList());
+        Map<Long, User> authors = userRepository.findAllById(
+            fetched.stream().map(Post::getAuthorId).filter(java.util.Objects::nonNull).distinct().toList()).stream()
+            .collect(Collectors.toMap(User::getId, Function.identity()));
         return CursorResponse.from(fetched, size,
-            post -> PostSummary.from(post, thumbnails.get(post.getId())),
+            post -> PostSummary.from(post, thumbnails.get(post.getId()),
+                primaryCharacterId(authors.get(post.getAuthorId()))),
             post -> PostCursor.encode(post.isPinned(), post.getId()));
     }
 
@@ -116,7 +122,9 @@ public class PostService {
 
         Long viewerId = currentUserIdOrNull();
         boolean editable = post.isOwnedBy(viewerId) || (viewerId != null && currentUserIsAdmin());
-        return PostDetailResponse.from(post, board.getSlug(), editable, postImageService.imagesOf(post.getId()));
+        User author = post.getAuthorId() == null ? null : userRepository.findById(post.getAuthorId()).orElse(null);
+        return PostDetailResponse.from(post, board.getSlug(), editable, postImageService.imagesOf(post.getId()),
+            primaryCharacterId(author));
     }
 
     /**
@@ -174,6 +182,10 @@ public class PostService {
     /** 작성 쓰기정책 게이팅 — {@code ADMIN_ONLY} 는 관리자만, {@code AUTHENTICATED} 는 임의 인증(항상 허용). */
     private boolean canWrite(Board board, boolean admin) {
         return board.getWritePolicy() != WritePolicy.ADMIN_ONLY || admin;
+    }
+
+    private Integer primaryCharacterId(User user) {
+        return user == null || user.isDeleted() ? null : user.getPrimaryCharacterId();
     }
 
     /** 인증 주체(내부 PK)를 해석한다. 쓰기 엔드포인트라 SecurityConfig 가 인증을 강제한다(B-009). */

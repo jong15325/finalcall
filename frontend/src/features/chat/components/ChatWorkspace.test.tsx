@@ -45,6 +45,7 @@ vi.mock('../lib/ChatRealtimeProvider', () => ({
 const CURRENT_USER = {
     userPublicId: 'member-me',
     nickname: '나',
+    primaryCharacterId: 2,
     isAdmin: false,
 }
 const CLIENT_MESSAGE_ID = '00000000-0000-4000-8000-000000000001'
@@ -62,8 +63,13 @@ function message(
             ? {
                   memberPublicId: CURRENT_USER.userPublicId,
                   nickname: CURRENT_USER.nickname,
+                  primaryCharacterId: CURRENT_USER.primaryCharacterId,
               }
-            : { memberPublicId: 'member-luna', nickname: '루나상점' },
+            : {
+                  memberPublicId: 'member-luna',
+                  nickname: '루나상점',
+                  primaryCharacterId: 25,
+              },
         body,
         sentByMe,
         createdAt: `2026-08-18T09:0${roomSequence}:00Z`,
@@ -337,6 +343,9 @@ describe('ChatWorkspace', () => {
         expect(
             within(selectedConversation).getAllByText('지금 접속할게요.'),
         ).toHaveLength(1)
+        expect(
+            within(selectedConversation).getByAltText('나 프로필'),
+        ).toHaveAttribute('src', '/art/characters/profile/uc_02_shamoo.png')
 
         mock.emit({
             eventId: 'event-2',

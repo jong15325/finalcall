@@ -67,6 +67,10 @@ public class User extends BaseTimeEntity {
     @Column(name = "is_admin", nullable = false)
     private boolean isAdmin;
 
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    @Column(name = "primary_character_id", nullable = false, columnDefinition = "TINYINT UNSIGNED")
+    private int primaryCharacterId;
+
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
 
@@ -80,12 +84,18 @@ public class User extends BaseTimeEntity {
         this.passwordHash = passwordHash;
         this.nickname = nickname;
         this.isAdmin = isAdmin;
+        this.primaryCharacterId = 1;
         this.isDeleted = false;
     }
 
     /** 닉네임 변경(도메인 메서드). @Setter 대신 사용. */
     public void changeNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    /** 사이트에서 사용할 기본 캐릭터를 변경한다. */
+    public void changePrimaryCharacter(int primaryCharacterId) {
+        this.primaryCharacterId = primaryCharacterId;
     }
 
     /** 비밀번호(해시) 변경(도메인 메서드). 해싱은 호출 측 책임. */

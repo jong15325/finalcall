@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="euc-kr"?>
+<WINDOW CLASS_NAME="CharSelectBtnWnd">
+	<NAME_ID NAME="cs_btn" ID="125"/>
+	<SIZE X="71" Y="326" WIDTH="41" HEIGHT="45"/>
+	<NORMAL_IMAGE NAME="room\char_select\back_btn.pgf" LOAD_TYPE="LOAD_SIZE"/>
+	<CLICK_IMAGE NAME="room\char_select\back_btn.pgf"/>
+	<OVER_IMAGE NAME="room\char_select\back_btn.pgf"/>
+	<STYLE>IWS_BACKMOST</STYLE>
+	<CHILD_LIST>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="select_normal" ID="1"/>
+			<SIZE X="2" Y="2"/>
+                        <NORMAL_IMAGE NAME="room\char_select\btn_nc_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+                        <CLICK_IMAGE NAME="room\char_select\btn_nc_c.pgf"/>
+                        <OVER_IMAGE NAME="room\char_select\btn_nc_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+		<BUTTON CLASS_NAME="ioButton">
+			<NAME_ID NAME="select_premium" ID="2"/>
+			<SIZE X="2" Y="2"/>
+                        <NORMAL_IMAGE NAME="room\char_select\btn_pc_n.pgf" LOAD_TYPE="LOAD_SIZE"/>
+                        <CLICK_IMAGE NAME="room\char_select\btn_pc_c.pgf"/>
+                        <OVER_IMAGE NAME="room\char_select\btn_pc_n.pgf" DRAW_TYPE="DRAW_SCREEN_PLUS"/>
+			<STYLE>IWS_BACKMOST</STYLE>
+		</BUTTON>
+	</CHILD_LIST>
+</WINDOW>

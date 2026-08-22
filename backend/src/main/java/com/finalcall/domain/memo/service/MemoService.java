@@ -2,6 +2,9 @@ package com.finalcall.domain.memo.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -92,7 +95,10 @@ public class MemoService {
     public CursorResponse<MemoSummaryResponse, String> getReceived(String cursor, int size) {
         Long userId = currentUserId();
         List<Memo> fetched = memoRepository.findReceivedByCursor(userId, MemoCursor.decode(cursor), size);
-        return CursorResponse.from(fetched, size, MemoSummaryResponse::received, m -> MemoCursor.encode(m.getId()));
+        Map<Long, User> users = usersById(fetched.stream().map(Memo::getSenderId).toList());
+        return CursorResponse.from(fetched, size,
+            memo -> MemoSummaryResponse.received(memo, primaryCharacterId(users.get(memo.getSenderId()))),
+            m -> MemoCursor.encode(m.getId()));
     }
 
     /** 보낸함(계약 §2.6, 커서) — sender=주체 AND 미삭제, id DESC. */
@@ -100,7 +106,10 @@ public class MemoService {
     public CursorResponse<MemoSummaryResponse, String> getSent(String cursor, int size) {
         Long userId = currentUserId();
         List<Memo> fetched = memoRepository.findSentByCursor(userId, MemoCursor.decode(cursor), size);
-        return CursorResponse.from(fetched, size, MemoSummaryResponse::sent, m -> MemoCursor.encode(m.getId()));
+        Map<Long, User> users = usersById(fetched.stream().map(Memo::getReceiverId).toList());
+        return CursorResponse.from(fetched, size,
+            memo -> MemoSummaryResponse.sent(memo, primaryCharacterId(users.get(memo.getReceiverId()))),
+            m -> MemoCursor.encode(m.getId()));
     }
 
     /** 미열람 개수(계약 §2.6, 뱃지) — receiver=주체 AND 미삭제 AND 미열람. */
@@ -123,7 +132,10 @@ public class MemoService {
         if (memo.isReceiver(userId)) {
             memo.markRead(Instant.now());
         }
-        return MemoResponse.from(memo);
+        Map<Long, User> users = usersById(java.util.stream.Stream.of(memo.getSenderId(), memo.getReceiverId())
+            .filter(java.util.Objects::nonNull).toList());
+        return MemoResponse.from(memo, primaryCharacterId(users.get(memo.getSenderId())),
+            primaryCharacterId(users.get(memo.getReceiverId())));
     }
 
     /**
@@ -144,5 +156,14 @@ public class MemoService {
     private Long currentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return Long.parseLong(authentication.getName());
+    }
+
+    private Map<Long, User> usersById(List<Long> userIds) {
+        return userRepository.findAllById(userIds.stream().filter(java.util.Objects::nonNull).distinct().toList())
+            .stream().collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
+    private Integer primaryCharacterId(User user) {
+        return user == null || user.isDeleted() ? null : user.getPrimaryCharacterId();
     }
 }

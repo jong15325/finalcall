@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 public enum MemberErrorCode implements ErrorCode {
 
     MEMBER_DUPLICATE_NICKNAME("MEMBER_001", HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
-    MEMBER_WITHDRAW_BLOCKED_BY_ACTIVE_TRADE("MEMBER_002", HttpStatus.CONFLICT, "진행 중인 거래가 있어 탈퇴할 수 없습니다.");
+    MEMBER_WITHDRAW_BLOCKED_BY_ACTIVE_TRADE("MEMBER_002", HttpStatus.CONFLICT, "진행 중인 거래가 있어 탈퇴할 수 없습니다."),
+    MEMBER_INVALID_PRIMARY_CHARACTER("MEMBER_003", HttpStatus.BAD_REQUEST,
+        "선택 가능한 기본 캐릭터 ID는 1~12 또는 25~28입니다.");
 
     private final String code;
     private final HttpStatus status;

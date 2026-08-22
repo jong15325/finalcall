@@ -20,6 +20,7 @@ public record PostSummary(
     String postPublicId,
     String title,
     String authorNickname,
+    Integer authorPrimaryCharacterId,
     // record 의 boolean 컴포넌트가 Jackson 에서 'pinned' 로 오인 매핑되지 않도록 계약 키(isPinned)를 명시한다.
     @JsonProperty("isPinned") boolean isPinned,
     int viewCount,
@@ -39,10 +40,15 @@ public record PostSummary(
      * @param thumbnailUrl 첫 첨부 이미지 presigned URL(없으면 null)
      */
     public static PostSummary from(Post post, String thumbnailUrl) {
+        return from(post, thumbnailUrl, null);
+    }
+
+    public static PostSummary from(Post post, String thumbnailUrl, Integer authorPrimaryCharacterId) {
         return PostSummary.builder()
             .postPublicId(post.getPublicId())
             .title(post.getTitle())
             .authorNickname(post.getAuthorNickname())
+            .authorPrimaryCharacterId(authorPrimaryCharacterId)
             .isPinned(post.isPinned())
             .viewCount(post.getViewCount())
             .commentCount(post.getCommentCount())

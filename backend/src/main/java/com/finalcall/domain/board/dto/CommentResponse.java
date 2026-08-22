@@ -22,6 +22,7 @@ import lombok.Builder;
 public record CommentResponse(
     String commentPublicId,
     String authorNickname,
+    Integer authorPrimaryCharacterId,
     String content,
     Instant createdAt,
     Instant updatedAt,
@@ -42,10 +43,16 @@ public record CommentResponse(
      */
     public static CommentResponse fromRoot(
         Comment comment, boolean editable, boolean ownedByMe, String myReaction) {
+        return fromRoot(comment, editable, ownedByMe, myReaction, null);
+    }
+
+    public static CommentResponse fromRoot(
+        Comment comment, boolean editable, boolean ownedByMe, String myReaction, Integer authorPrimaryCharacterId) {
         if (comment.isTombstone()) {
             return CommentResponse.builder()
                 .commentPublicId(comment.getPublicId())
                 .authorNickname(null)
+                .authorPrimaryCharacterId(null)
                 .content(null)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
@@ -61,6 +68,7 @@ public record CommentResponse(
         return CommentResponse.builder()
             .commentPublicId(comment.getPublicId())
             .authorNickname(comment.getAuthorNickname())
+            .authorPrimaryCharacterId(authorPrimaryCharacterId)
             .content(comment.getContent())
             .createdAt(comment.getCreatedAt())
             .updatedAt(comment.getUpdatedAt())

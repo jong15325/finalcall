@@ -6,7 +6,7 @@ import {
     verifyEmailCode,
 } from '@/lib/api/email'
 import { useAuthStore, useIsAuthenticated } from '@/store/authStore'
-import type { MeResponse } from '@/lib/api/auth'
+import type { MeResponse, UpdateMeRequest } from '@/lib/api/auth'
 import type { SetEmailResponse, VerifyEmailResponse } from '@/lib/api/email'
 
 /**
@@ -50,10 +50,24 @@ export function useUpdateNickname() {
     const queryClient = useQueryClient()
 
     return useMutation<MeResponse, Error, string>({
-        mutationFn: (nickname) => updateMe(nickname),
+        mutationFn: (nickname) => updateMe({ nickname }),
         onSuccess: (me) => {
             queryClient.setQueryData(meKeys.profile(), me)
             useAuthStore.getState().updateUser({ nickname: me.nickname })
+        },
+    })
+}
+
+export function useUpdateProfile() {
+    const queryClient = useQueryClient()
+    return useMutation<MeResponse, Error, UpdateMeRequest>({
+        mutationFn: updateMe,
+        onSuccess: (me) => {
+            queryClient.setQueryData(meKeys.profile(), me)
+            useAuthStore.getState().updateUser({
+                nickname: me.nickname,
+                primaryCharacterId: me.primaryCharacterId,
+            })
         },
     })
 }
