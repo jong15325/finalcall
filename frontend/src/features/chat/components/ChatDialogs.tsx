@@ -16,9 +16,9 @@ export function NewChatDialog({
     onClose,
     onSubmit,
 }: DialogBaseProps & {
-    onSubmit: (nickname: string) => Promise<boolean>
+    onSubmit: (counterpartNickname: string) => Promise<boolean>
 }) {
-    const [nickname, setNickname] = useState('')
+    const [counterpartNickname, setCounterpartNickname] = useState('')
     const titleId = useId()
     const dialogRef = useRef<HTMLElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -26,7 +26,7 @@ export function NewChatDialog({
     useDialogKeyboard(open, onClose, dialogRef)
     useEffect(() => {
         if (!open) return
-        setNickname('')
+        setCounterpartNickname('')
         requestAnimationFrame(() => inputRef.current?.focus())
     }, [open])
 
@@ -59,7 +59,8 @@ export function NewChatDialog({
                                 새 대화 시작
                             </h2>
                             <p className="mt-1 text-sm text-content-muted">
-                                상대의 정확한 닉네임을 입력해 주세요.
+                                첫 메시지를 보내기 전까지 상대에게 대화방이
+                                표시되지 않습니다.
                             </p>
                         </div>
                     </div>
@@ -78,7 +79,7 @@ export function NewChatDialog({
                     className="mt-6"
                     onSubmit={(event) => {
                         event.preventDefault()
-                        void onSubmit(nickname).then((succeeded) => {
+                        void onSubmit(counterpartNickname).then((succeeded) => {
                             if (succeeded) onClose()
                         })
                     }}
@@ -92,13 +93,15 @@ export function NewChatDialog({
                     <input
                         ref={inputRef}
                         id="new-chat-nickname"
-                        value={nickname}
+                        value={counterpartNickname}
                         maxLength={30}
                         autoComplete="off"
                         className="mt-2 min-h-11 w-full rounded-lg border border-content-line bg-content-surface px-3 text-base text-content-fg outline-none placeholder:text-content-subtle focus-visible:border-control-action focus-visible:ring-2 focus-visible:ring-control-focus"
                         placeholder="예: 루나상점"
                         aria-describedby={error ? 'new-chat-error' : undefined}
-                        onChange={(event) => setNickname(event.target.value)}
+                        onChange={(event) =>
+                            setCounterpartNickname(event.target.value)
+                        }
                     />
                     {error && (
                         <p
@@ -120,10 +123,13 @@ export function NewChatDialog({
                         </button>
                         <button
                             type="submit"
-                            disabled={pending || nickname.trim().length === 0}
+                            disabled={
+                                pending ||
+                                counterpartNickname.trim().length === 0
+                            }
                             className="min-h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:opacity-50"
                         >
-                            {pending ? '대화 여는 중…' : '대화 시작'}
+                            대화 작성
                         </button>
                     </div>
                 </form>

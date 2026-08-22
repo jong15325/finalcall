@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     chatBlockErrorMessage,
-    chatCreateRoomErrorMessage,
     chatLoadErrorMessage,
     chatReportErrorMessage,
     chatSendErrorMessage,
@@ -30,6 +29,8 @@ interface MessagePageState {
 
 type MessagesByRoom = Record<string, ChatTimelineMessage[]>
 type MessagePagesByRoom = Record<string, MessagePageState>
+
+const DRAFT_ROOM_PREFIX = 'draft:'
 
 export function useChatController({
     runtime,
@@ -381,20 +382,66 @@ export function useChatController({
             )
             setSendError(null)
             try {
-                const result = await runtime.rest.sendMessage(roomPublicId, {
-                    clientMessageId,
-                    body: optimistic.body,
-                })
-                updateMessages(roomPublicId, (current) =>
-                    mergeChatMessages(current, [result.message]),
+                const draftCounterpartNickname = roomPublicId.startsWith(
+                    DRAFT_ROOM_PREFIX,
                 )
-                updateRooms((current) =>
-                    current.map((room) =>
-                        room.roomPublicId === roomPublicId
-                            ? roomAfterMessage(room, result.message, true)
-                            : room,
-                    ),
-                )
+                    ? decodeURIComponent(
+                          roomPublicId.slice(DRAFT_ROOM_PREFIX.length),
+                      )
+                    : null
+                if (draftCounterpartNickname) {
+                    const directResult = await runtime.rest.sendDirectMessage({
+                        counterpartNickname: draftCounterpartNickname,
+                        clientMessageId,
+                        body: optimistic.body,
+                    })
+                    const persistedRoomId = directResult.room.roomPublicId
+                    updateRooms((current) =>
+                        mergeRooms(
+                            current.filter(
+                                ({ roomPublicId: candidateId }) =>
+                                    candidateId !== roomPublicId,
+                            ),
+                            [directResult.room],
+                        ),
+                    )
+                    const draftMessages =
+                        messagesRef.current[roomPublicId] ?? []
+                    const currentMessages = messagesRef.current
+                    const nextMessages = {
+                        ...currentMessages,
+                        [persistedRoomId]: mergeChatMessages(
+                            [
+                                ...(currentMessages[persistedRoomId] ?? []),
+                                ...draftMessages,
+                            ],
+                            [directResult.message],
+                        ),
+                    }
+                    delete nextMessages[roomPublicId]
+                    messagesRef.current = nextMessages
+                    setMessagesByRoom(nextMessages)
+                    selectedRoomRef.current = persistedRoomId
+                    setSelectedRoomId(persistedRoomId)
+                } else {
+                    const result = await runtime.rest.sendMessage(
+                        roomPublicId,
+                        {
+                            clientMessageId,
+                            body: optimistic.body,
+                        },
+                    )
+                    updateMessages(roomPublicId, (current) =>
+                        mergeChatMessages(current, [result.message]),
+                    )
+                    updateRooms((current) =>
+                        current.map((room) =>
+                            room.roomPublicId === roomPublicId
+                                ? roomAfterMessage(room, result.message, true)
+                                : room,
+                        ),
+                    )
+                }
             } catch (error) {
                 updateMessages(roomPublicId, (current) =>
                     upsertOptimisticMessage(current, {
@@ -530,7 +577,7 @@ export function useChatController({
                             )
                         }
                     })
-                } else if (cached) {
+                } else {
                     updateMessages(event.roomPublicId, (current) =>
                         mergeChatMessages(current, [message]),
                     )
@@ -549,6 +596,12 @@ export function useChatController({
                             : candidate,
                     ),
                 )
+
+                if (!room) {
+                    void refreshRoom(event.roomPublicId).catch(() => {
+                        void loadRooms(false)
+                    })
+                }
 
                 if (
                     selectedRoomRef.current === event.roomPublicId &&
@@ -599,7 +652,15 @@ export function useChatController({
                 )
             })
         },
-        [markRead, refreshRoom, replayGap, updateMessages, updateRooms, user],
+        [
+            loadRooms,
+            markRead,
+            refreshRoom,
+            replayGap,
+            updateMessages,
+            updateRooms,
+            user,
+        ],
     )
     handleEventRef.current = handleEvent
 
@@ -678,23 +739,42 @@ export function useChatController({
         [runtime],
     )
 
-    const createRoom = useCallback(
-        async (counterpartNickname: string) => {
-            setActionPending(true)
-            setActionError(null)
-            try {
-                const room = await runtime.rest.createRoom({
-                    counterpartNickname,
-                })
-                updateRooms((current) => mergeRooms(current, [room]))
-                selectRoom(room.roomPublicId)
+    const startDraft = useCallback(
+        (counterpartNickname: string) => {
+            const nickname = counterpartNickname.trim()
+            if (!nickname) return false
+            const existing = roomsRef.current.find(
+                ({ counterpart }) => counterpart.nickname === nickname,
+            )
+            if (existing) {
+                selectRoom(existing.roomPublicId)
                 return true
-            } catch (error) {
-                setActionError(chatCreateRoomErrorMessage(error))
-                return false
-            } finally {
-                setActionPending(false)
             }
+            const roomPublicId = `${DRAFT_ROOM_PREFIX}${encodeURIComponent(nickname)}`
+            const now = runtime.now()
+            const draftRoom: ChatRoomResponse = {
+                roomPublicId,
+                counterpart: {
+                    memberPublicId: '',
+                    nickname,
+                },
+                lastMessage: null,
+                lastSequence: 0,
+                lastReadSequence: 0,
+                counterpartLastReadSequence: 0,
+                unreadCount: 0,
+                blockedByMe: false,
+                canSend: true,
+                createdAt: now,
+                lastActivityAt: now,
+            }
+            updateRooms((current) => mergeRooms(current, [draftRoom]))
+            selectedRoomRef.current = roomPublicId
+            setSelectedRoomId(roomPublicId)
+            setConversationError(null)
+            setSendError(null)
+            setActionError(null)
+            return true
         },
         [runtime, selectRoom, updateRooms],
     )
@@ -736,12 +816,12 @@ export function useChatController({
         selectRoom,
         reloadRooms: () => void loadRooms(false),
         loadMoreRooms: () => void loadRooms(true),
-        loadOlder: () => void loadOlder(),
+        loadOlder,
         sendMessage,
         retryMessage,
         toggleBlock,
         reportMessage,
-        createRoom,
+        startDraft,
         clearNotice: () => setNotice(null),
         clearActionError: () => setActionError(null),
     }

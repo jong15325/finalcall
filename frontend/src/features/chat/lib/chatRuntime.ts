@@ -1,18 +1,19 @@
 import { Client, Versions } from '@stomp/stompjs'
 import {
     blockChatCounterpart,
-    createDirectChatRoom,
     getChatMessages,
     getChatRoom,
     getChatRooms,
     reportChatMessage,
+    sendDirectChatMessage,
     sendChatMessage,
     unblockChatCounterpart,
     updateChatRead,
 } from '@/lib/api/chat'
 import type {
     ChatCursorPage,
-    ChatDirectRoomCreateRequest,
+    ChatDirectMessageSendRequest,
+    ChatDirectMessageSendResponse,
     ChatEventResponse,
     ChatMessageListQuery,
     ChatMessageResponse,
@@ -40,7 +41,9 @@ export interface ChatRealtimeClient {
 }
 
 export interface ChatRestAdapter {
-    createRoom: (body: ChatDirectRoomCreateRequest) => Promise<ChatRoomResponse>
+    sendDirectMessage: (
+        body: ChatDirectMessageSendRequest,
+    ) => Promise<ChatDirectMessageSendResponse>
     listRooms: (
         query?: ChatRoomListQuery,
         signal?: AbortSignal,
@@ -80,7 +83,7 @@ export interface ChatRuntime {
 }
 
 const rest: ChatRestAdapter = {
-    createRoom: createDirectChatRoom,
+    sendDirectMessage: sendDirectChatMessage,
     listRooms: getChatRooms,
     getRoom: getChatRoom,
     getMessages: getChatMessages,

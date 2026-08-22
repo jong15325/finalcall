@@ -80,8 +80,13 @@ export interface ChatUnreadCountResponse {
     count: number
 }
 
-export interface ChatDirectRoomCreateRequest {
+export interface ChatDirectMessageSendRequest extends ChatMessageSendRequest {
     counterpartNickname: string
+}
+
+export interface ChatDirectMessageSendResponse extends ChatMessageSendResponse {
+    room: ChatRoomResponse
+    roomCreated: boolean
 }
 
 export interface ChatRoomListQuery {
@@ -130,10 +135,13 @@ export type ChatEventResponse =
           payload: BlockChangedPayload
       })
 
-export function createDirectChatRoom(
-    body: ChatDirectRoomCreateRequest,
-): Promise<ChatRoomResponse> {
-    return apiClient.post<ChatRoomResponse>('/me/chat-rooms/direct', body)
+export function sendDirectChatMessage(
+    body: ChatDirectMessageSendRequest,
+): Promise<ChatDirectMessageSendResponse> {
+    return apiClient.post<ChatDirectMessageSendResponse>(
+        '/me/chat-rooms/direct/messages',
+        body,
+    )
 }
 
 export function getChatRooms(

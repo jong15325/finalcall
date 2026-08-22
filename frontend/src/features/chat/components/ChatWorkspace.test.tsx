@@ -95,7 +95,22 @@ function createMockRuntime({
         )
 
     const rest: ChatRestAdapter = {
-        createRoom: vi.fn(async () => currentRooms[0]!),
+        sendDirectMessage: vi.fn(async (body) => ({
+            room:
+                currentRooms[0] ??
+                room({
+                    counterpart: {
+                        memberPublicId: 'member-new',
+                        nickname: body.counterpartNickname,
+                    },
+                }),
+            message: {
+                ...message(2, body.body, true),
+                clientMessageId: body.clientMessageId,
+            },
+            roomCreated: true,
+            deduplicated: false,
+        })),
         listRooms: vi.fn(async () => ({
             content: currentRooms,
             nextCursor: null,
@@ -546,6 +561,45 @@ describe('ChatWorkspace', () => {
         )
     })
 
+    it('상대 선택은 서버 호출 없는 초안이며 첫 메시지에서만 방과 메시지를 생성한다', async () => {
+        const mock = createMockRuntime({ rooms: [] })
+        render(
+            <ChatWorkspace
+                accessToken="access-token"
+                runtime={mock.runtime}
+                user={CURRENT_USER}
+            />,
+        )
+
+        await userEvent.click(
+            await screen.findByRole('button', { name: '새 대화 시작' }),
+        )
+        await userEvent.type(
+            screen.getByRole('textbox', { name: '상대 닉네임' }),
+            '새상대',
+        )
+        await userEvent.click(screen.getByRole('button', { name: '대화 작성' }))
+
+        expect(mock.rest.sendDirectMessage).not.toHaveBeenCalled()
+        const form = await screen.findByRole('form', { name: '메시지 작성' })
+        await userEvent.type(
+            within(form).getByRole('textbox', { name: '메시지 입력' }),
+            '첫 메시지',
+        )
+        await userEvent.click(
+            within(form).getByRole('button', { name: '메시지 보내기' }),
+        )
+
+        await waitFor(() =>
+            expect(mock.rest.sendDirectMessage).toHaveBeenCalledWith({
+                counterpartNickname: '새상대',
+                clientMessageId: CLIENT_MESSAGE_ID,
+                body: '첫 메시지',
+            }),
+        )
+        expect(mock.rest.sendMessage).not.toHaveBeenCalled()
+    })
+
     it('메시지 기록은 추가분 live log이며 하단 근처에서만 reduced-motion 방식으로 스크롤한다', async () => {
         const originalMatchMedia = window.matchMedia
         window.matchMedia = vi.fn((query: string) => ({
@@ -595,6 +649,17 @@ describe('ChatWorkspace', () => {
                 await within(log).findByText('스크롤 유지 메시지'),
             ).toBeVisible()
             expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled()
+            expect(
+                screen.getByRole('button', { name: '새 메시지 1개' }),
+            ).toBeVisible()
+
+            await userEvent.click(
+                screen.getByRole('button', { name: '새 메시지 1개' }),
+            )
+            expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+                behavior: 'auto',
+                block: 'end',
+            })
 
             log.scrollTop = 600
             fireEvent.scroll(log)

@@ -52,6 +52,7 @@ export default function ChatWorkspace({
     const timelineScrollRef = useRef<HTMLDivElement>(null)
     const timelineEndRef = useRef<HTMLDivElement>(null)
     const timelineNearBottomRef = useRef(true)
+    const [unseenMessageCount, setUnseenMessageCount] = useState(0)
     const reducedMotion = usePrefersReducedMotion()
 
     useVolatileQueueExitWarning(chat.hasQueuedMessages)
@@ -67,6 +68,7 @@ export default function ChatWorkspace({
         [chat.rooms, normalizedSearch],
     )
     const lastMessageKey = chat.messages.at(-1)?.clientMessageId
+    const latestMessageSentByMe = chat.messages.at(-1)?.sentByMe ?? false
 
     useEffect(() => {
         if (mobilePane === 'conversation') {
@@ -76,16 +78,26 @@ export default function ChatWorkspace({
 
     useEffect(() => {
         timelineNearBottomRef.current = true
+        setUnseenMessageCount(0)
     }, [chat.selectedRoomId])
 
     useEffect(() => {
         if (!lastMessageKey) return
-        if (!timelineNearBottomRef.current) return
+        if (!timelineNearBottomRef.current && !latestMessageSentByMe) {
+            setUnseenMessageCount((current) => current + 1)
+            return
+        }
+        setUnseenMessageCount(0)
         timelineEndRef.current?.scrollIntoView({
             behavior: reducedMotion ? 'auto' : 'smooth',
             block: 'end',
         })
-    }, [chat.selectedRoomId, lastMessageKey, reducedMotion])
+    }, [
+        chat.selectedRoomId,
+        lastMessageKey,
+        latestMessageSentByMe,
+        reducedMotion,
+    ])
 
     const openRoom = (roomPublicId: string) => {
         chat.selectRoom(roomPublicId)
@@ -106,8 +118,37 @@ export default function ChatWorkspace({
         messageInputRef.current?.focus()
     }
 
+    const loadOlderPreservingPosition = async () => {
+        const timeline = timelineScrollRef.current
+        if (!timeline) {
+            await chat.loadOlder()
+            return
+        }
+        const previousHeight = timeline.scrollHeight
+        const previousTop = timeline.scrollTop
+        await chat.loadOlder()
+        requestAnimationFrame(() => {
+            timeline.scrollTop =
+                previousTop + (timeline.scrollHeight - previousHeight)
+        })
+    }
+
+    const scrollToLatest = () => {
+        timelineNearBottomRef.current = true
+        setUnseenMessageCount(0)
+        timelineEndRef.current?.scrollIntoView({
+            behavior: reducedMotion ? 'auto' : 'smooth',
+            block: 'end',
+        })
+    }
+
+    const selectedIsDraft = chat.selectedRoomId?.startsWith('draft:') ?? false
+
     return (
-        <div data-chat-operational className="flex min-w-0 flex-col gap-4">
+        <div
+            data-chat-operational
+            className="flex min-h-0 min-w-0 flex-col gap-4"
+        >
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-content-fg">채팅</h1>
@@ -121,7 +162,7 @@ export default function ChatWorkspace({
 
             <section
                 aria-label="실시간 채팅"
-                className="relative min-w-0 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid lg:min-h-[640px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
+                className="relative h-[calc(100dvh-13rem)] min-h-[520px] max-h-[760px] min-w-0 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid lg:min-h-[640px] lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
             >
                 <aside
                     data-chat-list
@@ -359,38 +400,42 @@ export default function ChatWorkspace({
                                         </p>
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    disabled={chat.actionPending}
-                                    aria-label={
-                                        chat.selectedRoom.blockedByMe
-                                            ? '상대 차단 해제'
-                                            : '상대 차단'
-                                    }
-                                    className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-bold disabled:opacity-50 ${
-                                        chat.selectedRoom.blockedByMe
-                                            ? 'border border-content-line text-content-fg hover:bg-content-soft'
-                                            : 'text-danger-ink hover:bg-danger-soft'
-                                    }`}
-                                    onClick={() => {
-                                        chat.clearActionError()
-                                        if (chat.selectedRoom?.blockedByMe) {
-                                            void chat.toggleBlock()
-                                        } else {
-                                            setBlockConfirmOpen(true)
+                                {!selectedIsDraft && (
+                                    <button
+                                        type="button"
+                                        disabled={chat.actionPending}
+                                        aria-label={
+                                            chat.selectedRoom.blockedByMe
+                                                ? '상대 차단 해제'
+                                                : '상대 차단'
                                         }
-                                    }}
-                                >
-                                    <TbUserCancel
-                                        aria-hidden
-                                        className="size-5"
-                                    />
-                                    <span className="hidden sm:inline">
-                                        {chat.selectedRoom.blockedByMe
-                                            ? '차단 해제'
-                                            : '상대 차단'}
-                                    </span>
-                                </button>
+                                        className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-bold disabled:opacity-50 ${
+                                            chat.selectedRoom.blockedByMe
+                                                ? 'border border-content-line text-content-fg hover:bg-content-soft'
+                                                : 'text-danger-ink hover:bg-danger-soft'
+                                        }`}
+                                        onClick={() => {
+                                            chat.clearActionError()
+                                            if (
+                                                chat.selectedRoom?.blockedByMe
+                                            ) {
+                                                void chat.toggleBlock()
+                                            } else {
+                                                setBlockConfirmOpen(true)
+                                            }
+                                        }}
+                                    >
+                                        <TbUserCancel
+                                            aria-hidden
+                                            className="size-5"
+                                        />
+                                        <span className="hidden sm:inline">
+                                            {chat.selectedRoom.blockedByMe
+                                                ? '차단 해제'
+                                                : '상대 차단'}
+                                        </span>
+                                    </button>
+                                )}
                             </header>
 
                             {blockConfirmOpen && (
@@ -458,10 +503,11 @@ export default function ChatWorkspace({
                                 }
                                 className="min-h-0 flex-1 overflow-y-auto px-3 py-5 sm:px-6"
                                 onScroll={(event) => {
-                                    timelineNearBottomRef.current =
-                                        isTimelineNearBottom(
-                                            event.currentTarget,
-                                        )
+                                    const nearBottom = isTimelineNearBottom(
+                                        event.currentTarget,
+                                    )
+                                    timelineNearBottomRef.current = nearBottom
+                                    if (nearBottom) setUnseenMessageCount(0)
                                 }}
                             >
                                 <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
@@ -470,7 +516,9 @@ export default function ChatWorkspace({
                                             type="button"
                                             disabled={chat.olderLoading}
                                             className="mx-auto min-h-11 rounded-lg border border-content-line bg-content-surface px-4 text-sm font-bold text-content-fg hover:bg-content-soft disabled:opacity-50"
-                                            onClick={chat.loadOlder}
+                                            onClick={() =>
+                                                void loadOlderPreservingPosition()
+                                            }
                                         >
                                             {chat.olderLoading
                                                 ? '이전 메시지 불러오는 중…'
@@ -526,6 +574,15 @@ export default function ChatWorkspace({
                                     )}
                                     <div ref={timelineEndRef} aria-hidden />
                                 </div>
+                                {unseenMessageCount > 0 && (
+                                    <button
+                                        type="button"
+                                        className="sticky bottom-2 mx-auto mt-3 flex min-h-11 items-center rounded-full bg-control-action px-4 text-sm font-bold text-control-action-ink shadow-md hover:bg-control-action-hover"
+                                        onClick={scrollToLatest}
+                                    >
+                                        새 메시지 {unseenMessageCount}개
+                                    </button>
+                                )}
                             </div>
 
                             <form
@@ -625,14 +682,14 @@ export default function ChatWorkspace({
 
             <NewChatDialog
                 open={newChatOpen}
-                pending={chat.actionPending}
+                pending={false}
                 error={chat.actionError}
                 onClose={() => {
                     setNewChatOpen(false)
                     chat.clearActionError()
                 }}
-                onSubmit={async (nickname) => {
-                    const succeeded = await chat.createRoom(nickname)
+                onSubmit={async (counterpartNickname) => {
+                    const succeeded = chat.startDraft(counterpartNickname)
                     if (succeeded) setMobilePane('conversation')
                     return succeeded
                 }}
