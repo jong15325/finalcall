@@ -1,8 +1,8 @@
 # Chat 도메인 스펙
 
-> 상태: **v1.6 — APPROVED** (2026-08-22, FC-341 send 응답 후속 DB 조회 제거 게이트2 승인 반영)
+> 상태: **v1.8 — APPROVED** (2026-08-22, G2-CHAT-12 보정안 A nickname resolve 승인 반영)
 >
-> EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.27,
+> EPIC-CHAT의 도메인·성능 정본이다. 외부 계약 정본은 `docs/spec/api-contract.md` v1.29,
 > 스키마 정본은 `docs/spec/erd.md` v2.1이다.
 > Vuexy 기반 채팅 워크벤치 디자인 게이트도 2026-08-18 승인됐으며 소비 티켓은 FC-317이다.
 
@@ -573,6 +573,42 @@ TTL로 제거한다. 반복 abuse는 차단·계정 제재 도메인으로 승�
 
 ## 10. 오프라인, 재접속, 보존
 
+> **APPROVED (G2-CHAT-12, 2026-08-22)** — 아래 §10.0·§10.1.1과 §15의 G2-CHAT-12는
+> 사용자 승인된 구현 계약이다.
+
+### 10.0 대화 초안과 타임라인 UX 계약 — APPROVED
+
+- 상대 선택과 대화 패널 진입은 **클라이언트 로컬 초안**이다. 이 시점에는 REST room 생성 명령, DB room/member
+  state, 상대방 방 목록 항목, unread 또는 실시간 event가 생기지 않는다. 초안 식별자는 사용자가 입력한
+  `counterpartNickname`이며 서버 room ID나 확정 회원 식별자로 취급하지 않는다.
+- 첫 메시지는 §15 G2-CHAT-12 권고안 A의 단일 REST 명령으로 전송한다. 성공 응답을 받은 때만 초안을
+  `roomPublicId`가 있는 영속 대화로 승격한다. 전송 실패·timeout·429·차단·인증 실패 때는 입력 본문과 같은
+  `clientMessageId`를 가진 초안을 유지하고, 사용자가 수정하면 새 `clientMessageId`, 그대로 재시도하면 같은
+  `clientMessageId`를 사용한다. 상대방에게는 커밋 전 어떤 room도 노출하지 않는다.
+- 대화 패널 전체가 메시지 수에 따라 늘어나지 않도록 header와 composer 사이의 **timeline만 내부 세로
+  스크롤 컨테이너**가 된다. desktop·mobile 모두 부모 가용 높이를 점유하고 page 하단을 밀어내지 않으며,
+  composer는 패널 하단에 유지한다.
+- 최초 room 진입과 최신 페이지 로드 완료 시 마지막 메시지가 보이도록 하단으로 이동한다. 새 메시지 수신 시
+  사용자가 하단 임계영역(권고 80px) 안에 있었거나 본인이 전송한 메시지이면 하단으로 이동한다.
+- 사용자가 과거 내용을 읽는 중이면 수신 이벤트가 강제 스크롤하지 않는다. timeline 안에 접근 가능한
+  `새 메시지 N개` 안내를 표시하고 활성화하면 하단으로 이동한다.
+- 과거 페이지를 prepend할 때는 로드 직전 첫 visible message의 `messagePublicId`와 viewport offset을 anchor로
+  보존한다. 로딩 완료 뒤 같은 message가 같은 시각 위치에 남아야 한다.
+
+### 10.1.1 실시간 신규·미캐시 room 소비 — APPROVED
+
+- `MESSAGE_CREATED`는 이미 열었거나 메시지 cache가 있는 room에만 적용하는 이벤트가 아니다. 수신자는
+  `roomPublicId`가 목록 또는 cache에 없더라도 payload message를 즉시 `(roomPublicId, roomSequence)`로
+  cache에 병합한다.
+- 미캐시 room이면 클라이언트는 `GET /api/v1/me/chat-rooms/{roomPublicId}`를 조회해 권위 있는
+  `ChatRoomResponse`를 얻고 목록에 삽입한다. 조회 중 수신한 message는 버리지 않고 임시 room bucket에
+  보관했다가 응답과 병합한다. room 조회 실패 시 전체 방 목록을 invalidate/refetch하고 sequence gap 복구를
+  수행한다.
+- 기존 room도 `MESSAGE_CREATED` 수신 즉시 last message/last sequence/unread/order를 갱신한다. event와 REST
+  응답의 중복은 기존 `eventId`, `messagePublicId`, `(roomPublicId, roomSequence)` 규칙으로 제거한다.
+- 이 소비 계약은 `MESSAGE_CREATED` 외부 STOMP schema를 바꾸지 않는다. 첫 메시지 커밋의 기존 event만으로
+  양 참여자에게 신규 room을 알리고, 상세 room 형상은 REST hydration으로 얻는다.
+
 ### 10.1 클라이언트 재접속 절차
 
 1. REST 방 목록을 조회해 각 room의 `lastSequence`, `lastReadSequence`를 동기화한다.
@@ -654,13 +690,13 @@ TTL로 제거한다. 반복 abuse는 차단·계정 제재 도메인으로 승�
 ## 12. API 계약
 
 공통 prefix, `ApiResponse<T>`, 오류 envelope, ULID, `Instant`, `CursorResponse<T,C>`는
-`api-contract.md` §1을 따르며 외부 정본은 동 문서 §2.7(v1.27)이다.
+`api-contract.md` §1을 따르며 외부 정본은 동 문서 §2.7(v1.29)이다.
 
 ### 12.1 REST endpoint
 
 | Method | Path | 성공 | 설명 |
 |---|---|---|---|
-| POST | `/api/v1/me/chat-rooms/direct` | 신규 201, 기존 200 | nickname으로 direct room 생성/재사용 |
+| POST | `/api/v1/me/chat-rooms/direct/messages` | 신규 message 201, dedup 200 | nickname resolve 후 기존 room 재사용 또는 room+첫 message 원자 생성 |
 | GET | `/api/v1/me/chat-rooms` | 200 | 내 방 목록 cursor 조회 |
 | GET | `/api/v1/me/chat-rooms/{roomPublicId}` | 200 | 내 방 현재 상태 상세 |
 | GET | `/api/v1/me/chat-rooms/{roomPublicId}/messages` | 200 | 최신/과거/gap 메시지 조회 |
@@ -671,23 +707,30 @@ TTL로 제거한다. 반복 abuse는 차단·계정 제재 도메인으로 승�
 | POST | `/api/v1/me/chat-rooms/{roomPublicId}/reports` | 201 | 상대 메시지 신고 |
 | GET | `/api/v1/me/chat-rooms/unread-count` | 200 | 전체 unread 합계 |
 
-### 12.2 방 생성
+생성 전용 `POST /api/v1/me/chat-rooms/direct`는 v1.28에서 폐지됐다. 상대 선택·패널 진입은 서버 호출 없는
+client draft이며 위 `/direct/messages`만 최초 영속 명령이다.
+
+### 12.2 direct room + 첫 메시지 원자 전송
 
 ```json
 {
-  "counterpartNickname": "판매자닉네임"
+  "counterpartNickname": "판매자닉네임",
+  "clientMessageId": "c96278a5-f102-4b76-a09d-4dfe30caa243",
+  "body": "안녕하세요"
 }
 ```
 
-- 본인 nickname은 `CHAT_003`이다.
-- 같은 쌍의 동시 생성은 unique constraint 후 기존 room 재조회로 수렴한다.
-- 기존 방은 차단 상태여도 history 접근을 위해 반환한다. 방이 없는 차단 쌍의 새 방 생성과 신규 전송은
-  `CHAT_005`로 거절한다.
+- 원자 TX에서 현재 활성 nickname 소유자를 resolve한 내부 user ID를 권위로 고정한다. 이후 nickname으로
+  재조회하지 않으며 변경·탈퇴로 resolve하지 못하면 전체 rollback하고 `CHAT_002`를 반환한다.
+- 본인 nickname은 `CHAT_003`이다. 같은 쌍의 동시 생성은 unique constraint 충돌 loser의 bounded 전체-TX
+  retry 후 기존 room 잠금으로 수렴한다.
+- 어느 방향이든 차단된 쌍의 신규 전송은 `CHAT_005`로 거절한다. 성공 응답은 `room`과 `message`,
+  `roomCreated`, `deduplicated`를 함께 반환한다.
 
 ### 12.3 방 응답
 
-방 생성과 방 상세는 `ChatRoomResponse`, 목록은 `CursorResponse<ChatRoomResponse, String>`을 반환해 같은
-표시 형상을 재사용한다.
+첫 메시지 원자 전송 응답의 `room`과 방 상세는 `ChatRoomResponse`, 목록은
+`CursorResponse<ChatRoomResponse, String>`을 반환해 같은 표시 형상을 재사용한다.
 
 ```json
 {
@@ -1091,6 +1134,61 @@ pool 32·timeout 1초는 유지하고 추가 pool 증설은 금지한다. 외부
 
 ---
 
+### G2-CHAT-12 — 첫 메시지에서 direct room 원자 생성 — APPROVED
+
+요구 불변식은 “상대 선택만으로 상대 목록에 빈 room을 만들지 않고, 첫 메시지 DB 커밋 성공 때 room·양측
+member state·message·outbox가 함께 보인다”이다. 기존 `POST /api/v1/me/chat-rooms/direct` 생성 전용 계약의
+폐지/대체와 신규 명령 추가는 되돌리기 큰 외부 API·동시성 변경이므로 사용자 승인이 필요하다.
+
+| 선택지 | 내용 | 장단점 |
+|---|---|---|
+| A (**권고**) | `POST /api/v1/me/chat-rooms/direct/messages` 단일 명령으로 기존 room 재사용 또는 room+양측 state+첫 message+outbox를 한 TX에 커밋하고, 생성 전용 `/direct`는 폐지 | 빈 room을 구조적으로 차단하고 성공 의미가 명확함. 외부 API 변경과 absent-row 동시 생성 재시도 구현 필요 |
+| B | 기존 `/direct`는 유지하되 frontend가 첫 send 직전에 room 생성 후 기존 message API 호출 | 변경이 작지만 두 HTTP/TX 사이 실패 시 빈 room이 남아 요구 불변식을 보장하지 못함 |
+| C | client draft room을 DB에 `DRAFT/ACTIVE` 상태로 먼저 저장하고 첫 send에서 활성화 | 서버 복구 가능한 draft이나 상대 비노출 필터·정리 worker·스키마 migration과 상태 경합이 추가되어 현재 요구에 과도함 |
+
+**권고안 A의 계약 초안:**
+
+1. 주체는 `SecurityContext`, 상대 입력은 `counterpartNickname`으로 받는다. 서버는 원자 전송 TX에서 현재 활성
+   nickname 소유자를 resolve하고, 그 시점에 얻은 내부 user ID를 이후 room·차단·message 쓰기의 권위 식별자로
+   고정한다. resolve 뒤 nickname으로 회원을 재조회하거나 인가하지 않는다. 자기 자신, 미존재/비활성 상대,
+   양방향 차단, message/user/IP rate limit을 room/message 쓰기 전에 검증하며 요청의 userId·roomId는 신뢰하지
+   않는다. nickname 변경·탈퇴로 resolve하지 못하면 `CHAT_002`로 전부 rollback한다.
+2. 기존 사용자 쌍 room이 있으면 그 room을 `FOR UPDATE`하고 기존 §6.1과 같은 메시지 전송으로 수렴한다.
+   차단된 기존 room은 history 조회만 가능하고 신규 send는 `CHAT_005`다.
+3. room이 없으면 정렬된 `(member_low_id, member_high_id)`로 insert하고 양측 member state, sequence 1 message,
+   발신자 read sequence 1, `MESSAGE_CREATED` 및 필요한 `READ_UPDATED` outbox를 **한 DB TX**에서 만든다.
+4. absent-row 동시 생성은 기존 사용자 쌍 UK를 최종 권위로 삼는다. room insert UK 충돌/deadlock loser는 전체 TX를
+   bounded retry한 뒤 승자 room을 `FOR UPDATE`하여 같은 명령을 재평가한다. savepoint 밖의 일부 state를 남기거나
+   Redis lock을 정확성 수단으로 쓰지 않는다. 반대편 사용자의 동시 첫 전송은 같은 room에서 sequence 1·2로
+   직렬화되어 둘 다 성공할 수 있다.
+5. `clientMessageId` 멱등 범위는 최종 `(room,sender,clientMessageId)`이며 기존 180일 규칙을 유지한다. 같은
+   sender의 동시 재시도는 room 생성 경쟁 뒤에도 한 message로 수렴한다. 같은 정규화 본문이면 200
+   `deduplicated=true`, 다른 본문이면 `CHAT_004`다.
+6. 신규 message는 201, dedup은 200이다. 응답은 `{ room, message, roomCreated, deduplicated }`이며 기존 room
+   재사용 여부를 명시한다. timeout 후 같은 키 재시도로 커밋 결과를 복구할 수 있다.
+7. 첫 message 커밋 뒤 기존 `MESSAGE_CREATED` event를 양 참여자 session에 보낸다. 별도 `ROOM_CREATED` event를
+   추가하지 않으며 §10.1.1에 따라 미캐시 수신자가 room을 REST hydration한다.
+8. 별도 회원 검색 API는 추가하지 않는다. 성공 응답의 `room.counterpart`가 서버가 확정한 최종
+   `memberPublicId`와 nickname을 제공하며, 클라이언트는 이 응답으로 초안 표시와 식별자를 교체한다.
+
+**계약/스키마 영향:** 외부 REST는 신규 endpoint/request/response 추가 및 기존 생성 전용 endpoint 폐지라는
+breaking 변경이다. 기존 room message endpoint와 `ChatMessageResponse`, STOMP `ChatEventResponse`,
+Redis/Kafka/outbox event type·version·payload는 변경하지 않는다. 기존 UK로 수렴 가능하므로 DB schema·ERD
+변경은 없다. 이미 존재하는 빈 room은 삭제하지 않고 첫 send 시 기존 room으로 재사용한다.
+
+**Origin 보정 범위:** local profile의 strict allowlist에 `http://localhost:5173`과
+`http://127.0.0.1:5173`을 각각 exact origin으로 허용한다. dev/prod는 배포 frontend exact origin만 허용하고
+wildcard, reflected Origin, query token, gateway-token 완화는 금지한다. 이는 외부 STOMP schema 변경이 아니다.
+
+**승인:** 2026-08-22 사용자가 권고안 A와 위 계약 초안을 승인했다.
+
+**직접 영향 티켓:** `FC-342`(에픽/계약), `FC-343`·`FC-344`·`FC-345`(backend 원자 명령·frontend
+초안/스크롤/미캐시 event 소비·reviewer 검증), `FC-329`(신규 첫-message 경로 query/lock 비용을 포함한 성능
+재검증), `FC-324`(성능 결과와 본 변경 최종 리뷰)다. 기존 완료 구현 티켓은 재개하지 않고 신규 파생 티켓이
+흡수한다.
+
+---
+
 ## 16. 확정 영향 티켓/산출물
 
 현재 확인되는 EPIC-CHAT 하위 티켓 중 직접 영향은 다음과 같다.
@@ -1143,6 +1241,8 @@ pool 32·timeout 1초는 유지하고 추가 pool 증설은 금지한다. 외부
 
 | 버전 | 날짜 | 상태 | 변경 |
 |---|---|---|---|
+| v1.8 | 2026-08-22 | **APPROVED** | G2-CHAT-12 보정안 A 승인. `direct/messages` 상대 입력을 `counterpartNickname`으로 교체하고 원자 TX의 활성 nickname resolve 시점 내부 user ID를 권위로 고정, 이후 nickname 재조회 금지, 변경·탈퇴 resolve 실패 시 전부 rollback `CHAT_002`, 성공 응답 `room.counterpart`로 최종 publicId/nickname 제공, 추가 회원 검색 API 없음으로 확정. FC-342~345·FC-329·FC-324 영향. DB schema·ERD·event schema 불변 |
+| v1.7 | 2026-08-22 | **APPROVED** | G2-CHAT-12 권고안 A 승인. 상대 선택을 client draft로 한정하고 첫 message에서 direct room·양측 state·message·outbox 원자 생성하는 REST 대체 계약, 기존 room/동시 생성/clientMessageId 멱등·차단/rate-limit/IDOR, timeline 내부 스크롤·anchor 보존·새 메시지 안내, 미캐시 `MESSAGE_CREATED` hydration, local exact Origin 2종을 확정. FC-342~345·FC-329·FC-324 영향. 외부 REST는 breaking, STOMP/event와 DB schema·ERD는 불변 |
 | v1.6 | 2026-08-22 | **APPROVED** | G2-CHAT-11 권고안 A 승인 반영. `ChatMessagePersistence.senderPublicId`로 send 응답 후속 user SELECT/read TX 1회만 제거하고 신규/멱등 상태·JSON·IDOR·lock·outbox 및 history/fan-out factory는 불변으로 확정. pool 32·timeout 1초 유지, 추가 증설 금지와 동일 extended 종료선 명시. FC-341·FC-329·FC-324 영향. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.5 | 2026-08-21 | **APPROVED** | G2-CHAT-10 권고안 A 승인 반영. app별 Hikari min/max 32 fixed pool·connection timeout 1초, MySQL `@@max_connections` 96 이상과 32 connection reserve/assert·운영 telemetry를 확정. 동일 extended 전체 재검증과 burst 통과 후 socket 진입, 실패 시 추가 pool 증설 금지·재상신 조건 명시. FC-340·FC-329·FC-324 영향. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |
 | v1.4 | 2026-08-21 | **APPROVED** | G2-CHAT-9 권고안 A 승인 반영. hosted diagnostic은 topology·prewarm·단일 monitor·10/s smoke로 한정하고, 격리된 self-hosted extended에서 10→50→150→300/s 출시 판정을 수행하도록 runner 경계를 확정. SLO·실패 즉시 중단은 불변이며 host/container 자원·Hikari 시계열·Kafka lag artifact를 추가. FC-337·FC-329·FC-324 영향 명시. 외부 REST/STOMP/event 계약과 DB schema·ERD 불변 |

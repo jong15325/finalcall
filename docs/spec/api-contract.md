@@ -1,12 +1,14 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.27 — EPIC-CHAT 1:1 채팅 REST/STOMP 계약 확정(2026-08-18, G2-CHAT-1~6 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.29 — G2-CHAT-12 보정안 A nickname resolve 계약 확정(2026-08-22 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
-근거: domain-spec v0.5, chat-domain-spec v1.0, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
+근거: domain-spec v0.5, chat-domain-spec v1.8, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.29 | 2026-08-22 | **G2-CHAT-12 보정안 A 사용자 승인.** `direct/messages` 요청 상대 식별자를 `counterpartNickname`으로 교체한다. 서버 원자 TX가 현재 활성 nickname 소유자를 resolve한 시점의 내부 user ID를 권위로 고정하고 이후 nickname 재조회 금지, 변경·탈퇴 resolve 실패는 전부 rollback `CHAT_002`, 성공 응답 `room.counterpart`가 최종 publicId/nickname을 제공한다. 추가 회원 검색 API 없음. 영향 = FC-342~345·FC-329·FC-324. DB schema·ERD와 event schema 불변. |
+| v1.28 | 2026-08-22 | **G2-CHAT-12 권고안 A 사용자 승인.** `POST /api/v1/me/chat-rooms/direct/messages`가 기존 room 재사용 또는 room+첫 message를 원자 커밋하고 생성 전용 `/direct`를 대체한다. client draft·동시 생성·멱등·차단/rate-limit/IDOR, timeline 내부 스크롤, 미캐시 `MESSAGE_CREATED` hydration, local exact Origin 2종을 확정했다. 영향 = FC-342~345·FC-329·FC-324. DB schema·ERD와 STOMP/Redis/Kafka/outbox event schema는 불변. |
 | v1.27 | 2026-08-18 | **EPIC-CHAT(FC-316) — G2-CHAT-1~6 권고안 전건 사용자 승인 확정.** **§2.7 채팅 신설**: 1:1 direct room 생성/목록/상세, 방별 sequence 메시지 최신·과거·gap 조회, REST 멱등 전송, 단조 읽음, 차단/해제, 신고, 전체 unread의 REST 10종 + `/ws/chat` STOMP 1.2 user-destination push 계약. 영속 명령/replay는 REST+MySQL 정본, STOMP는 server push only(`SEND` 금지). CONNECT bearer JWT·strict Origin·JWT exp 강제종료·SecurityContext 주체·IDOR 404 통일·IP/user rate limit을 확정했다. **§5 `CHAT_001`~`009` 등재.** 스키마 = erd v2.0(6테이블·V25 예약), 도메인/장애/보존/성능 정본 = `chat-domain-spec.md` v1.0. 직접 기존 티켓 파급 = FC-317(Vuexy 승인 UI가 본 계약 소비), 공용 JWT 검증 결과에 `expiresAt` 가법 노출 및 후속 backend/frontend·CDC·부하 티켓 필요. 기존 auth/auction/bid/settlement/delivery/memo API 형상은 불변(additive). |
 | v1.26 | 2026-08-07 | **FC-221 — 댓글·답글 응답에 `ownedByMe: boolean` 가법 추가(게이트2 사용자 승인).** `SecurityContext.userId == comment.authorId`일 때만 `true`; 비로그인·관리자가 작성하지 않은 타인 댓글·tombstone은 `false`. 판정은 닉네임 스냅샷과 무관하므로 닉네임 변경·재사용에도 안정적이며 `authorId`는 외부에 노출하지 않는다. 기존 `editable`(작성자 또는 관리자에게 수정·삭제 UI 허용)과 의미를 분리하고, 자기 댓글 반응은 계속 서버가 `authorId`로 차단해 `COMMENT_003`(422)을 반환한다. **직접 구현 파급 = FC-222(backend)·FC-223(frontend). 기존 완료 티켓 FC-207~FC-212의 댓글 응답 생산·소비 계약에는 가법 파급만 있으며 재개하지 않고 FC-222·FC-223이 흡수한다.** 엔드포인트·요청·스키마·에러코드 무변경. 정본 = `board-domain-spec.md` v1.3 §13.2. |
 | v0 | 2026-07-13 | 골격 착수 — 공통 규약 + auth 섹션 |
@@ -267,26 +269,57 @@
 - 응답 204
 - 에러: `MEMO_002` 메모 없음(404), `MEMO_003` 당사자 아님(403), 401
 
-### 2.7 1:1 채팅 (chat) — EPIC-CHAT, v1.27(G2-CHAT-1~6 승인 확정 2026-08-18)
+### 2.7 1:1 채팅 (chat) — EPIC-CHAT, v1.29(G2-CHAT-12 보정안 A 승인 확정 2026-08-22)
+
+> **APPROVED — G2-CHAT-12 사용자 승인(2026-08-22).** 기존
+> `POST /api/v1/me/chat-rooms/direct` 생성 전용 계약을 아래 원자 명령으로 대체한다.
+
+#### POST /api/v1/me/chat-rooms/direct/messages — direct room + 첫 메시지 원자 전송
+
+- 요청(body): `ChatDirectMessageSendRequest = { counterpartNickname, clientMessageId, body }`.
+  - `counterpartNickname`: 현재 활성 상대 회원 nickname, `@NotBlank`, 최대 30자. 별도 회원 검색 API나
+    `memberPublicId` 직접 입력 UX는 제공하지 않는다.
+  - `clientMessageId`, `body`: 기존 `ChatMessageSendRequest`와 동일한 UUID v4·NFC·길이·control 문자 규칙.
+- 동작: `SecurityContext` 주체와 상대 쌍의 기존 room이 있으면 재사용하고, 없으면 room·양측 member state를
+  만든다. 같은 TX에서 첫/새 message, 발신자 read 위치, metadata-only outbox까지 커밋한다. 어느 하나라도
+  실패하면 전부 rollback되어 상대 목록에 room이 나타나지 않는다.
+- 상대 resolve: 같은 원자 TX에서 현재 활성 `counterpartNickname` 소유자를 resolve한 시점의 내부 user ID가
+  권위다. 이후 nickname으로 다시 조회하거나 인가하지 않는다. nickname 변경·탈퇴로 resolve하지 못하면
+  room/member state/message/outbox를 모두 rollback하고 `CHAT_002`를 반환한다. 성공 응답의
+  `room.counterpart`가 서버가 확정한 최종 `memberPublicId`와 nickname을 제공한다.
+- 동시성: 사용자 쌍 unique constraint 충돌/deadlock loser는 bounded 전체-TX retry 후 승자 room을
+  `FOR UPDATE`한다. 반대 방향 동시 첫 send는 한 room의 연속 sequence로 직렬화된다. Redis lock은 사용하지
+  않는다.
+- 멱등: 최종 `(room,sender,clientMessageId)`가 권위다. 같은 정규화 본문 재시도는 원 room/message를 200과
+  `deduplicated=true`로 반환하고, 다른 본문은 `CHAT_004`다. 보장 기간은 기존 180일이다.
+- 응답: 신규 message `201`, dedup `200`.
+  `ChatDirectMessageSendResponse = { room: ChatRoomResponse, message: ChatMessageResponse,
+  roomCreated: boolean, deduplicated: boolean }`.
+- 에러: `CHAT_002` 상대 없음/비활성(404), `CHAT_003` 자기대화(422), `CHAT_004` 멱등 키 본문 충돌(409),
+  `CHAT_005` 대화 불가(409), `CHAT_009` rate limit(429), 검증 400, 401.
+- rate limit: 기존 message IP/user 제한을 항상 적용하고, 실제 신규 room 생성 시 기존 방 생성 20/시간도
+  적용한다. 경쟁 중 기존 room 재사용으로 수렴한 요청에는 방 생성 quota를 중복 소비시키지 않는다.
+- 첫 커밋의 기존 `MESSAGE_CREATED` event가 상대에게 신규 room 신호가 된다. 별도 event type/version/schema는
+  추가하지 않으며 미캐시 client는 room detail REST hydration 후 목록에 삽입한다.
+- 기존 생성 전용 `POST /api/v1/me/chat-rooms/direct`는 v1.28에서 제거한다. 상대 선택은 서버 호출 없는
+  client draft이고, 실패 시 같은 `clientMessageId`와 본문을 유지해 재시도한다.
+
+외부 REST 계약은 breaking 변경이나 DB schema·ERD, 기존 room message REST, STOMP/Redis/Kafka/outbox event
+schema는 불변이다. local WebSocket Origin은 `localhost:5173`과 `127.0.0.1:5173` exact 두 값만 허용하며
+dev/prod strict exact allowlist·gateway token·CONNECT bearer 정책은 완화하지 않는다.
 
 사용자 간 1:1 텍스트 채팅. **REST+MySQL이 영속 명령·조회·replay 정본**이고 STOMP/WebSocket은
 server→client best-effort push 전용이다. Redis Pub/Sub·Kafka·STOMP 전달 실패는 성공한 DB 메시지를
 취소하지 않으며 클라이언트는 방별 `roomSequence`로 gap을 복구한다. 도메인/장애/보존/성능 정본 =
-`chat-domain-spec.md` v1.0, 스키마 = `erd.md` §4.6(v2.0).
+`chat-domain-spec.md` v1.8, 스키마 = `erd.md` §4.6(v2.0).
 
 전 REST 엔드포인트 **인증 필요**, 주체 = `SecurityContext`. sender/reporter/reader user ID를 요청으로 받지
 않는다. 미존재 room과 비참여 room은 모두 `CHAT_001` 404로 통일하고 내부 BIGINT ID는 노출하지 않는다.
 
-#### POST /api/v1/me/chat-rooms/direct — direct room 생성/재사용
+#### POST /api/v1/me/chat-rooms/direct — 제거됨(v1.28)
 
-- 요청(body): `ChatDirectRoomCreateRequest = { counterpartNickname }`
-  - `counterpartNickname`: 활성 회원 nickname, `@NotBlank`, 최대 30자.
-- 동작: 현재 주체와 상대의 내부 ID를 정렬해 같은 사용자 쌍의 room을 생성하거나 기존 room을 반환한다.
-  기존 room은 차단 상태여도 history 접근을 위해 `canSend=false` 형상으로 반환한다. room이 없을 때 어느
-  방향이든 차단됐거나 상대가 비활성이면 새 room을 만들지 않는다. 비활성 상대는 `CHAT_002`, 차단은 방향을
-  숨긴 `CHAT_005`다.
-- 응답: 신규 생성 `201`, 기존 room 재사용 `200`, data=`ChatRoomResponse`.
-- 에러: `CHAT_002` 상대 없음(404), `CHAT_003` 자기대화(422), `CHAT_005` 대화 불가(409), 검증 400, 401.
+생성 전용 endpoint와 `ChatDirectRoomCreateRequest`는 G2-CHAT-12 승인으로 제거됐다. 상대 선택·패널 진입은
+서버 호출 없는 client draft이며, 최초 영속 명령은 위 `/api/v1/me/chat-rooms/direct/messages`만 사용한다.
 
 #### GET /api/v1/me/chat-rooms — 내 방 목록
 
