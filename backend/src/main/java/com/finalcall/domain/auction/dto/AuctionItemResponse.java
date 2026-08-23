@@ -3,6 +3,7 @@ package com.finalcall.domain.auction.dto;
 import java.time.Instant;
 
 import com.finalcall.domain.auction.entity.Auction;
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemTemplate;
 
@@ -33,9 +34,10 @@ public record AuctionItemResponse(
     int skillPercent,
     Instant goldforceExpireAt,
     String nameSnapshot,
-    String specSnapshot) {
+    String specSnapshot,
+    CardInfoResponse cardInfo) {
 
-    public static AuctionItemResponse from(Auction auction) {
+    public static AuctionItemResponse from(Auction auction, CardInfoResponse cardInfo) {
         ItemInstance item = auction.getItemInstance();
         ItemTemplate template = item.getTemplate();
         return AuctionItemResponse.builder()
@@ -53,6 +55,7 @@ public record AuctionItemResponse(
             .goldforceExpireAt(item.getGfExpireAt())
             .nameSnapshot(auction.getItemNameSnapshot())
             .specSnapshot(auction.getItemSpecSnapshot())
+            .cardInfo(cardInfo)
             .build();
     }
 }

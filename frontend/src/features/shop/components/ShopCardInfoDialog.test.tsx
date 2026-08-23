@@ -4,6 +4,7 @@ import ShopCardInfoDialog from './ShopCardInfoDialog'
 import { renderWithProviders, signInForTest } from '@/test/renderWithProviders'
 import type { ShopSummary } from '@/lib/api/shop'
 import type { BalanceResponse } from '@/lib/api/balance'
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 
 /**
  * 카드정보 즉시구매 모달 (FC-146) — 승인 목업 `market-quickbuy-cardinfo.html`.
@@ -34,6 +35,15 @@ const baseShop: ShopSummary = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 한손 도끼',
+        cardInfo: cardInfoFixture({
+            kind: { code: 1, label: '도끼', abbreviation: '도' },
+            shortName: 'Lv.3 불도',
+            formalName: '3레벨 도끼',
+            skills: [
+                { slot: 1, code: 11, name: '공격시간 3 감소', percent: null },
+                { slot: 2, code: 202, name: '트리플샷', percent: 33 },
+            ],
+        }),
     },
     price: 2_480_000,
     endAt: '2026-07-30T00:00:00Z',
@@ -98,12 +108,12 @@ describe('<ShopCardInfoDialog>', () => {
         expect(
             screen.getByRole('dialog').querySelector('.card-info-content'),
         ).toBeInTheDocument()
-        expect(screen.getByText('거래 128회').closest('.ci-scroll')).toHaveClass(
-            'card-info-content-shell',
-        )
+        expect(
+            screen.getByText('거래 128회').closest('.ci-scroll'),
+        ).toHaveClass('card-info-content-shell')
 
         // 속성표 — 명칭·채널제한(level 파생)·속성.
-        expect(screen.getByText('불의 전투도끼')).toBeInTheDocument()
+        expect(screen.getByText('3레벨 도끼')).toBeInTheDocument()
         expect(screen.getByText('채널제한')).toBeInTheDocument()
         // level 3 → 초보채널 이상(channelLimitOf 파생, 표시 전용).
         expect(screen.getByText('초보채널 이상')).toBeInTheDocument()

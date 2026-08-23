@@ -1,6 +1,7 @@
 package com.finalcall.domain.item.dto;
 
 import java.util.List;
+import java.util.function.Function;
 
 import com.finalcall.domain.item.entity.ItemInstance;
 
@@ -16,11 +17,14 @@ public record InventoryResponse(
     int used,
     List<InventoryItem> items) {
 
-    public static InventoryResponse from(InventoryData data) {
+    public static InventoryResponse from(
+        InventoryData data, Function<ItemInstance, CardInfoResponse> cardInfoFactory) {
         return InventoryResponse.builder()
             .capacity(data.capacity())
             .used(data.items().size())
-            .items(data.items().stream().map(InventoryItem::from).toList())
+            .items(data.items().stream()
+                .map(item -> InventoryItem.from(item, cardInfoFactory.apply(item)))
+                .toList())
             .build();
     }
 
@@ -31,11 +35,11 @@ public record InventoryResponse(
         int slotNo,
         ItemSummaryResponse summary) {
 
-        public static InventoryItem from(ItemInstance instance) {
+        public static InventoryItem from(ItemInstance instance, CardInfoResponse cardInfo) {
             return InventoryItem.builder()
                 .itemInstancePublicId(instance.getPublicId())
                 .slotNo(instance.getSlotNo())
-                .summary(ItemSummaryResponse.from(instance))
+                .summary(ItemSummaryResponse.from(instance, cardInfo))
                 .build();
         }
     }

@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import ShopHeroCard from './ShopHeroCard'
@@ -23,6 +24,7 @@ const baseShop: ShopDetail = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 양손 도끼',
+            cardInfo: cardInfoFixture(),
     },
     price: 2_480_000,
     endAt: '2026-08-22T00:00:00Z',
@@ -48,6 +50,10 @@ describe('<ShopHeroCard>', () => {
                         ...baseShop.item,
                         skill2: null,
                         skill2Name: null,
+                        cardInfo: cardInfoFixture({ skills: [
+                            { slot: 1, code: 11, name: '공격시간 3 감소', percent: null },
+                            { slot: 2, code: null, name: null, percent: null },
+                        ] }),
                     },
                 }}
                 now={NOW}
@@ -70,6 +76,10 @@ describe('<ShopHeroCard>', () => {
                         ...baseShop.item,
                         skill1: null,
                         skill1Name: null,
+                        cardInfo: cardInfoFixture({ skills: [
+                            { slot: 1, code: null, name: null, percent: null },
+                            { slot: 2, code: 202, name: '트리플샷', percent: 33 },
+                        ] }),
                     },
                 }}
                 now={NOW}
@@ -92,6 +102,10 @@ describe('<ShopHeroCard>', () => {
                         skill2: null,
                         skill1Name: null,
                         skill2Name: null,
+                        cardInfo: cardInfoFixture({ skills: [
+                            { slot: 1, code: null, name: null, percent: null },
+                            { slot: 2, code: null, name: null, percent: null },
+                        ] }),
                     },
                 }}
                 now={NOW}
@@ -111,7 +125,10 @@ describe('<ShopHeroCard>', () => {
             <ShopHeroCard
                 shop={{
                     ...baseShop,
-                    item: { ...baseShop.item, skill1Name: longSkill },
+                    item: { ...baseShop.item, skill1Name: longSkill, cardInfo: cardInfoFixture({ skills: [
+                        { slot: 1, code: 11, name: longSkill, percent: null },
+                        { slot: 2, code: 202, name: '트리플샷', percent: 33 },
+                    ] }) },
                 }}
                 now={NOW}
             />,

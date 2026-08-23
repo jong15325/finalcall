@@ -5,6 +5,7 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.finalcall.domain.delivery.entity.DeliveryStatus;
 import com.finalcall.domain.delivery.entity.ItemDelivery;
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.item.dto.ItemSummaryResponse;
 import com.finalcall.domain.item.entity.ItemInstance;
 
@@ -33,11 +34,12 @@ public record DeliveryDetailResponse(
      * 배송 + 대상 아이템 인스턴스로 상세를 만든다. 당사자 검증(recipient=주체)은 서비스가 이미 통과시켰다.
      * {@code instance} 의 template·skill1·skill2 는 fetch join 으로 초기화된 상태여야 한다(OSIV off).
      */
-    public static DeliveryDetailResponse from(ItemDelivery delivery, ItemInstance instance) {
+    public static DeliveryDetailResponse from(
+        ItemDelivery delivery, ItemInstance instance, CardInfoResponse cardInfo) {
         return DeliveryDetailResponse.builder()
             .deliveryPublicId(delivery.getPublicId())
             .status(delivery.getStatus())
-            .item(ItemSummaryResponse.from(instance))
+            .item(ItemSummaryResponse.from(instance, cardInfo))
             .itemInstancePublicId(instance.getPublicId())
             .createdAt(delivery.getCreatedAt())
             .appliedAt(delivery.getAppliedAt())

@@ -36,6 +36,7 @@ import com.finalcall.domain.delivery.repository.ItemDeliveryRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.service.CardInfoFactory;
 import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
@@ -76,6 +77,7 @@ public class AuctionService {
     private final BidIncrementProperties incrementProperties;
     /** 자유문 검색(EPIC-SEARCH) — {@code q} 매칭·랭킹·커서는 ES 가, 표시 데이터 하이드레이션은 MySQL(정본)이 담당. */
     private final ListingSearchService listingSearchService;
+    private final CardInfoFactory cardInfoFactory;
 
     /**
      * 경매를 등록한다(계약 §3.1 POST /auctions, 단일 TX). 소유·시간·가격 검증 후 item 을 INVENTORY→LISTED 로
@@ -145,12 +147,13 @@ public class AuctionService {
     @ServiceLog
     public CursorResponse<AuctionSummaryResponse, String> getList(
         AuctionSearchCondition condition, String cursor, int size) {
-        Instant now = Instant.now();
+        Instant now = cardInfoFactory.now();
         AuctionCursor decoded = AuctionCursor.decode(cursor);
         List<AuctionWithBidCount> fetched = auctionRepository.findByCursor(condition, decoded, size, now);
         // 커서는 매핑 전 원본(AuctionWithBidCount)의 마지막 항목에서 정렬 필드 값 + id 로 추출한다.
         return CursorResponse.from(fetched, size,
-            row -> AuctionSummaryResponse.from(row, now),
+            row -> AuctionSummaryResponse.from(
+                row, now, cardInfoFactory.create(row.auction().getItemInstance(), now)),
             row -> encodeCursor(row, condition.sort()));
     }
 
@@ -165,7 +168,7 @@ public class AuctionService {
     @ServiceLog
     public CursorResponse<AuctionSummaryResponse, String> search(
         AuctionSearchCondition condition, String query, String cursor, int size) {
-        Instant now = Instant.now();
+        Instant now = cardInfoFactory.now();
         ListingSearchCondition searchCondition = new ListingSearchCondition(
             ListingType.AUCTION, query,
             condition.mainCategory(), condition.subGroup(), condition.element(), condition.kind(),
@@ -180,7 +183,8 @@ public class AuctionService {
         List<AuctionSummaryResponse> ordered = hits.publicIds().stream()
             .map(byPublicId::get)
             .filter(Objects::nonNull)
-            .map(row -> AuctionSummaryResponse.from(row, now))
+            .map(row -> AuctionSummaryResponse.from(
+                row, now, cardInfoFactory.create(row.auction().getItemInstance(), now)))
             .toList();
         // 커서·hasNext 는 ES 가 판정한 값을 그대로 보존한다(over-fetch 슬라이싱 아님).
         return CursorResponse.of(ordered, hits.nextCursor(), hits.hasNext());
@@ -203,8 +207,10 @@ public class AuctionService {
     public AuctionDetailResponse getDetail(String publicId) {
         AuctionWithBidCount row = auctionRepository.findDetailByPublicId(publicId)
             .orElseThrow(() -> new BusinessException(AuctionErrorCode.AUCTION_NOT_FOUND));
+        Instant now = cardInfoFactory.now();
         return AuctionDetailResponse.from(
-            row.auction(), row.bidCount(), minNextBidAmount(row.auction()), Instant.now());
+            row.auction(), row.bidCount(), minNextBidAmount(row.auction()),
+            now, cardInfoFactory.create(row.auction().getItemInstance(), now));
     }
 
     /**

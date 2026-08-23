@@ -14,6 +14,7 @@ import com.finalcall.domain.item.dto.InventoryResponse;
 import com.finalcall.domain.item.dto.RelocateRequest;
 import com.finalcall.domain.item.dto.RelocateResponse;
 import com.finalcall.domain.item.dto.TempStorageItemResponse;
+import com.finalcall.domain.item.service.CardInfoFactory;
 import com.finalcall.domain.item.service.InventoryService;
 
 import jakarta.validation.Valid;
@@ -31,11 +32,14 @@ import lombok.RequiredArgsConstructor;
 public class InventoryController {
 
     private final InventoryService inventoryService;
+    private final CardInfoFactory cardInfoFactory;
 
     /** 내 정규 인벤토리(96칸) — 비페이지네이션 단일 응답, slotNo asc. */
     @GetMapping("/inventory")
     public ApiResponse<InventoryResponse> getInventory() {
-        return ApiResponse.success(InventoryResponse.from(inventoryService.getMyInventory()));
+        java.time.Instant calculatedAt = cardInfoFactory.now();
+        return ApiResponse.success(InventoryResponse.from(inventoryService.getMyInventory(),
+            item -> cardInfoFactory.create(item, calculatedAt)));
     }
 
     /** 내 임시보관(오버플로우) — cursor 페이지((stored_at desc, instance_id desc)). */

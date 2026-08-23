@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getMyInventory } from '@/lib/api/inventory'
 import { useIsAuthenticated } from '@/store/authStore'
+import { useCardInfoExpiry } from './cardInfoExpiry'
 import type { InventoryResponse } from '@/lib/api/inventory'
 
 /**
@@ -27,10 +28,12 @@ export const inventoryKeys = {
 export function useMyInventory() {
     const isAuthed = useIsAuthenticated()
 
-    return useQuery<InventoryResponse>({
+    const query = useQuery<InventoryResponse>({
         queryKey: inventoryKeys.me(),
         queryFn: ({ signal }) => getMyInventory(signal),
         enabled: isAuthed,
         refetchOnWindowFocus: true,
     })
+    useCardInfoExpiry(inventoryKeys.me(), query.data)
+    return query
 }

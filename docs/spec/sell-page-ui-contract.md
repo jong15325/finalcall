@@ -36,18 +36,18 @@
 ## 5. 공용 CardInfo content 추출 계약
 
 - `CardInfoDialog`에서 dialog chrome과 카드정보 content를 분리한다. 공용 content는 item feature가 소유하는 표현 전용 컴포넌트다.
-- 공용 content는 이미지/프레임, 타입, 명칭, 채널 제한, 속성, 골드포스 잔여, 특수 스킬 1·2를 기존 계산 함수와 동일한 마크업 의미론으로 렌더한다.
+- 공용 content는 이미지/프레임, 타입, 명칭, 채널 제한, 속성, 골드포스 잔여, 특수 스킬 1·2를 `InventoryItem.summary.cardInfo`의 서버 계산값으로 동일하게 렌더한다. 이때 `명칭`은 `formalName`(`9레벨 칼`, `5레벨 마법`, `5레벨 스페셜필`)이며 `shortName`을 대신 표시하지 않는다. content 안의 compact card face는 목록 표시명 `shortName`(`Lv.9 바검`)을 사용할 수 있다.
 - 공용 content는 `role=dialog`, backdrop, 닫기 버튼, focus trap, scroll lock, footer CTA, query 또는 mutation을 소유하지 않는다.
 - `CardInfoDialog`는 content를 자신의 shell 안에서 소비하고, `SellPage`는 같은 content를 inline 카드정보 표면 안에서 소비한다.
-- 판매 페이지는 현재 `InventoryItem.typeCode`와 기존 item 유틸인 `decodeTypeCode`, `channelLimitOf`, `resolveSkillSlots`, `goldforceRemainingDays`, `itemArt`로 view props를 조립한다. 별도 `GET /items/{id}` 호출이나 API 응답 필드 추가는 금지한다.
+- 판매 페이지는 이미 적재된 `InventoryItem.summary.cardInfo`로 view props를 조립한다. `decodeTypeCode`, `channelLimitOf`, `resolveSkillSlots`, `goldforceRemainingDays`로 표시값을 재계산하지 않는다. `itemArt`처럼 서버 표시 계약 밖의 이미지 매핑에만 `typeCode`를 사용할 수 있다. 별도 `GET /items/{id}` 호출은 추가하지 않는다.
 - 추출은 시각·접근성의 무변경 리팩터다. `CardInfoDialog`, `ShopCardInfoDialog`, `InventoryCardInfoDialog`의 shell/slot 계약과 소비자별 mutation은 유지한다.
 
 ## 6. API, 성능, 되돌리기 판정
 
-- API와 DB 변경은 없다.
+- DB 변경은 없다. API는 기존 `ItemSummaryResponse`에 api-contract §3.3.2의 `cardInfo`를 가법 추가하며 기존 필드는 유지한다.
 - 경매는 기존 `POST /auctions`의 `{ itemInstancePublicId, startPrice, buyNowPrice?, endAt, softCloseWindowSec?, softCloseExtendSec?, maxEndAt }`를 사용하고 `startAt`을 생략한다.
 - 고정가는 기존 `POST /shops`의 `{ itemInstancePublicId, price }`를 사용한다.
-- 카드정보는 이미 적재된 인벤토리 응답에서 파생하므로 네트워크 호출과 서버 부하는 증가하지 않는다. 모바일 최하단 감지는 클라이언트 viewport 관찰만 사용한다.
+- 카드정보는 이미 적재된 인벤토리 응답의 서버 파생 `cardInfo`를 소비하므로 추가 네트워크 호출은 없다. 목록당 단일 Clock 계산만 추가되고 DB 조회·N+1은 증가하지 않는다. 모바일 최하단 감지는 클라이언트 viewport 관찰만 사용한다.
 - 되돌리기는 운영 레이아웃과 공용 content 소비를 기존 내부 마크업으로 복원하는 프론트 범위이며 데이터 마이그레이션이 없다. 추가 게이트2 결정은 없다.
 
 ## 7. 영향 파일과 필수 테스트

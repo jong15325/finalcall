@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -24,6 +25,22 @@ const baseAuction: AuctionDetail = {
         goldforceExpireAt: '2026-08-10T00:00:00Z',
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '화면에서 제거되어야 하는 설명',
+        cardInfo: cardInfoFixture({
+            level: 5,
+            shortName: 'Lv.5 불도',
+            formalName: '5레벨 도끼',
+            channelLimit: { code: 'INTERMEDIATE', label: '중수채널 이상' },
+            frame: { type: 'GOLD', label: '골드', remainingGoldforceDays: 2 },
+            skills: [
+                {
+                    slot: 1,
+                    code: 104,
+                    name: '긴 이름의 화염 강타',
+                    percent: null,
+                },
+                { slot: 2, code: 207, name: '연속 폭발', percent: 18 },
+            ],
+        }),
     },
     startPrice: 1_000_000,
     buyNowPrice: null,
@@ -72,11 +89,11 @@ describe('<AuctionHeroCard>', () => {
             screen.getAllByRole('term').map((term) => term.textContent),
         ).toEqual(['타입', '명칭', '채널제한', '속성', '남은 골드 포스'])
         expect(valueOf('타입')).toHaveTextContent('골드 - 무기')
-        expect(valueOf('명칭')).toHaveTextContent('불의 전투도끼')
-        expect(valueOf('채널제한')).toHaveTextContent('고수채널 이상')
+        expect(valueOf('명칭')).toHaveTextContent('5레벨 도끼')
+        expect(valueOf('채널제한')).toHaveTextContent('중수채널 이상')
         // CardInfoDialog와 동일한 elementLabelOf 의미론: 축 이름은 dt, 값은 순수 라벨이다.
         expect(valueOf('속성')).toHaveTextContent('불')
-        expect(valueOf('남은 골드 포스')).toHaveTextContent('2일')
+        expect(valueOf('남은 골드 포스')).toHaveTextContent(/^2$/)
         expect(screen.queryByText('종류', { selector: 'dt' })).toBeNull()
         expect(screen.queryByText('레벨', { selector: 'dt' })).toBeNull()
         expect(screen.queryByText('골드포스 2일 남음')).toBeNull()
@@ -89,10 +106,17 @@ describe('<AuctionHeroCard>', () => {
         ['만료', '2026-08-07T00:00:00Z'],
         ['미적용', null],
     ])('%s 골드포스는 블랙 타입과 없음 상태를 표시한다', (_, expireAt) => {
-        renderHero({ goldforceExpireAt: expireAt })
+        renderHero({
+            goldforceExpireAt: expireAt,
+            cardInfo: cardInfoFixture({
+                level: 5,
+                shortName: 'Lv.5 불도',
+                formalName: '5레벨 도끼',
+            }),
+        })
 
         expect(valueOf('타입')).toHaveTextContent('블랙 - 무기')
-        expect(valueOf('남은 골드 포스')).toHaveTextContent('없음')
+        expect(valueOf('남은 골드 포스')).toHaveTextContent(/^0$/)
     })
 
     it('원본 슬롯과 이름, 슬롯 2 퍼센트를 보존한다', () => {
@@ -129,6 +153,19 @@ describe('<AuctionHeroCard>', () => {
             skill2: 999,
             skill2Name: null,
             skillPercent: 7,
+            cardInfo: cardInfoFixture({
+                category: { code: 3, label: '마법' },
+                kind: { code: 2, label: '스페셜필', abbreviation: '스필' },
+                frame: {
+                    type: 'GOLD',
+                    label: '골드',
+                    remainingGoldforceDays: 2,
+                },
+                skills: [
+                    { slot: 1, code: null, name: null, percent: null },
+                    { slot: 2, code: 999, name: '스킬 #999', percent: 7 },
+                ],
+            }),
         })
 
         expect(valueOf('타입')).toHaveTextContent('골드 - 마법')
@@ -143,7 +180,20 @@ describe('<AuctionHeroCard>', () => {
     })
 
     it('슬롯 2 퍼센트가 0이면 강조 요소를 표시하지 않는다', () => {
-        renderHero({ skillPercent: 0 })
+        renderHero({
+            skillPercent: 0,
+            cardInfo: cardInfoFixture({
+                skills: [
+                    {
+                        slot: 1,
+                        code: 104,
+                        name: '긴 이름의 화염 강타',
+                        percent: null,
+                    },
+                    { slot: 2, code: 207, name: '연속 폭발', percent: null },
+                ],
+            }),
+        })
 
         const list = screen.getByRole('list', { name: '특수 스킬' })
         const items = within(list).getAllByRole('listitem')
@@ -152,7 +202,17 @@ describe('<AuctionHeroCard>', () => {
     })
 
     it('스킬이 없으면 명시적인 빈 상태를 표시한다', () => {
-        renderHero({ skill1: null, skill2: null, skillPercent: 20 })
+        renderHero({
+            skill1: null,
+            skill2: null,
+            skillPercent: 20,
+            cardInfo: cardInfoFixture({
+                skills: [
+                    { slot: 1, code: null, name: null, percent: null },
+                    { slot: 2, code: null, name: null, percent: null },
+                ],
+            }),
+        })
 
         expect(screen.getByText('보유한 특수 스킬이 없습니다.')).toBeVisible()
         expect(
@@ -162,7 +222,20 @@ describe('<AuctionHeroCard>', () => {
     })
 
     it('미등록 코드는 축 이름과 원본 코드로 안전하게 폴백한다', () => {
-        renderHero({ subGroup: 9, kind: 8, element: 7 })
+        renderHero({
+            subGroup: 9,
+            kind: 8,
+            element: 7,
+            cardInfo: cardInfoFixture({
+                category: { code: 9, label: '대분류 9' },
+                element: { code: 7, label: '속성 7', abbreviation: '7' },
+                frame: {
+                    type: 'GOLD',
+                    label: '골드',
+                    remainingGoldforceDays: 2,
+                },
+            }),
+        })
 
         expect(valueOf('타입')).toHaveTextContent('골드 - 대분류 9')
         expect(valueOf('속성')).toHaveTextContent('속성 7')
@@ -170,9 +243,18 @@ describe('<AuctionHeroCard>', () => {
 
     it.each([
         [3, '초보채널 이상'],
-        [8, '마스터채널 이상'],
+        [8, '고수채널 이상'],
     ])('레벨 %i의 공용 채널 제한을 표시한다', (level, expected) => {
-        renderHero({ level })
+        renderHero({
+            level,
+            cardInfo: cardInfoFixture({
+                level,
+                channelLimit:
+                    level <= 4
+                        ? { code: 'BEGINNER', label: '초보채널 이상' }
+                        : { code: 'EXPERT', label: '고수채널 이상' },
+            }),
+        })
 
         expect(valueOf('채널제한')).toHaveTextContent(expected)
     })

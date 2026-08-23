@@ -1,4 +1,5 @@
 import type { AuctionSummary } from '@/lib/api/auctions'
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import type { WorkbenchFixture } from '../types'
 
 export const AUCTION_CARD_NOW = Date.parse('2026-08-16T03:00:00Z')
@@ -35,6 +36,9 @@ function auction(
             goldforceExpireAt: null,
             nameSnapshot: '불의 전투도끼',
             specSnapshot: '공격력이 높은 한손 도끼',
+            cardInfo: cardInfoFixture({
+                calculatedAt: '2026-08-16T03:00:00Z',
+            }),
             ...overrides.item,
         },
     }
@@ -56,6 +60,12 @@ export const auctionCardFixture: AuctionCardFixture = {
                 skill2: null,
                 skill1Name: null,
                 skill2Name: null,
+                cardInfo: cardInfoFixture({
+                    skills: [
+                        { slot: 1, code: null, name: null, percent: null },
+                        { slot: 2, code: null, name: null, percent: null },
+                    ],
+                }),
             },
         }),
         auction('design-auction-one', {
@@ -65,7 +75,14 @@ export const auctionCardFixture: AuctionCardFixture = {
             item: { skill2: null, skill2Name: null, element: 1 },
         }),
         auction('design-auction-selected', {
-            item: { element: 3, nameSnapshot: '대지의 비교 선택 도끼' },
+            item: {
+                element: 3,
+                nameSnapshot: '대지의 비교 선택 도끼',
+                cardInfo: cardInfoFixture({
+                    shortName: 'Lv.3 흙도',
+                    element: { code: 3, label: '흙', abbreviation: '흙' },
+                }),
+            },
         }),
         auction('design-auction-ended', {
             status: 'SOLD',
@@ -76,6 +93,22 @@ export const auctionCardFixture: AuctionCardFixture = {
                     '공격 성공 시 상대의 방어력을 오랫동안 감소시키는 매우 긴 스킬',
                 skill2Name: '연속 폭발 피해량이 크게 증가하는 매우 긴 스킬',
                 nameSnapshot: '아주 긴 이름의 불타는 전설적인 황금 전투도끼',
+                cardInfo: cardInfoFixture({
+                    skills: [
+                        {
+                            slot: 1,
+                            code: 11,
+                            name: '공격 성공 시 상대의 방어력을 오랫동안 감소시키는 매우 긴 스킬',
+                            percent: null,
+                        },
+                        {
+                            slot: 2,
+                            code: 202,
+                            name: '연속 폭발 피해량이 크게 증가하는 매우 긴 스킬',
+                            percent: 33,
+                        },
+                    ],
+                }),
             },
         }),
         auction('design-auction-long-price', {

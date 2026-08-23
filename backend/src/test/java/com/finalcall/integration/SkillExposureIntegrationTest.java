@@ -123,7 +123,7 @@ class SkillExposureIntegrationTest extends IntegrationTest {
         flushClear();
 
         Shop shop = shopRepository.findDetailByPublicId(shopPublicId).orElseThrow();
-        ShopItemResponse view = ShopItemResponse.from(shop);
+        ShopItemResponse view = ShopItemResponse.from(shop, null);
 
         assertThat(view.skill1()).isNull();
         assertThat(view.skill1Name()).isNull();

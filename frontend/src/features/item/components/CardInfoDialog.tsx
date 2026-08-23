@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { TbId } from 'react-icons/tb'
 import AppModal from '@/components/common/AppModal'
 import CardInfoContent from './CardInfoContent'
+import type { CardInfoResponse } from '@/lib/api/cardInfo'
 
 /**
  * 카드정보 모달 **셸 정본** (EPIC-CARD-SYSTEM T4 · 제안 §2.2·§3 단계2).
@@ -28,24 +29,12 @@ import CardInfoContent from './CardInfoContent'
  */
 
 interface CardInfoDialogProps {
+    cardInfo: CardInfoResponse
     /** 4축(마켓=item 필드, 인벤토리=decodeTypeCode). 속성표·아트 파생 입력. */
     subGroup: number
     kind: number
     element: number
     level: number
-    /** 골드포스 만료(ISO) — 프레임/남은일수/썸네일 파생. */
-    goldforceExpireAt: string | null
-    /** 명칭(속성표·썸네일 alt). 마켓=nameSnapshot · 인벤토리=displayName. */
-    name: string
-    /** 특수스킬 슬롯 코드(1·2)와 % — resolveSkillSlots 입력. */
-    skill1: number | null
-    skill2: number | null
-    skillPercent: number
-    /** 스킬명(인스턴스 상세만 보유 — 마켓). 없으면 중립 표기(`스킬 #코드`)로 폴백. */
-    skill1Name?: string | null
-    skill2Name?: string | null
-    /** 골드포스·프레임 파생 기준 시각. 미주입이면 Date.now(). */
-    now?: number
     /** 특수스킬 아래(스크롤 영역 내) 추가 행 — 마켓 판매자 행 등. */
     belowScroll?: ReactNode
     /** 하단 액션 영역(`.ci-foot`) 내용 — 가격+CTA / 판매 등록 CTA 등 소비자 주입. */
@@ -58,18 +47,11 @@ interface CardInfoDialogProps {
 }
 
 function CardInfoDialog({
+    cardInfo,
     subGroup,
     kind,
     element,
     level,
-    goldforceExpireAt,
-    name,
-    skill1,
-    skill2,
-    skillPercent,
-    skill1Name,
-    skill2Name,
-    now,
     belowScroll,
     footer,
     backgroundInert = false,
@@ -93,20 +75,7 @@ function CardInfoDialog({
             overlay={overlay}
         >
             <CardInfoContent
-                {...{
-                    subGroup,
-                    kind,
-                    element,
-                    level,
-                    goldforceExpireAt,
-                    name,
-                    skill1,
-                    skill2,
-                    skillPercent,
-                    skill1Name,
-                    skill2Name,
-                    now,
-                }}
+                {...{ subGroup, kind, element, level, cardInfo }}
             />
 
             {belowScroll}

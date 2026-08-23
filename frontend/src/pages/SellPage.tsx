@@ -114,7 +114,7 @@ export default function SellPage() {
     const errorFor = (field: SellField): string | undefined =>
         errors.find((error) => error.field === field)?.message
 
-    const selectedName = preemptedItem?.summary.displayName ?? ''
+    const selectedName = preemptedItem?.summary.cardInfo.formalName ?? ''
 
     const handleOpenConfirm = () => {
         const capturedNow = Math.floor(Date.now() / 1000) * 1000
@@ -505,21 +505,11 @@ export default function SellPage() {
                         </div>
                         <div className="ci-scroll min-h-0 flex-1">
                             <CardInfoContent
+                                cardInfo={preemptedItem.summary.cardInfo!}
                                 {...decodeTypeCode(
                                     preemptedItem.summary.typeCode,
                                 )}
                                 level={preemptedItem.summary.level}
-                                goldforceExpireAt={
-                                    preemptedItem.summary.goldforceExpireAt
-                                }
-                                name={preemptedItem.summary.displayName}
-                                skill1={preemptedItem.summary.skill1Code}
-                                skill2={preemptedItem.summary.skill2Code}
-                                skillPercent={
-                                    preemptedItem.summary.skillPercent
-                                }
-                                skill1Name={preemptedItem.summary.skill1Name}
-                                skill2Name={preemptedItem.summary.skill2Name}
                             />
                         </div>
                         <div className="hidden border-t border-content-line bg-content-surface p-5 lg:block">
@@ -902,4 +892,3 @@ function StateBlock({
         </section>
     )
 }
-

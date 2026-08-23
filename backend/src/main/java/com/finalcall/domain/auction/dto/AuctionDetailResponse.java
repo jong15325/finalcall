@@ -6,6 +6,7 @@ import com.finalcall.common.util.NicknameMasker;
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionResultType;
 import com.finalcall.domain.auction.entity.AuctionStatus;
+import com.finalcall.domain.item.dto.CardInfoResponse;
 
 import lombok.Builder;
 
@@ -42,11 +43,12 @@ public record AuctionDetailResponse(
      * 계산해 넘긴다 — 표현 계층은 스프링 빈(증분 정책)에 접근할 수 없기 때문이다. {@code minNextBidAmount}는 종료
      * 상태 경매에서 null 이다(계약 v1.8 F3).
      */
-    public static AuctionDetailResponse from(Auction auction, long bidCount, Long minNextBidAmount, Instant now) {
+    public static AuctionDetailResponse from(
+        Auction auction, long bidCount, Long minNextBidAmount, Instant now, CardInfoResponse cardInfo) {
         return AuctionDetailResponse.builder()
             .auctionPublicId(auction.getPublicId())
             .status(auction.displayStatus(now))
-            .item(AuctionItemResponse.from(auction))
+            .item(AuctionItemResponse.from(auction, cardInfo))
             .startPrice(auction.getStartPrice())
             .buyNowPrice(auction.getBuyNowPrice())
             .highestBidAmount(auction.getHighestBidAmount())

@@ -17,6 +17,7 @@ import { balanceKeys } from './balance'
 import { inventoryKeys } from './inventory'
 import { orderKeys } from './orders'
 import { tempStorageKeys } from './tempStorage'
+import { useCardInfoExpiry } from './cardInfoExpiry'
 import { useIsAuthenticated } from '@/store/authStore'
 import type {
     CancelShopResponse,
@@ -60,7 +61,7 @@ export const shopKeys = {
  * ★ `cursor` 는 `query` 에 넣지 않는다 — 페이지 파라미터는 react-query 가 따로 나른다.
  */
 export function useShopBrowse(query: ShopListQuery) {
-    return useInfiniteQuery<CursorPage<ShopSummary>>({
+    const result = useInfiniteQuery<CursorPage<ShopSummary>>({
         queryKey: shopKeys.browse(query),
         queryFn: ({ pageParam, signal }) =>
             getShops(
@@ -78,6 +79,8 @@ export function useShopBrowse(query: ShopListQuery) {
                 : null,
         refetchOnWindowFocus: false,
     })
+    useCardInfoExpiry(shopKeys.browse(query), result.data)
+    return result
 }
 
 /**
@@ -85,12 +88,14 @@ export function useShopBrowse(query: ShopListQuery) {
  * **비교표**(`useCompareShops`)다. 폴링하지 않는다(고정가는 실시간 값이 아니다).
  */
 export function useShopDetail(shopPublicId: string, enabled = true) {
-    return useQuery<ShopDetail>({
+    const query = useQuery<ShopDetail>({
         queryKey: shopKeys.detail(shopPublicId),
         queryFn: ({ signal }) => getShop(shopPublicId, signal),
         enabled,
         refetchOnWindowFocus: false,
     })
+    useCardInfoExpiry(shopKeys.detail(shopPublicId), query.data)
+    return query
 }
 
 /**
@@ -100,7 +105,7 @@ export function useShopDetail(shopPublicId: string, enabled = true) {
  *   — 상세 캐시(`shopKeys.detail`) 재사용. **가변 개수라 `useQueries`**(경매 `useCompareAuctions` 대칭).
  */
 export function useCompareShops(ids: string[]) {
-    return useQueries({
+    const queries = useQueries({
         queries: ids.map((id) => ({
             queryKey: shopKeys.detail(id),
             queryFn: ({ signal }: { signal: AbortSignal }) =>
@@ -108,6 +113,12 @@ export function useCompareShops(ids: string[]) {
             refetchOnWindowFocus: false,
         })),
     })
+    useCardInfoExpiry(
+        shopKeys.details(),
+        queries.map(({ data }) => data),
+        false,
+    )
+    return queries
 }
 
 /**
@@ -180,7 +191,7 @@ export function useCreateShop() {
 export function useMyShops(query: MyShopsQuery) {
     const isAuthed = useIsAuthenticated()
 
-    return useInfiniteQuery<CursorPage<MyShopSummary>>({
+    const result = useInfiniteQuery<CursorPage<MyShopSummary>>({
         queryKey: shopKeys.mine(query),
         queryFn: ({ pageParam, signal }) =>
             getMyShops(
@@ -195,6 +206,8 @@ export function useMyShops(query: MyShopsQuery) {
         enabled: isAuthed,
         refetchOnWindowFocus: false,
     })
+    useCardInfoExpiry(shopKeys.mine(query), result.data)
+    return result
 }
 
 /**

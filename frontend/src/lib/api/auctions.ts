@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type { CursorPage, OffsetPage } from '@/types/api'
+import type { CardInfoResponse } from './cardInfo'
 
 /**
  * 경매 목록 API (계약 §3.1 `GET /auctions` · §3.3 AuctionSummary) — FC-058.
@@ -51,6 +52,7 @@ export interface AuctionItemBlock {
     /** 등록 시점 스냅샷(D-045) — 표시명은 이 값이 코드 사전보다 우선한다 */
     nameSnapshot: string
     specSnapshot: string
+    cardInfo: CardInfoResponse
 }
 
 /** AuctionSummary (계약 §3.3 — `GET /auctions` content 항목) */

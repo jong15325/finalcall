@@ -2,6 +2,7 @@ package com.finalcall.domain.shop.dto;
 
 import java.time.Instant;
 
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopStatus;
 
@@ -24,11 +25,11 @@ public record ShopDetailResponse(
     long sellerCompletedSales) {
 
     /** 상세 응답을 조립한다. {@code sellerCompletedSales} 는 서비스가 단건 카운트로 산출해 주입한다(§11.3). */
-    public static ShopDetailResponse from(Shop shop, long sellerCompletedSales) {
+    public static ShopDetailResponse from(Shop shop, long sellerCompletedSales, CardInfoResponse cardInfo) {
         return ShopDetailResponse.builder()
             .shopPublicId(shop.getPublicId())
             .status(shop.getStatus())
-            .item(ShopItemResponse.from(shop))
+            .item(ShopItemResponse.from(shop, cardInfo))
             .price(shop.getPrice())
             .endAt(shop.getEndAt())
             .sellerNickname(shop.getSeller().getNickname())

@@ -61,7 +61,7 @@ export default function DeliveredBanner({ arrived }: DeliveredBannerProps) {
         setDismissed(next)
     }
 
-    const names = visible.map((d) => d.item.displayName)
+    const names = visible.map((d) => d.item.cardInfo.shortName)
     const lead =
         names.length === 1
             ? `${names[0]}`

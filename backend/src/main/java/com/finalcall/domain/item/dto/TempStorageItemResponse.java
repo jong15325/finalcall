@@ -19,12 +19,12 @@ public record TempStorageItemResponse(
     Instant expireAt,
     ItemSummaryResponse summary) {
 
-    public static TempStorageItemResponse from(TempStorage temp) {
+    public static TempStorageItemResponse from(TempStorage temp, CardInfoResponse cardInfo) {
         return TempStorageItemResponse.builder()
             .itemInstancePublicId(temp.getInstance().getPublicId())
             .storedAt(temp.getStoredAt())
             .expireAt(temp.getExpireAt())
-            .summary(ItemSummaryResponse.from(temp.getInstance()))
+            .summary(ItemSummaryResponse.from(temp.getInstance(), cardInfo))
             .build();
     }
 }

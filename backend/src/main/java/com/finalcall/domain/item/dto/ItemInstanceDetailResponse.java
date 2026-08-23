@@ -23,6 +23,7 @@ public record ItemInstanceDetailResponse(
     ItemSkillResponse skill2,
     int skillPercent,
     Instant goldforceExpireAt,
+    CardInfoResponse cardInfo,
     ItemLocation location,
     String ownerMasked,
     Integer slotNo) {
@@ -31,7 +32,8 @@ public record ItemInstanceDetailResponse(
      * 상세 응답을 만든다. 소유 여부({@code viewerIsOwner})는 서비스가 SecurityContext 주체로 판정해 넘긴다
      * (IDOR 방지 — spec §5.2). 비인증 조회는 {@code viewerIsOwner=false}로 공개 필드만 노출한다.
      */
-    public static ItemInstanceDetailResponse from(ItemInstance instance, boolean viewerIsOwner) {
+    public static ItemInstanceDetailResponse from(
+        ItemInstance instance, boolean viewerIsOwner, CardInfoResponse cardInfo) {
         boolean showSlot = viewerIsOwner && instance.getLocation() == ItemLocation.INVENTORY;
         return ItemInstanceDetailResponse.builder()
             .itemInstancePublicId(instance.getPublicId())
@@ -41,6 +43,7 @@ public record ItemInstanceDetailResponse(
             .skill2(ItemSkillResponse.from(instance.getSkill2()))
             .skillPercent(instance.getSkillPercent())
             .goldforceExpireAt(instance.getGfExpireAt())
+            .cardInfo(cardInfo)
             .location(instance.getLocation())
             .ownerMasked(mask(instance.getOwner().getNickname()))
             .slotNo(showSlot ? instance.getSlotNo() : null)

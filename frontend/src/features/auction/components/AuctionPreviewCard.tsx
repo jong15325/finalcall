@@ -4,7 +4,6 @@ import ItemCardView, {
     ItemCardArtwork,
 } from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
-import { elementLabelOf } from '@/features/item/lib/element'
 import {
     auctionPhaseOf,
     type AuctionPhase,
@@ -47,6 +46,7 @@ interface AuctionPreviewCardProps {
 
 function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
     const { item } = auction
+    const cardInfo = item.cardInfo
     const phase = auctionPhaseOf(
         {
             status: auction.status,
@@ -60,7 +60,7 @@ function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
     const action = {
         kind: 'link' as const,
         to: auctionDetailPath(auction.auctionPublicId),
-        label: `${item.nameSnapshot} 경매 상세 보기`,
+        label: `${cardInfo.shortName} 경매 상세 보기`,
     }
     const controlGapAction = (
         <ItemCardActionSurface
@@ -88,7 +88,7 @@ function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
                             >
                                 <CardCompareOverlay
                                     listingId={auction.auctionPublicId}
-                                    name={item.nameSnapshot}
+                                    name={cardInfo.shortName}
                                 />
                             </div>
                         </div>
@@ -109,7 +109,7 @@ function AuctionPreviewCard({ auction, now }: AuctionPreviewCardProps) {
                             {PHASE_LABEL[phase]}
                         </span>
                         <span className="text-[10px] font-semibold uppercase text-content-subtle">
-                            {elementLabelOf(item.element)}
+                            {cardInfo.element.label}
                         </span>
                     </span>
                 }

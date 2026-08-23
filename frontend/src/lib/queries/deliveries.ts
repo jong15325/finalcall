@@ -1,10 +1,8 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { getMyDeliveries } from '@/lib/api/deliveries'
 import { useIsAuthenticated } from '@/store/authStore'
-import type {
-    DeliveryListQuery,
-    DeliverySummary,
-} from '@/lib/api/deliveries'
+import { useCardInfoExpiry } from './cardInfoExpiry'
+import type { DeliveryListQuery, DeliverySummary } from '@/lib/api/deliveries'
 import type { CursorPage } from '@/types/api'
 
 /**
@@ -58,13 +56,15 @@ function toLookup(page: CursorPage<DeliverySummary>): DeliveryLookup {
 export function useDeliveryLookup() {
     const isAuthed = useIsAuthenticated()
 
-    return useQuery<CursorPage<DeliverySummary>, Error, DeliveryLookup>({
+    const query = useQuery<CursorPage<DeliverySummary>, Error, DeliveryLookup>({
         queryKey: deliveryKeys.lookup(),
         queryFn: ({ signal }) => getMyDeliveries({}, signal),
         select: toLookup,
         enabled: isAuthed,
         refetchOnWindowFocus: true,
     })
+    useCardInfoExpiry(deliveryKeys.lookup(), query.data)
+    return query
 }
 
 /**
@@ -75,7 +75,7 @@ export function useDeliveryLookup() {
 export function useMyDeliveries(query: DeliveryListQuery = {}) {
     const isAuthed = useIsAuthenticated()
 
-    return useInfiniteQuery<CursorPage<DeliverySummary>>({
+    const result = useInfiniteQuery<CursorPage<DeliverySummary>>({
         queryKey: deliveryKeys.list(query),
         queryFn: ({ pageParam, signal }) =>
             getMyDeliveries(
@@ -90,4 +90,6 @@ export function useMyDeliveries(query: DeliveryListQuery = {}) {
         enabled: isAuthed,
         refetchOnWindowFocus: false,
     })
+    useCardInfoExpiry(deliveryKeys.list(query), result.data)
+    return result
 }

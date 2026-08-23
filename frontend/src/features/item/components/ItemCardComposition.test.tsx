@@ -3,8 +3,12 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import ItemCardActionSurface from './ItemCardActionSurface'
 import ItemCardFlip from './ItemCardFlip'
-import ItemCardView, { ItemCardArtwork } from './ItemCardView'
+import ItemCardView, {
+    ItemCardArtwork,
+    ItemCardPropertyBackView,
+} from './ItemCardView'
 import type { ItemCardViewModel } from './ItemCardView'
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 
 describe('compact ItemCardView', () => {
     it('판매자 정보가 없으면 판매자 행을 표시하지 않는다', () => {
@@ -46,6 +50,15 @@ describe('compact ItemCardView', () => {
     })
 })
 
+describe('ItemCardPropertyBackView', () => {
+    it('남은 골드 포스를 일 단위 없이 서버 숫자 그대로 표시한다', () => {
+        render(<ItemCardPropertyBackView item={item} />)
+
+        expect(screen.getByText('0')).toBeInTheDocument()
+        expect(screen.queryByText('0일')).not.toBeInTheDocument()
+    })
+})
+
 const item: ItemCardViewModel = {
     name: '불의 전투도끼',
     description: '공격력이 높은 한손 도끼',
@@ -58,6 +71,7 @@ const item: ItemCardViewModel = {
     price: { amount: 2_480_000, label: '현재가' },
     goldforceExpireAt: null,
     referenceNow: Date.parse('2026-07-23T00:00:00Z'),
+    cardInfo: cardInfoFixture(),
 }
 
 describe('아이템 카드 composition', () => {

@@ -57,6 +57,7 @@ function toCardData(item: InventoryItem): ItemCardSource {
         skillPercent: summary.skillPercent,
         goldforceExpireAt: summary.goldforceExpireAt,
         nameSnapshot: summary.displayName,
+        cardInfo: summary.cardInfo,
     }
 }
 

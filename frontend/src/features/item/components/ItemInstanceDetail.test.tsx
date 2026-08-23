@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
@@ -36,6 +37,18 @@ function makeItem(
         skill2: { skillCode: 207, name: '대지의 축복' },
         skillPercent: 18,
         goldforceExpireAt: null,
+        cardInfo: cardInfoFixture({
+            level: 5,
+            shortName: 'Lv.5 물검',
+            formalName: '5레벨 칼',
+            kind: { code: 3, label: '칼', abbreviation: '검' },
+            element: { code: 1, label: '물', abbreviation: '물' },
+            channelLimit: { code: 'INTERMEDIATE', label: '중수채널 이상' },
+            skills: [
+                { slot: 1, code: 104, name: '강인함', percent: null },
+                { slot: 2, code: 207, name: '대지의 축복', percent: 18 },
+            ],
+        }),
         location: 'INVENTORY',
         ownerMasked: '레***',
         slotNo: 7,
@@ -65,15 +78,27 @@ describe('<ItemInstanceDetail>', () => {
         renderDetail(
             makeItem({
                 template: {
-                    typeCode: 1312,
+                    typeCode: 1332,
                     mainCategory: 1,
                     subGroup: 3, // 마법
-                    element: 1,
+                    element: 3,
                     kind: 2, // 특수
-                    displayName: '얼음 마법서',
+                    displayName: '대지 마법서',
                 },
                 skill1: null,
                 skill2: { skillCode: 301, name: '빙결' },
+                cardInfo: cardInfoFixture({
+                    level: 5,
+                    shortName: 'Lv.5 흙스필',
+                    formalName: '5레벨 스페셜필',
+                    category: { code: 3, label: '마법' },
+                    kind: { code: 2, label: '스페셜필', abbreviation: '스필' },
+                    element: { code: 3, label: '흙', abbreviation: '흙' },
+                    skills: [
+                        { slot: 1, code: null, name: null, percent: null },
+                        { slot: 2, code: 301, name: '빙결', percent: 18 },
+                    ],
+                }),
             }),
         )
         // 슬롯 2 라벨이 그대로 남고, 슬롯 1 로 재번호되지 않는다.
@@ -87,7 +112,18 @@ describe('<ItemInstanceDetail>', () => {
     })
 
     it('스킬이 없으면 두 슬롯을 대시로 표기한다', () => {
-        renderDetail(makeItem({ skill1: null, skill2: null }))
+        renderDetail(
+            makeItem({
+                skill1: null,
+                skill2: null,
+                cardInfo: cardInfoFixture({
+                    skills: [
+                        { slot: 1, code: null, name: null, percent: null },
+                        { slot: 2, code: null, name: null, percent: null },
+                    ],
+                }),
+            }),
+        )
         const skill1Row = screen.getByText('스킬 1').closest('div')
         const skill2Row = screen.getByText('스킬 2').closest('div')
         expect(
@@ -123,6 +159,13 @@ describe('<ItemInstanceDetail>', () => {
         renderDetail(
             makeItem({
                 goldforceExpireAt: new Date(NOW + 3 * DAY).toISOString(),
+                cardInfo: cardInfoFixture({
+                    frame: {
+                        type: 'GOLD',
+                        label: '골드',
+                        remainingGoldforceDays: 3,
+                    },
+                }),
             }),
         )
         expect(screen.getByText('골드포스 활성')).toBeInTheDocument()

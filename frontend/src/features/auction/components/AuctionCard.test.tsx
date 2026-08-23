@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -23,6 +24,7 @@ const baseAuction: AuctionSummary = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 한손 도끼',
+        cardInfo: cardInfoFixture(),
     },
     startPrice: 1_000_000,
     buyNowPrice: null,
@@ -43,7 +45,41 @@ describe('<AuctionCard>', () => {
             <AuctionCard
                 auction={{
                     ...baseAuction,
-                    item: { ...baseAuction.item, skill1, skill2 },
+                    item: {
+                        ...baseAuction.item,
+                        skill1,
+                        skill2,
+                        cardInfo: cardInfoFixture({
+                            skills: [
+                                skill1 === null
+                                    ? {
+                                          slot: 1,
+                                          code: null,
+                                          name: null,
+                                          percent: null,
+                                      }
+                                    : {
+                                          slot: 1,
+                                          code: skill1,
+                                          name: '공격시간 3 감소',
+                                          percent: null,
+                                      },
+                                skill2 === null
+                                    ? {
+                                          slot: 2,
+                                          code: null,
+                                          name: null,
+                                          percent: null,
+                                      }
+                                    : {
+                                          slot: 2,
+                                          code: skill2,
+                                          name: '트리플샷',
+                                          percent: 33,
+                                      },
+                            ],
+                        }),
+                    },
                 }}
                 now={NOW}
             />,
@@ -181,7 +217,7 @@ describe('<AuctionCard>', () => {
 
         const links = screen.getAllByRole('link')
         expect(links).toHaveLength(1)
-        expect(links[0]).toHaveAccessibleName('불의 전투도끼 경매 상세 보기')
+        expect(links[0]).toHaveAccessibleName('Lv.3 불도 경매 상세 보기')
         expect(links[0]).toHaveAttribute('href', '/auctions/01J3AUCTION0001')
         expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })

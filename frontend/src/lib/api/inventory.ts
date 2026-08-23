@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import type { CardInfoResponse } from './cardInfo'
 
 /**
  * 인벤토리 API (계약 §4.2 `GET /me/inventory`) — FC-073.
@@ -27,6 +28,7 @@ export interface ItemSummary {
     skillPercent: number
     /** 골드포스 만료 시각(ISO-8601 UTC). 미적용이면 null. 활성 여부는 클라 파생 */
     goldforceExpireAt: string | null
+    cardInfo: CardInfoResponse
 }
 
 /** 인벤토리 슬롯 항목 (계약 §4.2). */

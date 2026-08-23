@@ -35,7 +35,6 @@ interface InventoryCardInfoDialogProps {
 
 function InventoryCardInfoDialog({
     item,
-    now,
     onSell,
     onClose,
     deliveryStatus,
@@ -73,18 +72,11 @@ function InventoryCardInfoDialog({
 
     return (
         <CardInfoDialog
+            cardInfo={summary.cardInfo!}
             subGroup={axes.subGroup}
             kind={axes.kind}
             element={axes.element}
             level={summary.level}
-            goldforceExpireAt={summary.goldforceExpireAt}
-            name={summary.displayName}
-            skill1={summary.skill1Code}
-            skill2={summary.skill2Code}
-            skill1Name={summary.skill1Name}
-            skill2Name={summary.skill2Name}
-            skillPercent={summary.skillPercent}
-            now={now}
             footer={footer}
             onClose={onClose}
         />

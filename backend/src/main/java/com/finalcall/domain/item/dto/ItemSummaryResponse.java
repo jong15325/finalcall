@@ -25,9 +25,10 @@ public record ItemSummaryResponse(
     String skill1Name,
     String skill2Name,
     int skillPercent,
-    Instant goldforceExpireAt) {
+    Instant goldforceExpireAt,
+    CardInfoResponse cardInfo) {
 
-    public static ItemSummaryResponse from(ItemInstance instance) {
+    public static ItemSummaryResponse from(ItemInstance instance, CardInfoResponse cardInfo) {
         return ItemSummaryResponse.builder()
             .typeCode(instance.getTemplate().getTypeCode())
             .displayName(instance.getTemplate().getDisplayName())
@@ -38,6 +39,7 @@ public record ItemSummaryResponse(
             .skill2Name(instance.getSkill2() == null ? null : instance.getSkill2().getName())
             .skillPercent(instance.getSkillPercent())
             .goldforceExpireAt(instance.getGfExpireAt())
+            .cardInfo(cardInfo)
             .build();
     }
 }

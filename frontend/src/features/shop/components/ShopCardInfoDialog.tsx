@@ -161,18 +161,11 @@ function ShopCardInfoDialog({
     return (
         <>
             <CardInfoDialog
+                cardInfo={item.cardInfo}
                 subGroup={item.subGroup}
                 kind={item.kind}
                 element={item.element}
                 level={item.level}
-                goldforceExpireAt={item.goldforceExpireAt}
-                name={item.nameSnapshot}
-                skill1={item.skill1}
-                skill2={item.skill2}
-                skillPercent={item.skillPercent}
-                skill1Name={item.skill1Name}
-                skill2Name={item.skill2Name}
-                now={now}
                 belowScroll={sellerRow}
                 footer={footer}
                 backgroundInert={step === 'confirm'}
@@ -187,7 +180,7 @@ function ShopCardInfoDialog({
                         ? '구매 완료'
                         : errorView
                           ? errorView.title
-                          : item.nameSnapshot
+                          : item.cardInfo.formalName
                 }
                 eyebrow="아이템 마켓"
                 closeDisabled={isSubmitting}
@@ -241,7 +234,7 @@ function ShopCardInfoDialog({
                     <div className="space-y-4 text-sm text-content-muted">
                         <p>
                             <b className="text-content-fg">
-                                {item.nameSnapshot}
+                                {item.cardInfo.formalName}
                             </b>{' '}
                             을(를) 구매했습니다. 아이템은 인벤토리에서
                             확인하세요.

@@ -48,7 +48,7 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
         <CardCompareOverlay
             source="MARKET"
             listingId={shop.shopPublicId}
-            name={shop.item.nameSnapshot}
+            name={shop.item.cardInfo.shortName}
         />
     )
     const action = {

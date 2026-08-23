@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -31,6 +32,7 @@ const baseAuction: AuctionSummary = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 한손 도끼',
+        cardInfo: cardInfoFixture(),
     },
     startPrice: 1_000_000,
     buyNowPrice: null,
@@ -47,13 +49,15 @@ describe('<AuctionPreviewCard>', () => {
             <AuctionPreviewCard auction={baseAuction} now={NOW} />,
         )
         const link = screen.getByRole('link', {
-            name: '불의 전투도끼 경매 상세 보기',
+            name: 'Lv.3 불도 경매 상세 보기',
         })
         expect(link).toHaveAttribute('href', '/auctions/01J3PREVIEW0001')
         expect(link).toHaveClass('item-card__primary-action--content')
         expect(link).toBeEmptyDOMElement()
         expect(screen.queryByText('카드정보 보기')).not.toBeInTheDocument()
-        const links = document.querySelectorAll('a[href="/auctions/01J3PREVIEW0001"]')
+        const links = document.querySelectorAll(
+            'a[href="/auctions/01J3PREVIEW0001"]',
+        )
         expect(links).toHaveLength(3)
         const artworkLink = document.querySelector(
             '[data-card-hit-area="artwork"]',

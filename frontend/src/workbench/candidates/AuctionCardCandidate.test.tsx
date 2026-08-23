@@ -38,7 +38,7 @@ describe('<AuctionCardCandidate>', () => {
             />,
         )
         const detail = screen.getByRole('link', {
-            name: `${auction.item.nameSnapshot} 경매 상세 보기`,
+            name: `${auction.item.cardInfo.shortName} 경매 상세 보기`,
         })
 
         expect(detail).toHaveAttribute('data-card-hit-area', 'content')

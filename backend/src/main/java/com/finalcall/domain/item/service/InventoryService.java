@@ -53,6 +53,7 @@ public class InventoryService {
     private final ItemInstanceRepository itemInstanceRepository;
     private final TempStorageRepository tempStorageRepository;
     private final UserRepository userRepository;
+    private final CardInfoFactory cardInfoFactory;
 
     @ServiceLog
     public InventoryData getMyInventory() {
@@ -63,12 +64,15 @@ public class InventoryService {
 
     @ServiceLog
     public CursorResponse<TempStorageItemResponse, String> getMyTempStorage(String cursor, int size) {
+        Instant calculatedAt = cardInfoFactory.now();
         Long userId = currentUserId();
         TempStorageCursor decoded = TempStorageCursor.decode(cursor);
         List<TempStorage> fetched = tempStorageRepository.findByCursor(userId, decoded.storedAt(), decoded.instanceId(),
             size);
         // 커서는 매핑 전 원본(TempStorage)의 마지막 항목에서 안정 정렬 키 (stored_at, instance_id)로 추출한다.
-        return CursorResponse.from(fetched, size, TempStorageItemResponse::from,
+        return CursorResponse.from(fetched, size,
+            temp -> TempStorageItemResponse.from(
+                temp, cardInfoFactory.create(temp.getInstance(), calculatedAt)),
             temp -> TempStorageCursor.encode(temp.getStoredAt(), temp.getInstance().getId()));
     }
 

@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ListGrid } from '@/components/common/ListFrame'
@@ -26,6 +27,15 @@ function item(slotNo: number, id: string, name: string): InventoryItem {
             skill2Code: null,
             skillPercent: 18,
             goldforceExpireAt: null,
+            cardInfo: cardInfoFixture({
+                shortName: 'Lv.3 불검',
+                formalName: '3레벨 칼',
+                kind: { code: 3, label: '칼', abbreviation: '검' },
+                skills: [
+                    { slot: 1, code: 104, name: '공격력 증가', percent: null },
+                    { slot: 2, code: null, name: null, percent: null },
+                ],
+            }),
         },
     }
 }
@@ -62,7 +72,7 @@ describe('<InventorySlotGrid>', () => {
         const { onItemClick } = renderGrid({ used: 1, items: [target] })
         // FC-178: 채운 슬롯은 마켓 카드 — 오버레이 버튼 aria-label 로 연다(가격/판매자 없음).
         const slot = screen.getByRole('button', {
-            name: '불의 검 카드정보 보기',
+            name: 'Lv.3 불검 카드정보 보기',
         })
         // 이미지·타입 줄 중심 — 이름은 별도 텍스트 라벨이 아니라 aria-label 로만.
         expect(screen.queryByText('불의 검')).toBeNull()
@@ -145,7 +155,7 @@ describe('<InventorySlotGrid>', () => {
 
         expect(
             screen.getByRole('button', {
-                name: `경계 아이템 ${slotNo} 카드정보 보기`,
+                name: 'Lv.3 불검 카드정보 보기',
             }),
         ).toBeInTheDocument()
 
@@ -158,7 +168,7 @@ describe('<InventorySlotGrid>', () => {
         })
         expect(
             screen.queryByRole('button', {
-                name: `경계 아이템 ${slotNo} 카드정보 보기`,
+                name: 'Lv.3 불검 카드정보 보기',
             }),
         ).toBeNull()
     })

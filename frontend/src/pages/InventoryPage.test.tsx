@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/react'
 import { Route, Routes, useSearchParams } from 'react-router'
@@ -38,6 +39,15 @@ const sword: InventoryItem = {
         skill2Code: null,
         skillPercent: 18,
         goldforceExpireAt: null,
+        cardInfo: cardInfoFixture({
+            shortName: 'Lv.3 불검',
+            formalName: '3레벨 칼',
+            kind: { code: 3, label: '칼', abbreviation: '검' },
+            skills: [
+                { slot: 1, code: 104, name: '공격력 증가', percent: null },
+                { slot: 2, code: null, name: null, percent: null },
+            ],
+        }),
     },
 }
 
@@ -74,7 +84,7 @@ describe('InventoryPage (FC-177)', () => {
 
         expect(await screen.findByText('1 / 24 사용')).toBeInTheDocument()
         expect(
-            screen.getByRole('button', { name: '불의 검 카드정보 보기' }),
+            screen.getByRole('button', { name: 'Lv.3 불검 카드정보 보기' }),
         ).toBeInTheDocument()
     })
 
@@ -83,7 +93,7 @@ describe('InventoryPage (FC-177)', () => {
         renderInventory()
 
         const slot = await screen.findByRole('button', {
-            name: '불의 검 카드정보 보기',
+            name: 'Lv.3 불검 카드정보 보기',
         })
         fireEvent.click(slot)
 

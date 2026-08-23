@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it } from 'vitest'
 import { compareSkillLabel, comparePriceOf } from './compareView'
 import type { AuctionSummary } from '@/lib/api/auctions'
@@ -24,6 +25,7 @@ const baseAuction: AuctionSummary = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 한손 도끼',
+            cardInfo: cardInfoFixture(),
     },
     startPrice: 1_000_000,
     buyNowPrice: null,

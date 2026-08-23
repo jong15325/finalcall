@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import InventoryCardInfoDialog from './InventoryCardInfoDialog'
 import type { InventoryItem } from '@/lib/api/inventory'
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 
 /**
  * 인벤토리 카드정보 모달 = 아이템 마켓 `ShopCardInfoDialog` 와 동일 구조(FC-178).
@@ -27,6 +28,15 @@ const target: InventoryItem = {
         skill2Name: null,
         skillPercent: 18,
         goldforceExpireAt: null,
+        cardInfo: cardInfoFixture({
+            shortName: 'Lv.3 불검',
+            formalName: '3레벨 칼',
+            kind: { code: 3, label: '칼', abbreviation: '검' },
+            skills: [
+                { slot: 1, code: 104, name: '공격력 증가', percent: null },
+                { slot: 2, code: null, name: null, percent: null },
+            ],
+        }),
     },
 }
 
@@ -58,13 +68,13 @@ describe('<InventoryCardInfoDialog>', () => {
 
         // 속성표 — 타입(블랙 - 무기)·명칭·채널제한(level 파생)·속성·골드포스.
         expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
-        expect(screen.getByText('불의 검')).toBeInTheDocument()
+        expect(screen.getByText('3레벨 칼')).toBeInTheDocument()
         expect(screen.getByText('채널제한')).toBeInTheDocument()
         // level 3 → 초보채널 이상(channelLimitOf 파생, 표시 전용).
         expect(screen.getByText('초보채널 이상')).toBeInTheDocument()
         expect(screen.getByText('불')).toBeInTheDocument()
         // 골드포스 없음(goldforceExpireAt null).
-        expect(screen.getByText('없음')).toBeInTheDocument()
+        expect(screen.getByText('0일')).toBeInTheDocument()
 
         // 특수스킬 — v1.21 델타로 실제 이름 표시(마켓 동일 배선, `스킬 #코드` 폴백 아님).
         expect(
@@ -113,6 +123,12 @@ describe('<InventoryCardInfoDialog>', () => {
                     ...target.summary,
                     skill1Code: null,
                     skill2Code: null,
+                    cardInfo: cardInfoFixture({
+                        skills: [
+                            { slot: 1, code: null, name: null, percent: null },
+                            { slot: 2, code: null, name: null, percent: null },
+                        ],
+                    }),
                 },
             },
         })

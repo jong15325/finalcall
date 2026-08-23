@@ -5,6 +5,7 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.finalcall.domain.delivery.entity.DeliveryStatus;
 import com.finalcall.domain.delivery.entity.ItemDelivery;
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.item.dto.ItemSummaryResponse;
 import com.finalcall.domain.item.entity.ItemInstance;
 
@@ -38,11 +39,12 @@ public record DeliverySummaryResponse(
      * @param delivery 조회된 배송 행(수령자 스코프 통과 — recipient = 주체)
      * @param instance 배송 대상 item_instance(id = delivery.itemInstanceId, 연관 fetch join 완료)
      */
-    public static DeliverySummaryResponse from(ItemDelivery delivery, ItemInstance instance) {
+    public static DeliverySummaryResponse from(
+        ItemDelivery delivery, ItemInstance instance, CardInfoResponse cardInfo) {
         return DeliverySummaryResponse.builder()
             .deliveryPublicId(delivery.getPublicId())
             .status(delivery.getStatus())
-            .item(ItemSummaryResponse.from(instance))
+            .item(ItemSummaryResponse.from(instance, cardInfo))
             .itemInstancePublicId(instance.getPublicId())
             .createdAt(delivery.getCreatedAt())
             .appliedAt(delivery.getAppliedAt())

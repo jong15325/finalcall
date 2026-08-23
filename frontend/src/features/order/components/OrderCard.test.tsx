@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -24,6 +25,7 @@ const item: AuctionItemBlock = {
     goldforceExpireAt: null,
     nameSnapshot: '불의 전투도끼',
     specSnapshot: '한손 도끼',
+            cardInfo: cardInfoFixture(),
 }
 
 const buyerOrder: OrderSummary = {

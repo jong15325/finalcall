@@ -8,16 +8,10 @@ import {
     auctionPhaseLabelOf,
     auctionPhaseOf,
 } from '@/features/auction/lib/auctionPhase'
-import {
-    compareSkillLabel,
-    comparePriceOf,
-} from '@/features/auction/lib/compareView'
+import { comparePriceOf } from '@/features/auction/lib/compareView'
 import { useNow } from '@/features/auction/lib/useNow'
 import ItemFrame from '@/features/item/components/ItemFrame'
-import { elementLabelOf } from '@/features/item/lib/element'
 import { itemArt } from '@/features/item/lib/itemArt'
-import { itemTypeLabel } from '@/features/item/lib/itemCode'
-import { goldforceRemainingDays } from '@/features/item/components/frame'
 import { useCompareAuctions } from '@/lib/queries/auctions'
 import { useCompareShops } from '@/lib/queries/shop'
 import { shopStatusLabelOf } from '@/features/shop/lib/shopStatus'
@@ -267,8 +261,7 @@ export default function ComparePage() {
                             render={(column) =>
                                 column.item ? (
                                     <SkillCell
-                                        code={column.item.skill1}
-                                        name={column.item.skill1Name}
+                                        skill={column.item.cardInfo.skills[0]}
                                     />
                                 ) : null
                             }
@@ -283,8 +276,7 @@ export default function ComparePage() {
                             render={(column) =>
                                 column.item ? (
                                     <SkillCell
-                                        code={column.item.skill2}
-                                        name={column.item.skill2Name}
+                                        skill={column.item.cardInfo.skills[1]}
                                     />
                                 ) : null
                             }
@@ -318,11 +310,8 @@ export default function ComparePage() {
                             columns={columns}
                             render={(column) => {
                                 if (!column.item) return null
-                                const days = goldforceRemainingDays(
-                                    column.item.goldforceExpireAt,
-                                    now,
-                                )
-                                if (days === null) {
+                                const frame = column.item.cardInfo.frame
+                                if (frame.type === 'BLACK') {
                                     return (
                                         <span className="text-xs text-content-subtle">
                                             미적용
@@ -332,7 +321,7 @@ export default function ComparePage() {
                                 return (
                                     <>
                                         <strong className="text-[13px] text-content-fg">
-                                            {days}일
+                                            {frame.remainingGoldforceDays}일
                                         </strong>
                                         <small className="text-[10px] text-content-subtle">
                                             잔여 기간
@@ -351,15 +340,10 @@ export default function ComparePage() {
                                 column.item ? (
                                     <>
                                         <strong className="text-[13px] text-content-fg">
-                                            {elementLabelOf(
-                                                column.item.element,
-                                            )}
+                                            {column.item.cardInfo.element.label}
                                         </strong>
                                         <small className="text-[10px] text-content-subtle">
-                                            {itemTypeLabel(
-                                                column.item.subGroup,
-                                                column.item.kind,
-                                            )}
+                                            {column.item.cardInfo.kind.label}
                                         </small>
                                     </>
                                 ) : null
@@ -444,7 +428,7 @@ function CompareProduct({
         'l',
         1,
     )
-    const hasSkill = item.skill1 !== null || item.skill2 !== null
+    const hasSkill = item.cardInfo.skills.some((skill) => skill.code !== null)
     const badgeClass =
         column.source === 'MARKET'
             ? 'bg-brand-structure/10 text-chrome-selected'
@@ -458,8 +442,8 @@ function CompareProduct({
                     fill
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
-                    name={item.nameSnapshot}
-                    visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+                    name={item.cardInfo.shortName}
+                    frame={item.cardInfo.frame}
                     hasSkill={hasSkill}
                     size="stage"
                     now={now}
@@ -471,7 +455,7 @@ function CompareProduct({
                 {column.sourceLabel}
             </span>
             <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-content-fg">
-                {item.nameSnapshot}
+                {item.cardInfo.shortName}
             </h2>
             <p className="mt-0.5 line-clamp-1 text-[11px] text-content-subtle">
                 {item.specSnapshot}
@@ -523,15 +507,13 @@ function CompareRow({
     )
 }
 
-/** 스킬 셀 — 스킬명(없으면 `스킬 #{code}` 폴백) 또는 "없음"(빈 슬롯). */
+/** 스킬 셀 — 서버 카드정보의 슬롯 이름 또는 "없음". */
 function SkillCell({
-    code,
-    name,
+    skill,
 }: {
-    code: number | null
-    name?: string | null
+    skill: AuctionItemBlock['cardInfo']['skills'][number]
 }) {
-    const label = compareSkillLabel(code, name)
+    const label = skill.name ?? '없음'
     const empty = label === '없음'
     return (
         <strong
@@ -573,4 +555,3 @@ function CompareEmpty() {
         </section>
     )
 }
-

@@ -4,6 +4,7 @@ import { renderWithProviders } from '@/test/renderWithProviders'
 import TempStorageList from './TempStorageList'
 import { EXPIRY_IMMINENT_MS } from '@/features/member/lib/tempStorageExpiry'
 import type { TempStorageItem } from '@/lib/api/tempStorage'
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 
 /**
  * 임시 보관함 목록 (FC-076 · FC-085 #1).
@@ -26,6 +27,18 @@ function tempItem(id: string, expireAt: string | null): TempStorageItem {
         itemInstancePublicId: id,
         storedAt: at(-3 * 86_400_000),
         expireAt,
+        summary: {
+            typeCode: 1123,
+            displayName: '호환 이름',
+            level: 3,
+            skill1Code: 11,
+            skill2Code: 202,
+            skill1Name: '호환 스킬 1',
+            skill2Name: '호환 스킬 2',
+            skillPercent: 33,
+            goldforceExpireAt: null,
+            cardInfo: cardInfoFixture(),
+        },
     }
 }
 
@@ -68,14 +81,14 @@ describe('<TempStorageList>', () => {
         ).toBeNull()
     })
 
-    it('아트는 상세 링크를 걸고, 상세 응답 전엔 깨진 img 없이 폴백한다(#1)', () => {
+    it('서버 카드정보로 명칭·아트·프레임을 표시하고 상세 링크를 건다', () => {
         renderList()
-        const link = screen.getByRole('link', {
-            name: '보관 아이템 #AAAAAA 상세 보기',
-        })
+        const link = screen.getAllByRole('link', {
+            name: 'Lv.3 불도 상세 보기',
+        })[0]
         expect(link).toHaveAttribute('href', '/items/ITEM-AAAAAA')
-        // 상세 데이터 도착 전/실패 시 실제 img 아트가 아니라 플레이스홀더(깨진 이미지 0)
-        expect(link.querySelector('img')).toBeNull()
+        expect(link.querySelector('img')).toHaveAccessibleName('Lv.3 불도')
+        expect(screen.getAllByText('Lv.3 불도')).toHaveLength(2)
     })
 
     it('이동 버튼 클릭 → onRelocate(id)', () => {

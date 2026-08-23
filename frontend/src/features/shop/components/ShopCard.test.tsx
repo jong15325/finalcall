@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -39,6 +40,7 @@ const baseShop: ShopSummary = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '공격력이 높은 한손 도끼',
+        cardInfo: cardInfoFixture(),
     },
     price: 2_480_000,
     endAt: '2026-07-30T00:00:00Z',
@@ -56,7 +58,7 @@ describe('<ShopCard>', () => {
             container.querySelector('[data-card-hit-area="compare"]'),
         ).toContainElement(
             screen.getByRole('button', {
-                name: '불의 전투도끼 비교에 담기',
+                name: 'Lv.3 불도 비교에 담기',
             }),
         )
         expect(itemFrameCss).toMatch(
@@ -73,7 +75,7 @@ describe('<ShopCard>', () => {
             screen.queryByRole('link', { name: '불의 전투도끼 상세 보기' }),
         ).not.toBeInTheDocument()
         const opener = screen.getByRole('button', {
-            name: '불의 전투도끼 카드정보 보기',
+            name: 'Lv.3 불도 카드정보 보기',
         })
         expect(opener).toHaveClass('item-card__primary-action--content')
         expect(opener.closest('.item-card__market-info')).not.toBeNull()
@@ -103,20 +105,20 @@ describe('<ShopCard>', () => {
             container.querySelector('.item-card__skill-flip'),
         ).not.toContainElement(
             screen.getByRole('button', {
-                name: '불의 전투도끼 비교에 담기',
+                name: 'Lv.3 불도 비교에 담기',
             }),
         )
         expect(
             container.querySelector('.item-card__artwork-controls'),
         ).toContainElement(
             screen.getByRole('button', {
-                name: '불의 전투도끼 비교에 담기',
+                name: 'Lv.3 불도 비교에 담기',
             }),
         )
         expect(
             screen
                 .getByRole('button', {
-                    name: '불의 전투도끼 비교에 담기',
+                    name: 'Lv.3 불도 비교에 담기',
                 })
                 .closest('[data-card-hit-area="compare"]'),
         ).not.toBeNull()
@@ -135,7 +137,7 @@ describe('<ShopCard>', () => {
 
         fireEvent.click(
             screen.getByRole('button', {
-                name: '불의 전투도끼 카드정보 보기',
+                name: 'Lv.3 불도 카드정보 보기',
             }),
         )
 
@@ -155,7 +157,7 @@ describe('<ShopCard>', () => {
             container.querySelector('[data-card-hit-area="flip"]'),
         ).toBeNull()
         expect(
-            screen.getByRole('img', { name: '불의 전투도끼' }),
+            screen.getByRole('img', { name: 'Lv.3 불도' }),
         ).toBeInTheDocument()
     })
 
@@ -209,7 +211,7 @@ describe('<ShopCard>', () => {
         )
 
         fireEvent.click(
-            screen.getByRole('button', { name: '불의 전투도끼 비교에 담기' }),
+            screen.getByRole('button', { name: 'Lv.3 불도 비교에 담기' }),
         )
 
         // 담기는 열기 버튼과 독립 상위 레이어 — onOpen 미호출.
@@ -264,6 +266,13 @@ describe('<ShopCard>', () => {
                     item: {
                         ...baseShop.item,
                         goldforceExpireAt: '2026-07-30T00:00:00Z',
+                        cardInfo: cardInfoFixture({
+                            frame: {
+                                type: 'GOLD',
+                                label: '골드',
+                                remainingGoldforceDays: 7,
+                            },
+                        }),
                     },
                 }}
                 now={NOW}

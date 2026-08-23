@@ -1,36 +1,26 @@
 /**
  * ItemInstanceDetail — 보유 아이템 인스턴스 상세 (FC-077 — 목업 `itemDetail()` · design-brief B-11).
  *
- * ══════════════════════════════════════════════════════════════════════════════
- * ★★ **스킬명을 실제로 표시한다** — 인스턴스 상세는 `{skillCode, name}` 객체를 준다.
- * ══════════════════════════════════════════════════════════════════════════════
- * EPIC-MARKET-DATA 이후 경매·고정가 item 블록도 skill1Name/skill2Name 을 실어 스킬명을 내지만,
- * 인스턴스 상세는 자기 API(`GET /items/{id}` — `ItemSkill{skillCode, name}`)로 이름을 얻는다.
- * 슬롯 해소는 보존 `resolveSkillSlots`/`skillLabelOf` 를 재사용한다 — 이름이 있으면 이름, 없으면
- * 중립 코드로 흐르는 분기가 그 lib 한 곳에 있어 모든 맥락의 일관성이 보장된다(m-5 슬롯 오표기 방지).
+ * 명칭·축 라벨·스킬 2슬롯·골드포스 잔여일은 상세 응답의 서버 `cardInfo`를 그대로 표시한다.
  *
  * ★ 목업 `item-detail-grid`(아트 + 스펙 카드) 레이아웃 1:1, 색만 장터 브랜드 토큰(§2.9).
  * ★ 아트는 공용 `ItemFrame`(72×134 캔버스 불변, §6.1) — 골드포스/스킬 마크 파생 포함.
  * ★ `slotNo` 는 **소유자 & INVENTORY 일 때만** 서버가 싣는다 → 있을 때만 슬롯·"경매에 등록"을
  *   낸다(그 조건이 곧 출품 가능 조건이라, 없을 때 등록 버튼을 감춰 헛클릭/404 를 막는다).
- * ★ 골드포스 잔여는 **클라 파생**(`goldforceRemainingDays`) — 활성일 때만 배지·행을 낸다.
+ * ★ 명칭·스킬·골드포스 잔여는 서버 `cardInfo`를 그대로 표시한다.
  */
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { TbArrowLeft, TbTag } from 'react-icons/tb'
 import { paths } from '@/app/paths'
-import { elementLabelOf } from '@/features/item/lib/element'
 import { itemArt } from '@/features/item/lib/itemArt'
-import { itemTypeLabel } from '@/features/item/lib/itemCode'
 import { itemLocationLabel } from '@/features/item/lib/itemLocation'
-import { goldforceRemainingDays } from './frame'
-import { resolveSkillSlots, skillLabelOf } from './skillSlots'
 import ItemFrame from './ItemFrame'
 import type { ItemInstanceDetail as ItemInstanceDetailData } from '@/lib/api/items'
 
 interface ItemInstanceDetailProps {
     item: ItemInstanceDetailData
-    /** 골드포스 파생 기준 시각(테스트 주입). 기본 Date.now() */
+    /** 기존 상세 호출 계약과 테스트 시계 주입 형상을 유지한다. */
     now?: number
 }
 
@@ -57,9 +47,10 @@ function SpecRow({
     )
 }
 
-function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
-    const resolvedNow = now ?? Date.now()
+function ItemInstanceDetail({ item }: ItemInstanceDetailProps) {
     const { template } = item
+    const cardInfo = item.cardInfo
+    if (!cardInfo) throw new Error('서버 카드정보 응답이 없습니다.')
 
     const art = itemArt(
         {
@@ -73,22 +64,15 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
     )
 
     // 슬롯 번호를 먼저 매기고 null 을 거른다(마법 skill1 부재 → skill2 는 슬롯 2 유지, m-5).
-    const skills = resolveSkillSlots(
-        item.skill1?.skillCode ?? null,
-        item.skill2?.skillCode ?? null,
-        {
-            skill1Name: item.skill1?.name ?? null,
-            skill2Name: item.skill2?.name ?? null,
-        },
-    )
+    const skills = cardInfo.skills.filter((skill) => skill.code !== null)
     const hasSkill = skills.length > 0
     const skillRows = ([1, 2] as const).map((slot) => ({
         slot,
         skill: skills.find((skill) => skill.slot === slot),
     }))
 
-    // 골드포스 잔여(클라 파생) — 활성일 때만 값이 있다(미적용·만료는 null).
-    const gfDays = goldforceRemainingDays(item.goldforceExpireAt, resolvedNow)
+    // 골드포스 잔여는 서버 cardInfo 스냅샷을 표시한다.
+    const gfDays = cardInfo.frame.remainingGoldforceDays
 
     // slotNo 존재 = 소유자 & INVENTORY = 출품 가능 조건. 그때만 등록 버튼을 낸다.
     const canRegister = item.slotNo !== null && item.slotNo !== undefined
@@ -113,10 +97,9 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                     <ItemFrame
                         imageUrl={art?.src}
                         spriteUrl={art?.src}
-                        name={template.displayName}
-                        visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+                        name={cardInfo.shortName}
+                        frame={cardInfo.frame}
                         hasSkill={hasSkill}
-                        now={resolvedNow}
                         size="stage"
                         scale={2}
                         className="w-full"
@@ -130,7 +113,7 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                         <span className="detail-meta rounded-md bg-brand-structure/5 px-2.5 py-1 text-xs font-semibold text-chrome-selected">
                             {itemLocationLabel(item.location)}
                         </span>
-                        {gfDays !== null && (
+                        {cardInfo.frame.type === 'GOLD' && (
                             <span className="rounded-md bg-brand-highlight-soft px-2.5 py-1 text-xs font-semibold text-brand-highlight-deep">
                                 골드포스 활성
                             </span>
@@ -138,21 +121,18 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                     </div>
 
                     <h1 className="mt-3 text-2xl font-bold text-content-fg">
-                        {template.displayName}
+                        {cardInfo.formalName}
                     </h1>
                     <p className="mt-1 text-sm text-content-subtle">
-                        {itemTypeLabel(template.subGroup, template.kind)}
-                        {canRegister && ` · 슬롯 ${item.slotNo}`}
+                        {canRegister
+                            ? `슬롯 ${item.slotNo}`
+                            : '보유 아이템 정보'}
                     </p>
 
                     <dl className="mt-5">
-                        <SpecRow term="종류">
-                            {itemTypeLabel(template.subGroup, template.kind)}
-                        </SpecRow>
+                        <SpecRow term="종류">{cardInfo.kind.label}</SpecRow>
                         <SpecRow term="레벨">{item.level}</SpecRow>
-                        <SpecRow term="속성">
-                            {elementLabelOf(template.element)}
-                        </SpecRow>
+                        <SpecRow term="속성">{cardInfo.element.label}</SpecRow>
 
                         {/* 스킬 — 슬롯 번호 유지, 이름 표시(없으면 중립 코드) */}
                         {skillRows.map(({ slot, skill }) => (
@@ -168,19 +148,18 @@ function ItemInstanceDetail({ item, now }: ItemInstanceDetailProps) {
                                             : 'text-content-subtle'
                                     }
                                 >
-                                    {skill ? skillLabelOf(skill) : '-'}
-                                    {slot === 2 &&
-                                        skill &&
-                                        item.skillPercent > 0 && (
+                                    {skill?.name ?? '-'}
+                                    {skill?.percent !== null &&
+                                        skill?.percent !== undefined && (
                                             <span className="item-skill-percent">
-                                                ({item.skillPercent}%)
+                                                ({skill.percent}%)
                                             </span>
                                         )}
                                 </span>
                             </SpecRow>
                         ))}
 
-                        {gfDays !== null && (
+                        {cardInfo.frame.type === 'GOLD' && (
                             <SpecRow term="골드포스 잔여">
                                 {gfDays}일 남음
                             </SpecRow>

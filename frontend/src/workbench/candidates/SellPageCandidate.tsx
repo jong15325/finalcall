@@ -142,9 +142,7 @@ export default function SellPageCandidate({
                                 hasSkill
                                 imageUrl="/art/items/level1/l/earth/armor.png"
                                 name="황혼의 수호자 갑옷"
-                                visual={{
-                                    goldforceExpireAt: '2026-09-30T00:00:00Z',
-                                }}
+                                frame={{ type: 'GOLD', label: '골드', remainingGoldforceDays: 38 }}
                                 size="frame"
                                 now={Date.parse('2026-08-14T05:30:00Z')}
                             />

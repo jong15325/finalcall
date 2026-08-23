@@ -117,55 +117,55 @@ export default function MarketDetailPage() {
     return (
         <ElementDetailBackground element={shop.item.element}>
             <div className="flex flex-col gap-6">
-            <Link
-                to={paths.market}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-content-subtle hover:text-brand-structure"
-            >
-                <TbArrowLeft aria-hidden className="size-4" />
-                아이템 마켓
-            </Link>
-
-            {toast && (
-                <p
-                    role="status"
-                    className="rounded-lg bg-success-soft px-4 py-2.5 text-sm font-medium text-success-ink"
+                <Link
+                    to={paths.market}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-content-subtle hover:text-brand-structure"
                 >
-                    {toast}
-                </p>
-            )}
+                    <TbArrowLeft aria-hidden className="size-4" />
+                    아이템 마켓
+                </Link>
 
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
-                {/* 모바일: 구매 패널을 먼저(즉시 진입, 경매 상세와 동일) */}
-                <div className="order-2 lg:order-1">
-                    <ShopHeroCard shop={shop} now={now} />
-                </div>
-                <div className="order-1 lg:order-2">
-                    <ShopBuyPanel
-                        shop={shop}
-                        now={now}
-                        balance={balanceQuery.data}
-                        isAuthed={isAuthed}
-                        isOwn={isOwn}
-                        loginHref={loginHref}
-                        onBuy={openPurchase}
-                    />
-                </div>
-            </div>
+                {toast && (
+                    <p
+                        role="status"
+                        className="rounded-lg bg-success-soft px-4 py-2.5 text-sm font-medium text-success-ink"
+                    >
+                        {toast}
+                    </p>
+                )}
 
-            <ShopPurchaseDialog
-                open={purchaseOpen}
-                itemName={shop.item.nameSnapshot}
-                price={shop.price}
-                gameMoneyAvailable={
-                    isAuthed
-                        ? (balanceQuery.data?.gameMoneyAvailable ?? null)
-                        : null
-                }
-                isSubmitting={purchaseMutation.isPending}
-                submitError={purchaseMutation.error}
-                onClose={() => setPurchaseOpen(false)}
-                onConfirm={handlePurchase}
-            />
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
+                    {/* 모바일: 구매 패널을 먼저(즉시 진입, 경매 상세와 동일) */}
+                    <div className="order-2 lg:order-1">
+                        <ShopHeroCard shop={shop} now={now} />
+                    </div>
+                    <div className="order-1 lg:order-2">
+                        <ShopBuyPanel
+                            shop={shop}
+                            now={now}
+                            balance={balanceQuery.data}
+                            isAuthed={isAuthed}
+                            isOwn={isOwn}
+                            loginHref={loginHref}
+                            onBuy={openPurchase}
+                        />
+                    </div>
+                </div>
+
+                <ShopPurchaseDialog
+                    open={purchaseOpen}
+                    itemName={shop.item.cardInfo.formalName}
+                    price={shop.price}
+                    gameMoneyAvailable={
+                        isAuthed
+                            ? (balanceQuery.data?.gameMoneyAvailable ?? null)
+                            : null
+                    }
+                    isSubmitting={purchaseMutation.isPending}
+                    submitError={purchaseMutation.error}
+                    onClose={() => setPurchaseOpen(false)}
+                    onConfirm={handlePurchase}
+                />
             </div>
         </ElementDetailBackground>
     )

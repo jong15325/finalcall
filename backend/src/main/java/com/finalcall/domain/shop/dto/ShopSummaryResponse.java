@@ -2,6 +2,7 @@ package com.finalcall.domain.shop.dto;
 
 import java.time.Instant;
 
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopStatus;
 
@@ -34,11 +35,11 @@ public record ShopSummaryResponse(
      * 요약 응답을 조립한다. {@code sellerCompletedSales} 는 DTO 가 스스로 셀 수 없어(N+1 유발) 서비스가 배치 집계로
      * 산출한 값을 주입받는다 — 이력 없는 판매자는 0 이다.
      */
-    public static ShopSummaryResponse from(Shop shop, long sellerCompletedSales) {
+    public static ShopSummaryResponse from(Shop shop, long sellerCompletedSales, CardInfoResponse cardInfo) {
         return ShopSummaryResponse.builder()
             .shopPublicId(shop.getPublicId())
             .status(shop.getStatus())
-            .item(ShopItemResponse.from(shop))
+            .item(ShopItemResponse.from(shop, cardInfo))
             .price(shop.getPrice())
             .endAt(shop.getEndAt())
             .sellerNickname(shop.getSeller().getNickname())

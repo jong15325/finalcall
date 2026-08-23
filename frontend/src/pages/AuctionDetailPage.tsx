@@ -219,7 +219,7 @@ export default function AuctionDetailPage() {
 
                     <BidDialog
                         open={bidOpen}
-                        auctionName={auction.item.nameSnapshot}
+                        auctionName={auction.item.cardInfo.formalName}
                         currentHighestAmount={auction.highestBidAmount}
                         minNextBidAmount={auction.minNextBidAmount}
                         buyNowPrice={auction.buyNowPrice}
@@ -235,7 +235,7 @@ export default function AuctionDetailPage() {
                     {auction.buyNowPrice !== null && (
                         <PurchaseDialog
                             open={purchaseOpen}
-                            auctionName={auction.item.nameSnapshot}
+                            auctionName={auction.item.cardInfo.formalName}
                             buyNowPrice={auction.buyNowPrice}
                             gameMoneyAvailable={
                                 balanceQuery.data?.gameMoneyAvailable ?? null

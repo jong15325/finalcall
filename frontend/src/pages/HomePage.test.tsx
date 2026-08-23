@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import { okEnvelope, renderWithProviders } from '@/test/renderWithProviders'
@@ -33,6 +34,7 @@ function makeAuction(overrides: Partial<AuctionSummary>): AuctionSummary {
             goldforceExpireAt: null,
             nameSnapshot: '기본 아이템',
             specSnapshot: '설명',
+            cardInfo: cardInfoFixture(),
         },
         startPrice: 1_000_000,
         buyNowPrice: null,
@@ -115,7 +117,7 @@ describe('<HomePage>', () => {
         await waitFor(() =>
             expect(
                 screen.getByRole('link', {
-                    name: '살아있는 검 경매 상세 보기',
+                    name: 'Lv.3 불도 경매 상세 보기',
                 }),
             ).toBeInTheDocument(),
         )

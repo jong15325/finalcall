@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -43,6 +44,15 @@ const sword: InventoryItem = {
         skill2Code: null,
         skillPercent: 18,
         goldforceExpireAt: null,
+        cardInfo: cardInfoFixture({
+            shortName: 'Lv.3 불검',
+            formalName: '3레벨 칼',
+            kind: { code: 3, label: '칼', abbreviation: '검' },
+            skills: [
+                { slot: 1, code: 104, name: '공격력 증가', percent: null },
+                { slot: 2, code: null, name: null, percent: null },
+            ],
+        }),
     },
 }
 
@@ -522,7 +532,7 @@ describe('SellPage 선점 모드 (FC-177)', () => {
         expect(
             await screen.findByRole('heading', { name: /카드정보/ }),
         ).toBeInTheDocument()
-        expect(screen.getByText('불의 검')).toBeInTheDocument()
+        expect(screen.getByText('3레벨 칼')).toBeInTheDocument()
         expect(
             screen.getByRole('link', { name: '다시 선택' }),
         ).toBeInTheDocument()

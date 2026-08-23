@@ -8,8 +8,6 @@ import ItemFrame from './ItemFrame'
  */
 
 const NOW = Date.parse('2026-07-21T00:00:00Z')
-const DAY = 86_400_000
-const at = (offsetMs: number) => new Date(NOW + offsetMs).toISOString()
 const ART = '/art/items/level3/l/fire/axe.png'
 
 describe('<ItemFrame>', () => {
@@ -35,7 +33,7 @@ describe('<ItemFrame>', () => {
             <ItemFrame
                 imageUrl={ART}
                 name="검"
-                visual={{ goldforceExpireAt: at(42 * DAY) }}
+                frame={{ type: 'GOLD', label: '골드', remainingGoldforceDays: 42 }}
                 now={NOW}
             />,
         )
@@ -56,7 +54,7 @@ describe('<ItemFrame>', () => {
             <ItemFrame
                 imageUrl={ART}
                 name="검"
-                visual={{ goldforceExpireAt: at(42 * DAY) }}
+                frame={{ type: 'GOLD', label: '골드', remainingGoldforceDays: 42 }}
                 now={NOW}
                 showGoldforceDays={false}
             />,
@@ -75,7 +73,7 @@ describe('<ItemFrame>', () => {
             <ItemFrame
                 imageUrl={ART}
                 name="검"
-                visual={{ goldforceExpireAt: at(-DAY) }}
+                frame={{ type: 'BLACK', label: '블랙', remainingGoldforceDays: 0 }}
                 now={NOW}
             />,
         )

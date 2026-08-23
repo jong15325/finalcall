@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getItemInstance } from '@/lib/api/items'
+import { useCardInfoExpiry } from './cardInfoExpiry'
 import type { ItemInstanceDetail } from '@/lib/api/items'
 
 /**
@@ -23,9 +24,11 @@ export const itemKeys = {
  * ★ `enabled: id.length > 0` — 라우트 파라미터가 비면 요청하지 않는다(잘못된 주소 방어).
  */
 export function useItemInstance(itemInstancePublicId: string) {
-    return useQuery<ItemInstanceDetail>({
+    const query = useQuery<ItemInstanceDetail>({
         queryKey: itemKeys.detail(itemInstancePublicId),
         queryFn: ({ signal }) => getItemInstance(itemInstancePublicId, signal),
         enabled: itemInstancePublicId.length > 0,
     })
+    useCardInfoExpiry(itemKeys.detail(itemInstancePublicId), query.data)
+    return query
 }

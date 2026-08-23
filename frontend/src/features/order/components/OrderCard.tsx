@@ -75,7 +75,7 @@ function OrderCard({ order, deliveryStatus }: OrderCardProps) {
                 imageUrl={art?.src}
                 spriteUrl={art?.src}
                 name={item.nameSnapshot}
-                visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+                frame={item.cardInfo?.frame}
                 hasSkill={hasSkill}
                 size="stage"
             />

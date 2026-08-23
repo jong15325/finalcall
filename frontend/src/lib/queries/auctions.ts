@@ -18,6 +18,7 @@ import { balanceKeys } from './balance'
 import { inventoryKeys } from './inventory'
 import { orderKeys } from './orders'
 import { tempStorageKeys } from './tempStorage'
+import { useCardInfoExpiry } from './cardInfoExpiry'
 import type {
     AuctionCancelResponse,
     AuctionDetail,
@@ -79,11 +80,13 @@ export const auctionKeys = {
  *   창 포커스 복귀 시에만 다시 가져온다. 화면에 "N초마다 갱신" 류 문구를 쓰지 마라 — 거짓이다.
  */
 export function useAuctionList(query: AuctionListQuery) {
-    return useQuery<CursorPage<AuctionSummary>>({
+    const result = useQuery<CursorPage<AuctionSummary>>({
         queryKey: auctionKeys.preview(query),
         queryFn: ({ signal }) => getAuctions(query, signal),
         refetchOnWindowFocus: true,
     })
+    useCardInfoExpiry(auctionKeys.preview(query), result.data)
+    return result
 }
 
 /**
@@ -102,7 +105,7 @@ export function useAuctionList(query: AuctionListQuery) {
  *   성립하지 않는다. 페이지 파라미터는 react-query 가 따로 나른다.
  */
 export function useAuctionBrowse(query: AuctionListQuery) {
-    return useInfiniteQuery<CursorPage<AuctionSummary>>({
+    const result = useInfiniteQuery<CursorPage<AuctionSummary>>({
         queryKey: auctionKeys.browse(query),
         queryFn: ({ pageParam, signal }) =>
             getAuctions(
@@ -121,6 +124,8 @@ export function useAuctionBrowse(query: AuctionListQuery) {
                 : null,
         refetchOnWindowFocus: false,
     })
+    useCardInfoExpiry(auctionKeys.browse(query), result.data)
+    return result
 }
 
 /**
@@ -130,11 +135,13 @@ export function useAuctionBrowse(query: AuctionListQuery) {
  *   최고가는 창 포커스 복귀·입찰 성공 시에만 다시 가져온다. 화면에 "실시간" 이라 쓰지 마라.
  */
 export function useAuctionDetail(auctionPublicId: string) {
-    return useQuery<AuctionDetail>({
+    const query = useQuery<AuctionDetail>({
         queryKey: auctionKeys.detail(auctionPublicId),
         queryFn: ({ signal }) => getAuction(auctionPublicId, signal),
         refetchOnWindowFocus: true,
     })
+    useCardInfoExpiry(auctionKeys.detail(auctionPublicId), query.data)
+    return query
 }
 
 /**
@@ -148,7 +155,7 @@ export function useAuctionDetail(auctionPublicId: string) {
  * ★ **폴링하지 않는다**(`refetchOnWindowFocus:false`). 비교는 스냅샷 대조이지 실시간 추적이 아니다.
  */
 export function useCompareAuctions(ids: string[]) {
-    return useQueries({
+    const queries = useQueries({
         queries: ids.map((id) => ({
             queryKey: auctionKeys.detail(id),
             queryFn: ({ signal }: { signal: AbortSignal }) =>
@@ -156,6 +163,12 @@ export function useCompareAuctions(ids: string[]) {
             refetchOnWindowFocus: false,
         })),
     })
+    useCardInfoExpiry(
+        auctionKeys.details(),
+        queries.map(({ data }) => data),
+        false,
+    )
+    return queries
 }
 
 /**

@@ -4,6 +4,7 @@ import BidPanel from '@/features/auction/components/BidPanel'
 import CardInfoContent from '@/features/item/components/CardInfoContent'
 import CardInfoDialog from '@/features/item/components/CardInfoDialog'
 import type { WorkbenchFixture } from '../types'
+import type { CardInfoResponse } from '@/lib/api/cardInfo'
 import {
     CARD_INFO_NOW as NOW,
     cardInfoAuction,
@@ -24,6 +25,7 @@ const baseItem = {
     skill1Name: '방어력 강화 8초',
     skill2Name: '이빌아이 8초',
     now: NOW,
+    cardInfo: cardInfoAuction.item.cardInfo!,
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -78,6 +80,14 @@ export default function CardInfoParityScenario() {
                     skill1Name: null,
                     skill2Name: null,
                     skillPercent: 0,
+                    cardInfo: {
+                        ...baseItem.cardInfo,
+                        frame: { type: 'BLACK' as const, label: '블랙', remainingGoldforceDays: 0 },
+                        skills: [
+                            { slot: 1 as const, code: null, name: null, percent: null },
+                            { slot: 2 as const, code: null, name: null, percent: null },
+                        ] as CardInfoResponse['skills'],
+                    },
                 }
               : baseItem
 

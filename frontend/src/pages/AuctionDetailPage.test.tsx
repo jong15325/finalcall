@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import AuctionDetailPage from './AuctionDetailPage'
 
 const mocks = vi.hoisted(() => ({
@@ -71,7 +72,14 @@ vi.mock('@/features/auction/components/BidPanel', () => ({
 const auction = {
     auctionPublicId: 'A-1',
     status: 'ACTIVE',
-    item: { element: 2, nameSnapshot: '불의 검' },
+    item: {
+        element: 2,
+        nameSnapshot: '불의 검',
+        cardInfo: cardInfoFixture({
+            shortName: 'Lv.3 불검',
+            formalName: '3레벨 칼',
+        }),
+    },
     startAt: null,
     endAt: '2026-08-12T00:00:00Z',
     sellerNickname: 'seller',

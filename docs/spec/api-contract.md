@@ -1,12 +1,14 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.32 — FC-352 기본 캐릭터 허용 집합 축소 확정(2026-08-22 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.34 — FC-366 카드 목록 표시명과 정보 명칭 의미 정정(2026-08-23 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, chat-domain-spec v1.9, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.34 | 2026-08-23 | **FC-366 변경 계약 사용자 승인 확정.** `cardInfo.formalName`은 카드정보 모달·inline·상세 정보영역의 `{레벨}레벨 {원형 종류}` 명칭으로, `shortName`은 마켓·실시간 경매 등 목록과 compact card의 `Lv.{레벨} {속성약칭}{종류약칭}` 표시명으로 의미를 분리한다. 예: `9레벨 칼` / `Lv.9 바검`, `5레벨 마법` / `Lv.5 흙필`, 스페셜필은 `5레벨 스페셜필` / `Lv.5 흙스필`. `9바검`·`바검`·`불신`·`흙필` 등은 화면 표시명이 아닌 후속 검색 alias로 분리하며 이번 `cardInfo`에 검색 필드를 추가하지 않는다. DTO 형상·DB·엔드포인트·조회 계약은 불변이다. 정본=`item-domain-spec.md` §5.6, `frontend-ui-system-contract.md` §6.7. 영향=FC-367~369. |
+| v1.33 | 2026-08-23 | **FC-366 Gate 2 사용자 승인 확정.** 경매·고정가의 공통 `item` 블록, 인벤토리·임시보관·배송의 `ItemSummaryResponse`, 아이템 인스턴스 상세에 동일한 중첩 `cardInfo`를 가법 추가한다. 서버가 목록 표시명과 카드정보 명칭, 분류·종류·속성 label/약어, 채널 제한, 블랙/골드 프레임·GF 잔여 일수, 슬롯별 스킬 표시와 `calculatedAt`·`validUntil`을 요청/목록당 단일 `Clock` 기준 시각으로 계산한다. 두 명칭의 표시 형식과 사용 경계는 v1.34에서 정정했다. 프론트는 이 값을 재계산하지 않고 렌더한다. 기존 `nameSnapshot`·`displayName`·`goldforceExpireAt` 및 모든 기존 필드는 호환·감사 목적으로 유지한다. DB·엔드포인트·에러코드·검색 계약은 불변이며 스키마 마이그레이션이 없다. 약칭/스킬 검색은 후속 에픽이다. 정본=`item-domain-spec.md` §5.6, `frontend-ui-system-contract.md` §6.7. 영향=FC-367~369. |
 | v1.32 | 2026-08-22 | **FC-352 변경 계약 사용자 승인 확정.** `primaryCharacterId` 허용 집합을 종전 1..28에서 `{1..12,25..28}`로 축소하고 13..24는 `MEMBER_003`(400)으로 거부한다. 기본값 1, API wire, PATCH 부분 수정·원자성, 공개 프로필 노출 의미는 불변이다. 선택 UI·동기화에서 premium 13..24 자산을 제거한다. 정본=`member-domain-spec.md` v1.1, DB=`erd.md` v2.3/V28. 영향=FC-352~358. |
 | v1.31 | 2026-08-22 | **FC-352 Gate 2 사용자 승인 확정.** `GET/PATCH /me`에 `primaryCharacterId`를 가법 추가하고 PATCH를 nickname/character 부분 수정으로 확장한다. 채팅·게시판·쪽지의 당사자 프로필 응답에도 현재 `primaryCharacterId`를 가법 노출한다. 선택 ID 1..28, 기본값 1, 정적 자산 매핑 정본=`member-domain-spec.md` v1.0. DB=`erd.md` v2.2/V28. `ch_*_btn_2_*`는 전면 제외. 영향=FC-353~358. |
 | v1.30 | 2026-08-22 | **FC-347 사용자 승인.** wire 변경 없이 로그인 브라우저 탭의 AppShell당 단일 STOMP 연결·구독과 unread client lifecycle을 확정했다. `MESSAGE_CREATED.sentByMe`는 수신 principal 관점이며 송신자 자기 배지는 증가시키지 않는다. MESSAGE_CREATED·본인 READ_UPDATED·REST 전송 성공·재연결에서 `/unread-count`를 서버 권위로 coalesced refetch하고 30초 polling을 fallback으로 유지한다. token 교체·logout·다중 탭·ChatWorkspace 중복 연결 제거 규약 포함. 영향 = FC-348~351. REST/STOMP/event/DB schema·ERD 불변. |
@@ -671,7 +673,7 @@ GET /api/v1/me/shops — 내 판매 목록 (PROPOSAL, EPIC-SHOP-MANAGE / FC-103)
 
 ### 3.3 응답 스키마 — 목록/상세 (6절, D-073)
 
-목록/상세 응답의 구체 필드(프론트·QA·디자인 단일 진실). erd 필드·표시 스냅샷 기준. 등급 없음(D-073). 소유자·최고입찰자는 마스킹, 골드포스는 만료시각(활성/잔여는 클라 파생).
+목록/상세 응답의 구체 필드(프론트·QA·디자인 단일 진실). erd 필드·표시 스냅샷 기준. 등급 없음(D-073). 소유자·최고입찰자는 마스킹한다. 골드포스 만료시각은 호환 원시값으로 유지하고 활성/잔여 표시는 서버 `cardInfo`가 파생한다(§3.3.2).
 
 item 블록(공통):
 ```
@@ -693,13 +695,53 @@ item: { typeCode, mainCategory, subGroup, element, kind, level,
 | `skill1` | `integer` | **Y** | `skill_definition.skill_code` | 슬롯1 스킬 코드. 슬롯이 비면 `null` |
 | `skill2` | `integer` | **Y** | `skill_definition.skill_code` | 슬롯2 스킬 코드. 슬롯이 비면 `null` |
 | `skillPercent` | `integer` | N | `item_instance.skill_percent` | 스킬 발동 확률(%) |
-| `goldforceExpireAt` | `string` (ISO-8601 UTC) | **Y** | `item_instance.gf_expire_at` | 골드포스 만료 시각. 미적용이면 `null`. 활성 여부·잔여는 클라 파생(§3.3 서두) |
+| `goldforceExpireAt` | `string` (ISO-8601 UTC) | **Y** | `item_instance.gf_expire_at` | 골드포스 만료 시각. 미적용이면 `null`. 호환·감사용 원시값이며 표시는 서버 파생 `cardInfo.frame` 사용(§3.3.2) |
 | `nameSnapshot` | `string` | N | 등록 시점 auction 스냅샷 | 표시명(D-045) |
 | `specSnapshot` | `string` | N | 등록 시점 auction 스냅샷 | 표시 스펙(D-045) |
+| `cardInfo` | `object` | N | 서버 파생(§3.3.2) | 카드 표시에 사용하는 공통 파생 응답. 프론트 재계산 금지 |
 
 - 5개 코드 축(`typeCode`·`mainCategory`·`subGroup`·`element`·`kind`)과 `level`·`skillPercent`는 **모두 정수**다. erd `item_template`·`item_instance` 컬럼이 전부 `INT`이며 서버 응답 record도 `int`다. 클라이언트는 문자열로 다루지 않는다(정렬·필터·비교가 사전순으로 깨진다).
 - **4개 코드 축의 값 정본은 §3.3.1(아이템 코드 사전)이다.** v1.9까지 전 축이 "미확정"이었으나 v1.10에서 원게임 실데이터 전수 조회로 확정됐다.
 - **폴백 의무는 유지된다.** 현재 미확정 코드는 없지만, 클라이언트는 여전히 **사전에 없는 코드를 중립 표기(예: "속성 N")로 폴백**해야 하며 코드 집합 크기를 가정한 하드코딩(배열 인덱싱·exhaustive switch)을 두지 않는다. 축이 장차 확장될 수 있고(§3.3.1 스코프 주), 서버·클라이언트 배포 시차 동안 신규 코드가 먼저 내려올 수 있다.
+
+#### 3.3.2 공통 `cardInfo` 파생 응답 (FC-366)
+
+`cardInfo`는 아래 기존 응답 블록에 **동일한 JSON 형상**으로 가법 추가한다.
+
+- `AuctionItemResponse`: `GET /api/v1/auctions`, `GET /api/v1/auctions/{auctionPublicId}`의 `item` 및 이를 재사용하는 경매 응답
+- `ShopItemResponse`: `GET /api/v1/shops`, `GET /api/v1/shops/{shopPublicId}`, `GET /api/v1/me/shops`의 `item`
+- `ItemSummaryResponse`: `GET /api/v1/me/inventory`의 `items[].summary`, `GET /api/v1/me/temp-storage`의 `content[].summary`, 배송 응답의 `item`
+- `ItemInstanceDetailResponse`: `GET /api/v1/items/{itemInstancePublicId}`의 최상위 `cardInfo`
+
+```text
+cardInfo = {
+  level: integer,
+  shortName: string,
+  formalName: string,
+  category: { code: integer, label: string },
+  kind: { code: integer, label: string, abbreviation: string },
+  element: { code: integer, label: string, abbreviation: string },
+  channelLimit: { code: "BEGINNER"|"INTERMEDIATE"|"EXPERT", label: string },
+  frame: { type: "BLACK"|"GOLD", label: string, remainingGoldforceDays: integer },
+  skills: [
+    { slot: 1, code: integer|null, name: string|null, percent: null },
+    { slot: 2, code: integer|null, name: string|null, percent: integer|null }
+  ],
+  calculatedAt: string(ISO-8601 UTC),
+  validUntil: string(ISO-8601 UTC)|null
+}
+```
+
+- `shortName = "Lv.{level} {element.abbreviation}{kind.abbreviation}"`. 마켓·실시간 경매 등 목록과 compact card의 표시명이다. 속성은 `불/물/흙/바`, 종류는 칼=`검`, 지팡이=`지`, 도끼=`도`, 활=`활`, 신발=`신`, 펜던트=`펜`, 갑옷=`갑`, 방패=`방`, 일반 마법=`필`, 특수 마법(스페셜필)=`스필`이다. 예: `Lv.4 불필`, `Lv.9 바검`, `Lv.5 흙스필`.
+- `formalName = "{level}레벨 {kind.label}"`. 카드정보 모달·inline·상세 정보영역의 `명칭`이다. 종류 label은 `칼/지팡이/도끼/활/신발/펜던트/갑옷/방패/마법/스페셜필`, category label은 `무기/방어구/마법`이다. 스페셜필의 명칭은 예외 없이 `5레벨 스페셜필`처럼 표시한다. 기존 template `displayName`과 listing `nameSnapshot`을 개명하거나 대체하지 않는다.
+- `9바검`·`바검`·`불신`·`흙필` 등 붙임형·무레벨 약칭은 화면 표시명이 아니라 후속 검색 계약의 입력 alias다. 이번 `cardInfo`에 alias 필드를 추가하거나 프론트에서 alias를 재계산하지 않는다.
+- 채널 제한은 Lv.1~4=`BEGINNER`/`초보채널 이상`, Lv.5~6=`INTERMEDIATE`/`중수채널 이상`, Lv.7~9=`EXPERT`/`고수채널 이상`이다.
+- `gf_expire_at == null` 또는 `gf_expire_at <= calculatedAt`이면 `BLACK`/`블랙`, 잔여 0일이다. 활성이라면 `GOLD`/`골드`, 잔여는 `ceil((gf_expire_at-calculatedAt)/24h)`를 `1..999`로 clamp한다.
+- `skills`는 항상 slot 1, 2 순서의 **정확히 2개 원소**다. 빈 슬롯은 `code/name/percent=null`. 스킬명은 현행 `skill_definition.name`이며 이번 변경에서 명칭을 바꾸지 않는다. 현행 `skillPercent`는 slot 2에만 귀속되어 slot 2가 있고 값이 양수일 때만 `percent`로 싣고, 그 외에는 null이다.
+- `calculatedAt`은 해당 단건 요청 또는 목록 응답 조립을 시작하며 `Clock`에서 **한 번만 얻은 Instant**다. 같은 응답의 모든 `cardInfo`가 같은 값을 사용한다.
+- `validUntil`은 시간 경과만으로 현재 `frame.type` 또는 `remainingGoldforceDays`가 처음 달라지는 시각(그 시각부터 재조회 필요)이다. 비활성 GF는 `null`. 활성 GF는 999 상한까지 고려한 다음 잔여 일수 경계이며, 만료 경계에서는 BLACK/0으로 바뀐다. 프론트는 자체 countdown으로 값을 고치지 않고 `now >= validUntil`이면 해당 query를 재조회한다.
+
+이 변경은 표시용 projection 추가다. 스키마·인덱스·엔드포인트·에러코드에 변화가 없고 추가 조회나 N+1을 허용하지 않는다. `nameSnapshot`, `displayName`, `goldforceExpireAt`과 기존 코드/스킬 필드는 호환·거래 감사 용도로 그대로 유지한다. `9바검`·`바검` 등 약칭 검색, 슬롯 무관 스킬명 검색, 자동완성 및 검색 색인 변경은 본 계약 범위 밖의 후속 에픽이다.
 
 > **⚠ PROPOSAL — EPIC-MARKET-DATA(FC-097), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `skill-exposure-spec.md` v1.0. 아래는 공통 item 블록에 스킬명 2개를 **추가**하는 델타다(스키마·엔드포인트·에러코드 무변경, 기존 필드 무변경).
 > - **item 블록(공통) 추가 필드**: `skill1Name?`(string, nullable) · `skill2Name?`(string, nullable). 출처 `skill_definition.name`(§5 효과 서술 그대로). `skill1`/`skill2`(코드)가 null이면 각각 null이다(마법 카드는 skill1 부재라 skill1Name=null — game-item-skill-format §6).
@@ -853,7 +895,7 @@ GET /api/v1/me/temp-storage — 내 임시보관(오버플로우)
 - 인증: 필요
 - 응답 200: cursor 페이지(`items:[ {itemInstancePublicId, storedAt, expireAt?, 요약} ]`)
 
-- **"요약"(ItemSummaryResponse) 블록**: `{ typeCode, displayName, level, skill1Code?, skill2Code?, skill1Name?, skill2Name?, skillPercent, goldforceExpireAt? }`. `skill1Code`/`skill2Code`는 스킬 코드(`skill_definition.skill_code`, 슬롯 비면 null), `skill1Name`/`skill2Name`은 그 코드의 스킬명(`skill_definition.name`, 코드가 null이면 각각 null — v1.21/FC-179 가법 추가). 이름은 코드에 **부가**될 뿐 대체하지 않는다(필터·아트 매핑은 코드 유지). §3.3 공통 item 블록의 `skill1Name`/`skill2Name`(v1.14/FC-098)과 대칭이며 스킬명 단일 원천 = 백엔드 `SkillDefinition`.
+- **"요약"(ItemSummaryResponse) 블록**: `{ typeCode, displayName, level, skill1Code?, skill2Code?, skill1Name?, skill2Name?, skillPercent, goldforceExpireAt?, cardInfo }`. `skill1Code`/`skill2Code`는 스킬 코드(`skill_definition.skill_code`, 슬롯 비면 null), `skill1Name`/`skill2Name`은 그 코드의 스킬명(`skill_definition.name`, 코드가 null이면 각각 null — v1.21/FC-179 가법 추가). 이름은 코드에 **부가**될 뿐 대체하지 않는다(필터·아트 매핑은 코드 유지). `cardInfo`는 §3.3.2의 서버 파생 표시 블록이며 인벤토리·임시보관과 이를 재사용하는 배송 응답에서 동형이다. §3.3 공통 item 블록의 `skill1Name`/`skill2Name`(v1.14/FC-098)과 대칭이며 스킬명 단일 원천 = 백엔드 `SkillDefinition`.
 
 POST /api/v1/me/temp-storage/{itemInstancePublicId}/relocate — 임시보관→정규 슬롯 이동
 - 인증: 필요(소유자)

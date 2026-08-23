@@ -1,16 +1,5 @@
 import ItemFrame from '@/features/item/components/ItemFrame'
-import {
-    goldforceRemainingDays,
-    resolveFrameType,
-} from '@/features/item/components/frame'
-import {
-    resolveSkillSlots,
-    skillLabelOf,
-} from '@/features/item/components/skillSlots'
-import { elementLabelOf } from '@/features/item/lib/element'
 import { itemArt } from '@/features/item/lib/itemArt'
-import { subGroupLabelOf } from '@/features/item/lib/itemCode'
-import { channelLimitOf } from '@/features/item/lib/channelLimit'
 import {
     auctionPhaseLabelOf,
     type AuctionPhase,
@@ -24,11 +13,7 @@ import type { AuctionDetail } from '@/lib/api/auctions'
  * 우측 copy(상태 배지·카드정보 속성표·특수 스킬). 아이템 마켓 `CardInfoDialog` 의 정보 구조와
  * 앱 navy/gold/orange 팔레트를 따르되 모달 셸·초점 트랩은 재사용하지 않는다.
  *
- * ★ **스킬명은 item 블록의 skill1Name/skill2Name 으로 표시**(계약 §3.3 델타 — EPIC-MARKET-DATA).
- *   이름이 없으면 `스킬 #{code}` 중립 표기로 폴백한다. 슬롯 번호는 `resolveSkillSlots` 가 먼저
- *   매기고 걸러 마법(subGroup 3, skill1 부재)이 "스킬 1" 로 오표기되지 않는다(FC-064 함정 4).
- *   퍼센트는 원본 슬롯 2에만 병기한다.
- * ★ **골드포스 잔여일은 클라 파생**(서버는 만료 시각만)해 속성표에 표시한다.
+ * ★ 명칭·축 라벨·스킬 2슬롯·골드포스 잔여일은 서버 `cardInfo`를 그대로 표시한다.
  * ★ 색은 브랜드 팔레트(navy/gold) — 목업 Vuexy 잔재색은 쓰지 않는다(§2.9).
  */
 
@@ -41,12 +26,14 @@ const PHASE_BADGE_CLASS: Record<AuctionPhase, string> = {
 interface AuctionHeroCardProps {
     auction: AuctionDetail
     phase: AuctionPhase
-    /** 현재 시각(ms) — 골드포스 잔여일 파생용(단일 타이머 주입) */
+    /** 기존 상세 카드 호출 계약과 단일 시계 주입 형상을 유지한다. */
     now: number
 }
 
 function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
     const { item } = auction
+    const cardInfo = item.cardInfo
+    if (!cardInfo) throw new Error('서버 카드정보 응답이 없습니다.')
     const art = itemArt(
         {
             subGroup: item.subGroup,
@@ -57,18 +44,9 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
         'l',
         3,
     )
-    const skills = resolveSkillSlots(item.skill1, item.skill2, {
-        skill1Name: item.skill1Name,
-        skill2Name: item.skill2Name,
-    })
+    const skills = cardInfo.skills.filter((skill) => skill.code !== null)
     const hasSkill = skills.length > 0
-    const goldforceDays = goldforceRemainingDays(item.goldforceExpireAt, now)
-    const frameType = resolveFrameType(
-        { goldforceExpireAt: item.goldforceExpireAt },
-        now,
-    )
-    const typeLine = `${frameType === 'GOLDFORCE' ? '골드' : '블랙'} - ${subGroupLabelOf(item.subGroup)}`
-    const channelLimit = channelLimitOf(item.level)
+    const typeLine = `${cardInfo.frame.label} - ${cardInfo.category.label}`
 
     return (
         <section className="detail-surface grid overflow-hidden rounded-2xl border border-content-line bg-content-surface md:grid-cols-[118px_minmax(0,1fr)] lg:h-full lg:grid-cols-[245px_minmax(0,1fr)]">
@@ -78,8 +56,8 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                     fill
                     imageUrl={art?.src}
                     spriteUrl={art?.src}
-                    name={item.nameSnapshot}
-                    visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+                    name={cardInfo.shortName}
+                    frame={cardInfo.frame}
                     hasSkill={hasSkill}
                     size="stage"
                     now={now}
@@ -118,7 +96,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             명칭
                         </dt>
                         <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
-                            {item.nameSnapshot}
+                            {cardInfo.formalName}
                         </dd>
                     </div>
                     <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
@@ -126,7 +104,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             채널제한
                         </dt>
                         <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
-                            {channelLimit}
+                            {cardInfo.channelLimit.label}
                         </dd>
                     </div>
                     <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
@@ -134,7 +112,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             속성
                         </dt>
                         <dd className="min-w-0 break-words text-right font-semibold text-content-fg">
-                            {elementLabelOf(item.element)}
+                            {cardInfo.element.label}
                         </dd>
                     </div>
                     <div className="flex items-start justify-between gap-4 border-b border-content-line py-2.5 text-sm">
@@ -142,9 +120,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             남은 골드 포스
                         </dt>
                         <dd className="font-semibold tabular-nums text-content-fg">
-                            {goldforceDays === null
-                                ? '없음'
-                                : `${goldforceDays}일`}
+                            {cardInfo.frame.remainingGoldforceDays}
                         </dd>
                     </div>
                 </dl>
@@ -159,11 +135,6 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                             aria-label="특수 스킬"
                         >
                             {skills.map((skill) => {
-                                const showPercent =
-                                    skill.slot === 2 &&
-                                    Number.isFinite(item.skillPercent) &&
-                                    item.skillPercent > 0
-
                                 return (
                                     <li
                                         key={skill.slot}
@@ -176,10 +147,10 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                                             {skill.slot}
                                         </span>
                                         <span className="item-skill-content min-w-0 break-words font-semibold">
-                                            {skillLabelOf(skill)}
-                                            {showPercent && (
+                                            {skill.name}
+                                            {skill.percent !== null && (
                                                 <span className="item-skill-percent whitespace-nowrap font-extrabold">
-                                                    ({item.skillPercent}%)
+                                                    ({skill.percent}%)
                                                 </span>
                                             )}
                                         </span>

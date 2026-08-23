@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class ItemInstanceService {
 
     private final ItemInstanceRepository itemInstanceRepository;
+    private final CardInfoFactory cardInfoFactory;
 
     @ServiceLog
     public ItemInstanceDetailResponse getDetail(String publicId) {
@@ -35,7 +36,8 @@ public class ItemInstanceService {
             .orElseThrow(() -> new BusinessException(ItemErrorCode.ITEM_NOT_FOUND));
         Long viewerId = currentUserIdOrNull();
         boolean viewerIsOwner = viewerId != null && instance.isOwnedBy(viewerId);
-        return ItemInstanceDetailResponse.from(instance, viewerIsOwner);
+        return ItemInstanceDetailResponse.from(
+            instance, viewerIsOwner, cardInfoFactory.create(instance, cardInfoFactory.now()));
     }
 
     /**

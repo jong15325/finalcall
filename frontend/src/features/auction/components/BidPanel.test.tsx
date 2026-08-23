@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
@@ -31,6 +32,7 @@ const baseAuction: AuctionDetail = {
         goldforceExpireAt: null,
         nameSnapshot: '불의 전투도끼',
         specSnapshot: '한손 도끼',
+            cardInfo: cardInfoFixture(),
     },
     startPrice: 1_000_000,
     buyNowPrice: 3_900_000,

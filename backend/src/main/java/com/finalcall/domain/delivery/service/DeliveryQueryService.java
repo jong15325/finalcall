@@ -23,6 +23,7 @@ import com.finalcall.domain.delivery.entity.ItemDelivery;
 import com.finalcall.domain.delivery.repository.DeliveryReadRepository;
 import com.finalcall.domain.delivery.repository.ItemDeliveryRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
+import com.finalcall.domain.item.service.CardInfoFactory;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +46,7 @@ public class DeliveryQueryService {
 
     private final DeliveryReadRepository deliveryReadRepository;
     private final ItemDeliveryRepository itemDeliveryRepository;
+    private final CardInfoFactory cardInfoFactory;
 
     /**
      * 내 배송 목록(계약 §4.6.1) — 수령자 스코프 + status 선택 필터 + cursor 페이지(created_at desc).
@@ -63,9 +65,14 @@ public class DeliveryQueryService {
             userId, statusFilter, cursor.createdAt(), cursor.id(), size);
         // 대상 item_instance 를 배치 로드해 표시 블록(displayName·스킬명·item public_id)을 채운다(N+1 없음).
         Map<Long, ItemInstance> instances = loadInstances(fetched);
+        java.time.Instant calculatedAt = cardInfoFactory.now();
         // 커서는 매핑 전 원본(ItemDelivery)의 마지막 항목(created_at + id)에서 추출해 형상(String opaque)을 보존한다.
         return CursorResponse.from(fetched, size,
-            delivery -> DeliverySummaryResponse.from(delivery, requireInstance(instances, delivery)),
+            delivery -> {
+                ItemInstance instance = requireInstance(instances, delivery);
+                return DeliverySummaryResponse.from(
+                    delivery, instance, cardInfoFactory.create(instance, calculatedAt));
+            },
             delivery -> DeliveryReadCursor.encode(delivery.getCreatedAt(), delivery.getId()));
     }
 
@@ -87,7 +94,9 @@ public class DeliveryQueryService {
             .stream().findFirst()
             // item_instance_id 는 NOT NULL FK 라 항상 존재한다(부재는 깨진 상태 → 500).
             .orElseThrow(() -> new BusinessException(CommonErrorCode.INTERNAL_ERROR));
-        return DeliveryDetailResponse.from(delivery, instance);
+        java.time.Instant calculatedAt = cardInfoFactory.now();
+        return DeliveryDetailResponse.from(
+            delivery, instance, cardInfoFactory.create(instance, calculatedAt));
     }
 
     /** 페이지의 배송들이 가리키는 item_instance 를 id→인스턴스 맵으로 배치 로드한다(표시 블록 구성용). */

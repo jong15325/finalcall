@@ -119,7 +119,8 @@ export default function MyShopsSection() {
                                     내 판매
                                 </h2>
                                 <p className="text-xs text-content-subtle">
-                                    판매 중인 고정가 상품을 확인하고 내릴 수 있어요.
+                                    판매 중인 고정가 상품을 확인하고 내릴 수
+                                    있어요.
                                 </p>
                             </div>
                         </div>
@@ -171,7 +172,7 @@ export default function MyShopsSection() {
 
             <MyShopCancelDialog
                 open={target !== null}
-                itemName={target?.item.nameSnapshot ?? ''}
+                itemName={target?.item.cardInfo.formalName ?? ''}
                 price={target?.price ?? 0}
                 isSubmitting={cancelMutation.isPending}
                 submitError={cancelMutation.error}

@@ -9,6 +9,7 @@ import {
 } from '@/lib/api/tempStorage'
 import { useIsAuthenticated } from '@/store/authStore'
 import { inventoryKeys } from './inventory'
+import { useCardInfoExpiry } from './cardInfoExpiry'
 import type { RelocateResponse, TempStorageItem } from '@/lib/api/tempStorage'
 import type { CursorPage } from '@/types/api'
 
@@ -40,7 +41,7 @@ export interface RelocateVariables {
 export function useMyTempStorage() {
     const isAuthed = useIsAuthenticated()
 
-    return useInfiniteQuery<CursorPage<TempStorageItem>>({
+    const query = useInfiniteQuery<CursorPage<TempStorageItem>>({
         queryKey: tempStorageKeys.me(),
         queryFn: ({ pageParam, signal }) =>
             getMyTempStorage((pageParam as string | null) ?? undefined, signal),
@@ -56,6 +57,8 @@ export function useMyTempStorage() {
         enabled: isAuthed,
         refetchOnWindowFocus: true,
     })
+    useCardInfoExpiry(tempStorageKeys.me(), query.data)
+    return query
 }
 
 /**

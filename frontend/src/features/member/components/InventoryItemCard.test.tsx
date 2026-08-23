@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import InventoryItemCard from './InventoryItemCard'
@@ -26,6 +27,15 @@ const target: InventoryItem = {
         skill2Name: null,
         skillPercent: 18,
         goldforceExpireAt: null,
+        cardInfo: cardInfoFixture({
+            shortName: 'Lv.3 불검',
+            formalName: '3레벨 칼',
+            kind: { code: 3, label: '칼', abbreviation: '검' },
+            skills: [
+                { slot: 1, code: 104, name: '공격력 증가', percent: null },
+                { slot: 2, code: null, name: null, percent: null },
+            ],
+        }),
     },
 }
 
@@ -39,7 +49,7 @@ describe('<InventoryItemCard>', () => {
         expect(
             screen.getByRole('heading', { name: '블랙 - 무기' }),
         ).toBeInTheDocument()
-        expect(screen.getAllByText('검 · Lv.3').length).toBeGreaterThan(0)
+        expect(screen.getAllByText('칼 · Lv.3').length).toBeGreaterThan(0)
         expect(screen.getByText('불')).toBeInTheDocument()
         // 스킬명(v1.21 델타)을 그대로 표시 — `스킬 #104` 코드 폴백이 아니라 실제 이름(마켓 동일 배선).
         // 정보영역 + 플립 뒷면 양쪽에 렌더되므로 1개 이상.
@@ -62,7 +72,7 @@ describe('<InventoryItemCard>', () => {
         expect(screen.queryByText('불의 검')).toBeNull()
 
         fireEvent.click(
-            screen.getByRole('button', { name: '불의 검 카드정보 보기' }),
+            screen.getByRole('button', { name: 'Lv.3 불검 카드정보 보기' }),
         )
         expect(onOpen).toHaveBeenCalledWith(target)
     })

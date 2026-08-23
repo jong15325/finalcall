@@ -2,6 +2,7 @@ package com.finalcall.domain.shop.dto;
 
 import java.time.Instant;
 
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemTemplate;
 import com.finalcall.domain.shop.entity.Shop;
@@ -34,9 +35,10 @@ public record ShopItemResponse(
     int skillPercent,
     Instant goldforceExpireAt,
     String nameSnapshot,
-    String specSnapshot) {
+    String specSnapshot,
+    CardInfoResponse cardInfo) {
 
-    public static ShopItemResponse from(Shop shop) {
+    public static ShopItemResponse from(Shop shop, CardInfoResponse cardInfo) {
         ItemInstance item = shop.getItemInstance();
         ItemTemplate template = item.getTemplate();
         return ShopItemResponse.builder()
@@ -54,6 +56,7 @@ public record ShopItemResponse(
             .goldforceExpireAt(item.getGfExpireAt())
             .nameSnapshot(shop.getItemNameSnapshot())
             .specSnapshot(shop.getItemSpecSnapshot())
+            .cardInfo(cardInfo)
             .build();
     }
 }

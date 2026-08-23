@@ -1,3 +1,4 @@
+import { cardInfoFixture } from '@/test/cardInfoFixture'
 import { describe, expect, it } from 'vitest'
 import { deriveItemSummaryArt } from './itemSummary'
 import type { ItemSummary } from '@/lib/api/inventory'
@@ -16,6 +17,7 @@ function summary(overrides: Partial<ItemSummary> = {}): ItemSummary {
         skill2Code: null,
         skillPercent: 18,
         goldforceExpireAt: null,
+            cardInfo: cardInfoFixture(),
         ...overrides,
     }
 }

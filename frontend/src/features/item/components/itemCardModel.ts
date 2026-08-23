@@ -1,8 +1,6 @@
 import { itemArt } from '@/features/item/lib/itemArt'
 import { toElementKey } from '@/features/item/lib/element'
-import { kindLabelOf, subGroupLabelOf } from '@/features/item/lib/itemCode'
-import { resolveFrameType } from './frame'
-import { resolveSkillSlots, skillLabelOf } from './skillSlots'
+import type { CardInfoResponse } from '@/lib/api/cardInfo'
 import type { ItemCardViewModel, ItemSkillView } from './ItemCardView'
 
 export interface ItemCardSource {
@@ -18,59 +16,33 @@ export interface ItemCardSource {
     goldforceExpireAt?: string | null
     nameSnapshot: string
     specSnapshot?: string
+    cardInfo: CardInfoResponse
 }
 
 export function toItemCardViewModel(
     item: ItemCardSource,
     now: number,
-    options: {
-        price?: { amount: number | null; label?: string }
-        seller?: string
-    } = {},
+    options: { price?: { amount: number | null; label?: string }; seller?: string } = {},
 ): ItemCardViewModel {
-    const art = itemArt(
-        {
-            subGroup: item.subGroup,
-            kind: item.kind,
-            element: item.element,
-            level: item.level,
-        },
-        'l',
-        1,
-    )
-    const frameLabel =
-        resolveFrameType({ goldforceExpireAt: item.goldforceExpireAt }, now) ===
-        'GOLDFORCE'
-            ? '골드'
-            : '블랙'
-    const skills: ItemSkillView[] = resolveSkillSlots(
-        item.skill1,
-        item.skill2,
-        {
-            skill1Name: item.skill1Name,
-            skill2Name: item.skill2Name,
-        },
-    ).map((skill) => ({
-        slot: skill.slot,
-        label: skillLabelOf(skill),
-        percent:
-            skill.slot === 2 && (item.skillPercent ?? 0) > 0
-                ? item.skillPercent
-                : undefined,
-    }))
+    const art = itemArt(item, 'l', 1)
+    const cardInfo = item.cardInfo
+    const skills: ItemSkillView[] = cardInfo.skills
+        .filter((skill) => skill.code !== null)
+        .map((skill) => ({ slot: skill.slot, label: skill.name ?? '-', percent: skill.percent }))
 
     return {
-        name: item.nameSnapshot,
+        name: cardInfo.shortName,
         description: item.specSnapshot,
-        typeLabel: `${frameLabel} - ${subGroupLabelOf(item.subGroup)}`,
-        kindLabel: kindLabelOf(item.subGroup, item.kind),
-        level: item.level,
-        element: toElementKey(item.element),
+        typeLabel: `${cardInfo.frame.label} - ${cardInfo.category.label}`,
+        kindLabel: cardInfo.kind.label,
+        level: cardInfo.level,
+        element: toElementKey(cardInfo.element.code),
         artUrl: art?.src ?? null,
         skills,
         price: options.price,
         seller: options.seller,
         goldforceExpireAt: item.goldforceExpireAt,
         referenceNow: now,
+        cardInfo,
     }
 }

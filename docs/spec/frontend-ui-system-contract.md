@@ -382,8 +382,8 @@ interface ItemCardViewProps {
 }
 ```
 
-`ItemCardView`는 `Date.now()`를 매 렌더에서 직접 읽지 않는다. 시간 파생이 필요한 경우 adapter가 목록 공통 `now`를
-주입하거나 파생 view model을 만든다. `variant='market'`이 시각·flip·가격 유무를 한꺼번에 결정하는 방식은
+`ItemCardView`는 `Date.now()`를 매 렌더에서 직접 읽지 않는다. 카드 정체성·채널 제한·프레임·GF 잔여·스킬 표시는
+서버 `cardInfo`를 그대로 사용하며 adapter가 이 값을 재계산하지 않는다. `variant='market'`이 시각·flip·가격 유무를 한꺼번에 결정하는 방식은
 호환 기간 뒤 제거한다. 가격 부재는 데이터 부재이고, flip은 interaction composition이며, density는 geometry다.
 
 ### 6.3 controlled flip
@@ -528,6 +528,24 @@ phase·가격·마감 시간은 핵심 탐색 정보이고, 경매 ID 뒷자리 
 
 이 델타는 `AuctionSummary`의 현재 필드만 소비한다. API endpoint·응답 필드·query key·백엔드·DB·신규 asset·dependency는
 변경하지 않으며, scene·Canvas·RAF·네트워크 요청을 추가하지 않는다.
+
+### 6.7 서버 권위 카드정보 소비 계약 (FC-366)
+
+경매·마켓·인벤토리·아이템 상세의 카드와 `CardInfoDialog` 계열은 api-contract §3.3.2의 `cardInfo`를 단일 표시
+정본으로 사용한다. 판매 등록 inline 카드정보와 확인 dialog도 선택된 `InventoryItem.summary.cardInfo`를 그대로 쓴다.
+
+- 마켓·실시간 경매·인벤토리·임시보관 등 목록과 compact card의 보이는 이름 및 연결된 접근성 label은 `shortName`(예: `Lv.9 바검`, `Lv.5 흙필`)을 사용한다.
+- `CardInfoDialog`·판매 등록 inline 카드정보·상세 정보 패널의 `명칭`은 `formalName`(예: `9레벨 칼`, `5레벨 마법`)을 사용한다. 스페셜필은 `5레벨 스페셜필`처럼 종류를 유지한다. 정보영역 안의 실제 compact card face만 `shortName`을 사용할 수 있다.
+- `9바검`·`바검`·`불신`·`흙필` 등은 후속 검색의 입력 alias이며 화면에 목록명으로 렌더하지 않는다. 종류·속성·분류·채널·프레임 문구는 각각의 서버 label을 렌더한다.
+- BLACK/GOLD 판정과 GF 잔여 일수, 채널 구간, 코드→label/약어, 스킬 슬롯·확률을 프론트에서 다시 계산하지 않는다.
+- 기존 `decodeTypeCode`, `channelLimitOf`, `goldforceRemainingDays`, `resolveSkillSlots`, kind/element label 사전은 해당 표시 경로에서 제거한다. 아트 선택처럼 `cardInfo`가 소유하지 않는 시각 자산 매핑만 원시 `typeCode`를 계속 사용할 수 있다.
+- `skills`의 고정 2개 원소를 순서대로 렌더하며 빈 슬롯은 디자인 계약의 `없음` 상태로 표시한다. 스킬명은 서버 `name`, 확률은 서버 `percent`만 사용한다.
+- `validUntil`이 null이면 시간 기반 refetch를 예약하지 않는다. 값이 있으면 `now >= validUntil`에 해당 query를 invalidate/refetch한다. 화면이 잔여 일수를 countdown하거나 로컬에서 감소시키지 않는다.
+- 호환 필드(`nameSnapshot`, `displayName`, `goldforceExpireAt`, 원시 코드/스킬)는 route label·거래 기록·아트 또는 이행 기간에 남을 수 있으나 카드정보 표시의 폴백 계산에 사용하지 않는다. `cardInfo` 누락을 조용히 계산으로 복구하지 말고 계약 위반 상태로 다룬다.
+- 카드정보 모달 shell의 focus trap, Escape, scroll lock, trigger focus 복귀와 소비자별 구매/판매 mutation 책임은 불변이다.
+
+적용 화면은 마켓 목록/상세, 인벤토리, 판매 등록 선택 카드, 경매 목록/상세, 아이템 단건 상세 및 이 공통 DTO를
+표시하는 배송 화면이다. 홈 preview처럼 동일 응답 DTO를 소비하는 화면도 같은 adapter를 통과해야 한다.
 
 ## 7. 단계적 마이그레이션·되돌리기
 

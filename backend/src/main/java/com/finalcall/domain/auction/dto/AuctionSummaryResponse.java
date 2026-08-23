@@ -5,6 +5,7 @@ import java.time.Instant;
 import com.finalcall.domain.auction.entity.Auction;
 import com.finalcall.domain.auction.entity.AuctionStatus;
 import com.finalcall.domain.auction.entity.AuctionWithBidCount;
+import com.finalcall.domain.item.dto.CardInfoResponse;
 
 import lombok.Builder;
 
@@ -30,12 +31,12 @@ public record AuctionSummaryResponse(
     Instant endAt,
     String sellerNickname) {
 
-    public static AuctionSummaryResponse from(AuctionWithBidCount row, Instant now) {
+    public static AuctionSummaryResponse from(AuctionWithBidCount row, Instant now, CardInfoResponse cardInfo) {
         Auction auction = row.auction();
         return AuctionSummaryResponse.builder()
             .auctionPublicId(auction.getPublicId())
             .status(auction.displayStatus(now))
-            .item(AuctionItemResponse.from(auction))
+            .item(AuctionItemResponse.from(auction, cardInfo))
             .startPrice(auction.getStartPrice())
             .buyNowPrice(auction.getBuyNowPrice())
             .highestBidAmount(auction.getHighestBidAmount())

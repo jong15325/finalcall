@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import type { CardInfoResponse } from './cardInfo'
 import type { ItemTemplate } from './itemTemplates'
 
 /**
@@ -37,6 +38,7 @@ export interface ItemSkill {
 
 /** `GET /items/{id}` 200 (계약 §4.1 / `ItemInstanceDetailResponse` 실측 — 10필드). */
 export interface ItemInstanceDetail {
+    cardInfo: CardInfoResponse
     itemInstancePublicId: string
     /** 카탈로그 템플릿(축·표시명). `ItemTemplate` 과 동형 */
     template: ItemTemplate

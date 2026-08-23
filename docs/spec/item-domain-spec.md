@@ -1,5 +1,7 @@
 # FinalCall Item·Inventory Domain Spec (아이템·인벤토리 도메인 스펙)
 
+최신 델타: **v0.6 — FC-366 공통 카드정보 서버 파생 계약(2026-08-23 Gate 2 승인), §5.6.**
+
 상태: v0.5 — FC-019(EPIC-ITEM 계약/설계 확정, architect) 산출 + **게이트2 결정 반영(2026-07-18)** + **§3.1 LISTED 전이 드리프트 정정(2026-07-18, FC-030)** + **§2.3·§3.1 location `IN_GAME` 상태축 확장(2026-08-05, FC-185 EPIC-ITEM-DELIVERY 게이트2 형상 (a) — 게임 이관 상태=enum 확장·재판매 차단 XOR 연장, 정본 `delivery-domain-spec.md` v1.0)** + **§3.1 재판매 가드 상태집합 동기화(2026-08-05, FC-191 MAJOR-2 — "FAILED 아닌 배송(PENDING/CLAIMED/DEFERRED/APPLIED) 존재 시 출품 차단"으로 delivery-spec v1.1 §6.1 정본과 일치, apply~IN_GAME lag 창 커버)** — 초안의 엔티티 메서드 `markListed()` 서술을 실구현(조건부 CAS `markListedIfInInventory`)에 맞게 갱신했다(FC-029 리뷰 판단 #5). **v0.4(2026-07-19, 게이트2 FC-044)**: §2.1 `item_template` 코드 축을 교정된 정의로 갱신(`main_category`=상품군·`sub_group`=대분류) + `kind`의 `sub_group` 의존·마법 2값 검증 주의 + 시드 정합 부채 명기. 코드값 열거 정본은 api-contract §3.3.1. 기존 정본(api-contract §4.1·§4.2, erd §4.3·§5·§6, domain-spec §7)의 **검증·구현 슬라이싱·갭 식별** 결과를 담는다. erd v0.9(G2·G3 반영)와 정합.
 소유: architect (spec). 게이트2 4항목 전부 승인 완료(§9) → 구현 착수 근거.
 근거: api-contract v1.5 §4.1·§4.2·§5, erd v0.8 §2(결정 플래그 B)·§4.3·§5·§6, domain-spec v0.5 §7, CLAUDE.md 섹션 5(도메인 컨벤션), D-044~047·D-062·D-066·D-067·D-073.
@@ -168,6 +170,21 @@ INVENTORY 행만 값을 가져 (owner, slot) 유일, 그 외 NULL(다중 허용)
 - 동작(단일 TX): 소유자·TEMP 검증 → 슬롯 확보(자동/명시) → `item_instance.location TEMP→INVENTORY` + slot_no 세팅 → `temp_storage` 행 삭제. 최종 정합성은 slot UK(§3.2)가 보증.
 - 응답 200: `{ slotNo }`.
 - 에러: `INV_001` 만실(used≥96, 409), `INV_002` 슬롯 점유(명시 slotNo 중복, 409), `ITEM_002` 소유자 아님(403). 대상이 TEMP가 아니면(이미 INVENTORY/LISTED) → `ITEM_003`(신설 권고, §6) 또는 409로 처리.
+
+### 5.6 공통 카드정보 projection (FC-366, Gate 2 승인 2026-08-23)
+
+아이템 엔티티·템플릿·스킬의 원시값을 화면마다 다시 해석하지 않도록 서버가 공통 `CardInfoResponse`를 파생한다.
+외부 JSON 형상과 값 사전은 api-contract §3.3.2가 정본이다.
+
+- 적용: 경매/고정가 `item`, 인벤토리/임시보관/배송 `ItemSummaryResponse`, 아이템 인스턴스 상세. 기존 필드는 전부 유지한다.
+- 입력: template의 `subGroup/element/kind`, instance의 `level/skill1/skill2/skillPercent/gfExpireAt`, 요청 또는 목록당 한 번 얻은 `Clock` 기준 Instant.
+- 출력: 목록 표시명 `shortName`과 카드정보 명칭 `formalName`, 분류/종류/속성 label과 약어, 채널 제한, BLACK/GOLD와 GF 잔여 일수, 고정 2슬롯 스킬 표시, `calculatedAt/validUntil`.
+- `shortName`은 `Lv.{레벨} {속성약칭}{종류약칭}` 형식의 목록·compact card 표시명이고, `formalName`은 `{레벨}레벨 {원형 종류}` 형식의 모달·inline·상세 정보영역 명칭이다. 스페셜필은 각각 `Lv.5 흙스필`, `5레벨 스페셜필`처럼 구분한다.
+- 동일 목록의 모든 항목은 같은 기준 Instant를 사용한다. DTO 항목별 `Instant.now()` 호출과 시스템 기본 시간대 의존을 금지한다.
+- 계산기는 순수·결정적이어야 하며 repository 조회를 수행하지 않는다. 이미 fetch join된 template/skill을 사용해 목록 N+1과 추가 쿼리를 만들지 않는다.
+- GF는 `expireAt <= calculatedAt`부터 BLACK/0이다. 활성 잔여는 24시간 단위 올림 후 1..999로 제한한다. `validUntil`은 clamp를 포함해 표시가 다음으로 바뀌는 최초 Instant이며 비활성은 null이다.
+- DB 컬럼·스냅샷을 새 명칭으로 덮어쓰지 않는다. `displayName`, `nameSnapshot`, `goldforceExpireAt`은 호환·거래 감사 원시값으로 보존한다.
+- 스킬명 변경, `9바검`·`바검`·`불신`·`흙필` 등 화면 표시와 분리된 검색 alias 처리, 슬롯 무관 스킬 검색과 Elasticsearch 재색인은 후속 범위다. `cardInfo`에 검색 alias 필드를 추가하지 않는다.
 
 ---
 

@@ -2,6 +2,7 @@ package com.finalcall.domain.shop.dto;
 
 import java.time.Instant;
 
+import com.finalcall.domain.item.dto.CardInfoResponse;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopStatus;
 
@@ -37,12 +38,13 @@ public record MyShopSummaryResponse(
      * 내 판매 요약을 조립한다. {@code sellerCompletedSales} 는 본인(판매자) 완료 판매 건수로, /me/shops 페이지 전체가
      * 동일 판매자라 서비스가 단건 카운트 1회로 산출해 주입한다(§11.3).
      */
-    public static MyShopSummaryResponse from(MyShopListing listing, long sellerCompletedSales) {
+    public static MyShopSummaryResponse from(
+        MyShopListing listing, long sellerCompletedSales, CardInfoResponse cardInfo) {
         Shop shop = listing.shop();
         return MyShopSummaryResponse.builder()
             .shopPublicId(shop.getPublicId())
             .status(shop.getStatus())
-            .item(ShopItemResponse.from(shop))
+            .item(ShopItemResponse.from(shop, cardInfo))
             .price(shop.getPrice())
             .endAt(shop.getEndAt())
             .sellerNickname(shop.getSeller().getNickname())

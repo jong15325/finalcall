@@ -209,9 +209,7 @@ function ItemPanel({ compact = false }: { compact?: boolean }) {
                             imageUrl="/art/items/level1/l/earth/armor.png"
                             spriteUrl="/art/items/level1/l/earth/armor.png"
                             name="태산의 수호자 갑옷"
-                            visual={{
-                                goldforceExpireAt: '2026-09-30T00:00:00Z',
-                            }}
+                            frame={{ type: 'GOLD', label: '골드', remainingGoldforceDays: 38 }}
                             size="stage"
                             scale={2}
                             now={Date.parse('2026-08-14T05:30:00Z')}
@@ -297,9 +295,7 @@ function VerticalItemPanel({
                             imageUrl="/art/items/level1/l/earth/armor.png"
                             spriteUrl="/art/items/level1/l/earth/armor.png"
                             name="태산의 수호자 갑옷"
-                            visual={{
-                                goldforceExpireAt: '2026-09-30T00:00:00Z',
-                            }}
+                            frame={{ type: 'GOLD', label: '골드', remainingGoldforceDays: 38 }}
                             size="stage"
                             scale={2}
                             now={Date.parse('2026-08-14T05:30:00Z')}
@@ -473,9 +469,7 @@ function SellReviewDialog({
                                 imageUrl="/art/items/level1/l/earth/armor.png"
                                 spriteUrl="/art/items/level1/l/earth/armor.png"
                                 name="태산의 수호자 갑옷"
-                                visual={{
-                                    goldforceExpireAt: '2026-09-30T00:00:00Z',
-                                }}
+                                frame={{ type: 'GOLD', label: '골드', remainingGoldforceDays: 38 }}
                                 size="stage"
                                 scale={2}
                                 now={Date.parse('2026-08-14T05:30:00Z')}

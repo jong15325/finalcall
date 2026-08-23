@@ -24,6 +24,7 @@ import com.finalcall.domain.delivery.repository.ItemDeliveryRepository;
 import com.finalcall.domain.item.entity.ItemInstance;
 import com.finalcall.domain.item.entity.ItemLocation;
 import com.finalcall.domain.item.repository.ItemInstanceRepository;
+import com.finalcall.domain.item.service.CardInfoFactory;
 import com.finalcall.domain.item.service.InventoryService;
 import com.finalcall.domain.search.dto.ListingSearchHits;
 import com.finalcall.domain.search.entity.ListingSearchCondition;
@@ -77,6 +78,7 @@ public class ShopService {
     private final SaleOrderRepository saleOrderRepository;
     /** 자유문 검색(EPIC-SEARCH) — {@code q} 매칭·랭킹·커서는 ES 가, 표시 데이터 하이드레이션은 MySQL(정본)이 담당. */
     private final ListingSearchService listingSearchService;
+    private final CardInfoFactory cardInfoFactory;
 
     /**
      * 고정가를 등록한다(계약 §3.2 POST /shops, 단일 TX). 소유 검증 후 기한을 서버 설정 일수로 자동 계산하고, item 을
@@ -143,11 +145,13 @@ public class ShopService {
         ShopSearchCondition condition, String cursor, int size) {
         ShopCursor decoded = ShopCursor.decode(cursor);
         List<Shop> fetched = shopRepository.findByCursor(condition, decoded, size);
+        Instant calculatedAt = cardInfoFactory.now();
         // 판매자 완료 판매 건수는 페이지당 배치 IN 집계 1쿼리로 채운다(§11.3, N+1 회피 — 행별 카운트 금지).
         Map<Long, Long> completedSales = completedSalesBySeller(fetched);
         // 커서는 매핑 전 원본(Shop)의 마지막 항목에서 정렬 필드 값 + id 로 추출한다.
         return CursorResponse.from(fetched, size,
-            shop -> ShopSummaryResponse.from(shop, sellerSales(completedSales, shop)),
+            shop -> ShopSummaryResponse.from(shop, sellerSales(completedSales, shop),
+                cardInfoFactory.create(shop.getItemInstance(), calculatedAt)),
             shop -> encodeCursor(shop, condition.sort()));
     }
 
@@ -176,8 +180,10 @@ public class ShopService {
             .toList();
         // 배치 IN 집계 1쿼리(§11.3) — ES 하이드레이션 목록에도 동일하게 N+1 없이 완료 판매 건수를 채운다.
         Map<Long, Long> completedSales = completedSalesBySeller(orderedShops);
+        Instant calculatedAt = cardInfoFactory.now();
         List<ShopSummaryResponse> ordered = orderedShops.stream()
-            .map(shop -> ShopSummaryResponse.from(shop, sellerSales(completedSales, shop)))
+            .map(shop -> ShopSummaryResponse.from(shop, sellerSales(completedSales, shop),
+                cardInfoFactory.create(shop.getItemInstance(), calculatedAt)))
             .toList();
         // 커서·hasNext 는 ES 가 판정한 값을 그대로 보존한다(over-fetch 슬라이싱 아님).
         return CursorResponse.of(ordered, hits.nextCursor(), hits.hasNext());
@@ -213,9 +219,11 @@ public class ShopService {
         List<Shop> fetched = shopRepository.findBySellerCursor(sellerId, status, sort, ascending, decoded, size);
         // 페이지 전체가 동일 판매자(본인)라 완료 판매 건수는 단건 카운트 1회로 채운다(§11.3, 리스팅별 재조회 없음).
         long completedSales = saleOrderRepository.countCompletedSalesBySellerId(sellerId);
+        Instant calculatedAt = cardInfoFactory.now();
         // 예상 정산 파생은 매핑 클로저(toListing)에서 끝내고 봉투엔 파생완료 요약만 담는다(계약영향 노트 준수).
         return CursorResponse.from(fetched, size,
-            shop -> MyShopSummaryResponse.from(toListing(shop), completedSales),
+            shop -> MyShopSummaryResponse.from(toListing(shop), completedSales,
+                cardInfoFactory.create(shop.getItemInstance(), calculatedAt)),
             shop -> encodeCursor(shop, sort));
     }
 
@@ -248,7 +256,9 @@ public class ShopService {
         Shop shop = shopRepository.findDetailByPublicId(publicId)
             .orElseThrow(() -> new BusinessException(ShopErrorCode.SHOP_NOT_FOUND));
         long completedSales = saleOrderRepository.countCompletedSalesBySellerId(shop.getSeller().getId());
-        return ShopDetailResponse.from(shop, completedSales);
+        Instant calculatedAt = cardInfoFactory.now();
+        return ShopDetailResponse.from(
+            shop, completedSales, cardInfoFactory.create(shop.getItemInstance(), calculatedAt));
     }
 
     /**

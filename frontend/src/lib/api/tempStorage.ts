@@ -1,24 +1,24 @@
 import { apiClient } from './client'
+import type { ItemSummary } from './inventory'
 import type { CursorPage } from '@/types/api'
 
 /**
  * 임시 보관함 API (계약 §4.2 `GET /me/temp-storage` · `POST …/relocate`) — FC-076.
  *
- * ★ **계약 스키마와 1:1.** 임시보관 목록 항목은 **인벤토리 요약(`ItemSummary`)과 형태가 다르다** —
- *   `typeCode`·표시명·레벨·스킬이 **없다**(계약 §4.2 는 `itemInstancePublicId, storedAt, expireAt?`
- *   세 필드만 내린다). 따라서 이 목록만으로는 **아트·이름을 만들 수 없다**(§2.1 링크 끊김 계열).
- *   화면은 인스턴스 ID 로 아이템 상세(`/items/{id}`)에 링크하되, 목록 카드 아트는 플레이스홀더로 둔다.
+ * ★ **계약 스키마와 1:1.** 임시보관 목록도 인벤토리와 동형인 `summary`를 포함하며,
+ *   카드 표시는 그 안의 서버 파생 `cardInfo`를 정본으로 사용한다.
  *
  * ★ **만료 임박은 클라 파생**이다(`expireAt` − now). 서버가 "임박" 플래그를 내리지 않는다.
  */
 
-/** 임시보관 항목 (계약 §4.2 — 요약 없음, 세 필드뿐). */
+/** 임시보관 항목 (계약 §4.2). */
 export interface TempStorageItem {
     itemInstancePublicId: string
     /** 임시보관에 들어온 시각(ISO-8601 UTC). */
     storedAt: string
     /** 만료 예정 시각(ISO-8601 UTC). 만료 개념이 없으면 null. */
     expireAt: string | null
+    summary: ItemSummary
 }
 
 /** `POST /me/temp-storage/{id}/relocate` 200 (계약 §4.2). */

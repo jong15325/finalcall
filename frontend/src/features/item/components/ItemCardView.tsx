@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
 import CodeAmount from '@/components/common/CodeAmount'
-import { channelLimitOf } from '@/features/item/lib/channelLimit'
 import { elementLabelOf } from '@/features/item/lib/element'
 import type { ElementKey } from '@/features/item/lib/element'
-import { goldforceRemainingDays } from './frame'
+import type { CardInfoResponse } from '@/lib/api/cardInfo'
 import ItemFrame from './ItemFrame'
 
 export interface ItemSkillView {
@@ -25,6 +24,7 @@ export interface ItemCardViewModel {
     seller?: string
     goldforceExpireAt?: string | null
     referenceNow: number
+    cardInfo: CardInfoResponse
 }
 
 export interface ItemCardViewProps {
@@ -208,7 +208,7 @@ export function ItemCardArtwork({
             imageUrl={item.artUrl}
             spriteUrl={item.artUrl}
             name={item.name}
-            visual={{ goldforceExpireAt: item.goldforceExpireAt }}
+            frame={item.cardInfo.frame}
             hasSkill={item.skills.length > 0}
             size={mode === 'card' ? undefined : 'stage'}
             now={item.referenceNow}
@@ -239,19 +239,14 @@ export function ItemCardPropertyBackView({
 }: {
     item: ItemCardViewModel
 }) {
-    const goldforceDays = goldforceRemainingDays(
-        item.goldforceExpireAt,
-        item.referenceNow,
-    )
+    const cardInfo = item.cardInfo
+    if (!cardInfo) throw new Error('서버 카드정보 응답이 없습니다.')
     const rows = [
         ['타입', item.typeLabel],
         ['명칭', item.name],
-        ['채널제한', channelLimitOf(item.level)],
-        ['속성', elementLabelOf(elementNumberOf(item.element))],
-        [
-            '남은 골드 포스',
-            goldforceDays === null ? '없음' : `${goldforceDays}일`,
-        ],
+        ['채널제한', cardInfo.channelLimit.label],
+        ['속성', cardInfo.element.label],
+        ['남은 골드 포스', String(cardInfo.frame.remainingGoldforceDays)],
     ] as const
 
     return (
