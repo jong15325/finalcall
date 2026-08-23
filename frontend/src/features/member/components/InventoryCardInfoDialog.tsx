@@ -1,4 +1,5 @@
 import CardInfoDialog from '@/features/item/components/CardInfoDialog'
+import AppModalButton from '@/components/common/AppModalButton'
 import { decodeTypeCode } from '@/features/item/lib/itemCode'
 import { isFailed, isShipping } from '@/features/delivery/lib/deliveryView'
 import type { DeliveryStatus } from '@/lib/api/deliveries'
@@ -57,19 +58,16 @@ function InventoryCardInfoDialog({
                       ? '배송에 문제가 있어 고객센터 확인이 필요합니다.'
                       : '내 인벤토리 아이템입니다. 판매 등록으로 마켓에 올려보세요.'}
             </p>
-            <button
+            <AppModalButton
                 type="button"
-                className="ci-buy disabled:opacity-50"
+                variant="primary"
+                className="ci-buy"
                 disabled={sellLocked}
                 aria-disabled={sellLocked}
                 onClick={() => onSell(item)}
             >
-                {shipping
-                    ? '배송 중'
-                    : failed
-                      ? '문의 필요'
-                      : '판매 등록'}
-            </button>
+                {shipping ? '배송 중' : failed ? '문의 필요' : '판매 등록'}
+            </AppModalButton>
         </>
     )
 

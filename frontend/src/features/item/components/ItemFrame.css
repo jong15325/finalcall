@@ -388,11 +388,13 @@
 
 .item-card__secondary-actions {
     display: flex;
-    flex: 0 0 44px;
     min-width: 44px;
     height: 44px;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
+    margin-top: 6px;
+    margin-right: 6px;
 }
 
 .item-card__control-gap {
@@ -492,6 +494,10 @@
     white-space: nowrap;
 }
 
+.item-skill-content {
+    color: var(--item-skill-body);
+}
+
 .item-card__skill-list li {
     padding: 8px;
     overflow: hidden;
@@ -502,10 +508,6 @@
     font-size: 11px;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.item-card__skill-list li span {
-    color: var(--brand-highlight-bright);
 }
 
 .item-card__skill-flip-back > small {
@@ -671,10 +673,11 @@
     color: white;
 }
 
+.item-skill-label,
 .item-skill-summary__slot {
     display: block;
     margin-bottom: 2px;
-    color: inherit;
+    color: var(--item-skill-slot);
     font-size: 9px;
     font-weight: 700;
     opacity: 0.7;
@@ -762,7 +765,6 @@
     border: 1px solid
         color-mix(in srgb, var(--brand-structure) 16%, transparent);
     border-radius: 8px;
-    color: var(--chrome-bg-selected);
     background: color-mix(
         in srgb,
         var(--brand-structure) 7%,
@@ -775,12 +777,16 @@
 }
 
 .item-card__market-skills .item-skill-summary__slot {
-    color: var(--content-muted);
     opacity: 1;
 }
 
+.item-skill-percent,
+.item-skill-summary__percent,
+.item-card__skill-percent {
+    color: var(--item-skill-percent);
+}
+
 .item-card__market-skills li > .item-card__skill-percent {
-    color: var(--brand-highlight-deep);
     font-size: 13px;
 }
 

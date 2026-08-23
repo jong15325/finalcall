@@ -90,6 +90,9 @@
         --brand-highlight-bright: var(--brand-gold-bright);
         --brand-highlight-deep: var(--brand-gold-deep);
         --brand-highlight-soft: var(--brand-gold-soft);
+        --item-skill-body: var(--chrome-fg);
+        --item-skill-slot: var(--chrome-muted);
+        --item-skill-percent: var(--brand-highlight-bright);
 
         /* geometry · motion */
         --radius-sm: 4px;

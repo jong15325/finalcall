@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
+import AppModal from '@/components/common/AppModal'
+import AppModalButton from '@/components/common/AppModalButton'
 import CodeAmount from '@/components/common/CodeAmount'
 import CardInfoDialog from '@/features/item/components/CardInfoDialog'
 import { usePurchaseShop } from '@/lib/queries/shop'
@@ -29,9 +31,8 @@ import type { BalanceResponse } from '@/lib/api/balance'
  * ★ **판매자는 특수스킬 하단 독립 행**(아바타 이니셜 + "판매자" 라벨 + 닉네임 + 거래 건수)으로
  *   노출한다. 거래 건수는 계약 신규 필드 `sellerCompletedSales`(FC-148 — 정산원장 실집계, 위조
  *   아님)를 실값으로 표시하며, 우측 신뢰 칩("거래 N회")에 배치한다. 이력 없으면(0) "신규 판매자".
- * ★ **구매 확인 서브뷰**는 셸 `overlay` 슬롯으로 주입한다. 서브뷰가 뜨면 `backgroundInert` 로
- *   배경(제목·본문·푸터 CTA)을 `inert` 처리해 Tab 초점이 배경 컨트롤로 새지 않게 한다(초점 트랩도
- *   `[inert]` 하위를 건너뛴다).
+ * ★ **구매 확인 서브뷰**는 별도 공통 `AppModal`을 중첩한다. 확인창이 뜨면 부모 카드정보를
+ *   `inert` 처리하고, 공통 모달 스택이 최상단 초점·Escape·스크롤 잠금을 관리한다.
  */
 
 interface ShopCardInfoDialogProps {
@@ -57,18 +58,9 @@ function ShopCardInfoDialog({
     loginHref,
     onClose,
 }: ShopCardInfoDialogProps) {
-    const confirmRef = useRef<HTMLButtonElement>(null)
-
     const purchaseMutation = usePurchaseShop(shop.shopPublicId)
     /** 'info' = 카드정보 · 'confirm' = 구매 확인/성공/실패 서브뷰 */
     const [step, setStep] = useState<'info' | 'confirm'>('info')
-
-    // 구매 확인 서브뷰로 진입하면 확정 버튼으로 초점을 옮긴다(질문 단계).
-    useEffect(() => {
-        if (step === 'confirm' && !purchaseMutation.isSuccess) {
-            confirmRef.current?.focus()
-        }
-    }, [step, purchaseMutation.isSuccess])
 
     const { item } = shop
     const purchasable = isShopPurchasable(shop.status, shop.endAt, now)
@@ -128,155 +120,187 @@ function ShopCardInfoDialog({
             </div>
 
             {!purchasable ? (
-                <button disabled type="button" className="ci-buy">
+                <AppModalButton
+                    disabled
+                    type="button"
+                    variant="primary"
+                    className="ci-buy"
+                >
                     {shopStatusLabelOf(shop.status)}
-                </button>
+                </AppModalButton>
             ) : isOwn ? (
-                <button disabled type="button" className="ci-buy">
+                <AppModalButton
+                    disabled
+                    type="button"
+                    variant="primary"
+                    className="ci-buy"
+                >
                     내 상품입니다
-                </button>
+                </AppModalButton>
             ) : !isAuthed ? (
-                <Link to={loginHref} className="ci-buy">
+                <Link
+                    to={loginHref}
+                    className="app-modal-button ci-buy"
+                    data-modal-button="primary"
+                >
                     로그인하고 구매
                 </Link>
             ) : (
-                <button type="button" className="ci-buy" onClick={openConfirm}>
+                <AppModalButton
+                    type="button"
+                    variant="primary"
+                    className="ci-buy"
+                    onClick={openConfirm}
+                >
                     바로 구매
-                </button>
+                </AppModalButton>
             )}
         </>
     )
 
-    // 구매 확인 / 성공 / 실패 서브뷰(셸 overlay 슬롯).
-    const confirmOverlay = step === 'confirm' && (
-        <div className="confirm">
-            <div className="confirm-box">
+    return (
+        <>
+            <CardInfoDialog
+                subGroup={item.subGroup}
+                kind={item.kind}
+                element={item.element}
+                level={item.level}
+                goldforceExpireAt={item.goldforceExpireAt}
+                name={item.nameSnapshot}
+                skill1={item.skill1}
+                skill2={item.skill2}
+                skillPercent={item.skillPercent}
+                skill1Name={item.skill1Name}
+                skill2Name={item.skill2Name}
+                now={now}
+                belowScroll={sellerRow}
+                footer={footer}
+                backgroundInert={step === 'confirm'}
+                onClose={onClose}
+            />
+            <AppModal
+                open={step === 'confirm'}
+                role="alertdialog"
+                size="sm"
+                title={
+                    purchaseMutation.isSuccess
+                        ? '구매 완료'
+                        : errorView
+                          ? errorView.title
+                          : item.nameSnapshot
+                }
+                eyebrow="아이템 마켓"
+                closeDisabled={isSubmitting}
+                actions={
+                    purchaseMutation.isSuccess
+                        ? [
+                              {
+                                  id: 'done',
+                                  label: '확인',
+                                  variant: 'primary',
+                                  autoFocus: true,
+                                  onClick: onClose,
+                              },
+                          ]
+                        : errorView
+                          ? [
+                                {
+                                    id: 'back',
+                                    label: '돌아가기',
+                                    variant: 'primary',
+                                    autoFocus: true,
+                                    onClick: backToInfo,
+                                },
+                            ]
+                          : [
+                                {
+                                    id: 'cancel',
+                                    label: '취소',
+                                    variant: 'secondary',
+                                    disabled: isSubmitting,
+                                    onClick: backToInfo,
+                                },
+                                {
+                                    id: 'confirm',
+                                    label: '구매 확정',
+                                    pendingLabel: '전송 중…',
+                                    variant: 'primary',
+                                    pending: isSubmitting,
+                                    autoFocus: true,
+                                    onClick: handlePurchase,
+                                },
+                            ]
+                }
+                onClose={
+                    purchaseMutation.isSuccess || errorView
+                        ? onClose
+                        : backToInfo
+                }
+            >
                 {purchaseMutation.isSuccess ? (
-                    <>
-                        <div aria-hidden className="icon ok">
-                            ✓
-                        </div>
-                        <h4>구매 완료</h4>
+                    <div className="space-y-4 text-sm text-content-muted">
                         <p>
-                            <b>{item.nameSnapshot}</b> 을(를) 구매했습니다.
-                            <br />
-                            아이템은 인벤토리에서 확인하세요.
+                            <b className="text-content-fg">
+                                {item.nameSnapshot}
+                            </b>{' '}
+                            을(를) 구매했습니다. 아이템은 인벤토리에서
+                            확인하세요.
                         </p>
-                        <div className="confirm-price">
-                            <span className="k">결제 금액</span>
-                            <span className="v">
-                                <CodeAmount
-                                    value={
-                                        purchaseMutation.data?.finalPrice ??
-                                        shop.price
-                                    }
-                                    mode="full"
-                                />
-                            </span>
-                        </div>
-                        <div className="confirm-actions">
-                            <button
-                                type="button"
-                                className="btn-primary"
-                                onClick={onClose}
-                            >
-                                확인
-                            </button>
-                        </div>
-                    </>
-                ) : errorView ? (
-                    <div role="alert">
-                        <div aria-hidden className="icon err">
-                            !
-                        </div>
-                        <h4>{errorView.title}</h4>
-                        {errorView.description && <p>{errorView.description}</p>}
-                        <div className="confirm-actions">
-                            <button
-                                type="button"
-                                className="btn-primary"
-                                onClick={backToInfo}
-                            >
-                                돌아가기
-                            </button>
+                        <div className="flex items-center justify-between rounded-xl bg-content-soft p-4">
+                            <span>결제 금액</span>
+                            <CodeAmount
+                                value={
+                                    purchaseMutation.data?.finalPrice ??
+                                    shop.price
+                                }
+                                mode="full"
+                                className="font-bold text-content-fg"
+                            />
                         </div>
                     </div>
+                ) : errorView ? (
+                    <p role="alert" className="text-sm text-danger-ink">
+                        {errorView.description ??
+                            '구매를 완료하지 못했습니다. 다시 확인해 주세요.'}
+                    </p>
                 ) : (
-                    <>
-                        <div aria-hidden className="icon q">
-                            ?
-                        </div>
-                        <h4>{item.nameSnapshot}</h4>
+                    <div className="space-y-4 text-sm text-content-muted">
                         <p>
                             아래 금액으로 즉시 구매됩니다. 게임머니가 바로
-                            차감되고
-                            <br />
-                            아이템은 인벤토리로 들어옵니다.
+                            차감되고 아이템은 인벤토리로 들어옵니다.
                         </p>
-                        <div className="confirm-price">
-                            <span className="k">판매가</span>
-                            <span className="v">
-                                <CodeAmount value={shop.price} mode="full" />
-                            </span>
-                        </div>
-                        {remainingAfter !== null && (
-                            <div className="confirm-price">
-                                <span className="k">구매 후 잔액</span>
-                                <span
-                                    className={`v ${remainingAfter < 0 ? 'low' : ''}`.trim()}
-                                >
+                        <dl className="space-y-2 rounded-xl bg-content-soft p-4">
+                            <div className="flex items-center justify-between">
+                                <dt>판매가</dt>
+                                <dd>
                                     <CodeAmount
-                                        value={remainingAfter}
+                                        value={shop.price}
                                         mode="full"
+                                        className="font-bold text-content-fg"
                                     />
-                                </span>
+                                </dd>
                             </div>
-                        )}
-                        <div className="confirm-actions">
-                            <button
-                                type="button"
-                                className="btn-ghost"
-                                disabled={isSubmitting}
-                                onClick={backToInfo}
-                            >
-                                취소
-                            </button>
-                            <button
-                                ref={confirmRef}
-                                type="button"
-                                className="btn-primary"
-                                disabled={isSubmitting}
-                                onClick={handlePurchase}
-                            >
-                                {isSubmitting ? '전송 중…' : '구매 확정'}
-                            </button>
-                        </div>
-                    </>
+                            {remainingAfter !== null && (
+                                <div className="flex items-center justify-between">
+                                    <dt>구매 후 잔액</dt>
+                                    <dd>
+                                        <CodeAmount
+                                            value={remainingAfter}
+                                            mode="full"
+                                            className={
+                                                remainingAfter < 0
+                                                    ? 'font-bold text-danger-ink'
+                                                    : 'font-bold text-content-fg'
+                                            }
+                                        />
+                                    </dd>
+                                </div>
+                            )}
+                        </dl>
+                    </div>
                 )}
-            </div>
-        </div>
-    )
-
-    return (
-        <CardInfoDialog
-            subGroup={item.subGroup}
-            kind={item.kind}
-            element={item.element}
-            level={item.level}
-            goldforceExpireAt={item.goldforceExpireAt}
-            name={item.nameSnapshot}
-            skill1={item.skill1}
-            skill2={item.skill2}
-            skillPercent={item.skillPercent}
-            skill1Name={item.skill1Name}
-            skill2Name={item.skill2Name}
-            now={now}
-            belowScroll={sellerRow}
-            footer={footer}
-            backgroundInert={step === 'confirm'}
-            overlay={confirmOverlay}
-            onClose={onClose}
-        />
+            </AppModal>
+        </>
     )
 }
 

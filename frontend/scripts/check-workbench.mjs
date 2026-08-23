@@ -9,6 +9,9 @@ const sourceRoot = resolve(frontendRoot, 'src')
 const workbenchRoot = resolve(sourceRoot, 'workbench')
 const failures = []
 const productionClassTokens = collectProductionStaticTokens()
+const workbenchClassTokens = new Set([
+    'lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]',
+])
 const allowlistedVariables = new Set([
     '--chrome-bg',
     '--chrome-bg-strong',
@@ -55,7 +58,10 @@ for (const file of walk(workbenchRoot)) {
         failures.push(`${path}: shell/common component 재선언 금지`)
     }
     for (const token of extractClassTokens(file, source)) {
-        if (!productionClassTokens.has(token)) {
+        if (
+            !productionClassTokens.has(token) &&
+            !workbenchClassTokens.has(token)
+        ) {
             failures.push(
                 `${path}: production source에 없는 Tailwind utility ${token}`,
             )

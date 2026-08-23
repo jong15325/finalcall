@@ -106,11 +106,7 @@ describe('<AuctionHeroCard>', () => {
         expect(items[1].textContent).toBe('2연속 폭발(18%)')
         const percent = within(items[1]).getByText('(18%)')
         // --gold-deep(#8b6100)은 surface-sunken(#f4f5f8)에서 5.06:1로 WCAG AA를 충족한다.
-        expect(percent).toHaveClass(
-            'whitespace-nowrap',
-            'font-extrabold',
-            'text-brand-highlight-deep',
-        )
+        expect(percent).toHaveClass('whitespace-nowrap', 'font-extrabold')
         expect(percent).not.toHaveAttribute('aria-hidden')
         expect(within(items[0]).queryByText(/%/)).not.toBeInTheDocument()
         expect(within(items[0]).getByText('1')).toHaveAttribute(
@@ -142,7 +138,6 @@ describe('<AuctionHeroCard>', () => {
         expect(within(item).getByText('(7%)')).toHaveClass(
             'whitespace-nowrap',
             'font-extrabold',
-            'text-brand-highlight-deep',
         )
         expect(within(list).queryByText('1')).not.toBeInTheDocument()
     })

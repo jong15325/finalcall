@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 const frontendRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const buildRoot = resolve(frontendRoot, 'build')
 const forbiddenMarkers = [
+    'card-info-parity',
     '/__design',
     'FC_WORKBENCH_MARKER_284',
     'FC_CHAT_WORKBENCH_317',

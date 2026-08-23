@@ -1,6 +1,8 @@
 import { memo } from 'react'
 import ItemCardActionSurface from '@/features/item/components/ItemCardActionSurface'
-import ItemCardView, { ItemCardArtwork } from '@/features/item/components/ItemCardView'
+import ItemCardView, {
+    ItemCardArtwork,
+} from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import CardCompareOverlay from '@/features/item/components/CardCompareOverlay'
 import type { ShopSummary } from '@/lib/api/shop'

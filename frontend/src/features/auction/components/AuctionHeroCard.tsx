@@ -178,7 +178,7 @@ function AuctionHeroCard({ auction, phase, now }: AuctionHeroCardProps) {
                                         <span className="item-skill-content min-w-0 break-words font-semibold">
                                             {skillLabelOf(skill)}
                                             {showPercent && (
-                                                <span className="item-skill-percent whitespace-nowrap font-extrabold text-brand-highlight-deep">
+                                                <span className="item-skill-percent whitespace-nowrap font-extrabold">
                                                     ({item.skillPercent}%)
                                                 </span>
                                             )}

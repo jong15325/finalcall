@@ -199,7 +199,7 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         const purchaseView = renderPage()
         fireEvent.click(screen.getByTestId('open-purchase'))
         const purchaseDialog = screen.getByRole('dialog')
-        expect(purchaseDialog.parentElement).toHaveClass('fixed', 'z-50')
+        expect(purchaseDialog.parentElement).toHaveClass('app-modal-overlay')
         expect(document.body.style.overflow).toBe('hidden')
         expect(purchaseDialog.closest('.element-detail')).toBeNull()
         expect(document.body).toContainElement(purchaseDialog)

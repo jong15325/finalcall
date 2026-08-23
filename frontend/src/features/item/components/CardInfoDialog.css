@@ -67,6 +67,23 @@
     animation: ci-panel-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.card-info-content-shell {
+    --content-fg: var(--frost-fg);
+    --content-muted: var(--frost-muted);
+    --content-subtle: var(--frost-subtle);
+    --content-line: var(--frost-line);
+    --content-surface: var(--frost-bg-dialog);
+    --content-soft: var(--frost-bg-soft);
+    --brand-structure: var(--frost-accent);
+    --ci-label: var(--frost-subtle);
+    --ci-value: var(--frost-fg);
+    --ci-line: var(--frost-line);
+
+    width: 100%;
+    min-width: 0;
+    color: var(--frost-fg);
+}
+
 /* ── 타이틀 바 — 흰 surface + 헤어라인(게임 헤더바 대체) ── */
 .shop-cardinfo .ci-title {
     display: flex;
@@ -135,7 +152,12 @@
 }
 
 /* ── 상단 2열: 썸네일 | 속성표 ── */
-.shop-cardinfo .ci-head {
+.card-info-content {
+    width: 100%;
+    min-width: 0;
+}
+
+.card-info-content .ci-head {
     display: grid;
     grid-template-columns: 168px 1fr;
     gap: 20px;
@@ -144,7 +166,7 @@
 /* 썸네일 = **배경 없이 카드 이미지만**(FC-146 배경 제거). 라이트 미디어 패널
  * (surface-sunken·헤어라인·radius)을 전면 걷어내고, 자체 프레임 PNG를 가진 픽셀아트 카드만
  * 크롭·왜곡 없이 영역에 딱 맞게 중앙 정렬한다(72/134 비율 유지). */
-.shop-cardinfo .ci-thumb {
+.card-info-content .ci-thumb {
     position: relative;
     display: grid;
     place-items: center;
@@ -152,33 +174,33 @@
     background: transparent;
 }
 /* 공용 ItemFrame 스테이지의 게임 다크 배경·글로우 에코를 이 모달에서만 중화(전역 불변). */
-.shop-cardinfo .ci-thumb .item-frame__stage {
+.card-info-content .ci-thumb .item-frame__stage {
     background: transparent;
     box-shadow: none;
 }
-.shop-cardinfo .ci-thumb .item-frame__stage::before,
-.shop-cardinfo .ci-thumb .item-frame__stage::after {
+.card-info-content .ci-thumb .item-frame__stage::before,
+.card-info-content .ci-thumb .item-frame__stage::after {
     content: none;
 }
 /* 모달 썸네일은 **정적 전시**다 — 공용 스테이지의 hover 리프트/드롭섀도(카드 주변에 남던
  * 그림자·글로우 잔여)를 이 스코프에서만 무효화한다. 카드 PNG(자체 프레임)만 배경 없이 딱 맞게. */
-.shop-cardinfo .ci-thumb .item-frame__stage:hover {
+.card-info-content .ci-thumb .item-frame__stage:hover {
     background: transparent;
     box-shadow: none;
 }
-.shop-cardinfo .ci-thumb .item-frame__stage:hover .card-art {
+.card-info-content .ci-thumb .item-frame__stage:hover .card-art {
     transform: scale(var(--art-scale, 1));
     filter: none;
 }
 
-.shop-cardinfo .ci-attrs {
+.card-info-content .ci-attrs {
     display: flex;
     flex-direction: column;
     justify-content: center;
     margin: 0;
     gap: 0;
 }
-.shop-cardinfo .ci-row {
+.card-info-content .ci-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -187,53 +209,53 @@
     border-bottom: 1px solid var(--content-line);
     font-size: 13px;
 }
-.shop-cardinfo .ci-row:last-child {
+.card-info-content .ci-row:last-child {
     border-bottom: 0;
 }
-.shop-cardinfo .ci-row .k {
+.card-info-content .ci-row .k {
     margin: 0;
     color: var(--ci-label);
     font-weight: 600;
 }
-.shop-cardinfo .ci-row .v {
+.card-info-content .ci-row .v {
     margin: 0;
     color: var(--ci-value);
     font-weight: 700;
     text-align: right;
 }
 /* 속성 색 — 흰 배경 대비를 확보하려 진한 톤으로(≥3:1, bold). */
-.shop-cardinfo .ci-row .v.el-fire {
+.card-info-content .ci-row .v.el-fire {
     color: var(--element-fire-ink);
 }
-.shop-cardinfo .ci-row .v.el-water {
+.card-info-content .ci-row .v.el-water {
     color: var(--element-water-ink);
 }
-.shop-cardinfo .ci-row .v.el-earth {
+.card-info-content .ci-row .v.el-earth {
     color: var(--element-earth-ink);
 }
-.shop-cardinfo .ci-row .v.el-wind {
+.card-info-content .ci-row .v.el-wind {
     color: var(--element-wind-ink);
 }
-.shop-cardinfo .ci-row .v.gf-off {
+.card-info-content .ci-row .v.gf-off {
     color: var(--content-subtle);
 }
 
 /* ── 특수 스킬(탭 제거 → 직접 노출) — 라이트 인셋 패널 ── */
-.shop-cardinfo .ci-panel {
+.card-info-content .ci-panel {
     margin-top: 18px;
     padding: 16px 18px;
     border: 1px solid var(--content-line);
     border-radius: 14px;
     background: var(--content-soft);
 }
-.shop-cardinfo .ci-panel h3 {
+.card-info-content .ci-panel h3 {
     margin: 0 0 12px;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.2px;
     color: var(--ci-label);
 }
-.shop-cardinfo .skill-list {
+.card-info-content .skill-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -241,15 +263,15 @@
     padding: 0;
     list-style: none;
 }
-.shop-cardinfo .skill-list li {
+.card-info-content .skill-list li {
     display: flex;
     gap: 10px;
     align-items: center;
     font-size: 13.5px;
     font-weight: 600;
-    color: var(--content-fg);
+    color: var(--item-skill-body);
 }
-.shop-cardinfo .skill-list .n {
+.card-info-content .skill-list .n {
     flex: none;
     display: grid;
     place-items: center;
@@ -258,15 +280,15 @@
     border: 1px solid var(--content-line);
     border-radius: 7px;
     background: var(--content-surface);
-    color: var(--brand-structure);
+    color: var(--item-skill-slot);
     font-size: 12px;
     font-weight: 800;
 }
-.shop-cardinfo .skill-list .pct {
-    color: var(--control-action-hover);
+.card-info-content .skill-list .pct {
+    color: var(--item-skill-percent);
     font-weight: 800;
 }
-.shop-cardinfo .muted-note {
+.card-info-content .muted-note {
     margin: 0;
     font-size: 12.5px;
     line-height: 1.6;
@@ -275,7 +297,7 @@
 
 /* ── 판매자 — 특수스킬 하단 독립 행(변형 A seller-strip) ──
  * 아바타 이니셜 + "판매자" 라벨 + 닉네임 + 우측 거래 건수 칩(sellerCompletedSales 실값). */
-.shop-cardinfo .ci-seller {
+.card-info-content-shell .ci-seller {
     display: flex;
     align-items: center;
     gap: 11px;
@@ -285,7 +307,7 @@
     border-radius: 14px;
     background: var(--content-soft);
 }
-.shop-cardinfo .ci-seller .avatar {
+.card-info-content-shell .ci-seller .avatar {
     flex: none;
     display: grid;
     place-items: center;
@@ -302,18 +324,18 @@
     font-weight: 800;
     letter-spacing: -0.5px;
 }
-.shop-cardinfo .ci-seller .who {
+.card-info-content-shell .ci-seller .who {
     display: flex;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
 }
-.shop-cardinfo .ci-seller .lbl {
+.card-info-content-shell .ci-seller .lbl {
     font-size: 11px;
     font-weight: 700;
     color: var(--content-subtle);
 }
-.shop-cardinfo .ci-seller .name {
+.card-info-content-shell .ci-seller .name {
     overflow: hidden;
     font-size: 14px;
     font-weight: 800;
@@ -322,7 +344,7 @@
     white-space: nowrap;
 }
 /* 거래 건수 = 우측 신뢰 칩(surface 위 헤어라인 pill). 닉네임이 길어도 밀리지 않게 flex:none·우측 고정. */
-.shop-cardinfo .ci-seller .trade {
+.card-info-content-shell .ci-seller .trade {
     flex: none;
     margin-left: auto;
     padding: 5px 11px;
@@ -365,141 +387,8 @@
     flex: none;
     margin-left: auto;
     min-width: 156px;
-    border: 0;
-    border-radius: 12px;
     padding: 15px 24px;
-    background: var(--control-action);
-    color: var(--control-action-ink);
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
     text-align: center;
-    transition:
-        background 0.15s,
-        transform 0.08s;
-}
-.shop-cardinfo .ci-buy:hover {
-    background: var(--control-action-hover);
-}
-.shop-cardinfo .ci-buy:active {
-    transform: translateY(1px);
-}
-.shop-cardinfo .ci-buy:disabled {
-    background: var(--content-soft);
-    color: var(--content-subtle);
-    cursor: not-allowed;
-}
-
-/* ── 구매 확인 / 성공 / 실패 서브뷰(모달 내부 오버레이) ── */
-.shop-cardinfo .confirm {
-    position: absolute;
-    inset: 0;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: var(--overlay-scrim-soft);
-    backdrop-filter: blur(3px);
-    animation: ci-overlay-in 140ms ease-out;
-}
-.shop-cardinfo .confirm-box {
-    width: 100%;
-    max-width: 420px;
-    overflow: hidden;
-    padding: 26px 24px;
-    border: 1px solid var(--content-line);
-    border-radius: 16px;
-    background: var(--content-surface);
-    box-shadow: var(--shadow-popover);
-    text-align: center;
-    animation: ci-panel-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.shop-cardinfo .confirm-box .icon {
-    display: grid;
-    place-items: center;
-    width: 52px;
-    height: 52px;
-    margin: 0 auto 14px;
-    border-radius: 50%;
-    font-size: 26px;
-    font-weight: 800;
-}
-.shop-cardinfo .confirm-box .icon.q {
-    background: var(--control-action-soft);
-    color: var(--control-action-hover);
-}
-.shop-cardinfo .confirm-box .icon.ok {
-    background: var(--success-soft);
-    color: var(--success);
-}
-.shop-cardinfo .confirm-box .icon.err {
-    background: var(--danger-soft);
-    color: var(--danger);
-}
-.shop-cardinfo .confirm-box h4 {
-    margin: 0 0 8px;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--content-fg);
-}
-.shop-cardinfo .confirm-box p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--content-muted);
-}
-.shop-cardinfo .confirm-price {
-    display: flex;
-    justify-content: space-between;
-    margin: 16px 0;
-    padding: 12px 14px;
-    border: 1px solid var(--content-line);
-    border-radius: 10px;
-    background: var(--content-soft);
-    font-size: 13px;
-}
-.shop-cardinfo .confirm-price .k {
-    color: var(--content-subtle);
-}
-.shop-cardinfo .confirm-price .v {
-    color: var(--content-fg);
-    font-weight: 700;
-}
-.shop-cardinfo .confirm-price .v.low {
-    color: var(--danger);
-}
-.shop-cardinfo .confirm-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 18px;
-}
-.shop-cardinfo .confirm-actions button {
-    flex: 1;
-    border: 0;
-    border-radius: 10px;
-    padding: 13px;
-    font-size: 14px;
-    font-weight: 700;
-}
-.shop-cardinfo .confirm-actions .btn-ghost {
-    border: 1px solid var(--content-line);
-    background: var(--content-surface);
-    color: var(--content-muted);
-}
-.shop-cardinfo .confirm-actions .btn-ghost:hover:not(:disabled) {
-    background: var(--content-soft);
-}
-.shop-cardinfo .confirm-actions .btn-primary {
-    background: var(--control-action);
-    color: var(--control-action-ink);
-}
-.shop-cardinfo .confirm-actions .btn-primary:hover:not(:disabled) {
-    background: var(--control-action-hover);
-}
-.shop-cardinfo .confirm-actions button:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
 }
 
 /* ── 진입 모션(reduced-motion 폴백 아래) ── */
@@ -531,14 +420,14 @@
     /* 모바일도 상단은 웹 변형 A처럼 2열(썸네일 좌 · 속성표 우) 유지 — 폭에 맞춰 썸네일
      * 컬럼만 축소(168px→108px)해 세로 스택 대비 스크롤을 크게 줄인다. 썸네일은 컬럼을 채우므로
      * 웹의 중앙정렬(width/margin) 오버라이드는 되돌린다(108×~201px, 72/134 비율 보존). */
-    .shop-cardinfo .ci-head {
+    .card-info-content .ci-head {
         grid-template-columns: 108px 1fr;
         gap: 16px;
     }
     /* 108px 컬럼에선 --art-scale:2(144×268 카드)가 스테이지(108×~201)를 넘쳐 overflow:hidden 에
      * 잘렸다. 카드가 컬럼에 온전히 들어오도록 배율을 낮춘다(비율·object-fit 불변, PC와 유사한 채움
      * 비율 유지). --art-scale 은 .item-frame 요소에 직접 걸려 있으므로 같은 요소에서 재정의한다. */
-    .shop-cardinfo .ci-thumb .item-frame {
+    .card-info-content .ci-thumb .item-frame {
         --art-scale: 1.3;
     }
     .shop-cardinfo .ci-foot {
@@ -569,9 +458,7 @@
 /* 모션 최소화 — 진입 애니메이션은 즉시 표시로 대체(가시성은 기본값). */
 @media (prefers-reduced-motion: reduce) {
     .shop-cardinfo-overlay,
-    .shop-cardinfo,
-    .shop-cardinfo .confirm,
-    .shop-cardinfo .confirm-box {
+    .shop-cardinfo {
         animation: none;
     }
 }

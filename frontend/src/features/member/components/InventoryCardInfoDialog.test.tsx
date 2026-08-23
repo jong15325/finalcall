@@ -50,6 +50,11 @@ describe('<InventoryCardInfoDialog>', () => {
 
         const dialog = screen.getByRole('dialog')
         expect(dialog).toHaveAttribute('aria-modal', 'true')
+        expect(dialog).toHaveClass('shop-cardinfo')
+        expect(dialog.querySelector('.card-info-content')).toBeInTheDocument()
+        expect(dialog.querySelector('.ci-scroll')).toHaveClass(
+            'card-info-content-shell',
+        )
 
         // 속성표 — 타입(블랙 - 무기)·명칭·채널제한(level 파생)·속성·골드포스.
         expect(screen.getByText('블랙 - 무기')).toBeInTheDocument()
@@ -77,9 +82,9 @@ describe('<InventoryCardInfoDialog>', () => {
         expect(screen.queryByText('판매가')).toBeNull()
         expect(screen.queryByRole('button', { name: '바로 구매' })).toBeNull()
 
-        expect(
-            screen.getByRole('button', { name: '판매 등록' }),
-        ).toBeInTheDocument()
+        const sellButton = screen.getByRole('button', { name: '판매 등록' })
+        expect(sellButton).toBeInTheDocument()
+        expect(sellButton).toHaveAttribute('data-modal-button', 'primary')
     })
 
     it('판매 등록 → onSell(item) 을 부른다', () => {

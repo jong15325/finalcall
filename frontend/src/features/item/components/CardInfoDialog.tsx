@@ -2,7 +2,6 @@ import { type ReactNode } from 'react'
 import { TbId } from 'react-icons/tb'
 import AppModal from '@/components/common/AppModal'
 import CardInfoContent from './CardInfoContent'
-import './CardInfoDialog.css'
 
 /**
  * 카드정보 모달 **셸 정본** (EPIC-CARD-SYSTEM T4 · 제안 §2.2·§3 단계2).
@@ -88,7 +87,7 @@ function CardInfoDialog({
             closeDisabled={backgroundInert}
             contentInert={backgroundInert}
             panelClassName="shop-cardinfo"
-            bodyClassName="ci-scroll"
+            bodyClassName="ci-scroll card-info-content-shell"
             footer={footer}
             footerClassName="ci-foot"
             overlay={overlay}

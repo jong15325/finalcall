@@ -141,6 +141,8 @@ describe('<ItemSkillSummary>', () => {
         expect(screen.getByText('(33%)')).toHaveClass(
             'item-skill-summary__percent',
             'shrink-0',
+        )
+        expect(screen.getByText('(33%)')).not.toHaveClass(
             'text-brand-highlight-deep',
         )
     })
@@ -160,7 +162,6 @@ describe('<ItemSkillSummary>', () => {
         expect(items[1]).toHaveAccessibleName('스킬 2 트리플샷(33%)')
         expect(screen.getByText('(33%)')).toHaveClass(
             'item-skill-summary__percent',
-            'text-brand-highlight-deep',
         )
     })
 

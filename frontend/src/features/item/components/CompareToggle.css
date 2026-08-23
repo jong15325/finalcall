@@ -1,0 +1,80 @@
+.compare-toggle {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    color: var(--frost-fg);
+    background: color-mix(in srgb, var(--frost-bg-dialog) 86%, transparent);
+    box-shadow:
+        0 6px 16px color-mix(in srgb, var(--frost-accent-ink) 18%, transparent),
+        inset 0 1px color-mix(in srgb, var(--frost-highlight) 18%, transparent);
+    backdrop-filter: blur(12px) saturate(112%);
+    -webkit-backdrop-filter: blur(12px) saturate(112%);
+    transition:
+        color 150ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease,
+        transform 150ms ease;
+}
+.compare-toggle svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    stroke-width: 2.2;
+}
+.compare-toggle:hover:not(:disabled) {
+    background: color-mix(
+        in srgb,
+        var(--frost-accent) 18%,
+        var(--frost-bg-dialog)
+    );
+    box-shadow:
+        0 9px 20px color-mix(in srgb, var(--frost-accent-ink) 22%, transparent),
+        inset 0 1px color-mix(in srgb, var(--frost-highlight) 28%, transparent);
+    transform: translateY(-1px);
+}
+.compare-toggle:active:not(:disabled) {
+    transform: scale(0.96);
+}
+.compare-toggle:focus-visible {
+    outline: 2px solid var(--frost-focus);
+    outline-offset: 2px;
+}
+.compare-toggle[aria-pressed='true'] {
+    color: var(--frost-fg);
+    background: color-mix(
+        in srgb,
+        var(--frost-accent) 28%,
+        var(--frost-bg-dialog)
+    );
+    box-shadow:
+        0 7px 18px color-mix(in srgb, var(--frost-accent-ink) 22%, transparent),
+        inset 0 1px color-mix(in srgb, var(--frost-highlight) 38%, transparent),
+        0 0 14px color-mix(in srgb, var(--frost-accent) 14%, transparent);
+}
+.compare-toggle:disabled {
+    cursor: not-allowed;
+    color: var(--frost-subtle);
+    background: var(--frost-bg-inset);
+    box-shadow: none;
+    filter: saturate(0.65);
+    opacity: 0.68;
+}
+@media (prefers-reduced-motion: reduce) {
+    .compare-toggle {
+        transition-duration: 1ms;
+    }
+    .compare-toggle:hover:not(:disabled),
+    .compare-toggle:active:not(:disabled) {
+        transform: none;
+    }
+}

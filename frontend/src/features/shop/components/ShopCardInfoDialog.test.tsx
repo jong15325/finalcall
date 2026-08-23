@@ -94,6 +94,14 @@ describe('<ShopCardInfoDialog>', () => {
         signInForTest()
         renderDialog()
 
+        expect(screen.getByRole('dialog')).toHaveClass('shop-cardinfo')
+        expect(
+            screen.getByRole('dialog').querySelector('.card-info-content'),
+        ).toBeInTheDocument()
+        expect(screen.getByText('거래 128회').closest('.ci-scroll')).toHaveClass(
+            'card-info-content-shell',
+        )
+
         // 속성표 — 명칭·채널제한(level 파생)·속성.
         expect(screen.getByText('불의 전투도끼')).toBeInTheDocument()
         expect(screen.getByText('채널제한')).toBeInTheDocument()
@@ -133,6 +141,7 @@ describe('<ShopCardInfoDialog>', () => {
         renderDialog({ isOwn: true })
         const cta = screen.getByRole('button', { name: '내 상품입니다' })
         expect(cta).toBeDisabled()
+        expect(cta).toHaveAttribute('data-modal-button', 'primary')
     })
 
     it('판매 종료 상품은 상태 라벨로 비활성화한다', () => {
@@ -146,6 +155,8 @@ describe('<ShopCardInfoDialog>', () => {
         renderDialog({ isAuthed: false, balance: undefined })
         const link = screen.getByRole('link', { name: '로그인하고 구매' })
         expect(link).toHaveAttribute('href', '/login?redirectUrl=%2Fmarket')
+        expect(link).toHaveClass('app-modal-button')
+        expect(link).toHaveAttribute('data-modal-button', 'primary')
     })
 
     it('바로 구매 → 확인 → 성공까지 흐른다', async () => {
@@ -174,7 +185,18 @@ describe('<ShopCardInfoDialog>', () => {
         })
 
         renderDialog()
-        fireEvent.click(screen.getByRole('button', { name: '바로 구매' }))
+        const buyButton = screen.getByRole('button', { name: '바로 구매' })
+        expect(buyButton).toHaveAttribute('data-modal-button', 'primary')
+        fireEvent.click(buyButton)
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+        expect(screen.getByRole('alertdialog')).toHaveClass('app-modal-panel')
+        expect(screen.getByRole('button', { name: '취소' })).toHaveAttribute(
+            'data-modal-button',
+            'secondary',
+        )
+        expect(
+            screen.getByRole('button', { name: '구매 확정' }),
+        ).toHaveAttribute('data-modal-button', 'primary')
         // 확인 서브뷰 — 구매 후 잔액 표기.
         expect(screen.getByText('구매 후 잔액')).toBeInTheDocument()
 

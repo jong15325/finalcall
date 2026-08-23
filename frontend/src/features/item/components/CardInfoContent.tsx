@@ -5,6 +5,7 @@ import { itemArt } from '@/features/item/lib/itemArt'
 import { toElementKey, elementLabelOf } from '@/features/item/lib/element'
 import { subGroupLabelOf } from '@/features/item/lib/itemCode'
 import { channelLimitOf } from '@/features/item/lib/channelLimit'
+import './CardInfoDialog.css'
 
 export interface CardInfoContentProps {
     subGroup: number
@@ -48,7 +49,7 @@ export default function CardInfoContent(props: CardInfoContentProps) {
     }))
 
     return (
-        <>
+        <div className="card-info-content">
             <div className="ci-head">
                 <div className="ci-thumb">
                     <ItemFrame
@@ -107,7 +108,7 @@ export default function CardInfoContent(props: CardInfoContentProps) {
                     ))}
                 </ul>
             </div>
-        </>
+        </div>
     )
 }
 

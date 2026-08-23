@@ -34,7 +34,7 @@ function CompareBar() {
         <aside
             aria-label="아이템 비교 선택"
             aria-live="polite"
-            className="app-chrome fixed inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[920px] items-center gap-3 rounded-xl border border-chrome-selected bg-chrome px-4 py-3 text-chrome-fg shadow-xl xl:inset-x-auto xl:right-6 xl:bottom-6 xl:left-auto"
+            className="compare-bar liquid-frost liquid-frost--strong fixed z-40 flex items-center gap-2 rounded-xl px-3 py-3 sm:gap-3 sm:px-4"
         >
             <span className="flex min-w-0 flex-1 items-center gap-2.5">
                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-chrome-raised text-brand-highlight-bright">

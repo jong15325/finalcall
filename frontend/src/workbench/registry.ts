@@ -19,6 +19,13 @@ function defineScenario(
 
 export const WORKBENCH_SCENARIOS = [
     defineScenario({
+        id: 'card-info-parity',
+        title: '마켓·경매 카드정보 정합',
+        shell: 'app',
+        routeContext: paths.auctions,
+        load: () => import('./scenarios/CardInfoParityScenario'),
+    }),
+    defineScenario({
         id: 'character-profile',
         title: '기본 캐릭터 프로필 선택',
         shell: 'app',

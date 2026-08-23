@@ -20,12 +20,8 @@ describe('<CompareToggle>', () => {
         rerender(<CompareToggle pressed onToggle={() => {}} />)
         const selected = screen.getByRole('button', { name: '비교 담기' })
         expect(selected).toHaveAttribute('aria-pressed', 'true')
-        expect(selected).toHaveClass(
-            'border-content-fg',
-            'bg-control-action',
-            'text-control-action-ink',
-        )
-        expect(selected).not.toHaveClass('text-on-strong')
+        expect(selected).toHaveClass('compare-toggle')
+        expect(selected.querySelector('svg')).toBeInTheDocument()
     })
 
     it('클릭하면 반대값을 콜백으로 올린다(controlled)', async () => {
@@ -61,11 +57,12 @@ describe('<CompareToggle>', () => {
         ).toBeInTheDocument()
     })
 
-    it('아이콘 크기를 유지하면서 44px hit area를 제공한다', () => {
+    it('가벼운 단일 비교 아이콘과 44px 공통 hit-area class를 제공한다', () => {
         render(<CompareToggle pressed={false} onToggle={() => {}} />)
 
         const button = screen.getByRole('button')
-        expect(button).toHaveClass('size-11')
-        expect(button.querySelector('svg')).toHaveClass('size-[15px]')
+        expect(button).toHaveClass('compare-toggle')
+        expect(button.querySelector('span')).toBeNull()
+        expect(button.querySelector('svg')).toBeInTheDocument()
     })
 })

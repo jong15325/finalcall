@@ -47,6 +47,23 @@ const baseShop: ShopSummary = {
 }
 
 describe('<ShopCard>', () => {
+    it('공통 비교 control을 이미지 우상단 6px 인셋 hit area에 둔다', () => {
+        const { container } = renderWithProviders(
+            <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
+        )
+
+        expect(
+            container.querySelector('[data-card-hit-area="compare"]'),
+        ).toContainElement(
+            screen.getByRole('button', {
+                name: '불의 전투도끼 비교에 담기',
+            }),
+        )
+        expect(itemFrameCss).toMatch(
+            /\.item-card__secondary-actions\s*\{[^}]*margin-top:\s*6px;[^}]*margin-right:\s*6px;/s,
+        )
+    })
+
     it('카드정보 열기 버튼과 플립·비교 버튼을 중첩하지 않는다(FC-146 모달 전환)', () => {
         const { container } = renderWithProviders(
             <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
@@ -76,8 +93,12 @@ describe('<ShopCard>', () => {
             '.item-card__primary-action--artwork',
         )
         expect(artworkOpener).not.toBeNull()
-        expect(container.querySelector('.item-card__skill-flip-back')).toBeNull()
-        expect(container.querySelector('[data-card-hit-area="flip"]')).toBeNull()
+        expect(
+            container.querySelector('.item-card__skill-flip-back'),
+        ).toBeNull()
+        expect(
+            container.querySelector('[data-card-hit-area="flip"]'),
+        ).toBeNull()
         expect(
             container.querySelector('.item-card__skill-flip'),
         ).not.toContainElement(
@@ -127,9 +148,15 @@ describe('<ShopCard>', () => {
         const { container } = renderWithProviders(
             <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
         )
-        expect(container.querySelector('.item-card__skill-flip-back')).toBeNull()
-        expect(container.querySelector('[data-card-hit-area="flip"]')).toBeNull()
-        expect(screen.getByRole('img', { name: '불의 전투도끼' })).toBeInTheDocument()
+        expect(
+            container.querySelector('.item-card__skill-flip-back'),
+        ).toBeNull()
+        expect(
+            container.querySelector('[data-card-hit-area="flip"]'),
+        ).toBeNull()
+        expect(
+            screen.getByRole('img', { name: '불의 전투도끼' }),
+        ).toBeInTheDocument()
     })
 
     it('전면 판매자 행을 유지하고 전면 스킬 퍼센트만 강조한다', () => {
@@ -156,10 +183,8 @@ describe('<ShopCard>', () => {
             ).toBeInTheDocument()
         })
         const percent = within(marketSkills).getByText('(33%)')
-        expect(percent).toHaveClass(
-            'item-card__skill-percent',
-            'text-control-action-hover',
-        )
+        expect(percent).toHaveClass('item-card__skill-percent')
+        expect(percent).not.toHaveClass('text-control-action-hover')
         expect(
             marketSkills.querySelector(
                 '.item-card__market-skills li > .item-card__skill-percent',
@@ -167,13 +192,12 @@ describe('<ShopCard>', () => {
         ).toBe(percent)
         expect(within(marketSkills).getByText('트리플샷')).not.toHaveClass(
             'item-card__skill-percent',
-            'text-control-action-hover',
         )
         expect(itemFrameCss).toMatch(
-            /\.item-card__market-skills li\s*\{[^}]*var\(--brand-structure\) 16%[^}]*var\(--chrome-bg-selected\)[^}]*var\(--brand-structure\) 7%[^}]*var\(--content-surface\)/s,
+            /\.item-card__market-skills li\s*\{[^}]*var\(--brand-structure\) 16%[^}]*var\(--brand-structure\) 7%[^}]*var\(--content-surface\)/s,
         )
         expect(itemFrameCss).toMatch(
-            /\.item-card__market-skills li > \.item-card__skill-percent\s*\{[^}]*var\(--brand-highlight-deep\)/s,
+            /\.item-skill-percent,\s*\.item-skill-summary__percent,\s*\.item-card__skill-percent\s*\{[^}]*var\(--item-skill-percent\)/s,
         )
     })
 
@@ -250,6 +274,8 @@ describe('<ShopCard>', () => {
         expect(
             screen.getByRole('img', { name: '골드포스 잔여 7일' }),
         ).toBeInTheDocument()
-        expect(container.querySelector('.item-card__skill-flip-back')).toBeNull()
+        expect(
+            container.querySelector('.item-card__skill-flip-back'),
+        ).toBeNull()
     })
 })

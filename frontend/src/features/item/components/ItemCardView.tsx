@@ -286,7 +286,7 @@ function ItemSkillList({
             {rows.map(({ slot, skill }) => (
                 <li
                     key={slot}
-                    className="item-card__skill-row text-label font-medium text-brand-structure xs:text-xs"
+                    className="item-card__skill-row text-label font-medium xs:text-xs"
                 >
                     <span className="item-skill-summary__slot">
                         스킬 {slot}
@@ -295,7 +295,7 @@ function ItemSkillList({
                         {skill?.label ?? '-'}
                     </span>
                     {skill?.percent ? (
-                        <span className="item-card__skill-percent font-bold text-control-action-hover">
+                        <span className="item-card__skill-percent font-bold">
                             ({skill.percent}%)
                         </span>
                     ) : null}

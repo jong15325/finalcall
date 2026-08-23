@@ -57,17 +57,17 @@ function ItemSkillSummary({
                     <li
                         key={slot}
                         aria-label={`스킬 ${slot} ${value}${showPercent ? `(${skillPercent}%)` : ''}`}
-                        className="flex min-h-0 min-w-0 items-center text-[11px] font-medium text-chrome-selected xs:text-xs"
+                        className="flex min-h-0 min-w-0 items-center text-[11px] font-medium xs:text-xs"
                     >
                         <span className="item-skill-summary__slot shrink-0">
                             스킬 {slot}
                         </span>{' '}
-                        <span className="item-skill-summary__value flex min-w-0 flex-1 items-center">
+                        <span className="item-skill-summary__value item-skill-content flex min-w-0 flex-1 items-center">
                             <span className="item-skill-summary__name min-w-0 truncate">
                                 {value}
                             </span>
                             {showPercent && (
-                                <span className="item-skill-summary__percent shrink-0 font-bold text-brand-highlight-deep">
+                                <span className="item-skill-summary__percent shrink-0 font-bold">
                                     ({skillPercent}%)
                                 </span>
                             )}
