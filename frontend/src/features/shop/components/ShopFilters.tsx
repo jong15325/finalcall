@@ -1,6 +1,6 @@
-import { TbX } from 'react-icons/tb'
 import ListSearchBar from '@/components/common/ListSearchBar'
 import ListFilterSelect from '@/components/common/ListFilterSelect'
+import ActiveFilterBar from '@/components/common/ActiveFilterBar'
 import { elementLabelOf } from '@/features/item/lib/element'
 import {
     elementOptions,
@@ -131,35 +131,19 @@ function ShopFilters({
                         </ListFilterSelect>
                     </div>
                 </div>
-            </div>
 
-            {/* 적용된 필터 칩 — 개별 해제(정규화가 뒤처리) */}
-            {chips.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                    {chips.map((chip) => (
-                        <button
-                            key={chip.id}
-                            type="button"
-                            aria-label={`${chip.label} 필터 해제`}
-                            className="flex items-center gap-1 rounded-full bg-brand-structure/5 py-1 pl-3 pr-2 text-xs font-medium text-chrome-selected hover:bg-brand-structure/10"
-                            onClick={() => onChange(chip.patch)}
-                        >
-                            {chip.label}
-                            <TbX aria-hidden className="size-3.5" />
-                        </button>
-                    ))}
-                    <button
-                        type="button"
-                        className="text-xs font-bold text-content-subtle underline-offset-2 hover:underline"
-                        onClick={onReset}
-                    >
-                        전체 초기화
-                    </button>
-                </div>
-            )}
+                {/* 적용된 필터 칩 — 개별 해제(정규화가 뒤처리) */}
+                <ActiveFilterBar
+                    items={chips.map((chip) => ({
+                        id: chip.id,
+                        label: chip.label,
+                        onRemove: () => onChange(chip.patch),
+                    }))}
+                    onReset={onReset}
+                />
+            </div>
         </section>
     )
 }
 
 export default ShopFilters
-

@@ -5,6 +5,7 @@ import { paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
 import CursorPagination from '@/components/common/CursorPagination'
+import ListResultSummary from '@/components/common/ListResultSummary'
 import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import AuctionCard from '@/features/auction/components/AuctionCard'
 import AuctionFilters from '@/features/auction/components/AuctionFilters'
@@ -65,7 +66,6 @@ export default function AuctionListPage() {
 
     const templatesQuery = useItemTemplates()
     const templates = templatesQuery.data?.content ?? []
-
 
     const auctions = useMemo(
         () => data?.pages.flatMap((page) => page.content) ?? [],
@@ -135,7 +135,7 @@ export default function AuctionListPage() {
                                 </p>
                             </div>
                         </div>
-                        <Link to={paths.sell} data-market-sell-action>
+                        <Link data-market-sell-action to={paths.sell}>
                             <span>경매 등록</span>
                             <TbArrowUpRight aria-hidden />
                         </Link>
@@ -151,19 +151,13 @@ export default function AuctionListPage() {
                 }
                 resultBar={
                     <>
-                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-                            {/* ★ 검색·필터 결과 수는 aria-live 로 알린다(스크린리더 결과 안내) */}
-                            <p
-                                aria-live="polite"
-                                className="min-w-0 flex-1 text-xs text-content-muted"
-                            >
-                                {status === 'ready'
-                                    ? filters.q
-                                        ? `'${filters.q}' 검색 결과 ${auctions.length}건`
-                                        : `${auctions.length}건 표시 중`
-                                    : '서버가 제공하는 가격·마감 기준'}
-                            </p>
-                        </div>
+                        <ListResultSummary
+                            count={
+                                status === 'ready' ? auctions.length : undefined
+                            }
+                            query={filters.q}
+                            fallback="서버가 제공하는 가격·마감 기준"
+                        />
                         {status === 'ready' && isError && (
                             <p
                                 role="alert"
@@ -202,4 +196,3 @@ export default function AuctionListPage() {
         </div>
     )
 }
-

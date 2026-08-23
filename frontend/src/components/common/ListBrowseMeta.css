@@ -1,0 +1,162 @@
+.list-result-summary {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+    color: var(--frost-fg);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+.list-result-summary__context {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 7px;
+    color: var(--frost-muted);
+}
+.list-result-summary__context strong {
+    overflow: hidden;
+    max-width: min(44vw, 32rem);
+    color: var(--frost-fg);
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.list-result-summary__count {
+    display: inline-flex;
+    min-width: 58px;
+    min-height: 32px;
+    flex: 0 0 auto;
+    align-items: baseline;
+    justify-content: center;
+    gap: 3px;
+    padding: 5px 10px;
+    border: 1px solid color-mix(in srgb, var(--frost-accent) 28%, transparent);
+    border-radius: 999px;
+    color: var(--frost-muted);
+    background: color-mix(in srgb, var(--frost-accent) 10%, transparent);
+    box-shadow: inset 0 1px
+        color-mix(in srgb, var(--frost-highlight) 18%, transparent);
+}
+.list-result-summary__count strong {
+    color: var(--frost-fg);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+.list-result-summary__fallback {
+    color: var(--frost-muted);
+}
+.active-filter-bar {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 9px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--frost-line);
+}
+.active-filter-bar__label {
+    flex: 0 0 auto;
+    color: var(--frost-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+.active-filter-bar__items {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+.active-filter-chip,
+.active-filter-reset {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 750;
+    transition:
+        color 150ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease,
+        transform 150ms ease;
+}
+.active-filter-chip {
+    padding: 7px 9px 7px 12px;
+    border: 1px solid color-mix(in srgb, var(--frost-accent) 30%, transparent);
+    color: var(--frost-fg);
+    background: color-mix(
+        in srgb,
+        var(--frost-accent) 13%,
+        var(--frost-bg-inset)
+    );
+    box-shadow: inset 0 1px
+        color-mix(in srgb, var(--frost-highlight) 18%, transparent);
+}
+.active-filter-chip svg,
+.active-filter-reset svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+}
+.active-filter-chip:hover {
+    border-color: color-mix(in srgb, var(--frost-accent) 48%, transparent);
+    background-color: color-mix(in srgb, var(--frost-accent) 17%, transparent);
+    box-shadow:
+        inset 0 1px color-mix(in srgb, var(--frost-highlight) 24%, transparent),
+        0 8px 18px color-mix(in srgb, var(--frost-accent-ink) 17%, transparent);
+    transform: translateY(-1px);
+}
+.active-filter-reset {
+    flex: 0 0 auto;
+    padding: 7px 11px;
+    border: 1px solid transparent;
+    color: var(--frost-muted);
+    background: transparent;
+}
+.active-filter-reset:hover {
+    border-color: var(--frost-line);
+    color: var(--frost-fg);
+    background: var(--frost-bg-soft);
+}
+.active-filter-chip:active,
+.active-filter-reset:active {
+    transform: scale(0.97);
+}
+.active-filter-chip:focus-visible,
+.active-filter-reset:focus-visible {
+    outline: 2px solid var(--frost-focus);
+    outline-offset: 2px;
+}
+@media (max-width: 639px) {
+    .active-filter-bar {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+    .active-filter-bar__label {
+        width: 100%;
+    }
+    .active-filter-bar__items {
+        flex-basis: 100%;
+    }
+    .active-filter-reset {
+        margin-left: auto;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .active-filter-chip,
+    .active-filter-reset {
+        transition-duration: 1ms;
+    }
+    .active-filter-chip:hover,
+    .active-filter-chip:active,
+    .active-filter-reset:active {
+        transform: none;
+    }
+}

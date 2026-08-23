@@ -5,6 +5,7 @@ import { paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
 import CursorPagination from '@/components/common/CursorPagination'
+import ListResultSummary from '@/components/common/ListResultSummary'
 import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import ShopCard from '@/features/shop/components/ShopCard'
 import ShopCardInfoDialog from '@/features/shop/components/ShopCardInfoDialog'
@@ -161,7 +162,7 @@ export default function MarketPage() {
                                 </p>
                             </div>
                         </div>
-                        <Link to={paths.sell} data-market-sell-action>
+                        <Link data-market-sell-action to={paths.sell}>
                             <span>아이템 판매</span>
                             <TbArrowUpRight aria-hidden />
                         </Link>
@@ -177,19 +178,13 @@ export default function MarketPage() {
                 }
                 resultBar={
                     <>
-                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-                            {/* ★ 검색·필터 결과 수는 aria-live 로 알린다(스크린리더 결과 안내) */}
-                            <p
-                                aria-live="polite"
-                                className="min-w-0 flex-1 text-xs text-content-muted"
-                            >
-                                {status === 'ready'
-                                    ? filters.q
-                                        ? `'${filters.q}' 검색 결과 ${shops.length}건`
-                                        : `${shops.length}건 표시 중`
-                                    : '검증된 판매자의 고정가 상품'}
-                            </p>
-                        </div>
+                        <ListResultSummary
+                            count={
+                                status === 'ready' ? shops.length : undefined
+                            }
+                            query={filters.q}
+                            fallback="검증된 판매자의 고정가 상품"
+                        />
                         {status === 'ready' && isError && (
                             <p
                                 role="alert"
@@ -238,4 +233,3 @@ export default function MarketPage() {
         </div>
     )
 }
-
