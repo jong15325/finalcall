@@ -3,6 +3,27 @@
 Elasticsearch(nori) + Kafka(KRaft) + Kafka Connect(Debezium MySQL source → ES sink) CDC 파이프라인을
 로컬에서 기동·검증하는 절차다. 정본 설계 = `docs/spec/search-spec.md` v0.3 §12.
 
+## Kafka Connect 내부 토픽 초기화
+
+`finalcall-search-kafka-connect-topic-init`은 `connect-configs`, `connect-offsets`, `connect-status`를
+생성하고 `cleanup.policy=compact`로 멱등 보정하는 one-shot 컨테이너다. 작업 후 `Exited (0)`이면 정상이며,
+검색 Kafka Connect는 이 초기화가 성공한 뒤 시작한다. 기존 Kafka 데이터 볼륨은 삭제하지 않는다.
+
+기존 볼륨에서 worker가 내부 토픽 정책 오류로 종료됐다면 다음 명령으로 복구·검증한다.
+
+```bash
+docker compose -f docker-compose.local.yml up -d search-kafka-connect-topic-init kafka-connect
+docker compose -f docker-compose.local.yml ps -a search-kafka-connect-topic-init kafka-connect
+for topic in connect-configs connect-offsets connect-status; do
+  docker exec finalcall-kafka /opt/kafka/bin/kafka-configs.sh --bootstrap-server kafka:9092 \
+    --describe --entity-type topics --entity-name "$topic"
+done
+curl -s localhost:8083/connectors?expand=status | jq .
+```
+
+초기화 컨테이너는 `Exited (0)`, 세 내부 토픽은 `cleanup.policy=compact`, 등록된 connector와 task는
+각각 `RUNNING`이어야 한다.
+
 > ★ 이 스택은 **로컬 부담이 크다**(신규 컨테이너 3개 + MySQL binlog). 사용자 게이트2 승인분(포트폴리오 사실성 우선).
 > Windows 로컬에서 전체 CDC 스택 통합테스트는 무거우므로 **아래 수동 절차로 검증**한다. 색인/검색 쿼리 로직 자체는
 > `ListingSearchIntegrationTest`(ES Testcontainer)가 자동 검증한다.

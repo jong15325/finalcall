@@ -159,6 +159,25 @@ services:
     restart: "no"
 
   # EPIC-SEARCH(FC-107): 커넥터 런타임. Debezium MySQL source(내장) + Confluent ES sink(Dockerfile 에서 추가).
+  # FC-362: Kafka Connect 내부 토픽은 compact 정책이 필수다. 기존 볼륨에서도 멱등하게 생성·보정한다.
+  search-kafka-connect-topic-init:
+    image: apache/kafka:3.8.0
+    container_name: finalcall-search-kafka-connect-topic-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -ec
+      - >-
+        for topic_spec in connect-configs:1 connect-offsets:25 connect-status:5; do
+          topic=$${topic_spec%%:*};
+          partitions=$${topic_spec##*:};
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic "$${topic}" --partitions "$${partitions}" --replication-factor 1 --config cleanup.policy=compact;
+          /opt/kafka/bin/kafka-configs.sh --bootstrap-server kafka:9092 --alter --entity-type topics --entity-name "$${topic}" --add-config cleanup.policy=compact;
+        done
+    restart: "no"
+
   kafka-connect:
     build:
       context: ./docker/search/kafka-connect
@@ -184,6 +203,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      search-kafka-connect-topic-init:
+        condition: service_completed_successfully
       elasticsearch:
         condition: service_healthy
     healthcheck:
