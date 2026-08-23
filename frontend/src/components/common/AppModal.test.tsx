@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import AppModal from './AppModal'
@@ -27,8 +27,8 @@ describe('<AppModal>', () => {
             <AppModal
                 open
                 title="확인"
-                onClose={onClose}
                 initialFocusRef={focusRef}
+                onClose={onClose}
             >
                 <button ref={focusRef}>확인</button>
             </AppModal>,
@@ -40,7 +40,7 @@ describe('<AppModal>', () => {
 
         onClose.mockClear()
         rerender(
-            <AppModal open title="확인" onClose={onClose} closeDisabled>
+            <AppModal open closeDisabled title="확인" onClose={onClose}>
                 처리 중
             </AppModal>,
         )
@@ -50,14 +50,13 @@ describe('<AppModal>', () => {
         expect(container).toBeTruthy()
     })
 
-    it('액션 옵션만으로 취소·확정 버튼을 조립한다', () => {
+    it('액션 옵션만으로 취소·확정 버튼을 조립하고 지정 액션에 먼저 초점을 둔다', async () => {
         const onClose = vi.fn()
         const onConfirm = vi.fn()
         render(
             <AppModal
                 open
                 title="구매"
-                onClose={onClose}
                 actions={[
                     {
                         id: 'cancel',
@@ -69,9 +68,11 @@ describe('<AppModal>', () => {
                         id: 'confirm',
                         label: '구매 확정',
                         variant: 'primary',
+                        autoFocus: true,
                         onClick: onConfirm,
                     },
                 ]}
+                onClose={onClose}
             >
                 구매 내용
             </AppModal>,
@@ -81,6 +82,7 @@ describe('<AppModal>', () => {
         const confirm = screen.getByRole('button', { name: '구매 확정' })
         expect(cancel).toHaveAttribute('data-modal-button', 'secondary')
         expect(confirm).toHaveAttribute('data-modal-button', 'primary')
+        await waitFor(() => expect(confirm).toHaveFocus())
         fireEvent.click(confirm)
         expect(onConfirm).toHaveBeenCalledOnce()
         fireEvent.click(cancel)
@@ -117,15 +119,15 @@ describe('<AppModal>', () => {
         render(
             <AppModal
                 open
-                title="구매"
                 contentInert
-                onClose={vi.fn()}
+                title="구매"
                 overlay={
                     <div>
                         <button>취소</button>
                         <button>확인</button>
                     </div>
                 }
+                onClose={vi.fn()}
             >
                 <button>배경 액션</button>
             </AppModal>,

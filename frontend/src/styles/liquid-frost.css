@@ -74,10 +74,15 @@
 
 /* One interaction grammar for every modal action. */
 .app-modal-button,
-[role='dialog'] button:not([aria-label='닫기']),
-[role='alertdialog'] button:not([aria-label='닫기']) {
+[role='dialog'] button:not(.app-modal-close),
+[role='alertdialog'] button:not(.app-modal-close) {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     min-height: 46px;
+    padding: 0.72rem 1.05rem;
     border-radius: 12px !important;
+    color: var(--frost-fg);
     font-size: 0.875rem;
     font-weight: 800;
     transition:
@@ -88,88 +93,132 @@
         transform 160ms ease !important;
 }
 .app-modal-button:hover:not(:disabled),
-[role='dialog'] button:not([aria-label='닫기']):hover:not(:disabled),
-[role='alertdialog'] button:not([aria-label='닫기']):hover:not(:disabled) {
+[role='dialog'] button:not(.app-modal-close):hover:not(:disabled),
+[role='alertdialog'] button:not(.app-modal-close):hover:not(:disabled) {
     transform: translateY(-2px);
 }
 .app-modal-button:active:not(:disabled),
-[role='dialog'] button:not([aria-label='닫기']):active:not(:disabled),
-[role='alertdialog'] button:not([aria-label='닫기']):active:not(:disabled) {
-    transform: scale(0.975);
+[role='dialog'] button:not(.app-modal-close):active:not(:disabled),
+[role='alertdialog'] button:not(.app-modal-close):active:not(:disabled) {
+    transform: translateY(0) scale(0.975);
 }
 .app-modal-button:focus-visible,
-[role='dialog'] button:not([aria-label='닫기']):focus-visible,
-[role='alertdialog'] button:not([aria-label='닫기']):focus-visible {
-    outline: 2px solid var(--frost-accent) !important;
-    outline-offset: 2px;
+[role='dialog'] button:not(.app-modal-close):focus-visible,
+[role='alertdialog'] button:not(.app-modal-close):focus-visible {
+    outline: 2px solid rgb(142 231 242 / 82%) !important;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgb(142 231 242 / 12%) !important;
 }
 .app-modal-button:disabled,
-[role='dialog'] button:not([aria-label='닫기']):disabled,
-[role='alertdialog'] button:not([aria-label='닫기']):disabled {
+[role='dialog'] button:not(.app-modal-close):disabled,
+[role='alertdialog'] button:not(.app-modal-close):disabled {
     cursor: not-allowed;
-    opacity: 0.52;
+    opacity: 0.48;
+    filter: saturate(0.65);
     transform: none !important;
 }
-.app-modal-button[data-modal-button='primary'] {
+.app-modal-button__label {
     position: relative;
-    overflow: hidden;
-    min-width: 112px;
-    border: 1px solid rgba(174, 242, 249, 0.48);
-    background: linear-gradient(135deg, #a5edf4 0%, #67cfdd 52%, #48b8ca 100%);
-    color: #08232d;
-    box-shadow:
-        inset 0 1px rgba(255, 255, 255, 0.62),
-        0 8px 20px rgba(30, 139, 158, 0.2);
-    text-shadow: 0 1px rgba(255, 255, 255, 0.28);
+    z-index: 1;
 }
-.app-modal-button[data-modal-button='primary']::before {
+.app-modal-button::before {
     position: absolute;
+    z-index: 0;
     inset: 0;
     content: '';
+    pointer-events: none;
     background: linear-gradient(
-        115deg,
-        transparent 20%,
-        rgba(255, 255, 255, 0.28) 48%,
-        transparent 72%
+        112deg,
+        transparent 18%,
+        rgb(255 255 255 / 18%) 48%,
+        transparent 76%
     );
     opacity: 0;
-    transform: translateX(-70%);
+    transform: translateX(-72%);
     transition:
         opacity 180ms ease,
-        transform 360ms ease;
+        transform 380ms ease;
+}
+.app-modal-button:not(:has(.app-modal-button__label))::before {
+    display: none;
+}
+.app-modal-button:hover:not(:disabled)::before {
+    opacity: 1;
+    transform: translateX(72%);
+}
+.app-modal-button[data-modal-button='primary'] {
+    min-width: 112px;
+    border: 1px solid rgb(151 235 244 / 42%);
+    background: linear-gradient(
+        145deg,
+        rgb(75 176 194 / 42%),
+        rgb(18 91 109 / 54%)
+    );
+    color: #f5fdff;
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 20%),
+        inset 0 -1px rgb(2 24 32 / 32%),
+        0 10px 24px rgb(16 118 139 / 18%);
+    text-shadow: 0 1px 2px rgb(0 13 20 / 42%);
 }
 .app-modal-button[data-modal-button='primary']:hover:not(:disabled) {
-    border-color: rgba(210, 249, 252, 0.72);
-    background: linear-gradient(135deg, #b9f3f7 0%, #76d9e5 52%, #54c2d2 100%);
+    border-color: rgb(194 246 251 / 64%);
+    background: linear-gradient(
+        145deg,
+        rgb(88 196 214 / 50%),
+        rgb(20 105 124 / 62%)
+    );
     box-shadow:
-        inset 0 1px rgba(255, 255, 255, 0.7),
-        0 12px 26px rgba(30, 139, 158, 0.3);
-}
-.app-modal-button[data-modal-button='primary']:hover:not(:disabled)::before {
-    opacity: 1;
-    transform: translateX(70%);
+        inset 0 1px rgb(255 255 255 / 26%),
+        0 14px 30px rgb(16 118 139 / 28%);
 }
 .app-modal-button[data-modal-button='secondary'] {
     min-width: 88px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    background: rgba(3, 18, 27, 0.28);
-    color: rgba(224, 237, 242, 0.72);
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+    border: 1px solid rgb(255 255 255 / 12%);
+    background: linear-gradient(
+        145deg,
+        rgb(255 255 255 / 7%),
+        rgb(2 17 26 / 24%)
+    );
+    color: rgb(229 241 245 / 82%);
+    box-shadow: inset 0 1px rgb(255 255 255 / 7%);
 }
 .app-modal-button[data-modal-button='secondary']:hover:not(:disabled) {
-    border-color: rgba(142, 231, 242, 0.18);
-    background: rgba(142, 231, 242, 0.075);
+    border-color: rgb(142 231 242 / 26%);
+    background: linear-gradient(
+        145deg,
+        rgb(142 231 242 / 13%),
+        rgb(7 35 47 / 36%)
+    );
     color: var(--frost-fg);
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 10%),
+        0 10px 22px rgb(0 10 18 / 18%);
 }
 .app-modal-button[data-modal-button='danger'] {
-    border: 1px solid rgba(255, 135, 124, 0.34);
-    background: rgba(190, 64, 55, 0.75);
-    color: #fff;
+    min-width: 104px;
+    border: 1px solid rgb(255 145 135 / 42%);
+    background: linear-gradient(
+        145deg,
+        rgb(196 69 61 / 48%),
+        rgb(112 31 33 / 58%)
+    );
+    color: #fff8f7;
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 16%),
+        0 10px 24px rgb(123 35 34 / 18%);
+    text-shadow: 0 1px 2px rgb(48 4 5 / 42%);
 }
 .app-modal-button[data-modal-button='danger']:hover:not(:disabled) {
-    background: rgba(215, 76, 66, 0.92);
-    box-shadow: 0 11px 24px rgba(190, 64, 55, 0.23);
+    border-color: rgb(255 181 173 / 62%);
+    background: linear-gradient(
+        145deg,
+        rgb(218 82 72 / 58%),
+        rgb(135 38 38 / 68%)
+    );
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 20%),
+        0 14px 28px rgb(123 35 34 / 28%);
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -1803,7 +1852,6 @@ section > ul.rounded-xl,
     min-height: 47px;
     padding: 8px 0 !important;
     border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-    color: #f2f8fa !important;
     line-height: 1.35;
 }
 [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
@@ -1814,16 +1862,36 @@ section > ul.rounded-xl,
     .item-skill-summary__slot {
     display: block;
     margin-bottom: 3px;
-    color: rgba(194, 214, 222, 0.6) !important;
     font-size: 9px;
     font-weight: 750;
     letter-spacing: 0.04em;
 }
-[data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
-    .item-card__skill-percent,
-[data-testid='app-content-plane']:has([aria-label='경매 목록'])
-    .item-card__skill-percent {
-    color: #8ee7f2 !important;
+
+.compare-bar {
+    right: 0.75rem;
+    bottom: calc(5.75rem + env(safe-area-inset-bottom));
+    left: 0.75rem;
+    width: auto;
+    max-width: 920px;
+    margin-inline: auto;
+    color: var(--frost-fg);
+}
+
+.compare-bar .text-chrome-fg {
+    color: var(--frost-fg);
+}
+.compare-bar .text-chrome-muted {
+    color: var(--frost-muted);
+}
+
+@media (min-width: 1280px) {
+    .compare-bar {
+        right: max(1.5rem, calc((100vw - 1440px) / 2));
+        bottom: 1.5rem;
+        left: auto;
+        width: min(920px, calc(100vw - 3rem));
+        margin-inline: 0;
+    }
 }
 [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
     .item-card__market-price,
@@ -2114,7 +2182,6 @@ section > ul.rounded-xl,
     padding: 8px 0 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 0 !important;
-    color: #f2f8fa !important;
     background: transparent !important;
 }
 [data-home-auction-list] .item-card__skill-row:last-child {
@@ -2234,7 +2301,6 @@ section > ul.rounded-xl,
     border: 0 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 0 !important;
-    color: #f2f8fa !important;
     line-height: 1.35;
     background: transparent !important;
 }
@@ -2244,13 +2310,9 @@ section > ul.rounded-xl,
 [data-auction-list-card] .item-card__skill-row .item-skill-summary__slot {
     display: block;
     margin-bottom: 3px;
-    color: rgba(194, 214, 222, 0.6) !important;
     font-size: 9px;
     font-weight: 750;
     letter-spacing: 0.04em;
-}
-[data-auction-list-card] .item-card__skill-percent {
-    color: var(--frost-accent) !important;
 }
 [data-auction-list-card] .item-card__market-price {
     margin-top: 12px;
@@ -3037,7 +3099,6 @@ section > ul.rounded-xl,
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 0 !important;
     background: transparent !important;
-    color: #f2f8fa !important;
     line-height: 1.35;
 }
 [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
@@ -3307,12 +3368,8 @@ section > ul.rounded-xl,
 }
 #view .auction-detail-region .detail-surface h2,
 #view .auction-detail-region .detail-surface h3,
-#view .auction-detail-region .detail-surface dd,
-#view .auction-detail-region .detail-surface .item-skill-content {
+#view .auction-detail-region .detail-surface dd {
     color: var(--frost-fg) !important;
-}
-#view .auction-detail-region .detail-surface .item-skill-percent {
-    color: #f4c96b !important;
 }
 
 /* Auction close state and bid activity use the same restrained frost palette. */
@@ -3418,18 +3475,6 @@ section > ul.rounded-xl,
     -webkit-backdrop-filter: blur(30px) saturate(128%);
     animation: app-modal-sheet-in 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
     outline: none;
-}
-.app-modal-panel[data-size='sm'] {
-    max-width: 420px;
-}
-.app-modal-panel[data-size='md'] {
-    max-width: 560px;
-}
-.app-modal-panel[data-size='lg'] {
-    max-width: 760px;
-}
-.app-modal-panel[data-size='xl'] {
-    max-width: 980px;
 }
 .app-modal-panel[data-tone='danger'] {
     --modal-accent: #ff9f92;
@@ -3555,6 +3600,10 @@ section > ul.rounded-xl,
     gap: 10px;
 }
 @media (max-width: 639px) {
+    .app-modal-panel[data-size] {
+        width: 100%;
+        max-width: none;
+    }
     .app-modal-actions {
         width: 100%;
     }
@@ -3583,6 +3632,18 @@ section > ul.rounded-xl,
             var(--frost-shadow),
             inset 0 1px rgb(255 255 255 / 12%);
         animation-name: app-modal-dialog-in;
+    }
+    .app-modal-panel[data-size='sm'] {
+        max-width: 420px;
+    }
+    .app-modal-panel[data-size='md'] {
+        max-width: 560px;
+    }
+    .app-modal-panel[data-size='lg'] {
+        max-width: 760px;
+    }
+    .app-modal-panel[data-size='xl'] {
+        max-width: 980px;
     }
     .app-modal-handle {
         display: none;
@@ -3627,6 +3688,22 @@ section > ul.rounded-xl,
     }
     .app-modal-close {
         transition-duration: 1ms !important;
+    }
+    .app-modal-button,
+    [role='dialog'] button:not(.app-modal-close),
+    [role='alertdialog'] button:not(.app-modal-close) {
+        transition-duration: 1ms !important;
+    }
+    .app-modal-button:hover:not(:disabled),
+    [role='dialog'] button:not(.app-modal-close):hover:not(:disabled),
+    [role='alertdialog'] button:not(.app-modal-close):hover:not(:disabled),
+    .app-modal-button:active:not(:disabled),
+    [role='dialog'] button:not(.app-modal-close):active:not(:disabled),
+    [role='alertdialog'] button:not(.app-modal-close):active:not(:disabled) {
+        transform: none !important;
+    }
+    .app-modal-button::before {
+        display: none;
     }
 }
 
@@ -3764,7 +3841,6 @@ section > ul.rounded-xl,
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 12px !important;
     background: rgba(3, 14, 22, 0.3) !important;
-    color: var(--frost-fg) !important;
 }
 #view [aria-label='판매 중인 상품 목록'] .item-card__skill-row {
     padding: 8px 0 !important;

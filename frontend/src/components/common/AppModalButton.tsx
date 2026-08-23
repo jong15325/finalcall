@@ -21,7 +21,7 @@ const AppModalButton = forwardRef<HTMLButtonElement, AppModalButtonProps>(
                 data-modal-button={variant}
                 {...props}
             >
-                {children}
+                <span className="app-modal-button__label">{children}</span>
             </button>
         )
     },

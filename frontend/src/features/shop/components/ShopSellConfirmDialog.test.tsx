@@ -39,12 +39,9 @@ describe('ShopSellConfirmDialog 검토 gate', () => {
         mockScrollSize(500, 200)
         renderDialog()
         const dialog = screen.getByRole('dialog', { name: '불의 검' })
-        expect(dialog.parentElement).toHaveClass(
-            'items-end',
-            'xl:items-center',
-            'xl:px-4',
-        )
-        expect(dialog).toHaveClass('rounded-t-2xl', 'xl:rounded-2xl')
+        expect(dialog.parentElement).toHaveClass('app-modal-overlay')
+        expect(dialog).toHaveClass('app-modal-panel')
+        expect(dialog).toHaveAttribute('data-size', 'md')
         expect(screen.getByRole('button', { name: '판매 등록' })).toBeDisabled()
     })
 

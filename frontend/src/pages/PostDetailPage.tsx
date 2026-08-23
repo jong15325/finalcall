@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
     TbPin,
@@ -19,6 +19,7 @@ import CommentSection from '@/features/board/components/CommentSection'
 import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
+import AppModal from '@/components/common/AppModal'
 
 /**
  * 게시글 상세 `/boards/:slug/:postId` (FC-202 — 승인 화면 C).
@@ -44,64 +45,12 @@ export default function PostDetailPage() {
     const deleteMutation = useDeletePost(slug, postId)
 
     const [confirmOpen, setConfirmOpen] = useState(false)
-    const dialogRef = useRef<HTMLDivElement>(null)
-    const cancelRef = useRef<HTMLButtonElement>(null)
-    const previousFocusRef = useRef<HTMLElement | null>(null)
 
     const images = useMemo(
         () =>
             [...(post?.images ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
         [post],
     )
-
-    /**
-     * 삭제 확인 모달 — 초점·스크롤잠금·Escape·Tab 가둠(프로젝트 `SellConfirmDialog` 패턴 재사용).
-     * 의존은 `[confirmOpen]` 뿐 — 부모 리렌더가 초점을 강탈하지 않는다.
-     */
-    useEffect(() => {
-        if (!confirmOpen) return
-
-        previousFocusRef.current =
-            document.activeElement instanceof HTMLElement
-                ? document.activeElement
-                : null
-        const previousOverflow = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
-        const focusRaf = requestAnimationFrame(() => cancelRef.current?.focus())
-
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                event.preventDefault()
-                setConfirmOpen(false)
-                return
-            }
-            if (event.key !== 'Tab') return
-            const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-                'button, [href], input, [tabindex]:not([tabindex="-1"])',
-            )
-            const list = Array.from(focusables ?? []).filter(
-                (el) => !el.hasAttribute('disabled'),
-            )
-            if (list.length === 0) return
-            const first = list[0]
-            const last = list[list.length - 1]
-            if (event.shiftKey && document.activeElement === first) {
-                event.preventDefault()
-                last.focus()
-            } else if (!event.shiftKey && document.activeElement === last) {
-                event.preventDefault()
-                first.focus()
-            }
-        }
-        document.addEventListener('keydown', onKeyDown)
-
-        return () => {
-            cancelAnimationFrame(focusRaf)
-            document.removeEventListener('keydown', onKeyDown)
-            document.body.style.overflow = previousOverflow
-            previousFocusRef.current?.focus()
-        }
-    }, [confirmOpen])
 
     // 글 없음(삭제·미존재) — 상세 대신 안내.
     const notFound =
@@ -301,53 +250,39 @@ export default function PostDetailPage() {
             </article>
 
             {/* 삭제 확인 */}
-            {confirmOpen && (
-                <div
-                    role="presentation"
-                    className="fixed inset-0 z-50 grid place-items-center bg-brand-structure/40 p-4"
-                    onMouseDown={(event) => {
-                        if (event.target === event.currentTarget)
-                            setConfirmOpen(false)
-                    }}
-                >
-                    <div
-                        ref={dialogRef}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="deletePostTitle"
-                        className="w-full max-w-sm rounded-2xl bg-content-surface p-6 shadow-xl"
-                        onMouseDown={(event) => event.stopPropagation()}
-                    >
-                        <h2
-                            id="deletePostTitle"
-                            className="text-lg font-bold text-content-fg"
-                        >
-                            게시글을 삭제할까요?
-                        </h2>
-                        <p className="mt-1.5 text-sm text-content-subtle">
-                            삭제한 글은 되돌릴 수 없어요.
-                        </p>
-                        <div className="mt-5 flex justify-end gap-2.5">
-                            <button
-                                ref={cancelRef}
-                                type="button"
-                                className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:border-brand-structure"
-                                onClick={() => setConfirmOpen(false)}
-                            >
-                                취소
-                            </button>
-                            <button
-                                type="button"
-                                disabled={deleteMutation.isPending}
-                                className="rounded-lg bg-danger px-4 py-2.5 text-sm font-bold text-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                                onClick={handleDelete}
-                            >
-                                {deleteMutation.isPending ? '삭제 중…' : '삭제'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AppModal
+                open={confirmOpen}
+                role="alertdialog"
+                size="sm"
+                tone="danger"
+                title="게시글을 삭제할까요?"
+                titleIcon={<TbTrash />}
+                descriptionId="delete-post-description"
+                closeDisabled={deleteMutation.isPending}
+                actions={[
+                    {
+                        id: 'cancel',
+                        label: '취소',
+                        variant: 'secondary',
+                        disabled: deleteMutation.isPending,
+                        autoFocus: true,
+                        onClick: () => setConfirmOpen(false),
+                    },
+                    {
+                        id: 'delete',
+                        label: '삭제',
+                        pendingLabel: '삭제 중…',
+                        variant: 'danger',
+                        pending: deleteMutation.isPending,
+                        onClick: handleDelete,
+                    },
+                ]}
+                onClose={() => setConfirmOpen(false)}
+            >
+                <p id="delete-post-description">
+                    삭제한 글은 되돌릴 수 없어요.
+                </p>
+            </AppModal>
 
             {/* 목록으로(하단) — 비로그인·타인도 목록 복귀 */}
             <div className="text-center">

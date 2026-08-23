@@ -25,6 +25,7 @@ export interface AppModalAction {
     autoFocus?: boolean
     close?: boolean
     onClick?: () => void
+    buttonRef?: React.RefObject<HTMLButtonElement | null>
 }
 
 interface AppModalProps {
@@ -41,11 +42,14 @@ interface AppModalProps {
     size?: AppModalSize
     tone?: AppModalTone
     closeDisabled?: boolean
+    closeLabel?: string
     closeOnBackdrop?: boolean
     role?: 'dialog' | 'alertdialog'
     descriptionId?: string
     panelClassName?: string
     bodyClassName?: string
+    bodyRef?: React.RefObject<HTMLDivElement | null>
+    onBodyScroll?: React.UIEventHandler<HTMLDivElement>
     footerClassName?: string
     initialFocusRef?: React.RefObject<HTMLElement | null>
 }
@@ -69,11 +73,14 @@ export default function AppModal({
     size = 'md',
     tone = 'default',
     closeDisabled = false,
+    closeLabel = '닫기',
     closeOnBackdrop = true,
     role = 'dialog',
     descriptionId,
     panelClassName = '',
     bodyClassName = '',
+    bodyRef,
+    onBodyScroll,
     footerClassName = '',
     initialFocusRef,
 }: AppModalProps) {
@@ -101,10 +108,12 @@ export default function AppModal({
 
         const focusRaf = requestAnimationFrame(() => {
             const preferred = initialFocusRef?.current
+            const autoFocus =
+                panelRef.current?.querySelector<HTMLElement>('[data-autofocus]')
             const fallback = panelRef.current?.querySelector<HTMLElement>(
-                '[data-autofocus], input, textarea, select, button, [href], [tabindex]:not([tabindex="-1"])',
+                'input, textarea, select, button, [href], [tabindex]:not([tabindex="-1"])',
             )
-            ;(preferred ?? fallback ?? panelRef.current)?.focus()
+            ;(preferred ?? autoFocus ?? fallback ?? panelRef.current)?.focus()
         })
 
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -132,7 +141,10 @@ export default function AppModal({
             }
             const first = focusables[0]
             const last = focusables[focusables.length - 1]
-            if (event.shiftKey && document.activeElement === first) {
+            if (!panelRef.current?.contains(document.activeElement)) {
+                event.preventDefault()
+                ;(event.shiftKey ? last : first).focus()
+            } else if (event.shiftKey && document.activeElement === first) {
                 event.preventDefault()
                 last.focus()
             } else if (!event.shiftKey && document.activeElement === last) {
@@ -140,10 +152,10 @@ export default function AppModal({
                 first.focus()
             }
         }
-        document.addEventListener('keydown', handleKeyDown)
+        window.addEventListener('keydown', handleKeyDown)
         return () => {
             cancelAnimationFrame(focusRaf)
-            document.removeEventListener('keydown', handleKeyDown)
+            window.removeEventListener('keydown', handleKeyDown)
             const wasTopModal = isTopModal(modalId)
             const stackIndex = openModalStack.lastIndexOf(modalId)
             if (stackIndex >= 0) openModalStack.splice(stackIndex, 1)
@@ -203,7 +215,7 @@ export default function AppModal({
                     </div>
                     <button
                         type="button"
-                        aria-label="닫기"
+                        aria-label={closeLabel}
                         disabled={closeDisabled}
                         className="app-modal-close"
                         onClick={onClose}
@@ -212,8 +224,10 @@ export default function AppModal({
                     </button>
                 </header>
                 <div
+                    ref={bodyRef}
                     className={`app-modal-body ${bodyClassName}`.trim()}
                     inert={contentInert}
+                    onScroll={onBodyScroll}
                 >
                     {children}
                 </div>
@@ -227,6 +241,7 @@ export default function AppModal({
                                 {actions.map((action) => (
                                     <AppModalButton
                                         key={action.id}
+                                        ref={action.buttonRef}
                                         type={action.type ?? 'button'}
                                         form={action.form}
                                         variant={action.variant ?? 'primary'}
