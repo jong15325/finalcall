@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -57,6 +58,8 @@ class LocalActiveShopSeederTest {
             .thenReturn(1);
         lenient().when(jdbcTemplate.queryForObject(eq("SELECT RELEASE_LOCK(?)"), eq(Integer.class), any()))
             .thenReturn(1);
+        lenient().when(jdbcTemplate.queryForList(any(String.class), any(java.time.Instant.class)))
+            .thenReturn(List.of());
         ItemTemplate template = mock(ItemTemplate.class);
         lenient().when(template.getTypeCode()).thenReturn(1111);
         lenient().when(itemTemplateRepository.findAll()).thenReturn(List.of(template));
@@ -176,6 +179,69 @@ class LocalActiveShopSeederTest {
             .doesNotThrowAnyException();
     }
 
+    @Test
+    void 신규_매물은_레벨_스킬_골드포스가_결정론적으로_다양하다() {
+        mockActiveCounts(0L, 0L, 0L, 0L);
+        mockMaxSuffix(0L);
+
+        seeder.seedActiveShops();
+
+        List<ListedSeed> seeds = listedSeeds().getValue();
+        assertThat(seeds).extracting(ListedSeed::level).contains(1, 9);
+        assertThat(seeds).anyMatch(seed -> seed.skill1Code() != null);
+        assertThat(seeds).anyMatch(seed -> seed.skill2Code() != null);
+        assertThat(seeds).anyMatch(seed -> seed.gfExpireAt() != null);
+        assertThat(seeds).allSatisfy(seed -> {
+            assertThat(seed.level()).isBetween(1, 9);
+            if (seed.skill1Code() == null && seed.skill2Code() == null) {
+                assertThat(seed.skillPercent()).isZero();
+            } else {
+                assertThat(seed.skillPercent()).isBetween(1, levelMaxPercent(seed.level()));
+            }
+        });
+    }
+
+    @Test
+    void 마법_매물에는_스킬1을_부여하지_않는다() {
+        ItemTemplate magicTemplate = mock(ItemTemplate.class);
+        when(magicTemplate.getTypeCode()).thenReturn(1331);
+        when(magicTemplate.getSubGroup()).thenReturn(3);
+        when(itemTemplateRepository.findAll()).thenReturn(List.of(magicTemplate));
+        mockActiveCounts(0L, 0L, 0L, 0L);
+        mockMaxSuffix(0L);
+
+        seeder.seedActiveShops();
+
+        assertThat(listedSeeds().getValue()).allSatisfy(seed -> assertThat(seed.skill1Code()).isNull());
+    }
+
+    @Test
+    void 비어_있는_활성_SEEDLIST_매물만_조건부로_보정한다() {
+        when(jdbcTemplate.queryForList(any(String.class), any(java.time.Instant.class)))
+            .thenReturn(List.of(Map.of("itemId", 17L, "level", 7, "subGroup", 3)));
+        when(jdbcTemplate.update(any(String.class), any(Object[].class))).thenReturn(2);
+
+        Integer enriched = ReflectionTestUtils.invokeMethod(seeder, "enrichBlankSeedListings");
+
+        assertThat(enriched).isEqualTo(1);
+        verify(jdbcTemplate).queryForList(argThat(sql -> sql.contains("ii.public_id LIKE 'SEEDLIST%'")
+            && sql.contains("ii.location = 'LISTED'")
+            && sql.contains("ii.skill1_id IS NULL AND ii.skill2_id IS NULL")
+            && sql.contains("ii.skill_percent = 0 AND ii.gf_expire_at IS NULL")
+            && sql.contains("s.status = 'ACTIVE'")), any(java.time.Instant.class));
+        verify(jdbcTemplate).update(argThat(sql -> sql.contains("JOIN shop s ON s.item_instance_id = ii.id")
+            && sql.contains("s.item_spec_snapshot = ?")
+            && sql.contains("WHERE ii.id = ?")
+            && !sql.contains("ii.level = ?")
+            && sql.contains("ii.public_id LIKE 'SEEDLIST%'")
+            && sql.contains("ii.skill1_id IS NULL AND ii.skill2_id IS NULL")
+            && sql.contains("s.status = 'ACTIVE'")), org.mockito.ArgumentMatchers.isNull(), any(Integer.class),
+            any(Integer.class), any(java.time.Instant.class), any(java.time.Instant.class),
+            argThat((String snapshot) -> snapshot.startsWith("Lv.7 / skill1=-/skill2=")
+                && snapshot.contains(" / GF=")),
+            any(java.time.Instant.class), eq(17L), any(java.time.Instant.class));
+    }
+
     private void mockActiveCounts(Long... counts) {
         when(jdbcTemplate.queryForObject(any(String.class), eq(Long.class), any(), any()))
             .thenReturn(counts[0], java.util.Arrays.copyOfRange(counts, 1, counts.length));
@@ -190,5 +256,19 @@ class LocalActiveShopSeederTest {
         ArgumentCaptor<List<ListedSeed>> captor = ArgumentCaptor.forClass(List.class);
         verify(data).bulkCreateListedShopItems(captor.capture(), any(Integer.class));
         return captor;
+    }
+
+    private int levelMaxPercent(int level) {
+        return switch (level) {
+            case 1 -> 9;
+            case 2 -> 15;
+            case 3 -> 19;
+            case 4 -> 23;
+            case 5 -> 25;
+            case 6 -> 27;
+            case 7 -> 31;
+            case 8 -> 33;
+            default -> 36;
+        };
     }
 }

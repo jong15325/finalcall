@@ -1,9 +1,12 @@
 package com.finalcall.support;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -43,6 +46,9 @@ public class LocalActiveShopSeeder {
     private static final List<String> SELLERS = List.of("demo1", "demo2", "demo3", "demo4");
     private static final String LOCK_NAME = "finalcall:local-active-shop-seed";
     private static final long RANDOM_SEED = 352_004L;
+    private static final DateTimeFormatter GF_SNAPSHOT_FORMAT = DateTimeFormatter
+        .ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        .withZone(ZoneOffset.UTC);
 
     private final UserRepository userRepository;
     private final ItemTemplateRepository itemTemplateRepository;
@@ -63,6 +69,8 @@ public class LocalActiveShopSeeder {
     }
 
     private void topUp() {
+        enrichBlankSeedListings();
+
         List<ItemTemplate> templates = itemTemplateRepository.findAll();
         if (templates.isEmpty()) {
             log.warn("[LocalActiveShopSeeder] 아이템 템플릿이 없어 보충을 건너뜀");
@@ -97,9 +105,103 @@ public class LocalActiveShopSeeder {
     private ListedSeed seed(Long sellerId, List<ItemTemplate> templates, Random random, Instant now) {
         ItemTemplate template = templates.get(random.nextInt(templates.size()));
         int level = 1 + random.nextInt(9);
+        ItemTraits traits = traits(template.getSubGroup(), level, random, now);
         long price = 10_000L + random.nextInt(990_001);
         Instant endAt = now.plus(7 + random.nextInt(24), ChronoUnit.DAYS);
-        return new ListedSeed(sellerId, template.getTypeCode(), level, null, null, 0, null, price, endAt);
+        return new ListedSeed(sellerId, template.getTypeCode(), level, traits.skill1Code(), traits.skill2Code(),
+            traits.skillPercent(), traits.gfExpireAt(), price, endAt);
+    }
+
+    private int enrichBlankSeedListings() {
+        Instant now = Instant.now();
+        List<Map<String, Object>> candidates = jdbcTemplate.queryForList(
+            "SELECT ii.id AS itemId, ii.level AS level, it.sub_group AS subGroup FROM item_instance ii "
+                + "JOIN item_template it ON it.id = ii.template_id "
+                + "JOIN shop s ON s.item_instance_id = ii.id "
+                + "WHERE ii.public_id LIKE 'SEEDLIST%' AND ii.location = 'LISTED' "
+                + "AND ii.skill1_id IS NULL AND ii.skill2_id IS NULL "
+                + "AND ii.skill_percent = 0 AND ii.gf_expire_at IS NULL "
+                + "AND s.status = 'ACTIVE' AND (s.end_at IS NULL OR s.end_at > ?) ORDER BY ii.id",
+            now);
+        int enriched = 0;
+        for (Map<String, Object> candidate : candidates) {
+            long itemId = ((Number)candidate.get("itemId")).longValue();
+            int level = ((Number)candidate.get("level")).intValue();
+            int subGroup = ((Number)candidate.get("subGroup")).intValue();
+            Random random = new Random(RANDOM_SEED ^ itemId);
+            ItemTraits traits = traits(subGroup, level, random, now);
+            int updated = jdbcTemplate.update(
+                "UPDATE item_instance ii JOIN shop s ON s.item_instance_id = ii.id SET "
+                    + "ii.skill1_id = (SELECT id FROM skill_definition WHERE skill_code = ?), "
+                    + "ii.skill2_id = (SELECT id FROM skill_definition WHERE skill_code = ?), "
+                    + "ii.skill_percent = ?, ii.gf_expire_at = ?, ii.updated_at = ?, "
+                    + "s.item_spec_snapshot = ?, s.updated_at = ? "
+                    + "WHERE ii.id = ? AND ii.public_id LIKE 'SEEDLIST%' AND ii.location = 'LISTED' "
+                    + "AND ii.skill1_id IS NULL AND ii.skill2_id IS NULL "
+                    + "AND ii.skill_percent = 0 AND ii.gf_expire_at IS NULL "
+                    + "AND s.status = 'ACTIVE' AND (s.end_at IS NULL OR s.end_at > ?)",
+                traits.skill1Code(), traits.skill2Code(), traits.skillPercent(), traits.gfExpireAt(), now,
+                specSnapshot(level, traits), now, itemId, now);
+            if (updated > 0) {
+                enriched++;
+            }
+        }
+        if (enriched > 0) {
+            log.info("[LocalActiveShopSeeder] 기존 활성 시드 매물 {}건 특성 보정 완료", enriched);
+        }
+        return enriched;
+    }
+
+    private ItemTraits traits(int subGroup, int level, Random random, Instant now) {
+        boolean magic = subGroup == 3;
+        Integer skill1Code;
+        Integer skill2Code;
+        Instant gfExpireAt;
+        do {
+            skill1Code = magic ? null : maybeSkill1(random);
+            skill2Code = maybeSkill2(random);
+            gfExpireAt = random.nextInt(10) < 3
+                ? now.plus(5 + random.nextInt(86), ChronoUnit.DAYS)
+                : null;
+        } while (skill1Code == null && skill2Code == null && gfExpireAt == null);
+        int skillPercent = skill1Code == null && skill2Code == null
+            ? 0
+            : 1 + random.nextInt(levelMaxPercent(level));
+        return new ItemTraits(skill1Code, skill2Code, skillPercent, gfExpireAt);
+    }
+
+    private Integer maybeSkill1(Random random) {
+        return random.nextInt(100) < 15 ? null : 100 + random.nextInt(98);
+    }
+
+    private Integer maybeSkill2(Random random) {
+        if (random.nextInt(100) < 35) {
+            return null;
+        }
+        int pick = random.nextInt(146);
+        return pick < 10 ? 200 + pick : 300 + (pick - 10);
+    }
+
+    private int levelMaxPercent(int level) {
+        return switch (level) {
+            case 1 -> 9;
+            case 2 -> 15;
+            case 3 -> 19;
+            case 4 -> 23;
+            case 5 -> 25;
+            case 6 -> 27;
+            case 7 -> 31;
+            case 8 -> 33;
+            default -> 36;
+        };
+    }
+
+    private String specSnapshot(int level, ItemTraits traits) {
+        return "Lv." + level
+            + " / skill1=" + (traits.skill1Code() == null ? "-" : traits.skill1Code())
+            + "/skill2=" + (traits.skill2Code() == null ? "-" : traits.skill2Code())
+            + " / " + traits.skillPercent() + "%"
+            + " / GF=" + (traits.gfExpireAt() == null ? "-" : GF_SNAPSHOT_FORMAT.format(traits.gfExpireAt()));
     }
 
     private long countActive(Long sellerId, Instant now) {
@@ -153,5 +255,8 @@ public class LocalActiveShopSeeder {
         } catch (RuntimeException ex) {
             log.warn("[LocalActiveShopSeeder] named lock 해제 실패 — 원 트랜잭션 결과는 유지함", ex);
         }
+    }
+
+    private record ItemTraits(Integer skill1Code, Integer skill2Code, int skillPercent, Instant gfExpireAt) {
     }
 }
