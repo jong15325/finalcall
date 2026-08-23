@@ -2,6 +2,7 @@ import ItemFrame from '@/features/item/components/ItemFrame'
 import { itemArt } from '@/features/item/lib/itemArt'
 import { toElementKey } from '@/features/item/lib/element'
 import type { CardInfoResponse } from '@/lib/api/cardInfo'
+import CardInfoSkillPanel from './CardInfoSkillPanel'
 import './CardInfoDialog.css'
 
 export interface CardInfoContentProps {
@@ -61,30 +62,7 @@ export default function CardInfoContent({
                     />
                 </dl>
             </div>
-            <div className="ci-panel">
-                <h3>특수 스킬</h3>
-                <ul className="skill-list" aria-label="특수 스킬">
-                    {cardInfo.skills.map((skill) => (
-                        <li key={skill.slot}>
-                            <span className="n">
-                                <span className="sr-only">
-                                    스킬 {skill.slot}
-                                </span>
-                                <span aria-hidden="true">{skill.slot}</span>
-                            </span>
-                            <span>
-                                {skill.name ?? '-'}
-                                {skill.percent !== null && (
-                                    <span className="pct">
-                                        {' '}
-                                        ({skill.percent}%)
-                                    </span>
-                                )}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+            <CardInfoSkillPanel skills={cardInfo.skills} />
         </div>
     )
 }

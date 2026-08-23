@@ -125,12 +125,11 @@ describe('<AuctionHeroCard>', () => {
         const list = screen.getByRole('list', { name: '특수 스킬' })
         const items = within(list).getAllByRole('listitem')
         expect(items).toHaveLength(2)
-        expect(items[0]).toHaveTextContent('1긴 이름의 화염 강타')
-        expect(items[1]).toHaveTextContent('2연속 폭발(18%)')
-        expect(items[1].textContent).toBe('2연속 폭발(18%)')
+        expect(items[0]).toHaveTextContent('긴 이름의 화염 강타')
+        expect(items[1]).toHaveTextContent('연속 폭발 (18%)')
         const percent = within(items[1]).getByText('(18%)')
         // --gold-deep(#8b6100)은 surface-sunken(#f4f5f8)에서 5.06:1로 WCAG AA를 충족한다.
-        expect(percent).toHaveClass('whitespace-nowrap', 'font-extrabold')
+        expect(percent).toHaveClass('pct')
         expect(percent).not.toHaveAttribute('aria-hidden')
         expect(within(items[0]).queryByText(/%/)).not.toBeInTheDocument()
         expect(within(items[0]).getByText('1')).toHaveAttribute(
@@ -144,7 +143,7 @@ describe('<AuctionHeroCard>', () => {
         expect(screen.queryByText('발동 확률')).not.toBeInTheDocument()
     })
 
-    it('슬롯 2만 있어도 재번호하지 않고 이름이 없으면 코드로 폴백한다', () => {
+    it('슬롯 2만 있어도 모달과 동일하게 1·2번 슬롯을 유지한다', () => {
         renderHero({
             subGroup: 3,
             kind: 2,
@@ -170,13 +169,11 @@ describe('<AuctionHeroCard>', () => {
 
         expect(valueOf('타입')).toHaveTextContent('골드 - 마법')
         const list = screen.getByRole('list', { name: '특수 스킬' })
-        const item = within(list).getByRole('listitem')
-        expect(item).toHaveTextContent('2스킬 #999(7%)')
-        expect(within(item).getByText('(7%)')).toHaveClass(
-            'whitespace-nowrap',
-            'font-extrabold',
-        )
-        expect(within(list).queryByText('1')).not.toBeInTheDocument()
+        const items = within(list).getAllByRole('listitem')
+        expect(items).toHaveLength(2)
+        expect(items[0]).toHaveTextContent('-')
+        expect(items[1]).toHaveTextContent('스킬 #999 (7%)')
+        expect(within(items[1]).getByText('(7%)')).toHaveClass('pct')
     })
 
     it('슬롯 2 퍼센트가 0이면 강조 요소를 표시하지 않는다', () => {
@@ -214,10 +211,9 @@ describe('<AuctionHeroCard>', () => {
             }),
         })
 
-        expect(screen.getByText('보유한 특수 스킬이 없습니다.')).toBeVisible()
-        expect(
-            screen.queryByRole('list', { name: '특수 스킬' }),
-        ).not.toBeInTheDocument()
+        const list = screen.getByRole('list', { name: '특수 스킬' })
+        expect(within(list).getAllByRole('listitem')).toHaveLength(2)
+        expect(within(list).getAllByText('-')).toHaveLength(2)
         expect(screen.queryByText('(20%)')).not.toBeInTheDocument()
     })
 
