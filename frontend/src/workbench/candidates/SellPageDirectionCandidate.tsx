@@ -184,7 +184,7 @@ function ItemPanel({ compact = false }: { compact?: boolean }) {
             aria-labelledby={`direction-item-${compact}`}
         >
             <div className="ci-title">
-                <span className="ci-mark">
+                <span className="app-modal-title-icon">
                     <TbShieldCheck aria-hidden />
                 </span>
                 <div>
@@ -274,7 +274,7 @@ function VerticalItemPanel({
             aria-labelledby="canvas-item-title"
         >
             <div className="ci-title">
-                <span className="ci-mark">
+                <span className="app-modal-title-icon">
                     <TbShieldCheck aria-hidden />
                 </span>
                 <h2 id="canvas-item-title">
@@ -424,7 +424,7 @@ function SellReviewDialog({
     const [canConfirm, setCanConfirm] = useState(desktop)
     return (
         <div
-            className="shop-cardinfo-overlay"
+            className="app-modal-overlay"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose()
@@ -437,14 +437,14 @@ function SellReviewDialog({
                 aria-labelledby="sell-review-title"
             >
                 <div className="ci-title">
-                    <span className="ci-mark">
+                    <span className="app-modal-title-icon">
                         <TbShieldCheck aria-hidden />
                     </span>
                     <h2 id="sell-review-title">
                         판매 등록 확인 <small>FINAL REVIEW</small>
                     </h2>
                     <button
-                        className="ci-x"
+                        className="app-modal-close"
                         type="button"
                         aria-label="닫기"
                         onClick={onClose}

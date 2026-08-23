@@ -642,7 +642,7 @@ describe('ChatWorkspace', () => {
         expect(mock.rest.sendMessage).not.toHaveBeenCalled()
     })
 
-    it('메시지 기록은 추가분 live log이며 하단 근처에서만 reduced-motion 방식으로 스크롤한다', async () => {
+    it('메시지 기록은 추가분 live log이며 타임라인 자체만 하단으로 스크롤한다', async () => {
         const originalMatchMedia = window.matchMedia
         window.matchMedia = vi.fn((query: string) => ({
             matches: query === '(prefers-reduced-motion: reduce)',
@@ -692,10 +692,7 @@ describe('ChatWorkspace', () => {
             await userEvent.click(
                 screen.getByRole('button', { name: '새 메시지 1개' }),
             )
-            expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
-                behavior: 'auto',
-                block: 'end',
-            })
+            expect(log.scrollTop).toBe(1_000)
 
             log.scrollTop = 600
             fireEvent.scroll(log)
@@ -708,12 +705,7 @@ describe('ChatWorkspace', () => {
                 payload: { message: message(3, '하단 새 메시지') },
             })
             expect(await within(log).findByText('하단 새 메시지')).toBeVisible()
-            await waitFor(() =>
-                expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
-                    behavior: 'auto',
-                    block: 'end',
-                }),
-            )
+            await waitFor(() => expect(log.scrollTop).toBe(1_000))
         } finally {
             window.matchMedia = originalMatchMedia
         }

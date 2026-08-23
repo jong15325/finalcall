@@ -119,7 +119,7 @@ export default function SellPageCandidate({
                 aria-labelledby={`${variant}-item-title`}
             >
                 <div className="ci-title">
-                    <span className="ci-mark">
+                    <span className="app-modal-title-icon">
                         <TbShieldCheck aria-hidden />
                     </span>
                     <div>

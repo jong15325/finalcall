@@ -68,7 +68,8 @@ function Dropdown({
                 <div
                     id={panelId}
                     role="menu"
-                    className={`app-chrome absolute z-50 mt-2 overflow-hidden rounded-xl border border-chrome-selected bg-chrome-raised text-chrome-fg shadow-lg ${
+                    data-floating-align={align}
+                    className={`app-chrome app-floating-menu absolute z-50 mt-2 overflow-hidden rounded-xl border border-chrome-selected bg-chrome-raised text-chrome-fg shadow-lg ${
                         align === 'right' ? 'right-0' : 'left-0'
                     } ${panelClassName}`}
                     onClick={() => setOpen(false)}

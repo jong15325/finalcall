@@ -16,7 +16,7 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex h-full min-h-0 min-w-0 flex-col gap-4">
             <PageIntro
                 icon={TbMessages}
                 eyebrow="LIVE CONVERSATION"
@@ -27,4 +27,3 @@ export default function ChatPage() {
         </div>
     )
 }
-

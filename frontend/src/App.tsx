@@ -4,6 +4,7 @@ import { AuthProvider } from '@/auth'
 import ScrollToTop from '@/components/route/ScrollToTop'
 import { queryClient } from '@/lib/queryClient'
 import AppRoutes from '@/app/router'
+import { AppAlertProvider } from '@/components/common/AppAlertProvider'
 
 /**
  * 앱 루트 (FC-067 재구축 — 템플릿 Theme/Layout/Views 제거).
@@ -18,7 +19,9 @@ function App() {
             <ScrollToTop />
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
-                    <AppRoutes />
+                    <AppAlertProvider>
+                        <AppRoutes />
+                    </AppAlertProvider>
                 </AuthProvider>
             </QueryClientProvider>
         </BrowserRouter>

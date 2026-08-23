@@ -189,15 +189,15 @@ export default function AuctionDetailPage() {
                     )}
 
                     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
-                        {/* 모바일: bid-panel 을 먼저(입찰 즉시 진입, design-brief C-7) */}
-                        <div className="order-2 lg:order-1">
+                        {/* 모바일도 아이템 정보를 먼저 확인한 뒤 입찰 행동으로 이어진다. */}
+                        <div className="order-1">
                             <AuctionHeroCard
                                 auction={auction}
                                 phase={phase}
                                 now={now}
                             />
                         </div>
-                        <div className="order-1 lg:order-2">
+                        <div className="order-2">
                             <BidPanel
                                 auction={auction}
                                 phase={phase}

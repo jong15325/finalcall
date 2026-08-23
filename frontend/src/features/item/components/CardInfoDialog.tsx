@@ -1,5 +1,6 @@
-import { useEffect, useRef, type ReactNode } from 'react'
-import { TbId, TbX } from 'react-icons/tb'
+import { type ReactNode } from 'react'
+import { TbId } from 'react-icons/tb'
+import AppModal from '@/components/common/AppModal'
 import CardInfoContent from './CardInfoContent'
 import './CardInfoDialog.css'
 
@@ -76,127 +77,41 @@ function CardInfoDialog({
     overlay,
     onClose,
 }: CardInfoDialogProps) {
-    const dialogRef = useRef<HTMLDivElement>(null)
-    const closeRef = useRef<HTMLButtonElement>(null)
-    const previousFocusRef = useRef<HTMLElement | null>(null)
-    /** 최신 onClose — effect 의존에서 빼기 위한 콜백 ref */
-    const onCloseRef = useRef(onClose)
-    onCloseRef.current = onClose
-
-    // ── 초점 트랩 · 스크롤 잠금 · Esc(원본 ShopCardInfoDialog 이식) ────────────────
-    useEffect(() => {
-        previousFocusRef.current =
-            document.activeElement instanceof HTMLElement
-                ? document.activeElement
-                : null
-
-        const previousOverflow = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
-
-        const focusRaf = requestAnimationFrame(() => closeRef.current?.focus())
-
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                event.preventDefault()
-                onCloseRef.current()
-                return
-            }
-            if (event.key !== 'Tab') return
-
-            const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            )
-            if (!focusables || focusables.length === 0) return
-
-            const list = Array.from(focusables).filter(
-                (el) => !el.hasAttribute('disabled') && !el.closest('[inert]'),
-            )
-            const first = list[0]
-            const last = list[list.length - 1]
-            const active = document.activeElement
-
-            if (event.shiftKey && active === first) {
-                event.preventDefault()
-                last?.focus()
-            } else if (!event.shiftKey && active === last) {
-                event.preventDefault()
-                first?.focus()
-            }
-        }
-        document.addEventListener('keydown', onKeyDown)
-
-        return () => {
-            cancelAnimationFrame(focusRaf)
-            document.removeEventListener('keydown', onKeyDown)
-            document.body.style.overflow = previousOverflow
-            previousFocusRef.current?.focus()
-        }
-    }, [])
-
     return (
-        <div
-            className="shop-cardinfo-overlay"
-            role="presentation"
-            onMouseDown={(event) => {
-                if (event.target === event.currentTarget) onClose()
-            }}
+        <AppModal
+            open
+            size="lg"
+            eyebrow="CARD INFO"
+            title="카드정보"
+            titleIcon={<TbId />}
+            onClose={onClose}
+            closeDisabled={backgroundInert}
+            contentInert={backgroundInert}
+            panelClassName="shop-cardinfo"
+            bodyClassName="ci-scroll"
+            footer={footer}
+            footerClassName="ci-foot"
+            overlay={overlay}
         >
-            <div
-                ref={dialogRef}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="cardInfoTitle"
-                className="shop-cardinfo"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
-                <div className="ci-title" inert={backgroundInert}>
-                    <span aria-hidden className="ci-mark">
-                        <TbId className="size-[18px]" />
-                    </span>
-                    <h2 id="cardInfoTitle">
-                        카드정보 <small>CARD INFO</small>
-                    </h2>
-                    <button
-                        ref={closeRef}
-                        type="button"
-                        className="ci-x"
-                        aria-label="닫기"
-                        onClick={onClose}
-                    >
-                        <TbX aria-hidden className="size-4" />
-                    </button>
-                </div>
+            <CardInfoContent
+                {...{
+                    subGroup,
+                    kind,
+                    element,
+                    level,
+                    goldforceExpireAt,
+                    name,
+                    skill1,
+                    skill2,
+                    skillPercent,
+                    skill1Name,
+                    skill2Name,
+                    now,
+                }}
+            />
 
-                <div className="ci-scroll" inert={backgroundInert}>
-                    <CardInfoContent
-                        {...{
-                            subGroup,
-                            kind,
-                            element,
-                            level,
-                            goldforceExpireAt,
-                            name,
-                            skill1,
-                            skill2,
-                            skillPercent,
-                            skill1Name,
-                            skill2Name,
-                            now,
-                        }}
-                    />
-
-                    {belowScroll}
-                </div>
-
-                {/* 하단 액션 영역 — 소비자 주입(가격+구매 CTA / 판매 등록 CTA 등) */}
-                <div className="ci-foot" inert={backgroundInert}>
-                    {footer}
-                </div>
-
-                {/* 다이얼로그 내부 오버레이(구매 확인/성공/실패 서브뷰 등) */}
-                {overlay}
-            </div>
-        </div>
+            {belowScroll}
+        </AppModal>
     )
 }
 

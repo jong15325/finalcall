@@ -571,7 +571,7 @@ describe('AppShell route-scoped 상세 배경', () => {
         vi.unstubAllGlobals()
     })
 
-    it('fixed dialogs remain above the mobile nav and compare bar', () => {
+    it('dialogs remain above the mobile nav and compare bar', () => {
         useCompareStore.setState({
             items: [{ source: 'AUCTION', listingId: 'A-1' }],
         })
@@ -582,7 +582,13 @@ describe('AppShell route-scoped 상세 배경', () => {
 
         expect(dialogs).toHaveLength(2)
         dialogs.forEach((dialog) => {
-            expect(dialog.parentElement).toHaveClass('fixed', 'z-50')
+            const overlay = dialog.parentElement
+            expect(
+                overlay?.classList.contains('app-modal-overlay') ||
+                    (overlay?.classList.contains('fixed') &&
+                        overlay.classList.contains('z-50')),
+            ).toBe(true)
+            expect(document.body).toContainElement(dialog)
         })
         expect(contentWrapper).not.toHaveClass('relative', 'z-10')
         expect(view.container.querySelector('nav.fixed')).toHaveClass('z-30')

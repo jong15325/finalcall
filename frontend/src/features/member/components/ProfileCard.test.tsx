@@ -99,7 +99,7 @@ describe('<ProfileCard>', () => {
         expect(overlay.querySelector('[data-character-roster]')).toHaveClass(
             'grid',
             'grid-cols-4',
-            'gap-0',
+            'gap-2',
         )
         expect(
             screen.getByRole('button', { name: '캐릭터 1 선택' }),
@@ -129,7 +129,7 @@ describe('<ProfileCard>', () => {
         })
         expect(384 / 4).toBe(96)
         expect(overlay.querySelector('[data-character-roster]')).toHaveClass(
-            'gap-0',
+            'gap-2',
         )
 
         Object.defineProperty(window, 'innerWidth', {

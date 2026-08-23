@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
 import { TbArchive, TbBackpack, TbPencil, TbUserEdit } from 'react-icons/tb'
 import { paths } from '@/app/paths'
@@ -146,7 +147,11 @@ function ProfileCard({
         window.addEventListener('resize', updateOverlayPosition)
         window.addEventListener('scroll', updateOverlayPosition, true)
         const closeOnOutside = (event: PointerEvent) => {
-            if (!characterAnchorRef.current?.contains(event.target as Node)) {
+            const target = event.target as Node
+            if (
+                !characterAnchorRef.current?.contains(target) &&
+                !characterOverlayRef.current?.contains(target)
+            ) {
                 setCharacterDraft(profile.primaryCharacterId ?? 1)
                 setCharacterOpen(false)
             }
@@ -204,7 +209,7 @@ function ProfileCard({
     const errorMessage = localError ?? serverError
     return (
         <section className="overflow-visible rounded-2xl border border-content-line bg-content-surface p-5 sm:p-6">
-            <div className="flex flex-col gap-5 overflow-visible lg:flex-row lg:items-center">
+            <div className="flex flex-col gap-5 overflow-visible md:flex-row md:items-center">
                 <div
                     ref={characterAnchorRef}
                     className="relative z-20 w-fit shrink-0 overflow-visible"
@@ -215,6 +220,7 @@ function ProfileCard({
                         aria-controls="character-profile-selector"
                         aria-expanded={characterOpen}
                         aria-label="기본 캐릭터 변경"
+                        title="캐릭터 변경"
                         className="group relative w-fit shrink-0 rounded-2xl focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                         onClick={() => {
                             if (!characterOpen) {
@@ -229,51 +235,53 @@ function ProfileCard({
                         <ProfileAvatar
                             primaryCharacterId={characterDraft}
                             name={profile.nickname}
-                            className="size-20 rounded-2xl border border-content-line sm:size-24 xl:size-28"
+                            className="size-[5.5rem] rounded-2xl border border-content-line md:size-24 xl:size-28"
                         />
-                        <span className="absolute inset-x-1 bottom-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand-structure/90 px-2 py-1 text-[11px] font-bold text-on-strong">
-                            <TbUserEdit aria-hidden className="size-3.5" />
-                            캐릭터 변경
+                        <span className="profile-character-edit" aria-hidden>
+                            <TbUserEdit className="size-4" />
                         </span>
                     </button>
-                    {characterOpen && (
-                        <div
-                            ref={characterOverlayRef}
-                            data-character-overlay
-                            id="character-profile-selector"
-                            role="region"
-                            aria-label="기본 캐릭터 선택"
-                            className="character-overlay fixed z-30 max-h-[calc(100dvh-1rem)] origin-top-left overflow-y-auto opacity-100 xl:origin-left"
-                            style={overlayPosition}
-                        >
-                            <CharacterProfileSelector
-                                value={characterDraft}
-                                disabled={characterSavePending}
-                                onChange={(id) => {
-                                    if (
-                                        id === (profile.primaryCharacterId ?? 1)
-                                    ) {
-                                        setCharacterOpen(false)
-                                        characterTriggerRef.current?.focus()
-                                        return
-                                    }
-                                    setCharacterDraft(id)
-                                    onSaveCharacter(id)
-                                }}
-                            />
-                            {characterSaveError != null && (
-                                <p
-                                    ref={characterErrorRef}
-                                    role="alert"
-                                    tabIndex={-1}
-                                    className="mt-1 text-sm text-danger-ink"
-                                >
-                                    캐릭터를 저장하지 못했습니다. 다시 시도해
-                                    주세요.
-                                </p>
-                            )}
-                        </div>
-                    )}
+                    {characterOpen &&
+                        createPortal(
+                            <div
+                                ref={characterOverlayRef}
+                                data-character-overlay
+                                id="character-profile-selector"
+                                role="region"
+                                aria-label="기본 캐릭터 선택"
+                                className="character-overlay fixed max-h-[calc(100dvh-1rem)] overflow-y-auto opacity-100"
+                                style={overlayPosition}
+                            >
+                                <CharacterProfileSelector
+                                    value={characterDraft}
+                                    disabled={characterSavePending}
+                                    onChange={(id) => {
+                                        if (
+                                            id ===
+                                            (profile.primaryCharacterId ?? 1)
+                                        ) {
+                                            setCharacterOpen(false)
+                                            characterTriggerRef.current?.focus()
+                                            return
+                                        }
+                                        setCharacterDraft(id)
+                                        onSaveCharacter(id)
+                                    }}
+                                />
+                                {characterSaveError != null && (
+                                    <p
+                                        ref={characterErrorRef}
+                                        role="alert"
+                                        tabIndex={-1}
+                                        className="mt-1 text-sm text-danger-ink"
+                                    >
+                                        캐릭터를 저장하지 못했습니다. 다시
+                                        시도해 주세요.
+                                    </p>
+                                )}
+                            </div>,
+                            document.body,
+                        )}
                 </div>
 
                 <div className="min-w-0 flex-1">

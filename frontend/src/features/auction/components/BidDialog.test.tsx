@@ -38,7 +38,7 @@ describe('<BidDialog>', () => {
     it('열리면 최소 입찰가로 프리필하고 입력칸에 초점을 준다', async () => {
         render(<BidDialog {...baseProps} onSubmit={vi.fn()} />)
         const input = getAmountInput()
-        expect(input.value).toBe('2500000')
+        expect(input.value).toBe('2,500,000')
         await waitFor(() => expect(input).toHaveFocus())
     })
 
@@ -64,13 +64,13 @@ describe('<BidDialog>', () => {
         const input = getAmountInput()
         // 사용자가 스나이핑 금액을 직접 입력(edited=true).
         fireEvent.change(input, { target: { value: '9000000' } })
-        expect(input.value).toBe('9000000')
+        expect(input.value).toBe('9,000,000')
 
         // 재조회로 최소가 상승.
         rerender(<BidDialog {...baseProps} minNextBidAmount={2_600_000} />)
 
         // 9,000,000 은 새 최소가 이상 → 그대로 둔다(하향 치환 금지).
-        expect(getAmountInput().value).toBe('9000000')
+        expect(getAmountInput().value).toBe('9,000,000')
         // 상승은 안내로만 말한다.
         expect(screen.getByRole('status')).toHaveTextContent('올랐습니다')
     })
@@ -82,7 +82,7 @@ describe('<BidDialog>', () => {
         rerender(<BidDialog {...baseProps} minNextBidAmount={2_600_000} />)
 
         // 2,510,000 < 2,600,000 → 새 최소가로 끌어올린다.
-        expect(getAmountInput().value).toBe('2600000')
+        expect(getAmountInput().value).toBe('2,600,000')
     })
 
     it('전송 중이면 제출 버튼에 DOM disabled 속성이 실린다', () => {
@@ -118,9 +118,7 @@ describe('<BidDialog>', () => {
             status: 422,
         })
         render(<BidDialog {...baseProps} submitError={error} />)
-        expect(screen.getByRole('alert')).toHaveTextContent(
-            '즉시구매가 이상은',
-        )
+        expect(screen.getByRole('alert')).toHaveTextContent('즉시구매가 이상은')
         // 서버 원문은 노출하지 않는다.
         expect(screen.queryByText('raw server message')).toBeNull()
         // 금액 결함이므로 입력칸에 aria-invalid.
@@ -134,9 +132,7 @@ describe('<BidDialog>', () => {
             status: 403,
         })
         render(<BidDialog {...baseProps} submitError={error} />)
-        expect(screen.getByRole('alert')).toHaveTextContent(
-            '내가 등록한 경매',
-        )
+        expect(screen.getByRole('alert')).toHaveTextContent('내가 등록한 경매')
         expect(getAmountInput()).not.toHaveAttribute('aria-invalid', 'true')
     })
 })

@@ -38,12 +38,8 @@ describe('<PurchaseDialog>', () => {
         const onConfirm = vi.fn()
         renderDialog({ onConfirm })
         const confirm = screen.getByRole('button', { name: '즉시구매 확정' })
-        expect(confirm).toHaveClass(
-            'bg-control-action',
-            'text-control-action-ink',
-            'hover:bg-control-action-hover',
-            'focus-visible:ring-control-focus',
-        )
+        expect(confirm).toHaveClass('app-modal-button')
+        expect(confirm).toHaveAttribute('data-modal-button', 'primary')
         confirm.click()
         expect(onConfirm).toHaveBeenCalledOnce()
     })

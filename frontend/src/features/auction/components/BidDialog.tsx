@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { TbX } from 'react-icons/tb'
+import { TbGavel } from 'react-icons/tb'
 import CodeAmount from '@/components/common/CodeAmount'
+import AppModal from '@/components/common/AppModal'
+import { codeTierClass } from '@/components/common/codeTier'
 import { formatGameMoney } from '@/features/auction/lib/auctionPrice'
 import {
     isMinRaised,
@@ -68,18 +70,12 @@ function BidDialog({
     const [raisedNotice, setRaisedNotice] = useState<string | null>(null)
 
     const inputRef = useRef<HTMLInputElement>(null)
-    const dialogRef = useRef<HTMLDivElement>(null)
-    /** open 직전 초점을 되돌릴 대상(트리거 버튼 등) */
-    const previousFocusRef = useRef<HTMLElement | null>(null)
-    /** 최신 onClose — effect 의존에서 빼기 위한 콜백 ref */
-    const onCloseRef = useRef(onClose)
     /** 최신 edited·min — effect 재실행 없이 참조 */
     const editedRef = useRef(edited)
     const minRef = useRef(minNextBidAmount)
     const previousMinRef = useRef<number | null>(minNextBidAmount)
 
     // 렌더 중 최신값 미러(effect 의존에 넣지 않으려는 값들)
-    onCloseRef.current = onClose
     editedRef.current = edited
     minRef.current = minNextBidAmount
 
@@ -97,56 +93,6 @@ function BidDialog({
         setLocalError(null)
         setRaisedNotice(null)
         previousMinRef.current = min
-
-        previousFocusRef.current =
-            document.activeElement instanceof HTMLElement
-                ? document.activeElement
-                : null
-
-        // 스크롤 잠금 — 원래 값을 저장했다가 복원한다(m-6: 잠금 잔존 방지).
-        const previousOverflow = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
-
-        // 초점을 금액 입력으로. 다음 프레임에 넣어 브라우저 초점 이관과 경합하지 않는다.
-        const focusRaf = requestAnimationFrame(() => inputRef.current?.focus())
-
-        // Escape 닫기 + Tab 초점 가둠.
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                event.preventDefault()
-                onCloseRef.current()
-                return
-            }
-            if (event.key !== 'Tab') return
-
-            const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            )
-            if (!focusables || focusables.length === 0) return
-
-            const list = Array.from(focusables).filter(
-                (el) => !el.hasAttribute('disabled'),
-            )
-            const first = list[0]
-            const last = list[list.length - 1]
-            const active = document.activeElement
-
-            if (event.shiftKey && active === first) {
-                event.preventDefault()
-                last?.focus()
-            } else if (!event.shiftKey && active === last) {
-                event.preventDefault()
-                first?.focus()
-            }
-        }
-        document.addEventListener('keydown', onKeyDown)
-
-        return () => {
-            cancelAnimationFrame(focusRaf)
-            document.removeEventListener('keydown', onKeyDown)
-            document.body.style.overflow = previousOverflow
-            previousFocusRef.current?.focus()
-        }
     }, [open])
 
     /**
@@ -172,15 +118,25 @@ function BidDialog({
         previousMinRef.current = minNextBidAmount
     }, [open, minNextBidAmount])
 
-    if (!open) return null
-
     const errorView =
-        submitError != null ? bidErrorViewOf(submitError, minNextBidAmount) : null
+        submitError != null
+            ? bidErrorViewOf(submitError, minNextBidAmount)
+            : null
     const amountInvalid = localError !== null || errorView?.amountFault === true
+    const amountNumber = Number(amount)
+    const amountTone =
+        amount.length > 0 && Number.isSafeInteger(amountNumber)
+            ? codeTierClass(amountNumber)
+            : 'text-content-fg'
+    const formattedAmount = amount.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault()
-        const check = validateBidAmount(amount, minNextBidAmount, formatGameMoney)
+        const check = validateBidAmount(
+            amount,
+            minNextBidAmount,
+            formatGameMoney,
+        )
         if (!check.ok) {
             setLocalError(check.message)
             inputRef.current?.focus()
@@ -191,76 +147,74 @@ function BidDialog({
     }
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
-            role="presentation"
-            onMouseDown={(event) => {
-                // 배경 클릭으로 닫기(다이얼로그 내부 클릭은 전파되지 않게 아래 stopPropagation).
-                if (event.target === event.currentTarget) onClose()
-            }}
+        <AppModal
+            open={open}
+            size="sm"
+            eyebrow="안전 입찰"
+            title={auctionName}
+            titleIcon={<TbGavel />}
+            onClose={onClose}
+            closeDisabled={isSubmitting}
+            initialFocusRef={inputRef}
+            panelClassName="bid-entry-dialog"
+            bodyClassName="!p-0"
+            actions={[
+                {
+                    id: 'cancel',
+                    label: '취소',
+                    variant: 'secondary',
+                    disabled: isSubmitting,
+                    close: true,
+                },
+                {
+                    id: 'confirm',
+                    label: '입찰 확정',
+                    pendingLabel: '전송 중…',
+                    variant: 'primary',
+                    type: 'submit',
+                    form: 'bid-entry-form',
+                    pending: isSubmitting,
+                },
+            ]}
         >
-            <div
-                ref={dialogRef}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="bidDialogTitle"
-                className="w-full max-w-[520px] overflow-hidden rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
-                onMouseDown={(event) => event.stopPropagation()}
+            <form
+                id="bid-entry-form"
+                className="bid-entry-form"
+                noValidate
+                onSubmit={handleSubmit}
             >
-                <form noValidate onSubmit={handleSubmit}>
-                    <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
-                        <div>
-                            <span className="text-[11px] font-bold uppercase tracking-wide text-control-action-hover">
-                                안전 입찰
-                            </span>
-                            <h4
-                                id="bidDialogTitle"
-                                className="mt-0.5 text-lg font-bold text-content-fg"
-                            >
-                                {auctionName}
-                            </h4>
-                        </div>
-                        <button
-                            type="button"
-                            aria-label="닫기"
-                            className="flex size-8 items-center justify-center rounded-lg text-content-subtle hover:bg-content-soft hover:text-content-fg"
-                            onClick={onClose}
-                        >
-                            <TbX aria-hidden className="size-5" />
-                        </button>
+                <div className="bid-entry-body px-5 py-5">
+                    <div className="bid-entry-summary mb-5 flex flex-col gap-2 rounded-lg bg-content-soft p-3.5 text-xs text-content-muted xs:flex-row xs:justify-between">
+                        <span className="flex items-center gap-1.5">
+                            현재 최고가
+                            <CodeAmount
+                                value={currentHighestAmount}
+                                mode="full"
+                                className="font-bold text-content-fg"
+                            />
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            최소 입찰가
+                            <CodeAmount
+                                value={minNextBidAmount}
+                                mode="full"
+                                className="font-bold text-content-fg"
+                            />
+                        </span>
                     </div>
 
-                    <div className="px-5 py-5">
-                        <div className="mb-5 flex flex-col gap-2 rounded-lg bg-content-soft p-3.5 text-xs text-content-muted xs:flex-row xs:justify-between">
-                            <span className="flex items-center gap-1.5">
-                                현재 최고가
-                                <CodeAmount
-                                    value={currentHighestAmount}
-                                    mode="full"
-                                    className="font-bold text-content-fg"
-                                />
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                최소 입찰가
-                                <CodeAmount
-                                    value={minNextBidAmount}
-                                    mode="full"
-                                    className="font-bold text-content-fg"
-                                />
-                            </span>
-                        </div>
-
-                        <label
-                            htmlFor="bidAmount"
-                            className="text-sm font-semibold text-content-fg"
-                        >
-                            입찰 금액
-                        </label>
+                    <label
+                        htmlFor="bidAmount"
+                        className="text-sm font-semibold text-content-fg"
+                    >
+                        입찰 금액
+                    </label>
+                    <div className="bid-entry-input-wrap relative mt-1.5">
                         <input
                             ref={inputRef}
                             id="bidAmount"
                             name="bidAmount"
-                            className={`mt-1.5 w-full rounded-lg border bg-content-surface px-3.5 py-3 text-lg font-bold tabular-nums text-content-fg focus:outline-none focus:ring-2 ${
+                            className={`bid-entry-input w-full rounded-lg border bg-content-surface px-3.5 py-3 pr-16 text-lg font-bold tabular-nums focus:outline-none focus:ring-2 ${amountTone} ${
                                 amountInvalid
                                     ? 'border-danger focus:ring-danger/30'
                                     : 'border-content-line focus:border-control-action focus:ring-control-action/30'
@@ -269,85 +223,79 @@ function BidDialog({
                             autoComplete="off"
                             aria-describedby="bidHelp"
                             aria-invalid={amountInvalid || undefined}
-                            value={amount}
+                            value={formattedAmount}
                             onChange={(event) => {
+                                const raw = event.target.value.replaceAll(
+                                    ',',
+                                    '',
+                                )
+                                if (!/^\d*$/.test(raw)) return
                                 setEdited(true)
                                 setLocalError(null)
-                                setAmount(event.target.value)
+                                setAmount(raw)
                             }}
                         />
-                        <p id="bidHelp" className="mt-1.5 text-xs text-content-subtle">
-                            최소 입찰가 이상으로 입력하세요.
-                            {buyNowPrice !== null &&
-                                ' 즉시구매 참고가 미만까지 입찰할 수 있습니다.'}
-                        </p>
-
-                        <p className="mt-3 flex items-center gap-1.5 text-sm text-content-muted">
-                            입찰 가능 잔액
-                            <CodeAmount
-                                value={gameMoneyAvailable}
-                                mode="full"
-                                className="font-bold text-content-fg"
-                            />
-                        </p>
-
-                        {/* 최소가 상승 안내 — 금액은 그대로 두고 말로만 알린다(M-1) */}
-                        {raisedNotice && (
-                            <p
-                                role="status"
-                                className="mt-3 rounded-lg bg-control-action-soft px-3 py-2 text-xs font-medium text-control-action-hover"
-                            >
-                                {raisedNotice}
-                            </p>
-                        )}
-
-                        {/* 클라 검증 실패 */}
-                        {localError && (
-                            <p
-                                role="alert"
-                                className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
-                            >
-                                {localError}
-                            </p>
-                        )}
-
-                        {/* 서버 응답 실패 — code 로 분기(bidErrors) */}
-                        {errorView && !localError && (
-                            <div
-                                role="alert"
-                                className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
-                            >
-                                <strong className="font-bold">
-                                    {errorView.title}
-                                </strong>
-                                {errorView.description && (
-                                    <span className="mt-0.5 block text-danger-ink/90">
-                                        {errorView.description}
-                                    </span>
-                                )}
-                            </div>
-                        )}
+                        <span aria-hidden className="bid-entry-input-unit">
+                            코드
+                        </span>
                     </div>
+                    <p
+                        id="bidHelp"
+                        className="mt-1.5 text-xs text-content-subtle"
+                    >
+                        최소 입찰가 이상으로 입력하세요.
+                        {buyNowPrice !== null &&
+                            ' 즉시구매 참고가 미만까지 입찰할 수 있습니다.'}
+                    </p>
 
-                    <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
-                        <button
-                            type="button"
-                            className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
-                            onClick={onClose}
+                    <p className="bid-entry-balance mt-3 flex items-center gap-1.5 text-sm text-content-muted">
+                        입찰 가능 잔액
+                        <CodeAmount
+                            value={gameMoneyAvailable}
+                            mode="full"
+                            className="font-bold text-content-fg"
+                        />
+                    </p>
+
+                    {/* 최소가 상승 안내 — 금액은 그대로 두고 말로만 알린다(M-1) */}
+                    {raisedNotice && (
+                        <p
+                            role="status"
+                            className="mt-3 rounded-lg bg-control-action-soft px-3 py-2 text-xs font-medium text-control-action-hover"
                         >
-                            취소
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="detail-cta rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            {raisedNotice}
+                        </p>
+                    )}
+
+                    {/* 클라 검증 실패 */}
+                    {localError && (
+                        <p
+                            role="alert"
+                            className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
                         >
-                            {isSubmitting ? '전송 중…' : '입찰 확정'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                            {localError}
+                        </p>
+                    )}
+
+                    {/* 서버 응답 실패 — code 로 분기(bidErrors) */}
+                    {errorView && !localError && (
+                        <div
+                            role="alert"
+                            className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
+                        >
+                            <strong className="font-bold">
+                                {errorView.title}
+                            </strong>
+                            {errorView.description && (
+                                <span className="mt-0.5 block text-danger-ink/90">
+                                    {errorView.description}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </form>
+        </AppModal>
     )
 }
 

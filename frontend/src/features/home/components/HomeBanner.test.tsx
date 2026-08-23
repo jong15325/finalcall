@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import HomeBanner from './HomeBanner'
@@ -56,5 +56,58 @@ describe('<HomeBanner>', () => {
         expect(
             screen.getByRole('button', { name: '2번 배너로 이동' }),
         ).toHaveAttribute('aria-current', 'true')
+    })
+
+    it('모바일 가로 스크롤 위치를 활성 배너와 동기화한다', () => {
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            value: 390,
+        })
+        renderWithProviders(<HomeBanner />)
+        const track = document.querySelector('.home-banner__track')
+        expect(track).not.toBeNull()
+        Object.defineProperty(track, 'clientWidth', {
+            configurable: true,
+            value: 390,
+        })
+        Object.defineProperty(track, 'scrollLeft', {
+            configurable: true,
+            value: 402,
+        })
+        fireEvent.scroll(track!)
+
+        expect(
+            screen.getByRole('button', { name: '2번 배너로 이동' }),
+        ).toHaveAttribute('aria-current', 'true')
+    })
+
+    it('모바일 마지막 뒤의 연결 슬라이드에서 같은 방향으로 첫 배너를 이어간다', () => {
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            value: 390,
+        })
+        renderWithProviders(<HomeBanner />)
+        const track = document.querySelector('.home-banner__track')
+        const scrollTo = vi.fn()
+        Object.defineProperty(track, 'clientWidth', {
+            configurable: true,
+            value: 390,
+        })
+        Object.defineProperty(track, 'scrollLeft', {
+            configurable: true,
+            value: 3 * 402,
+        })
+        Object.defineProperty(track, 'scrollTo', {
+            configurable: true,
+            value: scrollTo,
+        })
+
+        expect(track?.querySelector('[data-loop-clone]')).not.toBeNull()
+        fireEvent.scroll(track!)
+        expect(
+            screen.getByRole('button', { name: '1번 배너로 이동' }),
+        ).toHaveAttribute('aria-current', 'true')
+        fireEvent(track!, new Event('scrollend'))
+        expect(scrollTo).toHaveBeenCalledWith({ left: 0, behavior: 'auto' })
     })
 })

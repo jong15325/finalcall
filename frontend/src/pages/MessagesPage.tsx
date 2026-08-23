@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { TbAlertTriangle, TbMail, TbMailOff, TbPencil } from 'react-icons/tb'
 import PageIntro from '@/components/common/PageIntro'
+import { useAppAlert } from '@/components/common/AppAlertProvider'
 import MemoRow from '@/features/memo/components/MemoRow'
 import MemoDetailPane from '@/features/memo/components/MemoDetailPane'
 import MemoComposeDialog from '@/features/memo/components/MemoComposeDialog'
@@ -32,6 +33,7 @@ import type { MemoSummary, SendMemoRequest } from '@/lib/api/memos'
  */
 export default function MessagesPage() {
     const queryClient = useQueryClient()
+    const appAlert = useAppAlert()
 
     const [box, setBox] = useState<MemoBox>('received')
     const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -90,7 +92,13 @@ export default function MessagesPage() {
         setComposeOpen(true)
     }
 
-    const handleSubmit = (request: SendMemoRequest) => {
+    const handleSubmit = async (request: SendMemoRequest) => {
+        const confirmed = await appAlert.confirm({
+            title: '쪽지를 보내시겠어요?',
+            description: `${request.receiverNickname}님에게 입력한 내용을 전송합니다.`,
+            confirmLabel: '보내기',
+        })
+        if (!confirmed) return
         sendMutation.mutate(request, {
             onSuccess: (result) => {
                 setComposeOpen(false)
@@ -100,8 +108,14 @@ export default function MessagesPage() {
         })
     }
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (selectedId === null) return
+        const confirmed = await appAlert.danger({
+            title: '쪽지를 삭제할까요?',
+            description: '삭제한 쪽지는 다시 복구할 수 없습니다.',
+            confirmLabel: '삭제',
+        })
+        if (!confirmed) return
         deleteMutation.mutate(selectedId, {
             onSuccess: () => setSelectedId(null),
         })
@@ -358,4 +372,3 @@ function ListState({
         </div>
     )
 }
-

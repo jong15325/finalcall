@@ -15,7 +15,7 @@ describe('CharacterProfileSelector', () => {
             screen.getByRole('button', { name: '캐릭터 25 선택' }),
         ).toBeInTheDocument()
         expect(container.querySelector('[data-character-roster]')).toHaveClass(
-            'gap-0',
+            'gap-2',
         )
         expect(container.innerHTML).not.toContain('_btn_')
     })

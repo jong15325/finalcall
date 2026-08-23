@@ -67,9 +67,11 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
     })
 
     return (
-        <section className="detail-surface rounded-2xl border border-content-line bg-content-surface">
-            <div className="border-b border-content-line px-5 py-4">
-                <h3 className="text-base font-bold text-content-fg">입찰 이력</h3>
+        <section className="auction-bid-history detail-surface rounded-2xl border border-content-line bg-content-surface">
+            <div className="auction-bid-history__header border-b border-content-line px-5 py-4">
+                <h3 className="text-base font-bold text-content-fg">
+                    입찰 이력
+                </h3>
             </div>
 
             {isPending ? (
@@ -91,7 +93,7 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                 </p>
             ) : (
                 <>
-                    <div className="overflow-x-auto">
+                    <div className="auction-bid-history__body overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-content-line text-left text-xs text-content-subtle">
@@ -113,7 +115,7 @@ function BidHistory({ auctionPublicId }: BidHistoryProps) {
                                 {bids.map((bid) => (
                                     <tr
                                         key={bid.bidPublicId}
-                                        className="border-b border-content-line last:border-0"
+                                        className="auction-bid-history__row border-b border-content-line last:border-0"
                                     >
                                         <td className="px-5 py-3 text-content-fg">
                                             {bid.bidderMasked}

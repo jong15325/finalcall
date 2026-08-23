@@ -88,10 +88,10 @@ export default function ChatWorkspace({
             return
         }
         setUnseenMessageCount(0)
-        timelineEndRef.current?.scrollIntoView({
-            behavior: reducedMotion ? 'auto' : 'smooth',
-            block: 'end',
-        })
+        scrollTimelineToLatest(
+            timelineScrollRef.current,
+            reducedMotion ? 'auto' : 'smooth',
+        )
     }, [
         chat.selectedRoomId,
         lastMessageKey,
@@ -136,10 +136,10 @@ export default function ChatWorkspace({
     const scrollToLatest = () => {
         timelineNearBottomRef.current = true
         setUnseenMessageCount(0)
-        timelineEndRef.current?.scrollIntoView({
-            behavior: reducedMotion ? 'auto' : 'smooth',
-            block: 'end',
-        })
+        scrollTimelineToLatest(
+            timelineScrollRef.current,
+            reducedMotion ? 'auto' : 'smooth',
+        )
     }
 
     const selectedIsDraft = chat.selectedRoomId?.startsWith('draft:') ?? false
@@ -1097,6 +1097,19 @@ function useVolatileQueueExitWarning(active: boolean): void {
 
 function isTimelineNearBottom(element: HTMLElement): boolean {
     return element.scrollHeight - element.scrollTop - element.clientHeight <= 96
+}
+
+/** 메시지 목록만 스크롤한다. scrollIntoView는 상위 앱 셸까지 밀어 올릴 수 있어 사용하지 않는다. */
+function scrollTimelineToLatest(
+    timeline: HTMLDivElement | null,
+    behavior: ScrollBehavior,
+) {
+    if (!timeline) return
+    if (typeof timeline.scrollTo === 'function') {
+        timeline.scrollTo({ top: timeline.scrollHeight, behavior })
+        return
+    }
+    timeline.scrollTop = timeline.scrollHeight
 }
 
 function formatTime(value: string, options: Intl.DateTimeFormatOptions) {

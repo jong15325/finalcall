@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { TbX } from 'react-icons/tb'
 import CodeAmount from '@/components/common/CodeAmount'
+import AppModalButton from '@/components/common/AppModalButton'
 import { purchaseErrorViewOf } from '@/features/auction/lib/purchaseErrors'
 
 /**
@@ -119,7 +121,7 @@ function PurchaseDialog({
         onConfirm()
     }
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-strong/60 px-4 backdrop-blur-[2px]"
             role="presentation"
@@ -132,11 +134,11 @@ function PurchaseDialog({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="purchaseDialogTitle"
-                className="w-full max-w-[480px] overflow-hidden rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
+                className="purchase-entry-dialog w-full max-w-[480px] overflow-hidden rounded-2xl bg-content-surface shadow-[var(--shadow-dialog)]"
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <form noValidate onSubmit={handleSubmit}>
-                    <div className="flex items-center justify-between border-b border-content-line px-5 py-4">
+                    <div className="legacy-modal-header flex items-center justify-between border-b border-content-line px-5 py-4">
                         <div>
                             <span className="text-[11px] font-bold uppercase tracking-wide text-brand-structure">
                                 즉시구매
@@ -202,26 +204,29 @@ function PurchaseDialog({
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
-                        <button
+                    <div className="legacy-modal-footer flex justify-end gap-2 border-t border-content-line bg-content-soft px-5 py-4">
+                        <AppModalButton
                             type="button"
-                            className="rounded-lg border border-content-line bg-content-surface px-4 py-2.5 text-sm font-bold text-content-muted hover:bg-content-soft"
+                            variant="secondary"
+                            className="px-4 py-2.5"
                             onClick={onClose}
                         >
                             취소
-                        </button>
-                        <button
+                        </AppModalButton>
+                        <AppModalButton
                             ref={confirmRef}
                             type="submit"
+                            variant="primary"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-control-action px-5 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="px-5 py-2.5"
                         >
                             {isSubmitting ? '전송 중…' : '즉시구매 확정'}
-                        </button>
+                        </AppModalButton>
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body,
     )
 }
 

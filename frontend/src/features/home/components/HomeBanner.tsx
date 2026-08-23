@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Link } from 'react-router'
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import { itemArt } from '@/features/item/lib/itemArt'
 import type { ItemArtInput } from '@/features/item/lib/itemArt'
+import './HomeBanner.css'
 
 /**
  * 홈 배너 캐러셀 — 목업 `#home` `home-carousel`(3슬라이드) 이식. Swiper 등 **의존성 없이**
@@ -60,10 +61,12 @@ const SLIDES: BannerSlide[] = [
         id: 'auction',
         tag: 'REALTIME AUCTION',
         title: '마감 임박 경매를 확인하세요',
-        description: '단 20분 남은 레전드 장비. 지금 입찰에 참여할 수 있습니다.',
+        description:
+            '단 20분 남은 레전드 장비. 지금 입찰에 참여할 수 있습니다.',
         cta: '경매 참여하기',
         href: paths.auctions,
-        surface: 'from-chrome-strong via-chrome-selected to-control-action-hover',
+        surface:
+            'from-chrome-strong via-chrome-selected to-control-action-hover',
         art: [
             { subGroup: 1, kind: 4, element: 4, level: 9 },
             { subGroup: 1, kind: 2, element: 1, level: 9 },
@@ -100,7 +103,7 @@ function SlideArt({ art }: { art: ItemArtInput[] }) {
     return (
         <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-4 hidden items-center gap-1 sm:right-8 md:flex"
+            className="home-banner__art pointer-events-none absolute inset-y-0 right-2 flex items-center gap-0 sm:right-8"
         >
             {art.map((input, index) => {
                 const resolved = itemArt(input, 'l', 2)
@@ -127,20 +130,98 @@ function SlideArt({ art }: { art: ItemArtInput[] }) {
 /** 드래그로 슬라이드를 넘길 최소 가로 이동(px). 이보다 작으면 클릭으로 본다. */
 const SWIPE_THRESHOLD = 45
 
+/** 연결용 첫 슬라이드에서 실제 첫 슬라이드로 시각 변화 없이 순간 이동한다. */
+function resetLoopPosition(track: HTMLDivElement) {
+    const previousBehavior = track.style.scrollBehavior
+    track.style.scrollBehavior = 'auto'
+    track.scrollTo({ left: 0, behavior: 'auto' })
+    requestAnimationFrame(() => {
+        track.style.scrollBehavior = previousBehavior
+    })
+}
+
 function HomeBanner() {
     const [active, setActive] = useState(0)
     const [paused, setPaused] = useState(false)
+    const [isMobile, setIsMobile] = useState(
+        () => typeof window !== 'undefined' && window.innerWidth < 640,
+    )
     const count = SLIDES.length
+    const trackRef = useRef<HTMLDivElement>(null)
+    const loopResetRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const loopResetPendingRef = useRef(false)
+    const renderedSlides = isMobile ? [...SLIDES, SLIDES[0]] : SLIDES
 
-    const go = (index: number) => setActive((index + count) % count)
+    const go = useCallback(
+        (index: number) => {
+            const next = (index + count) % count
+            const trackIndex = isMobile && index >= count ? count : next
+            setActive(next)
+            if (isMobile) {
+                requestAnimationFrame(() => {
+                    const track = trackRef.current
+                    if (!track) return
+                    track.scrollTo({
+                        left: trackIndex * (track.clientWidth + 12),
+                        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+                    })
+                })
+            }
+        },
+        [count, isMobile],
+    )
+
+    useEffect(() => {
+        const updateMode = () => setIsMobile(window.innerWidth < 640)
+        window.addEventListener('resize', updateMode)
+        return () => window.removeEventListener('resize', updateMode)
+    }, [])
+
+    useEffect(() => {
+        if (isMobile) return
+        const track = trackRef.current
+        if (!track) return
+        track.scrollLeft = 0
+    }, [isMobile])
+
+    useEffect(
+        () => () => {
+            if (loopResetRef.current) clearTimeout(loopResetRef.current)
+        },
+        [],
+    )
+
+    useEffect(() => {
+        const track = trackRef.current
+        if (!track || !isMobile) return
+        const finishLoop = () => {
+            if (!loopResetPendingRef.current) return
+            loopResetPendingRef.current = false
+            if (loopResetRef.current) {
+                clearTimeout(loopResetRef.current)
+                loopResetRef.current = null
+            }
+            resetLoopPosition(track)
+        }
+        track.addEventListener('scrollend', finishLoop)
+        return () => track.removeEventListener('scrollend', finishLoop)
+    }, [isMobile])
 
     // 포인터 드래그 상태(리렌더 없이 추적) — startX·최대 이동·"넘김 발생" 플래그.
-    const drag = useRef<{ startX: number; moved: boolean } | null>(null)
+    const drag = useRef<{
+        startX: number
+        moved: boolean
+        pointerType: string
+    } | null>(null)
     const swipedRef = useRef(false)
 
     const onPointerDown = (event: ReactPointerEvent) => {
         if (event.pointerType === 'mouse' && event.button !== 0) return
-        drag.current = { startX: event.clientX, moved: false }
+        drag.current = {
+            startX: event.clientX,
+            moved: false,
+            pointerType: event.pointerType,
+        }
         swipedRef.current = false
         setPaused(true)
     }
@@ -154,6 +235,10 @@ function HomeBanner() {
         drag.current = null
         setPaused(false)
         if (!state) return
+        if (state.pointerType !== 'mouse') {
+            swipedRef.current = state.moved
+            return
+        }
         const dx = event.clientX - state.startX
         if (Math.abs(dx) >= SWIPE_THRESHOLD) {
             swipedRef.current = true
@@ -163,18 +248,15 @@ function HomeBanner() {
 
     useEffect(() => {
         if (paused || count <= 1 || prefersReducedMotion()) return
-        const id = setInterval(
-            () => setActive((value) => (value + 1) % count),
-            AUTO_ADVANCE_MS,
-        )
+        const id = setInterval(() => go(active + 1), AUTO_ADVANCE_MS)
         return () => clearInterval(id)
-    }, [paused, count])
+    }, [active, count, go, paused])
 
     return (
         <section
             aria-roledescription="캐러셀"
             aria-label="프로모션 배너"
-            className="relative overflow-hidden rounded-2xl"
+            className="home-banner relative overflow-hidden"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             onFocusCapture={() => setPaused(true)}
@@ -189,52 +271,94 @@ function HomeBanner() {
             }}
         >
             <div
-                className="flex touch-pan-y transition-transform duration-500 ease-out motion-reduce:transition-none"
-                style={{ transform: `translateX(-${active * 100}%)` }}
+                ref={trackRef}
+                className="home-banner__track flex transition-transform duration-500 ease-out motion-reduce:transition-none"
+                style={{
+                    transform: `translateX(-${active * 100}%)`,
+                }}
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
+                onScroll={(event) => {
+                    if (window.innerWidth >= 640) return
+                    const track = event.currentTarget
+                    const index = Math.round(
+                        track.scrollLeft / (track.clientWidth + 12),
+                    )
+                    if (index === count) {
+                        setActive(0)
+                        loopResetPendingRef.current = true
+                        if (loopResetRef.current) {
+                            clearTimeout(loopResetRef.current)
+                        }
+                        loopResetRef.current = setTimeout(() => {
+                            loopResetPendingRef.current = false
+                            resetLoopPosition(track)
+                            loopResetRef.current = null
+                        }, 700)
+                    } else if (
+                        index >= 0 &&
+                        index < count &&
+                        index !== active
+                    ) {
+                        loopResetPendingRef.current = false
+                        if (loopResetRef.current) {
+                            clearTimeout(loopResetRef.current)
+                            loopResetRef.current = null
+                        }
+                        setActive(index)
+                    }
+                }}
             >
-                {SLIDES.map((slide, index) => {
-                    const isActive = index === active
+                {renderedSlides.map((slide, index) => {
+                    const isLoopClone = index === count
+                    const isActive = !isLoopClone && index === active
                     return (
                         <div
-                            key={slide.id}
+                            key={isLoopClone ? `${slide.id}-loop` : slide.id}
                             role="group"
                             aria-roledescription="슬라이드"
                             aria-label={`${index + 1} / ${count}`}
-                            aria-hidden={!isActive}
-                            className="w-full shrink-0"
+                            aria-hidden={isLoopClone || !isActive}
+                            data-active={isActive}
+                            data-loop-clone={isLoopClone || undefined}
+                            className="home-banner__slide-shell w-full shrink-0"
                         >
                             <Link
                                 to={slide.href}
                                 aria-label={`${slide.title}, ${slide.cta}`}
                                 tabIndex={isActive ? 0 : -1}
-                                className={`relative flex min-h-[200px] flex-col justify-center gap-2.5 overflow-hidden bg-gradient-to-br px-6 py-8 text-on-strong sm:min-h-[248px] sm:px-10 ${slide.surface}`}
+                                className={`home-banner__slide relative flex flex-col justify-center overflow-hidden bg-gradient-to-br text-on-strong ${slide.surface}`}
                             >
-                                <span className="flex items-center gap-2">
-                                    <span className="rounded-full bg-brand-highlight-bright px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-chrome-strong">
-                                        {slide.tag}
-                                    </span>
-                                    {slide.subTag && (
-                                        <span className="rounded-full bg-content-surface/20 px-2.5 py-1 text-[11px] font-bold text-on-strong">
-                                            {slide.subTag}
+                                <span
+                                    aria-hidden
+                                    className="home-banner__glow"
+                                />
+                                <span className="home-banner__content flex flex-col items-start">
+                                    <span className="flex items-center gap-2">
+                                        <span className="home-banner__tag rounded-full bg-brand-highlight-bright text-chrome-strong">
+                                            {slide.tag}
                                         </span>
-                                    )}
-                                </span>
-                                <span className="max-w-md text-2xl font-extrabold leading-tight sm:text-[32px]">
-                                    {slide.title}
-                                </span>
-                                <span className="max-w-md text-sm text-on-strong/80">
-                                    {slide.description}
-                                </span>
-                                <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-lg bg-content-surface/15 px-4 py-2 text-sm font-bold backdrop-blur-sm">
-                                    {slide.cta}
-                                    <TbChevronRight
-                                        aria-hidden
-                                        className="size-4"
-                                    />
+                                        {slide.subTag && (
+                                            <span className="home-banner__subtag rounded-full bg-content-surface/20 font-bold text-on-strong">
+                                                {slide.subTag}
+                                            </span>
+                                        )}
+                                    </span>
+                                    <span className="home-banner__title max-w-md font-extrabold leading-tight">
+                                        {slide.title}
+                                    </span>
+                                    <span className="home-banner__description max-w-md text-on-strong/80">
+                                        {slide.description}
+                                    </span>
+                                    <span className="home-banner__cta inline-flex w-fit items-center gap-1 font-bold">
+                                        {slide.cta}
+                                        <TbChevronRight
+                                            aria-hidden
+                                            className="size-4"
+                                        />
+                                    </span>
                                 </span>
 
                                 <SlideArt art={slide.art} />
@@ -248,7 +372,7 @@ function HomeBanner() {
             <button
                 type="button"
                 aria-label="이전 배너"
-                className="absolute left-3 top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-chrome-strong/25 text-on-strong transition-colors hover:bg-chrome-strong/40 sm:grid"
+                className="home-banner__arrow home-banner__arrow--previous absolute left-4 top-1/2 hidden -translate-y-1/2 place-items-center text-on-strong sm:grid"
                 onClick={() => go(active - 1)}
             >
                 <TbChevronLeft aria-hidden className="size-5" />
@@ -256,14 +380,14 @@ function HomeBanner() {
             <button
                 type="button"
                 aria-label="다음 배너"
-                className="absolute right-3 top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-chrome-strong/25 text-on-strong transition-colors hover:bg-chrome-strong/40 sm:grid"
+                className="home-banner__arrow home-banner__arrow--next absolute right-4 top-1/2 hidden -translate-y-1/2 place-items-center text-on-strong sm:grid"
                 onClick={() => go(active + 1)}
             >
                 <TbChevronRight aria-hidden className="size-5" />
             </button>
 
             {/* 페이지네이션 인디케이터 */}
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
+            <div className="home-banner__pagination absolute flex items-center gap-2">
                 {SLIDES.map((slide, index) => {
                     const isActive = index === active
                     return (
@@ -272,10 +396,11 @@ function HomeBanner() {
                             type="button"
                             aria-label={`${index + 1}번 배너로 이동`}
                             aria-current={isActive}
-                            className={`h-2 rounded-full transition-all ${
+                            data-active={isActive}
+                            className={`home-banner__dot rounded-full transition-all ${
                                 isActive
-                                    ? 'w-5 bg-content-surface'
-                                    : 'w-2 bg-content-surface/50 hover:bg-content-surface/80'
+                                    ? 'bg-content-surface'
+                                    : 'bg-content-surface/50 hover:bg-content-surface/80'
                             }`}
                             onClick={() => go(index)}
                         />

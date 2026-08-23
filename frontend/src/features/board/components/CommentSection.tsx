@@ -64,10 +64,16 @@ export default function CommentSection({
     }
 
     return (
-        <section aria-label="댓글" className="mt-6 border-t border-content-line pt-6">
+        <section
+            aria-label="댓글"
+            className="mt-6 border-t border-content-line pt-6"
+        >
             <div className="flex items-center gap-2">
                 <h3 className="flex items-center gap-1.5 text-base font-bold text-content-fg">
-                    <TbMessage aria-hidden className="size-4 text-brand-structure" />
+                    <TbMessage
+                        aria-hidden
+                        className="size-4 text-brand-structure"
+                    />
                     댓글
                     <span className="text-control-action-hover">
                         {commentCount.toLocaleString()}
@@ -172,9 +178,15 @@ function CommentSortControl({
                     setOpen((v) => !v)
                 }}
             >
-                <TbArrowsSort aria-hidden className="size-3.5 text-content-subtle" />
+                <TbArrowsSort
+                    aria-hidden
+                    className="size-3.5 text-content-subtle"
+                />
                 {current.label}
-                <TbChevronDown aria-hidden className="size-3.5 text-content-subtle" />
+                <TbChevronDown
+                    aria-hidden
+                    className="size-3.5 text-content-subtle"
+                />
             </button>
 
             {open && (
@@ -189,7 +201,7 @@ function CommentSortControl({
                         id="comment-sort-menu"
                         role="menu"
                         aria-label="댓글 정렬"
-                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-content-line bg-content-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-40 sm:rounded-xl sm:border sm:p-1.5 sm:shadow-lg"
+                        className="app-floating-menu app-floating-menu--responsive-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-content-line bg-content-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-40 sm:rounded-xl sm:border sm:p-1.5 sm:shadow-lg"
                         onKeyDown={handleMenuKeyDown}
                     >
                         <p className="px-3 pb-1.5 pt-1 text-xs font-bold text-content-subtle sm:hidden">

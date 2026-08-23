@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TbCheck } from 'react-icons/tb'
+import { TbCheck, TbSparkles } from 'react-icons/tb'
 import {
     CHARACTER_IDS,
     normalCharacterSources,
@@ -17,11 +17,42 @@ export default function CharacterProfileSelector({
     onChange,
     disabled,
 }: Props) {
+    const selectedSources =
+        value <= 12
+            ? normalCharacterSources(value)
+            : specialCharacterSources(value)
+
     return (
-        <section aria-label="기본 캐릭터" className="min-w-0">
+        <section
+            aria-label="기본 캐릭터"
+            className="character-select-panel min-w-0"
+        >
+            <header className="character-select-header">
+                <div className="character-select-preview" aria-hidden>
+                    <span className="character-select-aura" />
+                    <img
+                        src={selectedSources.hoverSrc}
+                        alt=""
+                        className="[image-rendering:pixelated]"
+                    />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <p className="character-select-eyebrow">
+                        <TbSparkles aria-hidden /> SELECT YOUR AVATAR
+                    </p>
+                    <h3>캐릭터 선택</h3>
+                    <p className="character-select-description">
+                        나를 대표할 캐릭터를 선택하세요. 선택 즉시 프로필에
+                        적용됩니다.
+                    </p>
+                    <span className="character-select-current">
+                        현재 선택됨
+                    </span>
+                </div>
+            </header>
             <div
                 data-character-roster
-                className="grid grid-cols-4 gap-0 overflow-hidden xl:grid-cols-8"
+                className="character-select-roster grid grid-cols-4 gap-2 overflow-hidden xl:grid-cols-8"
             >
                 {CHARACTER_IDS.map((id) => (
                     <CharacterButton
@@ -62,7 +93,7 @@ function CharacterButton({
             aria-label={`캐릭터 ${id} 선택`}
             aria-pressed={selected}
             disabled={disabled}
-            className="relative flex aspect-square w-full min-w-0 items-center justify-center focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-control-focus disabled:opacity-50"
+            className="character-choice relative flex aspect-square w-full min-w-0 items-center justify-center focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-control-focus disabled:opacity-50"
             onClick={onClick}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}

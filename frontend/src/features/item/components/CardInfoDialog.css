@@ -22,22 +22,33 @@
 .shop-cardinfo-overlay {
     position: fixed;
     inset: 0;
-    z-index: 50;
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     /* navy-900 틴트 백드롭(앱 모달 문법 정합, ShopPurchaseDialog 와 동일 계열) — 이질적 검정 회피. */
-    background: var(--overlay-scrim);
-    backdrop-filter: blur(3px);
+    background: var(--frost-scrim-strong);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     animation: ci-overlay-in 160ms ease-out;
 }
 
 .shop-cardinfo {
-    /* 카드정보 패널 토큰 — 라이트 커머스 매핑. */
-    --ci-label: var(--content-subtle);
-    --ci-value: var(--content-fg);
-    --ci-line: var(--content-line);
+    /* 카드정보 패널 토큰 — 앱 공통 다크 프로스트 매핑. */
+    --content-fg: var(--frost-fg);
+    --content-muted: var(--frost-muted);
+    --content-subtle: var(--frost-subtle);
+    --content-line: var(--frost-line);
+    --content-surface: var(--frost-bg-dialog);
+    --content-soft: var(--frost-bg-soft);
+    --brand-structure: var(--frost-accent);
+    --control-action: var(--frost-accent);
+    --control-action-hover: var(--frost-accent);
+    --control-action-ink: var(--frost-accent-ink);
+    --ci-label: var(--frost-subtle);
+    --ci-value: var(--frost-fg);
+    --ci-line: var(--frost-line);
 
     position: relative;
     display: flex;
@@ -46,11 +57,13 @@
     max-width: 720px;
     max-height: 92vh;
     overflow: hidden;
-    border: 1px solid var(--content-line);
-    border-radius: 16px;
-    background: var(--content-surface);
-    box-shadow: var(--shadow-dialog-soft);
-    color: var(--content-fg);
+    border: 1px solid var(--frost-line);
+    border-radius: var(--frost-radius);
+    background: var(--frost-bg-strong);
+    box-shadow: var(--frost-shadow);
+    color: var(--frost-fg);
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
     animation: ci-panel-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -71,9 +84,14 @@
     width: 28px;
     height: 28px;
     border-radius: 9px;
-    background: color-mix(in srgb, var(--brand-structure) 9%, var(--content-surface));
+    background: color-mix(
+        in srgb,
+        var(--brand-structure) 9%,
+        var(--content-surface)
+    );
     color: var(--brand-structure);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-structure) 12%, transparent);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--brand-structure) 12%, transparent);
 }
 .shop-cardinfo .ci-title h2 {
     margin: 0;
@@ -274,7 +292,11 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--chrome-bg-selected), var(--brand-structure));
+    background: linear-gradient(
+        135deg,
+        var(--chrome-bg-selected),
+        var(--brand-structure)
+    );
     color: var(--chrome-fg);
     font-size: 15px;
     font-weight: 800;

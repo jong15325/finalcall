@@ -171,9 +171,10 @@ function AppShellContent() {
                     className={`min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7 ${chatRoute ? 'flex min-h-0 overflow-hidden' : ''}`}
                 >
                     <div
+                        key={pathname}
                         data-testid="app-content-plane"
                         data-content-plane={routeUi.contentPlane}
-                        className={`mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : ''}`}
+                        className={`app-route-enter mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : ''}`}
                     >
                         <Outlet />
                     </div>
@@ -192,4 +193,3 @@ function AppShellContent() {
 }
 
 export default AppShell
-

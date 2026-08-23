@@ -631,7 +631,7 @@ function CommentEditMenu({
                     />
                     <div
                         role="menu"
-                        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-content-line bg-content-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-1 sm:w-32 sm:rounded-xl sm:border sm:p-1.5"
+                        className="app-floating-menu app-floating-menu--responsive-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-content-line bg-content-surface p-2 pb-4 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-1 sm:w-32 sm:rounded-xl sm:border sm:p-1.5"
                     >
                         <button
                             type="button"

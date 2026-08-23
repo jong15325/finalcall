@@ -11,6 +11,9 @@
     );
     --frost-bg-inset: rgb(3 14 22 / 34%);
     --frost-bg-control: rgb(255 255 255 / 8%);
+    --frost-bg-soft: rgb(255 255 255 / 6%);
+    --frost-bg-dialog: rgb(10 29 40 / 94%);
+    --frost-scrim-strong: rgb(2 10 16 / 74%);
     --frost-line: rgb(255 255 255 / 18%);
     --frost-line-strong: rgb(255 255 255 / 30%);
     --frost-highlight: rgb(255 255 255 / 48%);
@@ -21,6 +24,7 @@
     --frost-muted: rgb(215 231 236 / 72%);
     --frost-subtle: rgb(194 214 222 / 58%);
     --frost-accent: #8ee7f2;
+    --frost-accent-ink: rgb(4 19 27);
     --frost-focus: rgb(142 231 242 / 72%);
     --frost-radius: 20px;
     --frost-control-radius: 12px;
@@ -66,6 +70,106 @@
         --frost-blur: blur(18px) saturate(112%);
         --frost-radius: 18px;
     }
+}
+
+/* One interaction grammar for every modal action. */
+.app-modal-button,
+[role='dialog'] button:not([aria-label='닫기']),
+[role='alertdialog'] button:not([aria-label='닫기']) {
+    min-height: 46px;
+    border-radius: 12px !important;
+    font-size: 0.875rem;
+    font-weight: 800;
+    transition:
+        color 160ms ease,
+        background-color 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        transform 160ms ease !important;
+}
+.app-modal-button:hover:not(:disabled),
+[role='dialog'] button:not([aria-label='닫기']):hover:not(:disabled),
+[role='alertdialog'] button:not([aria-label='닫기']):hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+.app-modal-button:active:not(:disabled),
+[role='dialog'] button:not([aria-label='닫기']):active:not(:disabled),
+[role='alertdialog'] button:not([aria-label='닫기']):active:not(:disabled) {
+    transform: scale(0.975);
+}
+.app-modal-button:focus-visible,
+[role='dialog'] button:not([aria-label='닫기']):focus-visible,
+[role='alertdialog'] button:not([aria-label='닫기']):focus-visible {
+    outline: 2px solid var(--frost-accent) !important;
+    outline-offset: 2px;
+}
+.app-modal-button:disabled,
+[role='dialog'] button:not([aria-label='닫기']):disabled,
+[role='alertdialog'] button:not([aria-label='닫기']):disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+    transform: none !important;
+}
+.app-modal-button[data-modal-button='primary'] {
+    position: relative;
+    overflow: hidden;
+    min-width: 112px;
+    border: 1px solid rgba(174, 242, 249, 0.48);
+    background: linear-gradient(135deg, #a5edf4 0%, #67cfdd 52%, #48b8ca 100%);
+    color: #08232d;
+    box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.62),
+        0 8px 20px rgba(30, 139, 158, 0.2);
+    text-shadow: 0 1px rgba(255, 255, 255, 0.28);
+}
+.app-modal-button[data-modal-button='primary']::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.28) 48%,
+        transparent 72%
+    );
+    opacity: 0;
+    transform: translateX(-70%);
+    transition:
+        opacity 180ms ease,
+        transform 360ms ease;
+}
+.app-modal-button[data-modal-button='primary']:hover:not(:disabled) {
+    border-color: rgba(210, 249, 252, 0.72);
+    background: linear-gradient(135deg, #b9f3f7 0%, #76d9e5 52%, #54c2d2 100%);
+    box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.7),
+        0 12px 26px rgba(30, 139, 158, 0.3);
+}
+.app-modal-button[data-modal-button='primary']:hover:not(:disabled)::before {
+    opacity: 1;
+    transform: translateX(70%);
+}
+.app-modal-button[data-modal-button='secondary'] {
+    min-width: 88px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(3, 18, 27, 0.28);
+    color: rgba(224, 237, 242, 0.72);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+.app-modal-button[data-modal-button='secondary']:hover:not(:disabled) {
+    border-color: rgba(142, 231, 242, 0.18);
+    background: rgba(142, 231, 242, 0.075);
+    color: var(--frost-fg);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
+}
+.app-modal-button[data-modal-button='danger'] {
+    border: 1px solid rgba(255, 135, 124, 0.34);
+    background: rgba(190, 64, 55, 0.75);
+    color: #fff;
+}
+.app-modal-button[data-modal-button='danger']:hover:not(:disabled) {
+    background: rgba(215, 76, 66, 0.92);
+    box-shadow: 0 11px 24px rgba(190, 64, 55, 0.23);
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -251,6 +355,422 @@ thead {
     }
 }
 
+@keyframes action-alert-overlay-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes action-alert-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.94);
+        filter: blur(7px);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.01);
+        filter: blur(0);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.action-alert-overlay {
+    background: var(--frost-scrim-strong);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: action-alert-overlay-in 170ms ease-out both;
+}
+
+.action-alert-panel {
+    position: relative;
+    padding: 28px;
+    border: 1px solid var(--frost-line-strong);
+    border-radius: 24px;
+    background: var(--frost-bg-dialog);
+    color: var(--frost-fg);
+    box-shadow: var(--frost-shadow);
+    text-align: center;
+    animation: action-alert-panel-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.action-alert-handle {
+    display: none;
+}
+.action-alert-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--frost-muted);
+    transition: 150ms ease;
+}
+.action-alert-close:hover:not(:disabled) {
+    border-color: var(--frost-line);
+    background: var(--frost-bg-control);
+    color: var(--frost-fg);
+    transform: rotate(4deg) scale(1.05);
+}
+.action-alert-close svg {
+    width: 19px;
+    height: 19px;
+}
+.action-alert-icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 16px;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--frost-accent) 38%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--frost-accent) 13%, transparent);
+    color: var(--frost-accent);
+    box-shadow: 0 0 24px
+        color-mix(in srgb, var(--frost-accent) 14%, transparent);
+}
+.action-alert-panel[data-alert-tone='danger'] .action-alert-icon {
+    border-color: color-mix(in srgb, var(--danger) 38%, transparent);
+    background: color-mix(in srgb, var(--danger) 13%, transparent);
+    color: var(--danger);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+.action-alert-icon svg {
+    width: 27px;
+    height: 27px;
+}
+.action-alert-panel h2 {
+    margin: 0;
+    color: var(--frost-fg) !important;
+    font-size: 1.25rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+}
+.action-alert-panel p {
+    margin: 8px auto 0;
+    color: var(--frost-muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+.action-alert-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 10px;
+    margin-top: 24px;
+}
+.action-alert-actions:not(:has(.action-alert-cancel)) {
+    grid-template-columns: 1fr;
+}
+.action-alert-content {
+    padding-top: 18px;
+    padding-bottom: 8px;
+    text-align: center;
+}
+.action-alert-content p {
+    margin: 0;
+    color: var(--frost-muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+.action-alert-actions button {
+    min-height: 46px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease,
+        background-color 150ms ease;
+}
+.action-alert-cancel {
+    border: 1px solid var(--frost-line);
+    background: var(--frost-bg-control);
+    color: var(--frost-muted);
+}
+.action-alert-cancel:hover:not(:disabled) {
+    background: color-mix(
+        in srgb,
+        var(--frost-bg-control) 80%,
+        var(--frost-accent)
+    );
+    color: var(--frost-fg);
+    transform: translateY(-2px);
+}
+.action-alert-confirm {
+    border: 0;
+    background: var(--control-action);
+    color: var(--control-action-ink);
+}
+.action-alert-confirm:hover:not(:disabled) {
+    background: var(--control-action-hover);
+    color: var(--control-action-ink);
+    box-shadow: 0 9px 22px
+        color-mix(in srgb, var(--control-action) 25%, transparent);
+    transform: translateY(-2px);
+}
+.action-alert-panel[data-alert-tone='danger'] .action-alert-confirm {
+    background: var(--danger);
+    color: var(--frost-fg);
+}
+.app-modal-panel[data-tone='danger'] .action-alert-confirm {
+    background: var(--danger);
+    color: var(--frost-fg);
+}
+.action-alert-actions button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.action-alert-actions button:disabled {
+    cursor: wait;
+    opacity: 0.62;
+}
+
+@media (max-width: 639px) {
+    .action-alert-panel {
+        padding: 26px 20px calc(20px + env(safe-area-inset-bottom));
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 24px 24px 0 0;
+        animation-name: memo-compose-sheet-in;
+    }
+    .action-alert-handle {
+        display: block;
+        width: 42px;
+        height: 4px;
+        margin: -16px auto 20px;
+        border-radius: 999px;
+        background: var(--frost-line-strong);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .action-alert-overlay,
+    .action-alert-panel {
+        animation: none !important;
+    }
+}
+
+@keyframes memo-compose-overlay-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes memo-compose-sheet-in {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes memo-compose-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.memo-compose-overlay {
+    animation: memo-compose-overlay-in 180ms ease-out both;
+}
+
+.memo-compose-dialog {
+    --content-fg: var(--frost-fg);
+    --content-muted: var(--frost-muted);
+    --content-subtle: var(--frost-subtle);
+    border: 1px solid var(--frost-line);
+    background: var(--frost-bg-strong) !important;
+    color: var(--frost-fg);
+    box-shadow: var(--frost-shadow) !important;
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
+    animation: memo-compose-dialog-in 230ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.memo-compose-sheet-handle {
+    display: none;
+}
+
+.memo-compose-header,
+.memo-compose-footer {
+    border-color: var(--frost-line) !important;
+}
+
+.memo-compose-close,
+.memo-compose-submit {
+    transition:
+        color 150ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease,
+        transform 150ms ease;
+}
+
+.memo-compose-close {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--frost-muted) !important;
+}
+
+.memo-compose-close:hover {
+    border-color: color-mix(in srgb, var(--frost-accent) 34%, transparent);
+    background: color-mix(
+        in srgb,
+        var(--frost-accent) 12%,
+        transparent
+    ) !important;
+    color: var(--frost-accent) !important;
+    box-shadow: 0 0 16px
+        color-mix(in srgb, var(--frost-accent) 14%, transparent);
+    transform: scale(1.06) rotate(3deg);
+}
+
+.memo-compose-submit:hover:not(:disabled) {
+    background: var(--control-action-hover) !important;
+    color: var(--control-action-ink) !important;
+    box-shadow: 0 8px 20px
+        color-mix(in srgb, var(--control-action) 24%, transparent);
+    transform: translateY(-2px);
+}
+
+.memo-compose-submit:active:not(:disabled) {
+    box-shadow: none;
+    transform: translateY(0) scale(0.98);
+}
+
+.memo-compose-submit:disabled {
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.memo-compose-footer {
+    background: var(--frost-bg-inset) !important;
+    box-shadow: inset 0 1px 0
+        color-mix(in srgb, var(--frost-highlight) 10%, transparent);
+    backdrop-filter: blur(16px) saturate(112%);
+    -webkit-backdrop-filter: blur(16px) saturate(112%);
+}
+
+@media (max-width: 639px) {
+    .memo-compose-dialog {
+        max-height: min(88dvh, 760px) !important;
+        padding-bottom: env(safe-area-inset-bottom);
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 24px 24px 0 0 !important;
+        animation-name: memo-compose-sheet-in;
+        animation-duration: 280ms;
+    }
+
+    .memo-compose-sheet-handle {
+        display: block;
+        width: 42px;
+        height: 4px;
+        flex: 0 0 auto;
+        margin: 9px auto 0;
+        border-radius: 999px;
+        background: var(--frost-line-strong);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .memo-compose-overlay,
+    .memo-compose-dialog {
+        animation: none !important;
+    }
+}
+
+@keyframes app-route-content-in {
+    from {
+        opacity: 0;
+        filter: blur(5px);
+        transform: translateY(-14px) scale(0.995);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes app-list-item-in {
+    from {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.975);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes app-skeleton-shimmer {
+    from {
+        background-position: 0 -160%;
+    }
+    to {
+        background-position: 0 160%;
+    }
+}
+
+/* Shared content lifecycle motion: route → state → list items. */
+.app-route-enter {
+    animation: app-route-content-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    transform-origin: top center;
+}
+
+[data-ui-motion-grid] > * {
+    animation: app-list-item-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ui-motion-state {
+    animation: app-list-item-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[aria-busy='true'] .animate-pulse {
+    background-image: linear-gradient(
+        180deg,
+        transparent 28%,
+        color-mix(in srgb, var(--frost-highlight) 18%, transparent) 46%,
+        transparent 64%
+    ) !important;
+    background-size: 100% 220% !important;
+    animation: app-skeleton-shimmer 1.35s linear infinite !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-route-enter,
+    [data-ui-motion-grid] > *,
+    .ui-motion-state,
+    [aria-busy='true'] .animate-pulse {
+        animation: none !important;
+    }
+}
+
 /* High-contrast glass pass — visibly translucent even on mobile. */
 [data-app-navigation-surface] {
     position: relative;
@@ -264,6 +784,146 @@ thead {
     box-shadow:
         0 16px 38px rgba(15, 29, 42, 0.28),
         inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+/* Dropdowns must escape the rounded navigation glass while they are open. */
+[data-app-navigation-surface]:has(button[aria-expanded='true']) {
+    overflow: visible !important;
+}
+
+@keyframes app-floating-menu-down {
+    from {
+        opacity: 0;
+        filter: blur(8px);
+        transform: translateY(-14px) scale(0.94) rotateX(-5deg);
+    }
+    68% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(2px) scale(1.012) rotateX(0);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1) rotateX(0);
+    }
+}
+
+@keyframes app-floating-item-in {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes app-floating-highlight-in {
+    from {
+        opacity: 0;
+        transform: translateX(-45%) scaleX(0.35);
+    }
+    to {
+        opacity: 0.72;
+        transform: translateX(0) scaleX(1);
+    }
+}
+
+@keyframes app-floating-menu-sheet-up {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Shared motion contract for navigation and contextual floating menus. */
+.app-floating-menu {
+    transform-origin: top right;
+    border-color: var(--frost-line-strong) !important;
+    background: var(--frost-bg-strong) !important;
+    box-shadow:
+        0 22px 52px color-mix(in srgb, var(--chrome-strong) 38%, transparent),
+        inset 0 1px 0 var(--frost-highlight) !important;
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
+    animation: app-floating-menu-down 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+}
+
+.app-floating-menu::before {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    right: 10%;
+    left: 10%;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--frost-highlight),
+        transparent
+    );
+    content: '';
+    pointer-events: none;
+    transform-origin: left center;
+    animation: app-floating-highlight-in 360ms 50ms both;
+}
+
+.app-floating-menu > * {
+    animation: app-floating-item-in 240ms 70ms both
+        cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-floating-menu [role^='menuitem'] {
+    transition:
+        color 150ms ease,
+        background-color 150ms ease,
+        transform 150ms ease;
+}
+
+.app-floating-menu [role^='menuitem']:hover {
+    transform: translateX(3px);
+}
+
+[data-app-navigation-surface] button[aria-expanded='true'] {
+    background: color-mix(
+        in srgb,
+        var(--frost-accent) 14%,
+        transparent
+    ) !important;
+    color: var(--frost-accent) !important;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--frost-accent) 42%, transparent),
+        0 0 18px color-mix(in srgb, var(--frost-accent) 18%, transparent);
+}
+
+.app-floating-menu[data-floating-align='left'] {
+    transform-origin: top left;
+}
+
+@media (max-width: 639px) {
+    .app-floating-menu--responsive-sheet {
+        transform-origin: bottom center;
+        animation-name: app-floating-menu-sheet-up;
+        animation-duration: 240ms;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-floating-menu {
+        animation: none !important;
+    }
+
+    .app-floating-menu::before,
+    .app-floating-menu > * {
+        animation: none !important;
+    }
 }
 [data-app-navigation-surface]::after {
     content: '';
@@ -2028,72 +2688,6 @@ section > ul.rounded-xl,
         border-color: rgba(255, 255, 255, 0.11) !important;
     }
 }
-@media (min-width: 1024px) {
-    #view [data-testid='app-content-plane'] .lg\:border-content-line {
-        border-color: rgba(255, 255, 255, 0.11) !important;
-    }
-}
-#view
-    [data-testid='app-content-plane']
-    .divide-content-line
-    > :not([hidden])
-    ~ :not([hidden]),
-#view
-    [data-testid='app-content-plane']
-    .divide-content-line
-    > :not(:last-child) {
-    border-color: rgba(255, 255, 255, 0.095) !important;
-}
-#view
-    [data-testid='app-content-plane']
-    .divide-content-soft
-    > :not([hidden])
-    ~ :not([hidden]),
-#view
-    [data-testid='app-content-plane']
-    .divide-content-soft
-    > :not(:last-child) {
-    border-color: rgba(255, 255, 255, 0.055) !important;
-}
-#view [data-testid='app-content-plane'] .bg-content-surface.border,
-#view [data-testid='app-content-plane'] .bg-content-surface[class*='border-'] {
-    border-color: rgba(255, 255, 255, 0.15) !important;
-}
-#view [data-testid='app-content-plane'] .border-danger,
-#view [data-testid='app-content-plane'] .border-danger-soft {
-    border-color: rgba(223, 86, 92, 0.34) !important;
-}
-#view [data-testid='app-content-plane'] .border-warning,
-#view [data-testid='app-content-plane'] .border-warning-soft {
-    border-color: rgba(224, 181, 70, 0.32) !important;
-}
-#view [data-testid='app-content-plane'] .border-success,
-#view [data-testid='app-content-plane'] .border-success-soft {
-    border-color: rgba(44, 175, 112, 0.3) !important;
-}
-#view [data-testid='app-content-plane'] .focus\:border-control-action:focus,
-#view
-    [data-testid='app-content-plane']
-    .focus-visible\:border-control-action:focus-visible,
-#view
-    [data-testid='app-content-plane']
-    .focus-within\:border-control-action:focus-within {
-    border-color: rgba(142, 231, 242, 0.58) !important;
-}
-
-/* Shared item-skill color contract: copy stays white; probability alone is gold. */
-#view [data-testid='app-content-plane'] .item-skill-label,
-#view [data-testid='app-content-plane'] .item-skill-content,
-#view [data-testid='app-content-plane'] .item-skill-summary__slot,
-#view [data-testid='app-content-plane'] .item-skill-summary__value,
-#view [data-testid='app-content-plane'] .item-skill-summary__name {
-    color: #fff !important;
-}
-#view [data-testid='app-content-plane'] .item-skill-percent,
-#view [data-testid='app-content-plane'] .item-skill-summary__percent,
-#view [data-testid='app-content-plane'] .item-card__skill-percent {
-    color: var(--brand-highlight-bright) !important;
-}
 
 /* Authentication shell: the same dark-frost language without the app navigation. */
 .auth-shell {
@@ -2452,28 +3046,813 @@ section > ul.rounded-xl,
 }
 
 /* Inventory cards must read as one surface: no bright compositor outline. */
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .shop-card,
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .item-card {
     border: 0 !important;
     outline: 0 !important;
     box-shadow: none !important;
 }
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .item-card::after {
     display: none !important;
     content: none !important;
     box-shadow: none !important;
 }
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+
+/* Bid entry dialog: clear monetary hierarchy on the shared modal chrome. */
+.bid-entry-dialog {
+    color: var(--frost-fg) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(20, 45, 58, 0.97),
+        rgba(7, 25, 36, 0.98)
+    ) !important;
+}
+.bid-entry-form {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+}
+.bid-entry-header {
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.055),
+        rgba(255, 255, 255, 0)
+    );
+}
+.bid-entry-header,
+.legacy-modal-header {
+    min-height: 62px;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.055),
+        rgba(255, 255, 255, 0)
+    ) !important;
+}
+.legacy-modal-header h4 {
+    color: #f6fbfd !important;
+}
+.legacy-modal-header > div > span {
+    color: var(--frost-accent) !important;
+}
+.legacy-modal-footer {
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    background: rgba(3, 17, 25, 0.46) !important;
+}
+.purchase-entry-dialog {
+    color: var(--frost-fg) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(20, 45, 58, 0.97),
+        rgba(7, 25, 36, 0.98)
+    ) !important;
+}
+.bid-entry-header > div > span {
+    color: var(--frost-accent) !important;
+    letter-spacing: 0.12em;
+}
+.bid-entry-header h4 {
+    color: #f6fbfd !important;
+}
+.bid-entry-body {
+    overflow-y: auto;
+}
+.bid-entry-summary {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px !important;
+    overflow: hidden;
+    padding: 1px !important;
+    border: 1px solid rgba(142, 231, 242, 0.13);
+    border-radius: 14px !important;
+    background: rgba(142, 231, 242, 0.12) !important;
+}
+.bid-entry-summary > span {
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    padding: 12px 13px;
+    color: var(--frost-subtle) !important;
+    background: rgba(4, 20, 29, 0.78);
+}
+.bid-entry-summary > span > span {
+    max-width: 100%;
+    color: #f5fbfd !important;
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+}
+.bid-entry-body > label {
+    color: #f5fbfd !important;
+    font-weight: 800 !important;
+}
+.bid-entry-input {
+    min-height: 56px;
+    border-color: rgba(142, 231, 242, 0.18) !important;
+    border-radius: 14px !important;
+    background: rgba(3, 18, 27, 0.66) !important;
+    box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.06),
+        0 10px 24px rgba(1, 12, 19, 0.15) !important;
+    font-size: 1.25rem !important;
+}
+.bid-entry-input-unit {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    color: var(--frost-muted);
+    font-size: 0.8rem;
+    font-weight: 800;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+.bid-entry-input-wrap:focus-within .bid-entry-input-unit {
+    color: var(--frost-fg);
+}
+.bid-entry-input:focus {
+    border-color: rgba(142, 231, 242, 0.66) !important;
+    box-shadow:
+        0 0 0 3px rgba(142, 231, 242, 0.14),
+        inset 0 1px rgba(255, 255, 255, 0.07) !important;
+}
+.bid-entry-body #bidHelp {
+    color: var(--frost-subtle) !important;
+    line-height: 1.55;
+}
+.bid-entry-balance {
+    justify-content: space-between;
+    padding: 11px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: var(--frost-muted) !important;
+    background: rgba(255, 255, 255, 0.035);
+}
+.bid-entry-balance > span {
+    color: #f5fbfd !important;
+}
+.bid-entry-footer {
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    background: rgba(3, 17, 25, 0.46) !important;
+}
+.bid-entry-footer button {
+    min-height: 46px;
+    border-radius: 12px !important;
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease,
+        background 150ms ease;
+}
+.bid-entry-footer button:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+.bid-entry-footer button[type='button'] {
+    border-color: rgba(255, 255, 255, 0.11) !important;
+    background: rgba(255, 255, 255, 0.045) !important;
+    color: var(--frost-muted) !important;
+}
+.bid-entry-footer button[type='button']:hover {
+    background: rgba(142, 231, 242, 0.1) !important;
+    color: #fff !important;
+}
+.bid-entry-footer button[type='submit']:hover:not(:disabled) {
+    box-shadow: 0 12px 24px rgba(54, 150, 169, 0.25);
+}
+@media (max-width: 639px) {
+    .bid-entry-body {
+        padding: 18px 16px !important;
+    }
+    .bid-entry-header {
+        padding-right: 16px !important;
+        padding-left: 16px !important;
+    }
+    .bid-entry-summary {
+        grid-template-columns: 1fr;
+    }
+    .bid-entry-footer {
+        display: grid !important;
+        grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+        padding: 13px 16px max(13px, env(safe-area-inset-bottom)) !important;
+    }
+    .bid-entry-footer button {
+        width: 100%;
+    }
+}
+
+/* Legacy feature dialogs share reliable mobile-sheet sizing until their content
+   is migrated to AppModal: portal + bounded form body prevents clipping by page glass. */
+@media (max-width: 639px) {
+    .fixed.inset-0:not(.app-modal-overlay) > [role='dialog'],
+    .fixed.inset-0:not(.app-modal-overlay) > [role='alertdialog'],
+    .card-info-overlay > [role='dialog'] {
+        position: relative !important;
+        max-height: min(92dvh, 760px) !important;
+        padding-top: 10px;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .fixed.inset-0:not(.app-modal-overlay) > [role='dialog']::before,
+    .fixed.inset-0:not(.app-modal-overlay) > [role='alertdialog']::before,
+    .card-info-overlay > [role='dialog']::before {
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        z-index: 2;
+        width: 42px;
+        height: 4px;
+        border-radius: 999px;
+        content: '';
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateX(-50%);
+    }
+    .fixed.inset-0:not(.app-modal-overlay) > [role='dialog'] > form,
+    .fixed.inset-0:not(.app-modal-overlay) > [role='alertdialog'] > form {
+        display: flex;
+        max-height: calc(92dvh - 10px - env(safe-area-inset-bottom));
+        min-height: 0;
+        flex-direction: column;
+    }
+    .fixed.inset-0:not(.app-modal-overlay)
+        > [role='dialog']
+        > form
+        > :nth-child(2),
+    .fixed.inset-0:not(.app-modal-overlay)
+        > [role='alertdialog']
+        > form
+        > :nth-child(2) {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+/* Auction detail readability follows the shared dark-frost content hierarchy. */
+#view .auction-detail-region .detail-surface .text-content-fg {
+    color: var(--frost-fg) !important;
+}
+#view .auction-detail-region .detail-surface .text-content-muted {
+    color: var(--frost-muted) !important;
+}
+#view .auction-detail-region .detail-surface .text-content-subtle {
+    color: var(--frost-subtle) !important;
+}
+#view .auction-detail-region .detail-surface .text-on-strong,
+#view .auction-detail-region .detail-surface [class*='text-on-strong/'] {
+    color: #fff !important;
+}
+#view .auction-detail-region .detail-surface h2,
+#view .auction-detail-region .detail-surface h3,
+#view .auction-detail-region .detail-surface dd,
+#view .auction-detail-region .detail-surface .item-skill-content {
+    color: var(--frost-fg) !important;
+}
+#view .auction-detail-region .detail-surface .item-skill-percent {
+    color: #f4c96b !important;
+}
+
+/* Auction close state and bid activity use the same restrained frost palette. */
+#view .auction-detail-region .auction-ended-cta {
+    border: 1px solid rgba(142, 231, 242, 0.14) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(28, 49, 60, 0.78),
+        rgba(13, 32, 43, 0.88)
+    ) !important;
+    color: rgba(229, 240, 244, 0.66) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 24px rgba(2, 12, 19, 0.18) !important;
+}
+#view .auction-detail-region .auction-bid-history {
+    overflow: hidden;
+    border-color: rgba(142, 231, 242, 0.12) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(13, 34, 46, 0.82),
+        rgba(7, 24, 34, 0.86)
+    ) !important;
+    box-shadow:
+        0 18px 42px rgba(2, 13, 21, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+#view .auction-detail-region .auction-bid-history__header {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(4, 20, 29, 0.34) !important;
+}
+#view .auction-detail-region .auction-bid-history__header h3 {
+    color: #f5fbfd !important;
+}
+#view .auction-detail-region .auction-bid-history__body thead tr {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(9, 30, 41, 0.94) !important;
+}
+#view .auction-detail-region .auction-bid-history__body table {
+    background: rgba(4, 20, 29, 0.34) !important;
+    color: var(--frost-fg) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+#view .auction-detail-region .auction-bid-history__body tbody {
+    background: transparent !important;
+}
+#view .auction-detail-region .auction-bid-history__body thead th {
+    background: transparent !important;
+    color: rgba(232, 243, 247, 0.78) !important;
+}
+#view .auction-detail-region .auction-bid-history__body thead {
+    background: rgba(9, 30, 41, 0.94) !important;
+}
+#view .auction-detail-region .auction-bid-history__row {
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    transition: background-color 160ms ease;
+}
+#view .auction-detail-region .auction-bid-history__row:hover {
+    background: rgba(142, 231, 242, 0.055);
+}
+#view .auction-detail-region .auction-bid-history__row td:first-child,
+#view .auction-detail-region .auction-bid-history__row td:nth-child(2) {
+    color: #f2f8fa !important;
+}
+
+/* Shared modal system: mobile bottom sheet / desktop centered dark-frost form. */
+.app-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    background: rgb(2 10 17 / 68%);
+    backdrop-filter: blur(8px) saturate(112%);
+    -webkit-backdrop-filter: blur(8px) saturate(112%);
+    animation: app-modal-scrim-in 180ms ease-out both;
+}
+.app-modal-panel {
+    --modal-accent: var(--frost-accent);
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-height: min(92dvh, 900px);
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 13%);
+    border-bottom: 0;
+    border-radius: 24px 24px 0 0;
+    color: var(--frost-fg);
+    background: linear-gradient(
+        145deg,
+        rgb(22 46 59 / 96%),
+        rgb(8 26 37 / 96%)
+    );
+    box-shadow:
+        0 -18px 60px rgb(0 0 0 / 34%),
+        inset 0 1px rgb(255 255 255 / 12%);
+    backdrop-filter: blur(30px) saturate(128%);
+    -webkit-backdrop-filter: blur(30px) saturate(128%);
+    animation: app-modal-sheet-in 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+    outline: none;
+}
+.app-modal-panel[data-size='sm'] {
+    max-width: 420px;
+}
+.app-modal-panel[data-size='md'] {
+    max-width: 560px;
+}
+.app-modal-panel[data-size='lg'] {
+    max-width: 760px;
+}
+.app-modal-panel[data-size='xl'] {
+    max-width: 980px;
+}
+.app-modal-panel[data-tone='danger'] {
+    --modal-accent: #ff9f92;
+}
+.app-modal-handle {
+    width: 42px;
+    height: 4px;
+    flex: 0 0 auto;
+    align-self: center;
+    margin: 9px 0 2px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 26%);
+}
+.app-modal-header {
+    display: flex;
+    min-height: 62px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px 14px;
+    border-bottom: 1px solid rgb(255 255 255 / 9%);
+    background: linear-gradient(180deg, rgb(255 255 255 / 5%), transparent);
+}
+.app-modal-title-wrap {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+}
+.app-modal-title-copy {
+    min-width: 0;
+}
+.app-modal-eyebrow {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--modal-accent);
+    font-size: 0.62rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.app-modal-title-icon {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--modal-accent) 34%, transparent);
+    border-radius: 12px;
+    color: var(--modal-accent);
+    background: color-mix(in srgb, var(--modal-accent) 12%, transparent);
+}
+.app-modal-title-icon > svg {
+    width: 20px;
+    height: 20px;
+}
+.app-modal-title {
+    margin: 0;
+    overflow: hidden;
+    color: var(--frost-fg) !important;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.app-modal-close {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--frost-muted);
+    background: rgb(255 255 255 / 4%);
+    transition:
+        color 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease;
+}
+.app-modal-close > svg {
+    width: 20px;
+    height: 20px;
+}
+.app-modal-close:hover:not(:disabled) {
+    border-color: rgb(142 231 242 / 20%);
+    color: var(--frost-fg);
+    background: rgb(142 231 242 / 12%);
+    transform: rotate(4deg) scale(1.04);
+}
+.app-modal-close:active:not(:disabled) {
+    transform: scale(0.94);
+}
+.app-modal-close:focus-visible {
+    outline: 2px solid var(--frost-accent);
+    outline-offset: 2px;
+}
+.app-modal-close:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+.app-modal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 20px 18px;
+    overscroll-behavior: contain;
+}
+.app-modal-footer {
+    flex: 0 0 auto;
+    padding: 14px 18px max(14px, env(safe-area-inset-bottom));
+    border-top: 1px solid rgb(255 255 255 / 9%);
+    background: rgb(5 20 29 / 52%);
+}
+.app-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+@media (max-width: 639px) {
+    .app-modal-actions {
+        width: 100%;
+    }
+    .app-modal-actions .app-modal-button {
+        min-width: 0;
+    }
+    .app-modal-actions .app-modal-button[data-modal-button='secondary'] {
+        flex: 0.72 1 0;
+    }
+    .app-modal-actions .app-modal-button[data-modal-button='primary'],
+    .app-modal-actions .app-modal-button[data-modal-button='danger'] {
+        flex: 1.28 1 0;
+    }
+}
+
+@media (min-width: 640px) {
+    .app-modal-overlay {
+        align-items: center;
+        padding: 24px;
+    }
+    .app-modal-panel {
+        max-height: min(88vh, 900px);
+        border-bottom: 1px solid rgb(255 255 255 / 13%);
+        border-radius: 24px;
+        box-shadow:
+            var(--frost-shadow),
+            inset 0 1px rgb(255 255 255 / 12%);
+        animation-name: app-modal-dialog-in;
+    }
+    .app-modal-handle {
+        display: none;
+    }
+    .app-modal-header {
+        padding: 16px 20px;
+    }
+    .app-modal-body {
+        padding: 22px 20px;
+    }
+    .app-modal-footer {
+        padding: 15px 20px;
+    }
+}
+@keyframes app-modal-scrim-in {
+    from {
+        opacity: 0;
+    }
+}
+@keyframes app-modal-sheet-in {
+    from {
+        opacity: 0;
+        transform: translateY(46px);
+    }
+}
+@keyframes app-modal-dialog-in {
+    from {
+        opacity: 0;
+        filter: blur(8px);
+        transform: translateY(-18px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .app-modal-overlay,
+    .app-modal-panel {
+        animation-duration: 1ms !important;
+    }
+    .app-modal-close {
+        transition-duration: 1ms !important;
+    }
+}
+
+/* Compatibility layer for feature dialogs awaiting a content-only AppModal migration.
+   This keeps every existing bid/purchase/sell/chat/member dialog on the same responsive chrome. */
+.fixed.inset-0:not(.app-modal-overlay):has(> [role='dialog']),
+.fixed.inset-0:not(.app-modal-overlay):has(> [role='alertdialog']),
+.card-info-overlay:has(> [role='dialog']) {
+    z-index: 1200 !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: rgb(2 10 17 / 68%) !important;
+    backdrop-filter: blur(8px) saturate(112%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(112%) !important;
+    animation: app-modal-scrim-in 180ms ease-out both;
+}
+.fixed.inset-0:not(.app-modal-overlay) > [role='dialog'],
+.fixed.inset-0:not(.app-modal-overlay) > [role='alertdialog'],
+.card-info-overlay > [role='dialog'] {
+    width: 100% !important;
+    max-height: min(92dvh, 900px) !important;
+    border: 1px solid rgb(255 255 255 / 13%) !important;
+    border-bottom: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    color: var(--frost-fg) !important;
+    background: linear-gradient(
+        145deg,
+        rgb(22 46 59 / 96%),
+        rgb(8 26 37 / 96%)
+    ) !important;
+    box-shadow:
+        0 -18px 60px rgb(0 0 0 / 34%),
+        inset 0 1px rgb(255 255 255 / 12%) !important;
+    backdrop-filter: blur(30px) saturate(128%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(128%) !important;
+    animation: app-modal-sheet-in 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.fixed.inset-0:not(.app-modal-overlay)
+    > [role='dialog']
+    button[aria-label='닫기'],
+.fixed.inset-0:not(.app-modal-overlay)
+    > [role='alertdialog']
+    button[aria-label='닫기'],
+.card-info-overlay > [role='dialog'] button[aria-label='닫기'] {
+    border-color: transparent !important;
+    color: var(--frost-muted) !important;
+    background: rgb(255 255 255 / 4%) !important;
+    transition:
+        color 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease !important;
+}
+.fixed.inset-0:not(.app-modal-overlay)
+    > [role='dialog']
+    button[aria-label='닫기']:hover,
+.fixed.inset-0:not(.app-modal-overlay)
+    > [role='alertdialog']
+    button[aria-label='닫기']:hover,
+.card-info-overlay > [role='dialog'] button[aria-label='닫기']:hover {
+    border-color: rgb(142 231 242 / 20%) !important;
+    color: var(--frost-fg) !important;
+    background: rgb(142 231 242 / 12%) !important;
+    transform: rotate(4deg) scale(1.04);
+}
+@media (min-width: 640px) {
+    .fixed.inset-0:not(.app-modal-overlay):has(> [role='dialog']),
+    .fixed.inset-0:not(.app-modal-overlay):has(> [role='alertdialog']),
+    .card-info-overlay:has(> [role='dialog']) {
+        align-items: center !important;
+        padding: 24px !important;
+    }
+    .fixed.inset-0:not(.app-modal-overlay) > [role='dialog'],
+    .fixed.inset-0:not(.app-modal-overlay) > [role='alertdialog'],
+    .card-info-overlay > [role='dialog'] {
+        max-height: min(88vh, 900px) !important;
+        border-bottom: 1px solid rgb(255 255 255 / 13%) !important;
+        border-radius: 24px !important;
+        box-shadow:
+            var(--frost-shadow),
+            inset 0 1px rgb(255 255 255 / 12%) !important;
+        animation-name: app-modal-dialog-in;
+    }
+}
+
+/* My sales reuses the exact market-card surface without its buyer actions. */
+#view [aria-label='판매 중인 상품 목록'] .shop-card,
+#view [aria-label='판매 중인 상품 목록'] .item-card {
+    transform: none !important;
+    outline: 0 !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .shop-card {
+    border-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .item-card {
+    overflow: hidden !important;
+    border: 0 !important;
+    background: linear-gradient(
+        145deg,
+        rgba(16, 34, 47, 0.8),
+        rgba(34, 63, 74, 0.66)
+    ) !important;
+    box-shadow:
+        0 18px 34px rgba(5, 17, 26, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(24px) saturate(118%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(118%) !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .item-card::after {
+    display: none !important;
+    content: none !important;
+    box-shadow: none !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .item-card__market-info {
+    z-index: 2;
+    margin-top: -3px;
+    border: 0 !important;
+    background: linear-gradient(
+        155deg,
+        rgba(14, 31, 43, 0.42),
+        rgba(30, 56, 67, 0.24)
+    ) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .item-card__market-skills,
+#view [aria-label='판매 중인 상품 목록'] .item-card__skill-rows {
+    margin-top: 12px;
+    padding: 4px 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    background: rgba(3, 14, 22, 0.3) !important;
+    color: var(--frost-fg) !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .item-card__skill-row {
+    padding: 8px 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+#view [aria-label='판매 중인 상품 목록'] .item-card__skill-row:last-child {
+    border-bottom: 0 !important;
+}
+@media (max-width: 639px) {
+    #view [aria-label='판매 중인 상품 목록'] .item-card {
+        background: linear-gradient(
+            145deg,
+            rgba(16, 34, 47, 0.86),
+            rgba(34, 63, 74, 0.74)
+        ) !important;
+        backdrop-filter: blur(18px) saturate(112%) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(112%) !important;
+    }
+}
+
+/* Chat workspace: bounded viewport and one coherent dark-frost hierarchy. */
+#view [data-chat-operational] > [aria-label='실시간 채팅'] {
+    border-color: var(--frost-line) !important;
+    background: var(--frost-bg-strong) !important;
+    box-shadow: var(--frost-shadow) !important;
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
+}
+#view [data-chat-list] {
+    background: rgb(8 25 35 / 72%) !important;
+}
+#view [data-chat-conversation] {
+    background: rgb(5 20 29 / 66%) !important;
+}
+#view [data-chat-list] > div:first-child,
+#view [data-chat-conversation] > header,
+#view form[aria-label='메시지 작성'] {
+    border-color: var(--frost-line) !important;
+    background: rgb(14 34 45 / 84%) !important;
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+#view [data-chat-list] input,
+#view form[aria-label='메시지 작성'] textarea {
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--frost-fg) !important;
+    box-shadow: none !important;
+}
+#view [data-chat-list] input::placeholder,
+#view form[aria-label='메시지 작성'] textarea::placeholder {
+    color: var(--frost-subtle) !important;
+}
+#view [data-chat-list] button[aria-current='true'] {
+    border: 1px solid rgb(142 231 242 / 30%);
+    background: rgb(142 231 242 / 14%) !important;
+    color: var(--frost-fg) !important;
+    box-shadow: inset 0 1px rgb(255 255 255 / 8%);
+}
+#view [data-chat-list] button[aria-current='true'] span,
+#view [data-chat-list] button[aria-current='true'] time {
+    color: inherit !important;
+}
+#view [data-chat-conversation] [role='log'] {
+    background: linear-gradient(
+        180deg,
+        rgb(3 16 24 / 22%),
+        rgb(10 29 40 / 34%)
+    );
+}
+#view form[aria-label='메시지 작성'] > div {
+    border-color: var(--frost-line) !important;
+    background: var(--frost-bg-inset) !important;
+    box-shadow: inset 0 1px rgb(255 255 255 / 5%) !important;
+}
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .item-card__market-info {
     border: 0 !important;
     box-shadow:
         0 -4px 0 #172c39,
         0 16px 30px rgba(8, 19, 28, 0.25) !important;
 }
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .inventory-empty-slot {
     min-height: 447px;
     border-color: rgba(142, 231, 242, 0.16) !important;
@@ -2486,18 +3865,23 @@ section > ul.rounded-xl,
 }
 
 /* Market and inventory metadata decks use depth, not a fine bright outline. */
-#view [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
     .item-card,
-#view [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
     .item-card__market-info,
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .item-card__market-info {
     border: 0 !important;
     outline: 0 !important;
 }
-#view [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='마켓 상품 목록'])
     .item-card::after,
-#view [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
+#view
+    [data-testid='app-content-plane']:has([aria-label='인벤토리 슬롯'])
     .item-card::after {
     display: none !important;
     content: none !important;

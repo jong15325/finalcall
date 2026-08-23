@@ -73,8 +73,8 @@ function BidPanel({
     })
 
     return (
-        <aside className="detail-surface rounded-2xl border border-content-line bg-content-surface">
-            <div className="flex flex-col p-5 lg:sticky lg:top-28">
+        <aside className="detail-surface rounded-2xl border border-content-line bg-content-surface lg:flex lg:h-full lg:flex-col">
+            <div className="flex flex-col p-5 lg:sticky lg:top-28 lg:my-auto">
                 <div className="flex items-center justify-between">
                     <Countdown endAt={auction.endAt} now={now} />
                     {auction.extensionCount > 0 && (
@@ -151,7 +151,7 @@ function BidPanel({
                     <button
                         disabled
                         type="button"
-                        className="w-full rounded-lg bg-content-line px-5 py-3.5 text-sm font-bold text-content-subtle disabled:cursor-not-allowed"
+                        className="auction-ended-cta w-full rounded-lg bg-content-line px-5 py-3.5 text-sm font-bold text-content-subtle disabled:cursor-not-allowed"
                     >
                         입찰 마감
                     </button>

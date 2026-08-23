@@ -1,0 +1,202 @@
+.home-banner {
+    border: 1px solid var(--frost-line);
+    border-radius: var(--frost-radius);
+    background: var(--frost-bg-strong);
+    box-shadow: var(--frost-shadow);
+    isolation: isolate;
+}
+
+.home-banner__slide {
+    min-height: 244px;
+    padding: 34px 72px;
+}
+
+.home-banner__glow {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(
+            circle at 78% 42%,
+            color-mix(in srgb, var(--frost-accent) 28%, transparent),
+            transparent 31%
+        ),
+        linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--chrome-strong) 42%, transparent),
+            transparent 68%
+        );
+    pointer-events: none;
+}
+
+.home-banner__content {
+    position: relative;
+    z-index: 2;
+    gap: 10px;
+}
+
+.home-banner__tag,
+.home-banner__subtag {
+    padding: 5px 10px;
+    font-size: 0.67rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+}
+
+.home-banner__title {
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
+    letter-spacing: -0.04em;
+}
+
+.home-banner__description {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.home-banner__cta {
+    min-height: 42px;
+    margin-top: 6px;
+    padding: 0 16px;
+    border: 1px solid var(--frost-line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--frost-bg-control) 82%, transparent);
+    box-shadow: inset 0 1px 0 var(--frost-highlight);
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
+    transition:
+        transform 160ms ease,
+        background-color 160ms ease;
+}
+
+.home-banner__slide:hover .home-banner__cta {
+    background: color-mix(in srgb, var(--frost-bg-control) 100%, transparent);
+    transform: translateX(3px);
+}
+
+.home-banner__art {
+    z-index: 1;
+    width: 35%;
+    justify-content: center;
+    opacity: 0.9;
+    mask-image: linear-gradient(90deg, transparent, black 22%);
+}
+
+.home-banner__art img {
+    max-width: 46%;
+    height: auto;
+}
+
+.home-banner__arrow {
+    z-index: 4;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--frost-line);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--frost-bg-dialog) 70%, transparent);
+    box-shadow: inset 0 1px 0 var(--frost-highlight);
+    backdrop-filter: var(--frost-blur);
+    -webkit-backdrop-filter: var(--frost-blur);
+}
+
+.home-banner__pagination {
+    z-index: 4;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.home-banner__dot {
+    width: 8px;
+    height: 8px;
+}
+
+.home-banner__dot[data-active='true'] {
+    width: 28px;
+}
+
+@media (max-width: 639px) {
+    .home-banner {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .home-banner__track {
+        gap: 12px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        touch-action: pan-x pan-y;
+        transform: none !important;
+    }
+
+    .home-banner__track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .home-banner__slide-shell {
+        width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+    }
+
+    .home-banner__slide {
+        min-height: 254px;
+        padding: 25px 22px 42px;
+        border: 1px solid var(--frost-line);
+        border-radius: 20px;
+        box-shadow: var(--frost-shadow);
+    }
+
+    .home-banner__content {
+        gap: 9px;
+        max-width: 65%;
+    }
+
+    .home-banner__title {
+        font-size: 1.55rem;
+    }
+
+    .home-banner__description {
+        display: -webkit-box;
+        overflow: hidden;
+        font-size: 0.82rem;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .home-banner__cta {
+        min-height: 38px;
+        padding-inline: 13px;
+        font-size: 0.78rem;
+    }
+
+    .home-banner__art {
+        right: -4%;
+        width: 38%;
+        justify-content: flex-end;
+        opacity: 0.72;
+    }
+
+    .home-banner__art img {
+        position: absolute;
+        right: 0;
+        max-width: 78%;
+    }
+
+    .home-banner__art img:last-child {
+        display: none;
+    }
+
+    .home-banner__pagination {
+        bottom: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-banner__cta {
+        transition: none;
+    }
+}

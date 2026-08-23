@@ -1,5 +1,7 @@
 import CodeAmount from '@/components/common/CodeAmount'
-import ItemCardView from '@/features/item/components/ItemCardView'
+import ItemCardView, {
+    ItemCardArtwork,
+} from '@/features/item/components/ItemCardView'
 import { toItemCardViewModel } from '@/features/item/components/itemCardModel'
 import type { MyShopSummary } from '@/lib/api/shop'
 
@@ -33,31 +35,41 @@ function MyShopCard({ shop, now, onCancel, isCancelling }: MyShopCardProps) {
     })
 
     return (
-        <ItemCardView
-            item={item}
-            footer={
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-baseline justify-between gap-1.5 whitespace-nowrap">
-                        <span className="text-label text-content-subtle xs:text-xs">
-                            예상 정산액
-                        </span>
-                        <CodeAmount
-                            value={shop.estimatedSettle}
-                            mode="compact"
-                            className="text-body font-bold text-brand-structure xs:text-sm"
-                        />
+        <div className="shop-card my-shop-card group relative rounded-xl">
+            <ItemCardView
+                density="compact"
+                item={item}
+                artwork={
+                    <div className="item-card__artwork-composition">
+                        <div className="item-card__skill-flip is-market">
+                            <ItemCardArtwork item={item} />
+                        </div>
                     </div>
-                    <button
-                        type="button"
-                        disabled={isCancelling}
-                        className="w-full rounded-lg border border-content-line bg-content-surface px-3 py-2 text-xs font-bold text-content-muted hover:border-danger hover:text-danger-ink disabled:cursor-not-allowed disabled:opacity-60"
-                        onClick={() => onCancel(shop)}
-                    >
-                        {isCancelling ? '내리는 중…' : '내리기'}
-                    </button>
-                </div>
-            }
-        />
+                }
+                footer={
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-baseline justify-between gap-1.5 whitespace-nowrap">
+                            <span className="text-label text-content-subtle xs:text-xs">
+                                예상 정산액
+                            </span>
+                            <CodeAmount
+                                value={shop.estimatedSettle}
+                                mode="compact"
+                                className="text-body font-bold text-brand-structure xs:text-sm"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            disabled={isCancelling}
+                            className="w-full rounded-lg border border-content-line bg-content-surface px-3 py-2 text-xs font-bold text-content-muted hover:border-danger hover:text-danger-ink disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => onCancel(shop)}
+                        >
+                            {isCancelling ? '내리는 중…' : '내리기'}
+                        </button>
+                    </div>
+                }
+            />
+        </div>
     )
 }
 

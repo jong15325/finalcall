@@ -42,6 +42,7 @@ export function ListGrid({
         <Tag
             aria-label={label}
             aria-hidden={hidden || undefined}
+            data-ui-motion-grid
             className={`${GRID_CLASS[layout]} [&>*]:min-w-0`}
         >
             {children}
@@ -140,7 +141,7 @@ function StatePanel({
     action?: ReactNode
 }) {
     return (
-        <section className="liquid-frost liquid-frost--strong flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
+        <section className="ui-motion-state liquid-frost liquid-frost--strong flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
             <h2 className="text-value font-bold text-content-fg">{title}</h2>
             {description && (
                 <p className="mt-1 max-w-[65ch] text-body text-content-muted">
@@ -151,4 +152,3 @@ function StatePanel({
         </section>
     )
 }
-

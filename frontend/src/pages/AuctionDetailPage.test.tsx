@@ -34,7 +34,10 @@ vi.mock('@/features/auction/components/AuctionHeroCard', () => ({
 }))
 vi.mock('@/features/auction/components/BidHistory', () => ({
     default: ({ auctionPublicId }: { auctionPublicId: string }) => (
-        <div data-testid="bid-history" className="detail-surface bg-content-surface">
+        <div
+            data-testid="bid-history"
+            className="detail-surface bg-content-surface"
+        >
             {auctionPublicId}
         </div>
     ),
@@ -174,7 +177,7 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         ).toHaveAttribute('data-element', 'wind')
     })
 
-    it('404에서는 배경을 격리하고 입찰 모달이 sticky 패널보다 높은 계층으로 열린다', () => {
+    it('입찰·구매 모달은 배경 레이어 밖 body 포털에서 sticky 패널보다 높게 열린다', () => {
         mocks.detail.mockReturnValue({
             data: auction,
             isPending: false,
@@ -183,17 +186,12 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         const successView = renderPage()
         fireEvent.click(screen.getByRole('button', { name: '입찰 열기' }))
         const dialog = screen.getByRole('dialog')
-        expect(dialog.parentElement).toHaveClass('fixed', 'z-50')
+        expect(dialog.parentElement).toHaveClass('app-modal-overlay')
         expect(document.body.style.overflow).toBe('hidden')
         expect(screen.getByRole('complementary')).toHaveClass('z-10')
         const backgroundRoot = dialog.closest('.element-detail')
-        expect(backgroundRoot).not.toBeNull()
-        expect(getComputedStyle(backgroundRoot as Element).isolation).not.toBe(
-            'isolate',
-        )
-        expect(getComputedStyle(backgroundRoot as Element).zIndex).toMatch(
-            /^(|auto)$/,
-        )
+        expect(backgroundRoot).toBeNull()
+        expect(document.body).toContainElement(dialog)
         expect(screen.getByTestId('global-navigation')).toHaveClass('z-30')
         successView.unmount()
         expect(document.body.style.overflow).toBe('')
@@ -203,11 +201,8 @@ describe('AuctionDetailPage 속성 배경 계약', () => {
         const purchaseDialog = screen.getByRole('dialog')
         expect(purchaseDialog.parentElement).toHaveClass('fixed', 'z-50')
         expect(document.body.style.overflow).toBe('hidden')
-        expect(
-            getComputedStyle(
-                purchaseDialog.closest('.element-detail') as Element,
-            ).isolation,
-        ).not.toBe('isolate')
+        expect(purchaseDialog.closest('.element-detail')).toBeNull()
+        expect(document.body).toContainElement(purchaseDialog)
         purchaseView.unmount()
         expect(document.body.style.overflow).toBe('')
 
