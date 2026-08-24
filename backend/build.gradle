@@ -56,8 +56,8 @@ dependencies {
 	//   ES = 파생 read-model(정본은 MySQL, search-spec §12.8) — dual-write 금지, 접속은 spring.elasticsearch.uris.
 	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 	// Stage E2: 회복탄력성(CircuitBreaker + Retry). Rate limiter 는 앱 레벨 미도입(게이트웨이 담당).
-	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.3.0'
-	implementation 'io.github.resilience4j:resilience4j-micrometer:2.3.0'      // 메트릭을 Stage 5 Prometheus 로 노출
+	implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.4.0'
+	implementation 'io.github.resilience4j:resilience4j-micrometer:2.4.0'      // 메트릭을 Stage 5 Prometheus 로 노출
 	// Stage F1: 보안(JWT 인증 뼈대)
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.security:spring-security-messaging'
