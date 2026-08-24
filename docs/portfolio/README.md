@@ -1,57 +1,56 @@
-# FinalCall 포트폴리오 도시에 (인덱스)
+# FinalCall 포트폴리오 도시에
 
-## 2026-08-13 추가 도시에
+> 케이스 스터디·이력서·소개 페이지로 재가공하기 위한 근거 중심 중간 산출물이다. 정본은 코드,
+> `docs/spec/`, `docs/board/`, 리뷰와 Git 이력이다. 최종 감사: 2026-08-24.
+
+## 프로젝트 한눈에 보기
+
+FinalCall은 게임 아이템의 등록·경매·입찰·낙찰·정산·게임 지급을 다루는 모놀리식 서비스다. Java 21,
+Spring Boot 3.5, MySQL, Redis를 사용하며 SCG 엣지 게이트웨이를 별도 배포한다. 업무 코드는 현재
+`com.finalcall.domain.<feature>.<layer>` feature-first 구조이고 공용 커널은 `common`·`infra`에 둔다.
+
+Claude Code와 Codex에 같은 역할 분리와 파일 보드 규율을 적용해 `architect → backend/frontend → reviewer`
+흐름을 운영하되, 계약·성능·인가처럼 되돌리기 큰 결정과 Done은 사용자가 승인했다. 핵심 주장은 “AI가 전부
+만들었다”가 아니라 **AI를 통제 가능한 개발 파이프라인으로 구성하고 사람이 기술 판단과 검증 책임을 유지했다**는 것이다.
+
+## 대표 도시에
+
+| 도시에 | 상태 | 포트폴리오에서 증명하는 것 |
+|---|---|---|
+| [ai-development-journey.md](ai-development-journey.md) | 완료·운영 중 | 공통 파일 보드로 기획부터 구현·디자인·리뷰·수정까지 운영한 여정 |
+| [auction-bid-settlement.md](auction-bid-settlement.md) | 완료 | 경매 행 비관적 락+금전 CAS로 입찰·소프트클로즈·마감·정산 불변식 구현 |
+| [search-cdc.md](search-cdc.md) | 완료 | MySQL 정본·Elasticsearch 파생 모델, nori, Kafka/Debezium CDC와 라이브 장애 해결 |
+| [item-delivery.md](item-delivery.md) | 1단계 완료 | DB 우편함+Redis 알림, 트랜잭셔널 아웃박스, 멱등 claim. 게임 실이식 phase-2는 미구현 |
+| [shop.md](shop.md) | 완료 | 고정가 구매 동시성 3중 방어와 공통 정산 꼬리 재사용 |
+
+## 기반·프로세스·기능 도시에
 
 | 도시에 | 상태 | 한 줄 요약 |
 |---|---|---|
-| [frontend-ui-system.md](frontend-ui-system.md) | 완료·게이트3 승인 | navy/gold/orange 역할형 토큰을 단일 정본으로 통합하고, route accent와 commerce chrome을 격리했다. 선언형 route metadata·`ListFrame`·표시/flip/action 카드 composition으로 공개·보호 화면을 이관했으며, 카드·clipping·모바일 배경 회귀와 CTA 대비(2.52/3.25→6.92/5.36)를 후속 보정해 최종 98파일·765테스트를 통과했다. |
+| [skeleton.md](skeleton.md) | 완료 | Spring·Flyway·Redis·JWT·관측성·SCG 기반. 분산락은 데모이며 입찰 정확성 수단은 아님 |
+| [orchestration.md](orchestration.md) | 완료·운영 중 | contract-first, 역할별 AI, 사용자 게이트, 파일 보드·Jira 미러·push 통제 |
+| [process-log.md](process-log.md) | 누적 로그 | Jira 드리프트·보안 리뷰·게임 연동 논의의 시점별 기록 |
+| [frontend-ui-system.md](frontend-ui-system.md) | 완료 | semantic token·AppShell·카드 composition·접근성 대비와 완료 당시 765테스트 |
+| [quality-cleanup.md](quality-cleanup.md) | 완료 | 댓글 소유권을 SecurityContext 회원 ID로 전환하고 테스트 환경 격리 |
+| [member.md](member.md) | 완료 | 회원·탈퇴·refresh 세션 폐기·soft-delete 재가입·열거 방지 |
+| [fe-member.md](fe-member.md) | 완료 | 인증·마이페이지·잔액 UI와 계약 기반 프론트 구현 |
+| [market-quickbuy.md](market-quickbuy.md) | 완료 | 구매 API 재사용, 배치 집계 N+1 회피, 연출 데이터 위조 방지 |
 
-_갱신: 2026-08-13 (portfolio-writer, frontend-ui-system.md 신설 — EPIC-FRONTEND-UI-SYSTEM 브랜드 토큰·고정 commerce chrome·route metadata·목록/카드 composition·정적 guard·FC-280~282 회귀 보정 증거)_
+## 전체 범위와 선별 원칙
 
-## 2026-08-07 추가 도시에
+보드 기준으로 회원·화폐·아이템·경매·입찰·마감·즉시구매·고정가 장터·검색·이메일 인증·OAuth·게시판·
+댓글·메모·채팅·판매관리와 다수 UI 에픽이 완료됐다. 모든 에픽을 장문으로 만들지 않고 기술 선택과
+트레이드오프가 강한 사례만 선별했다. EPIC-RESTRUCTURE와 EPIC-CONVENTION-V2도 완료되어 현재 구조에 반영했다.
 
-| 도시에 | 상태 | 한 줄 요약 |
-|---|---|---|
-| [quality-cleanup.md](quality-cleanup.md) | 완료·게이트3 승인 | 댓글 소유권을 닉네임 추론에서 SecurityContext 회원 ID 기반 `ownedByMe` 계약으로 전환하고, 관리자 권한·tombstone·게스트 경계를 분리했다. OAuth와 백엔드 통합 테스트의 환경 의존성도 격리해 백엔드 586/586·프론트 714/714 회귀 검증을 통과했다. |
+진행 중 항목은 구현 완료로 쓰지 않는다. 2026-08-24 현재 `EPIC-OPS-SEED`와 포트폴리오 최신화 에픽은 진행
+중이다. 검색 운영 재색인 코어는 구현됐지만 관리자 API는 별도 범위로 되돌린 이력이 있다.
 
-_갱신: 2026-08-07 (portfolio-writer, quality-cleanup.md 신설 — EPIC-QUALITY-CLEANUP 댓글 소유권 계약·서버 식별자 판정·프론트 전환·테스트 환경 격리·통합/보안 리뷰 증거)_
+[portfolio-outline.md](portfolio-outline.md)는 FinalCall 독립본 12페이지 초안이다. OnRace의 대기열·처리량
+최적화를 반복하지 않고 AI 개발 운영체계·경매 금전 정합성·검색 CDC·검증 책임에 집중한다.
 
-> 이 폴더는 포트폴리오(케이스 스터디·이력서 불릿·소개 페이지)로 **재가공하기 위한 중간 산출물(도시에)**을
-> 모은다. 정본이 아니라 코드·spec·계약·보드·리뷰·결정로그에서 큐레이션한 파생 요약이며, 모든 주장은
-> 증거(파일 경로·커밋 해시·테스트)로 뒷받침한다. 진행 중 항목은 "진행 중"으로만 표기한다.
->
-> 구조 표준: `_TEMPLATE.md`(개요 / 해결한 기술 도전과 해법 / 핵심 결정과 근거 / 아키텍처 / 증거).
+## 감사 메모
 
-## 프로젝트 개요
-
-**FinalCall** — 게임 아이템 경매 플랫폼. 게임 아이템을 등록·경매·입찰·낙찰하는 대규모 트래픽 경매
-백엔드다. 핵심 기술 도전은 **마감 직전 입찰 폭주(동시성 제어)**와 **실시간 최고가 갱신**이며,
-Java 21 + Spring Boot 3.5 모놀리식 서비스 + SCG 엣지 게이트웨이(별도 배포) 토폴로지로 구성된다.
-개발은 메인세션 총괄 + 서브에이전트 오케스트레이션(파일 티켓 보드 기반)으로 진행한다.
-
-## 도시에 목록
-
-| 도시에 | 상태 | 한 줄 요약 |
-|---|---|---|
-| [skeleton.md](skeleton.md) | 완료 | Stage 0~G 프로덕션 스켈레톤 — 분산락·회복탄력성·JWT·관측성 + SCG 엣지 게이트웨이(rate limit·직접접근 차단) + 모노레포. 대규모 트래픽·동시성 인프라 선점. |
-| [orchestration.md](orchestration.md) | 완료·운영 중 | 파일 티켓 보드 기반 멀티에이전트 오케스트레이션 — contract-first·게이트 정책·상태 머신·Jira 단방향 미러·게이트3 push 차단 훅. "AI 협업 개발 프로세스 설계"라는 메타 성과. |
-| [process-log.md](process-log.md) | 누적 로그 | 프로세스 개선·트러블슈팅·열린 논의의 누적 이력. 항목1=Jira 미러 드리프트 사건→규율화(해결됨, warn-only 훅+HANDOVER 패리티). 항목2=보안 층 도입 논의(**OPEN·미결**). 케이스 스터디가 아니라 재개용 이슈·의사결정 로그. |
-| [member.md](member.md) | 완료·push됨 | 회원 도메인(EPIC-MEMBER) — 프로필/수정/탈퇴. refresh 회전·세션 일괄 폐기(SEC-006), soft delete 재가입 UK(D-081), 열거 방지(COMMON_005/SEC-007), 탈퇴 잔액 소멸 동의(D-080). |
-| [fe-member.md](fe-member.md) | 완료·게이트3 Done | 프론트 내 계정(EPIC-FE-MEMBER) — auth·마이페이지·잔액 표시. contract-first 단일 1패스(팬아웃 교차 분석), `GET /me` 하이드레이션(계약 변경 없이 정합), 디자인 U-020 남색→U-021 라이트 커머스 실코드 교체, COMMON_005 열거방지·메모리 세션·탈퇴 동의(D-080), Jira 미러 누락→규율 전환. |
-| [shop.md](shop.md) | 완료·게이트3 Done | 고정가 마켓(EPIC-SHOP) — "입찰 없는 즉시 SOLD". 정산 꼬리(SettlementRecorder·sale_order source_type=SHOP·수익원장·인벤토리 CAS) **코드 변경 0 재사용**(3번째 소비처), shop 애그리거트 머리만 신규. 동시성 3중 방어(행 FOR UPDATE+status CAS+sale_order UK)·구매/만료 시간축 배타·잔액 user_id 오름차순(A4)·만료 워커 TEMP 직행. contract-first 게이트2 기한 모델 정정→재작업 0, 목업 fidelity+상세 경매디자인 재사용, FC-096 취소 UI 후속 분리. |
-| [market-quickbuy.md](market-quickbuy.md) | 완료·게이트3 Done | 마켓 즉시구매(EPIC-MARKET-QUICKBUY) — 목록에서 게임 "카드정보" UI 차용 모달로 인라인 구매. **구매 API 계약 변경 0**(POST /shops/{id}/purchase 재사용). 규율 2건: **N+1 회피**(판매자 거래횟수를 페이지당 배치 IN 집계 1쿼리로 계약·슬라이스 테스트 Statistics=1 강제)와 **데이터 위조 금지**(연출값을 실데이터/표시파생/제거로 3분 — 거래횟수 실집계 sellerCompletedSales, 채널제한 표시파생 격리, 랭크뱃지 제거). 형상 보존(필드 1개 추가). 디자인 게이트 반복→게이트2 계약 승격→병렬 팬아웃. |
-| [item-delivery.md](item-delivery.md) | 완료·게이트3 Done | 게임 아이템 지급 연동(EPIC-ITEM-DELIVERY) — 낙찰·구매 아이템을 게임 인벤토리로 도착시키는 **웹측 우편함 다리**(1단계). **하이브리드 우편함**(DB 내구 정본 + Redis best-effort 알림, 순수 Redis 기각—증발·이중쓰기·장애전파)·**정산 TX 내 트랜잭셔널 아웃박스**(SettlementRecorder 꼬리 1행, 양 경로 자동 커버)·**claim 멱등**(at-least-once 전달 + item_uuid UK exactly-once 효과)·**재판매 2중 방어**(location XOR CAS + 배송 존재 가드로 apply~IN_GAME lag 창 봉쇄)·게임 claim=DB 직접 프로토콜(웹 API 아님). reviewer 2라운드(MAJOR-2 lag 창 구멍·MAJOR-1 테스트 격리 오염 해소). 게임 실이식은 phase-2. |
-| [frontend-ui-system.md](frontend-ui-system.md) | 완료·게이트3 승인 | 프론트 UI 시스템(EPIC-FRONTEND-UI-SYSTEM) — navy/gold/orange semantic token 단일화, 고정 commerce chrome과 route accent 격리, 선언형 shell metadata, `ListFrame`, 아이템 카드 composition, 정적 guard. 사용자 피드백 회귀 3건을 경계 유지 상태로 보정하고 최신 98파일·765테스트 통과. |
-
-## 향후 도메인 (자리표시 — 미착수/진행 중)
-
-- **화폐(EPIC-CURRENCY) — 진행 중**: `UserBalance` 원자적 증감(조건부 UPDATE, D-008) + 캐시↔게임머니
-  교환(`POST /exchanges`, 멱등키 SEC-004). 완료 시 도시에 추가 예정.
-- **충전(EPIC-CHARGE) — 미착수**: 토스 테스트 결제 연동(외부 연동·시크릿, pg_tx_id 멱등).
-- **경매(auction)** — 구현됨(EPIC-CLOSING 마감·즉시구매 EPIC-PURCHASE 완료): 시작가·즉시구매가·마감시각·상태. 별도 도시에 미작성(SettlementRecorder·sale_order 정산 꼬리는 shop.md에서 재사용 관점으로 다룸).
-- **입찰(bid)** — 미착수: 마감 직전 동시성 제어의 핵심.
-- **정산(settlement)** — 구현됨: SettlementRecorder·sale_order·수익원장(경매·즉시구매·고정가 3소비처 공통). 전용 도시에 미작성.
-- **아이템/카테고리(item/category)** — 부분 구현(ItemInstance 에스크로·인벤토리 CAS). 전용 도시에 미작성.
-
-_최종 갱신: 2026-07-29 (portfolio-writer, market-quickbuy.md 신설 — EPIC-MARKET-QUICKBUY 카드정보 모달 인라인 구매·N+1 회피 배치 집계·데이터 위조 금지 3분)_
-_갱신: 2026-08-05 (portfolio-writer, item-delivery.md 신설 — EPIC-ITEM-DELIVERY 웹 우편함 다리·하이브리드 우편함·트랜잭셔널 아웃박스·claim 멱등·재판매 2중 방어·reviewer 2라운드 MAJOR 2건 해소. process-log 항목 3 갱신)_
+- 기존 인덱스의 `EPIC-CURRENCY 진행 중`, `입찰 미착수` 표기는 보드와 불일치해 수정했다.
+- 과거 `api → domain → infra → common` 설명은 현재 구조가 아니므로 정정했다.
+- 테스트 개수는 각 에픽 완료 당시 리뷰 기록의 수치이며 현재 전체 테스트 총계가 아니다.
+- Git 작성자만으로 Claude Code/Codex 개별 기여를 단정하지 않는다. 역할 정의와 공통 정본 운영을 증거로 삼는다.

@@ -5,7 +5,7 @@
 > 뒷받침한다 — 과장·미구현을 구현으로 쓰지 않는다.
 
 - **영역/에픽**: EPIC-SHOP (고정가 마켓: 등록 `POST /shops` → 즉시 구매 `POST /shops/{id}/purchase` → 취소·기한 만료 회수)
-- **상태**: 완료 · reviewer PASS · 온디맨드 보안 0건 · 게이트3 Done 승인(2026-07-22) · **로컬 커밋(미push)**
+- **상태**: 완료 · reviewer PASS · 온디맨드 보안 0건 · 게이트3 Done 승인(2026-07-22) · 원격 반영 확인
 - **기간(커밋 기준)**: `04f5987`(shop-spec v0.2 계약) ~ `5855626`(backend) ∥ `9ab2b27`+`abcaa1f`(frontend) ~ `fb8a5b6`(게이트3 Done)
 - **관련 티켓**: FC-092(architect)·FC-093(backend-impl)·FC-094(frontend-impl)·FC-095(reviewer) / 후속 FC-096(취소 UI, todo)
 
@@ -90,11 +90,12 @@
 
 ## 4. 아키텍처
 
-의존 방향 `api → domain → infra → common` 단방향. **shop 애그리거트(머리)만 신규, 정산 꼬리는 재사용.**
+현재 코드는 `com.finalcall.domain.shop.<layer>` feature-first 구조다. **shop 애그리거트(머리)만 신규,
+정산 꼬리는 재사용했다.** 아래 다이어그램은 구현 당시의 책임 분리를 현재 패키지 구조로 다시 표기한 것이다.
 
 ```
-api/shop/                          domain/shop/                              [재사용 — 코드 변경 0]
-  ShopController                     ShopService(등록·목록·상세·취소)          settlement/
+domain/shop/controller/            domain/shop/service/                      [재사용 — 코드 변경 0]
+  ShopController                     ShopService(등록·목록·상세·취소)          domain/settlement/
    · POST /shops        (판매자)      · register: markListedIfInInventory CAS    SettlementRecorder.record(SHOP,…)
    · GET  /shops        (공개)         · cancel:   releaseFromListing            SaleOrder(+UK source_type,source_id)
    · GET  /shops/{id}   (공개)        ShopPurchaseService(구매·최고위험)         PlatformRevenueLedger / FeeCalculator
@@ -138,7 +139,7 @@ CAS 3종·구매/취소/등록 서비스·만료 워커·`InventoryService.recov
   폐기). 마켓 상세는 목업 미포함 → **사용자 게이트 결정으로 승인 경매상세 디자인을 고정가 변형 재사용**
   (신규 비주얼 창작 없음).
 - **reviewer PASS → 온디맨드 보안 0건 → 게이트3 Done**: critical/major 0(minor 2 비차단). 에픽 완료
-  직전 `/security-review` 1회 HIGH/MEDIUM **0건**. 사용자 Done 승인, push는 사용자 직접(미push 7건).
+  직전 `/security-review` 1회 HIGH/MEDIUM **0건**. 사용자 Done 승인 후 관련 커밋의 원격 반영을 확인했다.
 
 **교훈**: (1) 목업에 없는 화면(취소·판매관리 UI)을 발견 → 억지로 끼우지 않고 후속 티켓 **FC-096**으로
 분리(EPIC-SHOP done을 막지 않음). 백엔드 cancel API는 FC-093에서 이미 구현, UI 소비처만 후속. (2)

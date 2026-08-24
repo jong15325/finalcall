@@ -5,7 +5,7 @@
 > 뒷받침한다 — 과장·미구현을 구현으로 쓰지 않는다.
 
 - **영역/에픽**: EPIC-MARKET-QUICKBUY (마켓 목록에서 상세 이동 없이 게임 "카드정보" UI를 차용한 모달로 인라인 즉시 구매)
-- **상태**: 완료 · reviewer 전건 passed · 게이트3 Done 승인(2026-07-29) · **로컬 커밋(미push)**
+- **상태**: 완료 · reviewer 전건 passed · 게이트3 Done 승인(2026-07-29) · 원격 반영 확인
 - **기간(커밋 기준)**: `f1aa276`(보드·목업) · `25d3652`(계약 FC-148) → `d088645`(backend FC-149) ∥ `f74c20f`(frontend FC-146·150) → `263e39d`(게이트3 Done)
 - **관련 티켓**: FC-145(디자인 목업)·FC-146(모달 실구현)·FC-147(디자인 변형 목업)·FC-148(거래횟수 계약)·FC-149(백엔드 집계)·FC-150(프론트 표시)
 
@@ -133,8 +133,8 @@ frontend                                        backend
 - **병렬 팬아웃**: FC-149(backend 집계) ∥ FC-150(frontend 표시) — 쓰기 파일 무교차(backend =
   settlement repository·shop service/dto, frontend = 모달 컴포넌트·타입)라 병렬. 프론트는 필드 계약만으로
   선구현하되 통합 확인은 backend 완료 후(프론트는 `?? 0` 안전 폴백으로 필드 미도달 시 "신규 판매자").
-- **reviewer 전건 passed → 게이트3 Done**: FC-145~150 review_status 전부 passed, 사용자 Done 승인,
-  push는 사용자 직접(미push).
+- **reviewer 전건 passed → 게이트3 Done**: FC-145~150 review_status 전부 passed, 사용자 Done 승인 후
+  관련 커밋의 원격 반영을 확인했다.
 
 **교훈**: (1) **연출값을 실데이터/표시파생/제거로 3분**해 목업 충실도와 "위조 금지"를 양립시켰다 — 거래
 횟수는 실집계, 채널제한은 표시 전용으로 격리, 랭크 뱃지는 제거. (2) **N+1을 코드 리뷰가 아니라 계약
