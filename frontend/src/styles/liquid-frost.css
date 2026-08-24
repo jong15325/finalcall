@@ -2917,21 +2917,46 @@ section > ul.rounded-xl,
 }
 @media (max-width: 639px) {
     .auth-shell {
-        padding: 14px;
+        height: 100dvh;
+        min-height: 0;
+        padding: 8px;
     }
     .auth-frame {
-        min-height: calc(100dvh - 28px);
+        height: calc(100dvh - 16px);
+        min-height: 0;
     }
     .auth-form-panel {
         margin-block: 0;
         max-height: none;
-        min-height: calc(100dvh - 28px);
-        padding: 24px 20px;
+        min-height: 0;
+        padding: 16px 18px;
         background: linear-gradient(
             145deg,
             rgba(23, 53, 67, 0.76),
             rgba(7, 27, 38, 0.84)
         );
+    }
+    .auth-form-panel > a {
+        margin-bottom: 14px;
+    }
+    .auth-form-panel > .auth-copy-faint {
+        display: none;
+    }
+    .auth-form > form {
+        margin-top: 16px;
+    }
+    .auth-frame[data-auth-mode='signup'] .auth-form > form {
+        row-gap: 10px;
+    }
+    .auth-form > p:last-child {
+        margin-top: 16px;
+    }
+}
+/* 키보드가 닫힌 일반 스마트폰 높이에서는 불필요한 내부 스크롤을 만들지 않는다.
+ * 소프트 키보드·가로모드처럼 가용 높이가 줄면 기본 overflow-y:auto가 다시 적용된다. */
+@media (max-width: 639px) and (min-height: 700px) {
+    .auth-form-panel {
+        overflow-y: hidden;
     }
 }
 @media (prefers-reduced-motion: no-preference) {

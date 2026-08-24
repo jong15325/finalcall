@@ -16,6 +16,7 @@ function AuthLayout() {
     return (
         <div className="auth-shell relative isolate min-h-screen overflow-hidden px-4 py-5 sm:px-6 sm:py-8">
             <main
+                data-auth-mode={isSignup ? 'signup' : 'login'}
                 className={`auth-frame mx-auto grid min-h-[calc(100vh-2.5rem)] w-full overflow-hidden sm:min-h-[calc(100vh-4rem)] ${
                     isSignup ? 'max-w-6xl' : 'max-w-5xl'
                 }`}
