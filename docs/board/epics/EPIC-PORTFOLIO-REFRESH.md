@@ -3,7 +3,7 @@ id: EPIC-PORTFOLIO-REFRESH
 type: epic
 jira_key: KAN-427
 title: FinalCall 포트폴리오 도시에 최신화
-state: review
+state: done
 children: [FC-383, FC-384, FC-385, FC-386, FC-381, FC-382]
 gate: null
 ---
