@@ -3,7 +3,7 @@
 //   플러그인은 루트와 동일 버전으로 자체 선언한다(루트가 서비스 앱 자체라 subprojects 상속 대신 자립 구성).
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.16'
+    id 'org.springframework.boot' version '4.1.0'
     id 'io.spring.dependency-management' version '1.1.7'
     // 코드 스타일(B-020): 게이트웨이 모듈도 동일 룰셋 적용(루트 config 파일 재사용).
     id 'checkstyle'
