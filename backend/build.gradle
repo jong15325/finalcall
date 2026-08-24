@@ -75,7 +75,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	// Stage 1: 레이어 의존 방향 규율을 test 코드로 강제(ArchUnit)
-	testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.2'
 	// Stage F2: Testcontainers 기반 통합 테스트(실제 MySQL/Redis, H2 대체 금지). 버전은 BOM 관리.
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:junit-jupiter'
