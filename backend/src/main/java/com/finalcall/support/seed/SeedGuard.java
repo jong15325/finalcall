@@ -20,7 +20,7 @@ public final class SeedGuard {
         database = database.substring(database.lastIndexOf('/') + 1).split("\\?")[0];
         int port = uri.getPort() < 0 ? 3306 : uri.getPort();
         String scenario = required(env, "SEED_SCENARIO");
-        if (!java.util.Set.of("ops-20-v1", DEFAULT_SCENARIO).contains(scenario)) {
+        if (!java.util.Set.of("ops-20-v1", DEFAULT_SCENARIO, "board-surf-20-v1").contains(scenario)) {
             throw new IllegalArgumentException("지원하지 않는 시나리오입니다.");
         }
         String fingerprint = uri.getHost().toLowerCase(Locale.ROOT) + ":" + port + "/" + database + ":" + scenario;
@@ -38,7 +38,8 @@ public final class SeedGuard {
                 .equals(env.get("SEED_CONFIRM_WRITE")))) {
             throw new IllegalStateException("쓰기 명령은 SEED_ALLOW_PROD=true와 명령별 SEED_CONFIRM_WRITE가 필요합니다.");
         }
-        if ("apply".equals(normalized) && (hash == null || !BCRYPT.matcher(hash).matches())) {
+        if ("apply".equals(normalized) && !"board-surf-20-v1".equals(scenario)
+            && (hash == null || !BCRYPT.matcher(hash).matches())) {
             throw new IllegalArgumentException("apply에는 BCrypt SEED_PASSWORD_HASH가 필요합니다.");
         }
         return new SeedEnvironment(url, required(env, "SEED_DB_USERNAME"), required(env, "SEED_DB_PASSWORD"), database,
