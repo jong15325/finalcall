@@ -1,0 +1,35 @@
+# On-Race와 동시에 실행하기 위한 FinalCall 로컬 호스트 포트 override.
+# 컨테이너 내부 포트는 유지하고 호스트 공개 포트만 FinalCall 전용 대역으로 옮긴다.
+services:
+  mysql:
+    ports: !override
+      - "127.0.0.1:23306:3306"
+
+  redis:
+    ports: !override
+      - "127.0.0.1:26379:6379"
+
+  elasticsearch:
+    ports: !override
+      - "127.0.0.1:29200:9200"
+
+  kafka:
+    ports: !override
+      - "127.0.0.1:39093:9092"
+      - "127.0.0.1:39092:29092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:39092
+
+  kafka-connect:
+    ports: !override
+      - "127.0.0.1:38083:8083"
+
+  chat-kafka-connect:
+    ports: !override
+      - "127.0.0.1:38084:8083"
+      - "127.0.0.1:39404:9404"
+
+  minio:
+    ports: !override
+      - "127.0.0.1:39000:9000"
+      - "127.0.0.1:39001:9001"

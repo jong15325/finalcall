@@ -1,0 +1,13 @@
+node_modules
+build
+logs
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+.idea
+.claude
+.impeccable
+*.log
+*.tsbuildinfo

@@ -44,6 +44,7 @@ boot*.log
 .env
 .env.*
 !.env.example
+!.env.deploy.example
 
 # Stage G: 앱 JSON 로그 파일(Alloy tail 대상)
 /logs/
@@ -68,6 +69,8 @@ AGENTS.md
 
 # 로컬 실행 로그
 /backend/logs/
+/scripts/seed/*.local.ps1
+/backups/seed/
 
 # 채택하지 않은 일회성 색상 목업
 /docs/ux/mockups/button-color-system-options.html

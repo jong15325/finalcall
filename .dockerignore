@@ -1,0 +1,10 @@
+.git
+.gradle
+.idea
+.env
+.env.*
+!.env.example
+!.env.deploy.example
+**/build
+**/logs
+frontend/node_modules
