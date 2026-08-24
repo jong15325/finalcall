@@ -101,6 +101,14 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+tasks.register('operationsSeed', JavaExec) {
+	group = 'application'
+	description = '운영형 검증 데이터를 수동 관리한다.'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.finalcall.support.seed.OperationsSeedCli'
+	args providers.gradleProperty('seedCommand').orElse('status')
+}
+
 // B-020: Checkstyle — Naver 룰셋(스페이스4 커스터마이즈). 위반/경고 시 빌드 실패(maxWarnings=0).
 checkstyle {
 	// B-021: Java 21 record 파싱 위해 10.20.2 확정(8.24 는 record 파싱 불가). Naver 룰(8.24+)과 호환.

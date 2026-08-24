@@ -11,4 +11,7 @@
 	     프로덕션 코드 enforcement 는 불변. 룰 완화 아니라 컨벤션 정합. -->
 	<suppress files="Test\.java$" checks="MethodName"/>
 	<suppress files="Test\.java$" checks="AbbreviationAsWordInName"/>
+
+	<!-- OPS fixture의 SQL 원문은 스키마 열과 불변식을 한 문장으로 대조해야 하므로 SQL 줄 길이만 예외로 둔다. -->
+	<suppress files="OperationsSeedFixture\.java$" checks="LineLength"/>
 </suppressions>
