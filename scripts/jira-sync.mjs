@@ -70,6 +70,7 @@ function parseBoardFile(file) {
     const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!match) return {file, text, data: null, body: ""};
     const data = {};
+    const listFields = new Set(["artifacts", "blocks", "children", "depends_on"]);
     let listKey = null;
     for (const line of match[1].split(/\r?\n/)) {
         const listMatch = line.match(/^\s+-\s+(.+)$/);
@@ -80,7 +81,7 @@ function parseBoardFile(file) {
         const fieldMatch = line.match(/^([a-z_]+):\s*(.*)$/);
         if (!fieldMatch) continue;
         const [, key, raw] = fieldMatch;
-        if (raw.trim() === "") {
+        if (raw.trim() === "" && listFields.has(key)) {
             data[key] = [];
             listKey = key;
         } else {
@@ -291,7 +292,7 @@ async function recoverCreatedIssue(record) {
 }
 
 function updateJiraKey(record, key) {
-    const next = record.text.replace(/^(jira_key:\s*).+$/m, `$1${key}`);
+    const next = record.text.replace(/^(jira_key:[\t ]*).*$/m, `$1${key}`);
     if (next === record.text) throw new Error(`${record.data.id}: jira_key 필드를 갱신할 수 없습니다.`);
     fs.writeFileSync(record.file, next, "utf8");
     record.text = next;

@@ -1,7 +1,7 @@
 ---
 id: EPIC-BOARD-SEED
 type: epic
-jira_key:
+jira_key: KAN-445
 title: 서프 감성 게시판 운영 데이터 구축
 state: done
 children: [FC-387, FC-388, FC-389, FC-390]
