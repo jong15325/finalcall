@@ -1,12 +1,13 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.34 — FC-366 카드 목록 표시명과 정보 명칭 의미 정정(2026-08-23 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.35 — FC-397 OAuth 라이브 활성화·state 보강 계약 확정(2026-08-25 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, chat-domain-spec v1.9, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.35 | 2026-08-25 | **FC-397 게이트2 사용자 승인 확정.** 기존 SPA 주도+backend code 교환, 즉시 자동가입, 이메일 자동연결 금지, 기존 JWT/refresh, `POST /api/v1/auth/oauth/{provider}` 요청·응답·에러 형상을 유지한다. 브라우저 `sessionStorage` pending state를 `provider+state+issuedAt+안전한 내부 returnPath`로 보강하고 5분 TTL·일회 소비·마지막 시도 우선 정책을 적용한다. PKCE·계정 연결·HttpOnly token cookie는 범위 밖이다. provider key는 환경변수 only, callback은 provider 콘솔·frontend·backend가 정확 일치해야 한다. **스키마·Flyway 무변경.** 정본=`oauth-live-hardening-spec.md` v1.0, 영향=FC-398~403. |
 | v1.34 | 2026-08-23 | **FC-366 변경 계약 사용자 승인 확정.** `cardInfo.formalName`은 카드정보 모달·inline·상세 정보영역의 `{레벨}레벨 {원형 종류}` 명칭으로, `shortName`은 마켓·실시간 경매 등 목록과 compact card의 `Lv.{레벨} {속성약칭}{종류약칭}` 표시명으로 의미를 분리한다. 예: `9레벨 칼` / `Lv.9 바검`, `5레벨 마법` / `Lv.5 흙필`, 스페셜필은 `5레벨 스페셜필` / `Lv.5 흙스필`. `9바검`·`바검`·`불신`·`흙필` 등은 화면 표시명이 아닌 후속 검색 alias로 분리하며 이번 `cardInfo`에 검색 필드를 추가하지 않는다. DTO 형상·DB·엔드포인트·조회 계약은 불변이다. 정본=`item-domain-spec.md` §5.6, `frontend-ui-system-contract.md` §6.7. 영향=FC-367~369. |
 | v1.33 | 2026-08-23 | **FC-366 Gate 2 사용자 승인 확정.** 경매·고정가의 공통 `item` 블록, 인벤토리·임시보관·배송의 `ItemSummaryResponse`, 아이템 인스턴스 상세에 동일한 중첩 `cardInfo`를 가법 추가한다. 서버가 목록 표시명과 카드정보 명칭, 분류·종류·속성 label/약어, 채널 제한, 블랙/골드 프레임·GF 잔여 일수, 슬롯별 스킬 표시와 `calculatedAt`·`validUntil`을 요청/목록당 단일 `Clock` 기준 시각으로 계산한다. 두 명칭의 표시 형식과 사용 경계는 v1.34에서 정정했다. 프론트는 이 값을 재계산하지 않고 렌더한다. 기존 `nameSnapshot`·`displayName`·`goldforceExpireAt` 및 모든 기존 필드는 호환·감사 목적으로 유지한다. DB·엔드포인트·에러코드·검색 계약은 불변이며 스키마 마이그레이션이 없다. 약칭/스킬 검색은 후속 에픽이다. 정본=`item-domain-spec.md` §5.6, `frontend-ui-system-contract.md` §6.7. 영향=FC-367~369. |
 | v1.32 | 2026-08-22 | **FC-352 변경 계약 사용자 승인 확정.** `primaryCharacterId` 허용 집합을 종전 1..28에서 `{1..12,25..28}`로 축소하고 13..24는 `MEMBER_003`(400)으로 거부한다. 기본값 1, API wire, PATCH 부분 수정·원자성, 공개 프로필 노출 의미는 불변이다. 선택 UI·동기화에서 premium 13..24 자산을 제거한다. 정본=`member-domain-spec.md` v1.1, DB=`erd.md` v2.3/V28. 영향=FC-352~358. |
@@ -181,6 +182,8 @@
 
 스키마 정본 = erd §4.1 `user_social_account`·`user` nullable 델타. 게이트2 승인(2026-07-29).
 
+라이브 활성화·브라우저 state·환경변수·provider callback·관측성·롤백 정본 = `oauth-live-hardening-spec.md` v1.0(FC-397, v1.35). **본 절의 API·신원·JWT·스키마 형상은 불변**이다.
+
 네이버·카카오 소셜 로그인. 프론트가 provider 인가 페이지로 리다이렉트해 `code`를 받고, 백엔드가 그 `code`로 토큰 교환·프로필 조회·find-or-create 후 **기존 `/login`과 동일한 JWT를 발급**한다(스테이틀리스 JWT·게이트웨이·`RefreshTokenStore.issue(userId)`를 그대로 재사용 — provider 무관 userId 기반). provider 리다이렉트 복귀지는 백엔드가 아니라 **프론트 `/oauth/callback`**이다. 콜백 API는 `/login`처럼 permitAll이며 엣지 게이트웨이(X-Gateway-Token, D-068)를 경유한다.
 
 신원 모델(결정, 2026-07-29): 신원 키는 **`provider + provider_user_id`**다. 소셜 프로필의 이메일은 **신원이 아니라 프로필 데이터**이며, 같은 이메일의 기존 비밀번호 계정에 **자동 연결하지 않는다**(결정 2). 로그인·가입은 **단일 엔드포인트가 find-or-create**로 통합한다(결정 1) — 최초 호출=자동가입, 이후=로그인(단일 동작).
@@ -192,6 +195,7 @@
   - `code`(string, 필수): provider가 프론트 `/oauth/callback`으로 넘긴 1회용 인가 코드.
   - `redirectUri`(string, 필수): 프론트가 인가 요청에 사용한 redirect_uri. provider 토큰 교환의 redirect_uri **일치 요건** 충족용. 백엔드는 **서버 설정 화이트리스트**(provider별 env)와 대조해 불일치·형식오류 시 400(검증) — open redirect·토큰 탈취 방어.
   - `state`(CSRF)는 **프론트 소유**다 — 프론트가 생성·세션 보관하고 콜백 복귀 시 대조한다(불일치면 백엔드를 호출하지 않고 중단). 스테이틀리스 백엔드는 자신이 만들지 않은 state를 권위 있게 검증할 수 없어(세션 부재) **요청 바디에 두지 않는다**(게이트2 확정 2026-07-29 — state 요청필드·에러코드 없음).
+    - v1.35 보강: pending은 `provider+state+issuedAt+returnPath`로 `sessionStorage`에 저장하고 **5분 TTL**로 일회 소비한다. `returnPath`는 same-origin 내부 상대 경로만 허용하며 무효 시 `/`로 폴백한다. 마지막 인가 시도 하나만 유효하다. 상세 검증 순서와 금지값은 `oauth-live-hardening-spec.md` §3을 따른다.
 - 동작(단일 TX): (1) `code`+`redirectUri`+서버 보관 client_id/secret으로 provider **토큰 교환** → (2) **userinfo** 조회로 `provider_user_id`(+표시명 등 프로필) 획득 → (3) `user_social_account(provider, provider_user_id)` 조회 — **있으면** 해당 user 로그인, **없으면** user(+ `user_balance`(0,0,0), signup과 동일 흐름) · `user_social_account` 생성(자동가입) → (4) 기존 `TokenProvider` + `RefreshTokenStore.issue(userId)`로 발급.
 - 응답 200: `{ accessToken, refreshToken, accessExpiresAt }` — **기존 `LoginResponse` 형상 그대로**(형상 보존). **가입·로그인 모두 200**(201 미사용) — 신규/기존 여부가 상태코드로 드러나지 않게 통일(SEC-007 열거 방지).
 - 신규 가입 시 계정 채움: `password_hash`=NULL·`login_id`=NULL(소셜 전용 — 비밀번호 로그인 불가) · `email`=NULL(소셜 이메일 미저장, 결정 2) · `nickname`=provider 표시명 스템 + **항상** 무작위 꼬리표(아래) · `is_admin`=false · `public_id`=ULID.
@@ -199,6 +203,7 @@
 - 이메일(결정 2): 소셜 프로필 이메일은 **`user.email`에 저장하지 않는다**(NULL 유지). `user.email`은 회원이 §2 `PUT /me/email`로 직접 설정·인증하는 자기 소유 채널로만 채워진다 → `email_active` UK(활성 유니크, EMAIL_007)와 소셜 가입이 **충돌하지 않는다**.
 - 에러: `AUTH_006` 미지원 provider(400) · `AUTH_007` 인가 코드 교환 실패(무효·만료·재사용, 401) · `AUTH_008` provider 통신 실패(토큰 교환·userinfo 조회 중 provider 오류·타임아웃, 502) · `redirectUri` 화이트리스트 위반·형식오류(400 검증)
 - 열거 방지(SEC-007): 성공은 신규·기존 불문 200·동일 형상이라 소셜 계정 존재 여부가 응답으로 드러나지 않는다. 시도 제한은 게이트웨이 rate limit(D-068, login·signup 계열과 동일). provider 비밀정보(client secret 등)는 환경변수(`${OAUTH_<PROVIDER>_*}`, 운영 fail-fast)로 두고 프론트에 미노출한다. provider 호출은 풀링 RestClient(FC-151 커넥션 누수 교훈) — 구현 세부(FC-153/154).
+- v1.35 범위 고정: PKCE·계정 연결/해제·이메일 자동연결·HttpOnly token cookie는 포함하지 않는다. provider 콘솔 callback, 프론트 `VITE_OAUTH_REDIRECT_URI`, 백엔드 `OAUTH_REDIRECT_URI`는 exact match이며 키 실값은 환경변수로만 주입한다. 스키마·Flyway 변경은 없다.
 
 ### 2.5 회원 리소스 (member) — 069, v1.4
 
