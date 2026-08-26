@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Route, Routes } from 'react-router'
 import { screen, waitFor } from '@testing-library/react'
@@ -60,22 +61,28 @@ function stubFetch(handler: (url: string, method: string) => Response) {
 function seedPending(provider: string, state: string) {
     sessionStorage.setItem(
         OAUTH_SESSION_KEY,
-        JSON.stringify({ provider, state }),
+        JSON.stringify({
+            provider,
+            state,
+            issuedAt: Date.now(),
+            returnPath: '/',
+        }),
     )
 }
 
 /** 콜백을 PublicRoute 아래에 두고(성공 시 홈 복귀 검증), 지정 URL 로 진입시킨다. */
-function renderCallback(url: string) {
-    return renderWithProviders(
+function renderCallback(url: string, strict = false) {
+    const routes = (
         <Routes>
             <Route element={<PublicRoute />}>
-                <Route
-                    path="/oauth/callback"
-                    element={<OAuthCallbackPage />}
-                />
+                <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
             </Route>
             <Route path="/" element={<div>HOME</div>} />
-        </Routes>,
+            <Route path="/auctions" element={<div>AUCTIONS</div>} />
+        </Routes>
+    )
+    return renderWithProviders(
+        strict ? <StrictMode>{routes}</StrictMode> : routes,
         { route: url },
     )
 }
@@ -107,7 +114,9 @@ describe('OAuthCallbackPage', () => {
 
         renderCallback('/oauth/callback?state=S1')
 
-        await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+        await waitFor(() =>
+            expect(screen.getByRole('alert')).toBeInTheDocument(),
+        )
         expect(fetchSpy).not.toHaveBeenCalled()
     })
 
@@ -131,7 +140,9 @@ describe('OAuthCallbackPage', () => {
 
         renderCallback('/oauth/callback?code=CODE&state=S1')
 
-        await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+        await waitFor(() =>
+            expect(screen.getByRole('alert')).toBeInTheDocument(),
+        )
         expect(fetchSpy).not.toHaveBeenCalled()
     })
 
@@ -148,7 +159,9 @@ describe('OAuthCallbackPage', () => {
         renderCallback('/oauth/callback?code=CODE&state=S1')
 
         // 성공 → PublicRoute 가 홈으로 되돌린다.
-        await waitFor(() => expect(screen.getByText('HOME')).toBeInTheDocument())
+        await waitFor(() =>
+            expect(screen.getByText('HOME')).toBeInTheDocument(),
+        )
 
         // 기존 토큰 저장 경로 재사용 — 스토어에 토큰·사용자가 확립된다.
         const state = useAuthStore.getState()
@@ -182,5 +195,69 @@ describe('OAuthCallbackPage', () => {
             ),
         )
         expect(useAuthStore.getState().accessToken).toBeNull()
+    })
+
+    it('만료된 pending은 backend를 호출하지 않는다', async () => {
+        const fetchSpy = stubFetch(() => okEnvelope(TOKENS))
+        sessionStorage.setItem(
+            OAUTH_SESSION_KEY,
+            JSON.stringify({
+                provider: 'kakao',
+                state: 'S1',
+                issuedAt: Date.now() - 5 * 60 * 1000 - 1,
+                returnPath: '/',
+            }),
+        )
+        renderCallback('/oauth/callback?code=CODE&state=S1')
+        await waitFor(() =>
+            expect(screen.getByRole('alert')).toBeInTheDocument(),
+        )
+        expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('성공하면 저장한 내부 returnPath로 복귀한다', async () => {
+        stubFetch((url, method) => {
+            if (method === 'POST' && url.includes('/auth/oauth/naver'))
+                return okEnvelope(TOKENS)
+            if (url.includes('/me')) return okEnvelope(ME)
+            throw new Error(`예상하지 못한 요청: ${method} ${url}`)
+        })
+        sessionStorage.setItem(
+            OAUTH_SESSION_KEY,
+            JSON.stringify({
+                provider: 'naver',
+                state: 'S1',
+                issuedAt: Date.now(),
+                returnPath: '/auctions?sort=closing',
+            }),
+        )
+        renderCallback('/oauth/callback?code=CODE&state=S1')
+        await waitFor(() =>
+            expect(screen.getByText('AUCTIONS')).toBeInTheDocument(),
+        )
+    })
+
+    it('StrictMode에서도 backend code 교환을 정확히 한 번만 수행한다', async () => {
+        const fetchSpy = stubFetch((url, method) => {
+            if (method === 'POST' && url.includes('/auth/oauth/kakao')) {
+                return okEnvelope(TOKENS)
+            }
+            if (url.includes('/me')) return okEnvelope(ME)
+            throw new Error(`예상하지 못한 요청: ${method} ${url}`)
+        })
+        seedPending('kakao', 'S1')
+
+        renderCallback('/oauth/callback?code=CODE&state=S1', true)
+
+        await waitFor(() =>
+            expect(screen.getByText('HOME')).toBeInTheDocument(),
+        )
+        expect(
+            fetchSpy.mock.calls.filter(
+                ([url, init]) =>
+                    (init?.method ?? 'GET') === 'POST' &&
+                    String(url).includes('/auth/oauth/kakao'),
+            ),
+        ).toHaveLength(1)
     })
 })

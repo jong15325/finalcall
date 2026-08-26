@@ -3,6 +3,8 @@ package com.finalcall.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -24,6 +26,7 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.domain.auth.dto.TokenBundle;
+import com.finalcall.domain.auth.service.OAuthMetrics.Result;
 import com.finalcall.domain.member.entity.SocialProvider;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.service.SocialAccountService;
@@ -51,9 +54,13 @@ class OAuthServiceUnitTest {
     @Mock
     private RefreshTokenStore refreshTokenStore;
 
+    @Mock
+    private OAuthMetrics oauthMetrics;
+
     private OAuthService oauthService() {
         when(naverStrategy.provider()).thenReturn(SocialProvider.NAVER);
-        return new OAuthService(List.of(naverStrategy), socialAccountService, tokenProvider, refreshTokenStore);
+        return new OAuthService(List.of(naverStrategy), socialAccountService, tokenProvider, refreshTokenStore,
+            oauthMetrics);
     }
 
     @Test
@@ -114,5 +121,22 @@ class OAuthServiceUnitTest {
             .isInstanceOf(BusinessException.class)
             .extracting(e -> ((BusinessException)e).getErrorCode())
             .isEqualTo(AuthErrorCode.AUTH_UNSUPPORTED_PROVIDER);
+    }
+
+    @Test
+    void 예상하지_못한_RuntimeException도_고정_result로_계측하고_원예외를_전파한다() {
+        RuntimeException failure = new IllegalStateException("민감한 내부 오류 원문");
+        when(naverStrategy.exchange("code-1", "http://localhost:5173/oauth/callback"))
+            .thenReturn(new OAuthUserProfile("provider-user-id", "네이버유저"));
+        when(socialAccountService.findOrCreate(
+            SocialProvider.NAVER, "provider-user-id", "네이버유저"))
+            .thenThrow(failure);
+
+        assertThatThrownBy(() -> oauthService().login(
+            "naver", "code-1", "http://localhost:5173/oauth/callback"))
+            .isSameAs(failure);
+
+        verify(oauthMetrics).recordRequest(
+            eq(SocialProvider.NAVER), eq(Result.PROVIDER_ERROR), eq(500), anyLong());
     }
 }

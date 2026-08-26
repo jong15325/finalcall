@@ -13,6 +13,7 @@ import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.domain.auth.dto.TokenBundle;
+import com.finalcall.domain.auth.service.OAuthMetrics.Result;
 import com.finalcall.domain.member.entity.SocialProvider;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.service.SocialAccountService;
@@ -41,11 +42,13 @@ public class OAuthService {
     private final SocialAccountService socialAccountService;
     private final TokenProvider tokenProvider;
     private final RefreshTokenStore refreshTokenStore;
+    private final OAuthMetrics oauthMetrics;
 
     public OAuthService(List<OAuthProviderStrategy> strategies,
         SocialAccountService socialAccountService,
         TokenProvider tokenProvider,
-        RefreshTokenStore refreshTokenStore) {
+        RefreshTokenStore refreshTokenStore,
+        OAuthMetrics oauthMetrics) {
         Map<SocialProvider, OAuthProviderStrategy> map = new EnumMap<>(SocialProvider.class);
         for (OAuthProviderStrategy strategy : strategies) {
             map.put(strategy.provider(), strategy);
@@ -54,6 +57,7 @@ public class OAuthService {
         this.socialAccountService = socialAccountService;
         this.tokenProvider = tokenProvider;
         this.refreshTokenStore = refreshTokenStore;
+        this.oauthMetrics = oauthMetrics;
     }
 
     /**
@@ -66,11 +70,29 @@ public class OAuthService {
      */
     @ServiceLog
     public TokenBundle login(String providerPath, String code, String redirectUri) {
-        OAuthProviderStrategy strategy = resolveStrategy(providerPath);
-        OAuthUserProfile profile = strategy.exchange(code, redirectUri);
-        User user = socialAccountService.findOrCreate(
-            strategy.provider(), profile.providerUserId(), profile.nickname());
-        return issueTokens(user);
+        long startedAt = oauthMetrics.start();
+        OAuthProviderStrategy strategy;
+        try {
+            strategy = resolveStrategy(providerPath);
+        } catch (BusinessException e) {
+            oauthMetrics.recordUnsupportedRequest(startedAt);
+            throw e;
+        }
+        try {
+            OAuthUserProfile profile = strategy.exchange(code, redirectUri);
+            User user = socialAccountService.findOrCreate(
+                strategy.provider(), profile.providerUserId(), profile.nickname());
+            TokenBundle tokens = issueTokens(user);
+            oauthMetrics.recordRequest(strategy.provider(), Result.SUCCESS, 200, startedAt);
+            return tokens;
+        } catch (BusinessException e) {
+            Result result = resultOf(e);
+            oauthMetrics.recordRequest(strategy.provider(), result, e.getErrorCode().getStatus().value(), startedAt);
+            throw e;
+        } catch (RuntimeException e) {
+            oauthMetrics.recordRequest(strategy.provider(), Result.PROVIDER_ERROR, 500, startedAt);
+            throw e;
+        }
     }
 
     /** 경로 provider 문자열을 지원 전략으로 해석한다. enum 미매칭·전략 부재는 모두 {@code AUTH_006}(400). */
@@ -86,6 +108,16 @@ public class OAuthService {
             throw new BusinessException(AuthErrorCode.AUTH_UNSUPPORTED_PROVIDER);
         }
         return strategy;
+    }
+
+    private Result resultOf(BusinessException exception) {
+        if (exception.getErrorCode() == AuthErrorCode.AUTH_OAUTH_EXCHANGE_FAILED) {
+            return Result.EXCHANGE_FAILED;
+        }
+        if (exception.getErrorCode() == AuthErrorCode.AUTH_OAUTH_PROVIDER_ERROR) {
+            return Result.PROVIDER_ERROR;
+        }
+        return Result.CLIENT_INVALID;
     }
 
     /**

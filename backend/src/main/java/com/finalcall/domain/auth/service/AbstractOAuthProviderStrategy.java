@@ -13,6 +13,8 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.CommonErrorCode;
 import com.finalcall.common.util.Preconditions;
 import com.finalcall.domain.auth.config.OAuthProperties;
+import com.finalcall.domain.auth.service.OAuthMetrics.Phase;
+import com.finalcall.domain.auth.service.OAuthMetrics.Result;
 
 /**
  * OAuth provider 전략 공통 골격(auth, EPIC-OAUTH FC-154) — 토큰 교환·HTTP 호출·오류 매핑을 캡슐화한다.
@@ -30,9 +32,11 @@ public abstract class AbstractOAuthProviderStrategy implements OAuthProviderStra
     private static final String GRANT_TYPE = "authorization_code";
 
     private final RestClient oauthRestClient;
+    private final OAuthMetrics oauthMetrics;
 
-    protected AbstractOAuthProviderStrategy(RestClient oauthRestClient) {
+    protected AbstractOAuthProviderStrategy(RestClient oauthRestClient, OAuthMetrics oauthMetrics) {
         this.oauthRestClient = oauthRestClient;
+        this.oauthMetrics = oauthMetrics;
     }
 
     /** 이 전략이 사용할 provider 설정(client id/secret·URI). */
@@ -48,8 +52,16 @@ public abstract class AbstractOAuthProviderStrategy implements OAuthProviderStra
         Preconditions.validate(config.redirectUri().equals(redirectUri), CommonErrorCode.INVALID_INPUT);
 
         String accessToken = requestAccessToken(config, code, redirectUri);
-        JsonNode userInfo = requestUserInfo(config, accessToken);
-        return parseUserInfo(userInfo);
+        long startedAt = oauthMetrics.start();
+        try {
+            JsonNode userInfo = requestUserInfo(config, accessToken);
+            OAuthUserProfile profile = parseUserInfo(userInfo);
+            oauthMetrics.recordProviderCall(provider(), Phase.USERINFO, Result.SUCCESS, startedAt);
+            return profile;
+        } catch (BusinessException e) {
+            oauthMetrics.recordProviderCall(provider(), Phase.USERINFO, Result.PROVIDER_ERROR, startedAt);
+            throw e;
+        }
     }
 
     /**
@@ -57,6 +69,7 @@ public abstract class AbstractOAuthProviderStrategy implements OAuthProviderStra
      * 5xx·IO·타임아웃 → {@code AUTH_008}. 200 이나 access_token 이 없으면 교환 실패로 보고 {@code AUTH_007}.
      */
     private String requestAccessToken(OAuthProperties.Provider config, String code, String redirectUri) {
+        long startedAt = oauthMetrics.start();
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", GRANT_TYPE);
         form.add("client_id", config.clientId());
@@ -73,14 +86,18 @@ public abstract class AbstractOAuthProviderStrategy implements OAuthProviderStra
                 .retrieve()
                 .body(JsonNode.class);
         } catch (HttpClientErrorException e) {
+            oauthMetrics.recordProviderCall(provider(), Phase.TOKEN, Result.EXCHANGE_FAILED, startedAt);
             throw new BusinessException(AuthErrorCode.AUTH_OAUTH_EXCHANGE_FAILED); // 4xx = 인가코드 교환 실패
         } catch (RestClientException e) {
+            oauthMetrics.recordProviderCall(provider(), Phase.TOKEN, Result.PROVIDER_ERROR, startedAt);
             throw new BusinessException(AuthErrorCode.AUTH_OAUTH_PROVIDER_ERROR); // 5xx·타임아웃·IO
         }
         String accessToken = text(body, "access_token");
         if (accessToken == null || accessToken.isBlank()) {
+            oauthMetrics.recordProviderCall(provider(), Phase.TOKEN, Result.EXCHANGE_FAILED, startedAt);
             throw new BusinessException(AuthErrorCode.AUTH_OAUTH_EXCHANGE_FAILED);
         }
+        oauthMetrics.recordProviderCall(provider(), Phase.TOKEN, Result.SUCCESS, startedAt);
         return accessToken;
     }
 

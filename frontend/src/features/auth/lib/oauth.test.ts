@@ -5,6 +5,7 @@ import {
     generateState,
     isProviderConfigured,
     oauthRedirectUri,
+    sanitizeOAuthReturnPath,
     startOAuth,
     type OAuthPending,
 } from './oauth'
@@ -23,6 +24,7 @@ const assign = vi.fn()
 beforeEach(() => {
     vi.stubEnv('VITE_OAUTH_KAKAO_CLIENT_ID', '')
     vi.stubEnv('VITE_OAUTH_NAVER_CLIENT_ID', '')
+    vi.stubEnv('VITE_OAUTH_REDIRECT_URI', undefined)
 
     // jsdom 의 location.assign 은 미구현이라 스파이로 대체하고 오리진을 고정한다.
     Object.defineProperty(window, 'location', {
@@ -140,17 +142,46 @@ describe('startOAuth', () => {
 
     it('설정되면 state 를 세션에 보관하고 인가 페이지로 이동한다', () => {
         vi.stubEnv('VITE_OAUTH_KAKAO_CLIENT_ID', 'kakao-key')
-        startOAuth('kakao')
+        startOAuth('kakao', '/auctions/FC-1?tab=bid#history')
 
         const stored = sessionStorage.getItem(OAUTH_SESSION_KEY)
         expect(stored).not.toBeNull()
         const pending = JSON.parse(stored as string) as OAuthPending
         expect(pending.provider).toBe('kakao')
         expect(pending.state.length).toBeGreaterThan(0)
+        expect(pending.issuedAt).toBeTypeOf('number')
+        expect(pending.returnPath).toBe('/auctions/FC-1?tab=bid#history')
 
         expect(assign).toHaveBeenCalledOnce()
         const target = new URL(assign.mock.calls[0][0] as string)
         // 이동한 URL 의 state 가 세션에 보관한 값과 같다(콜백 대조의 전제).
         expect(target.searchParams.get('state')).toBe(pending.state)
+    })
+})
+
+describe('sanitizeOAuthReturnPath', () => {
+    it.each([
+        null,
+        '',
+        'https://evil.example',
+        '//evil.example',
+        '/oauth/callback',
+        '/oauth/callback/',
+        '/oauth/callback/child',
+        '/\\evil.example',
+        '/safe\\evil',
+        '/safe\npath',
+        '/safe\u0000path',
+        '/%2fevil.example',
+        '/safe%2Fchild',
+        '/safe%5cchild',
+    ])('외부·콜백 경로 %s를 홈으로 대체한다', (value) =>
+        expect(sanitizeOAuthReturnPath(value)).toBe('/'),
+    )
+
+    it('안전한 내부 경로의 query와 hash를 보존한다', () => {
+        expect(sanitizeOAuthReturnPath('/auctions/1?tab=bid#history')).toBe(
+            '/auctions/1?tab=bid#history',
+        )
     })
 })

@@ -72,4 +72,22 @@ class GatewayApplicationTests {
                 .containsEntry("redis-rate-limiter.requestedTokens", "1");
         });
     }
+
+    @Test
+    @DisplayName("OAuth 경로는 service proxy보다 먼저 auth 토큰버킷을 적용한다")
+    void oauthRouteUsesAuthRateLimiter() {
+        RouteDefinition route = routeDefinitionLocator.getRouteDefinitions()
+            .filter(candidate -> "auth-rate-limited".equals(candidate.getId()))
+            .blockFirst();
+        assertThat(route).isNotNull();
+        assertThat(route.getPredicates()).singleElement()
+            .satisfies(predicate -> assertThat(predicate.getArgs()).containsValue("/api/v1/auth/oauth/**"));
+        assertThat(route.getFilters()).singleElement().satisfies(filter -> {
+            assertThat(filter.getName()).isEqualTo("RequestRateLimiter");
+            assertThat(filter.getArgs())
+                .containsEntry("redis-rate-limiter.replenishRate", "5")
+                .containsEntry("redis-rate-limiter.burstCapacity", "10")
+                .containsEntry("redis-rate-limiter.requestedTokens", "1");
+        });
+    }
 }

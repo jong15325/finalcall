@@ -134,8 +134,7 @@ services:
       CHAT_ALLOWED_ORIGINS: https://jjh-finalcall.info
       CHAT_KAFKA_TOPIC_REPLICATION_FACTOR: 1
       CHAT_KAFKA_TOPIC_MIN_ISR: 1
-      OAUTH_NAVER_REDIRECT_URI: https://jjh-finalcall.info/oauth/callback
-      OAUTH_KAKAO_REDIRECT_URI: https://jjh-finalcall.info/oauth/callback
+      OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI:?OAUTH_REDIRECT_URI is required}
       OAUTH_NAVER_CLIENT_ID: ${OAUTH_NAVER_CLIENT_ID:?OAUTH_NAVER_CLIENT_ID is required}
       OAUTH_NAVER_CLIENT_SECRET: ${OAUTH_NAVER_CLIENT_SECRET:?OAUTH_NAVER_CLIENT_SECRET is required}
       OAUTH_KAKAO_CLIENT_ID: ${OAUTH_KAKAO_CLIENT_ID:?OAUTH_KAKAO_CLIENT_ID is required}
@@ -199,6 +198,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_OAUTH_KAKAO_CLIENT_ID: ${VITE_OAUTH_KAKAO_CLIENT_ID:?VITE_OAUTH_KAKAO_CLIENT_ID is required}
+        VITE_OAUTH_NAVER_CLIENT_ID: ${VITE_OAUTH_NAVER_CLIENT_ID:?VITE_OAUTH_NAVER_CLIENT_ID is required}
+        VITE_OAUTH_REDIRECT_URI: ${VITE_OAUTH_REDIRECT_URI:?VITE_OAUTH_REDIRECT_URI is required}
     image: finalcall-frontend:local
     restart: unless-stopped
     depends_on:

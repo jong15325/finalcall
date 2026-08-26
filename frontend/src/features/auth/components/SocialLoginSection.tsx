@@ -1,5 +1,8 @@
+import { useSearchParams } from 'react-router'
 import SocialLoginButton from '@/components/common/SocialLoginButton'
 import { isProviderConfigured, startOAuth } from '@/features/auth/lib/oauth'
+import { sanitizeReturnUrl } from '@/lib/returnUrl'
+import { REDIRECT_URL_KEY } from '@/constants/app.constant'
 
 /**
  * 소셜 로그인 진입 블록 (FC-155 · design-system §5.11).
@@ -10,6 +13,8 @@ import { isProviderConfigured, startOAuth } from '@/features/auth/lib/oauth'
  *   미설정 provider 는 비활성으로 낮추고, 하나라도 미설정이면 안내문을 병기한다.
  */
 export default function SocialLoginSection() {
+    const [searchParams] = useSearchParams()
+    const returnPath = sanitizeReturnUrl(searchParams.get(REDIRECT_URL_KEY))
     const kakaoReady = isProviderConfigured('kakao')
     const naverReady = isProviderConfigured('naver')
     const anyUnready = !kakaoReady || !naverReady
@@ -29,12 +34,12 @@ export default function SocialLoginSection() {
                 <SocialLoginButton
                     provider="kakao"
                     disabled={!kakaoReady}
-                    onClick={() => startOAuth('kakao')}
+                    onClick={() => startOAuth('kakao', returnPath)}
                 />
                 <SocialLoginButton
                     provider="naver"
                     disabled={!naverReady}
-                    onClick={() => startOAuth('naver')}
+                    onClick={() => startOAuth('naver', returnPath)}
                 />
             </div>
 

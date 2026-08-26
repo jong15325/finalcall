@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import useAuth from '@/auth/useAuth'
 import { oauthErrorMessage } from '@/features/auth/lib/authErrors'
-import { OAUTH_SESSION_KEY } from '@/features/auth/lib/oauth'
+import {
+    OAUTH_PENDING_TTL_MS,
+    OAUTH_SESSION_KEY,
+    sanitizeOAuthReturnPath,
+} from '@/features/auth/lib/oauth'
 import type { OAuthProvider } from '@/features/auth/lib/oauth'
 import { paths } from '@/app/paths'
 
@@ -19,7 +23,8 @@ import { paths } from '@/app/paths'
  */
 
 /** 콜백 자체가 무효(백엔드 미호출)일 때의 문구 — CSRF 등 상세는 노출하지 않는다. */
-const INVALID_REQUEST_MESSAGE = '로그인 요청이 올바르지 않습니다. 다시 시도해 주세요.'
+const INVALID_REQUEST_MESSAGE =
+    '로그인 요청이 올바르지 않습니다. 다시 시도해 주세요.'
 /** provider 에서 사용자가 동의를 취소한 경우. */
 const CANCELLED_MESSAGE = '소셜 로그인을 취소했습니다.'
 
@@ -28,6 +33,8 @@ const PROVIDERS: readonly OAuthProvider[] = ['kakao', 'naver']
 interface PendingOAuth {
     provider: OAuthProvider
     state: string
+    issuedAt: number
+    returnPath: string
 }
 
 /** FC-155 가 보관한 `{provider, state}` 를 읽어 형상 검증. 없거나 파손이면 null. */
@@ -38,11 +45,17 @@ function readPending(): PendingOAuth | null {
         const parsed = JSON.parse(raw) as Partial<PendingOAuth>
         if (
             typeof parsed.state === 'string' &&
+            parsed.state.length > 0 &&
+            typeof parsed.issuedAt === 'number' &&
+            Number.isFinite(parsed.issuedAt) &&
+            typeof parsed.returnPath === 'string' &&
             PROVIDERS.includes(parsed.provider as OAuthProvider)
         ) {
             return {
                 provider: parsed.provider as OAuthProvider,
                 state: parsed.state,
+                issuedAt: parsed.issuedAt,
+                returnPath: parsed.returnPath,
             }
         }
     } catch {
@@ -53,6 +66,7 @@ function readPending(): PendingOAuth | null {
 
 export default function OAuthCallbackPage() {
     const { oauthSignIn } = useAuth()
+    const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const [error, setError] = useState<string | null>(null)
     const ranRef = useRef(false)
@@ -75,15 +89,29 @@ export default function OAuthCallbackPage() {
             return
         }
         // state 대조(CSRF): 누락·불일치·보관값 부재면 백엔드를 호출하지 않고 중단한다.
-        if (!code || !state || !pending || pending.state !== state) {
+        const age = pending ? Date.now() - pending.issuedAt : NaN
+        if (
+            !code ||
+            !state ||
+            !pending ||
+            pending.state !== state ||
+            age < 0 ||
+            age > OAUTH_PENDING_TTL_MS
+        ) {
             setError(INVALID_REQUEST_MESSAGE)
             return
         }
 
-        oauthSignIn(pending.provider, code).catch((err) => {
-            setError(oauthErrorMessage(err))
-        })
-    }, [oauthSignIn, searchParams])
+        oauthSignIn(pending.provider, code)
+            .then(() => {
+                navigate(sanitizeOAuthReturnPath(pending.returnPath), {
+                    replace: true,
+                })
+            })
+            .catch((err) => {
+                setError(oauthErrorMessage(err))
+            })
+    }, [navigate, oauthSignIn, searchParams])
 
     if (error) {
         return (

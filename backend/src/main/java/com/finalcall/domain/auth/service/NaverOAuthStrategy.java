@@ -18,8 +18,8 @@ public class NaverOAuthStrategy extends AbstractOAuthProviderStrategy {
 
     private final OAuthProperties oauthProperties;
 
-    public NaverOAuthStrategy(RestClient oauthRestClient, OAuthProperties oauthProperties) {
-        super(oauthRestClient);
+    public NaverOAuthStrategy(RestClient oauthRestClient, OAuthProperties oauthProperties, OAuthMetrics oauthMetrics) {
+        super(oauthRestClient, oauthMetrics);
         this.oauthProperties = oauthProperties;
     }
 

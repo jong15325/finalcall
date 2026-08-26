@@ -23,10 +23,47 @@ const AUTHORIZE_ENDPOINT: Record<OAuthProvider, string> = {
 
 /** 콜백에서 provider·state 를 대조하기 위한 세션 보관 키. FC-156 이 이 값을 읽어 검증한다. */
 export const OAUTH_SESSION_KEY = 'finalcall.oauth'
+export const OAUTH_PENDING_TTL_MS = 5 * 60 * 1000
 
 export interface OAuthPending {
     provider: OAuthProvider
     state: string
+    issuedAt: number
+    returnPath: string
+}
+
+function hasControlCharacter(value: string): boolean {
+    return Array.from(value).some((character) => {
+        const code = character.charCodeAt(0)
+        return code <= 0x1f || code === 0x7f
+    })
+}
+
+export function sanitizeOAuthReturnPath(returnPath?: string | null): string {
+    if (
+        !returnPath ||
+        !returnPath.startsWith('/') ||
+        returnPath.startsWith('//') ||
+        returnPath.includes('\\') ||
+        hasControlCharacter(returnPath) ||
+        /%2f|%5c/i.test(returnPath)
+    ) {
+        return '/'
+    }
+    try {
+        const parsed = new URL(returnPath, window.location.origin)
+        if (
+            parsed.origin !== window.location.origin ||
+            parsed.username ||
+            parsed.password ||
+            /^\/oauth\/callback(?:\/|$)/.test(parsed.pathname)
+        ) {
+            return '/'
+        }
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`
+    } catch {
+        return '/'
+    }
 }
 
 /** provider 별 client_id(env). 없으면 undefined. 지연 조회라 테스트에서 env 를 주입할 수 있다. */
@@ -94,7 +131,7 @@ export function buildAuthorizeUrl(
  * 미설정(client_id 없음)이면 이동하지 않고 경고만 남긴다(화면이 이미 버튼을 비활성으로 두지만
  * 방어적으로 한 번 더 막는다).
  */
-export function startOAuth(provider: OAuthProvider): void {
+export function startOAuth(provider: OAuthProvider, returnPath?: string): void {
     if (!isProviderConfigured(provider)) {
         console.warn(
             `[oauth] ${provider} client_id 가 설정되지 않았습니다(VITE_OAUTH_${provider.toUpperCase()}_CLIENT_ID). 이동을 중단합니다.`,
@@ -108,7 +145,12 @@ export function startOAuth(provider: OAuthProvider): void {
         )
         return
     }
-    const pending: OAuthPending = { provider, state }
+    const pending: OAuthPending = {
+        provider,
+        state,
+        issuedAt: Date.now(),
+        returnPath: sanitizeOAuthReturnPath(returnPath),
+    }
     sessionStorage.setItem(OAUTH_SESSION_KEY, JSON.stringify(pending))
     window.location.assign(buildAuthorizeUrl(provider, state))
 }

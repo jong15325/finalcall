@@ -39,8 +39,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Testcontainers
 class RateLimit429IntegrationTest {
 
-    private static final String LOGIN_URL = "/api/v1/auth/login";
-    private static final String LOGIN_BODY = "{\"loginId\":\"nobody\",\"password\":\"pw12345678\"}";
+    private static final String LOGIN_URL = "/api/v1/auth/oauth/naver";
+    private static final String LOGIN_BODY = "{\"code\":\"one-time-code\",\"redirectUri\":\"http://localhost:5173/oauth/callback\"}";
     /** 버스트(10) + replenish 여유를 확실히 초과하도록 넉넉히 몰아친다. */
     private static final int BURST_ATTEMPTS = 60;
 

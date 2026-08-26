@@ -19,8 +19,8 @@ public class KakaoOAuthStrategy extends AbstractOAuthProviderStrategy {
 
     private final OAuthProperties oauthProperties;
 
-    public KakaoOAuthStrategy(RestClient oauthRestClient, OAuthProperties oauthProperties) {
-        super(oauthRestClient);
+    public KakaoOAuthStrategy(RestClient oauthRestClient, OAuthProperties oauthProperties, OAuthMetrics oauthMetrics) {
+        super(oauthRestClient, oauthMetrics);
         this.oauthProperties = oauthProperties;
     }
 

@@ -13,17 +13,24 @@ import viteConfig from './vite.config'
  * 존재해 두 벌 관리로 갈라지지 않는다. vitest 는 dev 서버를 띄우지 않으므로 상속된 `server.proxy`
  * 는 테스트에서 무해하다(네트워크는 각 테스트가 `fetch` 를 stub 해 차단한다).
  */
-export default mergeConfig(
-    viteConfig,
-    defineConfig({
-        test: {
-            environment: 'jsdom',
-            globals: false, // 전역 주입 없이 'vitest' 에서 명시 import — tsconfig types 추가 불요
-            setupFiles: ['./src/test/setup.ts'],
-            include: ['src/**/*.test.{ts,tsx}'],
-            css: false, // Tailwind 클래스는 문자열로만 검증한다. PostCSS 파이프라인은 렌더에 불필요
-            restoreMocks: true,
-            unstubGlobals: true,
-        },
-    }),
-)
+export default defineConfig(async (configEnv) => {
+    const resolvedViteConfig =
+        typeof viteConfig === 'function'
+            ? await viteConfig(configEnv)
+            : await viteConfig
+
+    return mergeConfig(
+        resolvedViteConfig,
+        defineConfig({
+            test: {
+                environment: 'jsdom',
+                globals: false, // 전역 주입 없이 'vitest' 에서 명시 import — tsconfig types 추가 불요
+                setupFiles: ['./src/test/setup.ts'],
+                include: ['src/**/*.test.{ts,tsx}'],
+                css: false, // Tailwind 클래스는 문자열로만 검증한다. PostCSS 파이프라인은 렌더에 불필요
+                restoreMocks: true,
+                unstubGlobals: true,
+            },
+        }),
+    )
+})
