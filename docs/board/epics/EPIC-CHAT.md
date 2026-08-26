@@ -4,7 +4,7 @@ type: epic
 jira_key: KAN-359
 title: 사용자 간 실시간 채팅 설계 및 구현
 state: doing
-children: [FC-316, FC-317, FC-318, FC-319, FC-320, FC-321, FC-322, FC-323, FC-324, FC-325, FC-326, FC-327, FC-328, FC-329, FC-330, FC-331, FC-332, FC-333, FC-334, FC-335, FC-336, FC-337, FC-338, FC-339, FC-340, FC-341]
+children: [FC-316, FC-317, FC-318, FC-319, FC-320, FC-321, FC-322, FC-323, FC-324, FC-325, FC-326, FC-327, FC-328, FC-329, FC-330, FC-331, FC-332, FC-333, FC-334, FC-335, FC-336, FC-337, FC-338, FC-339, FC-340, FC-341, FC-404, FC-405, FC-406, FC-407]
 gate: null
 ---
 
@@ -35,10 +35,13 @@ gate: null
 - FC-335: 전용 bounded executor 기반 Redis fast-path 구현과 회귀·성능 검증.
 - FC-336: 동일 eventId Kafka replay의 중복 전달을 기대하는 통합 테스트 계약 보정.
 - FC-337: 독립 Linux CI에서 채팅 2-node 단기 성능 단계를 재현하는 수동 workflow 구성.
+- FC-404: 운영 채팅 메시지 실시간 무갱신 원인 진단과 WebSocket handshake 증거 수집.
+- FC-405: 운영 시드 채팅 공개 ID를 ULID 계약에 맞추고 기존 데이터를 보존 교정.
 
 ## 게이트
 - 게이트1: 2026-08-18 사용자 승인 완료.
 - 게이트2: 2026-08-18 권고안 6건 사용자 승인 완료.
 - 게이트2: 2026-08-20 Redis fast-path를 전용 bounded executor로 분리하는 권고안 A 사용자 승인 완료.
+- 게이트2: 2026-08-26 운영 시드 채팅방 공개 ID를 ULID로 교정하고 기존 메시지를 보존하는 권고안 사용자 승인 완료.
 - 디자인 게이트: 2026-08-18 Vuexy 기반 `/__design/chat` 1안 사용자 승인 완료.
 - 게이트3: 구현·reviewer·온디맨드 보안 리뷰 후 사용자 Done·push 승인 필요.
