@@ -33,19 +33,17 @@ export default function ItemListSkeleton({
             <div
                 className={`relative ${artworkClassName} animate-pulse bg-content-soft`}
             />
-            {extendedFacts && (
-                <div
-                    data-skeleton-auction-info-rail
-                    className="flex h-[37px] items-center justify-between gap-3 border-t border-chrome-muted/40 bg-chrome-strong px-2.5"
-                >
-                    <SkeletonLine className="h-4 w-16 bg-chrome-muted" />
-                    <SkeletonLine className="h-4 w-14 bg-chrome-muted" />
-                </div>
-            )}
             {extendedFacts ? (
                 <div data-skeleton-extended-facts className="flex flex-col p-3">
                     <SkeletonLine className="h-[19px] w-3/4" />
                     <SkeletonLine className="mt-0.5 h-[15px] w-1/2" />
+                    <div
+                        data-skeleton-auction-info-rail
+                        className="mt-2.5 flex h-[36px] items-center justify-between gap-3 rounded-[10px] border border-content-line bg-content-soft px-2.5"
+                    >
+                        <SkeletonLine className="h-4 w-16" />
+                        <SkeletonLine className="h-4 w-14" />
+                    </div>
                     <div
                         data-skeleton-skills
                         className="mt-3 grid h-[98px] grid-rows-2 gap-[7px]"

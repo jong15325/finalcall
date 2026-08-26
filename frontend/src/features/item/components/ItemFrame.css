@@ -633,6 +633,15 @@
     min-height: 252px;
 }
 
+.shop-card .item-card__skill-flip.is-market .item-frame__stage {
+    min-height: 208px;
+}
+
+.shop-card .item-frame__stage::before,
+[data-auction-list-card] .item-frame__stage::before {
+    background-size: auto, auto, cover;
+}
+
 .item-card__skill-flip.is-market .item-frame__stage {
     padding-block: 28px;
 }

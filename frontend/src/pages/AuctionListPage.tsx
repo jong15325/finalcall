@@ -181,7 +181,7 @@ export default function AuctionListPage() {
                     <ItemListSkeleton
                         extendedFacts
                         layout="catalog"
-                        artworkClassName="h-[296px]"
+                        artworkClassName="h-[208px]"
                     />
                 )}
             >

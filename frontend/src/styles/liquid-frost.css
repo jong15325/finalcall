@@ -2342,24 +2342,17 @@ section > ul.rounded-xl,
 [data-auction-list-card] .item-card > .relative {
     isolation: isolate;
 }
-[data-auction-list-card] [data-auction-info-rail] {
-    position: absolute;
-    z-index: 4;
-    right: 10px;
-    bottom: 10px;
-    left: 10px;
-    width: auto;
-    min-height: 38px;
-    padding: 7px 10px;
+[data-auction-list-card] .item-card__market-info [data-auction-info-rail] {
+    position: static;
+    width: 100%;
+    min-height: 36px;
+    margin-top: 10px;
+    padding: 6px 9px;
     border: 1px solid var(--frost-line) !important;
-    border-radius: 12px;
+    border-radius: 10px;
     color: var(--frost-fg) !important;
-    background: var(--frost-bg-strong) !important;
-    box-shadow:
-        0 10px 24px rgba(3, 12, 20, 0.36),
-        inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
-    backdrop-filter: blur(16px) saturate(116%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(116%) !important;
+    background: rgba(5, 15, 23, 0.24) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 [data-auction-list-card] [data-auction-info-rail] .auction-info-rail__group {
     gap: 6px;
@@ -2396,13 +2389,8 @@ section > ul.rounded-xl,
     [data-auction-list-card] .item-card__market-info {
         padding: 13px !important;
     }
-    [data-auction-list-card] [data-auction-info-rail] {
-        right: 8px;
-        bottom: 8px;
-        left: 8px;
-        min-height: 36px;
-        padding: 6px 9px;
-        border-radius: 11px;
+    [data-auction-list-card] .item-card__market-info [data-auction-info-rail] {
+        margin-top: 9px;
     }
 }
 [data-page-intro] > a:hover,

@@ -49,6 +49,19 @@ const baseShop: ShopSummary = {
 }
 
 describe('<ShopCard>', () => {
+    it('목록 artwork는 배경을 줄이고 실제 아이템을 1.35배로 표시한다', () => {
+        const { container } = renderWithProviders(
+            <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,
+        )
+
+        expect(container.querySelector('.item-frame')).toHaveStyle({
+            '--art-scale': '1.35',
+        })
+        expect(itemFrameCss).toMatch(
+            /\.shop-card \.item-card__skill-flip\.is-market \.item-frame__stage\s*\{[^}]*min-height:\s*208px;/s,
+        )
+    })
+
     it('공통 비교 control을 이미지 우상단 6px 인셋 hit area에 둔다', () => {
         const { container } = renderWithProviders(
             <ShopCard shop={baseShop} now={NOW} onOpen={noop} />,

@@ -136,17 +136,21 @@ describe('<AuctionCard>', () => {
         expect(rail?.compareDocumentPosition(price as HTMLElement)).toBe(
             Node.DOCUMENT_POSITION_FOLLOWING,
         )
-        expect(price?.parentElement).not.toContainElement(countdown)
+        expect(rail?.closest('.item-card__market-info')).not.toBeNull()
+        expect(price?.parentElement).toContainElement(countdown)
     })
 
-    it('artwork를 마켓 기준보다 44px 확장한다', () => {
+    it('마켓과 같은 artwork 높이에서 아이템을 1.35배 표시한다', () => {
         const { container } = renderWithProviders(
             <AuctionCard auction={baseAuction} now={NOW} />,
         )
         const artwork = container.querySelector('[data-auction-artwork]')
 
-        expect(artwork).toHaveClass('h-[296px]')
-        expect(artwork).toHaveAttribute('data-market-artwork-height', '252')
+        expect(artwork).toHaveClass('h-[208px]')
+        expect(artwork).toHaveAttribute('data-market-artwork-height', '208')
+        expect(container.querySelector('.item-frame')).toHaveStyle({
+            '--art-scale': '1.35',
+        })
     })
 
     it('phase와 전체값을 보존한 입찰 badge를 artwork에 표시한다', () => {

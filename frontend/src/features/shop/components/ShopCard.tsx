@@ -79,7 +79,7 @@ function ShopCard({ shop, now, onOpen }: ShopCardProps) {
                 artwork={
                     <div className="item-card__artwork-composition">
                         <div className="item-card__skill-flip is-market">
-                            <ItemCardArtwork item={item} />
+                            <ItemCardArtwork item={item} scale={1.35} />
                         </div>
                         <div className="item-card__artwork-controls">
                             <div className="item-card__control-gap">

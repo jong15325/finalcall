@@ -73,63 +73,63 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
                 fullHeight
                 density="compact"
                 artwork={
-                    <>
-                        <div
-                            data-auction-artwork
-                            className="relative h-[296px]"
-                            data-market-artwork-height="252"
+                    <div
+                        data-auction-artwork
+                        className="relative h-[208px]"
+                        data-market-artwork-height="208"
+                    >
+                        <ItemCardArtwork item={item} mode="fill" scale={1.35} />
+                        <span
+                            data-auction-badge-stack
+                            className="pointer-events-none absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-col items-end gap-1"
                         >
-                            <ItemCardArtwork item={item} mode="fill" />
                             <span
-                                data-auction-badge-stack
-                                className="pointer-events-none absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-col items-end gap-1"
+                                data-auction-phase-badge
+                                className={`inline-flex shrink-0 items-center whitespace-nowrap text-[10px] font-extrabold ${PHASE_TAG_CLASSES[phase].badge}`}
+                                style={TAG_STYLE}
                             >
                                 <span
-                                    data-auction-phase-badge
-                                    className={`inline-flex shrink-0 items-center whitespace-nowrap text-[10px] font-extrabold ${PHASE_TAG_CLASSES[phase].badge}`}
-                                    style={TAG_STYLE}
-                                >
-                                    <span
-                                        aria-hidden="true"
-                                        className={`shrink-0 ${PHASE_TAG_CLASSES[phase].dot}`}
-                                        style={TAG_DOT_STYLE}
-                                    />
-                                    <span>{auctionPhaseLabelOf(phase)}</span>
-                                </span>
+                                    aria-hidden="true"
+                                    className={`shrink-0 ${PHASE_TAG_CLASSES[phase].dot}`}
+                                    style={TAG_DOT_STYLE}
+                                />
+                                <span>{auctionPhaseLabelOf(phase)}</span>
                             </span>
-                            <ItemCardActionSurface
-                                area="artwork"
-                                keyboard={false}
-                                action={action}
-                                className="!inset-0"
-                            />
-                        </div>
-                        <AuctionInfoRail>
-                            <AuctionInfoGroup>
-                                <TbGavel aria-hidden />
-                                {auction.bidCount > 0 ? (
-                                    <span
-                                        data-auction-bid-count
-                                        aria-label={bidLabel.full}
-                                        title={bidLabel.full}
-                                    >
-                                        {auction.bidCount < 10_000
-                                            ? `입찰 ${formatGameMoney(auction.bidCount)}`
-                                            : bidLabel.visible}
-                                    </span>
-                                ) : (
-                                    <span>첫 입찰 대기</span>
-                                )}
-                            </AuctionInfoGroup>
-                            <AuctionTimeDisplay
-                                ariaLabel={countdown.ariaText}
-                                className="ml-auto"
-                                tone="bare"
-                            >
-                                {countdown.text}
-                            </AuctionTimeDisplay>
-                        </AuctionInfoRail>
-                    </>
+                        </span>
+                        <ItemCardActionSurface
+                            area="artwork"
+                            keyboard={false}
+                            action={action}
+                            className="!inset-0"
+                        />
+                    </div>
+                }
+                meta={
+                    <AuctionInfoRail>
+                        <AuctionInfoGroup>
+                            <TbGavel aria-hidden />
+                            {auction.bidCount > 0 ? (
+                                <span
+                                    data-auction-bid-count
+                                    aria-label={bidLabel.full}
+                                    title={bidLabel.full}
+                                >
+                                    {auction.bidCount < 10_000
+                                        ? `입찰 ${formatGameMoney(auction.bidCount)}`
+                                        : bidLabel.visible}
+                                </span>
+                            ) : (
+                                <span>첫 입찰 대기</span>
+                            )}
+                        </AuctionInfoGroup>
+                        <AuctionTimeDisplay
+                            ariaLabel={countdown.ariaText}
+                            className="ml-auto"
+                            tone="bare"
+                        >
+                            {countdown.text}
+                        </AuctionTimeDisplay>
+                    </AuctionInfoRail>
                 }
                 item={cardItem}
                 action={<ItemCardActionSurface action={action} />}
@@ -139,4 +139,3 @@ function AuctionCard({ auction, now }: AuctionCardProps) {
 }
 
 export default AuctionCard
-

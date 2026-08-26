@@ -54,8 +54,12 @@ describe('AuctionListPage 밝은 region', () => {
         renderPage()
 
         expect(screen.getByText('REALTIME AUCTION')).toBeInTheDocument()
-        expect(screen.getByRole('link', { name: '경매 등록' })).toBeInTheDocument()
-        expect(screen.queryByTestId('list-available-balance')).not.toBeInTheDocument()
+        expect(
+            screen.getByRole('link', { name: '경매 등록' }),
+        ).toBeInTheDocument()
+        expect(
+            screen.queryByTestId('list-available-balance'),
+        ).not.toBeInTheDocument()
     })
 
     it.each([
@@ -102,7 +106,7 @@ describe('AuctionListPage 밝은 region', () => {
         )
     })
 
-    it('loading도 catalog grid와 296px artwork skeleton을 공유한다', () => {
+    it('loading도 catalog grid와 208px artwork skeleton을 공유한다', () => {
         mocks.browse.mockReturnValue({ ...baseQuery, isPending: true })
         const { container } = renderPage()
 
@@ -113,7 +117,7 @@ describe('AuctionListPage 밝은 region', () => {
             'xs:grid-cols-3',
             'min-[1200px]:grid-cols-6',
         )
-        expect(grid?.querySelector('.h-\\[296px\\]')).not.toBeNull()
+        expect(grid?.querySelector('.h-\\[208px\\]')).not.toBeNull()
         expect(
             grid?.querySelector('[data-skeleton-extended-facts]'),
         ).not.toBeNull()
@@ -149,4 +153,3 @@ describe('AuctionListPage 밝은 region', () => {
         expect(region.closest('.element-detail')).toHaveClass('element-detail')
     })
 })
-

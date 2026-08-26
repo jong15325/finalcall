@@ -70,11 +70,11 @@ export default function AuctionCardCandidate({
                 artwork={
                     <div
                         className="item-card__artwork-composition relative"
-                        data-artwork-height="296"
-                        data-market-artwork-height="252"
-                        style={{ height: 296 }}
+                        data-artwork-height="208"
+                        data-market-artwork-height="208"
+                        style={{ height: 208 }}
                     >
-                        <ItemCardArtwork item={item} mode="fill" />
+                        <ItemCardArtwork item={item} mode="fill" scale={1.35} />
                         <span
                             data-auction-badge-row
                             className="pointer-events-none absolute top-2 grid min-w-0 gap-1"

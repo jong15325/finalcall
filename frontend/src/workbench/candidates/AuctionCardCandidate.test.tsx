@@ -159,9 +159,9 @@ describe('<AuctionCardCandidate>', () => {
         ).toBe(true)
         expect(frame.querySelector('.item-frame__stage')).toBeInTheDocument()
         expect(artwork.getElementsByClassName('h-[158px]')).toHaveLength(0)
-        expect(artwork).toHaveAttribute('data-artwork-height', '296')
-        expect(artwork).toHaveAttribute('data-market-artwork-height', '252')
-        expect(296 - 252).toBe(44)
+        expect(artwork).toHaveAttribute('data-artwork-height', '208')
+        expect(artwork).toHaveAttribute('data-market-artwork-height', '208')
+        expect(208 - 208).toBe(0)
     })
 
     it('phase tag uses the scheduled and ended semantic soft roles', () => {

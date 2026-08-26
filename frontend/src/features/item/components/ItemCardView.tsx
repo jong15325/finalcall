@@ -90,6 +90,7 @@ export default function ItemCardView({
                     <p>
                         {item.kindLabel} · Lv.{item.level}
                     </p>
+                    {meta}
                     <ItemSkillList
                         className="item-card__market-skills"
                         skills={item.skills}
@@ -195,10 +196,12 @@ export function ItemCardArtwork({
     item,
     overlay,
     mode = 'card',
+    scale,
 }: {
     item: ItemCardViewModel
     overlay?: ReactNode
     mode?: 'card' | 'preview' | 'fill'
+    scale?: number
 }) {
     const frame = (
         <ItemFrame
@@ -211,6 +214,7 @@ export function ItemCardArtwork({
             frame={item.cardInfo.frame}
             hasSkill={item.skills.length > 0}
             size={mode === 'card' ? undefined : 'stage'}
+            scale={scale}
             now={item.referenceNow}
             overlay={overlay}
         />
