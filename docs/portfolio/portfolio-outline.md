@@ -113,9 +113,10 @@
   - **Workflow Orchestration** — 에픽·티켓으로 분해하고 `architect → backend/frontend → reviewer`의 책임·권한·파일 경계를 설계했다.
   - **Guardrails & Verification** — 레이어 규칙, ArchUnit·테스트, 읽기 전용 reviewer, 사람의 승인 게이트로 범위 이탈과 자기검증 편향을 제어했다.
   - **Engineering Judgment** — AI 결과를 실측·실패 모델로 비교하고 스키마·동시성·성능·Done을 직접 결정했다.
-- **시각 자료**: 네 역량 카드와 중앙의 `기획 → 계약 → 구현 → 리뷰 → 승인` 한 줄. Claude Code·Codex는 작은 도구 라벨로만 표시한다.
+  - **Tool-independent evolution** — 2026-07-10 Claude Code에서 시작해 7월 17일 역할별 에이전트·오케스트레이션을 도입하고, 보안층·입찰 계약·사용자 승인 커밋·feature-first/V2 규약으로 체계를 다듬었다. 2026-08-12에는 같은 프로젝트·도메인 규칙과 spec·파일 보드를 Codex의 `AGENTS.md`·`.codex/agents/**`로 이식하고 모델 고정·실제 UI 워크벤치·Jira 전건 미러까지 확장했다. Claude 구성을 폐기하거나 완전히 교체한 것이 아니라 두 도구가 공통 정본을 읽도록 만들었다.
+- **시각 자료**: 네 역량 카드와 중앙의 `기획 → 계약 → 구현 → 리뷰 → 승인` 한 줄. 하단에는 `Claude Code 기반 구축(07.10~) → 공통 정본 유지 → Codex 이식·확장(08.12~)`을 얇은 타임라인으로 표시한다. 도구 로고보다 공유된 규칙과 파일 정본을 강조한다.
 - **전환 문장**: 이 체계는 AI의 반복 한계에 대응하도록 구체적인 규칙과 검증 단계로 운영됐다.
-- **근거 파일**: `AGENTS.md` §4~5·§8~13, `docs/board/HANDOVER.md`, `docs/portfolio/orchestration.md`, `docs/portfolio/ai-development-journey.md`, `docs/common/proposals/layer-restructure-proposal-v0.1.md`, `backend/src/test/java/com/finalcall/architecture/`.
+- **근거 파일**: `CLAUDE.md` §4~5·§8~13, `.claude/agents/**`, `AGENTS.md` §4~5·§8~13, `.codex/agents/**`, `docs/board/HANDOVER.md`, `docs/portfolio/orchestration.md`, `docs/portfolio/ai-development-journey.md`, `docs/common/proposals/layer-restructure-proposal-v0.1.md`, `backend/src/test/java/com/finalcall/architecture/`, 커밋 `92ae82b2`.
 - **삭제/통합 대상**: 파일 기억·contract-first·역할·게이트·레이어·Claude→Codex를 각각 한 페이지로 만들지 않는다. Karpathy 직접 적용 주장은 쓰지 않는다.
 
 ## 8. AI COLLABORATION — 한계와 대응
@@ -134,7 +135,7 @@
   - `규칙 자체가 성과가 아니라, 잘못된 완료 판정을 되돌릴 수 있었던 것이 성과입니다.`
 - **시각 자료**: 세 개의 `한계 → 장치 → 효과` 흐름. 규칙 전문이나 설정 화면은 싣지 않는다.
 - **전환 문장**: 다음 두 사례는 이 체계가 실제 기술 결정과 출시 판단에서 작동한 증거다.
-- **근거 파일**: `.agents/skills/coding-discipline/SKILL.md`, `AGENTS.md` §8~13, `docs/board/reviews/FC-089-090-review.md`, `docs/portfolio/orchestration.md`.
+- **근거 파일**: `.agents/skills/coding-discipline/SKILL.md`, `CLAUDE.md` §8~13, `.claude/agents/**`, `AGENTS.md` §8~13, `.codex/agents/**`, `docs/board/reviews/FC-089-090-review.md`, `docs/portfolio/orchestration.md`.
 - **삭제/통합 대상**: 코딩 규율·레이어 템플릿·reviewer 사례를 별도 페이지로 나누지 않는다. 외부 인물 규칙의 직접 적용 귀속을 제거한다.
 
 ## 9. AI COLLABORATION — 판단과 검증 사례
@@ -163,7 +164,7 @@
   - `좋은 AI 활용은 더 많이 생성하는 능력이 아니라, 무엇을 맡기고 무엇을 직접 판단할지 설계하는 능력이라고 배웠습니다.`
 - **시각 자료**: 네 역량 키워드와 마지막 문장을 강조한다. 숫자는 검증 범위만 사용한다.
 - **전환 문장**: 없음. 저장소·상세 기술 문서 QR은 선택 사항이다.
-- **근거 파일**: `docs/portfolio/ai-development-journey.md`, `docs/portfolio/orchestration.md`, `docs/portfolio/auction-bid-settlement.md`, `docs/board/tickets/FC-329.md`, `docs/board/HANDOVER.md`.
+- **근거 파일**: `CLAUDE.md`, `.claude/agents/**`, `AGENTS.md`, `.codex/agents/**`, `docs/portfolio/ai-development-journey.md`, `docs/portfolio/orchestration.md`, `docs/portfolio/auction-bid-settlement.md`, `docs/board/tickets/FC-329.md`, `docs/board/HANDOVER.md`.
 - **삭제/통합 대상**: 기능·테스트·커밋 수를 무리하게 합산하지 않는다. `AI가 전부 수행`, `완전 자동화`, `운영 검증 완료`는 쓰지 않는다.
 
 ---
@@ -178,6 +179,17 @@
 - Karpathy 직접 적용을 주장하지 않고 저장소의 coding-discipline 세 원칙만 출처에 맞게 쓴다.
 - 공개 운영 배포·실사용자·운영 트래픽 증거가 없으므로 만들거나 암시하지 않는다.
 - OnRace 디자인 언어 차용은 이 설계서 승인 이후 PPT 제작 단계에서 적용한다.
+
+## Claude Code → Codex 전환 근거 메모 (비슬라이드용)
+
+- `CLAUDE.md`는 2026-07-10 프로젝트 초기 구축과 함께 시작됐다(`5b4a5a07`, `788f0ad3`).
+- 2026-07-17 `fdd88d5b`에서 오케스트레이션 절과 실행 에이전트 5종을 도입했고, `.claude/agents/**`에 architect·backend-impl·frontend-impl·reviewer·portfolio-writer 역할을 분리했다.
+- 2026-07-18 `b125456b`에서 보안층을 규칙으로 고정하고, `434aa268`에서 입찰 계약의 DB 행 락+금전 CAS 결정을 반영했다.
+- 2026-07-24 `4fe2e4df`에서 커밋을 자동 실행이 아닌 사용자 승인 방식으로 바꿨다.
+- 2026-07-25~26 `0b8455ab`·`1a2995c7`·`3324c87d`·`9e7ec840`에서 feature-first와 Convention V2를 확정했다.
+- 2026-08-12 `92ae82b2`에서 `AGENTS.md`, `.codex/config.toml`, `.codex/agents/**`를 추가해 동일 체계를 Codex에 이식했다.
+- `CLAUDE.md`와 `AGENTS.md`는 프로젝트·도메인·contract-first·역할·게이트·파일 보드 원칙을 공유한다. Codex 구성은 모델 고정, 실제 프론트 dev-only 워크벤치 기반 디자인 게이트, Jira 전건 미러 등으로 후속 확장됐다.
+- 따라서 포트폴리오 표현은 `Claude Code를 폐기하고 Codex로 완전 교체`가 아니라 `Claude Code에서 구축한 협업 규칙을 공통 파일 정본으로 유지한 채 Codex에도 도구 독립적으로 이식·확장`이 정확하다.
 
 ## 원천 도시에
 
