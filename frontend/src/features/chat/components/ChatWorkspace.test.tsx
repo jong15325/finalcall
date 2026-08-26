@@ -267,6 +267,127 @@ beforeEach(() => {
 })
 
 describe('ChatWorkspace', () => {
+    it('열린 대화방에서 상대 메시지를 받으면 최신 sequence까지 읽음 처리한다', async () => {
+        const mock = createMockRuntime()
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
+        await openConversation()
+        await waitFor(() =>
+            expect(mock.rest.updateRead).toHaveBeenCalledWith('room-1', 1),
+        )
+        vi.mocked(mock.rest.updateRead).mockClear()
+
+        mock.emit({
+            eventId: 'event-read-message-2',
+            eventVersion: 1,
+            eventType: 'MESSAGE_CREATED',
+            roomPublicId: 'room-1',
+            occurredAt: '2026-08-18T09:02:00Z',
+            payload: { message: message(2, '새 실시간 메시지') },
+        })
+
+        await waitFor(() =>
+            expect(mock.rest.updateRead).toHaveBeenCalledWith('room-1', 2),
+        )
+    })
+
+    it('상대의 READ_UPDATED를 받으면 보낸 메시지를 즉시 읽음으로 표시한다', async () => {
+        const mock = createMockRuntime()
+        mock.setMessages([message(1, '내가 보낸 메시지', true)])
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
+        await openConversation()
+        expect(await screen.findByText('전송됨')).toBeVisible()
+
+        mock.emit({
+            eventId: 'event-counterpart-read-1',
+            eventVersion: 1,
+            eventType: 'READ_UPDATED',
+            roomPublicId: 'room-1',
+            occurredAt: '2026-08-18T09:02:00Z',
+            payload: {
+                readerMemberPublicId: 'member-luna',
+                throughSequence: 1,
+                readAt: '2026-08-18T09:02:00Z',
+            },
+        })
+
+        expect(await screen.findByText('읽음')).toBeVisible()
+        expect(screen.queryByText('전송됨')).not.toBeInTheDocument()
+    })
+
+    it('연속 읽음 요청의 응답 순서가 바뀌어도 읽음 상태가 후퇴하지 않는다', async () => {
+        const mock = createMockRuntime()
+        const readResolvers = new Map<
+            number,
+            (value: { lastReadSequence: number; readAt: string }) => void
+        >()
+        vi.mocked(mock.rest.updateRead).mockImplementation(
+            async (_roomPublicId, throughSequence) => {
+                if (throughSequence === 1) {
+                    return {
+                        lastReadSequence: 1,
+                        readAt: '2026-08-18T09:01:00Z',
+                    }
+                }
+                return new Promise((resolve) => {
+                    readResolvers.set(throughSequence, resolve)
+                })
+            },
+        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
+        await openConversation()
+
+        mock.emit({
+            eventId: 'event-read-race-2',
+            eventVersion: 1,
+            eventType: 'MESSAGE_CREATED',
+            roomPublicId: 'room-1',
+            occurredAt: '2026-08-18T09:02:00Z',
+            payload: { message: message(2, '두 번째 메시지') },
+        })
+        mock.emit({
+            eventId: 'event-read-race-3',
+            eventVersion: 1,
+            eventType: 'MESSAGE_CREATED',
+            roomPublicId: 'room-1',
+            occurredAt: '2026-08-18T09:03:00Z',
+            payload: { message: message(3, '세 번째 메시지') },
+        })
+        await waitFor(() => {
+            expect(readResolvers.has(2)).toBe(true)
+            expect(readResolvers.has(3)).toBe(true)
+        })
+
+        act(() => {
+            readResolvers.get(3)?.({
+                lastReadSequence: 3,
+                readAt: '2026-08-18T09:03:00Z',
+            })
+        })
+        await waitFor(() =>
+            expect(mock.rest.updateRead).toHaveBeenCalledWith('room-1', 3),
+        )
+        act(() => {
+            readResolvers.get(2)?.({
+                lastReadSequence: 2,
+                readAt: '2026-08-18T09:02:00Z',
+            })
+        })
+
+        await userEvent.click(
+            screen.getByRole('button', { name: '대화 목록으로' }),
+        )
+        await waitFor(() =>
+            expect(
+                screen.getByRole('button', { name: '루나상점 대화 열기' }),
+            ).toBeVisible(),
+        )
+        expect(
+            screen.queryByRole('button', {
+                name: '루나상점 대화 열기, 읽지 않은 메시지 1개',
+            }),
+        ).not.toBeInTheDocument()
+    })
+
     it('모바일 목록에서 대화로 이동하고 동일 clientMessageId로 optimistic 전송을 수렴한다', async () => {
         const mock = createMockRuntime()
         const view = render(

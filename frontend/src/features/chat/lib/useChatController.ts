@@ -147,15 +147,7 @@ export function useChatController({
                 updateRooms((current) =>
                     current.map((candidate) =>
                         candidate.roomPublicId === roomPublicId
-                            ? {
-                                  ...candidate,
-                                  lastReadSequence: result.lastReadSequence,
-                                  unreadCount: Math.max(
-                                      0,
-                                      candidate.lastSequence -
-                                          result.lastReadSequence,
-                                  ),
-                              }
+                            ? roomAfterRead(candidate, result.lastReadSequence)
                             : candidate,
                     ),
                 )
@@ -845,10 +837,9 @@ function roomAfterMessage(
     const isNew = message.roomSequence > room.lastSequence
     if (!isNew) return room
 
-    const readSequence =
-        selected || message.sentByMe
-            ? Math.max(room.lastReadSequence, message.roomSequence)
-            : room.lastReadSequence
+    const readSequence = message.sentByMe
+        ? Math.max(room.lastReadSequence, message.roomSequence)
+        : room.lastReadSequence
     return {
         ...room,
         lastMessage: {
@@ -868,6 +859,18 @@ function roomAfterMessage(
             message.createdAt > room.lastActivityAt
                 ? message.createdAt
                 : room.lastActivityAt,
+    }
+}
+
+function roomAfterRead(
+    room: ChatRoomResponse,
+    lastReadSequence: number,
+): ChatRoomResponse {
+    const mergedReadSequence = Math.max(room.lastReadSequence, lastReadSequence)
+    return {
+        ...room,
+        lastReadSequence: mergedReadSequence,
+        unreadCount: Math.max(0, room.lastSequence - mergedReadSequence),
     }
 }
 
