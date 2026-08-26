@@ -141,18 +141,18 @@ function AppShellContent() {
             )}
 
             <div
-                className={`flex min-w-0 flex-1 flex-col pb-[calc(5.75rem+env(safe-area-inset-bottom))] xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden' : ''}`}
+                className={`flex min-w-0 flex-1 flex-col xl:pb-0 ${chatRoute ? 'min-h-0 overflow-hidden pb-0' : 'pb-[calc(5.75rem+env(safe-area-inset-bottom))]'}`}
             >
                 <div
                     ref={navigationSentinelRef}
                     aria-hidden
                     data-app-navigation-sentinel
-                    className="h-2 xl:h-3"
+                    className={`h-2 xl:h-3 ${chatRoute ? 'hidden sm:block' : ''}`}
                 />
                 <div
                     data-app-navigation-frame
                     data-dock-state={navigationStuck ? 'stuck' : 'flow'}
-                    className={`sticky z-30 px-3 sm:px-5 xl:px-8 ${navigationStuck ? 'top-0' : 'top-2 xl:top-3'}`}
+                    className={`sticky z-30 px-3 sm:px-5 xl:px-8 ${chatRoute ? 'hidden sm:block' : ''} ${navigationStuck ? 'top-0' : 'top-2 xl:top-3'}`}
                 >
                     <div
                         data-app-navigation-surface
@@ -168,13 +168,13 @@ function AppShellContent() {
 
                 <main
                     id="view"
-                    className={`min-w-0 flex-1 px-3 pb-4 sm:px-5 sm:pb-5 xl:px-8 xl:pb-7 ${chatRoute ? 'flex min-h-0 overflow-hidden' : ''}`}
+                    className={`min-w-0 flex-1 xl:px-8 xl:pb-7 ${chatRoute ? 'flex min-h-0 overflow-hidden p-0 sm:px-5 sm:pb-5' : 'px-3 pb-4 sm:px-5 sm:pb-5'}`}
                 >
                     <div
                         key={pathname}
                         data-testid="app-content-plane"
                         data-content-plane={routeUi.contentPlane}
-                        className={`app-route-enter mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface px-3 py-4 sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : ''}`}
+                        className={`app-route-enter mx-auto w-full min-w-0 max-w-[1440px] bg-content-surface sm:rounded-xl sm:border sm:border-content-line sm:px-6 sm:py-6 sm:shadow-sm xl:rounded-2xl ${chatRoute ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-0' : 'px-3 py-4'}`}
                     >
                         <Outlet />
                     </div>
@@ -187,7 +187,7 @@ function AppShellContent() {
 
             <CompareBar />
 
-            <MobileBottomNav />
+            {!chatRoute && <MobileBottomNav />}
         </div>
     )
 }

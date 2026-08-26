@@ -151,7 +151,7 @@ export default function ChatWorkspace({
         >
             <section
                 aria-label="실시간 채팅"
-                className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-content-line bg-content-surface shadow-sm lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
+                className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden border-0 bg-content-surface shadow-none sm:rounded-2xl sm:border sm:border-content-line sm:shadow-sm lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
             >
                 <aside
                     data-chat-list
@@ -162,6 +162,13 @@ export default function ChatWorkspace({
                     }`}
                 >
                     <div className="flex items-center gap-2 border-b border-content-line p-3 sm:p-4">
+                        <a
+                            href="/me"
+                            aria-label="마이페이지로 돌아가기"
+                            className="flex size-11 shrink-0 items-center justify-center rounded-lg text-content-muted hover:bg-content-soft hover:text-content-fg sm:hidden"
+                        >
+                            <TbChevronLeft aria-hidden className="size-5" />
+                        </a>
                         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-content-line bg-content-soft px-3 focus-within:border-control-action focus-within:ring-2 focus-within:ring-control-focus">
                             <TbSearch
                                 aria-hidden

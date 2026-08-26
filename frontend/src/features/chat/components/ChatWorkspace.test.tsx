@@ -299,6 +299,9 @@ describe('ChatWorkspace', () => {
         ).not.toBeInTheDocument()
         expect(list).toHaveClass('flex')
         expect(conversation).toHaveClass('hidden')
+        expect(
+            screen.getByRole('link', { name: '마이페이지로 돌아가기' }),
+        ).toHaveAttribute('href', '/me')
         expect(mock.rest.updateRead).not.toHaveBeenCalled()
 
         await openConversation()

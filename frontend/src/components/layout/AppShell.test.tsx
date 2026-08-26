@@ -122,6 +122,9 @@ describe('AppShell route-scoped 상세 배경', () => {
         const contentPlane = chatView.getByTestId('app-content-plane')
         const footerWrapper =
             chatView.container.querySelector('footer')!.parentElement
+        const navigationFrame = chatView.container.querySelector(
+            '[data-app-navigation-frame]',
+        )
 
         expect(shell).toHaveClass('min-h-0', 'overflow-hidden')
         expect(shell).not.toHaveClass('app-shell-height')
@@ -130,15 +133,21 @@ describe('AppShell route-scoped 상세 배경', () => {
             height: 'var(--chat-viewport-height, 100dvh)',
         })
         expect(main?.parentElement).toHaveClass('min-h-0', 'overflow-hidden')
+        expect(main?.parentElement).toHaveClass('pb-0')
         expect(main?.parentElement).not.toHaveClass('xl:overflow-visible')
-        expect(main).toHaveClass('flex', 'min-h-0', 'overflow-hidden')
+        expect(navigationFrame).toHaveClass('hidden', 'sm:block')
+        expect(main).toHaveClass('flex', 'min-h-0', 'overflow-hidden', 'p-0')
         expect(contentPlane).toHaveClass(
             'flex',
             'min-h-0',
             'flex-1',
             'flex-col',
             'overflow-hidden',
+            'p-0',
         )
+        expect(
+            chatView.queryByRole('navigation', { name: '모바일 주요 메뉴' }),
+        ).not.toBeInTheDocument()
         expect(footerWrapper).toHaveClass('hidden')
         expect(footerWrapper).not.toHaveClass('xl:block')
 
@@ -156,6 +165,9 @@ describe('AppShell route-scoped 상세 배경', () => {
         expect(
             marketView.container.querySelector('footer')?.parentElement,
         ).toHaveClass('contents')
+        expect(
+            marketView.getByRole('navigation', { name: '모바일 주요 메뉴' }),
+        ).toBeInTheDocument()
     })
 
     it('production 입력 CSS에서 100vh fallback 뒤에 100dvh를 선언한다', () => {
@@ -164,6 +176,8 @@ describe('AppShell route-scoped 상세 배경', () => {
             appCss.indexOf('@supports (min-height: 100dvh)'),
         )
         expect(appCss).toContain('min-height: 100dvh')
+        expect(appCss).toContain('scrollbar-width: none')
+        expect(appCss).toContain('html::-webkit-scrollbar')
     })
 
     it('visualViewport 높이를 반영하고 채팅 shell 해제 시 전역 상태를 정리한다', () => {

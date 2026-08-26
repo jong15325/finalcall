@@ -19,6 +19,18 @@
         scrollbar-gutter: stable;
     }
 
+    @media (max-width: 639px) {
+        html {
+            scrollbar-gutter: auto;
+            scrollbar-width: none;
+        }
+
+        html::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+    }
+
     body {
         @apply bg-app-canvas font-sans text-sm font-medium leading-normal text-content-fg antialiased;
         /* 외부 가로 오버플로 차단(HANDOVER §3.4) */

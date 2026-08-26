@@ -64,7 +64,7 @@ describe('WorldMapBackground', () => {
         vi.unstubAllGlobals()
     })
 
-    it('모바일 art-direction과 350KB 이하 JPEG fallback을 제공한다', () => {
+    it('모바일과 데스크톱에서 동일한 지도 원본을 사용한다', () => {
         vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
             null,
         )
@@ -81,20 +81,15 @@ describe('WorldMapBackground', () => {
         )
 
         expect(
-            view.container.querySelector(
-                'source[type="image/avif"][media="(max-width: 639px)"]',
+            view.container.querySelectorAll(
+                'source[media="(max-width: 639px)"]',
             ),
-        ).toHaveAttribute(
-            'srcset',
-            '/img/backgrounds/world-map/world-map-mobile.avif',
-        )
+        ).toHaveLength(0)
         expect(
-            view.container.querySelector(
-                'source[type="image/jpeg"][media="(max-width: 639px)"]',
-            ),
+            view.container.querySelector('source[type="image/avif"]'),
         ).toHaveAttribute(
             'srcset',
-            '/img/backgrounds/world-map/world-map-mobile.jpg',
+            '/img/backgrounds/world-map/world-map-1920.avif',
         )
         expect(view.container.querySelectorAll('canvas')).toHaveLength(1)
         expect(
@@ -128,6 +123,26 @@ describe('WorldMapBackground', () => {
         expect(reducedMotion).toContain('element-detail__ambient-canvas')
         expect(reducedMotion).not.toContain('world-map-background__image')
         expect(forcedColors).toContain('display: none')
+    })
+
+    it('모바일 배경은 키보드 viewport 변화와 분리된 안정 높이를 사용한다', () => {
+        const css = readFileSync(
+            `${process.cwd()}/src/components/layout/WorldMapBackground.css`,
+            'utf8',
+        )
+        const mobile = css.slice(
+            css.indexOf('@media (max-width: 639px)'),
+            css.indexOf('@media (prefers-reduced-motion: reduce)'),
+        )
+
+        expect(mobile).toContain('bottom: auto')
+        expect(mobile).toContain('height: 100vh')
+        expect(mobile).toContain('@supports (height: 100lvh)')
+        expect(mobile).toContain('height: 100lvh')
+        expect(mobile).toContain('world-map-1920.jpg')
+        expect(mobile).toContain('filter: blur(18px)')
+        expect(mobile).toContain('mask-image: linear-gradient')
+        expect(css).toContain('width: 100vw')
     })
 
     it('회전 스포트라이트 CSS만 제거하고 다른 글로우는 유지한다', () => {

@@ -21,26 +21,11 @@ export default function WorldMapBackground({
                 <picture>
                     <source
                         type="image/avif"
-                        media="(max-width: 639px)"
-                        srcSet="/img/backgrounds/world-map/world-map-mobile.avif"
-                    />
-                    <source
-                        type="image/avif"
                         srcSet="/img/backgrounds/world-map/world-map-1920.avif"
                     />
                     <source
                         type="image/webp"
-                        media="(max-width: 639px)"
-                        srcSet="/img/backgrounds/world-map/world-map-mobile.webp"
-                    />
-                    <source
-                        type="image/webp"
                         srcSet="/img/backgrounds/world-map/world-map-1920.webp"
-                    />
-                    <source
-                        type="image/jpeg"
-                        media="(max-width: 639px)"
-                        srcSet="/img/backgrounds/world-map/world-map-mobile.jpg"
                     />
                     <img
                         className="world-map-background__image"
