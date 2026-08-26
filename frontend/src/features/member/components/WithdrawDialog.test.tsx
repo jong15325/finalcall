@@ -39,6 +39,9 @@ describe('<WithdrawDialog>', () => {
     it('★ 동의 체크 전에는 확정 버튼이 DOM disabled 다', () => {
         render(<WithdrawDialog {...baseProps} />)
         expect(confirmButton()).toBeDisabled()
+        expect(
+            document.querySelector('[data-withdraw-acknowledgment]'),
+        ).toBeInTheDocument()
     })
 
     it('★ 동의 체크 후 확정하면 onConfirm 을 부른다', () => {

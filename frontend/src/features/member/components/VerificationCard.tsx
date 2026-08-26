@@ -292,7 +292,8 @@ function VerificationCard({ profile }: VerificationCardProps) {
                         <button
                             type="button"
                             disabled={requestMutation.isPending}
-                            className="h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            data-page-action="primary"
+                            className="app-page-action h-11 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={handleRequestCode}
                         >
                             {requestMutation.isPending
@@ -391,7 +392,8 @@ function VerificationCard({ profile }: VerificationCardProps) {
                                 expired
                             }
                             aria-busy={verifyMutation.isPending || undefined}
-                            className="flex h-11 items-center justify-center gap-2 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                            data-page-action="primary"
+                            className="app-page-action flex h-11 items-center justify-center gap-2 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => handleVerify()}
                         >
                             {verifyMutation.isPending ? '확인 중…' : '인증하기'}
@@ -502,7 +504,10 @@ function EmailRow({
 }) {
     return (
         <div className="flex items-center gap-2 rounded-lg bg-content-soft px-3.5 py-3">
-            <TbMail aria-hidden className="size-4 shrink-0 text-content-subtle" />
+            <TbMail
+                aria-hidden
+                className="size-4 shrink-0 text-content-subtle"
+            />
             <span className="min-w-0 flex-1 break-all text-sm font-bold text-content-fg">
                 {masked ?? '이메일 미설정'}
             </span>
@@ -580,7 +585,8 @@ function EmailForm({
                 <button
                     type="submit"
                     disabled={pending}
-                    className="h-11 flex-1 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    data-page-action="primary"
+                    className="app-page-action h-11 flex-1 rounded-lg bg-control-action px-4 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {pending ? '저장 중…' : '이메일 저장'}
                 </button>

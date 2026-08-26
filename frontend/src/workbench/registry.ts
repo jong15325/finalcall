@@ -124,6 +124,13 @@ export const WORKBENCH_SCENARIOS = [
         variants: WALLET_BALANCE_VARIANT_IDS,
         load: () => import('./scenarios/WalletBalanceScenario'),
     }),
+    defineScenario({
+        id: 'page-actions',
+        title: '페이지 행동 버튼 광택 시스템',
+        shell: 'app',
+        routeContext: paths.market,
+        load: () => import('./scenarios/PageActionScenario'),
+    }),
 ] as const
 
 export function findWorkbenchScenario(id: string | undefined) {

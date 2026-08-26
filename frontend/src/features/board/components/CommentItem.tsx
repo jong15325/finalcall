@@ -560,7 +560,7 @@ function ReactionButton({
             }
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 active
-                    ? 'border-control-action bg-control-action-soft text-control-action-hover'
+                    ? 'border-brand-highlight bg-brand-highlight-soft text-brand-highlight-deep shadow-sm'
                     : 'border-content-line bg-content-surface text-content-subtle hover:border-content-line hover:bg-content-soft'
             }`}
             onClick={onToggle}
@@ -789,7 +789,8 @@ function ReplyComposer({
                         <button
                             type="submit"
                             disabled={!canSubmit}
-                            className="rounded-lg bg-control-action px-4 py-1.5 text-xs font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                            data-page-action="primary"
+                            className="app-page-action rounded-lg bg-control-action px-4 py-1.5 text-xs font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {createReplyMutation.isPending
                                 ? '등록 중…'

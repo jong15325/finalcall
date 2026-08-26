@@ -137,6 +137,7 @@ function ShopSellConfirmDialog({
         >
             <form
                 noValidate
+                data-sell-confirm
                 id="shop-sell-confirm-form"
                 onSubmit={handleSubmit}
             >
@@ -178,7 +179,7 @@ function ShopSellConfirmDialog({
                                 {errorView.title}
                             </strong>
                             {errorView.description && (
-                                <span className="mt-0.5 block text-danger-ink/90">
+                                <span className="mt-0.5 block text-danger-ink">
                                     {errorView.description}
                                 </span>
                             )}

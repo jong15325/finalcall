@@ -261,6 +261,129 @@
         0 14px 28px rgb(123 35 34 / 28%);
 }
 
+/* Page-level CTA counterpart to the modal action grammar. */
+.app-page-action {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 12px !important;
+    transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        transform 160ms ease !important;
+    backdrop-filter: blur(18px) saturate(132%);
+    -webkit-backdrop-filter: blur(18px) saturate(132%);
+}
+.app-page-action::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background: linear-gradient(
+        112deg,
+        transparent 18%,
+        rgb(255 255 255 / 18%) 48%,
+        transparent 76%
+    );
+    opacity: 0;
+    transform: translateX(-72%);
+    transition:
+        opacity 180ms ease,
+        transform 380ms ease;
+}
+.app-page-action:hover:not(:disabled)::before {
+    opacity: 1;
+    transform: translateX(72%);
+}
+.app-page-action:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+.app-page-action:active:not(:disabled) {
+    transform: translateY(0) scale(0.975);
+}
+.app-page-action:focus-visible {
+    outline: 2px solid rgb(142 231 242 / 82%) !important;
+    outline-offset: 3px;
+}
+.app-page-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+    filter: saturate(0.65);
+    transform: none !important;
+}
+.app-page-action[data-page-action='primary'] {
+    border: 1px solid rgb(151 235 244 / 42%) !important;
+    color: #f5fdff !important;
+    background: linear-gradient(
+        145deg,
+        rgb(75 176 194 / 62%),
+        rgb(18 91 109 / 78%)
+    ) !important;
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 24%),
+        inset 0 -1px rgb(2 24 32 / 34%),
+        0 10px 24px rgb(16 118 139 / 22%) !important;
+    text-shadow: 0 1px 2px rgb(0 13 20 / 42%);
+}
+.app-page-action[data-page-action='primary']:hover:not(:disabled) {
+    border-color: rgb(194 246 251 / 64%) !important;
+    background: linear-gradient(
+        145deg,
+        rgb(88 196 214 / 70%),
+        rgb(20 105 124 / 86%)
+    ) !important;
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 28%),
+        0 14px 30px rgb(16 118 139 / 30%) !important;
+}
+.app-page-action[data-page-action='secondary'] {
+    border: 1px solid rgb(255 255 255 / 26%) !important;
+    color: var(--frost-fg) !important;
+    background: linear-gradient(
+        145deg,
+        rgb(61 82 98 / 72%),
+        rgb(23 42 55 / 74%)
+    ) !important;
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 16%),
+        0 8px 20px rgb(0 10 18 / 16%) !important;
+}
+.app-page-action[data-page-action='danger'] {
+    border: 1px solid rgb(255 145 135 / 42%) !important;
+    color: #fff8f7 !important;
+    background: linear-gradient(
+        145deg,
+        rgb(196 69 61 / 66%),
+        rgb(112 31 33 / 76%)
+    ) !important;
+    box-shadow:
+        inset 0 1px rgb(255 255 255 / 18%),
+        0 10px 24px rgb(123 35 34 / 22%) !important;
+}
+.app-page-action[data-page-action='danger']:hover:not(:disabled) {
+    border-color: rgb(255 181 173 / 62%) !important;
+    background: linear-gradient(
+        145deg,
+        rgb(218 82 72 / 72%),
+        rgb(135 38 38 / 84%)
+    ) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-page-action {
+        transition-duration: 1ms !important;
+    }
+    .app-page-action:hover:not(:disabled),
+    .app-page-action:active:not(:disabled) {
+        transform: none !important;
+    }
+    .app-page-action::before {
+        display: none;
+    }
+}
+
 @media (prefers-reduced-transparency: reduce) {
     :root {
         --frost-bg: #172c39;
@@ -3738,6 +3861,79 @@ section > ul.rounded-xl,
 }
 .app-modal-panel label {
     color: var(--frost-fg) !important;
+}
+
+/* Sell review uses dark, brand-tinted elevations inside the frost modal. */
+.app-modal-panel [data-sell-confirm] .bg-content-soft {
+    border: 1px solid rgb(255 255 255 / 13%);
+    background: rgb(3 16 24 / 68%) !important;
+}
+.app-modal-panel [data-sell-confirm] .bg-content-surface {
+    border-color: rgb(255 255 255 / 16%) !important;
+    background: rgb(11 34 46 / 82%) !important;
+    box-shadow: inset 0 1px rgb(255 255 255 / 7%);
+}
+.app-modal-panel [data-sell-confirm] .bg-control-action-soft {
+    border: 1px solid rgb(142 231 242 / 22%);
+    background: rgb(31 111 126 / 24%) !important;
+}
+.app-modal-panel [data-sell-confirm] .text-control-action-hover {
+    color: #c9f6f8 !important;
+}
+.app-modal-panel [data-sell-confirm] .text-danger-ink {
+    color: #ffb4ae !important;
+}
+.app-modal-panel [data-sell-confirm] .bg-danger-soft {
+    border: 1px solid rgb(255 180 174 / 24%);
+    background: rgb(132 38 43 / 28%) !important;
+}
+
+/* Account withdrawal stays legible while retaining a restrained danger cue. */
+#view [data-withdraw-zone] {
+    border-color: rgb(255 154 150 / 34%) !important;
+    background: linear-gradient(
+        145deg,
+        rgb(79 27 38 / 82%),
+        rgb(48 22 31 / 78%)
+    ) !important;
+    box-shadow: inset 0 1px rgb(255 255 255 / 8%);
+}
+#view [data-withdraw-zone] h3 {
+    color: #fff8f7 !important;
+}
+#view [data-withdraw-zone] p {
+    color: #f6d8d8 !important;
+}
+#view [data-withdraw-zone] button {
+    border-color: rgb(255 180 174 / 48%) !important;
+    color: #fff8f7 !important;
+    background: rgb(132 38 43 / 42%) !important;
+}
+#view [data-withdraw-zone] button:hover {
+    background: rgb(164 48 53 / 58%) !important;
+}
+.app-modal-panel [data-withdraw-dialog] ul {
+    color: #f1d9d9 !important;
+}
+.app-modal-panel [data-withdraw-dialog] strong {
+    color: #ffb4ae !important;
+}
+.app-modal-panel [data-withdraw-acknowledgment] {
+    border: 1px solid rgb(255 180 174 / 30%);
+    color: #fff8f7 !important;
+    background: rgb(94 31 41 / 58%) !important;
+    box-shadow: inset 0 1px rgb(255 255 255 / 7%);
+}
+.app-modal-panel [data-withdraw-acknowledgment]:has(input:checked) {
+    border-color: rgb(255 180 174 / 58%);
+    background: rgb(126 38 45 / 66%) !important;
+}
+.app-modal-panel [data-withdraw-dialog] .bg-danger-soft {
+    border: 1px solid rgb(255 180 174 / 24%);
+    background: rgb(132 38 43 / 28%) !important;
+}
+.app-modal-panel [data-withdraw-dialog] .text-danger-ink {
+    color: #ffb4ae !important;
 }
 .app-modal-footer {
     flex: 0 0 auto;

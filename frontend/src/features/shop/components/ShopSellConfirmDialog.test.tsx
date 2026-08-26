@@ -42,6 +42,9 @@ describe('ShopSellConfirmDialog 검토 gate', () => {
         expect(dialog.parentElement).toHaveClass('app-modal-overlay')
         expect(dialog).toHaveClass('app-modal-panel')
         expect(dialog).toHaveAttribute('data-size', 'md')
+        expect(
+            document.querySelector('[data-sell-confirm]'),
+        ).toBeInTheDocument()
         expect(screen.getByRole('button', { name: '판매 등록' })).toBeDisabled()
     })
 

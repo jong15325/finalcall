@@ -174,7 +174,8 @@ function ExchangeForm({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="min-w-0 whitespace-normal break-words rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    data-page-action="primary"
+                    className="app-page-action min-w-0 whitespace-normal break-words rounded-lg bg-control-action px-4 py-2.5 text-sm font-bold text-control-action-ink hover:bg-control-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {isSubmitting ? '교환 중…' : '교환하기'}
                 </button>

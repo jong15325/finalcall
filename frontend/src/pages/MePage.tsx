@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { TbAlertTriangle, TbChevronRight, TbReceipt, TbUserCircle } from 'react-icons/tb'
+import {
+    TbAlertTriangle,
+    TbChevronRight,
+    TbReceipt,
+    TbUserCircle,
+} from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ProfileCard from '@/features/member/components/ProfileCard'
 import VerificationCard from '@/features/member/components/VerificationCard'
@@ -138,7 +143,10 @@ export default function MePage() {
                     </Link>
 
                     {/* 위험 구역 — 회원 탈퇴 */}
-                    <section className="flex flex-col gap-3 rounded-2xl border border-danger/30 bg-danger-soft/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <section
+                        data-withdraw-zone
+                        className="flex flex-col gap-3 rounded-2xl border border-danger/30 bg-danger-soft/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+                    >
                         <div>
                             <h3 className="text-base font-bold text-content-fg">
                                 회원 탈퇴
@@ -149,7 +157,8 @@ export default function MePage() {
                         </div>
                         <button
                             type="button"
-                            className="shrink-0 rounded-lg border border-danger bg-content-surface px-4 py-2.5 text-sm font-bold text-danger-ink hover:bg-danger-soft"
+                            data-page-action="danger"
+                            className="app-page-action shrink-0 rounded-lg border border-danger bg-content-surface px-4 py-2.5 text-sm font-bold text-danger-ink hover:bg-danger-soft"
                             onClick={openWithdraw}
                         >
                             탈퇴하기

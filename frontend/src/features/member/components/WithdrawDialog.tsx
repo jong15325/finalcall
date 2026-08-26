@@ -74,38 +74,46 @@ function WithdrawDialog({
             ]}
             onClose={onClose}
         >
-            <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-content-muted">
-                <li>
-                    남은 게임머니·캐시 잔액이 <strong>모두 소멸</strong>
-                    하며 복구할 수 없습니다.
-                </li>
-                <li>
-                    로그인 세션이 전부 폐기되고 계정 정보는 되돌릴 수 없습니다.
-                </li>
-                <li>진행 중인 거래가 있으면 탈퇴할 수 없습니다.</li>
-            </ul>
+            <div data-withdraw-dialog>
+                <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-content-muted">
+                    <li>
+                        남은 게임머니·캐시 잔액이 <strong>모두 소멸</strong>
+                        하며 복구할 수 없습니다.
+                    </li>
+                    <li>
+                        로그인 세션이 전부 폐기되고 계정 정보는 되돌릴 수
+                        없습니다.
+                    </li>
+                    <li>진행 중인 거래가 있으면 탈퇴할 수 없습니다.</li>
+                </ul>
 
-            <label className="mt-4 flex items-start gap-2.5 rounded-lg bg-content-soft px-3.5 py-3 text-sm text-content-fg">
-                <input
-                    ref={acknowledgmentRef}
-                    type="checkbox"
-                    className="mt-0.5 size-4 shrink-0 accent-[var(--danger)]"
-                    checked={acknowledged}
-                    onChange={(event) => setAcknowledged(event.target.checked)}
-                />
-                <span>
-                    잔액 소멸과 복구 불가에 동의하며, 탈퇴를 진행합니다.
-                </span>
-            </label>
-
-            {errorMessage && (
-                <p
-                    role="alert"
-                    className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
+                <label
+                    data-withdraw-acknowledgment
+                    className="mt-4 flex items-start gap-2.5 rounded-lg bg-content-soft px-3.5 py-3 text-sm text-content-fg"
                 >
-                    {errorMessage}
-                </p>
-            )}
+                    <input
+                        ref={acknowledgmentRef}
+                        type="checkbox"
+                        className="mt-0.5 size-4 shrink-0 accent-[var(--danger)]"
+                        checked={acknowledged}
+                        onChange={(event) =>
+                            setAcknowledged(event.target.checked)
+                        }
+                    />
+                    <span>
+                        잔액 소멸과 복구 불가에 동의하며, 탈퇴를 진행합니다.
+                    </span>
+                </label>
+
+                {errorMessage && (
+                    <p
+                        role="alert"
+                        className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-ink"
+                    >
+                        {errorMessage}
+                    </p>
+                )}
+            </div>
         </AppModal>
     )
 }

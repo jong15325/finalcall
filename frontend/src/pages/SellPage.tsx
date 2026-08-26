@@ -253,7 +253,8 @@ export default function SellPage() {
                     action={
                         <button
                             type="button"
-                            className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                            data-page-action="secondary"
+                            className="app-page-action rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                             onClick={() => void inventoryQuery.refetch()}
                         >
                             다시 시도
@@ -270,7 +271,8 @@ export default function SellPage() {
                     action={
                         <Link
                             to={paths.inventory}
-                            className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                            data-page-action="primary"
+                            className="app-page-action rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                         >
                             인벤토리로 가기
                         </Link>
@@ -287,7 +289,8 @@ export default function SellPage() {
                     action={
                         <Link
                             to={paths.inventory}
-                            className="rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
+                            data-page-action="primary"
+                            className="app-page-action rounded-lg bg-control-action px-4 py-2 text-sm font-bold text-control-action-ink hover:bg-control-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-focus focus-visible:ring-offset-2"
                         >
                             인벤토리로 가기
                         </Link>
@@ -475,7 +478,8 @@ export default function SellPage() {
 
                             <button
                                 type="button"
-                                className="mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover lg:hidden"
+                                data-page-action="primary"
+                                className="app-page-action mt-4 w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover lg:hidden"
                                 onClick={
                                     sellMethod === 'auction'
                                         ? handleOpenConfirm
@@ -515,7 +519,8 @@ export default function SellPage() {
                         <div className="hidden border-t border-content-line bg-content-surface p-5 lg:block">
                             <button
                                 type="button"
-                                className="w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
+                                data-page-action="primary"
+                                className="app-page-action w-full rounded-lg bg-control-action px-5 py-3 text-sm font-bold text-control-action-ink hover:bg-control-action-hover"
                                 onClick={
                                     sellMethod === 'auction'
                                         ? handleOpenConfirm

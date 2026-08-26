@@ -191,6 +191,21 @@ describe('<CommentItem> FC-219·FC-223 댓글 UI', () => {
         })
     })
 
+    it('내가 공감한 댓글은 골드 활성색과 pressed 상태로 구분한다', () => {
+        signInForTest({ nickname: '다른사용자' })
+        renderComment({}, { myReaction: 'LIKE' })
+
+        const likeButton = screen.getByRole('button', {
+            name: '루트작성자의 댓글 공감, 현재 7개',
+        })
+        expect(likeButton).toHaveAttribute('aria-pressed', 'true')
+        expect(likeButton).toHaveClass(
+            'border-brand-highlight',
+            'bg-brand-highlight-soft',
+            'text-brand-highlight-deep',
+        )
+    })
+
     it('닉네임이 달라도 ownedByMe가 true면 본인 댓글 공감을 막는다', async () => {
         const user = userEvent.setup()
         signInForTest({ nickname: '변경된닉네임' })

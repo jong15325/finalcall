@@ -85,18 +85,19 @@ describe('MePage 탈퇴 — 컨텍스트 캐시 축출 (FC-175 M1)', () => {
         const withdrawTrigger = await screen.findByRole('button', {
             name: '탈퇴하기',
         })
+        expect(withdrawTrigger.closest('[data-withdraw-zone]')).not.toBeNull()
 
         // 축출 대상 캐시를 프라임한다(탈퇴 전에는 살아 있어야 한다).
         act(() => primeCaches(queryClient))
-        expect(queryClient.getQueryData(memoKeys.unread())).toEqual({ count: 5 })
+        expect(queryClient.getQueryData(memoKeys.unread())).toEqual({
+            count: 5,
+        })
 
         // 다이얼로그 열기 → 동의 체크 → 탈퇴 확정.
         fireEvent.click(withdrawTrigger)
         fireEvent.click(await screen.findByRole('checkbox'))
         await act(async () => {
-            fireEvent.click(
-                screen.getByRole('button', { name: '탈퇴 확정' }),
-            )
+            fireEvent.click(screen.getByRole('button', { name: '탈퇴 확정' }))
         })
 
         // onSuccess 가 컨텍스트 클라이언트를 clear → 프라임한 캐시가 전량 undefined.
