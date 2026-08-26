@@ -12,6 +12,8 @@ import java.util.List;
 
 /** ops-20-v1/v2 fixture를 시나리오별 단일 JDBC 트랜잭션으로 관리한다. */
 final class OperationsSeedFixture {
+    private static final String VERSION2_CHAT_ROOM_PREFIX = "0P2R0M";
+
     private final Connection connection;
     private final Instant now;
     private final boolean version2;
@@ -859,7 +861,11 @@ final class OperationsSeedFixture {
     }
 
     private String key(String prefix, int number) {
-        prefix = version2 ? prefix.replace("OPS", "OP2") : prefix;
+        if (version2 && "OPSROM".equals(prefix)) {
+            prefix = VERSION2_CHAT_ROOM_PREFIX;
+        } else {
+            prefix = version2 ? prefix.replace("OPS", "OP2") : prefix;
+        }
         return prefix + String.format("%0" + (26 - prefix.length()) + "d", number);
     }
 
@@ -870,7 +876,8 @@ final class OperationsSeedFixture {
         return sql.replace("login_id LIKE ? ESCAPE '\\\\'", "public_id LIKE ? ESCAPE '\\\\'")
             .replace("OPSITM", "OP2ITM").replace("OPSAUC", "OP2AUC").replace("OPSBID", "OP2BID")
             .replace("OPSSHP", "OP2SHP").replace("OPSORD", "OP2ORD").replace("OPSDLV", "OP2DLV")
-            .replace("OPSROM", "OP2ROM").replace("OPSMSG", "OP2MSG").replace("OPSMEM", "OP2MEM")
+            .replace("OPSROM", VERSION2_CHAT_ROOM_PREFIX).replace("OPSMSG", "OP2MSG")
+            .replace("OPSMEM", "OP2MEM")
             .replace("OPSRPT", "OP2RPT").replace("OPSEVT", "OP2EVT").replace("fc_ops_", "test");
     }
 

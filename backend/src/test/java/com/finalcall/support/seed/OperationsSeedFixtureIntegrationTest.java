@@ -264,6 +264,13 @@ class OperationsSeedFixtureIntegrationTest {
             .isEqualTo(200);
         assertThat(count(connection, "SELECT COUNT(*) FROM shop WHERE public_id LIKE 'OP2SHP%'"))
             .isEqualTo(56);
+        assertThat(count(connection, "SELECT COUNT(*) FROM chat_room "
+            + "WHERE public_id REGEXP '^[0-7][0-9A-HJKMNP-TV-Z]{25}$'"))
+            .isEqualTo(24);
+        assertThat(count(connection, "SELECT COUNT(*) FROM chat_room WHERE public_id LIKE '0P2R0M%'"))
+            .isEqualTo(24);
+        assertThat(count(connection, "SELECT COUNT(*) FROM chat_room WHERE public_id LIKE 'OP2ROM%'"))
+            .isZero();
         assertThat(count(connection, "SELECT COUNT(DISTINCT t.type_code) FROM shop s JOIN item_instance i "
             + "ON i.id=s.item_instance_id JOIN item_template t ON t.id=i.template_id "
             + "WHERE s.public_id LIKE 'OP2SHP%' AND s.status='ACTIVE'"))
