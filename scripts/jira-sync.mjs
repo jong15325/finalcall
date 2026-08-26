@@ -292,7 +292,7 @@ async function recoverCreatedIssue(record) {
 }
 
 function updateJiraKey(record, key) {
-    const next = record.text.replace(/^(jira_key:[\t ]*).*$/m, `$1${key}`);
+    const next = record.text.replace(/^jira_key:[\t ]*.*$/m, `jira_key: ${key}`);
     if (next === record.text) throw new Error(`${record.data.id}: jira_key 필드를 갱신할 수 없습니다.`);
     fs.writeFileSync(record.file, next, "utf8");
     record.text = next;
