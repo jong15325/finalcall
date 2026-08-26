@@ -20,12 +20,10 @@ export function NewChatDialog({
     onSubmit: (counterpartNickname: string) => Promise<boolean>
 }) {
     const [counterpartNickname, setCounterpartNickname] = useState('')
-    const inputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         if (!open) return
         setCounterpartNickname('')
-        requestAnimationFrame(() => inputRef.current?.focus())
     }, [open])
 
     if (!open) return null
@@ -39,7 +37,6 @@ export function NewChatDialog({
             descriptionId="new-chat-description"
             closeDisabled={pending}
             closeLabel="새 대화 창 닫기"
-            initialFocusRef={inputRef}
             actions={[
                 {
                     id: 'cancel',
@@ -81,7 +78,6 @@ export function NewChatDialog({
                     상대 닉네임
                 </label>
                 <input
-                    ref={inputRef}
                     id="new-chat-nickname"
                     value={counterpartNickname}
                     maxLength={30}

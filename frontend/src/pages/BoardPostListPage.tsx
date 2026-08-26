@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router'
 import {
-    TbPencilPlus,
     TbAlertTriangle,
     TbMessageOff,
     TbSearchOff,
@@ -23,6 +22,9 @@ import BoardStateBlock from '@/features/board/components/BoardStateBlock'
 import { isApiError } from '@/lib/api/errors'
 import { ERROR_CODES } from '@/types/errorCodes'
 import PageIntro from '@/components/common/PageIntro'
+import MobileBottomNavAction, {
+    DesktopPageAction,
+} from '@/components/layout/MobileBottomNavAction'
 
 /**
  * 게시판 글 목록 `/boards/:slug` (FC-202 — 승인 화면 B).
@@ -94,6 +96,12 @@ export default function BoardPostListPage() {
 
     return (
         <div className="flex flex-col gap-4">
+            {showWrite && (
+                <MobileBottomNavAction
+                    label="게시글 등록"
+                    to={boardWritePath(slug)}
+                />
+            )}
             {/* 허브 복귀 — 게시판 목록(허브)으로 */}
             <Link
                 to={paths.boards}
@@ -105,7 +113,10 @@ export default function BoardPostListPage() {
 
             {/* 게시판 탭 — 게시판 간 이동 */}
             {boardsQuery.data && boardsQuery.data.length > 0 && (
-                <div data-board-tabs className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-content-line bg-content-surface p-1">
+                <div
+                    data-board-tabs
+                    className="flex w-max max-w-full gap-1 overflow-x-auto rounded-full border border-content-line bg-content-surface p-1"
+                >
                     {boardsQuery.data.map((tab) => {
                         const active = tab.slug === slug
                         return (
@@ -133,22 +144,15 @@ export default function BoardPostListPage() {
                 description={
                     board?.description ?? '새로운 소식과 이야기를 확인하세요.'
                 }
-                action={showWrite ? (
-                    <Link
-                        to={boardWritePath(slug)}
-                        data-market-sell-action
-                    >
-                        <TbPencilPlus aria-hidden className="size-4" />
-                        <span>글쓰기</span>
-                    </Link>
-                ) : (
+                action={
+                    !showWrite &&
                     board &&
                     writeDisabledLabel(board) && (
                         <span className="text-xs font-medium text-content-subtle">
                             {writeDisabledLabel(board)}
                         </span>
                     )
-                )}
+                }
             />
 
             {/* 로딩 */}
@@ -256,7 +260,12 @@ export default function BoardPostListPage() {
                     더 불러오는 중…
                 </p>
             )}
+            {showWrite && (
+                <DesktopPageAction
+                    label="게시글 등록"
+                    to={boardWritePath(slug)}
+                />
+            )}
         </div>
     )
 }
-

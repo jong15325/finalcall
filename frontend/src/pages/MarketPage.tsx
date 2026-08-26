@@ -1,11 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router'
-import { TbArrowUpRight, TbBuildingStore } from 'react-icons/tb'
+import { useLocation, useSearchParams } from 'react-router'
+import { TbBuildingStore } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
 import CursorPagination from '@/components/common/CursorPagination'
 import ListResultSummary from '@/components/common/ListResultSummary'
+import MobileBottomNavAction, {
+    DesktopPageAction,
+} from '@/components/layout/MobileBottomNavAction'
 import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import ShopCard from '@/features/shop/components/ShopCard'
 import ShopCardInfoDialog from '@/features/shop/components/ShopCardInfoDialog'
@@ -138,6 +141,7 @@ export default function MarketPage() {
 
     return (
         <div>
+            <MobileBottomNavAction label="아이템 판매 등록" to={paths.sell} />
             <ListFrame
                 state={listState}
                 layout="catalog"
@@ -162,10 +166,6 @@ export default function MarketPage() {
                                 </p>
                             </div>
                         </div>
-                        <Link data-market-sell-action to={paths.sell}>
-                            <span>아이템 판매</span>
-                            <TbArrowUpRight aria-hidden />
-                        </Link>
                     </header>
                 }
                 filters={
@@ -215,6 +215,8 @@ export default function MarketPage() {
                     />
                 ))}
             </ListFrame>
+
+            <DesktopPageAction label="아이템 판매 등록" to={paths.sell} />
 
             {selectedShop && (
                 <ShopCardInfoDialog

@@ -55,8 +55,8 @@ describe('AuctionListPage 밝은 region', () => {
 
         expect(screen.getByText('REALTIME AUCTION')).toBeInTheDocument()
         expect(
-            screen.getByRole('link', { name: '경매 등록' }),
-        ).toBeInTheDocument()
+            screen.getByRole('link', { name: '실시간 경매 등록' }),
+        ).toHaveAttribute('data-registration-action')
         expect(
             screen.queryByTestId('list-available-balance'),
         ).not.toBeInTheDocument()

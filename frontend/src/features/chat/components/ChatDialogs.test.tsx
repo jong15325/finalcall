@@ -20,6 +20,12 @@ describe('ChatDialogs 공통 모달', () => {
         expect(
             screen.getByRole('button', { name: '새 대화 창 닫기' }),
         ).toHaveClass('app-modal-close')
+        await waitFor(() =>
+            expect(
+                screen.getByRole('button', { name: '새 대화 창 닫기' }),
+            ).toHaveFocus(),
+        )
+        expect(screen.getByLabelText('상대 닉네임')).not.toHaveFocus()
         fireEvent.change(screen.getByLabelText('상대 닉네임'), {
             target: { value: '루나상점' },
         })

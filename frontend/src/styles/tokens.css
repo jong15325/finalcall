@@ -49,6 +49,10 @@
         --element-fire-ink: #c2410c;
         --element-earth-ink: #8b6100;
         --element-wind-ink: #15803d;
+        --element-water-on-frost: #78b7ff;
+        --element-fire-on-frost: #ff9a72;
+        --element-earth-on-frost: #e6c35c;
+        --element-wind-on-frost: #72d894;
 
         /* 공통 elevation과 modal scrim. */
         --overlay-scrim: rgb(16 26 46 / 50%);
@@ -75,6 +79,12 @@
         --amount-code-tier-4: #007d00;
         --amount-code-tier-5: #a65a00;
         --amount-code-tier-6: #bd0000;
+        --amount-code-tier-1-on-frost: #d4e775;
+        --amount-code-tier-2-on-frost: #70d5ff;
+        --amount-code-tier-3-on-frost: #f38bdc;
+        --amount-code-tier-4-on-frost: #76d875;
+        --amount-code-tier-5-on-frost: #ffc071;
+        --amount-code-tier-6-on-frost: #ff8b86;
         --chrome-bg: var(--brand-navy);
         --chrome-bg-strong: var(--brand-navy-900);
         --chrome-bg-raised: var(--brand-navy-800);

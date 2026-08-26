@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { TbAlertTriangle, TbMail, TbMailOff, TbPencil } from 'react-icons/tb'
 import PageIntro from '@/components/common/PageIntro'
+import {
+    DesktopPageButton,
+    MobileBottomNavButton,
+} from '@/components/layout/MobileBottomNavAction'
 import { useAppAlert } from '@/components/common/AppAlertProvider'
 import MemoRow from '@/features/memo/components/MemoRow'
 import MemoDetailPane from '@/features/memo/components/MemoDetailPane'
@@ -130,16 +134,11 @@ export default function MessagesPage() {
                 eyebrow="DIRECT MESSAGE"
                 title="쪽지"
                 description="받은 쪽지와 보낸 쪽지를 확인하고 게임 이용자와 메시지를 주고받으세요."
-                action={
-                    <button
-                        type="button"
-                        data-market-sell-action
-                        onClick={() => openCompose()}
-                    >
-                        <TbPencil aria-hidden className="size-4" />
-                        <span>쪽지 쓰기</span>
-                    </button>
-                }
+            />
+            <MobileBottomNavButton
+                icon={TbPencil}
+                label="쪽지 쓰기"
+                onClick={() => openCompose()}
             />
 
             {deleteMutation.isError && (
@@ -283,6 +282,11 @@ export default function MessagesPage() {
                     />
                 </div>
             </section>
+            <DesktopPageButton
+                icon={TbPencil}
+                label="쪽지 쓰기"
+                onClick={() => openCompose()}
+            />
 
             <MemoComposeDialog
                 open={composeOpen}

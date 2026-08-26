@@ -262,7 +262,10 @@ function ShopCardInfoDialog({
                             아래 금액으로 즉시 구매됩니다. 게임머니가 바로
                             차감되고 아이템은 인벤토리로 들어옵니다.
                         </p>
-                        <dl className="space-y-2 rounded-xl bg-content-soft p-4">
+                        <dl
+                            data-shop-purchase-summary
+                            className="liquid-frost-inset space-y-2 rounded-xl p-4"
+                        >
                             <div className="flex items-center justify-between">
                                 <dt>판매가</dt>
                                 <dd>

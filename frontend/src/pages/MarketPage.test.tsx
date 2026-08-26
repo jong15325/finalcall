@@ -53,5 +53,8 @@ describe('<MarketPage>', () => {
             screen.getByRole('heading', { name: '아이템 마켓' }),
         ).toBeVisible()
         expect(screen.getByText('FIXED PRICE MARKET')).toBeVisible()
+        expect(
+            screen.getByRole('link', { name: '아이템 판매 등록' }),
+        ).toHaveAttribute('data-registration-action')
     })
 })

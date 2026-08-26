@@ -13,6 +13,10 @@ import {
     TbX,
 } from 'react-icons/tb'
 import ChatAvatar from './ChatAvatar'
+import {
+    FloatingActionButton,
+    MobileBottomNavButton,
+} from '@/components/layout/MobileBottomNavAction'
 import { NewChatDialog, ReportChatDialog } from './ChatDialogs'
 import { browserChatRuntime } from '../lib/chatRuntime'
 import { useChatController } from '../lib/useChatController'
@@ -149,6 +153,16 @@ export default function ChatWorkspace({
             data-chat-operational
             className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden"
         >
+            {mobilePane === 'list' && (
+                <MobileBottomNavButton
+                    icon={TbMessagePlus}
+                    label="새 대화 시작"
+                    onClick={() => {
+                        chat.clearActionError()
+                        setNewChatOpen(true)
+                    }}
+                />
+            )}
             <section
                 aria-label="실시간 채팅"
                 className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden border-0 bg-content-surface shadow-none sm:rounded-2xl sm:border sm:border-content-line sm:shadow-sm lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]"
@@ -157,7 +171,7 @@ export default function ChatWorkspace({
                     data-chat-list
                     aria-label="대화 목록"
                     aria-busy={chat.roomsLoading}
-                    className={`min-h-0 min-w-0 flex-col overflow-hidden bg-content-surface lg:flex lg:border-r lg:border-content-line ${
+                    className={`relative min-h-0 min-w-0 flex-col overflow-hidden bg-content-surface lg:flex lg:border-r lg:border-content-line ${
                         mobilePane === 'list' ? 'flex' : 'hidden'
                     }`}
                 >
@@ -202,17 +216,6 @@ export default function ChatWorkspace({
                                 </button>
                             )}
                         </div>
-                        <button
-                            type="button"
-                            aria-label="새 대화 시작"
-                            className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-control-action text-control-action-ink hover:bg-control-action-hover"
-                            onClick={() => {
-                                chat.clearActionError()
-                                setNewChatOpen(true)
-                            }}
-                        >
-                            <TbMessagePlus aria-hidden className="size-5" />
-                        </button>
                     </div>
 
                     <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -355,6 +358,19 @@ export default function ChatWorkspace({
                                 )}
                             </>
                         )}
+                    </div>
+                    <div
+                        data-desktop-page-action
+                        className="pointer-events-none absolute bottom-4 right-4 z-10 hidden xl:block"
+                    >
+                        <FloatingActionButton
+                            icon={TbMessagePlus}
+                            label="새 대화 시작"
+                            onClick={() => {
+                                chat.clearActionError()
+                                setNewChatOpen(true)
+                            }}
+                        />
                     </div>
                 </aside>
 

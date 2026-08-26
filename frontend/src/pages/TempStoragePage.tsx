@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
-import { TbArchive, TbArrowUpRight, TbBackpack } from 'react-icons/tb'
+import { TbArchive, TbBackpack } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import TempStorageList from '@/features/member/components/TempStorageList'
 import { relocateErrorMessage } from '@/features/member/lib/relocateErrors'
@@ -8,6 +7,9 @@ import { useInfiniteScroll } from '@/features/auction/lib/useInfiniteScroll'
 import { useMyInventory } from '@/lib/queries/inventory'
 import { useMyTempStorage, useRelocateItem } from '@/lib/queries/tempStorage'
 import PageIntro from '@/components/common/PageIntro'
+import MobileBottomNavAction, {
+    DesktopPageAction,
+} from '@/components/layout/MobileBottomNavAction'
 
 /**
  * 임시 보관함 `/me/temp-storage` (FC-076 — 목업 `.storage-list` · design-brief B-10).
@@ -47,18 +49,16 @@ export default function TempStoragePage() {
 
     return (
         <div className="flex flex-col gap-4">
+            <MobileBottomNavAction
+                icon={TbBackpack}
+                label="인벤토리로 이동"
+                to={paths.inventory}
+            />
             <PageIntro
                 icon={TbArchive}
                 eyebrow="TEMP STORAGE"
                 title="임시 보관함"
                 description="인벤토리 용량을 초과해 보관된 아이템을 빈 슬롯으로 이동하세요."
-                action={
-                    <Link to={paths.inventory} data-market-sell-action>
-                        <TbBackpack aria-hidden className="size-4" />
-                        <span>인벤토리</span>
-                        <TbArrowUpRight aria-hidden />
-                    </Link>
-                }
             />
 
             {/* 만실 안내 — 인벤토리에 여유가 없으면. 서버가 최종 판정(선제 차단 아님) */}
@@ -131,7 +131,11 @@ export default function TempStoragePage() {
                     )}
                 </>
             )}
+            <DesktopPageAction
+                icon={TbBackpack}
+                label="인벤토리로 이동"
+                to={paths.inventory}
+            />
         </div>
     )
 }
-

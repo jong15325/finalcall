@@ -21,6 +21,7 @@ function MobileBottomNav() {
 
     return (
         <nav
+            data-mobile-bottom-nav
             aria-label="모바일 주요 메뉴"
             className="app-chrome fixed inset-x-0 bottom-0 z-30 flex border-t border-chrome-selected bg-chrome pb-[env(safe-area-inset-bottom)] xl:hidden"
         >
@@ -81,6 +82,11 @@ function MobileBottomNav() {
                     </NavLink>
                 )
             })}
+            <span
+                data-mobile-nav-action-slot
+                id="mobile-bottom-nav-action-slot"
+                className="pointer-events-none absolute right-2 top-0 z-10"
+            />
         </nav>
     )
 }

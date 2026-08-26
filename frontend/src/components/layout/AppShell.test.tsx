@@ -146,8 +146,8 @@ describe('AppShell route-scoped 상세 배경', () => {
             'p-0',
         )
         expect(
-            chatView.queryByRole('navigation', { name: '모바일 주요 메뉴' }),
-        ).not.toBeInTheDocument()
+            chatView.getByRole('navigation', { name: '모바일 주요 메뉴' }),
+        ).toBeInTheDocument()
         expect(footerWrapper).toHaveClass('hidden')
         expect(footerWrapper).not.toHaveClass('xl:block')
 
@@ -172,12 +172,42 @@ describe('AppShell route-scoped 상세 배경', () => {
 
     it('production 입력 CSS에서 100vh fallback 뒤에 100dvh를 선언한다', () => {
         const appCss = readFileSync(`${process.cwd()}/src/index.css`, 'utf8')
+        const frostCss = readFileSync(
+            `${process.cwd()}/src/styles/liquid-frost.css`,
+            'utf8',
+        )
         expect(appCss.indexOf('min-height: 100vh')).toBeLessThan(
             appCss.indexOf('@supports (min-height: 100dvh)'),
         )
         expect(appCss).toContain('min-height: 100dvh')
         expect(appCss).toContain('scrollbar-width: none')
         expect(appCss).toContain('html::-webkit-scrollbar')
+        expect(frostCss).toContain('[data-mobile-nav-action-slot]')
+        expect(frostCss).toContain('translateY(calc(-100% - 24px))')
+        expect(frostCss).toContain('[data-registration-action]')
+        expect(frostCss).toContain('backdrop-filter: blur(20px) saturate(145%)')
+        expect(frostCss).toContain('--content-muted: #d7e7ec')
+        expect(frostCss).toContain('--content-subtle: #c2d6de')
+        expect(frostCss).toContain(
+            '--amount-code-tier-4: var(--amount-code-tier-4-on-frost)',
+        )
+        expect(frostCss).toContain(
+            '--element-wind-ink: var(--element-wind-on-frost)',
+        )
+        expect(frostCss).toContain("input:not([type='checkbox'])")
+        expect(frostCss).toContain(
+            'background: var(--frost-bg-inset) !important',
+        )
+        expect(frostCss).toContain('color: var(--frost-fg) !important')
+        expect(frostCss).toContain("#view [data-testid='app-content-plane']")
+        expect(frostCss).toContain(
+            '[data-desktop-page-action] [data-registration-action]',
+        )
+        expect(frostCss).toContain(
+            '[data-chat-shell]:has([data-chat-conversation]:not(.hidden))',
+        )
+        expect(frostCss).toContain("> nav[aria-label='모바일 주요 메뉴']")
+        expect(frostCss).toContain('@media (max-width: 1279px)')
     })
 
     it('visualViewport 높이를 반영하고 채팅 shell 해제 시 전역 상태를 정리한다', () => {

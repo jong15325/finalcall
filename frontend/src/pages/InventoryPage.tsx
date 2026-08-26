@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { TbArchive, TbArrowUpRight, TbLayoutGrid } from 'react-icons/tb'
+import { useNavigate } from 'react-router'
+import { TbArchive, TbLayoutGrid } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
@@ -13,6 +13,9 @@ import { useMyInventory } from '@/lib/queries/inventory'
 import { useDeliveryLookup } from '@/lib/queries/deliveries'
 import type { InventoryItem } from '@/lib/api/inventory'
 import PageIntro from '@/components/common/PageIntro'
+import MobileBottomNavAction, {
+    DesktopPageAction,
+} from '@/components/layout/MobileBottomNavAction'
 
 /**
  * 인벤토리 `/me/inventory` (FC-076 → FC-177 개편 → FC-178 마켓 카드 이식).
@@ -63,6 +66,11 @@ export default function InventoryPage() {
 
     return (
         <div>
+            <MobileBottomNavAction
+                icon={TbArchive}
+                label="임시 보관함으로 이동"
+                to={paths.tempStorage}
+            />
             <ListFrame
                 state={listState}
                 layout="inventory"
@@ -75,16 +83,6 @@ export default function InventoryPage() {
                             eyebrow="MY INVENTORY"
                             title="인벤토리"
                             description="보유 아이템의 핵심 스킬을 확인하고 판매할 아이템을 선택하세요."
-                            action={
-                                <Link
-                                    to={paths.tempStorage}
-                                    data-market-sell-action
-                                >
-                                    <TbArchive aria-hidden className="size-4" />
-                                    <span>임시 보관함</span>
-                                    <TbArrowUpRight aria-hidden />
-                                </Link>
-                            }
                         />
                         <DeliveredBanner arrived={arrived} />
                     </>
@@ -121,6 +119,12 @@ export default function InventoryPage() {
                     />
                 )}
             </ListFrame>
+
+            <DesktopPageAction
+                icon={TbArchive}
+                label="임시 보관함으로 이동"
+                to={paths.tempStorage}
+            />
 
             {inventoryQuery.data &&
                 Math.ceil(

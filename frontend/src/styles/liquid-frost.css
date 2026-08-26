@@ -21,8 +21,8 @@
         0 18px 40px rgb(7 18 27 / 24%), inset 0 1px 0 rgb(255 255 255 / 17%);
     --frost-blur: blur(24px) saturate(118%);
     --frost-fg: #f7fbfc;
-    --frost-muted: rgb(215 231 236 / 72%);
-    --frost-subtle: rgb(194 214 222 / 58%);
+    --frost-muted: #d7e7ec;
+    --frost-subtle: #c2d6de;
     --frost-accent: #8ee7f2;
     --frost-accent-ink: rgb(4 19 27);
     --frost-focus: rgb(142 231 242 / 72%);
@@ -53,6 +53,46 @@
     background: var(--frost-bg-inset);
     color: var(--frost-fg);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+/* Frost surfaces own a light text hierarchy; light-page content tokens must not leak in. */
+:is(
+    .liquid-frost,
+    .liquid-frost-inset,
+    .app-modal-panel,
+    .card-info-content-shell,
+    #view [data-testid='app-content-plane']
+) {
+    --content-fg: #f7fbfc;
+    --content-muted: #d7e7ec;
+    --content-subtle: #c2d6de;
+    --element-water-ink: var(--element-water-on-frost);
+    --element-fire-ink: var(--element-fire-on-frost);
+    --element-earth-ink: var(--element-earth-on-frost);
+    --element-wind-ink: var(--element-wind-on-frost);
+    --amount-code-tier-1: var(--amount-code-tier-1-on-frost);
+    --amount-code-tier-2: var(--amount-code-tier-2-on-frost);
+    --amount-code-tier-3: var(--amount-code-tier-3-on-frost);
+    --amount-code-tier-4: var(--amount-code-tier-4-on-frost);
+    --amount-code-tier-5: var(--amount-code-tier-5-on-frost);
+    --amount-code-tier-6: var(--amount-code-tier-6-on-frost);
+}
+
+.app-modal-panel
+    :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    color-scheme: dark;
+    color: var(--frost-fg) !important;
+    border-color: var(--frost-line) !important;
+    background: var(--frost-bg-inset) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+.app-modal-panel
+    :is(
+        input:not([type='checkbox']):not([type='radio']),
+        textarea
+    )::placeholder {
+    color: var(--content-subtle) !important;
+    opacity: 1;
 }
 
 @media (max-width: 639px) {
@@ -2542,6 +2582,81 @@ section > ul.rounded-xl,
     }
 }
 
+/* Page identity remains semantic, while visual chrome is reduced to actions. */
+[data-page-intro] {
+    min-height: 0;
+    justify-content: flex-end;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+[data-page-intro]::before {
+    display: none;
+}
+[data-page-intro] [data-market-page-identity] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+[data-page-intro]:not(:has(> a, > button, > span)) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+@media (max-width: 639px) {
+    .app-route-enter {
+        animation: none;
+    }
+}
+
+@media (max-width: 1279px) {
+    [data-mobile-bottom-nav] {
+        overflow: visible !important;
+    }
+    [data-mobile-nav-action-slot] {
+        transform: translateY(calc(-100% - 24px));
+    }
+}
+[data-registration-action],
+[data-desktop-page-action] [data-registration-action] {
+    color: var(--brand-gold-bright) !important;
+    border: 1px solid rgba(255, 255, 255, 0.58) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(64, 86, 104, 0.86),
+        rgba(27, 45, 59, 0.72)
+    ) !important;
+    box-shadow:
+        0 6px 16px rgba(8, 21, 31, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+    backdrop-filter: blur(20px) saturate(145%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
+}
+[data-registration-action]:hover,
+[data-desktop-page-action] [data-registration-action]:hover {
+    background: linear-gradient(
+        145deg,
+        rgba(74, 98, 118, 0.92),
+        rgba(35, 55, 70, 0.8)
+    ) !important;
+}
 /* Final AuctionCard contract: page-level skins cannot change component visuals. */
 #view [data-auction-list-card] .item-card {
     border-color: transparent !important;
@@ -3472,9 +3587,10 @@ section > ul.rounded-xl,
 /* Shared modal system: mobile bottom sheet / desktop centered dark-frost form. */
 .app-modal-overlay {
     position: fixed;
-    inset: 0;
+    inset: 0 0 auto;
     z-index: 1200;
     display: flex;
+    height: var(--chat-viewport-height, 100dvh);
     align-items: flex-end;
     justify-content: center;
     padding: 0;
@@ -3619,6 +3735,9 @@ section > ul.rounded-xl,
     overflow-y: auto;
     padding: 20px 18px;
     overscroll-behavior: contain;
+}
+.app-modal-panel label {
+    color: var(--frost-fg) !important;
 }
 .app-modal-footer {
     flex: 0 0 auto;
@@ -3911,6 +4030,15 @@ section > ul.rounded-xl,
         border: 0 !important;
         border-radius: 0 !important;
         box-shadow: none !important;
+    }
+}
+@media (max-width: 1279px) {
+    [data-chat-shell] [data-chat-list] {
+        padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+    }
+    [data-chat-shell]:has([data-chat-conversation]:not(.hidden))
+        > nav[aria-label='모바일 주요 메뉴'] {
+        display: none;
     }
 }
 #view [data-chat-list] {

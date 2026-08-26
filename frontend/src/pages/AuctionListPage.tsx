@@ -1,11 +1,14 @@
 import { useMemo } from 'react'
-import { Link, useSearchParams } from 'react-router'
-import { TbArrowUpRight, TbGavel } from 'react-icons/tb'
+import { useSearchParams } from 'react-router'
+import { TbGavel } from 'react-icons/tb'
 import { paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
 import CursorPagination from '@/components/common/CursorPagination'
 import ListResultSummary from '@/components/common/ListResultSummary'
+import MobileBottomNavAction, {
+    DesktopPageAction,
+} from '@/components/layout/MobileBottomNavAction'
 import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import AuctionCard from '@/features/auction/components/AuctionCard'
 import AuctionFilters from '@/features/auction/components/AuctionFilters'
@@ -114,6 +117,7 @@ export default function AuctionListPage() {
 
     return (
         <div data-testid="auction-list-region" className="auction-list-region">
+            <MobileBottomNavAction label="실시간 경매 등록" to={paths.sell} />
             <ListFrame
                 state={listState}
                 layout="catalog"
@@ -135,10 +139,6 @@ export default function AuctionListPage() {
                                 </p>
                             </div>
                         </div>
-                        <Link data-market-sell-action to={paths.sell}>
-                            <span>경매 등록</span>
-                            <TbArrowUpRight aria-hidden />
-                        </Link>
                     </header>
                 }
                 filters={
@@ -193,6 +193,7 @@ export default function AuctionListPage() {
                     />
                 ))}
             </ListFrame>
+            <DesktopPageAction label="실시간 경매 등록" to={paths.sell} />
         </div>
     )
 }

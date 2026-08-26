@@ -187,7 +187,7 @@ function AppShellContent() {
 
             <CompareBar />
 
-            {!chatRoute && <MobileBottomNav />}
+            <MobileBottomNav />
         </div>
     )
 }

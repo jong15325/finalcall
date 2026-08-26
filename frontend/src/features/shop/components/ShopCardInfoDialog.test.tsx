@@ -209,6 +209,12 @@ describe('<ShopCardInfoDialog>', () => {
         ).toHaveAttribute('data-modal-button', 'primary')
         // 확인 서브뷰 — 구매 후 잔액 표기.
         expect(screen.getByText('구매 후 잔액')).toBeInTheDocument()
+        expect(screen.getByText('구매 후 잔액').closest('dl')).toHaveClass(
+            'liquid-frost-inset',
+        )
+        expect(screen.getByText('구매 후 잔액').closest('dl')).not.toHaveClass(
+            'bg-content-soft',
+        )
 
         fireEvent.click(screen.getByRole('button', { name: '구매 확정' }))
 
