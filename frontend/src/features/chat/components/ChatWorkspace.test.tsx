@@ -800,6 +800,57 @@ describe('ChatWorkspace', () => {
         ).toBe(true)
     })
 
+    it('프로필 보강 조회가 실패해도 성공한 첫 메시지를 하나로 수렴한다', async () => {
+        const mock = createMockRuntime({ rooms: [] })
+        const persistedRoom = room({
+            counterpart: {
+                memberPublicId: 'member-new',
+                nickname: '새상대',
+            },
+        })
+        vi.mocked(mock.rest.sendDirectMessage).mockResolvedValue({
+            room: persistedRoom,
+            message: {
+                ...message(2, '첫 메시지', true),
+                clientMessageId: CLIENT_MESSAGE_ID,
+            },
+            roomCreated: true,
+            deduplicated: false,
+        })
+        vi.mocked(mock.rest.getRoom).mockRejectedValue(
+            new Error('프로필 조회 실패'),
+        )
+        render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
+
+        await userEvent.click(
+            await screen.findByRole('button', { name: '새 대화 시작' }),
+        )
+        await userEvent.type(
+            screen.getByRole('textbox', { name: '상대 닉네임' }),
+            '새상대',
+        )
+        await userEvent.click(screen.getByRole('button', { name: '대화 작성' }))
+        const form = await screen.findByRole('form', { name: '메시지 작성' })
+        await userEvent.type(
+            within(form).getByRole('textbox', { name: '메시지 입력' }),
+            '첫 메시지',
+        )
+        await userEvent.click(
+            within(form).getByRole('button', { name: '메시지 보내기' }),
+        )
+
+        await waitFor(() =>
+            expect(mock.rest.getRoom).toHaveBeenCalledWith('room-1'),
+        )
+        const conversation = screen.getByLabelText('선택한 대화')
+        await waitFor(() =>
+            expect(within(conversation).getAllByText('첫 메시지')).toHaveLength(
+                1,
+            ),
+        )
+        expect(within(conversation).getByText('전송됨')).toBeVisible()
+    })
+
     it('메시지 기록은 추가분 live log이며 타임라인 자체만 하단으로 스크롤한다', async () => {
         const originalMatchMedia = window.matchMedia
         window.matchMedia = vi.fn((query: string) => ({

@@ -388,10 +388,17 @@ export function useChatController({
                         body: optimistic.body,
                     })
                     const persistedRoomId = directResult.room.roomPublicId
-                    const persistedRoom =
+                    let persistedRoom = directResult.room
+                    if (
                         directResult.room.counterpart.primaryCharacterId == null
-                            ? await runtime.rest.getRoom(persistedRoomId)
-                            : directResult.room
+                    ) {
+                        try {
+                            persistedRoom =
+                                await runtime.rest.getRoom(persistedRoomId)
+                        } catch {
+                            // 메시지 전송 성공은 프로필 보강 조회 실패와 분리한다.
+                        }
+                    }
                     updateRooms((current) =>
                         mergeRooms(
                             current.filter(
