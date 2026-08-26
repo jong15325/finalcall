@@ -60,18 +60,26 @@ export function mergeChatMessages(
     const next = [...current]
 
     for (const message of incoming) {
-        const index = next.findIndex(
-            (candidate) =>
-                candidate.messagePublicId === message.messagePublicId ||
-                (candidate.roomSequence !== null &&
-                    candidate.roomSequence === message.roomSequence) ||
-                (candidate.sentByMe &&
-                    message.sentByMe &&
-                    candidate.clientMessageId === message.clientMessageId),
+        const matchingIndexes = next.flatMap((candidate, index) =>
+            candidate.messagePublicId === message.messagePublicId ||
+            (candidate.roomSequence !== null &&
+                candidate.roomSequence === message.roomSequence) ||
+            (candidate.sentByMe &&
+                message.sentByMe &&
+                candidate.clientMessageId === message.clientMessageId)
+                ? [index]
+                : [],
         )
         const committed = toTimelineMessage(message)
-        if (index >= 0) next[index] = committed
-        else next.push(committed)
+        if (matchingIndexes.length === 0) {
+            next.push(committed)
+            continue
+        }
+
+        next[matchingIndexes[0]] = committed
+        for (let index = matchingIndexes.length - 1; index >= 1; index -= 1) {
+            next.splice(matchingIndexes[index], 1)
+        }
     }
 
     return sortTimeline(next)

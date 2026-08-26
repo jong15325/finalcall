@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
     highestCommittedSequence,
     mergeChatMessages,
+    toTimelineMessage,
     upsertOptimisticMessage,
     validateChatBody,
 } from './chatTimeline'
@@ -57,6 +58,23 @@ describe('chatTimeline', () => {
             roomSequence: 1,
             delivery: 'sent',
         })
+    })
+
+    it('서버 이벤트가 먼저 도착한 초안 메시지를 하나로 수렴한다', () => {
+        const optimistic = {
+            ...message(1),
+            messagePublicId: null,
+            roomSequence: null,
+            delivery: 'sending' as const,
+        }
+        const committed = message(1)
+
+        const merged = mergeChatMessages(
+            [toTimelineMessage(committed), optimistic],
+            [committed],
+        )
+
+        expect(merged).toEqual([toTimelineMessage(committed)])
     })
 
     it('publicId·sequence 중복을 제거하고 권위 sequence로 정렬한다', () => {

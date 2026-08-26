@@ -388,13 +388,17 @@ export function useChatController({
                         body: optimistic.body,
                     })
                     const persistedRoomId = directResult.room.roomPublicId
+                    const persistedRoom =
+                        directResult.room.counterpart.primaryCharacterId == null
+                            ? await runtime.rest.getRoom(persistedRoomId)
+                            : directResult.room
                     updateRooms((current) =>
                         mergeRooms(
                             current.filter(
                                 ({ roomPublicId: candidateId }) =>
                                     candidateId !== roomPublicId,
                             ),
-                            [directResult.room],
+                            [persistedRoom],
                         ),
                     )
                     const draftMessages =

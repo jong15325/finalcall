@@ -129,6 +129,7 @@ function createMockRuntime({
                     counterpart: {
                         memberPublicId: 'member-new',
                         nickname: body.counterpartNickname,
+                        primaryCharacterId: 6,
                     },
                 }),
             message: {
@@ -735,6 +736,29 @@ describe('ChatWorkspace', () => {
 
     it('상대 선택은 서버 호출 없는 초안이며 첫 메시지에서만 방과 메시지를 생성한다', async () => {
         const mock = createMockRuntime({ rooms: [] })
+        const canonicalRoom = room({
+            counterpart: {
+                memberPublicId: 'member-new',
+                nickname: '새상대',
+                primaryCharacterId: 6,
+            },
+        })
+        vi.mocked(mock.rest.sendDirectMessage).mockResolvedValue({
+            room: {
+                ...canonicalRoom,
+                counterpart: {
+                    memberPublicId: 'member-new',
+                    nickname: '새상대',
+                },
+            },
+            message: {
+                ...message(2, '첫 메시지', true),
+                clientMessageId: CLIENT_MESSAGE_ID,
+            },
+            roomCreated: true,
+            deduplicated: false,
+        })
+        vi.mocked(mock.rest.getRoom).mockResolvedValue(canonicalRoom)
         render(<ChatWorkspace runtime={mock.runtime} user={CURRENT_USER} />)
 
         await userEvent.click(
@@ -764,6 +788,16 @@ describe('ChatWorkspace', () => {
             }),
         )
         expect(mock.rest.sendMessage).not.toHaveBeenCalled()
+        await waitFor(() =>
+            expect(mock.rest.getRoom).toHaveBeenCalledWith('room-1'),
+        )
+        expect(
+            screen
+                .getAllByRole('img')
+                .some((image) =>
+                    image.getAttribute('src')?.includes('uc_06_aurelli.png'),
+                ),
+        ).toBe(true)
     })
 
     it('메시지 기록은 추가분 live log이며 타임라인 자체만 하단으로 스크롤한다', async () => {
