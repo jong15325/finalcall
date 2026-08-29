@@ -1,42 +1,50 @@
 # 총괄 세션 핸드오버
 
-> 갱신: 2026-08-27 03:54 KST / 브랜치 `master`
+> 갱신: 2026-08-30 03:12 KST / 브랜치 `master`
 
 ## Git·환경
-- 로컬 HEAD: `837f42ca12f6c6fb8fbc673585c046da6ca85f65`
-- upstream 원격 HEAD: `6ea65502e5fcc3a7bdcaf5dccf4339aebf8298b1`
-- unpushed commit: 1
-- 작업 트리: clean — 프론트 페이지 행동 버튼 디자인 변경까지 커밋 완료.
-- 실행 서비스: `finalcall-deploy`의 frontend·gateway·backend·MySQL·Redis·Kafka·Elasticsearch·MinIO와 `shared-cloudflared` 모두 healthy. 프론트 재배포는 이 핸드오버 커밋 직후 수행한다.
+- 로컬 HEAD: `63f68666924c039e543abd5259d8377256b86702`
+- upstream 원격 HEAD: `63f68666924c039e543abd5259d8377256b86702`
+- unpushed commit: 0
+- 작업 트리: dirty — `compose.deploy.yml`에 운영형 MySQL의 loopback 전용 포트 매핑(`127.0.0.1:3306:3306`)이 미커밋 상태다. 사용자 요청으로 적용한 변경이므로 보존한다.
+- 실행 서비스: `finalcall-deploy`의 frontend·gateway·backend·MySQL과 나머지 운영 컨테이너가 실행 중이다. 확인한 frontend·gateway·backend·MySQL은 모두 healthy다.
+- 운영형 MySQL: `finalcall-deploy-mysql-1`, Windows/DBeaver 접속은 `127.0.0.1:3306`. 로컬 개발 DB `finalcall-mysql`과 별개다.
 
 ## 완료
-- OAuth 운영 활성화·보안 보강과 계약 기록을 커밋하고 사용자 push까지 완료했다: `7f46e702`, `f219ffd7`.
-- 운영 시드 채팅방 ID를 ULID 계약에 맞춰 교정하고 기존 메시지 436개·읽음 상태 48개를 보존했다. 관련 구현·진단 기록은 `3adb2ee2`, `cd54cd6c`와 FC-404·FC-405에 있다.
-- 채팅 읽음 실시간 갱신, 신규 대화 첫 메시지 중복 수렴, 상대 프로필 정규화와 프로필 보강 실패 격리를 구현·배포했다: `cba05829`, `2b6a9e27`, `c0d36bdd`. 정본 티켓은 FC-406·FC-407이다.
-- 모바일 채팅·배경, 페이지 액션과 모바일 내비게이션 디자인을 정리하고 배포했다: `c19fda4c`, `6ea65502`.
-- 페이지 주요 CTA를 `primary/secondary/danger` 광택 시스템으로 통일하고 판매 확인·회원 탈퇴 frost 대비를 보강했다. 워크벤치 `page-actions` 시나리오를 추가했으며 커밋은 `837f42ca`다.
-- Jira 키 기록 정규식과 포트폴리오의 Claude Code→Codex 이식 근거를 각각 `994e0414`, `839a2d70`으로 반영했다.
+- 운영형 MySQL을 DBeaver에서 관리할 수 있도록 `compose.deploy.yml`에 `127.0.0.1:3306:3306` 매핑을 추가하고 MySQL만 재생성했다. 데이터 볼륨은 유지됐고 backend·MySQL health 및 TCP 연결을 확인했다.
+- 운영 인벤토리의 카드 이미지 누락 원인을 진단했다. 카드 아트·ERD 계약은 표시 레벨 `1~9`인데 `OperationsSeedFixture`가 마지막 48건을 `10~15`로 생성한다.
+- 배포 이미지 자산 자체는 정상임을 확인했다. 레벨 `1~9` 카드 아트 648개가 원본과 배포 컨테이너에 있고 레벨 9 이미지가 HTTP 200으로 응답했다.
+- 운영 시드의 스킬 퍼센트도 진단했다. 레벨별 관측 상한은 `9~36%`인데 시드는 최대 `88%`를 저장하며, 레벨별 상한 위반 시드가 98건이다.
+- 프론트 이미지를 최신 HEAD 기준으로 `--no-deps` 재배포했다. `/healthz=ok`, frontend·gateway·backend 모두 healthy다. 이 배포는 데이터 교정과 무관하며 DB 변경을 만들지 않았다.
 
 ## 진행 중
-- `EPIC-CHAT`은 doing이다. FC-404·FC-405는 운영 진단/교정 기록이고 FC-406·FC-407은 reviewer 통과 상태다. 에픽 Done 전이는 사용자 게이트3 승인 전까지 수행하지 않는다.
-- `EPIC-OAUTH-LIVE-HARDENING`의 실제 provider 잔여 E2E와 공격·JWT lifecycle 회귀는 기존 FC-402/FC-403 상태를 따른다.
+- 운영 시드 아이템의 레벨·스킬 퍼센트 교정은 진단까지만 완료했다. 운영 DB, 시드 코드, 테스트, 명세는 아직 수정하지 않았다.
+- 권장 레벨 재매핑은 `10→7`, `11→8`, `12→9`, `13→7`, `14→8`, `15→9`다.
+- 권장 퍼센트 상한은 Lv.1부터 Lv.9까지 각각 `9, 15, 19, 23, 25, 27, 31, 33, 36`이며, 무스킬 아이템은 `0%`로 맞춘다.
+- 영향 범위에는 레벨 `10~15` 아이템 48건, 레벨별 퍼센트 상한 위반 시드 98건, 미적용 배송 스냅샷 48건이 포함된다. 검색·경매·상점 read model 표시도 교정 후 대조해야 한다.
+- 시드 범위 밖 일반 데이터에서 `무스킬인데 skill_percent가 0이 아닌 행` 1건이 발견됐다. 시드 교정과 구분해 원인·소유 데이터를 재확인한다.
+- 이전 세션의 architect 분석은 세션 종료 전에 반환되지 않았다. 계약·영향 범위를 새 세션에서 다시 확정해야 한다.
 
 ## 남은 일
-- 이번 핸드오버 이후 `837f42ca` 포함 프론트 이미지를 `--no-deps`로 재배포하고 health를 확인한다.
-- 전체 프론트 테스트에는 이번 디자인 범위 밖의 기존 실패 6건이 남아 있다: `MEMBER_003` 계약 불일치 1건, InventoryCardInfoDialog의 `0일` 기대 1건, 과거 workbench navigation 기대 4건.
-- 페이지 행동 버튼은 `prefers-reduced-transparency`에서도 고정 blur를 유지하고, CSS 대비·focus·reduced-motion 시각 회귀 테스트가 제한적이다. reviewer 판정은 minor이며 배포 비차단이다.
-- 사용자 push 후 원격 CI 결과를 확인한다. push와 에픽 Done 전이는 사용자 권한이다.
+- 데이터 변경 전에 운영 DB 대상 행을 다시 조회하고, 변경 대상만 담는 백업 테이블을 생성한다. 백업·복구 쿼리와 전후 카운트를 먼저 확정한다.
+- `OperationsSeedFixture`의 레벨 생성 로직을 `7~9`로 교정하고, `skilledPercent()`가 아이템 레벨별 상한 안에서만 값을 만들도록 변경한다.
+- 시드 완료 검증을 `모든 레벨 1~9`, `무스킬=0%`, `스킬 보유=1% 이상`, `레벨별 상한 이하` 불변식으로 교체하고 통합 테스트를 추가한다.
+- 운영 시드 명세의 `레벨 10 이상 48건`·고퍼센트 분포 요구를 실제 계약과 정합화한다. 계약/분포 변경이므로 구현·운영 DB 수정 전에 게이트2 사용자 승인을 받는다.
+- 승인 후 운영 `item_instance`와 미적용 `delivery_item_snapshot`을 같은 보정 규칙으로 갱신하고 검색 인덱스·인벤토리·경매·상점 화면을 검증한다.
+- 단일 스킬 72건이 `skill1`에 저장되지만 UI는 퍼센트를 `skill2`에 표시하는 문제는 이번 일괄 교정에 포함하지 않는다. 각 스킬 코드의 슬롯 적합성을 별도로 검증한 뒤 범위를 결정한다.
+- `compose.deploy.yml` 포트 매핑 변경은 데이터 교정과 분리해 사용자 승인 후 원자 커밋한다.
 
 ## 검증
-- 페이지 행동 버튼 변경 대상 테스트 44건, TypeScript, ESLint, Prettier 통과.
-- `npm.cmd run build`: UI system guard, workbench guard, Vite production build, production residue 검사 통과. 초기 `min-h-[520px]` 가드 실패는 production 정본의 `min-h-screen`으로 최소 보정했다.
-- reviewer 최종 판정: critical/major 없음, minor 2건으로 통과.
-- 앞선 모바일 내비게이션 디자인 변경은 대상 테스트 47건, TypeScript·ESLint·Prettier·production build와 reviewer를 통과했다.
-- 템플릿·컨벤션 준수: 확인 — `templates.md [8]` 형식으로 덮어썼고 프론트 변경은 원자 커밋했으며 push는 실행하지 않았다.
+- 운영 데이터 진단: 레벨 `10~15` 48건, 레벨별 퍼센트 상한 위반 시드 98건, 연동 배송 스냅샷 48건을 확인했다.
+- 운영 컨테이너: frontend·gateway·backend·MySQL `running/healthy`.
+- Jira: 로컬 보드 453건 및 Jira key·summary·상태·에픽 귀속·관계 링크 패리티 453건 정상.
+- Git: 로컬·원격 HEAD 일치, unpushed commit 0, 미커밋 변경은 `compose.deploy.yml` 1건.
+- 템플릿·컨벤션 준수: 확인 — `templates.md [8]` 형식으로 현행 상태를 덮어썼다.
 
 ## Jira 미러 패리티
-- `node scripts/jira-sync.mjs --check`: 파일 보드 453건 정상, Jira KAN 인증 정상, key·summary·상태·에픽 귀속·관계 링크 패리티 453건 정상.
-- Jira 연결 실패나 미생성 이슈 없음.
+- `node scripts/jira-sync.mjs --check`: 파일 보드 453건 정상, Jira KAN 인증 정상, 패리티 453건 정상.
+- 이번 데이터 진단은 아직 티켓 생성·상태 전이를 하지 않아 Jira 변경 없음.
 
 ## 다음 첫 행동
-1. `docker compose --env-file .env.deploy -f compose.deploy.yml up -d --build --no-deps frontend`로 프론트만 재배포하고 `/healthz` 및 frontend·gateway·backend healthy를 확인한다.
+1. architect에게 운영 시드 레벨·퍼센트 교정의 계약 영향, 정확한 대상 집합, 백업·복구 방식, 배송 스냅샷·검색 인덱스 파급을 다시 확정하게 한다.
+2. 분석 결과와 권장 보정식을 사용자에게 게이트2로 상신하고 승인 전에는 운영 DB·시드 코드·명세를 수정하지 않는다.
