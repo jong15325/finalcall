@@ -52,6 +52,8 @@ class RateLimit429IntegrationTest {
     static void redisProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+        registry.add("HOME_RECOMMEND_RATE_LIMIT_REPLENISH_RATE", () -> 2);
+        registry.add("HOME_RECOMMEND_RATE_LIMIT_REQUESTED_TOKENS", () -> 3);
     }
 
     @LocalServerPort
@@ -115,6 +117,33 @@ class RateLimit429IntegrationTest {
     }
 
     /** {@code Map<String,Object>} 역직렬화용 TypeReference(제네릭 소거 회피). */
+    @Test
+    @DisplayName("홈 추천 GET은 전용 burst 10 초과 시 429 GATEWAY_429와 Retry-After를 반환한다")
+    void homeRecommendationBurstReturns429() throws Exception {
+        WebTestClient client = WebTestClient.bindToServer()
+            .baseUrl("http://localhost:" + port)
+            .build();
+
+        EntityExchangeResult<byte[]> tooManyRequests = null;
+        for (int index = 0; index < 40 && tooManyRequests == null; index++) {
+            EntityExchangeResult<byte[]> result = client.get()
+                .uri("/api/v1/home/shop-recommendations")
+                .exchange()
+                .expectBody(byte[].class)
+                .returnResult();
+            if (result.getStatus() == HttpStatus.TOO_MANY_REQUESTS) {
+                tooManyRequests = result;
+            }
+        }
+
+        assertThat(tooManyRequests).isNotNull();
+        assertThat(tooManyRequests.getResponseHeaders().getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("2");
+        Map<String, Object> body = objectMapper.readValue(
+            tooManyRequests.getResponseBodyContent(), new TypeReferenceMap());
+        assertThat(body).containsOnlyKeys("success", "code", "message", "timestamp");
+        assertThat(body.get("code")).isEqualTo("GATEWAY_429");
+    }
+
     private static final class TypeReferenceMap
         extends com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>> {
     }

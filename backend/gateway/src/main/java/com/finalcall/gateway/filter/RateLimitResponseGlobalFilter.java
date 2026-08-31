@@ -1,7 +1,10 @@
 package com.finalcall.gateway.filter;
 
+import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR;
+
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.route.Route;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +16,7 @@ import org.springframework.web.server.ServerWebExchange;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finalcall.gateway.config.HomeRecommendationRateLimitProperties;
 import com.finalcall.gateway.response.GatewayErrorResponse;
 
 import reactor.core.publisher.Mono;
@@ -49,9 +53,13 @@ public class RateLimitResponseGlobalFilter implements GlobalFilter, Ordered {
     private static final String RETRY_AFTER_SECONDS = "1";
 
     private final ObjectMapper objectMapper;
+    private final HomeRecommendationRateLimitProperties homeRateLimitProperties;
 
-    public RateLimitResponseGlobalFilter(ObjectMapper objectMapper) {
+    public RateLimitResponseGlobalFilter(
+        ObjectMapper objectMapper,
+        HomeRecommendationRateLimitProperties homeRateLimitProperties) {
         this.objectMapper = objectMapper;
+        this.homeRateLimitProperties = homeRateLimitProperties;
     }
 
     @Override
@@ -71,7 +79,7 @@ public class RateLimitResponseGlobalFilter implements GlobalFilter, Ordered {
                     return super.setComplete();
                 }
                 getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                getHeaders().add(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS);
+                getHeaders().set(HttpHeaders.RETRY_AFTER, retryAfterSeconds(exchange));
                 DataBuffer buffer = bufferFactory().wrap(body);
                 return super.writeWith(Mono.just(buffer));
             }
@@ -82,5 +90,13 @@ public class RateLimitResponseGlobalFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;
+    }
+
+    private String retryAfterSeconds(ServerWebExchange exchange) {
+        Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
+        if (route == null || !"home-shop-recommendations-rate-limited".equals(route.getId())) {
+            return RETRY_AFTER_SECONDS;
+        }
+        return String.valueOf(homeRateLimitProperties.retryAfterSeconds());
     }
 }

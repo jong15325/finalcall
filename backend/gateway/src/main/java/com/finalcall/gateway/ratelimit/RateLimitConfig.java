@@ -1,6 +1,10 @@
 package com.finalcall.gateway.ratelimit;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RateLimiter;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,5 +26,18 @@ public class RateLimitConfig {
     @Bean
     public KeyResolver clientIpKeyResolver(GatewayClientIpProperties properties) {
         return new TrustedProxyClientIpKeyResolver(properties);
+    }
+
+    /** 홈 추천은 Redis 장애 시 우회하지 않고 거부한다. 정상 토큰버킷 계산은 SCG 구현을 그대로 사용한다. */
+    @Bean
+    public RateLimiter<RedisRateLimiter.Config> homeRecommendationRateLimiter(
+        @Qualifier("redisRateLimiter") RedisRateLimiter redisRateLimiter) {
+        return new FailClosedRedisRateLimiter(redisRateLimiter);
+    }
+
+    /** SCG 기본 필터 팩토리는 기존 Redis limiter를 계속 사용하고, 홈 래퍼는 라우트에서만 명시 참조한다. */
+    @Bean
+    public static BeanFactoryPostProcessor primaryRedisRateLimiter() {
+        return beanFactory -> beanFactory.getBeanDefinition("redisRateLimiter").setPrimary(true);
     }
 }
