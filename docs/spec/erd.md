@@ -1,12 +1,13 @@
 # FinalCall ERD (데이터 모델)
 
-상태: **v2.3 — FC-352 기본 캐릭터 sparse CHECK 확정(2026-08-22 사용자 승인).** 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: **v2.4 — FC-409 홈 추천 최신 후보 인덱스 확정(2026-08-31 사용자 게이트2 승인).** 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, chat-domain-spec v1.1, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v2.4 | 2026-08-31 | **FC-409 성능 후속 게이트2 A안 사용자 승인 확정.** `shop (status, created_at, id)` 보조 인덱스 `ix_shop_status_created_at_id` 1개를 추가해 홈 추천의 신규/GENERAL `ACTIVE + created_at DESC,id DESC` 최신 후보 조회를 커버한다. MySQL 8·ACTIVE 2,000건에서 종전 전체 scan+정렬 약 1.63ms가 데이터 증가에 선형인 증거를 반영했다. 마감 `(status,end_at)`, 검증 판매자 쿼리, 무캐시, API 계약은 불변이며 ACTIVE 2만·10만 재측정 후 read model/cache는 별도 상신한다. 실제 append-only Flyway는 backend 파생 티켓 소유 |
 | v2.3 | 2026-08-22 | **FC-352 변경 계약 사용자 승인 확정.** V28 `user.primary_character_id` CHECK를 종전 1..28에서 `(BETWEEN 1 AND 12) OR (BETWEEN 25 AND 28)`로 축소한다. premium 13..24는 저장 불가다. V28은 미커밋·미배포 상태에서 최종 정본을 수정하며 신규 V29는 만들지 않는다. 기본값·기존 행 backfill=1, 타입·인덱스 없음은 불변. 정본=`member-domain-spec.md` v1.1. 영향=FC-352~358. |
 | v2.2 | 2026-08-22 | **FC-352 Gate 2 사용자 승인 확정.** `user.primary_character_id TINYINT UNSIGNED NOT NULL DEFAULT 1`과 CHECK 1..28을 V28로 가법 추가한다. 기존 행은 1로 backfill한다. 프로필 스냅샷·인덱스는 추가하지 않는다. 정본=`member-domain-spec.md` v1.0. 영향=FC-353~358. |
 | v2.1 | 2026-08-19 | **FC-332 게이트2 승인.** 실제 purge 조건·정렬(`created_at < cutoff AND id <= CDC safe checkpoint ORDER BY created_at,id`)에 맞춘 `(created_at,id)` 인덱스를 append-only V27로 추가한다. `(occurred_at,id)`는 pipeline 최신 사건 관측용으로 유지한다. 7일 보존·CDC checkpoint·binlog guard·REST/STOMP 계약은 불변이다. |
@@ -737,6 +738,7 @@ PK·UK(4절 표기)는 생략하고, 조회·정합·마감·검색 목적의 �
 | bid | (auction_id, amount DESC) | 경매별 최고가·입찰 내역 조회. **"현재 최고 입찰" 식별도 이 인덱스가 커버**한다 — 입찰 금액이 단조 증가(bid-domain-spec §10 I2)해 선두 행이 곧 현재 최고 입찰이므로 `(auction_id, status)` 별도 인덱스는 두지 않는다(bid-domain-spec §11 G4) |
 | bid | (bidder_id) | 사용자 입찰 내역, 연속 입찰 금지 검증 |
 | shop | (status, end_at) | 고정가 만료(EXPIRED) 트리거 스캔(D-057) |
+| shop | (status, created_at, id) | 홈 추천 신규/GENERAL 최신 후보(`status=ACTIVE ORDER BY created_at DESC,id DESC LIMIT N`) 커버. FC-409 MySQL 8·ACTIVE 2,000건 전체 scan+정렬의 선형 증가 증거에 따른 성능 후속 게이트2 A안(2026-08-31). 인덱스명 `ix_shop_status_created_at_id` |
 | shop | (seller_id, status) | 판매자 고정가 목록 |
 | shop | (item_instance_id) | 출품 아이템 역참조(에스크로 상태 확인, auction 대칭 — G2 관찰 #3) |
 | sale_order | (source_type, source_id) **UK** | 출처 리스팅 역참조 + **동일 경매 이중 SOLD 핸드오프 DB 차단**(v1.3 UK 승격 — 이중 정산 방지, closing-domain-spec §6 I-C) |

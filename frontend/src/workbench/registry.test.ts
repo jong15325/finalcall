@@ -10,6 +10,22 @@ import {
 import { SEMANTIC_OVERRIDE_KEYS } from './types'
 
 describe('workbench registry', () => {
+    it('registers the home market recommendation gate in the real AppShell', async () => {
+        const scenario = WORKBENCH_SCENARIOS.find(
+            ({ id }) => id === 'home-market-recommendations',
+        )!
+
+        expect(scenario.shell).toBe('app')
+        expect(scenario.routeContext).toBe(paths.home)
+        const module = await scenario.load()
+        expect(
+            (module.fixture as { complete: readonly unknown[] }).complete,
+        ).toHaveLength(6)
+        expect(
+            (module.fixture as { partial: readonly unknown[] }).partial,
+        ).toHaveLength(3)
+    })
+
     it('registers the Vuexy chat gate in the real AppShell', async () => {
         const scenario = WORKBENCH_SCENARIOS.find(({ id }) => id === 'chat')!
 

@@ -1,12 +1,17 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.35 — FC-397 OAuth 라이브 활성화·state 보강 계약 확정(2026-08-25 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.40 — FC-415 홈 추천 rate 설정 검증·동적 Retry-After 확정(2026-08-31).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, chat-domain-spec v1.9, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.40 | 2026-08-31 | **FC-415 보안 2차 수정 구현 계약 확정.** `gateway.home-recommend-rate-limit` validated properties에 replenish/burst/requested를 바인딩하고 전부 양수·`burst >= replenish`를 gateway 부팅 시 fail-fast 검증한다(silent clamp 없음). 홈 `Retry-After=ceil(requestedTokens/replenishRate)`를 long 안전 계산해 기본 1/1=1초·비기본 3/2=2초를 보장한다. 홈 전용 fail-closed composition과 기존 limiter를 분리하며 성공 API·rate 기본값·추천/구매 정확성 경계는 불변 |
+| v1.39 | 2026-08-31 | **FC-415 구현 실측에 따른 계약 정정.** 사용자 승인 fail-closed 결정은 불변이나 SCG 기본 `RedisRateLimiter`가 Redis 장애 응답을 `allowed=true, remaining=-1`로 처리함을 테스트로 확인했다. 홈 추천 route 전용 `FailClosedRedisRateLimiter`가 이 오류 응답만 deny로 변환해 429 `GATEWAY_429`·하류 호출 0건을 보장한다. 정상 허용/소진 판정·rate 기본값·성공 API는 불변. `Retry-After` 설정 연동은 v1.40에서 확정 |
+| v1.38 | 2026-08-31 | **홈 추천 보안 후속 게이트2 사용자 승인 확정.** 공개 `GET /api/v1/home/shop-recommendations`에 gateway IP rate limit을 적용한다. 기본 `replenishRate=1`·`burstCapacity=10`·`requestedTokens=1`, `HOME_RECOMMEND_RATE_LIMIT_*` 환경변수 조정, 일반 service route보다 선행, 기존 `TrustedProxyClientIpKeyResolver` 재사용. 한도 초과와 Redis limiter 장애는 429 `GATEWAY_429`+`Retry-After`로 fail-closed 처리한다. 구체 수단은 v1.39에서 실측 정정했다. Redis는 추천·구매 정확성 수단이 아니며 성공 API·무캐시·reason·쿼터·다양성은 불변. V29 운영 절차 정본 = `docs/backend/flyway-deployment-runbook.md` |
+| v1.37 | 2026-08-31 | **FC-409 성능 후속 게이트2 A안 사용자 승인 확정.** MySQL 8·ACTIVE 2,000건 실행계획을 근거로 홈 추천 신규/GENERAL 최신 후보용 `ix_shop_status_created_at_id(status,created_at,id)` 1개를 추가한다. 검증 판매자 쿼리와 무캐시 정책은 유지하고 ACTIVE 2만·10만 재측정에서 후속 read model/cache 필요성을 별도 상신한다. `GET /home/shop-recommendations` 경로·응답·reason·쿼터·다양성 및 기존 API는 불변. 정본 = shop-spec §12.5~§12.6, erd v2.4 §5 |
+| v1.36 | 2026-08-31 | **FC-408 게이트2 H1~H5 사용자 승인 확정.** §3.2에 공개 `GET /api/v1/home/shop-recommendations` 추가. 최대 6건, 응답 `{items:[{reason,shop:ShopSummary}],calculatedAt}`. 24시간 내 마감·완료 판매 5회 임계, 판매자 1건·템플릿 2건 제한과 템플릿→판매자 순 완화, 1차 무캐시·신규 인덱스 없음 및 `EXPLAIN ANALYZE` 후 별도 상신을 확정했다. 기존 API·ShopSummary·스키마·에러코드 무변경. 정본 = shop-spec §12 |
 | v1.35 | 2026-08-25 | **FC-397 게이트2 사용자 승인 확정.** 기존 SPA 주도+backend code 교환, 즉시 자동가입, 이메일 자동연결 금지, 기존 JWT/refresh, `POST /api/v1/auth/oauth/{provider}` 요청·응답·에러 형상을 유지한다. 브라우저 `sessionStorage` pending state를 `provider+state+issuedAt+안전한 내부 returnPath`로 보강하고 5분 TTL·일회 소비·마지막 시도 우선 정책을 적용한다. PKCE·계정 연결·HttpOnly token cookie는 범위 밖이다. provider key는 환경변수 only, callback은 provider 콘솔·frontend·backend가 정확 일치해야 한다. **스키마·Flyway 무변경.** 정본=`oauth-live-hardening-spec.md` v1.0, 영향=FC-398~403. |
 | v1.34 | 2026-08-23 | **FC-366 변경 계약 사용자 승인 확정.** `cardInfo.formalName`은 카드정보 모달·inline·상세 정보영역의 `{레벨}레벨 {원형 종류}` 명칭으로, `shortName`은 마켓·실시간 경매 등 목록과 compact card의 `Lv.{레벨} {속성약칭}{종류약칭}` 표시명으로 의미를 분리한다. 예: `9레벨 칼` / `Lv.9 바검`, `5레벨 마법` / `Lv.5 흙필`, 스페셜필은 `5레벨 스페셜필` / `Lv.5 흙스필`. `9바검`·`바검`·`불신`·`흙필` 등은 화면 표시명이 아닌 후속 검색 alias로 분리하며 이번 `cardInfo`에 검색 필드를 추가하지 않는다. DTO 형상·DB·엔드포인트·조회 계약은 불변이다. 정본=`item-domain-spec.md` §5.6, `frontend-ui-system-contract.md` §6.7. 영향=FC-367~369. |
 | v1.33 | 2026-08-23 | **FC-366 Gate 2 사용자 승인 확정.** 경매·고정가의 공통 `item` 블록, 인벤토리·임시보관·배송의 `ItemSummaryResponse`, 아이템 인스턴스 상세에 동일한 중첩 `cardInfo`를 가법 추가한다. 서버가 목록 표시명과 카드정보 명칭, 분류·종류·속성 label/약어, 채널 제한, 블랙/골드 프레임·GF 잔여 일수, 슬롯별 스킬 표시와 `calculatedAt`·`validUntil`을 요청/목록당 단일 `Clock` 기준 시각으로 계산한다. 두 명칭의 표시 형식과 사용 경계는 v1.34에서 정정했다. 프론트는 이 값을 재계산하지 않고 렌더한다. 기존 `nameSnapshot`·`displayName`·`goldforceExpireAt` 및 모든 기존 필드는 호환·감사 목적으로 유지한다. DB·엔드포인트·에러코드·검색 계약은 불변이며 스키마 마이그레이션이 없다. 약칭/스킬 검색은 후속 에픽이다. 정본=`item-domain-spec.md` §5.6, `frontend-ui-system-contract.md` §6.7. 영향=FC-367~369. |
@@ -645,6 +650,23 @@ POST /api/v1/shops/{shopPublicId}/cancel — 판매자 취소
 - 인증: 필요(판매자 본인)
 - 동작: ACTIVE(미판매)일 때 CANCELLED. 아이템 에스크로 해제(인벤토리 복귀, 만실 시 임시보관).
 - 응답 200: `{ status }` / 에러 `SHOP_004` 이미 종료(409)
+
+GET /api/v1/home/shop-recommendations — 홈 오늘의 추천 마켓 (EPIC-HOME-MARKET-RECOMMEND / FC-408)
+- **게이트2 H1~H5 사용자 승인 확정(2026-08-31).** 상세 정본 = `shop-spec.md` §12.
+- 인증: 불요(로그인과 무관한 공개·비개인화 추천)
+- 요청 query/body: 없음
+- 응답 200(data): `{ items: [{ reason, shop }], calculatedAt }`
+  - `items`: 서버 표시 순서의 0~6건. `shop`은 기존 `ShopSummary` 형상 그대로.
+  - `reason`: `NEW | ENDING_SOON | TRUSTED_SELLER | GENERAL`.
+  - `calculatedAt`: ISO-8601 UTC. ACTIVE·미만료·임계를 후보군 전체에 판정한 단일 서버 기준시각.
+- 공통 자격: `ACTIVE AND (endAt IS NULL OR endAt > calculatedAt)`. 쿼터는 신규 3(`createdAt desc,id desc`) + 24시간 내 마감 임박 2(`endAt asc,id asc`) + 완료 판매 5회 이상 판매자 1(`sellerCompletedSales desc,createdAt desc,id desc`). 동일 shop 중복 금지.
+- 다양성: 동일 판매자 최대 1건·동일 item template 최대 2건. 부족하면 최신 미선택 ACTIVE를 `GENERAL`로 보충하면서 (1) 제한 유지 → (2) 템플릿 제한 완화 → (3) 판매자 제한 완화하며, 후보 부족은 6건 미만을 허용한다. 사실 임계 미충족 매물에 `ENDING_SOON`·`TRUSTED_SELLER`를 붙이지 않는다.
+- 오류: 결과 없음은 200 + `items=[]`. 신규 도메인 에러코드 없음; 공통 서버 오류 외피만 적용.
+- 성능/캐시 경계: 후보별 판매 건수 N+1 금지(기존 `sale_order(seller_id)` 배치 집계). 마감은 `ix_shop_status_end_at`, 신규/GENERAL은 성능 후속 승인 인덱스 `ix_shop_status_created_at_id(status,created_at,id)`를 사용한다. 검증 판매자 쿼리와 무캐시는 유지하며 ACTIVE 2만·10만 재측정 후 read model/cache를 별도 게이트2로 상신한다.
+- gateway rate limit: 클라이언트 IP 기준 기본 `replenishRate=1`·`burstCapacity=10`·`requestedTokens=1`. `HOME_RECOMMEND_RATE_LIMIT_REPLENISH_RATE`·`HOME_RECOMMEND_RATE_LIMIT_BURST_CAPACITY`·`HOME_RECOMMEND_RATE_LIMIT_REQUESTED_TOKENS` 환경변수를 `gateway.home-recommend-rate-limit` validated properties로 바인딩한다. 세 값은 모두 양수이고 `burstCapacity >= replenishRate`여야 하며 위반 시 gateway 부팅 실패, silent clamp 없음이다. 전용 GET route는 일반 service route보다 선행하며 기존 `TrustedProxyClientIpKeyResolver`를 재사용한다.
+- 한도 초과: 기존 엣지 오류 계약 429 `GATEWAY_429` + `Retry-After`. SCG 기본 `RedisRateLimiter`의 Redis 장애 응답은 `allowed=true, remaining=-1`이므로, 홈 추천 route 전용 `FailClosedRedisRateLimiter`가 이 오류 응답만 deny로 변환해 429와 하류 호출 0건을 보장한다. 정상 허용·토큰 소진 결과는 그대로 보존한다. Redis는 추천 선정이나 구매 성공의 정확성 수단이 아니며 Redis 장애가 성공 응답을 잘못된 추천으로 바꾸지는 않는다.
+- 홈 `Retry-After`: `ceil(requestedTokens / replenishRate)`초를 long 안전 계산한다. 기본 requested=1/replenish=1은 1초, 비기본 3/2는 2초다. 홈 전용 fail-closed composition과 다른 route의 기존 limiter 응답은 분리한다.
+- **게이트2 확정 내용**: H1 전용 공개 API, H2 reason+calculatedAt 포함, H3 24시간·5회 임계, H4 다양성 및 템플릿→판매자 순 완화. H5는 1차 무캐시·무인덱스 실측 후 **성능 후속 A안**으로 최신 후보 인덱스 1개 추가·검증 쿼리/무캐시 유지가 확정됐다. H6는 전용 gateway IP rate limit과 Redis 장애 fail-closed 처리로 확정됐으며, 구체 수단은 홈 route 전용 `FailClosedRedisRateLimiter`다.
 
 > **⚠ PROPOSAL — EPIC-SHOP(FC-092), 게이트2 미승인 (2026-07-22). 승인 전까지 확정 아님.** 정본 = `shop-spec.md` v1.0. 위 §3.2 엔드포인트·§5 SHOP_001~006은 이미 등재돼 있고, 아래는 그 **동작 정밀화**다(신규 엔드포인트·필드·스키마 없음).
 > - **등록(`POST /shops`)**: body `{ itemInstancePublicId, price }` — **기한 입력 필드 없음.** `price > 0`. 서버가 등록 시점에 `end_at = now + 설정 일수`로 **자동 계산**한다(판매자는 기한을 고르지 않는다, 게이트2 정정 2026-07-22). 설정 일수 = 단일 관리자 값 `@ConfigurationProperties` `shop.listing.default-duration-days`(기본 7일, 하드코딩 금지·향후 DB 이관 여지). **기한 범위·판매자 지정·최대값 없음.** 응답에는 계산된 `endAt`을 노출한다(ShopSummary/ShopDetail §3.3). 무기한(end_at NULL)은 스키마만 nullable로 남겨둔 향후 "무기한 노출 캐시아이템"용이며 이 에픽 등록 경로로는 만들지 않는다(shop-spec §3.1).

@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
-import { Link } from 'react-router'
-import { TbBuildingStore, TbFlame, TbPin, TbSpeakerphone } from 'react-icons/tb'
+import { useCallback, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router'
+import { TbFlame, TbPin, TbSpeakerphone } from 'react-icons/tb'
 import { boardPath, boardPostPath, paths } from '@/app/paths'
 import ListFrame from '@/components/common/ListFrame'
 import type { ListFrameState } from '@/components/common/ListFrame'
@@ -9,13 +9,20 @@ import { auctionPhaseOf } from '@/features/auction/lib/auctionPhase'
 import { useNow } from '@/features/auction/lib/useNow'
 import { formatPostTime } from '@/features/board/lib/postView'
 import HomeBanner from '@/features/home/components/HomeBanner'
+import HomeMarketRecommendations from '@/features/home/components/HomeMarketRecommendations'
 import HomeSection, {
     HomeSectionHeading,
 } from '@/features/home/components/HomeSection'
 import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
+import ShopCardInfoDialog from '@/features/shop/components/ShopCardInfoDialog'
 import { useAuctionList } from '@/lib/queries/auctions'
+import { useMyBalance } from '@/lib/queries/balance'
 import { usePostList } from '@/lib/queries/boards'
+import { useShopRecommendations } from '@/lib/queries/shop'
+import { buildReturnUrlQuery } from '@/lib/returnUrl'
+import { useAuthStore, useIsAuthenticated } from '@/store/authStore'
 import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
+import type { ShopSummary } from '@/lib/api/shop'
 
 /**
  * 홈 `/` (FC-070 — design-brief B-1 · 목업 `#home`).
@@ -39,7 +46,6 @@ import type { AuctionListQuery, AuctionSummary } from '@/lib/api/auctions'
 const PREVIEW_QUERY: AuctionListQuery = { sort: 'endAt,asc', size: 12 }
 const PREVIEW_COUNT = 6
 /** 추천 마켓 자리보류 골격 칸 수(목업 6) */
-const MARKET_PLACEHOLDER_COUNT = 6
 /** 공지 게시판 slug(FC-201 흡수) + 홈 미리보기 줄 수 */
 const NOTICE_SLUG = 'notice'
 const NOTICE_PREVIEW_COUNT = 5
@@ -52,7 +58,7 @@ export default function HomePage() {
             <HomeBanner />
 
             <ClosingSoonSection now={now} />
-            <RecommendMarketSection />
+            <RecommendMarketSection now={now} />
             <NoticeSection />
         </div>
     )
@@ -125,48 +131,52 @@ function ClosingSoonSection({ now }: { now: number }) {
     )
 }
 
-/* ── 오늘의 추천 마켓 아이템 (준비 중 자리보류) ─────────────────────────────
- *
- * ★ 고정가 마켓은 백엔드 미구현(`ShopController` 없음, §5). **엔드포인트를 호출하지 않는다**
- *   (FC-048 사고). 목업 헤드·캡션은 그대로 두고 `home-recommend-card` 6칸 골격만 비활성으로 남긴다.
- */
-function RecommendMarketSection() {
+/* ── 오늘의 추천 마켓 (FC-412 실연동) ───────────────────────────────────── */
+function RecommendMarketSection({ now }: { now: number }) {
+    const location = useLocation()
+    const { data, isPending, isError, refetch } = useShopRecommendations()
+    const balanceQuery = useMyBalance()
+    const isAuthed = useIsAuthenticated()
+    const myNickname = useAuthStore((state) => state.user?.nickname ?? null)
+    const [selectedShop, setSelectedShop] = useState<ShopSummary | null>(null)
+    const openCardInfo = useCallback(
+        (shop: ShopSummary) => setSelectedShop(shop),
+        [],
+    )
+    const items = data?.items ?? []
+    const state = isPending
+        ? 'loading'
+        : isError
+          ? 'error'
+          : items.length === 0
+            ? 'empty'
+            : 'ready'
+
     return (
-        <HomeSection
-            icon={TbBuildingStore}
-            title="오늘의 추천 마켓 아이템"
-            description="아이템마켓에서 거래 중인 추천 아이템입니다."
-            seeAllHref={paths.market}
-        >
-            <ul
-                aria-label="추천 마켓 준비 중"
-                className="grid grid-cols-2 gap-3 xs:grid-cols-3 md:grid-cols-6"
-            >
-                {Array.from({ length: MARKET_PLACEHOLDER_COUNT }).map(
-                    (_, index) => (
-                        <li
-                            key={index}
-                            aria-disabled="true"
-                            className="home-recommend-card flex flex-col overflow-hidden rounded-xl border border-dashed border-content-line bg-content-surface"
-                        >
-                            <div className="grid aspect-square place-items-center bg-content-soft text-content-line">
-                                <TbBuildingStore
-                                    aria-hidden
-                                    className="size-6"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1.5 p-3">
-                                <span className="h-3 w-3/4 rounded bg-content-soft" />
-                                <span className="h-3 w-1/2 rounded bg-content-soft" />
-                            </div>
-                        </li>
-                    ),
-                )}
-            </ul>
-            <p className="mt-2 text-center text-xs text-content-subtle">
-                고정가 마켓은 준비 중이에요.
-            </p>
-        </HomeSection>
+        <>
+            <HomeMarketRecommendations
+                items={items}
+                state={state}
+                now={now}
+                onOpen={openCardInfo}
+                onRetry={() => void refetch()}
+            />
+
+            {selectedShop && (
+                <ShopCardInfoDialog
+                    shop={selectedShop}
+                    now={now}
+                    balance={balanceQuery.data}
+                    isAuthed={isAuthed}
+                    isOwn={
+                        myNickname !== null &&
+                        myNickname === selectedShop.sellerNickname
+                    }
+                    loginHref={`${paths.login}${buildReturnUrlQuery(location)}`}
+                    onClose={() => setSelectedShop(null)}
+                />
+            )}
+        </>
     )
 }
 
@@ -254,4 +264,3 @@ function NoticeSection() {
         </HomeSection>
     )
 }
-

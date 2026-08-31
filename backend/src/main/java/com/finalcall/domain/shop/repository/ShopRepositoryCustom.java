@@ -1,8 +1,10 @@
 package com.finalcall.domain.shop.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopCursor;
@@ -15,6 +17,20 @@ import com.finalcall.domain.shop.entity.ShopStatus;
  * 노출하므로 to-one fetch join 으로 N+1 을 제거한다(표현 계층 lazy 접근 없음, OSIV off).
  */
 public interface ShopRepositoryCustom {
+
+    /** 홈 추천의 최신 공통 자격 후보. 표시 연관을 fetch join하고 최신순으로 제한한다. */
+    Optional<Shop> findNewestRecommendationCandidate(
+        Instant calculatedAt, Set<Long> excludedShopIds, Set<Long> excludedSellerIds, Set<Long> excludedTemplateIds);
+
+    /** 홈 추천의 24시간 내 마감 후보. 표시 연관을 fetch join하고 마감 임박순으로 제한한다. */
+    Optional<Shop> findEndingSoonRecommendationCandidate(
+        Instant calculatedAt, Instant endingBefore, Set<Long> excludedShopIds,
+        Set<Long> excludedSellerIds, Set<Long> excludedTemplateIds);
+
+    /** 완료 판매가 임계 이상인 판매자의 홈 추천 후보. 완료 판매 수, 최신순으로 제한한다. */
+    Optional<Shop> findTrustedSellerRecommendationCandidate(
+        Instant calculatedAt, long minimumSales, Set<Long> excludedShopIds,
+        Set<Long> excludedSellerIds, Set<Long> excludedTemplateIds);
 
     /** 상세 조회(fetch join item·template·skill·seller). 없으면 비어 있다(→ SHOP_003). */
     Optional<Shop> findDetailByPublicId(String publicId);

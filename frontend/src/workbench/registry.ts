@@ -19,6 +19,13 @@ function defineScenario(
 
 export const WORKBENCH_SCENARIOS = [
     defineScenario({
+        id: 'home-market-recommendations',
+        title: '홈 오늘의 추천 마켓',
+        shell: 'app',
+        routeContext: paths.home,
+        load: () => import('./scenarios/HomeMarketRecommendationsScenario'),
+    }),
+    defineScenario({
         id: 'card-info-parity',
         title: '마켓·경매 카드정보 정합',
         shell: 'app',

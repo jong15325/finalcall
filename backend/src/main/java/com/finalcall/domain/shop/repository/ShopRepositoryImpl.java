@@ -8,11 +8,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.finalcall.domain.item.entity.QItemInstance;
 import com.finalcall.domain.item.entity.QItemTemplate;
 import com.finalcall.domain.item.entity.QSkillDefinition;
 import com.finalcall.domain.member.entity.QUser;
+import com.finalcall.domain.settlement.entity.QSaleOrder;
 import com.finalcall.domain.shop.entity.Shop;
 import com.finalcall.domain.shop.entity.ShopCursor;
 import com.finalcall.domain.shop.entity.ShopSearchCondition;
@@ -22,6 +24,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -44,6 +47,87 @@ public class ShopRepositoryImpl implements ShopRepositoryCustom {
     private static final QUser SELLER = new QUser("seller");
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Optional<Shop> findNewestRecommendationCandidate(
+        Instant calculatedAt, Set<Long> excludedShopIds, Set<Long> excludedSellerIds,
+        Set<Long> excludedTemplateIds) {
+        Long id = recommendationIdQuery(
+            calculatedAt, excludedShopIds, excludedSellerIds, excludedTemplateIds)
+            .orderBy(shop.createdAt.desc(), shop.id.desc())
+            .fetchFirst();
+        return hydrateRecommendation(id);
+    }
+
+    @Override
+    public Optional<Shop> findEndingSoonRecommendationCandidate(
+        Instant calculatedAt, Instant endingBefore, Set<Long> excludedShopIds,
+        Set<Long> excludedSellerIds, Set<Long> excludedTemplateIds) {
+        Long id = recommendationIdQuery(
+            calculatedAt, excludedShopIds, excludedSellerIds, excludedTemplateIds)
+            .where(shop.endAt.isNotNull(), shop.endAt.loe(endingBefore))
+            .orderBy(shop.endAt.asc(), shop.id.asc())
+            .fetchFirst();
+        return hydrateRecommendation(id);
+    }
+
+    @Override
+    public Optional<Shop> findTrustedSellerRecommendationCandidate(
+        Instant calculatedAt, long minimumSales, Set<Long> excludedShopIds,
+        Set<Long> excludedSellerIds, Set<Long> excludedTemplateIds) {
+        QSaleOrder order = QSaleOrder.saleOrder;
+        Long id = queryFactory.select(shop.id).from(shop)
+            .join(order).on(order.seller.id.eq(shop.seller.id))
+            .where(
+                shop.status.eq(ShopStatus.ACTIVE),
+                shop.endAt.isNull().or(shop.endAt.gt(calculatedAt)),
+                shopIdNotIn(excludedShopIds),
+                sellerIdNotIn(excludedSellerIds),
+                templateIdNotIn(excludedTemplateIds))
+            .groupBy(shop.id)
+            .having(order.id.count().goe(minimumSales))
+            .orderBy(order.id.count().desc(), shop.createdAt.desc(), shop.id.desc())
+            .fetchFirst();
+        return hydrateRecommendation(id);
+    }
+
+    private JPAQuery<Long> recommendationIdQuery(
+        Instant calculatedAt, Set<Long> excludedShopIds, Set<Long> excludedSellerIds,
+        Set<Long> excludedTemplateIds) {
+        return queryFactory.select(shop.id).from(shop)
+            .where(
+                shop.status.eq(ShopStatus.ACTIVE),
+                shop.endAt.isNull().or(shop.endAt.gt(calculatedAt)),
+                shopIdNotIn(excludedShopIds),
+                sellerIdNotIn(excludedSellerIds),
+                templateIdNotIn(excludedTemplateIds));
+    }
+
+    private Optional<Shop> hydrateRecommendation(Long id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(queryFactory.selectFrom(shop)
+            .join(shop.itemInstance, ITEM).fetchJoin()
+            .join(ITEM.template, TEMPLATE).fetchJoin()
+            .leftJoin(ITEM.skill1, SKILL1).fetchJoin()
+            .leftJoin(ITEM.skill2, SKILL2).fetchJoin()
+            .join(shop.seller, SELLER).fetchJoin()
+            .where(shop.id.eq(id))
+            .fetchOne());
+    }
+
+    private BooleanExpression shopIdNotIn(Set<Long> ids) {
+        return ids.isEmpty() ? null : shop.id.notIn(ids);
+    }
+
+    private BooleanExpression sellerIdNotIn(Set<Long> ids) {
+        return ids.isEmpty() ? null : shop.seller.id.notIn(ids);
+    }
+
+    private BooleanExpression templateIdNotIn(Set<Long> ids) {
+        return ids.isEmpty() ? null : ITEM.template.id.notIn(ids);
+    }
 
     @Override
     public Optional<Shop> findDetailByPublicId(String publicId) {

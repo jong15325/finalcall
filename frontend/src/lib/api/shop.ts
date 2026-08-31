@@ -56,6 +56,23 @@ export interface ShopSummary {
     sellerCompletedSales: number
 }
 
+/** 홈 추천 사유(계약 v1.36 §3.2, shop-spec §12). */
+export type ShopRecommendationReason =
+    'NEW' | 'ENDING_SOON' | 'TRUSTED_SELLER' | 'GENERAL'
+
+/** 홈 추천 목록의 단일 항목. `shop`은 공개 ShopSummary 계약을 그대로 재사용한다. */
+export interface ShopRecommendationItem {
+    reason: ShopRecommendationReason
+    shop: ShopSummary
+}
+
+/** `GET /home/shop-recommendations` 응답 data. */
+export interface ShopRecommendationsResponse {
+    items: ShopRecommendationItem[]
+    /** 추천 후보를 판정한 단일 서버 기준 시각(ISO-8601 UTC). */
+    calculatedAt: string
+}
+
 /** ShopDetail (계약 §3.3 — `GET /shops/{id}`). ShopSummary + `createdAt`. */
 export interface ShopDetail extends ShopSummary {
     createdAt: string
@@ -102,6 +119,19 @@ export function getShops(
         auth: false,
         signal,
     })
+}
+
+/** `GET /home/shop-recommendations` — 인증이 필요 없는 홈 추천 최대 6건. */
+export function getShopRecommendations(
+    signal?: AbortSignal,
+): Promise<ShopRecommendationsResponse> {
+    return apiClient.get<ShopRecommendationsResponse>(
+        '/home/shop-recommendations',
+        {
+            auth: false,
+            signal,
+        },
+    )
 }
 
 /** `GET /shops/{id}` — 인증 불요(공개 상세). 없으면 `SHOP_003`(404). */

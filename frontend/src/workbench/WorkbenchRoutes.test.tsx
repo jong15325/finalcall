@@ -57,6 +57,84 @@ function useViewport(width: number) {
 }
 
 describe('WorkbenchRoutes', () => {
+    it.each([390, 1280])(
+        '%ipx 홈 추천 마켓은 추천 근거와 실제 카드 affordance를 함께 보존한다',
+        async (width) => {
+            useViewport(width)
+            const view = renderWorkbench(
+                '/__design/home-market-recommendations?state=ready',
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: '홈 추천 마켓 디자인 게이트',
+                }),
+            ).toBeVisible()
+            expect(
+                screen.getByRole('list', {
+                    name: '오늘의 추천 마켓 목록',
+                }),
+            ).toHaveClass(
+                'grid',
+                'grid-cols-2',
+                'xs:grid-cols-3',
+                'min-[1200px]:grid-cols-6',
+            )
+            expect(
+                view.container.querySelectorAll('[data-recommendation-reason]'),
+            ).toHaveLength(6)
+            expect(
+                view.container.querySelectorAll(
+                    '[data-card-hit-area="compare"]',
+                ),
+            ).toHaveLength(6)
+            expect(view.container.querySelectorAll('.shop-card')).toHaveLength(
+                6,
+            )
+            expect(screen.getAllByText('24시간 내 판매 종료')).toHaveLength(2)
+            expect(screen.getByText('완료 판매 5회 이상')).toBeVisible()
+        },
+    )
+
+    it.each([
+        ['partial', 3],
+        ['empty', 0],
+    ] as const)('홈 추천 마켓 %s 상태를 전환한다', async (state, count) => {
+        const view = renderWorkbench(
+            `/__design/home-market-recommendations?state=${state}`,
+        )
+        await screen.findByRole('heading', {
+            name: '홈 추천 마켓 디자인 게이트',
+        })
+
+        expect(view.container.querySelectorAll('.shop-card')).toHaveLength(
+            count,
+        )
+    })
+
+    it('홈 추천 마켓 loading 상태는 6개 골격을 노출한다', async () => {
+        const view = renderWorkbench(
+            '/__design/home-market-recommendations?state=loading',
+        )
+        await screen.findByRole('heading', {
+            name: '홈 추천 마켓 디자인 게이트',
+        })
+
+        expect(view.container.querySelector('[aria-busy="true"]')).toBeVisible()
+        expect(
+            view.container.querySelectorAll('[aria-busy="true"] li'),
+        ).toHaveLength(6)
+    })
+
+    it('홈 추천 마켓 error 상태는 재시도 affordance를 노출한다', async () => {
+        renderWorkbench('/__design/home-market-recommendations?state=error')
+        await screen.findByRole('heading', {
+            name: '홈 추천 마켓 디자인 게이트',
+        })
+
+        expect(screen.getByRole('button', { name: '다시 시도' })).toBeVisible()
+    })
+
     it('판매 등록 신규 디자인 3안을 실제 AppShell에서 연다', async () => {
         const view = renderWorkbench(
             '/__design/sell-page-directions?variant=document',

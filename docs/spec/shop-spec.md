@@ -18,6 +18,11 @@
 | v0.3 | 2026-07-22 | **FC-103 — 판매 관리 조회 계약(PROPOSAL)** §10 신설: `GET /me/shops`(판매자=주체·status 필터 ACTIVE 기본/`ALL`·ShopCursor 재사용). 신규=조회 1개, 취소 재사용. 스키마·에러코드·기존 엔드포인트 무변경(additive read). 게이트2 상신 M1~M3. 구현 FC-104 |
 | v0.4 | 2026-07-22 | **게이트2 M3 정정 반영(사용자)** — '내 판매' 카드에 등록가 + **예상 정산액** 함께 표시. §10.3 응답 DTO = `MyShopSummary`(ShopSummary + 판매자 전용 `estimatedFee`·`estimatedSettle` 예상치, FeeCalculator 재사용). 공개 `ShopSummary` 무오염(별도 DTO 격리). 추정치=예상 표기, 실현값은 /me/orders 유지. §10.5 M3·M3표 갱신. 스키마 무변경(서버 파생값) |
 | v0.5 | 2026-07-29 | **FC-148 — 판매자 완료 판매 건수(거래 횟수) 계약 확정** §11 신설. 사용자 승인(ⓐ 실데이터·정의=완료 판매 건수). `ShopSummary` 에 `sellerCompletedSales`(long, non-null, ≥0) 추가 — `sale_order` seller_id 집계(AUCTION+SHOP 합산, SETTLED 행 존재=완료·취소/유찰/만료 자동 제외). ShopDetail·MyShopSummary 자동 상속. 목록 포함(공개 노출 안전=집계 카운트)·성능=페이지당 배치 IN 집계 1쿼리(N+1 회피, `(seller_id)` 인덱스 커버). 스키마·인덱스·에러코드 무변경. 하위 티켓 FC-148-B(backend 집계)·FC-148-F(frontend 표시). api-contract §3.3 델타 PROPOSAL 병기 |
+| v0.6 | 2026-08-31 | **FC-408 — 홈 오늘의 추천 마켓 계약 확정(사용자 게이트2 H1~H5 승인)** §12 신설. 공개 `GET /home/shop-recommendations`, 최대 6건(`신규 3 + 24시간 내 마감 임박 2 + 완료 판매 5회 이상 판매자 1`), 응답 `{ items:[{reason,shop}], calculatedAt }`. 판매자 1건·템플릿 2건 제한과 템플릿→판매자 순 완화, 1차 무캐시·신규 인덱스 없음 및 `EXPLAIN ANALYZE` 후 별도 상신을 확정. 기존 ShopSummary 재사용, 스키마·에러코드 무변경 |
+| v0.7 | 2026-08-31 | **FC-409 성능 후속 게이트2 A안 사용자 승인 확정.** MySQL 8·ACTIVE 2,000건 실행계획(신규 1.63ms 전체 scan+정렬, 마감 0.022ms covering, 검증 판매자 3.91ms 집계)을 근거로 `ix_shop_status_created_at_id(status, created_at, id)` 1개를 추가한다. 신규/GENERAL 최신 후보가 사용하며 마감 인덱스·검증 판매자 쿼리·무캐시 정책·API/응답/reason/쿼터/다양성은 불변. ACTIVE 2만·10만 재측정 후 read model/cache는 별도 게이트2 상신 |
+| v0.8 | 2026-08-31 | **홈 추천 보안 후속 게이트2 사용자 승인 확정.** 공개 `GET /home/shop-recommendations`에 gateway IP 토큰버킷(`replenishRate=1`, `burstCapacity=10`, `requestedTokens=1`, `HOME_RECOMMEND_RATE_LIMIT_*` 환경변수)을 적용한다. 전용 route는 일반 service route보다 선행하고 기존 `TrustedProxyClientIpKeyResolver`·429 `GATEWAY_429`+`Retry-After`를 재사용한다. Redis limiter 장애는 fail-closed로 처리하며 Redis는 추천·구매 정확성 수단이 아니다. 성공 API·무캐시 불변. V29 online DDL 운영 절차는 FC-416 범용 runbook으로 분리 |
+| v0.9 | 2026-08-31 | **FC-415 구현 실측에 따른 fail-closed 수단 정정(사용자 결정 불변).** SCG 기본 `RedisRateLimiter`는 Redis 장애 응답을 `allowed=true, remaining=-1`로 처리하므로, 홈 추천 route 전용 `FailClosedRedisRateLimiter` 래퍼가 이 오류 응답만 deny로 변환해 429·하류 호출 0건을 보장한다. 정상 허용/소진 판정·rate 기본값·성공 API는 불변. `Retry-After` 설정 연동은 v0.10에서 확정 |
+| v0.10 | 2026-08-31 | **FC-415 보안 2차 수정 구현 계약 확정.** 세 rate 값을 validated `gateway.home-recommend-rate-limit` properties로 바인딩하고 replenish/burst/requested 전부 양수·`burst >= replenish`를 gateway 부팅 시 fail-fast 검증한다(silent clamp 없음). 홈 `Retry-After = ceil(requestedTokens / replenishRate)`로 long 안전 계산해 기본 1/1=1초·비기본 3/2=2초를 보장한다. 홈 전용 fail-closed composition과 기존 limiter는 분리하며 성공 API 불변 |
 
 ---
 
@@ -451,3 +456,92 @@ ShopSummary:
 - **어디에 보이나**: 마켓 카드 목록·상세, 그리고 그 목록에서 바로 뜨는 카드정보 모달에 나온다. 이 숫자는 그냥 "몇 번 팔았나" 카운트라 개인정보가 아니어서 로그인 없이도 공개해도 안전하다(마켓플레이스의 "판매 N회"와 같은 성격).
 - **느려지지 않나**: 목록 20개마다 판매자별 카운트를 **한 번의 합계 조회**로 모아 붙인다(개별로 20번 묻지 않음). 이미 있는 색인을 쓰므로 서버 부담이 작다. 나중에 트래픽이 몰리면 카운트를 미리 저장해두는 방식으로 바꿀 여지도 남겼다(그때도 화면 계약은 그대로).
 - **되돌리기 위험**: 낮음. 화면에 숫자 필드 하나 더 붙이는 것(기존 응답 형상 보존)이고, 계산 방식은 나중에 바꿔도 화면 계약이 안 변한다. DB 구조 변경·새 표·새 에러코드가 전혀 없다.
+
+---
+
+## 12. 홈 오늘의 추천 마켓 — EPIC-HOME-MARKET-RECOMMEND / FC-408
+
+> **게이트2 H1~H5 사용자 승인 확정(2026-08-31).** 아래 API 경로·응답 형상·추천 임계·다양성·캐시/인덱스 경계를 구현 계약으로 사용한다. api-contract v1.36 §3.2와 함께 정본이다.
+
+### 12.1 목적·경계
+
+- 홈의 자리보류 6칸을 로그인과 무관한 **비개인화 발견형 추천**으로 실연동한다. 행동 데이터·선호 프로필을 쓰지 않으므로 "AI 추천"·"개인 맞춤"·"인기순"이라고 부르지 않는다.
+- 1차 구성은 **신규 3 + 마감 임박 2 + 검증 판매자 1**, 최대 6건이다. 정확한 쿼터를 못 채우면 최신 ACTIVE 매물로 보충하거나 6건 미만을 반환한다.
+- 가격 매력도·최근 거래·조회수·찜·전환율은 이를 증명할 데이터가 없어 범위 밖이다. 구매·상세 계약은 기존 `/shops/{id}`를 그대로 사용한다.
+
+### 12.2 최소 공개 API
+
+```text
+GET /api/v1/home/shop-recommendations
+인증: 불요
+query/body: 없음
+응답 200:
+{
+  "items": [
+    {
+      "reason": "NEW" | "ENDING_SOON" | "TRUSTED_SELLER" | "GENERAL",
+      "shop": ShopSummary
+    }
+  ],
+  "calculatedAt": "<ISO-8601 UTC>"
+}
+```
+
+- 기존 API base `/api/v1`과 `ApiResponse<T>` 외피를 적용한다. 위 블록은 `data` 내부 형상이다.
+- `items`는 서버가 표시 순서까지 확정한 0~6개 배열이며 cursor·size·필터를 받지 않는다. `shop`은 §11의 `sellerCompletedSales`를 포함한 기존 `ShopSummary`를 그대로 재사용한다.
+- `calculatedAt`은 모든 후보의 활성·만료·24시간 임계를 판정한 **단일 서버 기준시각**이다. 각 쿼리마다 시각을 다시 읽지 않는다.
+- 공개 read라 비로그인 200이며 결과 없음도 `items=[]`인 정상 200이다. 추천 전용 도메인 에러코드는 추가하지 않는다. 서버 장애는 공통 5xx 외피를 따른다.
+
+### 12.3 자격·후보군·결정적 순서
+
+공통 자격은 `status=ACTIVE AND (end_at IS NULL OR end_at > calculatedAt)`이다. 동일 `shop.id`는 결과에 한 번만 들어간다.
+
+| 이유 | 목표 | 자격·정렬 | 사용자 문구 의미 |
+|---|---:|---|---|
+| `NEW` | 3 | 공통 자격, `created_at DESC, id DESC` | 상대적으로 가장 최근 등록된 매물 |
+| `ENDING_SOON` | 2 | 공통 자격 + `end_at IS NOT NULL AND end_at <= calculatedAt + 24h`, `end_at ASC, id ASC` | 실제 24시간 안에 판매 종료 |
+| `TRUSTED_SELLER` | 1 | 공통 자격 + `sellerCompletedSales >= 5`, `sellerCompletedSales DESC, created_at DESC, id DESC` | 실제 완료 판매 5회 이상 판매자. `sellerCompletedSales` 값으로 "거래 N회 판매자" 표시 가능 |
+| `GENERAL` | 부족분 | 아직 선택되지 않은 공통 자격 중 `created_at DESC, id DESC` | 다른 세 사실을 주장하지 않는 일반 보충 추천 |
+
+- 동률은 표의 마지막 `id`까지 적용해 항상 같은 데이터 상태에서 같은 순서를 만든다. `TRUSTED_SELLER`의 완료 판매는 §11 정의(AUCTION+SHOP 정산 성립 합산)를 바꾸지 않는다. "최근 거래가 검증됨"은 최근성 데이터가 없으므로 금지한다.
+- 조립은 `NEW → ENDING_SOON → TRUSTED_SELLER → GENERAL` 순으로 각 쿼터를 채운다. 앞 슬롯에 이미 뽑힌 shop은 다음 후보군에서 건너뛴다. 따라서 reason은 **그 매물이 최초로 채운 슬롯의 이유** 하나만 가진다.
+
+### 12.4 다양성·부족분 완화
+
+정상 조립 중 전역 다양성은 **동일 판매자 최대 1건**, **동일 item template 최대 2건**이다. 템플릿 판정에는 서버 내부 `item_instance.template.id`를 쓰며 내부 PK를 응답에 노출하지 않는다.
+
+6건 미달 시 다음 순서만 허용한다.
+
+1. 아직 선택되지 않은 최신 공통 자격 매물을 `GENERAL`로 보충하면서 두 다양성 제한 유지
+2. 동일 템플릿 최대 2건 제한만 완화하고 `GENERAL` 보충
+3. 동일 판매자 최대 1건 제한도 완화하고 `GENERAL` 보충
+4. 후보가 없으면 6건 미만 반환
+
+`ENDING_SOON` 24시간 후보가 없다고 더 먼 마감 매물에 같은 이유를 붙이지 않고, 검증 판매자 임계 미달 매물에 `TRUSTED_SELLER`를 붙이지 않는다. `GENERAL`은 부족한 수량을 채우는 **사실 중립적 fallback**이며 개인화·인기·가격 우위를 뜻하지 않는다.
+
+### 12.5 쿼리·인덱스·캐시·실행계획 경계
+
+- 프론트가 기존 `GET /shops`를 2~3회 호출해 합치지 않는다. 서버가 단일 `calculatedAt`으로 후보군·중복·다양성·reason을 결정한다.
+- N+1 금지: 후보 행마다 완료 판매 건수를 조회하지 않는다. 후보 seller 집합을 기존 `sale_order(seller_id)` 인덱스로 **배치 집계 1회**한 뒤 매핑하거나, 실행계획으로 동등 이상임이 입증된 집계 쿼리를 사용한다.
+- V15의 `ix_shop_status_end_at(status,end_at)`은 마감 후보를 계속 커버한다. **성능 후속 게이트2 A안 승인(2026-08-31)**으로 `ix_shop_status_created_at_id(status, created_at, id)`를 추가해 신규/`GENERAL`의 `status=ACTIVE ORDER BY created_at DESC,id DESC` 최신 후보 조회를 커버한다. 동률 `id`까지 인덱스 순서와 계약 순서가 일치한다.
+- 승인 근거는 MySQL 8 Testcontainers·ACTIVE 2,000건 실행계획이다: 신규 후보는 전체 scan+정렬 약 1.63ms, 마감은 기존 covering index로 약 0.022ms, 검증 판매자는 shop scan+`sale_order(seller_id)` lookup+집계/정렬 약 3.91ms였다. 절대 시간은 작지만 신규 경로의 선형 scan을 작은 보조 인덱스 하나로 제거한다.
+- 검증 판매자 쿼리는 현재 3.91ms 수준이라 사전 집계/read model을 도입하지 않고 유지한다. ACTIVE 2만·10만 건에서 같은 `EXPLAIN ANALYZE`와 요청 지연을 재측정해 실제 병목일 때만 read model 또는 cache를 별도 게이트2로 상신한다.
+- 애플리케이션/Redis 결과 캐시는 두지 않는다. 등록·구매·취소·만료 네 경로의 무효화와 stampede 운영 복잡도를 현재 수치가 정당화하지 않는다. 후속 캐시 상신 시 TTL뿐 아니라 네 전이 무효화, stampede 방지, 장애 시 DB fallback, `calculatedAt` 의미를 함께 계약한다.
+- **공개 조회 남용 방지(보안 후속 게이트2 승인, 2026-08-31):** gateway가 클라이언트 IP 기준 토큰버킷을 적용한다. 기본값은 `replenishRate=1`, `burstCapacity=10`, `requestedTokens=1`이며 `HOME_RECOMMEND_RATE_LIMIT_REPLENISH_RATE`·`HOME_RECOMMEND_RATE_LIMIT_BURST_CAPACITY`·`HOME_RECOMMEND_RATE_LIMIT_REQUESTED_TOKENS` 환경변수를 validated `gateway.home-recommend-rate-limit` properties로 바인딩한다. 세 값은 모두 양수이고 `burstCapacity >= replenishRate`여야 하며 위반 시 gateway가 부팅에 실패한다. 값을 조용히 보정하는 silent clamp는 금지한다. 전용 GET route는 일반 `/api/v1/**` service route보다 먼저 매칭하고 기존 `TrustedProxyClientIpKeyResolver`를 재사용한다.
+- 한도 초과는 기존 gateway 계약인 429 `GATEWAY_429`와 `Retry-After`로 응답한다. **SCG 기본 `RedisRateLimiter`는 Redis 장애 응답을 `allowed=true, remaining=-1`로 처리하므로 기본 동작에 의존하지 않는다.** 홈 추천 route 전용 `FailClosedRedisRateLimiter` 래퍼가 이 오류 응답만 deny로 변환해 429와 하류 호출 0건을 보장한다. 정상 허용·토큰 소진 판정은 기존 limiter 결과를 그대로 보존한다. Redis 장애 시 추천 섹션 가용성은 낮아질 수 있으나 DB를 무제한 개방하지 않는다. Redis는 요청 빈도 완화 수단일 뿐 추천 선정·구매 CAS·응답 성공의 정확성 수단이 아니다.
+- 홈 추천의 `Retry-After`는 고정값이 아니라 **`ceil(requestedTokens / replenishRate)`초**다. long 범위에서 overflow 없이 안전하게 계산하며 기본 1/1은 1초, 비기본 requested=3/replenish=2는 2초다. 홈 전용 fail-closed composition이 이 값을 응답에 전달하고, 다른 route의 기존 limiter·응답 정책과 섞지 않는다.
+- V29 인덱스 운영 적용은 `docs/backend/flyway-deployment-runbook.md`를 따른다. online DDL 지원·장기 TX/metadata lock·자원·replica lag를 사전 확인하고 합의 임계 초과 시 중단하며, 적용 후 `SHOW INDEX`와 `EXPLAIN ANALYZE`로 검증한다.
+- 캐시가 없더라도 조회 직후 구매 사이 상태 변화는 가능하다. 추천은 발견용 read model이며 구매의 최종 권위는 기존 purchase 종료성 CAS다. 프론트는 `SHOP_004`를 정상적인 "이미 판매/종료" 경쟁 결과로 처리한다.
+
+### 12.6 게이트2 H1~H5 승인 기록 (2026-08-31 사용자)
+
+| # | 결정 | 승인 결정안 | 검토한 대안 | 파급 |
+|---|---|---|---|---|
+| H1 | 홈 전용 API | **`GET /home/shop-recommendations` 공개 read** | 기존 `/shops` 여러 번 호출 | 전용 API 1개가 늘지만 서버가 중복·순서·기준시각을 일관되게 보장한다. 기존 shop API는 무변경 |
+| H2 | 응답 형태 | **`items[{reason,shop}] + calculatedAt`** | `ShopSummary[]`만 반환 | 필드가 조금 늘지만 프론트가 추천 이유를 추측하지 않고 시간 판정을 검증할 수 있다 |
+| H3 | 사실 임계 | **마감 24시간, 검증 판매 5회** | 48시간/72시간, 1회/10회 | 홈에 잡히는 매물 수와 배지 의미가 달라진다. DB 구조 영향은 없다 |
+| H4 | 다양성 | **판매자 1건·템플릿 2건, 부족 시 템플릿→판매자 순 완화** | 제한 없음 또는 완화 없음 | 추천 폭과 6칸 충족률의 균형이다. 내부 조립만 영향, 응답 형상 불변 |
+| H5 | 캐시·인덱스 | **최초 승인: 캐시/신규 인덱스 없이 실측. 후속 A안 승인: `ix_shop_status_created_at_id(status,created_at,id)` 1개 추가, 검증 판매자 쿼리·무캐시 유지, ACTIVE 2만·10만 재측정 후 read model/cache 별도 상신** | B 사전 집계/read model, C 짧은 결과 캐시, D 현 상태 유지 | 최신 후보 선형 scan만 작은 인덱스로 제거한다. 쓰기 시 보조 인덱스 유지 비용과 append-only 마이그레이션 1건이 생기나 API 형상·추천 정확성은 불변이다 |
+| H6 | 공개 요청 남용 방지 | **gateway IP rate limit 기본 1/s·burst 10·요청 1토큰. validated properties가 양수·burst≥replenish를 fail-fast 검증하고, 홈 `Retry-After=ceil(requested/replenish)`. Redis 장애는 홈 route 전용 `FailClosedRedisRateLimiter`가 SCG 기본 fail-open 응답을 deny로 변환** | 결과 캐시, rate limit+캐시, read model, 장애 시 기본 limiter 통과 | gateway/Redis가 다중 인스턴스의 반복 요청을 엣지에서 제한한다. 잘못된 설정은 부팅 전에 차단하고 Redis 장애 시 429·하류 0건으로 DB를 보호하되 추천·구매 정확성 경계에는 Redis가 들어가지 않는다 |
+
+**총 파급:** 신규 additive 공개 read API 1개와 응답 DTO, 최신 후보용 보조 인덱스 1개, 전용 gateway rate-limit route를 추가한다. 기존 `GET /shops`·구매 계약·`ShopSummary` 형상·추천 의미와 성공 응답은 바꾸지 않는다. H1~H6와 성능·보안 후속 결정은 2026-08-31 사용자 승인으로 확정됐다.

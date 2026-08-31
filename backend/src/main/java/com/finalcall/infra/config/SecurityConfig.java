@@ -64,6 +64,7 @@ public class SecurityConfig {
                 // 고정가 목록·상세는 공개(계약 §3.2 인증 불요). 등록(POST)·구매(POST .../purchase)·취소(POST
                 //   .../cancel)는 아래 인증 강제. GET "/api/v1/shops/*" 는 단일 세그먼트라 2세그먼트 POST 경로와 겹치지 않는다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/shops", "/api/v1/shops/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/home/shop-recommendations").permitAll()
                 // 게시판 목록·단건 조회는 공개(계약 §6.1 인증 불요). 단일 세그먼트라 쓰기(관리자 CRUD)·게시글 하위 경로와 겹치지 않는다.
                 //   write_policy(ADMIN_ONLY) 세부 게이팅은 서비스 계층 담당(게시판별 정책이 DB 값이라 URL 패턴으로 표현 불가, §6.5).
                 .requestMatchers(HttpMethod.GET, "/api/v1/boards", "/api/v1/boards/*").permitAll()

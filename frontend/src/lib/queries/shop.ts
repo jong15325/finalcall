@@ -10,6 +10,7 @@ import {
     createShop,
     getMyShops,
     getShop,
+    getShopRecommendations,
     getShops,
     purchaseShop,
 } from '@/lib/api/shop'
@@ -28,6 +29,7 @@ import type {
     PurchaseShopResponse,
     ShopDetail,
     ShopListQuery,
+    ShopRecommendationsResponse,
     ShopSummary,
 } from '@/lib/api/shop'
 import type { CursorPage } from '@/types/api'
@@ -51,6 +53,16 @@ export const shopKeys = {
     /** 내 판매 목록(마이페이지 '내 판매' — 공개 `browse` 와 형제로 분리) */
     mines: () => [...shopKeys.all, 'mine'] as const,
     mine: (query: MyShopsQuery) => [...shopKeys.mines(), query] as const,
+    recommendations: () => [...shopKeys.all, 'recommendations'] as const,
+}
+
+/** 홈 오늘의 추천 마켓(공개 read, 계약 v1.36 §3.2). */
+export function useShopRecommendations() {
+    return useQuery<ShopRecommendationsResponse>({
+        queryKey: shopKeys.recommendations(),
+        queryFn: ({ signal }) => getShopRecommendations(signal),
+        refetchOnWindowFocus: false,
+    })
 }
 
 /**
@@ -150,6 +162,9 @@ export function usePurchaseShop(shopPublicId: string) {
                 queryKey: tempStorageKeys.me(),
             })
             void queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
+            void queryClient.invalidateQueries({
+                queryKey: shopKeys.recommendations(),
+            })
         },
     })
 }
