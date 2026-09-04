@@ -55,3 +55,8 @@ oauth:
     redirect-uri: ${OAUTH_REDIRECT_URI}
   kakao:
     redirect-uri: ${OAUTH_REDIRECT_URI}
+
+# 공개 데모 기능은 운영자가 명시적으로 활성화해야 한다. 미주입 시 fail-fast 한다.
+demo:
+  access:
+    enabled: ${DEMO_ACCESS_ENABLED}

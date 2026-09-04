@@ -1,12 +1,14 @@
 # FinalCall ERD (데이터 모델)
 
-상태: **v2.4 — FC-409 홈 추천 최신 후보 인덱스 확정(2026-08-31 사용자 게이트2 승인).** 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
+상태: **v2.6 — FC-424 공용 단일 데모 계정으로 축소(2026-09-04 사용자 승인).** 이후 스키마 변경은 domain-spec 정합 + 총괄 승인 경유.
 소유: 기획/설계
 근거: domain-spec v0.5, chat-domain-spec v1.1, D-036(형식 골격), D-044~047·D-062·D-066(아이템), D-050~053(사용자·화폐), D-005·D-008(경매), **D-081**(soft delete 자연키 UK 패턴), B-001~009(기술 규약)
 형식: D-036 — 네이밍 선언부 / Mermaid erDiagram / 테이블 정의 표 / 인덱스 표(이유 열) / Flyway 매핑
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v2.6 | 2026-09-04 | **FC-424 범위 축소 승인.** `user.account_type NORMAL|DEMO`는 공용 테스트 계정 식별과 위험 쓰기 차단을 위해 유지하되 DEMO 시드는 8개에서 정확히 1개로 축소한다. Redis lease와 영속 `demo_account_state`/quarantine은 도입하지 않는다. DEMO는 기존 token pair를 쓰며 스키마 추가는 account_type 1컬럼과 단일 계정/user_balance/조회 fixture뿐이다. 정본=`demo-access-domain-spec.md` v1.1, 구현=FC-425. |
+| v2.5 | 2026-09-04 | **EPIC-DEMO-ACCESS / FC-424 게이트2 승인.** `user.account_type ENUM('NORMAL','DEMO') NOT NULL DEFAULT 'NORMAL'`을 가법 추가하고 기존 행을 NORMAL로 backfill한다. DEMO 8계정은 `login_id/password_hash=NULL`, `is_admin=false`로 user_balance·조회 fixture와 함께 멱등 시드한다. Redis lease는 비영속 런타임 상태라 ERD 테이블을 추가하지 않는다. 정본=`demo-access-domain-spec.md` v1.0, 구현=FC-425. |
 | v2.4 | 2026-08-31 | **FC-409 성능 후속 게이트2 A안 사용자 승인 확정.** `shop (status, created_at, id)` 보조 인덱스 `ix_shop_status_created_at_id` 1개를 추가해 홈 추천의 신규/GENERAL `ACTIVE + created_at DESC,id DESC` 최신 후보 조회를 커버한다. MySQL 8·ACTIVE 2,000건에서 종전 전체 scan+정렬 약 1.63ms가 데이터 증가에 선형인 증거를 반영했다. 마감 `(status,end_at)`, 검증 판매자 쿼리, 무캐시, API 계약은 불변이며 ACTIVE 2만·10만 재측정 후 read model/cache는 별도 상신한다. 실제 append-only Flyway는 backend 파생 티켓 소유 |
 | v2.3 | 2026-08-22 | **FC-352 변경 계약 사용자 승인 확정.** V28 `user.primary_character_id` CHECK를 종전 1..28에서 `(BETWEEN 1 AND 12) OR (BETWEEN 25 AND 28)`로 축소한다. premium 13..24는 저장 불가다. V28은 미커밋·미배포 상태에서 최종 정본을 수정하며 신규 V29는 만들지 않는다. 기본값·기존 행 backfill=1, 타입·인덱스 없음은 불변. 정본=`member-domain-spec.md` v1.1. 영향=FC-352~358. |
 | v2.2 | 2026-08-22 | **FC-352 Gate 2 사용자 승인 확정.** `user.primary_character_id TINYINT UNSIGNED NOT NULL DEFAULT 1`과 CHECK 1..28을 V28로 가법 추가한다. 기존 행은 1로 backfill한다. 프로필 스냅샷·인덱스는 추가하지 않는다. 정본=`member-domain-spec.md` v1.0. 영향=FC-353~358. |
@@ -86,7 +88,7 @@ Order 테이블명 확정(2026-07-13, 사용자): `sale_order`. 판매 성립(SO
 도메인별 엔티티. 상세 컬럼은 4절 테이블 표, 관계는 3절 Mermaid.
 
 거래 주체·화폐 (D-050~053)
-- `user` — 단일 사용자. 관리자 = 권한 플래그. 로그인 식별.
+- `user` — 단일 사용자. 관리자 = 권한 플래그. 계정 종류=NORMAL/DEMO. 로그인 식별.
 - `user_balance` — 사용자별 잔액: 캐시 / 게임머니 (1:1).
 - `charge` — 캐시 충전(토스 테스트 결제). 별도 도메인, 콜백 검증·멱등키.
 - `money_exchange` — 캐시↔게임머니 교환 이력(교환 비율 파라미터, ON-HOLD).
@@ -220,6 +222,7 @@ table `user` — 단일 사용자(관리자=플래그). 인증 상세 필드는 
 | login_id | VARCHAR(50) | Y | | 로그인 식별자(자연키). **원본에 UK를 걸지 않는다** — D-081. **소셜 전용 계정은 NULL**(신원=소셜, EPIC-OAUTH V19) |
 | login_id_active | VARCHAR(50) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, login_id)) STORED`. 활성만 유일·삭제행/소셜계정(login_id NULL) NULL(D-081) |
 | password_hash | VARCHAR | Y | | 비밀번호 해시. **소셜 전용 계정은 NULL**(비밀번호 로그인 불가 — 소셜 계정 비번 로그인 시도는 `AUTH_003`, EPIC-OAUTH V19) |
+| account_type | ENUM | N | | `NORMAL` \| `DEMO`, 기본 NORMAL. 기존 행 NORMAL backfill. DEMO는 공용 테스트 계정 1개 전용이며 일반 로그인·OAuth 신원을 갖지 않음(FC-424) |
 | nickname | VARCHAR(30) | N | | 표시명(자연키). **원본에 UK를 걸지 않는다** — D-081 |
 | nickname_active | VARCHAR(30) | Y | UK | 생성 컬럼 `GENERATED ALWAYS AS (IF(is_deleted, NULL, nickname)) STORED` (D-081) |
 | primary_character_id | TINYINT UNSIGNED | N | CHECK 1..12 OR 25..28 | 사이트 기본 캐릭터. 기본값 1, 기존 회원 V28 backfill. premium 13..24 저장 금지. 프로필 16종 매핑은 member-domain-spec §3에서 파생 |
@@ -235,6 +238,11 @@ table `user` — 단일 사용자(관리자=플래그). 인증 상세 필드는 
 `user` 주(EPIC-OAUTH, v1.5 — 소셜 로그인 방식 B):
 - **`login_id`·`password_hash` NOT NULL 해제**: 소셜 전용 계정은 loginId·비밀번호가 없다(신원 = `user_social_account`의 provider+provider_user_id). 생성 컬럼 `login_id_active`(`IF(is_deleted, NULL, login_id)`)는 NULL을 UK에서 제외하므로 **생성 컬럼·UK 정의 변경 불요**(원본 컬럼 nullable화만). 비밀번호 로그인(§2 `/login`)은 소셜 계정(password_hash NULL)에 대해 자격 불일치(`AUTH_003`)로 처리 — 계정 존재 비노출(SEC-007).
 - 소셜 프로필 **이메일 미저장**(결정 2): `user.email` NULL 유지, `user_social_account`에도 email 컬럼을 두지 않는다 → `email_active` UK(활성 유니크)와 무충돌. `user.email`은 §2 `PUT /me/email`로만 채워지는 자기 소유·검증 채널.
+
+`user` 주(EPIC-DEMO-ACCESS, v2.6):
+- signup·OAuth가 만드는 회원은 항상 `account_type=NORMAL`이다. `DEMO`는 migration이 만드는 공용 계정 정확히 1개만 허용한다.
+- DEMO는 `login_id/password_hash=NULL`, `is_admin=false`이고 `user_social_account` 행도 없다. 일반 `/login`은 NORMAL만 조회한다.
+- 계정 풀·lease·quarantine·`demo_account_state`는 없다. DEMO는 일반 token pair를 쓰고 accountType은 위험 쓰기 차단에만 사용한다. 정본은 `demo-access-domain-spec.md` v1.1이다.
 
 table `user_social_account` — 소셜 신원 연결(EPIC-OAUTH, 방식 B). 한 user가 provider별 소셜 신원을 갖는다. 신원 키 = (provider, provider_user_id)이며 이메일은 신원이 아니다(결정 2).
 
@@ -806,5 +814,6 @@ erd는 마이그레이션 그룹·순서만 규정하고, 구체 V-번호 채번
    - 8-a. 6개 테이블을 FK 순서(`chat_room` → `chat_room_member_state`·`chat_message`·`chat_user_block` → `chat_report`·`chat_event_outbox`)로 신설하고 UK/CHECK/FK/보조 인덱스를 함께 생성 = 백엔드 **`V25__chat.sql` 예약**(현재 최신 V24, append-only). `user`(V3) 선행, report의 message FK는 `ON DELETE SET NULL`, outbox aggregate는 물리 FK 없음. 실제 migration 작성은 후속 backend 구현 티켓 소유. **G2-CHAT-1~6 사용자 승인 확정(2026-08-18)** — 방 row lock sequence·UUID 멱등·Redis Pub/Sub fast-path·별도 Debezium outbox→Kafka fallback·180일 메시지/3년 신고/7일 event 보존.
    - 8-b. `chat_event_outbox (created_at,id)` retention 인덱스 가법 추가 = 백엔드 **`V27`**(V25·V26 수정 금지, append-only). 기존 `(occurred_at,id)`는 pipeline 관측용으로 유지한다. 운영 적용 전 MySQL 8 online secondary-index DDL 지원, metadata lock·장기 TX, 디스크 여유를 확인하고 지원 환경에서는 `ALGORITHM=INPLACE, LOCK=NONE`을 명시한다. rollback은 V27 수정/삭제가 아니라 후속 append-only migration에서 신규 인덱스만 DROP한다. 검증은 fresh/upgrade migration, 두 인덱스 공존, retention `EXPLAIN ANALYZE`, cutoff·CDC safe ID 경계, 멀티노드 purge와 online SLO·lock/IO·replica lag를 포함한다. **FC-332 게이트2 승인(2026-08-19).** 7일 보존·CDC checkpoint·binlog guard와 REST/STOMP 계약은 불변이다.
 9. 회원 기본 캐릭터 — `user.primary_character_id` 가법 추가 = 백엔드 **V28 예약**(현재 최신 V27, append-only). `TINYINT UNSIGNED NOT NULL DEFAULT 1`, CHECK `(primary_character_id BETWEEN 1 AND 12) OR (primary_character_id BETWEEN 25 AND 28)`, 기존 행 1 backfill. premium 13..24 저장 금지, 인덱스·프로필 스냅샷 없음. **FC-352 변경 계약 사용자 승인 확정(2026-08-22)**, 구현 FC-353 소유. V28은 미커밋·미배포라 최종 CHECK로 수정하며 V29를 추가하지 않는다.
+10. 공개 데모 계정 — `user.account_type` 가법 추가 + DEMO 공용 계정 정확히 1개/user_balance/조회 fixture 멱등 시드 = 백엔드 **V30**(FC-425). 기존 행과 신규 일반·OAuth는 NORMAL, DEMO는 login/password/social identity가 없고 `is_admin=false`다. 계정 풀·Redis lease·`demo_account_state`·quarantine은 없다. **FC-424 범위 축소 승인(2026-09-04)**, 정본=`demo-access-domain-spec.md` v1.1.
 
 주: 스켈레톤 규약 `JPA_DDL_AUTO=validate`(전 프로파일) — 스키마는 Flyway가 소유. 실제 V-번호·단위 분할은 백엔드 정보 공유로 동기화한다. 아이템 시드의 taxonomy 멤버·명칭·수치·타입코드는 원게임(SurvivalProject) 데이터로 시드 확정 단계에서 작성(D-066·D-067).

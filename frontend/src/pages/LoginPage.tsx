@@ -18,13 +18,14 @@ interface SignupHandoffState {
 }
 
 export default function LoginPage() {
-    const { signIn } = useAuth()
+    const { signIn, demoSignIn } = useAuth()
     const location = useLocation()
     const handoff = (location.state as SignupHandoffState | null) ?? {}
 
     const mutation = useMutation<void, Error, LoginRequest>({
         mutationFn: signIn,
     })
+    const demoMutation = useMutation<void, Error>({ mutationFn: demoSignIn })
 
     return (
         <div>
@@ -40,7 +41,10 @@ export default function LoginPage() {
                 isSubmitting={mutation.isPending}
                 submitError={mutation.error}
                 initialLoginId={handoff.loginId ?? ''}
+                isDemoSubmitting={demoMutation.isPending}
+                demoSubmitError={demoMutation.error}
                 onSubmit={(credential) => mutation.mutate(credential)}
+                onDemoSubmit={() => demoMutation.mutate()}
             />
         </div>
     )

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.ErrorCode;
+import com.finalcall.domain.member.entity.AccountType;
 import com.finalcall.domain.member.entity.User;
 
 /**
@@ -36,6 +37,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** PK로 활성 회원 조회(내 프로필·수정·탈퇴 주체) — 탈퇴행 제외(D-081). 탈퇴 계정은 조회에서 빠진다. */
     Optional<User> findByIdAndIsDeletedFalse(Long id);
+
+    /** 유일해야 하는 활성 DEMO 계정을 fail-closed 판정하기 위해 최대 두 행을 조회한다. */
+    java.util.List<User> findTop2ByAccountTypeAndIsDeletedFalseOrderById(AccountType accountType);
 
     /** OrThrow default 메서드 패턴 — 없으면 {@link BusinessException}(CLAUDE.md §5). */
     default User findByIdOrThrow(Long id, ErrorCode errorCode) {

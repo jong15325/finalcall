@@ -298,6 +298,11 @@ gateway:
   internal:
     enforced: ${GATEWAY_INTERNAL_ENFORCED:true}
 
+# EPIC-DEMO-ACCESS: 공용 테스트 계정 진입점은 기본 비활성이다.
+demo:
+  access:
+    enabled: ${DEMO_ACCESS_ENABLED:false}
+
 # EPIC-CHAT(FC-320): STOMP는 server→client best-effort push 전용이다. Redis session guard 장애는
 # node-local quota로 fail-open하며, WebSocket heartbeat보다 긴 lease TTL로 node crash 고아 lease를 정리한다.
 chat:

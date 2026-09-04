@@ -114,6 +114,13 @@ export function login(body: LoginRequest): Promise<SessionTokens> {
     return apiClient.post<SessionTokens>('/auth/login', body, { auth: false })
 }
 
+/** 공개 테스트 계정 로그인 — body 없이 기존 LoginResponse를 받는다(계약 §2 v1.42). */
+export function demoLogin(): Promise<SessionTokens> {
+    return apiClient.post<SessionTokens>('/auth/demo-login', undefined, {
+        auth: false,
+    })
+}
+
 /**
  * 소셜 로그인·가입(통합) — `POST /auth/oauth/{provider}` (계약 §2 소셜 로그인 방식 B).
  *

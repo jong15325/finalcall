@@ -19,15 +19,19 @@ function renderForm(
     props: Partial<React.ComponentProps<typeof LoginForm>> = {},
 ) {
     const onSubmit = props.onSubmit ?? vi.fn()
+    const onDemoSubmit = props.onDemoSubmit ?? vi.fn()
     renderWithProviders(
         <LoginForm
             isSubmitting={props.isSubmitting ?? false}
             submitError={props.submitError ?? null}
             initialLoginId={props.initialLoginId}
+            isDemoSubmitting={props.isDemoSubmitting}
+            demoSubmitError={props.demoSubmitError}
             onSubmit={onSubmit}
+            onDemoSubmit={onDemoSubmit}
         />,
     )
-    return { onSubmit }
+    return { onSubmit, onDemoSubmit }
 }
 
 describe('<LoginForm>', () => {
@@ -89,5 +93,51 @@ describe('<LoginForm>', () => {
         expect(
             screen.getByRole('button', { name: /네이버로 계속하기/ }),
         ).toBeInTheDocument()
+    })
+
+    it('테스트 계정 버튼은 자격증명 입력 없이 한 번의 액션을 전달한다', () => {
+        const { onDemoSubmit } = renderForm()
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: '테스트 계정으로 둘러보기',
+            }),
+        )
+        expect(onDemoSubmit).toHaveBeenCalledOnce()
+    })
+
+    it('테스트 계정 연결 중에는 버튼을 비활성화하고 서버 원문 대신 안내를 표시한다', () => {
+        renderForm({
+            isDemoSubmitting: true,
+            demoSubmitError: new ApiError({
+                code: ERROR_CODES.AUTH_009,
+                message: 'pool size=8 active=8',
+                status: 503,
+            }),
+        })
+        expect(
+            screen.getByRole('button', { name: '테스트 계정 연결 중…' }),
+        ).toBeDisabled()
+        expect(
+            screen.getByText(
+                '현재 모든 테스트 계정이 사용 중입니다. 잠시 후 다시 시도해 주세요.',
+            ),
+        ).toBeInTheDocument()
+        expect(screen.queryByText(/pool size/)).toBeNull()
+    })
+
+    it('AUTH_011은 서버 원문 대신 읽기 전용 안내를 표시한다', () => {
+        renderForm({
+            demoSubmitError: new ApiError({
+                code: ERROR_CODES.AUTH_011,
+                message: 'internal demo policy detail',
+                status: 403,
+            }),
+        })
+        expect(
+            screen.getByText(
+                '테스트 계정은 읽기 전용입니다. 다른 기능을 둘러봐 주세요.',
+            ),
+        ).toBeInTheDocument()
+        expect(screen.queryByText(/internal demo policy/)).toBeNull()
     })
 })

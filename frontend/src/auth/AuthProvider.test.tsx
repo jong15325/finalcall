@@ -140,6 +140,38 @@ describe('T4 — 로그아웃 캐시 축출 (defect A, spec §6.2)', () => {
     })
 })
 
+describe('FC-426 — 공개 테스트 계정 로그인', () => {
+    it('body 없이 demo-login을 호출하고 기존 원자 세션 경로로 /me를 조회한다', async () => {
+        const { queryClient } = renderWithProviders(<AuthProbe />)
+        primeDemo1Caches(queryClient)
+        fetchMock.mockImplementation(async (url: string, init: RequestInit) => {
+            if (String(url).endsWith('/auth/demo-login')) {
+                expect(init.body).toBeUndefined()
+                return okEnvelope({
+                    accessToken: 'demo-access',
+                    refreshToken: 'demo-refresh',
+                    accessExpiresAt: '2999-01-01T00:00:00Z',
+                })
+            }
+            return okEnvelope({
+                userPublicId: 'U-DEMO',
+                nickname: '테스트 방문자',
+                isAdmin: false,
+                createdAt: '2026-09-04T00:00:00Z',
+                emailVerified: false,
+                emailMasked: null,
+            })
+        })
+
+        await act(async () => auth.demoSignIn())
+
+        expect(useAuthStore.getState().accessToken).toBe('demo-access')
+        expect(useAuthStore.getState().refreshToken).toBe('demo-refresh')
+        expect(useAuthStore.getState().user?.nickname).toBe('테스트 방문자')
+        expect(queryClient.getQueryData(memoKeys.unread())).toBeUndefined()
+    })
+})
+
 describe('T5 — 계정 전환 격리 (defect A+B, spec §6.2)', () => {
     it('demo1→demo2 전환: store 가 demo2 로 갈리고 demo1 캐시가 사라지며, 이후 발신이 demo2 토큰으로 나간다', async () => {
         seedDemo1Session()

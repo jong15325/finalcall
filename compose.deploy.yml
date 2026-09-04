@@ -114,6 +114,7 @@ services:
       SERVER_PORT: 8080
       APP_NAME: finalcall
       APP_DESCRIPTION: ${APP_DESCRIPTION:-게임 아이템 경매 플랫폼}
+      DEMO_ACCESS_ENABLED: ${DEMO_ACCESS_ENABLED:-false}
       DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-finalcall}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}

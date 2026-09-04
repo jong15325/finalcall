@@ -1,12 +1,14 @@
 # FinalCall API Contract (계약서)
 
-상태: **v1.40 — FC-415 홈 추천 rate 설정 검증·동적 Retry-After 확정(2026-08-31).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
+상태: **v1.42 — FC-424 공개 원클릭 데모 접속 최소 계약 재확정(2026-09-04 사용자 승인).** 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 소유: 기획/설계 (변경은 확정 후 6절 절차)
 근거: domain-spec v0.5, chat-domain-spec v1.9, erd v2.0, D-035(형식 골격)·D-002(auth 우선)·D-065·B-004~009(기술 규약)
 버전 규칙: G3 확정 = v1. 이후 변경은 계약 변경 절차(`common/rules.md [6]`) 경유 + v+1.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v1.42 | 2026-09-04 | **FC-424 범위 축소 사용자 승인.** v1.41의 8계정 pool·Redis lease·DEMO JWT/sessionType·20분/refresh 예외·전용 DELETE·WebSocket 처리·초기화/quarantine을 폐기한다. 공용 DEMO 계정 1개와 `POST /api/v1/auth/demo-login`만 두고 기존 `LoginResponse` access/refresh pair, JWT, refresh·logout·프론트 세션 흐름을 그대로 재사용한다. 브라우저 자격증명 노출은 서버 endpoint가 제거하고, DB `account_type=DEMO` 판정으로 위험 쓰기만 `AUTH_011` 차단한다. 정본=`demo-access-domain-spec.md` v1.1, erd v2.6. 영향은 기존 FC-424~427뿐이다. |
+| v1.41 | 2026-09-04 | **EPIC-DEMO-ACCESS / FC-424 사용자 게이트2 승인.** `POST/DELETE /api/v1/auth/demo-session` 신설. `user.account_type=DEMO` 8계정을 Redis 배타 lease로 20분 할당하고 refresh 없는 DEMO JWT를 발급한다. 모든 DEMO 요청은 lease를 검증하며 읽기·WebSocket 구독·데모 종료 외 도메인 쓰기/계정변경/관리자 기능을 중앙 fail-closed 차단한다. IP당 3회/분·burst 2, 고갈/Redis/초기화 실패 fail-closed, 재할당 전 사용자별 가변 상태 초기화를 확정했다. 일반 auth wire/JWT/refresh는 불변. 정본=`demo-access-domain-spec.md` v1.0, erd v2.5. 영향=FC-425·FC-426. |
 | v1.40 | 2026-08-31 | **FC-415 보안 2차 수정 구현 계약 확정.** `gateway.home-recommend-rate-limit` validated properties에 replenish/burst/requested를 바인딩하고 전부 양수·`burst >= replenish`를 gateway 부팅 시 fail-fast 검증한다(silent clamp 없음). 홈 `Retry-After=ceil(requestedTokens/replenishRate)`를 long 안전 계산해 기본 1/1=1초·비기본 3/2=2초를 보장한다. 홈 전용 fail-closed composition과 기존 limiter를 분리하며 성공 API·rate 기본값·추천/구매 정확성 경계는 불변 |
 | v1.39 | 2026-08-31 | **FC-415 구현 실측에 따른 계약 정정.** 사용자 승인 fail-closed 결정은 불변이나 SCG 기본 `RedisRateLimiter`가 Redis 장애 응답을 `allowed=true, remaining=-1`로 처리함을 테스트로 확인했다. 홈 추천 route 전용 `FailClosedRedisRateLimiter`가 이 오류 응답만 deny로 변환해 429 `GATEWAY_429`·하류 호출 0건을 보장한다. 정상 허용/소진 판정·rate 기본값·성공 API는 불변. `Retry-After` 설정 연동은 v1.40에서 확정 |
 | v1.38 | 2026-08-31 | **홈 추천 보안 후속 게이트2 사용자 승인 확정.** 공개 `GET /api/v1/home/shop-recommendations`에 gateway IP rate limit을 적용한다. 기본 `replenishRate=1`·`burstCapacity=10`·`requestedTokens=1`, `HOME_RECOMMEND_RATE_LIMIT_*` 환경변수 조정, 일반 service route보다 선행, 기존 `TrustedProxyClientIpKeyResolver` 재사용. 한도 초과와 Redis limiter 장애는 429 `GATEWAY_429`+`Retry-After`로 fail-closed 처리한다. 구체 수단은 v1.39에서 실측 정정했다. Redis는 추천·구매 정확성 수단이 아니며 성공 API·무캐시·reason·쿼터·다양성은 불변. V29 운영 절차 정본 = `docs/backend/flyway-deployment-runbook.md` |
@@ -165,6 +167,25 @@
 - 응답 200: `{ emailVerified: true }`
 - 동작: Redis 코드 대조(상수시간·시도 5회 상한) → 성공 시 `email_verified=true` 커밋 + 코드 키 삭제
 - 에러: `EMAIL_001` 코드 불일치(422), `EMAIL_002` 만료·미발송 통일(422), `EMAIL_003` 시도 초과·코드 폐기(429), `EMAIL_005` 이미 인증됨(409), 검증 400, 401
+
+### 공개 원클릭 데모 로그인 (EPIC-DEMO-ACCESS, v1.42)
+
+정본은 `demo-access-domain-spec.md` v1.1이다. 공용 계정 1개가 기존 로그인 token pair와 세션 흐름을 그대로
+사용하며, 계정 풀·Redis lease·별도 JWT/sessionType·전용 만료/refresh/logout은 없다.
+
+#### POST /api/v1/auth/demo-login — 공용 테스트 계정 로그인
+- 인증: 불요, body 없음
+- 응답 200: 기존 `LoginResponse`와 동일한 `{ accessToken, refreshToken, accessExpiresAt }`
+- 동작: 활성 `account_type=DEMO` 계정이 정확히 1개인지 확인하고, 기존 access JWT 발급과
+  `RefreshTokenStore.issue(userId)`를 그대로 사용한다. 계정은 `isAdmin=false`, login/password/social identity 없음.
+- 에러: `AUTH_009` 데모 비활성 또는 활성 DEMO 계정 수 불일치(503). 내부 원인·계정 수는 노출하지 않는다.
+- rate limit: 기존 SCG `auth-rate-limited` route와 기존 값을 그대로 사용한다.
+- DEMO 여부는 JWT claim이 아니라 요청 주체 userId의 DB `account_type`으로 판정한다. 계정·자산·거래·외부
+  사용자/콘텐츠·관리자에 영향을 주는 위험 쓰기는 중앙 정책에서 `AUTH_011` 403으로 차단한다.
+- 조회와 조회 동반 읽음 전이, 기존 `/refresh`, `/logout`, WebSocket 동작은 일반 계정과 같다.
+
+최소 서버 endpoint는 프론트 번들·DOM·로그인 요청 body에 공용 비밀번호를 노출하지 않기 위해 필요하다.
+이는 별도 인증 체계가 아니라 기존 token pair 발급 경로의 자격증명 없는 제한 진입점이다.
 
 ### POST /api/v1/auth/login — 로그인
 - 인증: 불요
@@ -1059,6 +1080,8 @@ GET /api/v1/me/deliveries/{deliveryPublicId} — 배송 상세
 | AUTH_006 | 미지원 소셜 provider(경로 provider 오류, §2 OAuth) | 400 |
 | AUTH_007 | 소셜 인가 코드 교환 실패(무효·만료·재사용, §2 OAuth) | 401 |
 | AUTH_008 | 소셜 provider 통신 실패(토큰·userinfo 조회·타임아웃, §2 OAuth) | 502 |
+| AUTH_009 | 공용 데모 로그인 비활성 또는 활성 DEMO 계정 수 불일치(§2, 상세 미노출) | 503 |
+| AUTH_011 | 공용 DEMO 계정에서 금지된 위험 쓰기 | 403 |
 | MEMBER_001 | 닉네임 중복(프로필 수정, §2.5) | 409 |
 | MEMBER_002 | 진행 중 거래 보유로 탈퇴 불가(§2.5) | 409 |
 | MEMBER_003 | 기본 캐릭터 ID 허용 집합 위반(`{1..12,25..28}`, 13..24 포함, §2.5) | 400 |

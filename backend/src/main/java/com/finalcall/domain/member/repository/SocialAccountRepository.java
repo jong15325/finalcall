@@ -21,6 +21,9 @@ import com.finalcall.domain.member.entity.User;
  */
 public interface SocialAccountRepository extends JpaRepository<SocialAccount, Long> {
 
+    /** 특정 회원에 연결된 소셜 신원이 하나라도 있는지 확인한다. */
+    boolean existsByUserId(Long userId);
+
     /** 소셜 신원(provider + providerUserId)으로 연결 계정 조회 — 복합 UK 라 최대 1건(find-or-create 조회 앵커). */
     Optional<SocialAccount> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId);
 

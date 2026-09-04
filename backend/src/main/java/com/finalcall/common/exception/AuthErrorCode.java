@@ -23,7 +23,9 @@ public enum AuthErrorCode implements ErrorCode {
     AUTH_FORBIDDEN("AUTH_005", HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     AUTH_UNSUPPORTED_PROVIDER("AUTH_006", HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인 제공자입니다."),
     AUTH_OAUTH_EXCHANGE_FAILED("AUTH_007", HttpStatus.UNAUTHORIZED, "소셜 인가 코드 교환에 실패했습니다."),
-    AUTH_OAUTH_PROVIDER_ERROR("AUTH_008", HttpStatus.BAD_GATEWAY, "소셜 로그인 제공자와 통신하지 못했습니다.");
+    AUTH_OAUTH_PROVIDER_ERROR("AUTH_008", HttpStatus.BAD_GATEWAY, "소셜 로그인 제공자와 통신하지 못했습니다."),
+    AUTH_DEMO_UNAVAILABLE("AUTH_009", HttpStatus.SERVICE_UNAVAILABLE, "현재 테스트 계정을 사용할 수 없습니다."),
+    AUTH_DEMO_READ_ONLY("AUTH_011", HttpStatus.FORBIDDEN, "체험 계정은 읽기 전용입니다.");
 
     private final String code;
     private final HttpStatus status;

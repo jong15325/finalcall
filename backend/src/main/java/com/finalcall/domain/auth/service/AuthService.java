@@ -14,9 +14,12 @@ import com.finalcall.common.logging.ServiceLog;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
 import com.finalcall.common.util.Preconditions;
+import com.finalcall.domain.auth.config.DemoLoginProperties;
 import com.finalcall.domain.auth.dto.TokenBundle;
+import com.finalcall.domain.member.entity.AccountType;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
+import com.finalcall.domain.member.repository.SocialAccountRepository;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.member.repository.UserRepository;
 import com.finalcall.infra.security.RefreshTokenStore;
@@ -38,6 +41,30 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final RefreshTokenStore refreshTokenStore;
+    private final DemoLoginProperties demoLoginProperties;
+    private final SocialAccountRepository socialAccountRepository;
+
+    /** 유일한 활성 DEMO 계정에 기존 access/refresh 발급 경로를 그대로 적용한다. */
+    @ServiceLog
+    public TokenBundle demoLogin() {
+        if (!demoLoginProperties.enabled()) {
+            throw new BusinessException(AuthErrorCode.AUTH_DEMO_UNAVAILABLE);
+        }
+        java.util.List<User> demoUsers = userRepository
+            .findTop2ByAccountTypeAndIsDeletedFalseOrderById(AccountType.DEMO);
+        if (demoUsers.size() != 1 || demoUsers.getFirst().isAdmin()
+            || demoUsers.getFirst().getLoginId() != null || demoUsers.getFirst().getPasswordHash() != null) {
+            throw new BusinessException(AuthErrorCode.AUTH_DEMO_UNAVAILABLE);
+        }
+        User user = demoUsers.getFirst();
+        if (socialAccountRepository.existsByUserId(user.getId())) {
+            throw new BusinessException(AuthErrorCode.AUTH_DEMO_UNAVAILABLE);
+        }
+        String userId = String.valueOf(user.getId());
+        String accessToken = tokenProvider.generateAccessToken(new TokenClaims(userId, user.getPublicId(), false));
+        String refreshToken = refreshTokenStore.issue(userId);
+        return new TokenBundle(accessToken, refreshToken, tokenProvider.accessTokenExpiresAt());
+    }
 
     /**
      * 회원가입: loginId/nickname 중복 검사 → BCrypt 해시 → User + UserBalance(0,0,0)를 <b>단일 트랜잭션</b>으로 생성한다.
@@ -146,7 +173,8 @@ public class AuthService {
     @ServiceLog
     public TokenBundle login(String loginId, String password) {
         User user = userRepository.findByLoginIdAndIsDeletedFalse(loginId).orElse(null);
-        if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (user == null || user.getAccountType() != AccountType.NORMAL || user.getPasswordHash() == null
+            || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new BusinessException(AuthErrorCode.AUTH_INVALID_CREDENTIALS);
         }
         String userId = String.valueOf(user.getId());

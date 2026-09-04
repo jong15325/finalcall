@@ -3,7 +3,10 @@ import { Link } from 'react-router'
 import { TbLock, TbUser } from 'react-icons/tb'
 import AuthTextField from './AuthTextField'
 import SocialLoginSection from './SocialLoginSection'
-import { loginErrorMessage } from '@/features/auth/lib/authErrors'
+import {
+    demoLoginErrorMessage,
+    loginErrorMessage,
+} from '@/features/auth/lib/authErrors'
 import { paths } from '@/app/paths'
 
 /**
@@ -23,6 +26,9 @@ interface LoginFormProps {
     /** 회원가입 직후 아이디 자동 채움(선택) */
     initialLoginId?: string
     onSubmit: (credential: { loginId: string; password: string }) => void
+    isDemoSubmitting?: boolean
+    demoSubmitError?: unknown
+    onDemoSubmit?: () => void
 }
 
 export default function LoginForm({
@@ -30,6 +36,9 @@ export default function LoginForm({
     submitError,
     initialLoginId = '',
     onSubmit,
+    isDemoSubmitting = false,
+    demoSubmitError = null,
+    onDemoSubmit = () => undefined,
 }: LoginFormProps) {
     const [loginId, setLoginId] = useState(initialLoginId)
     const [password, setPassword] = useState('')
@@ -101,6 +110,27 @@ export default function LoginForm({
 
             {/* 소셜 로그인 — 카카오·네이버(design-system §5.11, FC-155). 목업엔 있으나 구현 누락분 보강. */}
             <SocialLoginSection />
+
+            <div className="mt-6 border-t border-content-line pt-6">
+                <button
+                    type="button"
+                    disabled={isSubmitting || isDemoSubmitting}
+                    className="h-12 w-full rounded-xl border border-control-action px-4 text-sm font-extrabold text-control-action transition-colors hover:bg-control-action-soft disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={onDemoSubmit}
+                >
+                    {isDemoSubmitting
+                        ? '테스트 계정 연결 중…'
+                        : '테스트 계정으로 둘러보기'}
+                </button>
+                <p className="mt-2 text-center text-xs text-content-subtle">
+                    읽기 전용 테스트 계정으로 주요 화면을 둘러볼 수 있어요.
+                </p>
+                {demoSubmitError != null && (
+                    <p role="alert" className="mt-3 text-sm text-danger-ink">
+                        {demoLoginErrorMessage(demoSubmitError)}
+                    </p>
+                )}
+            </div>
 
             <p className="mt-6 text-center text-xs text-content-subtle">
                 계정이 없으신가요?{' '}

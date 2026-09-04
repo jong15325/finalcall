@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { resetSessionState } from '@/lib/api/session'
 import {
     getMe,
+    demoLogin as apiDemoLogin,
     login as apiLogin,
     logout as apiLogout,
     oauthLogin as apiOauthLogin,
@@ -84,6 +85,10 @@ function AuthProvider({ children }: AuthProviderProps) {
         [establishSession],
     )
 
+    const demoSignIn = useCallback(async () => {
+        await establishSession(await apiDemoLogin())
+    }, [establishSession])
+
     const oauthSignIn = useCallback(
         async (provider: OAuthProvider, code: string) => {
             // 소셜 응답도 LoginResponse 형상 그대로라 동일 경로로 세션을 확립한다(계약 §2).
@@ -113,11 +118,12 @@ function AuthProvider({ children }: AuthProviderProps) {
             authenticated: accessToken !== null,
             user,
             signIn,
+            demoSignIn,
             oauthSignIn,
             signUp,
             signOut,
         }),
-        [accessToken, user, signIn, oauthSignIn, signUp, signOut],
+        [accessToken, user, signIn, demoSignIn, oauthSignIn, signUp, signOut],
     )
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

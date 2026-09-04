@@ -10,6 +10,8 @@ import com.finalcall.common.util.Ulid;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -67,6 +69,10 @@ public class User extends BaseTimeEntity {
     @Column(name = "is_admin", nullable = false)
     private boolean isAdmin;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type", nullable = false, length = 10)
+    private AccountType accountType = AccountType.NORMAL;
+
     @JdbcTypeCode(SqlTypes.TINYINT)
     @Column(name = "primary_character_id", nullable = false, columnDefinition = "TINYINT UNSIGNED")
     private int primaryCharacterId;
@@ -84,6 +90,7 @@ public class User extends BaseTimeEntity {
         this.passwordHash = passwordHash;
         this.nickname = nickname;
         this.isAdmin = isAdmin;
+        this.accountType = AccountType.NORMAL;
         this.primaryCharacterId = 1;
         this.isDeleted = false;
     }

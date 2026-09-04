@@ -24,6 +24,16 @@ export function loginErrorMessage(error: unknown): string {
     return '로그인하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
+export function demoLoginErrorMessage(error: unknown): string {
+    if (hasErrorCode(error, ERROR_CODES.AUTH_009)) {
+        return '현재 모든 테스트 계정이 사용 중입니다. 잠시 후 다시 시도해 주세요.'
+    }
+    if (hasErrorCode(error, ERROR_CODES.AUTH_011)) {
+        return '테스트 계정은 읽기 전용입니다. 다른 기능을 둘러봐 주세요.'
+    }
+    return '테스트 계정에 접속하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+}
+
 /**
  * 회원가입 실패 문구.
  * `AUTH_001`(409) = 중복 loginId(최소화 문구) · `AUTH_002`(409) = 중복 nickname · 400 = 형식 위반.

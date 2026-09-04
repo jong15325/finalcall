@@ -17,6 +17,8 @@ export interface AuthContextValue {
     user: UserSummary | null
     /** 성공 시 세션 확립. 실패 시 `ApiError` throw — 화면이 `code` 로 분기한다. */
     signIn: (credential: LoginRequest) => Promise<void>
+    /** 읽기 전용 공개 데모 세션을 발급해 기존 원자 세션 경로로 확립한다. */
+    demoSignIn: () => Promise<void>
     /**
      * 소셜 로그인·가입(통합) — provider 콜백의 `code` 를 교환해 세션을 확립한다(FC-156).
      * `signIn` 과 **동일한 토큰 저장·프로필 조회 경로**를 공유한다(계약 §2 — LoginResponse 형상 재사용).
@@ -37,6 +39,7 @@ const AuthContext = createContext<AuthContextValue>({
     authenticated: false,
     user: null,
     signIn: notReady,
+    demoSignIn: notReady,
     oauthSignIn: notReady,
     signUp: notReady,
     signOut: notReady,

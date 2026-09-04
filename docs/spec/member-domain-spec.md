@@ -1,11 +1,19 @@
 # Member 기본 캐릭터 프로필 스펙
 
-> 상태: **v1.1 — APPROVED** (2026-08-22, FC-352 변경 계약 사용자 승인)
+> 상태: **v1.3 — APPROVED** (2026-09-04, FC-424 공용 단일 데모 계정 범위 축소 승인)
 > 작성: 2026-08-22, EPIC-MEMBER-CHARACTER / FC-352
-> 외부 계약: `api-contract.md` v1.32 · 스키마: `erd.md` v2.3
+> 외부 계약: `api-contract.md` v1.42 · 스키마: `erd.md` v2.6
 
 > v1.1 변경: 프리미엄 캐릭터 13..24를 선택·저장 범위에서 제거했다. 허용 ID는
 > `{1..12, 25..28}`이며 API wire와 PATCH 부분 수정 의미는 v1.0과 동일하다.
+
+> v1.2 변경: `user.account_type=NORMAL|DEMO`를 추가한다. 기존·일반·OAuth 회원은 NORMAL이고 공개 데모
+> 풀 8계정만 DEMO다. 데모 계정의 생애주기·인가 정본은 `demo-access-domain-spec.md` v1.0이며 기본 캐릭터
+> 매핑과 기존 회원 API wire는 변경하지 않는다.
+
+> v1.3 변경: DEMO를 공용 계정 1개로 축소하고 별도 세션 종류·lease를 폐기했다. 기존 로그인 token pair와
+> refresh/logout을 그대로 사용하며 위험 쓰기만 DB accountType 기준으로 차단한다. 정본은
+> `demo-access-domain-spec.md` v1.1이다.
 
 ## 1. 목적과 범위
 
@@ -132,3 +140,14 @@ profileCharacterId(primaryCharacterId) =
 - FC-358: 본인 인가, 1/28 경계와 0/29 거부, migration backfill, N+1, tombstone, 반응형·접근성 리뷰.
 
 2026-08-22 Gate 2 사용자 승인으로 FC-353~357 구현 진입이 허용됐다.
+
+## 9. 데모 계정 종류 경계 (FC-424)
+
+- `User.accountType`은 `NORMAL|DEMO`이며 DB 기본값과 기존 행 backfill은 NORMAL이다.
+- 일반 signup·OAuth find-or-create는 항상 NORMAL을 생성한다.
+- 비밀번호 로그인은 활성 NORMAL만 대상으로 하며 DEMO는 loginId/password/social identity를 갖지 않는다.
+- DEMO는 정확히 1개인 공용 테스트 계정이며 `isAdmin=false`다. 별도 JWT/sessionType/lease 없이 일반
+  token pair를 사용하고 서버가 SecurityContext userId로 accountType을 조회해 위험 쓰기를 차단한다.
+- DEMO 계정과 user_balance/조회 fixture는 migration에서 멱등 시드한다. 탈퇴·프로필·이메일·거래 및
+  외부 사용자/콘텐츠에 영향을 주는 쓰기는 `AUTH_011`로 차단한다.
+- `GET /me`와 일반 로그인/refresh/logout 응답 형상은 불변이다. 프론트 세션 모델도 별도 DEMO 필드를 갖지 않는다.

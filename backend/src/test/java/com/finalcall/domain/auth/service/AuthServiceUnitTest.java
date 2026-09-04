@@ -8,9 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,9 +26,12 @@ import com.finalcall.common.exception.BusinessException;
 import com.finalcall.common.exception.EmailErrorCode;
 import com.finalcall.common.security.TokenClaims;
 import com.finalcall.common.security.TokenProvider;
+import com.finalcall.domain.auth.config.DemoLoginProperties;
 import com.finalcall.domain.auth.dto.TokenBundle;
+import com.finalcall.domain.member.entity.AccountType;
 import com.finalcall.domain.member.entity.User;
 import com.finalcall.domain.member.entity.UserBalance;
+import com.finalcall.domain.member.repository.SocialAccountRepository;
 import com.finalcall.domain.member.repository.UserBalanceRepository;
 import com.finalcall.domain.member.repository.UserRepository;
 import com.finalcall.infra.security.RefreshTokenStore;
@@ -53,8 +59,69 @@ class AuthServiceUnitTest {
     @Mock
     private RefreshTokenStore refreshTokenStore;
 
+    @Mock
+    private DemoLoginProperties demoLoginProperties;
+
+    @Mock
+    private SocialAccountRepository socialAccountRepository;
+
     @InjectMocks
     private AuthService authService;
+
+    @Test
+    void demo_login은_유일한_계정에_기존_token_pair를_발급한다() {
+        User user = org.mockito.Mockito.mock(User.class);
+        when(demoLoginProperties.enabled()).thenReturn(true);
+        when(userRepository.findTop2ByAccountTypeAndIsDeletedFalseOrderById(AccountType.DEMO))
+            .thenReturn(List.of(user));
+        when(user.getId()).thenReturn(42L);
+        when(user.getPublicId()).thenReturn("01DEMOACCESS00000000000001");
+        when(tokenProvider.generateAccessToken(any(TokenClaims.class))).thenReturn("access");
+        when(refreshTokenStore.issue("42")).thenReturn("refresh");
+        when(tokenProvider.accessTokenExpiresAt()).thenReturn(Instant.now().plusSeconds(60));
+
+        TokenBundle result = authService.demoLogin();
+
+        assertThat(result.accessToken()).isEqualTo("access");
+        assertThat(result.refreshToken()).isEqualTo("refresh");
+    }
+
+    @Test
+    void demo_login은_비활성이나_계정수가_유일하지_않으면_AUTH_009다() {
+        when(demoLoginProperties.enabled()).thenReturn(false);
+        assertThatThrownBy(() -> authService.demoLogin()).isInstanceOfSatisfying(BusinessException.class,
+            exception -> assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.AUTH_DEMO_UNAVAILABLE));
+
+        when(demoLoginProperties.enabled()).thenReturn(true);
+        when(userRepository.findTop2ByAccountTypeAndIsDeletedFalseOrderById(AccountType.DEMO))
+            .thenReturn(List.of());
+        assertThatThrownBy(() -> authService.demoLogin()).isInstanceOf(BusinessException.class);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true,false,false,false", "false,true,false,false", "false,false,true,false",
+        "false,false,false,true"})
+    void demo_login은_관리자_자격증명_소셜신원_경계를_AUTH_009로_거부한다(
+        boolean admin, boolean loginId, boolean password, boolean socialIdentity) {
+        User user = org.mockito.Mockito.mock(User.class);
+        when(demoLoginProperties.enabled()).thenReturn(true);
+        when(userRepository.findTop2ByAccountTypeAndIsDeletedFalseOrderById(AccountType.DEMO))
+            .thenReturn(List.of(user));
+        when(user.isAdmin()).thenReturn(admin);
+        if (!admin) {
+            when(user.getLoginId()).thenReturn(loginId ? "login" : null);
+        }
+        if (!admin && !loginId) {
+            when(user.getPasswordHash()).thenReturn(password ? "hash" : null);
+        }
+        if (!admin && !loginId && !password) {
+            when(user.getId()).thenReturn(42L);
+            when(socialAccountRepository.existsByUserId(42L)).thenReturn(socialIdentity);
+        }
+
+        assertThatThrownBy(() -> authService.demoLogin()).isInstanceOfSatisfying(BusinessException.class,
+            exception -> assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.AUTH_DEMO_UNAVAILABLE));
+    }
 
     @Test
     void 가입에_성공하면_유저와_잔액을_함께_생성한다() {

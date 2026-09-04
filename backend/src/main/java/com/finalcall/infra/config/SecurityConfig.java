@@ -1,5 +1,6 @@
 package com.finalcall.infra.config;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,6 +14,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finalcall.common.security.TokenProvider;
+import com.finalcall.domain.member.repository.UserRepository;
+import com.finalcall.infra.security.DemoRiskyWriteFilter;
 import com.finalcall.infra.security.GatewayAccessFilter;
 import com.finalcall.infra.security.JwtAccessDeniedHandler;
 import com.finalcall.infra.security.JwtAuthenticationEntryPoint;
@@ -34,6 +37,7 @@ public class SecurityConfig {
         JwtAuthenticationEntryPoint authenticationEntryPoint,
         JwtAccessDeniedHandler accessDeniedHandler,
         GatewayInternalProperties gatewayInternalProperties,
+        ObjectProvider<UserRepository> userRepositoryProvider,
         ObjectMapper objectMapper) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
@@ -48,6 +52,7 @@ public class SecurityConfig {
                     "/api/v1/auth/oauth/**", "/api/v1/auth/nickname/availability",
                     "/api/v1/auth/login-id/availability", "/ws/chat", "/actuator/**", "/error")
                 .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/demo-login").permitAll()
                 // 데모/참조(sample)는 공개 유지 — 실제 접근 정책은 도메인 구현 단계에서 정한다.
                 //   (notice 참조 구현은 board 로 흡수·제거됨 — FC-201. 게시판 공개 경로는 아래 /api/v1/boards 참조.)
                 .requestMatchers("/sample/**").permitAll()
@@ -91,6 +96,8 @@ public class SecurityConfig {
             // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 등록.
             .addFilterBefore(new JwtAuthenticationFilter(tokenProvider),
                 UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(new DemoRiskyWriteFilter(userRepositoryProvider.getIfAvailable(), objectMapper),
+                JwtAuthenticationFilter.class)
             // 직접접근 차단(D-068): 게이트웨이 경유 검증을 인증(JWT)보다 먼저 수행한다.
             .addFilterBefore(new GatewayAccessFilter(gatewayInternalProperties, objectMapper),
                 JwtAuthenticationFilter.class);

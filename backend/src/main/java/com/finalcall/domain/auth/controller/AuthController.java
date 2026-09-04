@@ -46,6 +46,12 @@ public class AuthController {
     private final AuthService authService;
     private final OAuthService oauthService;
 
+    /** 자격증명 없이 유일한 공용 DEMO 계정의 기존 token pair를 발급한다. */
+    @PostMapping("/demo-login")
+    public ApiResponse<LoginResponse> demoLogin() {
+        return ApiResponse.success(LoginResponse.from(authService.demoLogin()));
+    }
+
     /** 회원가입 — 성공 시 201, 토큰은 발급하지 않는다(계약 §2). */
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
