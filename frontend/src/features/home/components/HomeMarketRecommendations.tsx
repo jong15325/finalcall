@@ -1,20 +1,10 @@
-import {
-    TbBuildingStore,
-    TbClockHour4,
-    TbRosetteDiscountCheck,
-    TbSparkles,
-} from 'react-icons/tb'
+import { TbBuildingStore } from 'react-icons/tb'
 import ListFrame from '@/components/common/ListFrame'
 import { HomeSectionHeading } from './HomeSection'
 import ItemListSkeleton from '@/features/item/components/ItemListSkeleton'
 import ShopCard from '@/features/shop/components/ShopCard'
 import { paths } from '@/app/paths'
-import type { ComponentType } from 'react'
-import type {
-    ShopRecommendationItem,
-    ShopRecommendationReason,
-    ShopSummary,
-} from '@/lib/api/shop'
+import type { ShopRecommendationItem, ShopSummary } from '@/lib/api/shop'
 
 export type HomeMarketRecommendationsState =
     'loading' | 'error' | 'empty' | 'ready'
@@ -25,55 +15,6 @@ interface HomeMarketRecommendationsProps {
     now: number
     onOpen: (shop: ShopSummary) => void
     onRetry?: () => void
-}
-
-const REASON_VIEW: Record<
-    ShopRecommendationReason,
-    {
-        label: string
-        icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
-        className: string
-    }
-> = {
-    NEW: {
-        label: '방금 등록',
-        icon: TbSparkles,
-        className: 'bg-info-soft text-info',
-    },
-    ENDING_SOON: {
-        label: '24시간 내 판매 종료',
-        icon: TbClockHour4,
-        className: 'bg-warning-soft text-warning',
-    },
-    TRUSTED_SELLER: {
-        label: '완료 판매 5회 이상',
-        icon: TbRosetteDiscountCheck,
-        className: 'bg-brand-highlight-soft text-brand-highlight-deep',
-    },
-    GENERAL: {
-        label: '새 매물',
-        icon: TbBuildingStore,
-        className: 'bg-content-soft text-content-muted',
-    },
-}
-
-export function RecommendationReason({
-    reason,
-}: {
-    reason: ShopRecommendationReason
-}) {
-    const view = REASON_VIEW[reason]
-    const Icon = view.icon
-
-    return (
-        <span
-            data-recommendation-reason={reason}
-            className={`pointer-events-none inline-flex min-h-7 w-fit max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold leading-4 ${view.className}`}
-        >
-            <Icon aria-hidden className="size-3.5 shrink-0" />
-            <span className="truncate">{view.label}</span>
-        </span>
-    )
 }
 
 export default function HomeMarketRecommendations({
@@ -117,21 +58,13 @@ export default function HomeMarketRecommendations({
                 as="ul"
                 label="오늘의 추천 마켓 목록"
                 renderSkeleton={(index) => (
-                    <li className="flex min-w-0 flex-col gap-2">
-                        <span
-                            aria-hidden
-                            className="h-7 w-24 animate-pulse rounded-full bg-content-soft"
-                        />
+                    <li className="min-w-0">
                         <ItemListSkeleton key={index} layout="preview" />
                     </li>
                 )}
             >
-                {items.map(({ reason, shop }) => (
-                    <li
-                        key={shop.shopPublicId}
-                        className="flex min-w-0 flex-col gap-2"
-                    >
-                        <RecommendationReason reason={reason} />
+                {items.map(({ shop }) => (
+                    <li key={shop.shopPublicId} className="min-w-0">
                         <ShopCard shop={shop} now={now} onOpen={onOpen} />
                     </li>
                 ))}

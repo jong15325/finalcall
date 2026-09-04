@@ -16,6 +16,11 @@ import { NAVIGATION_LAYOUT_VARIANTS } from './scenarioMetadata'
 import { auditAuctionCountdownLayout } from './scenarios/auctionCountdownLayout'
 import WorkbenchRoutes from './WorkbenchRoutes'
 
+const liquidFrostCss = readFileSync(
+    resolve(process.cwd(), 'src/styles/liquid-frost.css'),
+    'utf8',
+)
+
 beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 })
@@ -58,7 +63,7 @@ function useViewport(width: number) {
 
 describe('WorkbenchRoutes', () => {
     it.each([390, 1280])(
-        '%ipx 홈 추천 마켓은 추천 근거와 실제 카드 affordance를 함께 보존한다',
+        '%ipx 홈 추천 마켓은 태그 없이 실제 카드 affordance를 보존한다',
         async (width) => {
             useViewport(width)
             const view = renderWorkbench(
@@ -82,7 +87,7 @@ describe('WorkbenchRoutes', () => {
             )
             expect(
                 view.container.querySelectorAll('[data-recommendation-reason]'),
-            ).toHaveLength(6)
+            ).toHaveLength(0)
             expect(
                 view.container.querySelectorAll(
                     '[data-card-hit-area="compare"]',
@@ -91,10 +96,23 @@ describe('WorkbenchRoutes', () => {
             expect(view.container.querySelectorAll('.shop-card')).toHaveLength(
                 6,
             )
-            expect(screen.getAllByText('24시간 내 판매 종료')).toHaveLength(2)
-            expect(screen.getByText('완료 판매 5회 이상')).toBeVisible()
         },
     )
+
+    it('홈 추천 마켓 카드와 스킬 행의 흰 테두리를 제거한다', () => {
+        expect(liquidFrostCss).toMatch(
+            /#view\s*\[data-testid='app-content-plane'\]\s*\[data-home-market-recommendations\]\s*\.item-card,\s*#view\s*\[data-testid='app-content-plane'\]\s*\[data-home-market-recommendations\]\s*\.item-card:hover\s*\{[^}]*border:\s*0\s*!important;[^}]*box-shadow:\s*0 18px 34px rgba\(5, 17, 26, 0\.24\)\s*!important;/s,
+        )
+        expect(liquidFrostCss).toMatch(
+            /#view\s*\[data-testid='app-content-plane'\]\s*\[data-home-market-recommendations\]\s*\.item-card::after\s*\{[^}]*content:\s*none\s*!important;[^}]*box-shadow:\s*none\s*!important;/s,
+        )
+        expect(liquidFrostCss).toMatch(
+            /\[data-home-market-recommendations\] \.item-card__market-skills\s*\{[^}]*border:\s*0\s*!important;/s,
+        )
+        expect(liquidFrostCss).toMatch(
+            /\[data-home-market-recommendations\] \.item-card__skill-row\s*\{[^}]*border-bottom:\s*0\s*!important;/s,
+        )
+    })
 
     it.each([
         ['partial', 3],

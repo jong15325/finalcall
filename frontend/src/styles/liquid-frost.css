@@ -2295,7 +2295,7 @@ section > ul.rounded-xl,
 }
 
 /* Home closing-soon uses the exact auction-list card composition. */
-[data-home-auction-list] .item-card {
+:is([data-home-auction-list], [data-home-market-recommendations]) .item-card {
     overflow: hidden !important;
     border: 1px solid rgba(255, 255, 255, 0.16) !important;
     border-radius: 12px 12px 18px 18px !important;
@@ -2309,7 +2309,8 @@ section > ul.rounded-xl,
         inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
     isolation: isolate;
 }
-[data-home-auction-list] .item-card__market-info {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__market-info {
     z-index: 2;
     gap: 0 !important;
     margin-top: -3px;
@@ -2324,15 +2325,20 @@ section > ul.rounded-xl,
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
-[data-home-auction-list] .item-card__market-heading h3 {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__market-heading
+    h3 {
     color: #fff !important;
     font-size: 15px;
     font-weight: 850;
 }
-[data-home-auction-list] .item-card__market-info > p {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__market-info
+    > p {
     color: var(--frost-muted) !important;
 }
-[data-home-auction-list] .item-card__market-skills {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__market-skills {
     min-height: 104px;
     margin-top: 12px;
     padding: 4px 10px !important;
@@ -2340,28 +2346,58 @@ section > ul.rounded-xl,
     border-radius: 12px !important;
     background: rgba(5, 15, 23, 0.24) !important;
 }
-[data-home-auction-list] .item-card__skill-row {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__skill-row {
     min-height: 47px;
     padding: 8px 0 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 0 !important;
     background: transparent !important;
 }
-[data-home-auction-list] .item-card__skill-row:last-child {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__skill-row:last-child {
     border-bottom: 0 !important;
 }
-[data-home-auction-list] .item-card__market-price {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__market-price {
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.14);
     color: #fff !important;
 }
-[data-home-auction-list] .item-card__seller-row {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card__seller-row {
     border-top-color: rgba(255, 255, 255, 0.1) !important;
     color: var(--frost-subtle) !important;
 }
-[data-home-auction-list] .item-card > .relative {
+:is([data-home-auction-list], [data-home-market-recommendations])
+    .item-card
+    > .relative {
     isolation: isolate;
+}
+#view
+    [data-testid='app-content-plane']
+    [data-home-market-recommendations]
+    .item-card,
+#view
+    [data-testid='app-content-plane']
+    [data-home-market-recommendations]
+    .item-card:hover {
+    border: 0 !important;
+    box-shadow: 0 18px 34px rgba(5, 17, 26, 0.24) !important;
+}
+#view
+    [data-testid='app-content-plane']
+    [data-home-market-recommendations]
+    .item-card::after {
+    content: none !important;
+    box-shadow: none !important;
+}
+[data-home-market-recommendations] .item-card__market-skills {
+    border: 0 !important;
+}
+[data-home-market-recommendations] .item-card__skill-row {
+    border-bottom: 0 !important;
 }
 [data-home-auction-list] [data-auction-info-rail] {
     position: absolute;
